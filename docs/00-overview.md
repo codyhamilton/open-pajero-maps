@@ -197,3 +197,23 @@ plausible-looking.
   search data dominates the index volume, more than street address search. **Phase 0
   is complete.** Next: Phase 1 format analysis, starting with cross-referencing the
   `IDX/` filename-prefix guesses against the archived Chapter 11 sub-section PDFs.
+- 2026-08-25: Follow-up pass specifically testing the "Street ID -> Link ID ->
+  main-map geometry" hypothesis from the previous entry, end-to-end against real
+  `SADSR201.IDX` data (GADEN ROAD / GINGIN BROOK ROAD / GINGIN ROAD, real WA
+  streets). **Hypothesis not confirmed** (full detail in
+  `docs/phases/01-format-analysis.md`, "Street ID -> Link ID indirection
+  hypothesis, tested end-to-end"). Progress made: re-read the archived
+  Ch.11.A.2.14/11.A.2.4 PDFs and confirmed the exact spec chain this hypothesis
+  describes (alphabetical record -> Address Range Search record -> Street
+  Address POI Information record, which is where real RLXY/Link ID actually
+  live per the spec); and found that the alphabetical record's previously
+  "16 opaque bytes" splits cleanly into four 4-byte fields
+  (`area_code`/`street_id`/`next_level_field`/`tail`, zero remainder) --
+  implemented as properties on `AlphabeticalMatchingRecord` in
+  `parser/kiwiw/index_data.py`. The blocker: none of six tried offset/base
+  transforms for `next_level_field` (the pointer candidate) resolve to the
+  expected Address Range Search record shape. Recommendation, if this is still
+  unresolved by Phase 3: treat it as a hard-time-boxed research spike rather
+  than an open blocker, since Phase 3 could instead match OSM street names
+  directly to the already-solved main-map link geometry and skip reproducing
+  the original disc's exact index indirection chain.

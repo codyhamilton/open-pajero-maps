@@ -253,50 +253,98 @@ class NameEntry:
 class AlphabeticalMatchingRecord:
     """Ch. 11.A.2.4.5.2.5.1 "Street Name Search (alphabetical order search)
     Matching Data Record" as it actually appears on this disc's SADSR*.IDX
-    `next_level` frame -- CONFIRMED record framing/boundaries, coordinate
-    field content NOT decoded (see module docstring section below and
-    docs/phases/01-format-analysis.md for the full writeup of what was
-    tried).
+    `next_level` frame -- CONFIRMED record framing/boundaries. Coordinate
+    field content is still NOT decoded to a lat/lon, but the archived
+    Ch.11.A.2.4.5.2.5.1 field table (re-read 2026-08-25, see
+    docs/phases/01-format-analysis.md "Street ID -> Link ID indirection
+    hypothesis" for the full writeup) let this pass go one level deeper
+    than the previous "16 undecoded bytes" state.
 
     ``file_offset``/``relprev``/``relnext`` are CONFIRMED: this is a
     doubly-linked chain of variable-length records, and ``relprev``/
-    ``relnext`` (each stored **1-byte SWS-halved** -- a new finding, the
-    same halving convention as `bitutils.sws()`/`sws32()` but at 1-byte
-    width) give the exact byte displacement to the previous/next record.
-    Walking the chain via ``relnext`` reproduces the same records (in the
-    same order) as independently scanning for length-prefixed strings and
-    inferring boundaries from inter-string spacing -- two independent
-    methods agreeing is why the framing itself is CONFIRMED, not a guess.
+    ``relnext`` (each stored **1-byte SWS-halved**) give the exact byte
+    displacement to the previous/next record. Walking the chain via
+    ``relnext`` reproduces the same records (in the same order) as
+    independently scanning for length-prefixed strings and inferring
+    boundaries from inter-string spacing.
 
-    ``raw_prefix`` is the 16 bytes between ``relnext`` and the search-key
-    length byte (i.e. record bytes [2:18)). This is NOT further decoded.
-    What's known about it: bytes [2:6) are constant across many
-    consecutive records (changing only occasionally, consistent with a
-    per-suburb/zone reference rather than per-record data); bytes [6:14)
-    increase quasi-monotonically as the alphabetical list progresses
-    (consistent with a sequentially-assigned Street ID, not a
-    geographic coordinate); bytes [14:18) were `00 00 00 01` (constant)
-    on every record sampled on this disc, consistent with "Area Code".
-    Neither the literal 3-byte-lat+3-byte-lon `geo_secs` PID reading nor
-    the literal Ch.1.2.13 2-word-per-axis PID reading of any sub-range of
-    these 16 bytes produced values in Australia's bounds (or even in
-    valid lat/lon bounds at all) -- see the phase doc. The spec's own
-    field table for this exact record variant marks both "Fuzzy Search
-    Flag" and "Latitude and Longitude" (RLXY) as classification 'c'
-    (conditional/optional), so the leading hypothesis is that this
-    disc's street-name search records simply **omit** the coordinate
-    field entirely (an alphabetical list doesn't need distance-sorting),
-    and that real coordinates for street/address data are instead
-    resolved indirectly via Street ID -> a main-map Link ID -> the link's
-    start point (exactly as Ch.11.A.2.14 footnote 4 describes for POI
-    Information records referencing street address data) rather than
-    being stored inline here at all."""
+    ``raw_prefix`` (the 16 bytes between ``relnext`` and the search-key
+    length byte, record bytes [2:18)) splits *exactly* into four 4-byte
+    big-endian fields with no remainder -- this clean fit (vs. the
+    previous pass's fuzzy "constant/monotonic/constant" byte-range
+    description) is itself new evidence that Ch.11.A.2.4.5.2.5.1's
+    conditional ('c') Fuzzy Search Flag (1B) and Latitude/Longitude (6B)
+    fields really are omitted on this disc (1+6+4=11 bytes would leave
+    5 leftover, unaccounted bytes; 4+4+4+4=16 leaves none):
+
+    - ``area_code`` (bytes [0:4)): matches the spec's mandatory ('a')
+      "Area Code" field. CONFIRMED-ish: near-constant across long runs of
+      consecutive alphabetical records (e.g. `80 7f 00 46` for all
+      sampled F-street names, ticking to `80 7f 00 47` at the G's) --
+      consistent with a coarse geographic/administrative zone id, not a
+      coordinate.
+    - ``street_id`` (bytes [4:8)): STRUCTURAL guess. Increases
+      quasi-monotonically as the alphabetical list progresses. Does
+      *not* line up with the spec's literal field order (which places
+      "Street ID" *after* the name, not before it) -- another instance
+      of the disc's real field order not matching the spec table's
+      declared order, already seen elsewhere in this module.
+    - ``next_level_field`` (bytes [8:12)): UNCONFIRMED, still the open
+      question. Leading candidate for the spec's mandatory "Offset to
+      Next-level Data Frame" (which per the spec should point at this
+      street's Address Range Search Matching Data Record --
+      Ch.11.A.2.4.4.5 -- whose own "Offset to POI Information" field is
+      what finally reaches a Street Address POI Information Record with
+      real RLXY + Link ID, per Ch.11.A.2.14.1.4). Tried resolving it as
+      an absolute file offset under the sws32 halving convention
+      (doubled, no base added): this DOES land in-bounds and on
+      byte patterns that structurally resemble *other* Street Name
+      Search (alphabetical) records elsewhere in the same file (i.e.
+      `area_code`/`street_id`/`next_level_field`/`tail`-shaped data
+      again) rather than on an Address Range Search record's shape --
+      so either this field isn't what the spec calls "Offset to
+      Next-level Data Frame", or the correct base/transform for
+      resolving it is still wrong. Tried bases: raw absolute (doubled
+      and undoubled), relative to `next_level.file_offset`, relative to
+      `matching_data_frame.file_offset` (each doubled and undoubled) --
+      none produced an unambiguous Address-Range-Search-shaped record.
+      NOT to be treated as working.
+    - ``tail`` (bytes [12:16)): small integer (observed range 1-38 across
+      ~2000 real records sampled), never a plausible byte offset in this
+      15MB file. Consistent with the spec's "Next-level Data Frame Class"
+      + "Next-level Data Frame Serial Number" (both small, packed
+      sub-byte fields per the spec) rather than a pointer -- e.g.
+      plausibly a per-street address-range-segment count. UNCONFIRMED.
+
+    Bottom line: the Street ID -> Link ID -> ALLDATA.KWI indirection
+    hypothesis from the previous pass is NOT confirmed end-to-end this
+    pass either. What's new is a cleaner, better-motivated decomposition
+    of the previously-opaque 16-byte prefix, and an empirical ruling-out
+    of several most-likely offset/base combinations for the pointer field
+    -- see docs/phases/01-format-analysis.md for the full log of what was
+    tried and what to try next."""
 
     file_offset: int
     relprev: int
     relnext: int
     raw_prefix: bytes
     search_key: str
+
+    @property
+    def area_code(self) -> bytes:
+        return self.raw_prefix[0:4]
+
+    @property
+    def street_id(self) -> int:
+        return int.from_bytes(self.raw_prefix[4:8], "big")
+
+    @property
+    def next_level_field(self) -> int:
+        return int.from_bytes(self.raw_prefix[8:12], "big")
+
+    @property
+    def tail(self) -> bytes:
+        return self.raw_prefix[12:16]
 
 
 def iter_alphabetical_matching_records(

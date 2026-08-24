@@ -543,6 +543,132 @@ layouts, and made real progress on the *framing* even though the
    verified (or replaced) before Phase 3 assumes a particular file
    corresponds to a particular display scale.
 
+### Street ID -> Link ID indirection hypothesis, tested end-to-end (2026-08-25)
+
+Follow-up to the 2026-08-25 "coordinate decoding still not solved"
+pass above. This pass tested the leading hypothesis it left behind:
+that street-level coordinates for SADSR alphabetical-order records are
+not stored inline at all, but resolved via Street ID -> Link ID ->
+`ALLDATA.KWI` main-map geometry (per the Ch.11.A.2.14 "POI Information
+Frame" footnote). Parser code: `parser/kiwiw/index_data.py`
+(`AlphabeticalMatchingRecord` gained `area_code`/`street_id`/
+`next_level_field`/`tail` properties), demo: `parser/demo_street_id_link.py`.
+Tested against the real mounted disc, real `SADSR201.IDX`, real WA
+street names (GADEN ROAD, GINGIN BROOK ROAD, GINGIN ROAD).
+
+**Result: the hypothesis is NOT confirmed end-to-end. This is an honest
+negative/partial result, not a workaround-in-disguise.**
+
+**What *did* come out of this pass (genuine progress on framing, not on
+coordinates):**
+
+- Re-read the archived Ch.11.A.2.14 (POI Information Frame) and
+  Ch.11.A.2.4 (Street Address Search) PDFs in full via `pdftotext`.
+  Found the exact spec chain the hypothesis describes:
+  Street Address Search Frame -> Street Name Search (alphabetical order)
+  Matching Data Record's "Offset to Next-level Data Frame" field should
+  point at an **Address Range Search Matching Data Record**
+  (Ch.11.A.2.4.4.5: `[1B relprev][1B relnext][4B offset-to-POI-info]
+  [2B POI-info-record-count][1B street-address-flag][variable street
+  address][variable area code]...`), whose own "Offset to POI
+  Information" field (a direct, non-Street-ID-keyed pointer) finally
+  reaches a **Street Address POI Information Record**
+  (Ch.11.A.2.14.1.4: `[1B relprev][1B relnext][1B street-address-flag]
+  [variable street address][variable RLXY lat/lon][variable Link ID]
+  [1B link-serial-number]`) -- this record is where real RLXY + Link ID
+  actually live. Footnote 4 on that record confirms the RLXY here is
+  "the coordinates of the link start point ... necessary to search for
+  a link ID stored as main map data ... in PID format", i.e. exactly the
+  coarse parcel-locating coordinate the previous pass was looking for,
+  just one indirection layer further away than assumed.
+- Got the exact literal field table for the SADSR alphabetical Matching
+  Data Record itself (Ch.11.A.2.4.5.2.5.1), confirming: `[1B relprev]
+  [1B relnext][1B fuzzy flag, c][6B lat/lon, c][4B area code, a]
+  [variable search key, a][1B language number, c][variable name, c]
+  [4B Street ID, a][1/2B next-level-frame class, a][1/2B next-level-
+  frame serial, a][4B offset-to-next-level-frame, a][1B padding, a]`.
+- **New clean finding: the real 16-byte `raw_prefix` splits exactly
+  into four 4-byte big-endian fields with zero remainder**
+  (`area_code`/`street_id`/`next_level_field`/`tail`), which is a much
+  better fit than the previous pass's fuzzy byte-range description and
+  is itself further evidence that the conditional (`'c'`) fuzzy-flag
+  and lat/lon fields really are omitted on this disc (1+6+4=11 leaves 5
+  bytes unaccounted for; 4+4+4+4=16 leaves none). Verified against 3
+  real consecutive WA street records (GADEN ROAD, GINGIN BROOK ROAD,
+  GINGIN ROAD) plus a 2000-record sample for the `tail` field's value
+  distribution.
+- `area_code` (bytes [0:4)) matches the spec's mandatory Area Code
+  field well: near-constant across long alphabetical runs
+  (`80 7f 00 46` throughout the F's, `80 7f 00 47` throughout the G's).
+- `tail` (bytes [12:16)) is a small integer (range 1-51 across a
+  2000-record sample) -- never plausible as a byte offset in this
+  15MB file, consistent with the spec's small packed "Next-level Data
+  Frame Class"/"Serial Number" fields rather than a pointer.
+- `street_id` (bytes [4:8)) increases quasi-monotonically per record, as
+  before -- consistent with a sequentially-assigned ID, though its
+  storage *position* (before the name, not after, per the disc's real
+  field order) still doesn't match the spec's literal declared order,
+  same caveat as elsewhere in this module.
+
+**What did NOT work -- the actual blocker:** `next_level_field` (bytes
+[8:12)), the best remaining candidate for the spec's "Offset to
+Next-level Data Frame" pointer, does not resolve to a
+plausible Address Range Search Matching Data Record under any tried
+transform. Tried on the real GINGIN ROAD record
+(`next_level_field = 0x1b6e3a` = 1,797,690): raw absolute, raw absolute
+doubled (the sws32 halving convention already confirmed for other
+32-bit fields on this disc), and both of those added to
+`next_level.file_offset` (2,523,498) and to
+`matching_data_frame.file_offset` (117,186) as bases. All six land
+in-bounds (file is 15,387,684 bytes) but none produce the expected
+`[1B][1B][4B][2B][1B]...` shape; several instead land on byte patterns
+that look like *other* `area_code`/`street_id`/`next_level_field`/`tail`
+Street-Name-alphabetical-style records elsewhere in the same file (i.e.
+structurally self-similar to the source record, not to the expected
+target type), which is circumstantial evidence the transform (or the
+field identification itself) is still wrong, not that the file lacks
+the data. Full detail and exact byte dumps: `parser/demo_street_id_link.py`.
+Also checked and ruled out: `matching_data_frame.file_offset` (117186)
+is not the flat alphabetical record array either (no length-prefixed
+strings found there in a 3000-byte scan) -- it's a separate,
+denser table of small repeating fixed-width groups, consistent with
+the previously-identified Category Parent/Option tree, not plain
+records.
+
+**Confidence: LOW that this specific pointer identification is correct;
+MEDIUM-HIGH that the general Street ID -> Link ID architecture
+described in the spec is real** (the spec text itself is unambiguous
+and internally consistent about this being how the format works,
+independent of whether this pass found the right bytes on this disc).
+
+**Recommended next steps for whoever picks this up:**
+1. Don't re-try the six transforms above on `next_level_field` -- they're
+   ruled out. Instead, directly decode the Category Parent/Option tree
+   at `matching_data_frame.file_offset` (7-byte parent = 3-byte offset +
+   4-byte count; 4-byte option = 1-byte char + 3-byte offset, per
+   Ch.11.A.2.1's stated sizes, already noted in the previous pass) --
+   this is the one sub-structure in this file we've located but not
+   actually parsed field-by-field, and it may be the real path to the
+   Address Range Search frame rather than a field inside the
+   alphabetical record itself.
+2. Consider that `next_level_field`/`street_id` might need to be read
+   together as an 8-byte compound key (both increase monotonically at
+   similar rates -- could be a single 64-bit ID split for alignment
+   reasons) rather than as two independent 4-byte fields.
+3. A second real disc (different manufacturer/year) would help
+   disambiguate "this field's real position differs from the spec's
+   declared order" (already seen twice in this file) from "this field
+   isn't what we think it is at all."
+4. If this remains unresolved going into Phase 3, budget for treating
+   address-search coordinate resolution as a research spike with a
+   hard time-box, not an open-ended blocker -- the main-map road/name
+   geometry (already fully solved, see above) may be sufficient to
+   build a workable address search by *matching OSM street names to
+   main-map link geometry directly* (skip the original disc's index
+   pointer chain entirely, since we're regenerating from OSM anyway and
+   don't need to preserve the original disc's exact indirection, only
+   its consumed *shape*).
+
 ## Decisions / deviations from plan
 
 (record anything that didn't go as expected here)
