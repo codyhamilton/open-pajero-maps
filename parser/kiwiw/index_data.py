@@ -27,6 +27,14 @@ INDEXDAT.KWI against real found signatures/records) before noticing
 `bitutils.sws()` already encodes the same halving trick for 16-bit fields
 -- strong cross-confirmation that this is a real, disc-wide encoding
 convention rather than a coincidence of one file.
+
+Second disc-wide finding (CONFIRMED, added while investigating the
+coordinate-decoding blocker): the same halving convention also applies to
+the **1-byte** "D" relation fields ("Relation to the Top of the Previous/
+Following Record") used in the Matching Data Record chains -- see
+`AlphabeticalMatchingRecord`/`iter_alphabetical_matching_records` below.
+Real byte value = stored value * 2, with no sentinel observed at this
+width on this disc.
 """
 from __future__ import annotations
 
@@ -241,6 +249,90 @@ class NameEntry:
     text: str
 
 
+@dataclass
+class AlphabeticalMatchingRecord:
+    """Ch. 11.A.2.4.5.2.5.1 "Street Name Search (alphabetical order search)
+    Matching Data Record" as it actually appears on this disc's SADSR*.IDX
+    `next_level` frame -- CONFIRMED record framing/boundaries, coordinate
+    field content NOT decoded (see module docstring section below and
+    docs/phases/01-format-analysis.md for the full writeup of what was
+    tried).
+
+    ``file_offset``/``relprev``/``relnext`` are CONFIRMED: this is a
+    doubly-linked chain of variable-length records, and ``relprev``/
+    ``relnext`` (each stored **1-byte SWS-halved** -- a new finding, the
+    same halving convention as `bitutils.sws()`/`sws32()` but at 1-byte
+    width) give the exact byte displacement to the previous/next record.
+    Walking the chain via ``relnext`` reproduces the same records (in the
+    same order) as independently scanning for length-prefixed strings and
+    inferring boundaries from inter-string spacing -- two independent
+    methods agreeing is why the framing itself is CONFIRMED, not a guess.
+
+    ``raw_prefix`` is the 16 bytes between ``relnext`` and the search-key
+    length byte (i.e. record bytes [2:18)). This is NOT further decoded.
+    What's known about it: bytes [2:6) are constant across many
+    consecutive records (changing only occasionally, consistent with a
+    per-suburb/zone reference rather than per-record data); bytes [6:14)
+    increase quasi-monotonically as the alphabetical list progresses
+    (consistent with a sequentially-assigned Street ID, not a
+    geographic coordinate); bytes [14:18) were `00 00 00 01` (constant)
+    on every record sampled on this disc, consistent with "Area Code".
+    Neither the literal 3-byte-lat+3-byte-lon `geo_secs` PID reading nor
+    the literal Ch.1.2.13 2-word-per-axis PID reading of any sub-range of
+    these 16 bytes produced values in Australia's bounds (or even in
+    valid lat/lon bounds at all) -- see the phase doc. The spec's own
+    field table for this exact record variant marks both "Fuzzy Search
+    Flag" and "Latitude and Longitude" (RLXY) as classification 'c'
+    (conditional/optional), so the leading hypothesis is that this
+    disc's street-name search records simply **omit** the coordinate
+    field entirely (an alphabetical list doesn't need distance-sorting),
+    and that real coordinates for street/address data are instead
+    resolved indirectly via Street ID -> a main-map Link ID -> the link's
+    start point (exactly as Ch.11.A.2.14 footnote 4 describes for POI
+    Information records referencing street address data) rather than
+    being stored inline here at all."""
+
+    file_offset: int
+    relprev: int
+    relnext: int
+    raw_prefix: bytes
+    search_key: str
+
+
+def iter_alphabetical_matching_records(
+    buf: bytes, start: int, max_records: Optional[int] = None
+) -> Iterator[AlphabeticalMatchingRecord]:
+    """Walk the `relnext` chain of Street Name Search (alphabetical order)
+    Matching Data Records starting at record-relative buffer offset
+    `start` (i.e. `start` must point at the `relprev` byte of a real
+    record -- e.g. found via `scan_length_prefixed_names` and subtracting
+    18, or by locating record 0 via a `relprev == 0` check). CONFIRMED
+    (see `AlphabeticalMatchingRecord`) to walk real SADSR201.IDX records
+    self-consistently: each record's `relprev` equals the previous
+    record's `relnext`, checked against >20 consecutive real records.
+    Stops when `relnext` is 0 (spec: "If ... following record does not
+    exist, the appropriate field contains 0") or bounds are exceeded."""
+    off = start
+    n = 0
+    while 0 <= off < len(buf) - 19 and (max_records is None or n < max_records):
+        relprev = buf[off] * 2
+        relnext = buf[off + 1] * 2
+        raw_prefix = buf[off + 2 : off + 18]
+        name_len = buf[off + 18]
+        search_key = buf[off + 19 : off + 19 + name_len].decode("ascii", errors="replace")
+        yield AlphabeticalMatchingRecord(
+            file_offset=off,
+            relprev=relprev,
+            relnext=relnext,
+            raw_prefix=raw_prefix,
+            search_key=search_key,
+        )
+        n += 1
+        if relnext == 0:
+            break
+        off += relnext
+
+
 def scan_length_prefixed_names(
     buf: bytes, start: int = 0, end: Optional[int] = None, min_len: int = 3, max_len: int = 40
 ) -> Iterator[NameEntry]:
@@ -300,6 +392,21 @@ if __name__ == "__main__":
     print(f"-- sample of {len(names)} names found in next-level frame --")
     for n in names[:15]:
         print(f"  @{n.file_offset}: {n.text!r}")
+
+    print()
+    print("=== SADSR201.IDX Alphabetical Matching Data Record chain walk ===")
+    print("(record framing CONFIRMED; coordinate/raw_prefix content NOT decoded --")
+    print(" see AlphabeticalMatchingRecord docstring / docs/phases/01-format-analysis.md)")
+    with open(f"{disc}/IDX/SADSR201.IDX", "rb") as fh:
+        fh.seek(rec.next_level.file_offset)
+        chain_buf = fh.read(400_000)
+    chain_names = list(scan_length_prefixed_names(chain_buf))
+    # Skip the first hit: it may start before our read window (mid-file cut).
+    walk_start = chain_names[1].file_offset - 18
+    walked = list(iter_alphabetical_matching_records(chain_buf, walk_start, max_records=15))
+    for r in walked:
+        print(f"  @{r.file_offset}: relprev={r.relprev:4d} relnext={r.relnext:4d} "
+              f"raw_prefix={r.raw_prefix.hex()} search_key={r.search_key!r}")
 
     print()
     print("=== POISR201.IDX (POI Search, Ch. 11.A.2.8) ===")

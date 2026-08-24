@@ -151,6 +151,43 @@ plausible-looking.
     coordinate blocker first since it's now the single biggest known risk, and
     Phase 2's plan (write the inverse of the Phase 1 parser, byte-diff against the
     original) is more valuable once that gap is closed.
+- 2026-08-25: Follow-up investigation into the index-record coordinate blocker
+  (single subagent, focused re-read of the archived Ch.11.A.2.4/11.A.2.8/11.A.2.14
+  PDFs plus systematic byte-offset experiments against real `SADSR201.IDX`/
+  `POISR201.IDX` records). **Coordinate decoding is still not solved**, but the
+  investigation narrowed the problem substantially and shipped two new CONFIRMED
+  structural findings into `parser/kiwiw/index_data.py` (full detail in
+  `docs/phases/01-format-analysis.md`):
+  - The same halved-storage ("SWS/D") convention already known for 16-bit and
+    32-bit fields elsewhere on the disc also applies at **1-byte width** to the
+    "Relation to Previous/Following Record" chain-link fields in Matching Data
+    Records (real value = stored value * 2).
+  - The exact real on-disc byte framing of the SADSR "Street Name Search
+    (alphabetical order) Matching Data Record" is now confirmed: 1-byte
+    `relprev`/`relnext` + a 16-byte undecoded prefix + a length-prefixed ASCII
+    search key, with the search key starting at record offset 18 (not the
+    spec-literal-field-list offset of 13). Chain-walking via `relnext` is
+    implemented (`iter_alphabetical_matching_records`) and verified
+    self-consistent across 25+ real consecutive records.
+  - Extensive testing of that 16-byte prefix under both previously-rejected
+    coordinate formulas still produced no plausible Australian (or even
+    valid-range) lat/lon at any sub-offset. New leading hypothesis (not yet
+    confirmed): the coordinate field is legitimately **omitted** for this record
+    variant (the spec marks it conditional/'c' here, since an alphabetical list
+    has no need for distance-sorting), and real address coordinates are instead
+    resolved indirectly — Street ID -> Link ID -> main-map link geometry — per
+    Ch.11.A.2.14's footnote on how POI/address records reference the main map,
+    rather than being stored inline in the index at all.
+  - POI records (`POISR*.IDX`) remain a separate, still-untouched sub-problem:
+    the spec describes their `RLXY` field there as a variable-length bit-packed
+    type (same family as the already-solved main-map background coordinate
+    encoding), not a fixed-width field, so the SADSR fixed-offset approach
+    doesn't transfer directly.
+  - **Recommended next step**: before Phase 3, follow a real Street ID from a
+    SADSR record through to `ALLDATA.KWI` Link ID / road geometry to test the
+    indirection hypothesis end-to-end against a real, known WA location: this
+    is now the most promising lead, more promising than further fixed-offset
+    guessing on the index record itself.
 - 2026-08-24: Raw ISO dump of `/dev/sr0` completed successfully
   (`original-disc/pajero-whereis-2007.iso`, 2,389,671,936 bytes, matches
   `blockdev --getsize64`, md5 `85fd52724443195d72a08ad8befccec7`) and a full file

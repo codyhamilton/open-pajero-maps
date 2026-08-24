@@ -411,16 +411,114 @@ should be picked up by whoever next touches `index_data.py` before
 relying on the mapping for Phase 3.
 
 **Coordinate (lat/lon / PID) decoding for individual SADSR/POISR
-records: NOT SOLVED, open item for Phase 3.** Two candidate encodings
-were tried (the spec Ch.1.2.13 4-word bit-packed PID format, and the
-sibling parser's `bitutils.geo_secs()`/`parcel_id_bounds()` compact
-3-byte-lat+1-byte-exp/3-byte-lon+1-byte-exp format) against byte regions
-adjacent to confirmed real street/POI name strings. Neither produced
-plausible Australian coordinates (expected roughly lat -10..-44, lon
-113..154) — results were near-zero or implausible. This is the single
-biggest gap standing between "we can extract names" and "we can build a
-real address/POI search index," and should be prioritized early in
-Phase 3 rather than assumed solved.
+records: STILL NOT SOLVED, but substantially narrowed (2026-08-25
+follow-up pass).** Parser code: `parser/kiwiw/index_data.py`
+(`AlphabeticalMatchingRecord`, `iter_alphabetical_matching_records`).
+
+Two earlier candidate encodings were tried against byte regions
+naively adjacent to confirmed real street/POI name strings and both
+failed (near-zero or implausible results): the spec Ch.1.2.13 4-word
+bit-packed PID format, and the sibling parser's
+`bitutils.geo_secs()`/`parcel_id_bounds()` compact
+3-byte-lat+1-byte-exp/3-byte-lon+1-byte-exp format.
+
+This pass re-read the archived Ch.11.A.2.4 (Street Address Search) and
+Ch.11.A.2.8 (POI Search) PDFs in full rather than guessing at bit
+layouts, and made real progress on the *framing* even though the
+*coordinate* itself is still unresolved:
+
+- **New CONFIRMED finding: 1-byte SWS/D halving.** The "Relation to the
+  Top of the Previous/Following Record" fields in Matching Data Records
+  are 1-byte fields using the same halved-storage convention already
+  documented for 16-bit (`bitutils.sws()`) and 32-bit (`index_data.sws32()`)
+  fields elsewhere on the disc — real value = stored value * 2. Confirmed
+  by walking real `SADSR201.IDX` records via `relnext` and checking that
+  each record's `relprev` exactly equals the previous record's `relnext`
+  (verified self-consistent across 25+ consecutive real records).
+- **New CONFIRMED finding: exact record framing for the Street Name
+  Search (alphabetical order) Matching Data Record** (Ch.11.A.2.4.5.2.5.1)
+  as actually stored on this disc: `[1B relprev][1B relnext][16B raw
+  prefix, undecoded][1B search-key length][search-key ASCII]`, i.e. the
+  search key starts at record-relative offset 18 — not offset 13/14 as a
+  literal reading of the spec's declared field list (fuzzy flag + 6-byte
+  lat/lon + 4-byte area code = 11 bytes) would suggest. This offset (18)
+  was derived independently two ways that agree: (a) treating `relnext`
+  as a byte-displacement to the next record and brute-forcing the prefix
+  length that makes it match the measured spacing between consecutive
+  length-prefixed name strings (18 was the unique best fit, 18/19
+  transitions matched vs. <3 for any other tried offset), and (b) walking
+  the `relnext` chain forward from a known record and confirming it lands
+  exactly on the next real street name every time. Implemented as
+  `iter_alphabetical_matching_records()`.
+- **The "missing" 7 bytes (18 actual vs. 11 spec-literal) were NOT found
+  to decode as a coordinate under any tried scheme**, despite extensive
+  testing: neither the plain 3-byte-lat+3-byte-lon `geo_secs` reading nor
+  the literal Ch.1.2.13 2-word-per-axis bit-packed reading, at any of the
+  several candidate byte offsets within the 16-byte raw prefix, produced
+  values in Australia's real bounds (lat roughly -10..-44, lon
+  113..154) or even in valid global lat/lon bounds. What *is* observed in
+  the raw prefix bytes: a 4-byte chunk that's constant across long runs
+  of consecutive alphabetically-sorted records (changing only
+  occasionally, consistent with a per-suburb/zone reference rather than
+  per-record geography); an 8-byte chunk that increases
+  quasi-monotonically as the alphabetical list progresses (consistent
+  with a sequentially-assigned Street ID, since streets are presumably
+  numbered in roughly the order they were compiled/sorted — not
+  consistent with geographic coordinates, which don't correlate with
+  alphabetical name order); and a final 4-byte chunk that was `00 00 00
+  01` (constant) on every sampled record, consistent with "Area Code".
+- **Leading hypothesis, not yet confirmed:** the spec's own field table
+  for this exact record variant (11.A.2.4.5.2.5, fields 3 and 5 in the
+  Matching Data Definition Frame) marks *both* "Fuzzy Search Flag" and
+  "Latitude and Longitude" (`RLXY`) as classification **'c'
+  (conditional/optional)** — the spec explains elsewhere that RLXY is
+  "used for sorting in order of distance," which an alphabetically-sorted
+  street list has no need for. The leading theory is that this disc's
+  street-name search records simply **omit the coordinate field
+  entirely** (both conditional fields dropped, consistent with the
+  observed 18-byte length not matching a with-fuzzy-and-RLXY 25-byte
+  layout, though it's also short of an even fully-omitted 12-byte layout —
+  the extra bytes are presumably Street ID + Area Code taking more room
+  than the spec's compact 4+4 byte estimate). Reading the archived
+  Ch.11.A.2.14 (POI Information Frame) text supports this: it explicitly
+  states that for regular street-address data, the "necessary" latitude
+  and longitude for locating a link in the main map is obtained by
+  resolving the **Link ID** into main-map data (a stored parcel/link
+  reference), not by storing a coordinate directly on the address record
+  — i.e. this may be architecturally correct, not a decoding failure:
+  street-level coordinates may genuinely live only in `ALLDATA.KWI`
+  (already solved, see the main map data frame section above), reached
+  via Street ID -> Link ID, rather than duplicated in the index.
+- **POI records (`POISR*.IDX`) were also examined and are a distinct,
+  still-harder case.** The Ch.11.A.2.8 "POI Search Matching Data Record"
+  table declares its own `RLXY` field as `'VRBL'`/`'BT'` (variable-length,
+  bit-packed) type, not the fixed 6-byte PID-minus-tail format used
+  elsewhere — i.e. structurally the *same family* of compact bit-packed
+  coordinate encoding as the main-map background/road geometry in
+  `coordconv.py`, not a simple fixed-width field at all. Byte-region
+  scanning around real POI records (e.g. the real "BURSWOOD CAR RENTALS"
+  Perth business) turned up a similarly-shaped constant/quasi-monotonic
+  byte pattern to the SADSR case, but the bit-packed variable-width
+  nature of this field means the fixed-offset scanning approach used for
+  SADSR doesn't directly apply — this needs its own dedicated pass
+  (likely modeled on how `coordconv.py` derives its main-map bit-packed
+  coordinate scheme) rather than being solved as a side effect of the
+  SADSR investigation.
+- **Recommended next steps for whoever picks this up:** (1) don't
+  re-attempt fixed-width PID decoding on the SADSR alphabetical matching
+  record's raw prefix — this was tried thoroughly and ruled out; (2)
+  instead follow the Street ID found in the raw prefix through to
+  `ALLDATA.KWI`'s Link ID / road-link geometry to test the
+  "coordinates live only in the main map, reached via a reference chain"
+  hypothesis, ideally cross-checking a specific real street (e.g.
+  "GINGIN ROAD", confirmed real in this same file) against its known
+  real-world WA location; (3) separately, POI record coordinates likely
+  need bit-level unpacking of the `RLXY`/`P6`/`BT` variable field format,
+  which is a different sub-problem from the SADSR one and hasn't been
+  attempted at the bit level yet. This is still the single biggest gap
+  standing between "we can extract names" and "we can build a real
+  address/POI search index," and should remain a priority early in
+  Phase 3.
 
 **Implication for Phase 3 (OSM ingestion pipeline):**
 1. The container/indirection mechanics (`DCTR` header, `SWS32` halving,
