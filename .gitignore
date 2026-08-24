@@ -1,0 +1,13 @@
+# Original disc dump and any derived binary data
+original-disc/
+
+# Archived third-party reference spec (large PDFs, not our content)
+spec/
+
+# Cloned/built external tools
+tools/
+
+# Build artifacts
+*.o
+*.bin
+*.iso
