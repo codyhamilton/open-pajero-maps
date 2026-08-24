@@ -35,6 +35,18 @@ Following Record") used in the Matching Data Record chains -- see
 `AlphabeticalMatchingRecord`/`iter_alphabetical_matching_records` below.
 Real byte value = stored value * 2, with no sentinel observed at this
 width on this disc.
+
+Third instance (CONFIRMED, 2026-08-25, and the one that finally unblocked
+the address-search chain): the halving *also* applies to the 4-byte
+absolute file offset stored inside an "Additional ***Address" table entry
+-- see `AdditionalAddress`. Reading it raw is what made every previously
+"resolved" frame pointer in this module point at garbage.
+
+For actually *using* the search frames -- street name or POI name to a
+real lat/lon -- see the newer `kiwiw.search_frame`, which parses each
+frame's self-describing 'DCTF' definition frame rather than hardcoding
+byte offsets. This module remains the low-level entry point for
+INDEXDAT.KWI and for quick, assumption-free poking at an .IDX file.
 """
 from __future__ import annotations
 
@@ -147,8 +159,17 @@ class AdditionalAddress:
     (category definition/data, matching-data definition/data, next-level)
     resolves through exactly this indirection -- `raw_field * 2 + 16`
     (record-relative, doubled per sws32) lands exactly on one of these
-    little structs, whose own 4-byte `file_offset` is the real, directly
-    usable absolute offset into `filename`."""
+    little structs.
+
+    **The entry's own 4-byte offset is itself SWS-halved** (fixed
+    2026-08-25). Earlier revisions of this module used it raw, which sent
+    every resolved frame pointer to a garbage location and single-handedly
+    blocked three investigation passes on the address-search chain. With
+    the doubling applied, all five of SADSR201.IDX's frame addresses land
+    exactly on their expected signatures ('DCTF' definition frames, the
+    category table, the alphabetical matching-record frame, and a nested
+    'DFSR'/'SRT1' management frame named "ADDRESS RANGE"), and the whole
+    street-name -> lat/lon chain falls out -- see `kiwiw.search_frame`."""
 
     file_offset: int
     filename: str
@@ -187,7 +208,7 @@ def _resolve_additional_address(
     if raw_field == SENTINEL32:
         return None
     entry_off = record_base + sws32(raw_field)
-    file_offset = u32(buf, entry_off)
+    file_offset = u32(buf, entry_off) * 2  # SWS-halved -- see AdditionalAddress
     name_size_words = struct.unpack_from(">H", buf, entry_off + 4)[0]
     name_size = name_size_words * 2
     filename = buf[entry_off + 6 : entry_off + 6 + name_size].rstrip(b"\x00").decode("ascii", errors="replace")
@@ -231,14 +252,12 @@ def parse_search_frame_header(path: str, read_size: int = 8192) -> DetailedSearc
 
 
 # ---------------------------------------------------------------------------
-# Heuristic name scanner: neither the exact Street-Name Matching Data
-# Record (11.A.2.4.1.6) nor the POI hybrid-search matching data record's
-# bitfield "Stored Data Flag" variants have been fully cracked (see the
-# module docstring / phase doc for what remains unconfirmed). What *is*
-# solidly confirmed is that both formats store names as a 1-byte length
-# prefix followed by that many bytes of printable ASCII -- this scanner
-# exploits exactly that, independent of the surrounding fixed-field
-# semantics, and is good enough to pull out real street/POI names.
+# Heuristic name scanner. Superseded for real work by
+# `kiwiw.search_frame` (which parses these records properly, via their
+# definition frame), but retained as a cheap, assumption-free way to find
+# your bearings in an unfamiliar .IDX: both record formats store names as
+# a 1-byte length prefix followed by that many bytes of printable ASCII,
+# and this scanner exploits only that.
 # ---------------------------------------------------------------------------
 
 
@@ -251,78 +270,55 @@ class NameEntry:
 
 @dataclass
 class AlphabeticalMatchingRecord:
-    """Ch. 11.A.2.4.5.2.5.1 "Street Name Search (alphabetical order search)
-    Matching Data Record" as it actually appears on this disc's SADSR*.IDX
-    `next_level` frame -- CONFIRMED record framing/boundaries. Coordinate
-    field content is still NOT decoded to a lat/lon, but the archived
-    Ch.11.A.2.4.5.2.5.1 field table (re-read 2026-08-25, see
-    docs/phases/01-format-analysis.md "Street ID -> Link ID indirection
-    hypothesis" for the full writeup) let this pass go one level deeper
-    than the previous "16 undecoded bytes" state.
+    """Ch. 11.A.2.4.1.6 "Street Name Search (alphabetical order search)
+    Matching Data Record" as it actually appears in this disc's
+    SADSR*.IDX `matching_data_frame`.
+
+    SOLVED 2026-08-25 -- this class is kept for the low-level, no-
+    dependencies chain walk, but **prefer `kiwiw.search_frame`**, which
+    reads the frame's own 'DCTF' Matching Data Definition Frame instead of
+    hardcoding these offsets and therefore also works for POI records,
+    other discs, and other search frames.
 
     ``file_offset``/``relprev``/``relnext`` are CONFIRMED: this is a
     doubly-linked chain of variable-length records, and ``relprev``/
     ``relnext`` (each stored **1-byte SWS-halved**) give the exact byte
     displacement to the previous/next record. Walking the chain via
-    ``relnext`` reproduces the same records (in the same order) as
-    independently scanning for length-prefixed strings and inferring
-    boundaries from inter-string spacing.
+    ``relnext`` visits exactly 38,120 records -- the count the Detailed
+    Search Info Record declares, to the record.
 
-    ``raw_prefix`` (the 16 bytes between ``relnext`` and the search-key
-    length byte, record bytes [2:18)) splits *exactly* into four 4-byte
-    big-endian fields with no remainder -- this clean fit (vs. the
-    previous pass's fuzzy "constant/monotonic/constant" byte-range
-    description) is itself new evidence that Ch.11.A.2.4.5.2.5.1's
-    conditional ('c') Fuzzy Search Flag (1B) and Latitude/Longitude (6B)
-    fields really are omitted on this disc (1+6+4=11 bytes would leave
-    5 leftover, unaccounted bytes; 4+4+4+4=16 leaves none):
+    The 16 bytes between ``relnext`` and the search-key length byte
+    (record bytes [2:18)) are, per that frame's definition frame and
+    CONFIRMED against real bytes:
 
-    - ``area_code`` (bytes [0:4)): matches the spec's mandatory ('a')
-      "Area Code" field. CONFIRMED-ish: near-constant across long runs of
-      consecutive alphabetical records (e.g. `80 7f 00 46` for all
-      sampled F-street names, ticking to `80 7f 00 47` at the G's) --
-      consistent with a coarse geographic/administrative zone id, not a
-      coordinate.
-    - ``street_id`` (bytes [4:8)): STRUCTURAL guess. Increases
-      quasi-monotonically as the alphabetical list progresses. Does
-      *not* line up with the spec's literal field order (which places
-      "Street ID" *after* the name, not before it) -- another instance
-      of the disc's real field order not matching the spec table's
-      declared order, already seen elsewhere in this module.
-    - ``next_level_field`` (bytes [8:12)): UNCONFIRMED, still the open
-      question. Leading candidate for the spec's mandatory "Offset to
-      Next-level Data Frame" (which per the spec should point at this
-      street's Address Range Search Matching Data Record --
-      Ch.11.A.2.4.4.5 -- whose own "Offset to POI Information" field is
-      what finally reaches a Street Address POI Information Record with
-      real RLXY + Link ID, per Ch.11.A.2.14.1.4). Tried resolving it as
-      an absolute file offset under the sws32 halving convention
-      (doubled, no base added): this DOES land in-bounds and on
-      byte patterns that structurally resemble *other* Street Name
-      Search (alphabetical) records elsewhere in the same file (i.e.
-      `area_code`/`street_id`/`next_level_field`/`tail`-shaped data
-      again) rather than on an Address Range Search record's shape --
-      so either this field isn't what the spec calls "Offset to
-      Next-level Data Frame", or the correct base/transform for
-      resolving it is still wrong. Tried bases: raw absolute (doubled
-      and undoubled), relative to `next_level.file_offset`, relative to
-      `matching_data_frame.file_offset` (each doubled and undoubled) --
-      none produced an unambiguous Address-Range-Search-shaped record.
-      NOT to be treated as working.
-    - ``tail`` (bytes [12:16)): small integer (observed range 1-38 across
-      ~2000 real records sampled), never a plausible byte offset in this
-      15MB file. Consistent with the spec's "Next-level Data Frame Class"
-      + "Next-level Data Frame Serial Number" (both small, packed
-      sub-byte fields per the spec) rather than a pointer -- e.g.
-      plausibly a per-street address-range-segment count. UNCONFIRMED.
+    - ``fuzzy_flag`` [0]: FGFZ, always 0 on this disc.
+    - ``stored_data_flag`` [1:3]: STFG, the presence bitmap for the fields
+      that follow it. Always `7f 00` here (7 fields present: STID, NXKD,
+      NXFN, NXST, NXCT, KYCH -- NAME absent), which is why every record in
+      this frame has the same fixed shape.
+    - ``street_id`` [3:7]: STID. (The previous pass read bytes [4:8) and
+      called [0:4) an "Area Code"; that was a mis-alignment -- the real
+      area code lives on the Address Range records, as ARCD.)
+    - ``next_level_class``/``next_level_serial`` [7]: NXKD/NXFN, one nibble
+      each, invariably 0x51 = class 5 ("next-level matching data") /
+      serial 1, i.e. "go to Detailed Search Info Record #1 of the
+      next-level search frame".
+    - ``next_level_offset`` [8:12]: NXST. The previous pass identified
+      this field correctly but could not resolve it; the missing pieces
+      were (a) it is **SWS-halved** like every other offset, and (b) its
+      base is the *next-level* frame's matching data frame, which was
+      itself being resolved to a garbage address by the
+      `AdditionalAddress` bug fixed above. Doubled and added to that base
+      it lands exactly on this street's first Address Range Search record.
+    - ``next_level_count`` [12:16]: NXCT, the number of consecutive
+      address-range records belonging to this street (the previous pass
+      guessed "plausibly a per-street address-range-segment count" from
+      its magnitude -- correct).
 
-    Bottom line: the Street ID -> Link ID -> ALLDATA.KWI indirection
-    hypothesis from the previous pass is NOT confirmed end-to-end this
-    pass either. What's new is a cleaner, better-motivated decomposition
-    of the previously-opaque 16-byte prefix, and an empirical ruling-out
-    of several most-likely offset/base combinations for the pointer field
-    -- see docs/phases/01-format-analysis.md for the full log of what was
-    tried and what to try next."""
+    So the previous pass's "Street ID -> Link ID" hypothesis was aiming at
+    the wrong field: STID is not the link key, NXST is the pointer, and
+    the Link ID (LKID) plus a real lat/lon (RLXY) are stored *inline* on
+    the Address Range record it reaches."""
 
     file_offset: int
     relprev: int
@@ -331,20 +327,34 @@ class AlphabeticalMatchingRecord:
     search_key: str
 
     @property
-    def area_code(self) -> bytes:
-        return self.raw_prefix[0:4]
+    def fuzzy_flag(self) -> int:
+        return self.raw_prefix[0]
+
+    @property
+    def stored_data_flag(self) -> bytes:
+        return self.raw_prefix[1:3]
 
     @property
     def street_id(self) -> int:
-        return int.from_bytes(self.raw_prefix[4:8], "big")
+        return int.from_bytes(self.raw_prefix[3:7], "big")
 
     @property
-    def next_level_field(self) -> int:
-        return int.from_bytes(self.raw_prefix[8:12], "big")
+    def next_level_class(self) -> int:
+        return (self.raw_prefix[7] >> 4) & 0xF
 
     @property
-    def tail(self) -> bytes:
-        return self.raw_prefix[12:16]
+    def next_level_serial(self) -> int:
+        return self.raw_prefix[7] & 0xF
+
+    @property
+    def next_level_offset(self) -> int:
+        """Byte displacement into the next-level (Address Range Search)
+        matching data frame. Already un-halved."""
+        return sws32(int.from_bytes(self.raw_prefix[8:12], "big"))
+
+    @property
+    def next_level_count(self) -> int:
+        return int.from_bytes(self.raw_prefix[12:16], "big")
 
 
 def iter_alphabetical_matching_records(
@@ -433,28 +443,26 @@ if __name__ == "__main__":
     names = list(
         iter_names_from_file(
             f"{disc}/IDX/SADSR201.IDX",
-            rec.next_level.file_offset,
+            rec.matching_data_frame.file_offset,
             window=200_000,
         )
     )
-    print(f"-- sample of {len(names)} names found in next-level frame --")
+    print(f"-- sample of {len(names)} names found in the matching data frame --")
     for n in names[:15]:
         print(f"  @{n.file_offset}: {n.text!r}")
 
     print()
     print("=== SADSR201.IDX Alphabetical Matching Data Record chain walk ===")
-    print("(record framing CONFIRMED; coordinate/raw_prefix content NOT decoded --")
-    print(" see AlphabeticalMatchingRecord docstring / docs/phases/01-format-analysis.md)")
+    print("(for the full name -> lat/lon chain see parser/demo_address_search.py)")
     with open(f"{disc}/IDX/SADSR201.IDX", "rb") as fh:
-        fh.seek(rec.next_level.file_offset)
+        fh.seek(rec.matching_data_frame.file_offset)
         chain_buf = fh.read(400_000)
-    chain_names = list(scan_length_prefixed_names(chain_buf))
-    # Skip the first hit: it may start before our read window (mid-file cut).
-    walk_start = chain_names[1].file_offset - 18
-    walked = list(iter_alphabetical_matching_records(chain_buf, walk_start, max_records=15))
+    walked = list(iter_alphabetical_matching_records(chain_buf, 0, max_records=15))
     for r in walked:
         print(f"  @{r.file_offset}: relprev={r.relprev:4d} relnext={r.relnext:4d} "
-              f"raw_prefix={r.raw_prefix.hex()} search_key={r.search_key!r}")
+              f"stid={r.street_id} nx={r.next_level_class}/{r.next_level_serial} "
+              f"nxst={r.next_level_offset} nxct={r.next_level_count} "
+              f"search_key={r.search_key!r}")
 
     print()
     print("=== POISR201.IDX (POI Search, Ch. 11.A.2.8) ===")
@@ -470,6 +478,6 @@ if __name__ == "__main__":
             window=200_000,
         )
     )
-    print(f"-- sample of {len(poi_names)} names found in next-level frame --")
+    print(f"-- sample of {len(poi_names)} names found in the matching data frame --")
     for n in poi_names[:15]:
         print(f"  @{n.file_offset}: {n.text!r}")

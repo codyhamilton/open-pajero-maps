@@ -297,6 +297,13 @@ matters for Phase 3's OSM `highway=*` -> KIWI-W road-type mapping.
 
 ### Index/search data frame decoding (sub-task 2, 2026-08-24)
 
+> **Partly superseded** by "Address / POI search chain: SOLVED
+> end-to-end (2026-08-25)" below. The framing findings here hold, but
+> every *resolved offset* quoted in this section is half its true value
+> (see the additional-address halving bug), and its conclusions about
+> what lives where -- the category tree, the alphabetical records, the
+> undecodable coordinates -- are corrected there.
+
 Parser code: `parser/kiwiw/index_data.py` (new submodule, fits the sibling
 package's dataclass/docstring conventions from `bitutils.py`/`model.py`).
 Cross-referenced against the archived Ch.11 sub-section PDFs
@@ -543,131 +550,215 @@ layouts, and made real progress on the *framing* even though the
    verified (or replaced) before Phase 3 assumes a particular file
    corresponds to a particular display scale.
 
-### Street ID -> Link ID indirection hypothesis, tested end-to-end (2026-08-25)
+### Address / POI search chain: SOLVED end-to-end (2026-08-25)
 
-Follow-up to the 2026-08-25 "coordinate decoding still not solved"
-pass above. This pass tested the leading hypothesis it left behind:
-that street-level coordinates for SADSR alphabetical-order records are
-not stored inline at all, but resolved via Street ID -> Link ID ->
-`ALLDATA.KWI` main-map geometry (per the Ch.11.A.2.14 "POI Information
-Frame" footnote). Parser code: `parser/kiwiw/index_data.py`
-(`AlphabeticalMatchingRecord` gained `area_code`/`street_id`/
-`next_level_field`/`tail` properties), demo: `parser/demo_street_id_link.py`.
-Tested against the real mounted disc, real `SADSR201.IDX`, real WA
-street names (GADEN ROAD, GINGIN BROOK ROAD, GINGIN ROAD).
+Supersedes both 2026-08-25 sections above ("coordinate decoding still not
+solved" and the "Street ID -> Link ID indirection hypothesis"). A typed
+street name now resolves to a real Western Australian lat/lon, and so
+does a POI name. Code: `parser/kiwiw/search_frame.py` (new, generic),
+`parser/kiwiw/index_data.py` (bug fixed, record layout corrected), demo:
+`parser/demo_address_search.py`.
 
-**Result: the hypothesis is NOT confirmed end-to-end. This is an honest
-negative/partial result, not a workaround-in-disguise.**
+#### The bug that blocked three passes
 
-**What *did* come out of this pass (genuine progress on framing, not on
-coordinates):**
+The "Additional \*\*\*Address" table entry (Ch.11.2.2 note 9) that every
+frame pointer resolves through is
+`[4B absolute file offset][2B name size in words][filename]` -- and
+**that 4-byte offset is itself SWS-halved**, like every other size and
+offset on this disc. `index_data._resolve_additional_address()` was
+using it raw. Consequence: *every* frame address in the file resolved to
+a location at half its true offset, i.e. to garbage. That is why the
+category tree "wasn't a flat record array", why the alphabetical records
+appeared to live in the next-level frame, and why none of the six tried
+transforms for the next-level pointer could work -- the base they were
+being added to was wrong.
 
-- Re-read the archived Ch.11.A.2.14 (POI Information Frame) and
-  Ch.11.A.2.4 (Street Address Search) PDFs in full via `pdftotext`.
-  Found the exact spec chain the hypothesis describes:
-  Street Address Search Frame -> Street Name Search (alphabetical order)
-  Matching Data Record's "Offset to Next-level Data Frame" field should
-  point at an **Address Range Search Matching Data Record**
-  (Ch.11.A.2.4.4.5: `[1B relprev][1B relnext][4B offset-to-POI-info]
-  [2B POI-info-record-count][1B street-address-flag][variable street
-  address][variable area code]...`), whose own "Offset to POI
-  Information" field (a direct, non-Street-ID-keyed pointer) finally
-  reaches a **Street Address POI Information Record**
-  (Ch.11.A.2.14.1.4: `[1B relprev][1B relnext][1B street-address-flag]
-  [variable street address][variable RLXY lat/lon][variable Link ID]
-  [1B link-serial-number]`) -- this record is where real RLXY + Link ID
-  actually live. Footnote 4 on that record confirms the RLXY here is
-  "the coordinates of the link start point ... necessary to search for
-  a link ID stored as main map data ... in PID format", i.e. exactly the
-  coarse parcel-locating coordinate the previous pass was looking for,
-  just one indirection layer further away than assumed.
-- Got the exact literal field table for the SADSR alphabetical Matching
-  Data Record itself (Ch.11.A.2.4.5.2.5.1), confirming: `[1B relprev]
-  [1B relnext][1B fuzzy flag, c][6B lat/lon, c][4B area code, a]
-  [variable search key, a][1B language number, c][variable name, c]
-  [4B Street ID, a][1/2B next-level-frame class, a][1/2B next-level-
-  frame serial, a][4B offset-to-next-level-frame, a][1B padding, a]`.
-- **New clean finding: the real 16-byte `raw_prefix` splits exactly
-  into four 4-byte big-endian fields with zero remainder**
-  (`area_code`/`street_id`/`next_level_field`/`tail`), which is a much
-  better fit than the previous pass's fuzzy byte-range description and
-  is itself further evidence that the conditional (`'c'`) fuzzy-flag
-  and lat/lon fields really are omitted on this disc (1+6+4=11 leaves 5
-  bytes unaccounted for; 4+4+4+4=16 leaves none). Verified against 3
-  real consecutive WA street records (GADEN ROAD, GINGIN BROOK ROAD,
-  GINGIN ROAD) plus a 2000-record sample for the `tail` field's value
-  distribution.
-- `area_code` (bytes [0:4)) matches the spec's mandatory Area Code
-  field well: near-constant across long alphabetical runs
-  (`80 7f 00 46` throughout the F's, `80 7f 00 47` throughout the G's).
-- `tail` (bytes [12:16)) is a small integer (range 1-51 across a
-  2000-record sample) -- never plausible as a byte offset in this
-  15MB file, consistent with the spec's small packed "Next-level Data
-  Frame Class"/"Serial Number" fields rather than a pointer.
-- `street_id` (bytes [4:8)) increases quasi-monotonically per record, as
-  before -- consistent with a sequentially-assigned ID, though its
-  storage *position* (before the name, not after, per the disc's real
-  field order) still doesn't match the spec's literal declared order,
-  same caveat as elsewhere in this module.
+With `* 2` applied, all five of SADSR201.IDX's frame addresses land
+exactly on their expected signatures. One-line fix, whole chain falls
+out.
 
-**What did NOT work -- the actual blocker:** `next_level_field` (bytes
-[8:12)), the best remaining candidate for the spec's "Offset to
-Next-level Data Frame" pointer, does not resolve to a
-plausible Address Range Search Matching Data Record under any tried
-transform. Tried on the real GINGIN ROAD record
-(`next_level_field = 0x1b6e3a` = 1,797,690): raw absolute, raw absolute
-doubled (the sws32 halving convention already confirmed for other
-32-bit fields on this disc), and both of those added to
-`next_level.file_offset` (2,523,498) and to
-`matching_data_frame.file_offset` (117,186) as bases. All six land
-in-bounds (file is 15,387,684 bytes) but none produce the expected
-`[1B][1B][4B][2B][1B]...` shape; several instead land on byte patterns
-that look like *other* `area_code`/`street_id`/`next_level_field`/`tail`
-Street-Name-alphabetical-style records elsewhere in the same file (i.e.
-structurally self-similar to the source record, not to the expected
-target type), which is circumstantial evidence the transform (or the
-field identification itself) is still wrong, not that the file lacks
-the data. Full detail and exact byte dumps: `parser/demo_street_id_link.py`.
-Also checked and ruled out: `matching_data_frame.file_offset` (117186)
-is not the flat alphabetical record array either (no length-prefixed
-strings found there in a 3000-byte scan) -- it's a separate,
-denser table of small repeating fixed-width groups, consistent with
-the previously-identified Category Parent/Option tree, not plain
-records.
+#### The index files are self-describing -- stop guessing offsets
 
-**Confidence: LOW that this specific pointer identification is correct;
-MEDIUM-HIGH that the general Street ID -> Link ID architecture
-described in the spec is real** (the spec text itself is unambiguous
-and internally consistent about this being how the format works,
-independent of whether this pass found the right bytes on this disc).
+The second realisation: each Matching Data Frame has a **Matching Data
+Definition Frame** (`DCTF`, Ch.11.5) listing its records' fields in
+order. 16 bytes per entry:
+`[4B usage][4B description type][2B element type][2B count or count-type]
+[4B additional info]`; the declaration entry's last 2 bytes hold the
+entry count including itself. Description types seen: `NORM` (scalar),
+`VRBL` (length-prefixed vector, `count-type` naming the length field's
+type), `FDRL` (record-relative displacement), `OFST` (frame-relative
+offset), `REAL` (the declaration). Element types seen: `UB`/`UW`/`UL`/
+`LG` (1/2/4/4 B), `UH` (a nibble), `P6` (6 B coordinate), `BF` (count is
+in *bits*), `CH` (chars).
 
-**Recommended next steps for whoever picks this up:**
-1. Don't re-try the six transforms above on `next_level_field` -- they're
-   ruled out. Instead, directly decode the Category Parent/Option tree
-   at `matching_data_frame.file_offset` (7-byte parent = 3-byte offset +
-   4-byte count; 4-byte option = 1-byte char + 3-byte offset, per
-   Ch.11.A.2.1's stated sizes, already noted in the previous pass) --
-   this is the one sub-structure in this file we've located but not
-   actually parsed field-by-field, and it may be the real path to the
-   Address Range Search frame rather than a field inside the
-   alphabetical record itself.
-2. Consider that `next_level_field`/`street_id` might need to be read
-   together as an 8-byte compound key (both increase monotonically at
-   similar rates -- could be a single 64-bit ID split for alignment
-   reasons) rather than as two independent 4-byte fields.
-3. A second real disc (different manufacturer/year) would help
-   disambiguate "this field's real position differs from the spec's
-   declared order" (already seen twice in this file) from "this field
-   isn't what we think it is at all."
-4. If this remains unresolved going into Phase 3, budget for treating
-   address-search coordinate resolution as a research spike with a
-   hard time-box, not an open-ended blocker -- the main-map road/name
-   geometry (already fully solved, see above) may be sufficient to
-   build a workable address search by *matching OSM street names to
-   main-map link geometry directly* (skip the original disc's index
-   pointer chain entirely, since we're regenerating from OSM anyway and
-   don't need to preserve the original disc's exact indirection, only
-   its consumed *shape*).
+So `parser/kiwiw/search_frame.py` parses the definition frame and drives
+a generic record decoder from it. The same code path handles the street
+name frame, the address range frame and the POI frame with no per-file
+constants. CONFIRMED: it walks all three frames and arrives at exactly
+the record count each frame declares (38,120 / 344,276 / 108,511), with
+each record's parsed length fitting inside the length its own `NFRL`
+announces.
+
+#### The `STFG` "Stored Data Flag" presence bitmap
+
+Records are variable-shape: `STFG` is a bitmap saying which of the
+*following* fields are present. CONFIRMED rule, derived by hand-decoding
+real records and then verified across all three frames:
+
+- Fields up to **and including** `STFG` are unconditional.
+- After it, one bit per following field in declaration order, **LSB
+  first within each byte**, byte 0 first.
+- Leftover bytes before the next record are the spec's padding field.
+
+E.g. street records carry `STFG = 7f 00` (STID..KYCH present, NAME
+absent), address ranges `07` (ZIPN/PRFX/STAD present), a geocoded POI
+`fc 07`, and a degenerate representative POI `81 2f`. Each parse lands
+exactly on the record boundary `NFRL` announces.
+
+#### The chain
+
+```
+IDX/SADSR201.IDX
+  DFSR management frame @0        2 records x 440 B, first at 16
+   +- SRMX  @16   "STREET ADDRESS"  (all-city street name search)
+   |    matching data definition -> @1040   (DCTF, 16 entries)
+   |    matching data frame      -> @234372 (38,120 records, max 60 B)
+   |         BFRL NFRL FGFZ STFG STID NXKD NXFN NXST NXCT KYCH [NAME ...]
+   |    next-level frame         -> @5046996
+   +- SRHA  @456  (city selection)
+
+  @5046996: a *nested* DFSR management frame
+   +- SRT1  @5047012  "ADDRESS RANGE"
+        matching data definition -> @5047388 (DCTF, 14 entries)
+        matching data frame      -> @5047628 (344,276 records, max 30 B)
+             BFRL NFRL FGSA ARCD RLXY LKID STFG [ZIPN PRFX STAD ...]
+```
+
+The street record's `NXST` (an `OFST`/`LG` field, **SWS-halved**) times 2
+is the byte displacement, from the start of the address-range matching
+data frame, of that street's first Address Range record; `NXCT` is how
+many consecutive records belong to it. `NXKD`/`NXFN` are one nibble each
+sharing a byte, invariably `0x51` = class 5 ("next-level matching data")
+/ detailed-search-record serial 1.
+
+#### `RLXY` is the `P6` type -- and it is stored inline
+
+The disc's definition frame for the address-range frame declares `RLXY`
+(P6) and `LKID` *inline on the address-range record*, where the spec's
+worked example instead used `POIO`/`POIC` pointers off to a separate
+Street Address POI Information frame. The definition frame is
+authoritative, and this is one indirection *fewer* than the previous
+pass predicted.
+
+`P6` = 6 bytes: a 3-byte latitude then a 3-byte longitude, each decoded
+by the **existing** `kiwiw.bitutils.geo_secs()` -- bit 23 is the sign
+(1 = south/west), the low 23 bits are the angle in 1/8 arc-second units.
+That is a Ch.1.2.13 PID with its two exponent bytes dropped. No new
+coordinate decoder was needed; the main-map one was already correct.
+
+Per Ch.11.A.2.14 footnote 4 this is "the coordinates of the link start
+point", i.e. a coarse link-locating coordinate (values quantise to a
+parcel-ish grid), not a house-accurate position. `STAD` gives the house
+numbers at the two ends of the link *in link direction*, so the start
+value is frequently greater than the end value; interpolating a precise
+house position is the head unit's job, against the main map's link
+geometry.
+
+#### Validation
+
+1. **Whole-file statistics (the decisive one).** Decoding all 344,276
+   address-range records gives lat `-35.1250 .. -14.2917`, lon
+   `113.4375 .. 128.9375`, **zero** outliers. Western Australia really
+   runs from -35.13 (West Cape Howe) to -13.69 (Cape Londonderry) and
+   from 112.92 (Steep Point) to exactly 129.00 (the straight-line
+   NT/SA border). Reproducing that box, including the artificial 129 deg
+   meridian, is not something a wrong decode does by accident. The
+   108,511 POI records reproduce the same box independently.
+2. **Spot checks against known geography.** Not just points but *shapes*:
+   - `ST GEORGES TERRACE` -> 152 ranges, all at -31.953, 115.852..115.867
+     (Perth CBD, one street).
+   - `STIRLING HIGHWAY` -> 346 ranges, -32.052..-31.969 / 115.766..115.828
+     (the Perth->Fremantle corridor).
+   - `GREAT EASTERN HIGHWAY` -> 817 ranges, 115.891..**121.438** -- the
+     real highway runs Perth to Kalgoorlie.
+   - `ALBANY HIGHWAY` -> 1,137 ranges, -31.969..**-35.042** -- Perth to
+     Albany.
+   - `HANNAN STREET` -> -30.75, 121.44 = Kalgoorlie's main street.
+   - `WANNEROO ROAD` -> -31.906..-31.042, north out of Perth.
+   - `GINGIN BROOK ROAD` -> -31.292, 115.563 (Gingin).
+   - POI `BURSWOOD CAR RENTALS` -> -31.970, 115.894 (Burswood).
+   - POI `POLE A A\48 FARRINGTON ROAD, PERTH` -> -32.080, 115.858
+     (Farrington Road, Leeming/Murdoch).
+3. **Self-consistency.** Record counts match the declared counts exactly
+   in all three frames; every record's field parse fits its own `NFRL`.
+
+**Confidence: HIGH / CONFIRMED** for the chain, the `DCTF` definition
+frame, the `STFG` bitmap, the `P6` coordinate, `NXST`/`NXCT`, `LKID`'s
+position, and the additional-address halving. The address-search half of
+"full feature parity" is now understood well enough to regenerate.
+
+#### Corrections to earlier entries in this document
+
+- The category Parent record is **14 bytes** and the Option record
+  **8 bytes**, not 7 and 4: those spec figures are SWS-halved like
+  everything else. Arithmetic proof: first-level category size
+  `0x93` (= 294 real) with `0x23` = 35 options, and `14 + 35*8 = 294`
+  exactly.
+- `matching_data_frame.file_offset` for SRMX is @234372 and *does* hold
+  the flat alphabetical record array. The earlier claim that it held a
+  category tree came from reading the un-doubled offset @117186.
+- `next_level.file_offset` does **not** hold the alphabetical records;
+  it holds a nested `DFSR`/`SRT1` management frame.
+- The six ruled-out transforms for `next_level_field` were not the
+  problem: the field identification was right all along (it is `NXST`),
+  and the byte alignment was one off (bytes [8:12) of `raw_prefix` is
+  correct, but `[0:4)` was `FGFZ`+`STFG`+the top byte of `STID`, not an
+  area code -- the real area code is `ARCD` on the address-range
+  record). The missing pieces were the `* 2` and the corrected base.
+- The "Street ID -> Link ID" framing was aimed at the wrong field: `STID`
+  is not a link key. `NXST` is the pointer, and `LKID` is inline at the
+  end of the chain.
+
+#### Loose ends (none blocking)
+
+- `ARCD` area-code *semantics* are unknown. The values are 4-byte, always
+  with a constant leading `0x1e` (e.g. `0x1e01f5d0` Perth CBD,
+  `0x1e000462` Albany, `0x1e007ec8` Gingin, `0x1e008815` the Stirling
+  Highway suburbs). Presumably a suburb/locality id shared with the
+  city-selection frame (`SRHA`) -- decoding `SRHA` should name them.
+- POI `CTGY` is a `UW` whose values are all multiples of 128
+  (`0xcf80`, `0x5280`, `0x2300`, ...), so the code is probably in the
+  high 9 bits. The category-name table (`category_data`) is located but
+  not parsed.
+- `VRBL` fields declare `CMCH`/`CMP6` "compressed" additional-info, but
+  on this disc the character vectors are plain ASCII; no compression
+  variant has been observed and none is implemented.
+- The POI index stores a separate record per *word suffix* of a name
+  ("A AA BURSWOOD CAR RENTALS" / "AA BURSWOOD CAR RENTALS" /
+  "BURSWOOD CAR RENTALS" / "CAR RENTALS"), each pointing at the same
+  coordinate. Worth knowing before generating a replacement: index size
+  scales with words per name, and this is what makes POISR205/206 the
+  largest files on the disc.
+- `LKID` -> `ALLDATA.KWI` link record has *not* been cross-checked yet,
+  because of the parcel-index anomaly below.
+
+#### Side finding: a pre-existing main-map parcel-index bug
+
+Now that the index chain works, it is an independent geographic oracle
+for the main map -- and it immediately caught something.
+`dump_parcel.py --lat -31.95312 --lon 115.86719 --level 0` computes the
+right *bounds* (-31.9583..-31.9375, 115.84375..115.875 = Perth CBD,
+blockset 51 / block 9 / parcel 536) but returns name records for
+Rockingham/Port Kennedy streets (ENNIS AVENUE, GNANGARA DRIVE,
+HARRINGTON WATERS DRIVE, INVESTIGATOR DRIVE, ABBEYTOWN CIRCLE, BONDI
+CRESCENT). Feeding those six names back through the now-working SADSR
+chain puts all of them at ~-32.32, 115.766 -- ~40 km south. So the bbox
+maths is right and the parcel *selection* is wrong: `mesh.py`'s flat
+parcel-index / iteration-order assumption (already flagged in this
+document as "unconfirmed, row-major lat-then-lng") is fetching the wrong
+parcel record. Not fixed here (out of scope for this pass) but now cheap
+to debug, since any street name gives a known-good coordinate to test
+against.
 
 ## Decisions / deviations from plan
 

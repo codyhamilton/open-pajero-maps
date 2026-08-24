@@ -217,3 +217,49 @@ plausible-looking.
   than an open blocker, since Phase 3 could instead match OSM street names
   directly to the already-solved main-map link geometry and skip reproducing
   the original disc's exact index indirection chain.
+- 2026-08-25: **Address/POI search chain SOLVED end-to-end.** A typed street name
+  now resolves to a real WA lat/lon, and so does a POI name — closing the last
+  known gap in "full feature parity" (main map roads/names/geometry were already
+  solved). Full writeup: `docs/phases/01-format-analysis.md`, "Address / POI
+  search chain: SOLVED end-to-end". New code `parser/kiwiw/search_frame.py`,
+  fix + corrected record layout in `parser/kiwiw/index_data.py`, demo
+  `parser/demo_address_search.py` (replaces `demo_street_id_link.py`).
+  - **Root cause of the three-pass blocker was a one-line bug in our own
+    parser**, not a gap in the format: the 4-byte absolute file offset inside an
+    "Additional \*\*\*Address" table entry is itself SWS-halved. We were reading
+    it raw, so every frame pointer in every `.IDX` resolved to half its true
+    offset — i.e. to garbage. That is why the "category tree" looked unparseable,
+    why the alphabetical records seemed to be in the wrong frame, and why none of
+    the six previously-tried pointer transforms could ever have worked.
+  - **The index files are self-describing.** Each Matching Data Frame is preceded
+    by a `DCTF` Matching Data Definition Frame listing its records' fields, types
+    and counts; combined with each record's `STFG` presence bitmap (per-byte,
+    LSB-first, covering the fields declared after it) this parses any record in
+    any search frame with zero hardcoded offsets. The new module is generic over
+    street, address-range and POI frames alike.
+  - Chain: `SADSR201.IDX` DFSR -> `SRMX` -> alphabetical street records
+    (38,120) -> `NXST`×2 into a *nested* DFSR/`SRT1` "ADDRESS RANGE" frame ->
+    address-range records (344,276) carrying **inline** `RLXY` coordinates and
+    `LKID` link IDs. `RLXY` is the `P6` type = two 3-byte angles decoded by the
+    *existing* `bitutils.geo_secs()` — no new coordinate decoder was needed; the
+    previous passes' "coordinate formula" search was chasing the wrong problem.
+  - **Validation (HIGH confidence).** Decisive check: decoding all 344,276
+    address ranges yields lat -35.125..-14.292, lon 113.438..128.938 with *zero*
+    outliers — Western Australia's real extent, including the artificial 129°E
+    NT/SA border meridian. The 108,511 geocoded POIs reproduce the same box
+    independently. Shape checks corroborate: GREAT EASTERN HIGHWAY spans Perth to
+    Kalgoorlie (121.44), ALBANY HIGHWAY spans Perth to Albany (-35.04), HANNAN
+    STREET lands in Kalgoorlie, BURSWOOD CAR RENTALS lands in Burswood. All three
+    frames parse to exactly their declared record counts.
+  - **Remaining (non-blocking):** `ARCD` area-code and POI `CTGY` category
+    *values* are not yet mapped to names (the tables are located, not parsed);
+    `LKID` has not been cross-checked against `ALLDATA.KWI` yet, see next point.
+  - **Side finding — a pre-existing bug in already-"solved" main-map code.** The
+    working index chain is now an independent geographic oracle, and it caught
+    `dump_parcel.py` returning Rockingham streets (~40 km south) for a Perth CBD
+    parcel whose *bounds* it computes correctly. `mesh.py`'s parcel-index /
+    iteration-order assumption (already flagged "unconfirmed, row-major
+    lat-then-lng" in the phase doc) selects the wrong parcel record. Not fixed
+    here — out of scope for this pass — but now cheap to debug, and it should be
+    fixed before Phase 2 byte-diffing, since it means main-map parcel addressing
+    is not actually verified.
