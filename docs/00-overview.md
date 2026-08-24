@@ -119,6 +119,38 @@ plausible-looking.
     real XML parsing and zero KIWI-W-encoding capability — not reusable for the
     write direction, confirmed as expected.
   - See `docs/phases/00-inventory.md` for full detail.
+- 2026-08-25: Phase 1 (format analysis) substantially complete, run as 3 parallel
+  subagents covering main map data, index/search data, and small metadata/image
+  files. A Python parser package now lives at `parser/kiwiw/` with a CLI
+  (`parser/dump_parcel.py`) and tests (`parser/tests/`). Key outcomes (full detail
+  in `docs/phases/01-format-analysis.md`):
+  - **Main map data (roads/background/names) works end-to-end on real data** —
+    tested at 3 real Australian coordinates (Melbourne, Sydney Harbour, Hunter
+    Valley), correctly decoding real road names and place names, cross-validated
+    against `kiwiread.c`'s independently-confirmed Melbourne bbox.
+  - **Street address search and POI search both extract real, plausible data**
+    (e.g. real WA street names, real Perth business names/addresses) from
+    `SADSR*.IDX`/`POISR*.IDX` — the container/indirection mechanics are solid.
+  - **New critical open blocker**: coordinate (lat/lon) decoding for individual
+    address/POI *index* records (as opposed to main map road/name geometry, which
+    *is* solved) is unsolved — two candidate encodings tried, neither worked. This
+    must be the first thing tackled early in Phase 3, since without it we can't
+    match OSM data to real coordinates for a regenerated address/POI index.
+  - Other open items carried into Phase 2/3: parcel-local coordinate encoding for
+    main-map background geometry is only medium-confidence (inferred, not
+    spec-confirmed); road-type codes are only ~50% identified; divided/integrated
+    parcel recursion beyond depth 1 is unverified; the 201-207 filename-suffix
+    zoom-level hypothesis for index files is unconfirmed.
+  - Most files identified as safe to copy through unchanged in Phase 4 (firmware,
+    voice prompts, UI graphics/tiles); a handful of small disc-identity files
+    (`COUNTRY.KWI`, `SPEC.KWI`, `METADATA.KWI`, `COVERAGE.BIN`, `DN/CLUSTER.DAT`,
+    `VERSION.TXT`) will need regeneration, mostly straightforward except a
+    cross-file "disc stamp" and cluster-index whose generation rule isn't
+    understood yet.
+  - Next: Phase 2 (round-trip writer) — but consider resolving the index-record
+    coordinate blocker first since it's now the single biggest known risk, and
+    Phase 2's plan (write the inverse of the Phase 1 parser, byte-diff against the
+    original) is more valuable once that gap is closed.
 - 2026-08-24: Raw ISO dump of `/dev/sr0` completed successfully
   (`original-disc/pajero-whereis-2007.iso`, 2,389,671,936 bytes, matches
   `blockdev --getsize64`, md5 `85fd52724443195d72a08ad8befccec7`) and a full file

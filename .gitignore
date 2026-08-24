@@ -4,10 +4,11 @@ original-disc/
 # Archived third-party reference spec (large PDFs, not our content)
 spec/
 
-# Cloned/built external tools
-tools/
+# Cloned/built external reference tools (not our source)
+tools/kiwiread/
 
 # Build artifacts
 *.o
-*.bin
 *.iso
+__pycache__/
+*.pyc
