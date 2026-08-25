@@ -456,3 +456,30 @@ plausible-looking.
     unverified km-fraction placeholder), and decide whether resolving the
     "ext" frame question is worth a dedicated investigation before Phase 3
     planning proceeds further.
+  - Size-budget artifact updated same day with these findings (route-plan
+    column footnote + §07 gap-list item rewritten to reflect the decoded
+    format and node/link-count formula rather than the old km-fraction
+    placeholder).
+- 2026-08-25: **First working Ch.9/Ch.10 route-planning writer prototype,
+  built and tested.** Full writeup: `docs/phases/03-osm-pipeline.md`, "Early,
+  out-of-sequence work: route-planning writer prototype". Per explicit
+  instruction, the writer matches vendor structure by default (every spec
+  field/frame present, including the undocumented "ext" frames) rather than
+  omitting anything without positive evidence it's unused. New code:
+  `parser/kiwiw/route_planning_writer.py`, `parser/build_route_graph.py`,
+  `parser/osm_to_route_planning.py` (committed `41d062e`).
+  - Tested against region 178/level 2 (real disc region, WA): OSM-derived
+    graph encodes to 114,216 bytes and round-trips fully self-consistently
+    through the decoder. No regressions (`parser/tests/` 13/13).
+  - Found and resolved a genuine spec-vs-disc discrepancy: Link Cost Records
+    are 14 bytes, not the spec's implied 16, when a rank's `avg_travel_time`
+    flag is false.
+  - **Key quantified finding**: OSM's raw major-road intersection graph for
+    this region's exact bbox is **26.6x** larger (2,819 nodes/5,567 links) than
+    the real disc's own graph (106 nodes/282 links) — direct evidence of how
+    much CH/highway-hierarchy-style contraction a real pipeline must perform,
+    previously only assumed qualitatively.
+  - Confirms the byte-encoding work is tractable (~1 session); the real
+    bottleneck remains building genuine multi-level graph contraction across
+    many regions with cross-region boundary handling — not attempted yet,
+    this prototype covers one standalone region only.
