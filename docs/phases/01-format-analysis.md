@@ -953,6 +953,118 @@ for at least one real case (Melbourne), partially addressing (though not
 exhaustively closing) the separate "unverified beyond depth 1" caveat
 from the original parcel work.
 
+### Route planning / region data (Ch.9 + Ch.10, 2026-08-25)
+
+Investigated via a background agent, following on from the route-planning
+sizing questions raised while correcting the disc size-budget artifact (see
+"What's still open" there). Unlike voice data (content-independent, copyable
+verbatim) or the main-map mesh (already understood, see the overhead model
+below), route-planning data is a **routing graph tied to the specific road
+network's topology** — it cannot be carried over unchanged to a disc built
+from fresh OSM roads, it must be regenerated. The two open questions were the
+byte format and what its size scales with.
+
+Parser code: `parser/kiwiw/route_planning.py`. Verified against the reference
+disc's `ALLDATA.KWI`.
+
+**Fully decoded, high confidence — structural/framing layer, validated
+against the full population:**
+
+- **Ch.9 (Region Data Management, `spec/format_english/pdf/0900122e.pdf`,
+  12 pages)** — distribution header, level management records (5 levels on
+  this disc: a dummy root at level -32, then real levels 2/4/6/8), and the
+  24-byte region management table records (type-code 0 = DSA+BS) all match
+  the spec text field-by-field. Short and structurally simple.
+- **Ch.10 (Route Planning Data Frame, `spec/format_english/pdf/1000122e.pdf`,
+  ~52 content pages + 4 worked-example supplements not fully read) —
+  distribution header (10.1), basic/ext subframe management records (10.2/
+  10.3, including the `D`-offset-halving convention), node distribution
+  header + rank info (10.6.1/10.6.1.1), the 6-byte node record (10.6.2.1),
+  link records + turn-regulation + between-link-cost records (10.7.1.1–
+  10.7.1.4), link-cost header/record incl. the "4^n metres" length encoding
+  and FFF/FFE sentinels (10.10.1/10.10.2), and the grid-quantized 4-byte node
+  coordinate record (10.12.1–10.12.3.1) — all fully bit-specified in the
+  spec, no ambiguity found on inspection.
+- **Empirical validation: 100% of the disc's real regions, not a sample.**
+  1,883 region management records total, 19 dummy placeholders, **1,864 real
+  regions** — all 1,864 decoded with zero errors. Per-region declared
+  `rp_bytes` sums to 150,913,568 bytes; the decoder's own subframe-size
+  totals account for 150,886,112 of those (99.98%), the ~27KB residual
+  consistent with sector-rounding padding rather than a decode gap.
+- Byte breakdown by subframe (population totals): link_cost 52,484,808 B
+  (34.8%), link incl. embedded regulation/between-link-cost 47,116,626 B
+  (31.2%), node 15,218,334 B (10.1%), node_coord 10,268,844 B (6.8%),
+  road_ref 4,917,174 B (3.3%), upper_node 1,491,430 B (1.0%), passage_code
+  19,560 B (~0%), upper_link/statistical_cost unused (0 B), **ext (see
+  below) 19,164,296 B (12.7%)**, distribution headers 205,040 B (0.1%).
+  Totals: 2,530,797 node-instances and 6,328,400 link-instances summed
+  across all region/hierarchy-level copies (a node/link present at multiple
+  levels counts once per level — not a unique-node count for the country).
+
+**Not yet fully verified: per-record round-trip.** The subframe/offset-table
+layer is validated at the size level across the whole population; individual
+node/link/cost records have not yet been round-tripped byte-for-byte at the
+per-record level in code (only checked by inspection against the spec).
+
+**Genuine unknown — vendor-proprietary "ext" frames, 12.7% of all
+route-planning bytes.** Ch.10.5/10.5.1 defines 6 "extended route planning
+data frame" slots per region whose contents the spec explicitly declines to
+define ("used for the extended data defined with META" — vendor-specific).
+Inspected raw bytes: a 12-byte "User Identification ID" (identical across a
+region's own slots) plus a 4-byte "Data Identification Code" incrementing by
+a fixed step per slot — consistent with a vendor extension table, but
+semantics can't be determined from the spec alone. **Whether the head unit's
+route-planning firmware requires this data to function, or whether it's
+safely omittable, is unknown and untested** — likely needs either further
+byte-level reverse-engineering or an in-vehicle test with it stripped.
+
+**Size-scaling model.** Using the disc's own Node Distribution Header counts
+(no OSM data needed), pooled OLS across all 1,864 real regions:
+
+```
+route_planning_bytes ≈ 4,695 + 10.26 · n_nodes + 18.36 · n_links      (R² = 0.983, n = 1,864)
+```
+
+Single-variable per-level fits against `n_nodes` alone (n=351/105/51/1,357
+for levels 2/4/6/8) all give R² ≈ 0.978–0.984.
+
+As an external sanity check (correlating against `australia-260824.osm.pbf`
+for regions with valid bboxes — 1,860 of 1,864, 99.8%): total road-km r=0.59
+(r²=0.35), major-road-km r=0.60 (r²=0.36), an OSM-junction proxy (nodes
+touched by ≥3 road ways) r=0.82 (r²=0.68), region bbox area r=0.18 (r²=0.03).
+Junction count is the best *external* proxy but still much weaker than the
+disc's own node/link counts.
+
+**Surprise finding: Ch.9 region bboxes are not spatial partition tiles.**
+They're the bounding box of whichever node cluster is stored in that region,
+and they overlap heavily — level-8 regions (72% of all regions, 83% of all
+route-planning bytes) have a *median* bbox of ~9.2°×9.6°, i.e. individual
+"regions" routinely span large fractions of the continent despite there
+being 1,357 of them. **Practical implication:** don't estimate route-planning
+size from road-km or region area — build the routing graph (or a placeholder
+graph) first and use the node/link-count formula above.
+
+**Scope of work for a writer:**
+
+- Ch.9 region-table writer: small, low-risk, ~1–2 days in isolation — a
+  straightforward table serializer once a region-hierarchy tree exists.
+- Ch.10 record encoders (node/link/link-cost/regulation/between-link-cost/
+  node-coordinate/road-reference): all fully bit-specified fixed-or-near-
+  fixed-width records, no spec ambiguity found — low single-digit days,
+  *given a routing graph model already exists to encode*.
+- **The real bottleneck is not byte-packing, it's generating the multi-level
+  hierarchical routing graph itself**: grouping roads into ranks (0–15),
+  building the 4 coarsening hierarchy tiers mirroring this disc's level
+  2/4/6/8 structure (a CH/highway-hierarchy-style graph contraction, keeping
+  only a subset of links per level per the "one-to-n between levels" rule in
+  10.6.2/10.7), boundary-node bookkeeping between regions, deriving
+  turn-regulation records from OSM turn-restriction relations, "aggregated
+  intersection" clustering, and per-link angle/same-road-sequence bookkeeping
+  (10.7.1.1 items 6–7). This is comparable in scope to building a CH-style
+  route-planning preprocessor from scratch, and dwarfs the encoding work.
+- **Blocking unknown before finalizing scope:** whether the vendor "ext"
+  frames are required by the firmware (see above).
+
 ## Decisions / deviations from plan
 
 (record anything that didn't go as expected here)

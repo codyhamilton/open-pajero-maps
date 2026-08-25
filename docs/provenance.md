@@ -58,6 +58,17 @@ same commit.
   `-updates` path above for a smaller diff-based extract) and name it
   `australia-<YYMMDD>.osm.pbf` using the download date.
 
+## `.venv-rp/`
+
+- **What**: a local Python virtualenv with `osmium` installed, used to run
+  OSM-correlation scripts (e.g. checking route-planning byte size against
+  OSM junction counts/road-km) since the system Python is externally-managed
+  and doesn't have `osmium` available.
+- **Source**: `python3 -m venv .venv-rp && .venv-rp/bin/pip install osmium`.
+- **Why not committed**: a local virtualenv, not project content.
+- **Reproduce**: the command above. Not referenced by any committed script's
+  default path — activate it manually when running OSM-correlation analysis.
+
 ## `tag_crosstab.out` / `tag_crosstab.err`
 
 - **What**: captured stdout/stderr from running `tag_crosstab.py` against the OSM

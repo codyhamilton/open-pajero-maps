@@ -94,6 +94,9 @@ plausible-looking.
 - Whether OSM data in the target region has sufficient tagging depth (speed limits,
   turn restrictions, addr:* completeness) to hit the "full parity" bar, especially for
   address search.
+- Whether the route-planning "ext" frames (Ch.10.5, vendor-proprietary, 12.7% of all
+  route-planning bytes) are required by the head unit's routing firmware to function,
+  or safely omittable — see `docs/phases/01-format-analysis.md`.
 
 ## Decision log
 
@@ -418,3 +421,38 @@ plausible-looking.
     preserved as raw bytes.
   - No regressions: `parser/tests/test_mesh.py`, `parser/roundtrip_misc.py`
     (still 7/7) and `parser/dump_parcel.py` all behave as before.
+- 2026-08-25: **Route planning data (Ch.9/Ch.10) format and size-scaling
+  investigated.** Full writeup: `docs/phases/01-format-analysis.md`, "Route
+  planning / region data (Ch.9 + Ch.10, 2026-08-25)". This is the last major
+  region of `ALLDATA.KWI` that was uncharacterized in the size-budget
+  analysis (9.9% of the file). Confirmed it must be regenerated from OSM road
+  topology — it's a routing graph, not content-independent like voice data.
+  - Structural/framing layer (region tables, per-region subframe directory,
+    node/link census headers) decoded and validated against **all 1,864 real
+    regions on the disc (100% of the population)**: subframe-size totals
+    account for 99.98% of the disc's own declared per-region byte counts.
+    Individual record layouts are fully bit-specified in the spec with no
+    ambiguity found, but not yet round-tripped byte-for-byte in code.
+  - Size scales with the routing graph's own node/link counts, not road-km or
+    region area: `route_planning_bytes ≈ 4,695 + 10.26·n_nodes + 18.36·n_links`
+    (R²=0.983, n=1,864). An OSM-junction-count proxy is the best *external*
+    stand-in (r²=0.68) if node/link counts aren't known yet, but road-km
+    (r²=0.35) and region bbox area (r²=0.03) are poor predictors — Ch.9
+    region bboxes turned out not to be spatial partition tiles, they overlap
+    heavily.
+  - **Genuine open unknown**: 12.7% of route-planning bytes are vendor-
+    proprietary "ext" frames the spec explicitly leaves undefined. Whether
+    the head unit's firmware requires this data to function is untested.
+  - **Scope for a writer**: the Ch.9/Ch.10 byte-encoding work itself is
+    low-to-moderate (day-to-low-single-digit-days range) once a routing graph
+    model exists. The real bottleneck is building that graph in the first
+    place — a CH/highway-hierarchy-style multi-level graph contraction from
+    OSM roads (ranks, 4 coarsening tiers, boundary-node bookkeeping, turn
+    restrictions, aggregated-intersection clustering) — comparable in scope
+    to a route-planning preprocessor built from scratch, and dwarfing the
+    encoding work.
+  - Next: fold the confirmed node/link-count scaling formula into the
+    size-budget artifact's route-planning projection (replacing the earlier
+    unverified km-fraction placeholder), and decide whether resolving the
+    "ext" frame question is worth a dedicated investigation before Phase 3
+    planning proceeds further.
