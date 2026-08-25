@@ -341,3 +341,23 @@ plausible-looking.
     sample rather than a single hand-picked coordinate — clearing the
     concern raised in the "Side finding" entry above before Phase 2
     byte-diffing work on `ALLDATA.KWI` begins.
+- 2026-08-25: **`SPEC.KWI`/`METADATA.KWI` whitespace-loss round-trip gap
+  fixed — Phase 2 misc-file round-trip now 7/7, up from 5/7.** Full
+  writeup: `docs/phases/02-roundtrip.md`, "Update: SPEC.KWI/METADATA.KWI
+  whitespace loss fixed". The two files' irregular per-statement whitespace
+  (no general rule found — e.g. METADATA.KWI's `CHCD` statement has a
+  leading space and a space before `::=` that neither `LANG` nor `COOR`
+  have) turned out not to need a whitespace-formatting model at all:
+  `parse_bnf_metadata` (`parser/kiwiw/misc.py`) now returns a `BnfMetadata`
+  dataclass holding the *raw* `text.split(";")` chunks verbatim
+  (`raw_statements`) alongside the same stripped-key/value `dict[str, str]`
+  convenience view as before (`fields`), and `write_bnf_metadata`
+  (`parser/kiwiw/misc_writer.py`) just rejoins `raw_statements` with `;` —
+  an exact inverse of `split`, not a best-effort reformat. Only two call
+  sites existed (`parser/roundtrip_misc.py`, unaffected since it treats the
+  parsed value opaquely; `parser/tests/test_roundtrip_misc.py`, updated
+  from an expected-failure test to two passing byte-identical tests). This
+  supersedes, not erases, the earlier 2026-08-25 "Phase 2 round-trip
+  writer" entry above's "2 documented, honest failures" — those two
+  failures are now fixed, and the phase doc's own copy of that finding is
+  marked resolved rather than rewritten.

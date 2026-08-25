@@ -5,6 +5,15 @@ Prove format understanding by re-serializing the parsed intermediate representat
 back into byte-identical (or documented-diff-only) files, then burning and testing
 that regenerated-but-unchanged disc in the vehicle.
 
+## Status: 7/7 byte-identical (2026-08-25 update — see below)
+
+The "5/7, 2 documented failures" writeup below is the honest original
+result from this phase's first pass. It is superseded, not deleted: a
+follow-up pass the same day fixed the `SPEC.KWI`/`METADATA.KWI` whitespace
+loss by changing `parse_bnf_metadata`'s intermediate representation (see
+"Update: SPEC.KWI/METADATA.KWI whitespace loss fixed" further down). The
+original section is left intact below for the record.
+
 ## Status: first real round-trip wins landed (2026-08-25)
 
 Targeted the small metadata/manifest files decoded in Phase 1 sub-task 3
@@ -162,3 +171,114 @@ targeted here:
 
 Full `ALLDATA.KWI` and `IDX/*.IDX` round-trip, disc reassembly, and
 in-vehicle testing of a regenerated-but-unchanged disc.
+
+## Update: SPEC.KWI/METADATA.KWI whitespace loss fixed (2026-08-25)
+
+Resolves "what remains" item 1 above. **7/7 targeted files now round-trip
+byte-identical.**
+
+### The real whitespace pattern
+
+Direct hex/text inspection of both files on the mounted disc
+(`/run/media/codyh/464210-8480`):
+
+```
+SPEC.KWI (34 bytes):
+SUPERMETA::=AFAU:2.64, AGAU:2.64 ;
+
+METADATA.KWI (164 bytes):
+LANG::=US English,...,Australian English ; CHCD ::=ISO 8859-1 ; COOR::=WGS84 ;
+```
+
+Splitting each file's text on `;` cleanly separates it into per-statement
+chunks whose *exact* surrounding whitespace differs statement-to-statement
+with no discoverable general rule:
+- `SPEC.KWI`: one statement, no space before `::=`, one space before `;`.
+- `METADATA.KWI`: `LANG` has no leading space and no space before `::=`;
+  `CHCD` has both a leading space *and* a space before `::=`; `COOR` has a
+  leading space but no space before `::=`. Every statement has exactly one
+  space before its `;`.
+
+There is no consistent formatting rule to encode as a small parameter set
+(e.g. "always one space before `;`" almost holds but the `::=`/leading-space
+inconsistency doesn't reduce to anything simpler than "keep the literal
+text"). Critically, in both files `raw.decode("ascii").split(";")` applied
+to the original bytes, then rejoined with `";".join(...)`, reproduces the
+original bytes exactly — including the trailing empty chunk after the
+file's final `;` — because that's definitionally how `str.split`/`str.join`
+compose. So preserving the *raw split chunks*, not a reformatted
+approximation, is sufficient and requires no whitespace model at all.
+
+### Representation chosen
+
+`parse_bnf_metadata` in `parser/kiwiw/misc.py` now returns a `BnfMetadata`
+dataclass instead of a plain `dict[str, str]`:
+
+```python
+@dataclass
+class BnfMetadata:
+    raw_statements: list[str]      # text.split(";") result, completely unmodified
+    fields: dict[str, str]         # convenience lookup: stripped key -> stripped value
+```
+
+`raw_statements` is `text.split(";")` untouched (including the trailing
+empty string after the final `;`); `fields` is the same stripped-key/value
+dict the old return type was, built from the same statements, kept as a
+`.fields` attribute for any code that only wants "give me the value of
+`COOR`" without caring about formatting. This was chosen over an explicit
+whitespace/formatting model (e.g. per-field leading-space/space-before-`::=`
+flags) because the raw-text approach needs no model of *what* varies —
+it can't miss a whitespace quirk future discs might have that this one
+disc's fields don't happen to exercise, since it never tries to categorize
+the whitespace in the first place, it just remembers the literal bytes.
+
+`write_bnf_metadata` (`parser/kiwiw/misc_writer.py`) is now a single line:
+`";".join(meta.raw_statements).encode("ascii")` — an exact inverse, not a
+best-effort canonical reformatting.
+
+### Callers checked
+
+Grepped the whole tree for `parse_bnf_metadata`/`write_bnf_metadata`/
+`BnfMetadata` before changing the return shape. Only two call sites exist,
+both already owned by this same round-trip work and both updated/verified
+in this pass:
+- `parser/roundtrip_misc.py` — passes the parser's return value straight
+  through to the writer opaquely; needed no code change since it never
+  inspects the intermediate value's shape.
+- `parser/tests/test_roundtrip_misc.py` — previously asserted the
+  known-lossy failure (`test_spec_kwi_known_lossy`, `assert raw != rebuilt`)
+  with a comment explicitly anticipating this fix
+  ("update this test... the known whitespace-loss gap seems fixed").
+  Replaced with `test_spec_kwi_byte_identical` and a new
+  `test_metadata_kwi_byte_identical`, both asserting `raw == rebuilt`.
+
+`VERSION.TXT`'s `parse_version_txt`/`write_version_txt` were deliberately
+left untouched (out of scope, already passing, single-statement file with
+no whitespace quirks to lose on this disc) — still works via the plain
+`dict[str, str]` it already returned.
+
+### Final round-trip results
+
+```
+PASS  PCT2MNG.KWI: byte-identical (174 bytes)
+PASS  COVERAGE.BIN: byte-identical (21 bytes)
+PASS  DN/CLUSTER.DAT: byte-identical (272 bytes)
+PASS  COUNTRY.KWI: byte-identical (113 bytes)
+PASS  SPEC.KWI: byte-identical (34 bytes)
+PASS  METADATA.KWI: byte-identical (164 bytes)
+PASS  VERSION.TXT: byte-identical (19 bytes)
+
+7/7 files byte-identical
+```
+
+`parser/tests/test_roundtrip_misc.py` and `parser/tests/test_mesh.py` both
+still pass in full (no regressions from the `mesh.py` parcel-index fix
+either, which predates this change).
+
+### What this changes in "what remains"
+
+Item 1 of the original "what remains before Phase 2 can be considered
+complete" list is now done. Items 2-4 (an `ALLDATA.KWI` structural-layer
+writer, an `IDX/*.IDX` writer, and eventual disc reassembly/in-vehicle
+testing) are unaffected and still outstanding — this was a small, fully
+self-contained fix scoped to the two BNF-metadata files only.

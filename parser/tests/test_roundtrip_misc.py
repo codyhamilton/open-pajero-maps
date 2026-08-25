@@ -70,22 +70,32 @@ def test_version_txt_byte_identical():
     print("PASS: VERSION.TXT round-trips byte-identical")
 
 
-def test_spec_kwi_known_lossy():
-    """Documented negative result: parse_bnf_metadata discards whitespace
-    formatting, so SPEC.KWI/METADATA.KWI do NOT round-trip byte-identical
-    from that intermediate representation. This test asserts the *known*
-    failure mode so a future fix to the parser (e.g. capturing raw
-    statement text) is caught as a welcome change, not a silent regression.
+def test_spec_kwi_byte_identical():
+    """`parse_bnf_metadata` now preserves each statement's raw text
+    (`BnfMetadata.raw_statements`) rather than collapsing straight to a
+    lossy plain dict, so SPEC.KWI's irregular whitespace round-trips
+    exactly. See docs/phases/02-roundtrip.md for the fix writeup (this used
+    to be a documented negative result / known-lossy test).
     """
     result = _roundtrip("SPEC.KWI", misc.parse_bnf_metadata, misc_writer.write_bnf_metadata)
     if result is None:
         return
     raw, rebuilt = result
-    assert raw != rebuilt, (
-        "SPEC.KWI now round-trips byte-identical -- update this test and "
-        "docs/phases/02-roundtrip.md, the known whitespace-loss gap seems fixed"
-    )
-    print("EXPECTED FAIL (documented): SPEC.KWI does not round-trip byte-identical")
+    assert raw == rebuilt
+    print("PASS: SPEC.KWI round-trips byte-identical")
+
+
+def test_metadata_kwi_byte_identical():
+    """Same fix as `test_spec_kwi_byte_identical`, against METADATA.KWI --
+    the file with the stray leading space before `CHCD` that motivated
+    capturing raw statement text in the first place.
+    """
+    result = _roundtrip("METADATA.KWI", misc.parse_bnf_metadata, misc_writer.write_bnf_metadata)
+    if result is None:
+        return
+    raw, rebuilt = result
+    assert raw == rebuilt
+    print("PASS: METADATA.KWI round-trips byte-identical")
 
 
 if __name__ == "__main__":
@@ -94,4 +104,5 @@ if __name__ == "__main__":
     test_cluster_dat_byte_identical()
     test_country_kwi_byte_identical()
     test_version_txt_byte_identical()
-    test_spec_kwi_known_lossy()
+    test_spec_kwi_byte_identical()
+    test_metadata_kwi_byte_identical()

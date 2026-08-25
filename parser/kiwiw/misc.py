@@ -25,22 +25,51 @@ from dataclasses import dataclass, field
 # all -- confirmed by direct inspection, matches Ch.13's stated BNF grammar.
 # ---------------------------------------------------------------------------
 
-def parse_bnf_metadata(raw: bytes) -> dict[str, str]:
+@dataclass
+class BnfMetadata:
+    """Round-trippable intermediate representation for a Ch.13 BNF-style
+    `KEY ::= value ; KEY2 ::= value2 ;` blob.
+
+    The real files (SPEC.KWI, METADATA.KWI) have irregular whitespace: every
+    statement has a space before its `;`, but spacing around `::=` and
+    leading whitespace before a key is inconsistent (e.g. METADATA.KWI has a
+    stray leading space before `CHCD` that `LANG`/`COOR` don't have). A
+    plain `dict[str, str]` can't remember any of that, so this keeps the
+    exact raw text of each `;`-delimited statement (including its
+    whitespace, and including the trailing empty chunk after the file's
+    final `;`) alongside the parsed `dict[str, str]` view for convenience.
+
+    Since the original bytes are always exactly `";".join(raw_statements)`
+    (that's how they were split in the first place), re-joining
+    `raw_statements` with `;` reproduces the original file byte-for-byte,
+    regardless of how odd its whitespace is.
+    """
+    raw_statements: list[str]      # text.split(";") result, completely unmodified
+    fields: dict[str, str]         # convenience lookup: stripped key -> stripped value
+
+
+def parse_bnf_metadata(raw: bytes) -> BnfMetadata:
     """Parse a KIWI Ch.13-style `KEY ::= value ; KEY2 ::= value2 ;` blob.
 
     Used for both SPEC.KWI (e.g. ``SUPERMETA::=AFAU:2.64, AGAU:2.64 ;``) and
     METADATA.KWI (``LANG::=...; CHCD::=ISO 8859-1; COOR::=WGS84;``).
     Confirmed by direct inspection against Ch.13's stated BNF grammar.
+
+    Returns a `BnfMetadata` that preserves the raw per-statement text (so a
+    writer can reproduce the original bytes exactly) alongside a plain
+    `dict[str, str]` convenience view (`.fields`) for code that only cares
+    about values.
     """
     text = raw.decode("ascii", errors="replace")
-    out: dict[str, str] = {}
-    for stmt in text.split(";"):
-        stmt = stmt.strip()
-        if not stmt or "::=" not in stmt:
+    raw_statements = text.split(";")
+    fields: dict[str, str] = {}
+    for stmt in raw_statements:
+        stripped = stmt.strip()
+        if not stripped or "::=" not in stripped:
             continue
-        key, val = stmt.split("::=", 1)
-        out[key.strip()] = val.strip()
-    return out
+        key, val = stripped.split("::=", 1)
+        fields[key.strip()] = val.strip()
+    return BnfMetadata(raw_statements=raw_statements, fields=fields)
 
 
 # ---------------------------------------------------------------------------

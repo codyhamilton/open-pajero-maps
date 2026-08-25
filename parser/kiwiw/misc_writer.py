@@ -10,17 +10,18 @@ Confidence / round-trip status per file (see docs/phases/02-roundtrip.md for
 the full writeup and actual byte-diff results):
 
 - `write_pct2mng`, `write_coverage_bin`, `write_cluster_dat`,
-  `write_country_kwi`: the corresponding parser captures every input byte
-  losslessly (either as fully-decoded fixed-width fields, or, for
-  COUNTRY.KWI's not-spec-confirmed tail, as a verbatim `raw_tail` blob) so
-  these are expected to be exact inverses.
-- `write_bnf_metadata` (SPEC.KWI / METADATA.KWI) and `write_version_txt`:
-  the *parser* these invert (`parse_bnf_metadata`/`parse_version_txt`)
+  `write_country_kwi`, `write_bnf_metadata`: the corresponding parser
+  captures every input byte losslessly (either as fully-decoded fixed-width
+  fields, or, for COUNTRY.KWI's not-spec-confirmed tail, as a verbatim
+  `raw_tail` blob, or, for SPEC.KWI/METADATA.KWI, as verbatim raw
+  per-statement text via `BnfMetadata.raw_statements`) so these are exact
+  inverses.
+- `write_version_txt`: the *parser* it inverts (`parse_version_txt`)
   discards whitespace formatting and statement order when it builds a
-  plain `dict[str, str]` -- so a writer driven only by that dict cannot
-  reconstruct the original bytes exactly. These are included anyway as a
-  documented near-miss/negative result (see the roundtrip doc), not
-  papered over as a success.
+  plain `dict[str, str]` -- so a writer driven only by that dict cannot in
+  general reconstruct the original bytes exactly, though it happens to for
+  the one single-statement `VERSION.TXT` on this disc. See
+  docs/phases/02-roundtrip.md.
 """
 
 from __future__ import annotations
@@ -28,6 +29,7 @@ from __future__ import annotations
 import struct
 
 from .misc import (
+    BnfMetadata,
     ClusterDat,
     CountryFile,
     CoverageBin,
@@ -125,28 +127,32 @@ def write_country_kwi(cf: CountryFile) -> bytes:
 
 
 # ---------------------------------------------------------------------------
-# SPEC.KWI / METADATA.KWI / VERSION.TXT -- documented lossy near-misses
+# SPEC.KWI / METADATA.KWI
 # ---------------------------------------------------------------------------
 
-def write_bnf_metadata(fields: dict[str, str]) -> bytes:
-    """Best-effort inverse of `kiwiw.misc.parse_bnf_metadata`.
+def write_bnf_metadata(meta: BnfMetadata) -> bytes:
+    """Exact inverse of `kiwiw.misc.parse_bnf_metadata`.
 
-    NOT expected to be byte-identical: the parser strips whitespace around
-    `::=` and `;` and returns a plain dict, which cannot recover the
-    original file's irregular spacing (e.g. METADATA.KWI has a stray
-    leading space before `CHCD` that `SUPERMETA`/`LANG` don't have, and a
-    space before every `;`). This emits a plausible canonical form (space
-    before `::=`, space before `;`, trailing space after the final `;`) --
-    see docs/phases/02-roundtrip.md for the actual measured diff against
-    the real files.
+    `BnfMetadata.raw_statements` is exactly `text.split(";")` from the
+    parser, so re-joining it with `;` reproduces the original text (and
+    therefore bytes, since these files are plain ASCII) byte-for-byte,
+    whitespace quirks and all -- no canonicalization/reformatting is done
+    here. See docs/phases/02-roundtrip.md for the resolved-whitespace-loss
+    writeup (this used to emit a canonical reformatted near-miss; now it
+    round-trips exactly on both SPEC.KWI and METADATA.KWI).
     """
-    parts = [f" {k} ::={v} ;" for k, v in fields.items()]
-    return "".join(parts).lstrip().encode("ascii")
+    return ";".join(meta.raw_statements).encode("ascii")
 
+
+# ---------------------------------------------------------------------------
+# VERSION.TXT -- documented lossy near-miss
+# ---------------------------------------------------------------------------
 
 def write_version_txt(fields: dict[str, str]) -> bytes:
-    """Best-effort inverse of `kiwiw.misc.parse_version_txt`. Same caveat as
-    `write_bnf_metadata`: statement order and any formatting quirks beyond
-    `KEY=value;` are not recoverable from the plain dict.
+    """Best-effort inverse of `kiwiw.misc.parse_version_txt`. `VERSION.TXT`
+    happens to round-trip exactly on this disc (single statement, no
+    whitespace quirks to lose), but statement order and any formatting
+    quirks beyond `KEY=value;` are not recoverable from the plain dict this
+    inverts, unlike `write_bnf_metadata` above.
     """
     return "".join(f"{k}={v};" for k, v in fields.items()).encode("ascii")
