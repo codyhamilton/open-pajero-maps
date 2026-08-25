@@ -263,3 +263,33 @@ plausible-looking.
     here — out of scope for this pass — but now cheap to debug, and it should be
     fixed before Phase 2 byte-diffing, since it means main-map parcel addressing
     is not actually verified.
+- 2026-08-25: **Phase 2 (round-trip writer) started — first real
+  byte-identical wins.** Targeted the smallest, most fully-understood files
+  rather than `ALLDATA.KWI`/`IDX/*` (full detail:
+  `docs/phases/02-roundtrip.md`). New code: `parser/kiwiw/misc_writer.py`
+  (inverse of each `parse_*` in `parser/kiwiw/misc.py`), harness
+  `parser/roundtrip_misc.py`, regression test
+  `parser/tests/test_roundtrip_misc.py`.
+  - **5 of 7 targeted files round-trip byte-identical** against the real
+    mounted disc: `PCT2MNG.KWI`, `COVERAGE.BIN`, `DN/CLUSTER.DAT`,
+    `COUNTRY.KWI`, `VERSION.TXT`.
+  - Notable finding: `COUNTRY.KWI` round-trips exactly *despite* its
+    trailing TLV-like block being explicitly flagged "not spec-confirmed" in
+    Phase 1, because the parser stored that unconfirmed region verbatim
+    (`raw_tail`) instead of forcing it through a lossy reinterpretation.
+    Lesson for future Phase 2 work on `ALLDATA.KWI`/`IDX/*`: preserve
+    not-yet-understood byte regions raw rather than round-tripping them
+    through a partial model.
+  - **2 honest failures, not smoothed over:** `SPEC.KWI`/`METADATA.KWI`
+    fail by 1-2 bytes because `parse_bnf_metadata` (shared Phase 1 code,
+    deliberately not modified here) collapses each file's irregularly-
+    whitespaced `KEY ::= value ;` statements into a plain dict, which can't
+    reconstruct the original spacing quirks. Root cause and exact byte diff
+    are in `docs/phases/02-roundtrip.md`.
+  - **Not attempted:** `ALLDATA.KWI` (main map data) and `IDX/*.IDX`
+    (search index) writers — both substantially harder (medium-confidence
+    coordinate decoding, ~50%-identified road-type codes, several
+    known-unhandled record kinds in the main map; self-describing
+    `DCTF`/`STFG` regeneration for the index chain) and explicitly deferred,
+    see the roundtrip doc's "what remains" section for the recommended
+    next steps.
