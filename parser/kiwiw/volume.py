@@ -10,7 +10,7 @@ from __future__ import annotations
 import struct
 from dataclasses import dataclass
 
-from .bitutils import extract, sws, geo_secs, u16, u32
+from .bitutils import extract, i8, sws, geo_secs, u16, u32
 from .model import BoundingBox, LevelMgmtRecord, BlockSetMgmtRecord, VolumeHeader
 
 SECTOR_SZ_DEFAULT = 2048
@@ -99,6 +99,79 @@ def parse_volume_header(buf: bytes) -> VolumeHeader:
 
 
 @dataclass
+class Mid:
+    """1.2.x `MID` Maker Identification (Ch. 5.1 note (12)): an 8-byte PID
+    (maker office lat/lon), a signed floor number, one reserved byte, and a
+    2-byte date counted in days from 1 Jan 1997."""
+    lat: float
+    lon: float
+    lat_exponent: int
+    lon_exponent: int
+    floor: int
+    reserved: int
+    date: int
+
+
+@dataclass
+class VolumeHeaderExtras:
+    """Everything in the 2048-byte Data Volume that `VolumeHeader` (the
+    Phase 1 IR) does not model, captured so the header can be re-serialized
+    byte-exactly.
+
+    Split deliberately into *decoded* leftovers (MIDs, the full Data
+    Contents words, coverage PID exponents) and *verbatim* regions (the
+    maker-defined free-form parts of the three MID:C fields, plus the
+    spec's RESERVED / Level Management Information areas, which are all
+    zero on this disc). Nothing here is a reinterpretation of bytes we do
+    not understand -- unknown regions are kept as raw hex on purpose (the
+    `COUNTRY.KWI` lesson in docs/phases/02-roundtrip.md).
+    """
+    mids: list[Mid]                 # system-specific, data-author, system
+    maker_defined_hex: list[str]    # the C part of each MID:C (52/52/20 B)
+    contents_word0_low: int         # Data Contents word 0, bits 12..0
+    contents_words_1_3: list[int]   # Data Contents words 1..3
+    coverage_exponents: list[int]   # 4 PID exponent bytes (ll lat/lon, ur lat/lon)
+    background_low: int             # Background Data Default Info, bits 13..0
+    reserved_478_hex: str           # 14 B RESERVED
+    level_mgmt_info_hex: str        # 256 B Level Management Information (5.1.1)
+    reserved_748_hex: str           # 1300 B RESERVED
+
+
+def _parse_mid(buf: bytes, off: int) -> Mid:
+    return Mid(
+        lat=geo_secs(buf[off : off + 3]),
+        lon=geo_secs(buf[off + 4 : off + 7]),
+        lat_exponent=buf[off + 3],
+        lon_exponent=buf[off + 7],
+        floor=i8(buf, off + 8),
+        reserved=buf[off + 9],
+        date=u16(buf, off + 10),
+    )
+
+
+def parse_volume_header_extras(buf: bytes) -> VolumeHeaderExtras:
+    """Companion to `parse_volume_header()`: capture the parts of the Data
+    Volume its IR drops. Offsets follow the Ch. 5.1 field table
+    (`spec/format_english/pdf/0500122e.pdf`, page 5-1)."""
+    assert len(buf) >= DATAVOL_SIZE
+    return VolumeHeaderExtras(
+        mids=[_parse_mid(buf, 0), _parse_mid(buf, 64), _parse_mid(buf, 128)],
+        maker_defined_hex=[
+            buf[12:64].hex(),
+            buf[76:128].hex(),
+            buf[140:160].hex(),
+        ],
+        contents_word0_low=u16(buf, 416) & 0x1FFF,
+        contents_words_1_3=[u16(buf, 418), u16(buf, 420), u16(buf, 422)],
+        coverage_exponents=[buf[459], buf[463], buf[467], buf[471]],
+        background_low=u16(buf, 476) & 0x3FFF,
+        reserved_478_hex=buf[478:492].hex(),
+        level_mgmt_info_hex=buf[492:748].hex(),
+        reserved_748_hex=buf[748:2048].hex(),
+    )
+
+
+@dataclass
 class MhrEntry:
     index: int  # 0-based (spec numbers these 1..34)
     dsa: int
@@ -119,6 +192,59 @@ def parse_mhr_table(buf: bytes) -> list[MhrEntry]:
     return entries
 
 
+# Ch. 5 record 2: "A Sequence of Management Header Tables [n]", each 2048
+# bytes. Ch. 5.2 lists records 1..33 at 18 bytes each plus a 1454-byte
+# "record 34 (maker original: RESERVED)" tail. On this disc that maker area
+# is simply *more* 18-byte management header records (record index 34 is a
+# real `COUNTRY.KWI` entry), so the whole table is modelled here as
+# 113 x 18 bytes + a 14-byte remainder -- see docs/phases/02-roundtrip.md.
+MHT_SIZE = 2048
+MHT_RECORD_COUNT = MHT_SIZE // MHR_SIZE          # 113
+MHT_TAIL_SIZE = MHT_SIZE - MHT_RECORD_COUNT * MHR_SIZE  # 14
+
+
+@dataclass
+class ManagementHeaderTable:
+    entries: list[MhrEntry]
+    tail_hex: str  # the 14 bytes the 18-byte record grid cannot cover
+
+
+def parse_management_header_table(buf: bytes) -> ManagementHeaderTable:
+    """Decode one full 2048-byte Management Header Table (Ch. 5.2),
+    including the maker-original area, as `MHT_RECORD_COUNT` records."""
+    assert len(buf) >= MHT_SIZE
+    entries = []
+    for i in range(MHT_RECORD_COUNT):
+        off = i * MHR_SIZE
+        entries.append(MhrEntry(
+            index=i,
+            dsa=u32(buf, off),
+            size=u16(buf, off + 4),
+            name=_cstr(buf[off + 6 : off + 18]),
+        ))
+    return ManagementHeaderTable(
+        entries=entries,
+        tail_hex=buf[MHT_RECORD_COUNT * MHR_SIZE : MHT_SIZE].hex(),
+    )
+
+
+@dataclass
+class BmtEntry:
+    """6.x Block Management Table entry: sector address + size (in logical
+    sectors) of one block's parcel management record."""
+    dsa: int
+    size: int
+
+
+@dataclass
+class BmtTable:
+    """One block set's Block Management Table, i.e. the array a
+    `BlockSetMgmtRecord.bmt_offset` points at."""
+    blockset_ordinal: int  # index into Pdmdh.blocksets
+    offset: int            # byte offset within the PDMDH buffer
+    entries: list[BmtEntry]
+
+
 @dataclass
 class Pdmdh:
     """6.1 Parcel Data Management Distribution Header, plus the LMR/BSMR
@@ -133,6 +259,13 @@ class Pdmdh:
     blocksets: list[BlockSetMgmtRecord]
     bsmr_table_offset: int  # byte offset (within the PDMDH buffer) of the BSMR array
     bmt_table_base: int  # byte offset (within the PDMDH buffer) that bmt_offset fields are relative to
+    # --- fields below are only populated by parse_pdmdh_full(), and exist
+    # so the whole management-record blob can be re-serialized exactly ---
+    record_size: int = 0        # 6.1 header field 1 (SWS): size of the record proper
+    total_size: int = 0         # bytes actually read for this record (sector-padded)
+    header_gap_hex: str = ""    # PDMDH bytes 2..8, undecoded (all zero on this disc)
+    bmt_tables: list[BmtTable] = None
+    trailing_padding_hex: str = ""  # record_size..total_size (zero padding)
 
 
 def parse_pdmdh(buf: bytes) -> Pdmdh:
@@ -205,6 +338,24 @@ def parse_pdmdh(buf: bytes) -> Pdmdh:
             lmr.n_background_frames = extract(xt, 5, 9) + 1
             lmr.n_name_frames = extract(xt, 0, 4) + 1
 
+            # Three u16 index tables follow, sized by the counts just
+            # decoded. On this disc 42 + 2*(16+32+16) == lmr_size exactly,
+            # which is what identified them; if a future disc's LMR is
+            # shorter than that, keep the remainder verbatim instead.
+            tbl_off = lmr_off + LMR_BASE_SIZE + 2
+            counts = (lmr.n_road_frames, lmr.n_background_frames, lmr.n_name_frames)
+            if LMR_BASE_SIZE + 2 + 2 * sum(counts) <= lmr_sz:
+                tables = []
+                for count in counts:
+                    tables.append([u16(buf, tbl_off + 2 * k) for k in range(count)])
+                    tbl_off += 2 * count
+                (lmr.road_frame_table,
+                 lmr.background_frame_table,
+                 lmr.name_frame_table) = tables
+            lmr.raw_tail_hex = buf[tbl_off : lmr_off + lmr_sz].hex()
+        elif lmr_sz > LMR_BASE_SIZE:
+            lmr.raw_tail_hex = buf[lmr_off + LMR_BASE_SIZE : lmr_off + lmr_sz].hex()
+
         levels.append(lmr)
         raw_lmrs.append((lmr_off, lmr))
         moff += lmr_sz
@@ -239,4 +390,46 @@ def parse_pdmdh(buf: bytes) -> Pdmdh:
         blocksets=blocksets,
         bsmr_table_offset=bsmr_table_offset,
         bmt_table_base=0,
+        record_size=header_size,
+        header_gap_hex=buf[2:8].hex(),
     )
+
+
+NO_DATA_DSA32 = 0xFFFFFFFF
+
+
+def parse_pdmdh_full(buf: bytes) -> Pdmdh:
+    """`parse_pdmdh()` plus the Block Management Tables the BSMR records
+    point at, and the record's own size/padding accounting -- i.e. enough
+    to account for every byte of the Parcel-related Data Management Record
+    blob, which is what `volume_writer.write_pdmdh()` needs.
+    """
+    pdmdh = parse_pdmdh(buf)
+    pdmdh.total_size = len(buf)
+    pdmdh.trailing_padding_hex = buf[pdmdh.record_size :].hex()
+
+    entry_size = pdmdh.bmr_size * 2  # [SWS]-halved on disc, 6 bytes here
+    levels = {lmr.level: lmr for lmr in pdmdh.levels}
+    tables: list[BmtTable] = []
+    for ordinal, bs in enumerate(pdmdh.blocksets):
+        if bs.bmt_size == 0 or bs.bmt_offset >= len(buf):
+            # "no block management table" -- the sentinel offset
+            # (0xFFFFFFFF, doubled by the shared SWS decode) with size 0.
+            continue
+        lmr = levels.get(bs.level)
+        n_blocks = (1 + lmr.n_blocks_lat) * (1 + lmr.n_blocks_lng) if lmr else None
+        n_entries = bs.bmt_size // entry_size
+        if n_blocks is not None and n_entries != n_blocks:
+            raise ValueError(
+                f"blockset {ordinal} (level {bs.level}): BMT size implies "
+                f"{n_entries} entries but the LMR declares {n_blocks} blocks"
+            )
+        entries = [
+            BmtEntry(dsa=u32(buf, bs.bmt_offset + i * entry_size),
+                     size=u16(buf, bs.bmt_offset + i * entry_size + 4))
+            for i in range(n_entries)
+        ]
+        tables.append(BmtTable(blockset_ordinal=ordinal, offset=bs.bmt_offset,
+                                entries=entries))
+    pdmdh.bmt_tables = tables
+    return pdmdh

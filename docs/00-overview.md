@@ -361,3 +361,60 @@ plausible-looking.
   writer" entry above's "2 documented, honest failures" — those two
   failures are now fixed, and the phase doc's own copy of that finding is
   marked resolved rather than rewritten.
+- 2026-08-25: **Phase 2 extended to `ALLDATA.KWI`'s container/mesh layer —
+  3/3 regions byte-identical (25,184 bytes).** This closes "what remains"
+  item 2 in `docs/phases/02-roundtrip.md` (see its section "ALLDATA.KWI
+  container/mesh layer: byte-identical" for the full writeup). New code:
+  `parser/kiwiw/volume_writer.py`, parse-side additions in
+  `parser/kiwiw/volume.py` / `model.py` / `bitutils.py`, harness
+  `parser/roundtrip_alldata_header.py`, regression test
+  `parser/tests/test_roundtrip_alldata_header.py`.
+  - **Targets, all byte-identical against the real mounted disc:** the
+    Ch. 5.1 Data Volume (2048 B at offset 0), the Ch. 5.2 Management
+    Header Table (2048 B at 2048), and the Ch. 6 Parcel-related Data
+    Management Record — PDMDH header + 7 LMRs + 601 BSMRs + 165 Block
+    Management Tables (2307 block entries) + padding (21,088 B at 6144).
+  - **Phase 1's "high confidence" rating for this layer is confirmed** —
+    but the write direction still forced out three things a read-only
+    parser had no reason to notice: (a) the LMR is **170 bytes**, and its
+    previously strode-over 128-byte remainder is three `u16` sub-frame
+    index tables sized exactly by the extended-info word's road/background
+    /name frame counts (`42 + 2*(16+32+16) = 170`, zero bytes left over on
+    all 7 levels); (b) the Management Header Table is a single 2048-byte
+    table whose spec-"RESERVED" maker-original area is used by this disc as
+    **more of the same 18-byte records** — `kiwiread.c` and our
+    `parse_mhr_table()` both stop at 34 records, one short of the real
+    in-use `COUNTRY.KWI` entry at index 34; (c) the 165 BMT tables tile
+    offsets 7230..21072 of the management record with **zero gaps or
+    overlaps**, and every table's entry count matches the entry count its
+    level's LMR implies — independent structural corroboration of the
+    block/parcel addressing that the recently fixed `mesh.py` lookup relies
+    on.
+  - **Anti-self-deception measures** (this is the point of Phase 2, so they
+    are documented rather than assumed): writer buffers are poison-filled
+    with `0xA5` instead of zeros so a forgotten region cannot accidentally
+    match a zero-filled original; raw disc bytes are never handed to the
+    writer, only the parsed IR; record offsets are re-derived from the
+    parsed structure rather than copied; and six negative controls
+    (perturbing one decoded value each, plus dropping a whole BMT table)
+    were verified to produce FAILs.
+  - **Honest remainder:** 1694 of the Data Volume's 2048 bytes are carried
+    through verbatim, though only **27 of those are non-zero** (inside the
+    maker-defined halves of the MID:C identification fields, which the
+    spec leaves to the manufacturer; note the "data author" one is binary,
+    so Phase 1's `data_author_id` *string* is a truncation and could not
+    have rebuilt it). The rest are the spec's RESERVED areas plus the
+    256-byte Level Management Information area, which is entirely zero on
+    this disc — **so that sub-structure remains untested**. The other two
+    regions are 99.3% and 99.9% rebuilt from decoded typed fields.
+  - **Not attempted, stated explicitly:** the separate 2048-byte management
+    frame at file offset 4096 (pointed at by management header record 29),
+    and all parcel content — road, background and name frames, plus the
+    parcel management records the BMT entries point at. The phase doc's
+    "concrete next steps" section proposes the staged path: parcel
+    management records first, then the Map Frame header + Main Map Data
+    Frame Entry table (structure only, sub-frame payloads left opaque),
+    and only then per-frame content writers with undecoded record kinds
+    preserved as raw bytes.
+  - No regressions: `parser/tests/test_mesh.py`, `parser/roundtrip_misc.py`
+    (still 7/7) and `parser/dump_parcel.py` all behave as before.

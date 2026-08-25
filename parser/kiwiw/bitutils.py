@@ -84,6 +84,32 @@ def geo_secs(raw3: bytes) -> float:
     return -degrees if negative else degrees
 
 
+def geo_secs_bytes(deg: float) -> bytes:
+    """Inverse of `geo_secs()`: encode signed decimal degrees back into the
+    3-byte geonum form (bit 23 = negative flag, low 23 bits = 1/8
+    arc-seconds). Exact for any value `geo_secs()` produced, since the
+    underlying quantity is an integer count of 1/8 arc-seconds.
+    """
+    units = int(round(abs(deg) * 3600.0 * 8))
+    if units >= (1 << 23):
+        raise ValueError(f"angle {deg} out of range for a 3-byte geonum")
+    if deg < 0:
+        units |= 1 << 23
+    return bytes(((units >> 16) & 0xFF, (units >> 8) & 0xFF, units & 0xFF))
+
+
+def unsws(v: int) -> int:
+    """Inverse of `sws()`/`d()`: halve a decoded value back to its stored
+    form, leaving the 0xFFFF "not present" sentinel untouched. Raises if the
+    value is odd (which no doubled value can be), so a bad IR value fails
+    loudly instead of silently writing wrong bytes."""
+    if v == SENTINEL16:
+        return v
+    if v & 1:
+        raise ValueError(f"{v} is odd -- cannot be an SWS/D-decoded value")
+    return v >> 1
+
+
 def parcel_id_bounds(buf: bytes, off: int) -> tuple[float, float]:
     """Decode a `pid_t` (1.2.13 Parcel ID: 3-byte lat, 1-byte exp, 3-byte
     lng, 1-byte exp) at `off`, returning (lat_deg, lon_deg). The exponent

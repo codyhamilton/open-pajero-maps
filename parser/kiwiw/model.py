@@ -80,6 +80,17 @@ class LevelMgmtRecord:
     n_name_frames: Optional[int] = None
     grid_nx: int = 0
     grid_ny: int = 0
+    # The bytes after the 2-byte extended-info word are three u16 index
+    # tables, one entry per road / background / name sub-frame declared by
+    # the n_*_frames counts above (see docs/phases/02-roundtrip.md --
+    # 42 + 2*(n_road+n_background+n_name) accounts for the LMR size
+    # exactly on this disc). Empty when the LMR is too short to hold them.
+    road_frame_table: list[int] = field(default_factory=list)
+    background_frame_table: list[int] = field(default_factory=list)
+    name_frame_table: list[int] = field(default_factory=list)
+    # Any LMR bytes past what the fields above model, kept verbatim (hex)
+    # so a writer can reproduce them without pretending to understand them.
+    raw_tail_hex: str = ""
 
 
 @dataclass
