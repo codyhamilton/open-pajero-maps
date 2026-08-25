@@ -130,8 +130,27 @@ def locate_parcel(fh, zdat0: bytes, pdmdh: Pdmdh, level: int, lat: float, lon: f
     bounds = BoundingBox(lat_lo=cell_lat_lo, lat_hi=cell_lat_lo + my,
                           lon_lo=cell_lon_lo, lon_hi=cell_lon_lo + mx)
 
-    local_lat_frac = (dlat - iy * my) / my if my else 0.0
-    local_lon_frac = (dlon - ix * mx) / mx if mx else 0.0
+    # (lpx, lpy) for the first loop iteration (depth 1, always parcel type
+    # 0 -- the type referenced directly by a block management record) are
+    # exactly (px, py) computed above: `ix`/`iy` already fold in the
+    # n_parcels_lng[0]/n_parcels_lat[0] factor (see `grid_nx`/`grid_ny` in
+    # volume.py), so `px`/`py` *are* this block's parcel-grid coordinates,
+    # not merely an intermediate step towards them.
+    #
+    # BUG FIXED HERE (was: recomputing lpx/lpy from `local_lat_frac`/
+    # `local_lon_frac` -- the fractional position *within* the already
+    # finest-grained cell that ix/iy identify -- multiplied a second time
+    # by the same gn_lng/gn_lat factor already baked into ix/iy. That
+    # produced an index that tracked the query point's sub-cell decimal
+    # position rather than its real (px, py) parcel-grid coordinates: the
+    # displayed `bounds` (computed straight from ix/iy) stayed correct,
+    # but the array entry actually fetched was effectively arbitrary --
+    # e.g. a Perth CBD query (-31.95312, 115.86719) landed on a real
+    # parcel record but one containing Rockingham/Baldivis street and
+    # place names, ~40 km south. See docs/phases/01-format-analysis.md,
+    # "Parcel-index iteration-order bug: ROOT CAUSE FOUND AND FIXED", for
+    # the cross-checked derivation and validation.
+    lpx, lpy = px, py
 
     poff_in_buf = 0
     depth = 0
@@ -151,8 +170,14 @@ def locate_parcel(fh, zdat0: bytes, pdmdh: Pdmdh, level: int, lat: float, lon: f
 
         gn_lat = 1 + lmr.n_parcels_lat[pt]
         gn_lng = 1 + lmr.n_parcels_lng[pt]
-        lpx = _clamp(int(local_lon_frac * gn_lng), 0, gn_lng - 1)
-        lpy = _clamp(int(local_lat_frac * gn_lat), 0, gn_lat - 1)
+        if depth > 1:
+            # Genuine divided/integrated-subparcel recursion: `lpx`/`lpy`
+            # here *do* need to come from the fractional position within
+            # the just-narrowed `bounds` (set at the bottom of the
+            # previous iteration), since this subdivision is additional
+            # to what `ix`/`iy` already captured.
+            lpx = _clamp(int(local_lon_frac * gn_lng), 0, gn_lng - 1)
+            lpy = _clamp(int(local_lat_frac * gn_lat), 0, gn_lat - 1)
         idx = lpy * gn_lng + lpx
         k = gn_lat * gn_lng
 

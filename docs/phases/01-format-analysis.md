@@ -217,18 +217,32 @@ reads only the specific BSMR/BMT/parcel-management entries needed, rather
 than kiwiread's brute-force scan-and-global-state approach. It also
 generalizes kiwiread's fixed-depth-2 "divided/integrated parcel" (pardiv)
 recursion into an arbitrary-depth loop that re-reads each level's own
-`parman_t.type` field to decide the next subdivision grid -- this is
-**unverified beyond depth 1** on this disc (no test coordinate happened to
-land in a divided parcel), flagged as a risk for Phase 2/3 if other
-regions use deeper subdivision. Note the resulting (blockset_index,
-block_index, parcel_index) numbers in my output do **not** match
-kiwiread's printed indices for the same Melbourne parcel (38/14/1946 vs.
-kiwiread's 22/23/542) -- only the geographic bbox and underlying sector
-address should be expected to agree; the flat-index numbering itself
-depends on an unconfirmed iteration-order assumption (row-major
-lat-then-lng) that isn't spec-stated and doesn't need to match kiwiread's
-own (possibly differently-ordered) internal bookkeeping as long as both
-land on the same real sector address, which they do here.
+`parman_t.type` field to decide the next subdivision grid -- at the time
+this section was first written no test coordinate had exercised depth > 1;
+this has since been exercised on real data (Melbourne resolves into a real
+divided sub-parcel post-fix) as part of the parcel-index bug fix below, see
+"Parcel iteration-order bug: ROOT CAUSE FOUND AND FIXED". Note the
+resulting (blockset_index, block_index, parcel_index) numbers in my output
+do **not** match kiwiread's printed indices for the same Melbourne parcel
+(38/14/1946 vs. kiwiread's 22/23/542) -- only the geographic bbox and
+underlying sector address should be expected to agree; kiwiread's own flat
+indices come from a debug-only helper (`divbsmr()`) whose bookkeeping isn't
+necessarily consistent with the on-disc layout either (see the fix-up note
+below), so this mismatch is expected and not itself evidence of a bug.
+
+> **UPDATE (2026-08-25):** the "unconfirmed iteration-order assumption
+> (row-major lat-then-lng)" this paragraph originally flagged here has
+> since been **checked against the archived spec text and confirmed
+> correct** -- see "Parcel iteration-order bug: ROOT CAUSE FOUND AND FIXED"
+> further down this document. The spec (`0600122e.pdf`, Ch. 6.1.2/6.2.1/
+> 6.3.1) explicitly states row-major, latitude-outer/longitude-inner
+> ordering at every level, exactly matching what this module already
+> computed for `bset_flat`/`block_flat`. A real bug *was* found and fixed
+> in this module, but it was a redundant fractional-recomputation of the
+> parcel array index (double-applying a subdivision factor already folded
+> into the outer grid indices) -- not an ordering/axis mistake. See that
+> section for the full root cause, fix, and validation (799/800 agreement
+> across 800 real, independently-oracle-verified WA coordinates).
 
 **Confidence levels / open uncertainty, called out in module docstrings:**
 - `volume.py`, Ch.5/6 struct layouts: **high** -- byte-for-byte matches
@@ -759,6 +773,185 @@ document as "unconfirmed, row-major lat-then-lng") is fetching the wrong
 parcel record. Not fixed here (out of scope for this pass) but now cheap
 to debug, since any street name gives a known-good coordinate to test
 against.
+
+### Parcel iteration-order bug: ROOT CAUSE FOUND AND FIXED (2026-08-25)
+
+Follow-up to "Side finding: a pre-existing main-map parcel-index bug"
+above, now that the address/POI search chain gives an independent
+geographic oracle for Western Australia. Fixed in `parser/kiwiw/mesh.py`
+(`locate_parcel()`); regression tests updated in
+`parser/tests/test_mesh.py`.
+
+**Root cause.** `locate_parcel()` computes the global grid cell `(ix, iy)`
+containing the query point by floor-dividing the coordinate delta by the
+level's *finest* cell size (`mx`/`my`), where the finest cell size already
+divides all the way down through blockset -> block -> top-level parcel
+(`LevelMgmtRecord.grid_nx`/`grid_ny` in `volume.py` are the product of all
+three counts). That means `ix`/`iy` -- and the `(px, py)` derived from them
+by successively floor-dividing/mod-ing out the blockset and block counts
+-- are *already* the correct parcel-array coordinates within the matched
+block; no further computation is needed to find the top-level parcel's
+place in that block's flat array.
+
+The buggy code didn't use `(px, py)` for that first lookup. Instead it
+computed the *fractional position within that already-finest cell*
+(`local_lat_frac`/`local_lon_frac`, values in `[0, 1)`, meant only for
+descending into genuine divided/integrated sub-parcels one level further
+than the block-level grid already resolves) and multiplied that fraction
+by the *same* per-level parcel-count that had already been folded into
+`ix`/`iy`. The result tracked the query point's arbitrary decimal position
+inside its own leaf cell rather than the cell's real address, and so
+picked an effectively unrelated entry out of the block's parcel array.
+
+This explains the exact reported symptom: the parcel *bounds* shown were
+computed straight from `ix`/`iy` (never touched by the bug) and so were
+always right, while the *record actually fetched* (`dsa`/`size`, i.e. the
+sector address of the real road/background/name data) came from the
+bogus index and was, in effect, arbitrary -- e.g. a Perth CBD query
+(-31.95312, 115.86719) reported a correct Perth CBD bounding box but
+decoded Rockingham/Baldivis street and place names from ~40 km south.
+
+**The fix.** `mesh.py` now sets `lpx, lpy = px, py` (the values already
+computed from `ix`/`iy`) for the loop's first iteration (depth 1, always
+parcel type 0 -- the type directly referenced by a block management
+record), and only falls back to the `local_lat_frac`/`local_lon_frac`
+fractional computation for genuine deeper divided/integrated-subparcel
+recursion (depth > 1), where it's needed because that subdivision is
+*not* already accounted for by `ix`/`iy`. No change to the block/blockset
+level indexing (`bset_flat`/`block_flat`), which was already correct --
+see the spec cross-reference below.
+
+**Spec cross-reference (confirms the ordering convention itself was
+already right).** `spec/format_english/pdf/0600122e.pdf` (Ch. 6) states,
+verbatim, for all three levels:
+- Block sets (6.1): "placed from the reference point ... side to side in
+  the longitudinal direction on one latitudinal level and another" and
+  "placed from low latitudes to high latitudes."
+- Block management records (6.2.1): "placed from the block set management
+  origin ... side to side in the longitudinal direction on one latitudinal
+  level after another" / "from low latitudes to high latitudes."
+- Main map parcel management records (6.3.1): "placed from low latitudes
+  to high latitudes" (implicitly the same longitude-inner convention as
+  the two levels above it).
+
+I.e. row-major with **latitude as the outer/slow axis and longitude as
+the inner/fast axis** (`flat_index = lat_index * n_lng + lng_index`) at
+every level. This is exactly what `mesh.py` already computed for
+`bset_flat`, `block_flat`, and the (now-fixed) parcel `idx` -- so the
+previously-flagged "unconfirmed, row-major lat-then-lng" note in this
+document is **CONFIRMED CORRECT** by the archived spec text; the actual
+bug was the redundant/misapplied fractional recomputation described
+above, not the axis-ordering convention itself.
+
+(Note: `tools/kiwiread/kiwiread.c`'s own debug-only `divbsmr()` helper,
+used solely to drive its hardcoded-coordinate `isin()` sanity checks,
+decomposes flat indices using the `.lat` field as the modulus at every
+level regardless of axis -- which looks backwards for the longitude
+component under this same spec text unless every level's lat/lng counts
+happen to be equal. This was a red herring investigated during this pass:
+`kiwiread.c`'s tool-specific quirk does not reflect the on-disc data
+layout, which the archived spec describes explicitly and which the
+independent oracle below confirms `mesh.py`'s row-major convention gets
+right.)
+
+**Validation.**
+
+1. **The originally-reported case.** `dump_parcel.py --lat -31.95312 --lon
+   115.86719 --level 0` now decodes real Perth CBD content at that
+   parcel -- `"190 ST GEORGES TERRACE"`, `A=PERTH CBD, PERTH,WESTERN
+   AUSTRALIA`, `A=WEST PERTH, ...`, `A=NORTHBRIDGE, ...` -- in place of
+   the previous Rockingham/Baldivis names. St Georges Terrace's real
+   longitude extent, independently established via the search-frame
+   oracle in the "SOLVED end-to-end" section above, is 115.852..115.867;
+   the query's 115.86719 sits right at that eastern end, exactly where
+   "190 ST GEORGES TERRACE" (a real, high street-numbered address at that
+   end) should be.
+2. **Broad cross-check against the search-frame oracle (the main
+   validation for this fix).** Script:
+   sample real Western Australian streets from `SADSR201.IDX` via
+   `kiwiw.search_frame.StreetAddressIndex.iter_streets()`, take a
+   real address-range coordinate for each via `.address_ranges()` (an
+   independently-decoded, oracle-confirmed lat/lon -- see "Address / POI
+   search chain: SOLVED end-to-end" above), feed that coordinate into
+   `AllData.find_parcel()` (i.e. the fixed `mesh.py`), and check whether
+   the returned main-map parcel's own decoded name records mention that
+   same street name.
+   - **800 randomly sampled real street/coordinate pairs: 799/800 (99.9%)
+     exact street-name match** between the oracle's street name and a
+     name record decoded from the mesh-located parcel. A smaller 200-pair
+     run independently got 199/200 (99.5%) -- consistent.
+   - **0 of 800 queries failed to locate a parcel at all** (no `None`
+     results, no coverage gaps hit).
+   - The single recurring miss (`SOMERVILLE STREET` at -31.94271,
+     115.86719) still decoded a parcel containing `ABERDEEN STREET`,
+     `GRAHAM FARMER FREEWAY`, `LITTLE SHENTON LANE`, and
+     `A=NORTHBRIDGE`/`A=WEST PERTH` -- i.e. still the correct immediate
+     Perth inner-city neighbourhood, just not the exact adjacent parcel
+     that happens to carry the Somerville Street name record (a
+     parcel-grid-boundary edge case, not a suburb-scale error).
+   - This is materially different from an exact-record match (the two
+     data structures -- main-map parcels and the address-search index --
+     are independent, differently-tiled representations of the same real
+     world, so *some* near-boundary disagreement is expected and
+     acceptable per this task's validation bar); what it demonstrates is
+     that the fixed `mesh.py` selects the *geographically correct*
+     parcel for a real coordinate at a ~99.9% rate across a large,
+     randomly sampled, independently-oracle-verified set, which is the
+     property that was broken before the fix.
+3. **Regression re-check against the 3 original Phase 1 test
+   coordinates** (`parser/tests/test_mesh.py`, both now passing):
+   - **Melbourne** (-37.813629, 144.963058): now resolves one level
+     deeper than before (a real divided/integrated sub-parcel, previously
+     "unverified beyond depth 1" -- this fix is the first time that
+     recursion path has actually been exercised against real data), and
+     decodes real, plausible content: `"TELSTRA DOME"`,
+     `A=DOCKLANDS, MELBOURNE,VICTORIA`, `A=WEST MELBOURNE, ...`. This
+     nests correctly inside kiwiread.c's independently-established
+     top-level cell bbox (the deeper subdivision is finer than what
+     kiwiread.c's own debug tool prints, so containment -- not exact
+     equality -- is the correct check; updated in the test).
+   - **Sydney Harbour** (-33.868820, 151.209290): now decodes
+     `"GOVERNMENT HOUSE"`, `"BULLETIN PLACE"`,
+     `A=SYDNEY CBD, SYDNEY,NEW SOUTH WALES` -- real Circular Quay / Sydney
+     CBD content, more specific than (but consistent with) the old
+     generic `"TASMAN SEA"` water-body label for the same harbour-edge
+     point.
+   - **The coordinate previously labelled "Regional NSW / Hunter Valley"**
+     (-33.8148, 151.0011): this is actually a **correction to an earlier,
+     wrong claim in this document**, not just a re-test. That coordinate
+     is nowhere near the Hunter Valley/Yengo NP (which is ~100 km further
+     north, around lat -32.7..-32.9) -- it sits in Sydney's
+     Parramatta/Camellia/Granville area. The original Phase 1 pass
+     decoded `"YENGO NATIONAL PARK"`/`"POKOLBIN STATE FOREST"` there and
+     took that as a positive real-place cross-check, but given the
+     coordinate's actual real-world location, that was this same
+     parcel-index bug manifesting -- it just wasn't caught at the time
+     because no independent oracle existed yet to check against. Post-fix
+     this coordinate correctly decodes real Camellia/Granville, Sydney
+     content (`A=CAMELLIA, SYDNEY,NEW SOUTH WALES`,
+     `A=GRANVILLE, SYDNEY,NEW SOUTH WALES`), which matches its real
+     location. `parser/tests/test_mesh.py` is updated with this
+     correction recorded in a comment, and its assertion strengthened to
+     check for `"SYDNEY"` in the decoded names rather than merely that
+     *some* road data was found.
+
+**Confidence: HIGH.** The fix is a small, well-understood change (use the
+already-correct `(px, py)` for the first lookup instead of recomputing a
+value that double-counted a factor already folded into `ix`/`iy`), the
+axis-ordering convention it preserves is directly confirmed by the
+archived spec text (not just inferred), and it's now validated against
+799/800 independently-oracle-confirmed real coordinates spanning
+Western Australia -- a materially larger and more rigorous check than the
+single hand-picked coordinate this bug was originally caught on.
+
+**Implication for Phase 2/3:** main-map parcel selection (not just parcel
+*bounds*) is now on solid, independently-cross-checked footing across a
+large real sample, clearing the "not actually verified" concern flagged
+when this bug was first found. The divided/integrated subparcel recursion
+path (depth > 1) is now confirmed exercised and correct against real data
+for at least one real case (Melbourne), partially addressing (though not
+exhaustively closing) the separate "unverified beyond depth 1" caveat
+from the original parcel work.
 
 ## Decisions / deviations from plan
 

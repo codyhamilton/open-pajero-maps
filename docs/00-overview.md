@@ -293,3 +293,51 @@ plausible-looking.
     `DCTF`/`STFG` regeneration for the index chain) and explicitly deferred,
     see the roundtrip doc's "what remains" section for the recommended
     next steps.
+- 2026-08-25: **Parcel-index bug (the "Side finding" above) root-caused and
+  fixed in `mesh.py`.** Full derivation and validation:
+  `docs/phases/01-format-analysis.md`, "Parcel iteration-order bug: ROOT
+  CAUSE FOUND AND FIXED".
+  - **Root cause was not the row-major ordering itself.** The archived spec
+    (`0600122e.pdf`, Ch. 6.1.2/6.2.1/6.3.1) explicitly states row-major,
+    latitude-outer/longitude-inner ordering at every level of the
+    blockset/block/parcel hierarchy — `mesh.py`'s existing convention there
+    was already correct, so the earlier "unconfirmed, row-major lat-then-lng"
+    caveat in the phase doc is now **resolved: confirmed correct**. The real
+    bug was that `locate_parcel()` computed the top-level parcel's array
+    index by taking the query point's *fractional position within its own
+    already-finest grid cell* and multiplying it by the same per-level
+    parcel-count factor that had *already* been folded into the grid indices
+    used to find that cell in the first place — double-applying the factor.
+    The parcel's displayed *bounds* never depended on that buggy index (they
+    come straight from the grid indices), so bounds stayed correct while the
+    actual data record fetched was effectively arbitrary. This is exactly
+    why a Perth CBD query reported a correct Perth CBD bounding box but
+    decoded Rockingham/Baldivis street and place names ~40 km south.
+  - **Fix**: use the already-correctly-computed grid coordinates directly for
+    the first (top-level, depth-1) parcel lookup; only use the
+    fractional-position calculation for genuine deeper divided/integrated
+    sub-parcel recursion (depth > 1), where it's actually needed since that
+    subdivision isn't captured by the outer grid indices.
+  - **Validation**: the reported Perth CBD coordinate now decodes real
+    Perth CBD content ("190 ST GEORGES TERRACE", Perth CBD/Northbridge/West
+    Perth/Kings Park suburb labels). Broad statistical cross-check against
+    the address-search oracle (`search_frame.py`): 800 randomly sampled real
+    WA street/address-range coordinates fed through the fixed `mesh.py`,
+    checking whether the located main-map parcel's own decoded name records
+    mention the same street — **799/800 (99.9%) agreement, 0 parcels not
+    found**; the one miss still landed in the correct immediate neighbourhood
+    (a parcel-boundary edge case, not a wrong-suburb error). The three
+    original Phase 1 test coordinates (Melbourne, Sydney Harbour, and one
+    previously mislabeled "regional NSW/Hunter Valley" point that is actually
+    in Sydney's Camellia/Granville area) were re-run and now decode more
+    specific, more plausible real content; the old results for two of them
+    are reinterpreted as likely undetected instances of this same bug rather
+    than genuine independent confirmations. `parser/tests/test_mesh.py`
+    updated accordingly (containment-based bbox check for the now-deeper
+    Melbourne subparcel result, corrected Sydney/Camellia commentary); no
+    regressions in `parser/tests/test_roundtrip_misc.py`.
+  - **Confidence: HIGH.** Main-map parcel selection (not just bounds) is now
+    independently cross-checked against a large, real, oracle-verified
+    sample rather than a single hand-picked coordinate — clearing the
+    concern raised in the "Side finding" entry above before Phase 2
+    byte-diffing work on `ALLDATA.KWI` begins.
