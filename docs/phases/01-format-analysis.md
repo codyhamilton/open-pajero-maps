@@ -1065,6 +1065,183 @@ graph) first and use the node/link-count formula above.
 - **Blocking unknown before finalizing scope:** whether the vendor "ext"
   frames are required by the firmware (see above).
 
+### Ch.10.5/10.5.1 "ext" frame content census (2026-08-27)
+
+Dedicated follow-up on the single open item flagged above. Goal: decode the
+raw bytes of every populated ext slot, not just presence/size, and form an
+evidence-ranked hypothesis about function. Sources: the archived Ch.10.5/
+10.5.1 spec text (`spec/format_english/pdf/1000122e.pdf`, re-read in full for
+this pass, including the adjacent Ch.10.7.1.5/10.8/10.9 "Upper Level
+Correspondence" sections and Ch.10.10.2 Link Cost Record for structural
+comparison); the real disc (`ALLDATA.KWI` at
+`/run/media/codyh/464210-8480/`); `tools/kiwiread/` (checked — has zero
+handling of Ch.10 route planning at all, its own "ext"/"extend" hits are all
+the unrelated main-map LMR "extended map" count, not route-planning ext
+frames); the existing decode-only `parser/kiwiw/route_planning.py`. No
+external (web) precedent search was performed — this environment's `WebFetch`/
+`WebSearch` were not exercised for this pass; that remains an open avenue, not
+a source ruled out.
+
+**Methodology.** New script `parser/analyze_ext_frames.py` (kept, not
+scratch — see `docs/provenance.md`) reads every one of the disc's real region
+records (100% of population, not a sample — the same 1,864 real regions
+established in the section above), decodes each populated ext slot per the
+spec's confirmed Ch.10.5.1 layout (`[12B MID][4B N Data Identification
+Code][B1 payload]`), and tabulates MID value, Data Identification Code,
+payload length, payload byte content, and cross-references against each
+region's level, node/link/boundary-node counts (from the Ch.10.6.1 Node
+Distribution Header already decoded), and hierarchy fields
+(`parent_region`/`n_child_regions`) already decoded in Ch.9.
+
+**Spec re-read confirms the field layout, not the content.** Ch.10.5.1 names
+field 1 explicitly "User Identification ID" (`MID`, 12 bytes) and field 2
+"Data Identification Code" (`N`, 4 bytes, "the code to recognize the contents
+of the extended data") — both fully spec-defined structurally. Field 3, the
+payload itself, is explicitly out of spec scope ("used for the extended data
+defined with META" — i.e. vendor/edition-specific and not enumerated in the
+archived document set; Ch.13's Metadata/META grammar chapter, also re-checked,
+defines disc-level metadata like language lists and vehicle option frames but
+contains no route-planning Data-Identification-Code table). This confirms the
+prior finding's framing was correct — the *outer* structure was never the
+unknown, only the *payload*.
+
+**Empirical results, 100% of the 1,864 real regions:**
+
+- **Every single real region has populated ext data — not "1-2 of 6 slots
+  typically populated" as the prior finding stated, but always exactly 2 or 3
+  populated slots, never 1 and never 4+**: 487 regions with 2 populated
+  slots, 1,377 with 3. This is a correction to the earlier build-and-test
+  finding, made precise now that the full population (not spot checks) was
+  decoded.
+- **The MID (12-byte "User Identification ID") field is a single constant
+  value across literally all 5,105 populated ext slots on the disc**, byte-
+  identical to the already-known cross-file `DISC_STAMP_12B`
+  (`0f 67 88 00 3c 47 22 00 03 00 07 22`, see the small-metadata-files
+  section above) in 5,105/5,105 cases (100%). This is a new, confirmed
+  location for that same disc-build stamp (previously seen in
+  `DN/CLUSTER.DAT` and five `K*`/`VAR256D.KWI` files) — the spec's own field
+  name for it turns out to be exactly right: it identifies who/what stamped
+  the data, not per-region routing content.
+- **The Data Identification Code takes exactly 4 distinct values on this
+  disc**, forming a coherent vendor namespace (`0xAF10` + a 2-byte type,
+  always ending `00`): `0xAF100100`, `0xAF100200`, `0xAF100300`,
+  `0xAF100600`. Their presence correlates tightly and non-randomly with
+  region **level** (Ch.9's 2/4/6/8 route-planning hierarchy, independent of
+  the main map's 0–12 level scale):
+
+  | Code | Present in | Payload shape |
+  |---|---|---|
+  | `0xAF100100` | **all 1,864 regions** (every level) | variable, 4–~21,700 B; constant 8-word preamble, then long runs of the `0x7FFF` sentinel interleaved with a handful of small real 16-bit values |
+  | `0xAF100200` | **only level 6, all 51/51 of them** | fixed 106 B; starts `0002 0033` then a run of monotonically-increasing 4-byte-ish ID pairs |
+  | `0xAF100300` | level 8 only, 1,326/1,357 (97.7%) | variable, up to ~4,150 B; `0002`+2B count header then repeating ~12-byte records of the shape `[4B sequential ID][2B value][2B value repeated][2B 0000]` |
+  | `0xAF100600` | **all 1,864 regions**, every level | fixed 4 B, byte-identical (`00 02 00 00`) in all 1,864 cases, zero variation |
+
+  By total bytes: `0xAF100100` = 62.1% of all ext-frame bytes, `0xAF100300` =
+  37.7%, `0xAF100600` = 0.2%, `0xAF100200` = 0.03% — the two clearly
+  content-free codes (`0100`'s constant preamble aside, and `0600`) account
+  for under 1% of the byte budget; the two variable/level-tied codes
+  (`0100`, `0300`) hold nearly all of it. (Grand total across all four codes:
+  19,164,296 B — matches the section above's population-wide ext total
+  exactly, a consistency cross-check between the two passes.)
+- **Ext-frame presence does NOT correlate with boundary/frontier status.**
+  187 of the 1,864 regions have child regions (non-leaf, hierarchy-parent
+  regions) and **all 187 still carry populated ext data**, same as every leaf
+  region — refuting, on this disc, the hypothesis that ext frames exist only
+  to carry a cross-region boundary/link table for frontier regions. It is
+  universal, not frontier-specific.
+- **`0xAF100100` payload size correlates only weakly with region size
+  metrics** (Pearson r = 0.20 vs. `n_nodes`, 0.25 vs. `n_links`, 0.34 vs.
+  summed `n_boundary_nodes` across ranks, 0.35 vs. `n_child_regions`) — real
+  content, not zero-variance noise, but not a simple linear function of any
+  single already-decoded field either. Regions with **zero** boundary nodes
+  still carry multi-kilobyte `0xAF100100` payloads, which argues against a
+  pure "boundary node cost table" reading and toward something closer to a
+  fixed-shape per-region matrix (see next point).
+- **Structural read of `0xAF100100`'s constant preamble is consistent with a
+  sparse cost/distance matrix using `0x7FFF` as an explicit "no value"
+  sentinel** — the same style of sentinel already seen and documented
+  elsewhere on this disc (`n_intersections == 0xFFFF` in `RoadFrame`,
+  see the main-map-parser section above). A representative payload begins
+  `00 07  ff ff  00 00  ff ff  00 00  00 07  05 74  04 45  7f ff  7f ff  7f
+  ff  04 4d  7f ff ...` (16-bit words): a repeated count word (`0x0007`),
+  two `0xFFFF`/`0x0000` null-pointer-looking pairs, the same count word
+  again, then a short run of small real-looking values interleaved with
+  `0x7FFF` before the rest of the payload is `0x7FFF` padding out to its
+  full declared size. This is circumstantial, not spec-confirmed — no Ch.10
+  section defines this exact layout — but the sentinel convention and the
+  "small header + mostly-empty fixed-shape array" shape are both consistent
+  with a genuine routing artifact (e.g. a rank/boundary cost matrix used to
+  shortcut hierarchical route cost lookups within the region) rather than a
+  stamp or padding.
+- **`0xAF100300`'s sequential-ID-record shape was checked against the one
+  spec-defined structure it could plausibly duplicate — Ch.10.9.1's "Upper
+  Level Correspondence Record of the Link" — and does NOT match it
+  byte-for-byte.** Ch.10.9.1 packs four 4-bit link record numbers into a
+  single 2-byte word (a compact nibble-packed index list); the real
+  `0xAF100300` records are 12 bytes wide with a 4-byte incrementing ID field,
+  a structurally different shape. The correlation with the "basic" Ch.10.2
+  `upper_link` subframe being **completely unused across the whole disc (0 B,
+  see the section above)** is suggestive circumstantial evidence — the
+  vendor may have moved link/upper-level-hierarchy bookkeeping into this
+  proprietary slot instead of the standard one the spec reserved for it —
+  but this is a level-correlation-and-absence argument, not a structural
+  match, and is offered as weak/best-guess only.
+
+**Ranked hypotheses (most to least confident):**
+
+1. **CONFIRMED, high confidence — the 12-byte MID field is the disc-build
+   stamp, safe to reproduce as a constant.** 100% match across the full
+   population against an independently-known cross-file constant. No
+   per-region variation at all; this piece carries zero routing information
+   and should simply be replicated as the same 12 bytes on a regenerated
+   disc (as the prototype writer already does for the one ext slot it knew
+   about).
+2. **CONFIRMED, high confidence — Data Identification Code `0xAF100600` is a
+   constant 4-byte version/format flag, safe to reproduce as a constant.**
+   Byte-identical across all 1,864 populated instances; together with
+   finding 1 this accounts for ~0.2% of ext-frame bytes disc-wide and can be
+   dismissed as "vendor stamp/versioning only" with the highest confidence
+   level this investigation reached.
+3. **Medium confidence, functionally load-bearing — `0xAF100100` (62.1% of
+   ext bytes, present in every region) is real per-region routing-adjacent
+   data, most likely a sparse cost/distance matrix or similar hierarchical
+   route-planning cache**, based on the sentinel-fill pattern and
+   weak-but-nonzero correlation with node/link/boundary counts. This is the
+   single largest share of ext bytes and the strongest candidate for
+   "actually required by the routing firmware" — genuinely NOT safe to
+   omit or zero out without a confirming test.
+4. **Weak/best-guess — `0xAF100300` (37.7% of ext bytes, level-8-only) may
+   be the vendor's private substitute for the spec-defined-but-disc-unused
+   basic "Upper Level Link" correspondence subframe.** Circumstantial only
+   (level correlation + the official slot's disc-wide absence); the record
+   shape does not structurally match the one spec table it was checked
+   against, so this is offered as a lead for a future pass, not a finding.
+5. **`0xAF100200` (level-6-only, 0.03% of ext bytes) not analyzed
+   further** — its fixed size and sequential-ID-looking content resemble
+   `0xAF100300` on a smaller scale (both level-tied, both hold
+   incrementing-ID records), but its small byte share made deeper analysis
+   lower priority this pass.
+
+**What would fully resolve the remaining ambiguity (types 3 and 4 above):**
+the byte-level analysis here is the practical ceiling of what this codebase's
+static evidence (spec text + disc bytes) can establish — the spec's own text
+disclaims further definition, and no second disc or vendor-tool source is
+available to compare against. The only test that can convert "plausible
+routing artifact" into "confirmed required/not required" is the one already
+named in `docs/00-overview.md`'s open-risks list: build a modified disc that
+zeroes or strips `0xAF100100`/`0xAF100300` for one region (or a small
+cluster) and test in-vehicle whether cross-boundary/multi-level route
+planning through that region degrades or fails, while leaving the MID stamp
+and the `0xAF100600` flag reproduced as the confirmed constants above (those
+two are no longer part of the open risk). A cheaper intermediate step, if
+pursued before an in-vehicle test: decode the Ch.10.7/10.8 basic node/link
+records for one of the zero-boundary-node regions with a large
+`0xAF100100` payload and check by hand whether any of its "real" (non-`0x7FFF`)
+16-bit values match a plausible cost/distance between two of that region's
+already-decoded node coordinates — this would upgrade hypothesis 3 from
+"structurally suggestive" to "content-confirmed" without needing a burned
+disc.
+
 ## Decisions / deviations from plan
 
 (record anything that didn't go as expected here)

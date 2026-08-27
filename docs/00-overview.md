@@ -96,7 +96,16 @@ plausible-looking.
   address search.
 - Whether the route-planning "ext" frames (Ch.10.5, vendor-proprietary, 12.7% of all
   route-planning bytes) are required by the head unit's routing firmware to function,
-  or safely omittable — see `docs/phases/01-format-analysis.md`.
+  or safely omittable — **partially resolved 2026-08-27**: the 12-byte "User
+  Identification ID" (confirmed = the disc-build stamp) and one of the four
+  Data-Identification-Code types (a constant 4-byte version flag, `0xAF100600`) are
+  now confirmed safe to reproduce as constants (~0.2% of ext bytes). The other two
+  types — `0xAF100100` (62.1% of ext bytes, present in every region, medium
+  confidence it's a real cost/distance table) and `0xAF100300` (37.7%, level-8-only,
+  weak circumstantial evidence it substitutes for the disc-unused basic
+  "Upper Level Link" subframe) — remain unresolved and are NOT safe to omit without
+  an in-vehicle test. See `docs/phases/01-format-analysis.md`'s dedicated ext-frame
+  census subsection for the full evidence and ranked hypotheses.
 
 ## Decision log
 
@@ -483,3 +492,38 @@ plausible-looking.
     bottleneck remains building genuine multi-level graph contraction across
     many regions with cross-region boundary handling — not attempted yet,
     this prototype covers one standalone region only.
+- 2026-08-27: **Dedicated ext-frame content census, all 1,864 real regions
+  (not a sample).** Full writeup:
+  `docs/phases/01-format-analysis.md`, "Ch.10.5/10.5.1 'ext' frame content
+  census". New script: `parser/analyze_ext_frames.py`. Findings, in
+  confidence order:
+  - **CONFIRMED**: the 12-byte MID ("User Identification ID") field is the
+    same cross-file disc-build stamp already found elsewhere on the disc,
+    byte-identical in all 5,105 populated ext slots. Safe to reproduce as a
+    constant.
+  - **CONFIRMED**: of the 4 distinct "Data Identification Code" values seen
+    (`0xAF100100/0200/0300/0600`), one (`0xAF100600`) is a constant 4-byte
+    flag in literally every one of the 1,864 regions. Safe to reproduce as a
+    constant. Together with the MID finding, this resolves ~0.2% of ext-frame
+    bytes as confirmed-safe stamp/versioning data.
+  - **Correction to the prior "1-2 of 6 slots populated" finding**: every
+    real region populates exactly 2 or 3 of the 6 ext slots, never fewer or
+    more — confirmed disc-wide, not just spot-checked.
+  - **Refuted**: ext-frame presence does not correlate with boundary/frontier
+    regions — all 187 regions with child regions (and all 1,677 without)
+    carry populated ext data equally. The "cross-region boundary link table"
+    theory doesn't hold on this disc.
+  - **Still open, NOT safe to omit**: the other two Data Identification
+    Codes — `0xAF100100` (62.1% of all ext bytes, present in every region,
+    medium-confidence read as a sentinel-filled cost/distance table) and
+    `0xAF100300` (37.7%, level-8-only, weak circumstantial link to the
+    disc-unused basic "Upper Level Link" subframe) — remain functionally
+    unresolved. Together these two hold 99.8% of all ext-frame bytes, so the
+    byte-budget risk is essentially unchanged even though the *field-level*
+    ambiguity is now mostly resolved (2 of 4 codes confirmed, but they're the
+    two smallest).
+  - Confirms the size-budget cross-check from the 2026-08-25 route-planning
+    finding: the four codes' bytes sum to exactly 19,164,296 B, matching that
+    section's population-wide ext total.
+  - No external precedent search (web) was performed this pass — remains a
+    genuinely open avenue, not a source ruled out.
