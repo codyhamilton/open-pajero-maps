@@ -676,3 +676,115 @@ plausible-looking.
     resulting decision to build the from-scratch writer without generating
     these two ext types for now, deferring to in-vehicle testing to see if
     that's tolerated.
+- 2026-08-28: **`IDX/*.IDX` search-index writer landed — 232/232 structural
+  checks byte-identical, including a full scan of all 38,120 street records.**
+  New `parser/kiwiw/index_writer.py` (inverse of `kiwiw/search_frame.py`),
+  harness `parser/roundtrip_idx.py`, regression tests
+  `parser/tests/test_roundtrip_idx.py`. Full detail in
+  `docs/phases/02-roundtrip.md`; summary:
+  - The generic self-describing frame machinery (`DCTF` definition-frame
+    writer + `STFG`-gated Matching Data Record writer) is a single
+    implementation reused unchanged for street name, address-range, and POI
+    records — confirming the read side's "no hardcoded offsets" design also
+    inverts cleanly. Validated: **all 38,120 street records** (full scan, not
+    a sample), the anchor streets GADEN ROAD / GINGIN BROOK ROAD / GINGIN
+    ROAD's address-range records, 2,000 sampled POI records, and all 3
+    BURSWOOD CAR RENTALS POI records — every one byte-identical.
+  - The SWS-halved "Additional ***Address" indirection-table entry (the field
+    that bit the read side badly three times, per the decision-log entry
+    above) round-trips exactly on every entry tested (6 of them, covering
+    both SADSR201.IDX and POISR201.IDX, both the street and the nested
+    address-range frames).
+  - `DFSR` search-frame headers and the 92-byte Detailed Search Info Records
+    (`SRMX`/`SRHA`/`SRT1`) round-trip exactly, using an explicit-known-fields
+    IR with two small undecoded gaps (12 bytes at record offset 4, 12 bytes
+    at offset 48) carried verbatim rather than reinterpreted — same
+    discipline as `COUNTRY.KWI`'s `raw_tail`.
+  - Negative controls confirmed live: perturbing a record's `STID`, a
+    record's `KYCH` name, or a `FieldDef.count` in the definition frame each
+    produce a different rebuild than the original — the passes above are not
+    the harness comparing bytes to themselves.
+  - **What is explicitly NOT attempted**: full-file reassembly of a whole
+    `SADSR*.IDX`/`POISR*.IDX` from scratch. Every check above validates one
+    structural piece against real bytes *at that piece's own byte range* in
+    the existing file; nothing here re-derives *where in the file* a
+    definition frame, matching-data frame, or additional-address entry
+    should itself be placed — that's the disc's file-layout allocation
+    strategy, a materially bigger and separate problem, left open the same
+    way `ALLDATA.KWI` parcel content was left open after the container/mesh
+    layer pass. `ARCD`/`CTGY` *values* remain located-but-not-mapped-to-names
+    (unchanged from the read side) — since nothing here re-interprets them
+    (they pass through as opaque integers in the generic record encoder),
+    this doesn't block round-tripping, only semantic understanding.
+  - One inferred, unvalidated branch flagged honestly rather than silently
+    assumed: `write_frame_ref_entry`'s NUL-pad-to-even-length behavior for an
+    odd-length filename never fires on this disc (both `IDX/SADSR201.IDX`
+    and `IDX/POISR201.IDX` are 16 ASCII bytes, already even) — so that
+    specific code path is unexercised by any real byte on this disc.
+- 2026-08-28: **`ALLDATA.KWI` parcel-content writer landed — 8/8 checks
+  byte-identical across 4 real parcels in 3 different Australian cities.**
+  New `parser/kiwiw/parcel_writer.py` (inverse of `parcel_mgmt.py`/
+  `parcel.py`/`road.py`/`background.py`/`name.py`), harness
+  `parser/roundtrip_parcel_content.py`, regression tests plus 4
+  negative-control tests in `parser/tests/test_roundtrip_parcel_content.py`.
+  Full detail (all findings, confidence levels, and coverage caveats) in
+  `docs/phases/02-roundtrip.md`'s "Parcel content writer" section; summary:
+  - Both structural layers targeted by this pass are now byte-identical on
+    Melbourne Docklands, Sydney Harbour, Sydney/Camellia-Granville, and
+    Perth CBD: the Ch. 6 Parcel Management Record a Block Management Table
+    entry addresses (24928/24832/24832/24640 bytes), and the Ch. 7 Map
+    Frame + road/background/name content a leaf entry points at (28160/
+    51808/81920/55552 bytes; 238/344/587/361 road links; 23/35/31/122
+    background shapes; 82/193/282/241 name records — all byte-identical).
+  - Confirmed (cross-referenced against `tools/kiwiread/kiwiread.c` as
+    ground truth) and named a previously-mysterious field:
+    `struct parman_t.routeoff`, a [D]-encoded pointer into the
+    route-guidance parcel management list (out of scope, preserved
+    verbatim). Also fixed a real read-side bug found while chasing this
+    round-trip: the Name Data Record's `na` field (documented in
+    kiwiread.c as "Size of Minimum Graphics Record") is the authoritative
+    per-record length for every `string_type`, not just some; the old
+    per-type length math for `string_type=4` was 2 bytes short, and the
+    resulting cascading misalignment was the actual cause of the
+    previously-observed phantom "`string_type=0`" records on every real
+    parcel — not a real record kind. `name.py` no longer aborts decoding a
+    name-data-list on an unrecognized `string_type` as a result.
+  - Also discovered and fixed: the Main Map Data Frame Entry (mfde) table's
+    true length is not derivable from any single LMR field
+    (`n_basic_map`/`n_ext_map`/`n_basic_route`/`n_ext_route`) — it is
+    self-describing, ending exactly where the road sub-frame's own content
+    begins. Empirically 20 entries on every one of the 4 tested real
+    parcels (medium confidence — empirically derived, not spec-confirmed;
+    not verified on a parcel with different `n_basic_map`/`n_ext_map`).
+    Two smaller previously-uncaptured real fields also fixed: the Road
+    Data Frame's per-display-class "Display Flag" (kiwiread.c's
+    `dispflag`) and its "Additional Data Management Records" content
+    (table was already captured; the content those offsets point at was
+    not).
+  - Two **medium-confidence, not spec-confirmed** "leftover bytes" findings
+    carried as raw/verbatim rather than modeled: a Block buffer's own
+    declared size consistently runs 8.3–12.5 KB past everything the Parcel
+    Management Record tree reaches (`ParcelMgmtRecord.tail_raw`), and a Map
+    Frame buffer similarly has 6-16 trailing bytes past everything its own
+    structure reaches (`MapFrame.tail_raw`, some fragments looking like
+    stray ASCII text). Both cross-checked against kiwiread.c's own
+    traversal logic (`showbmt()`), which never reads past the same point
+    either — read as disc-mastering artifacts, not parser gaps, but this is
+    an inference ("no known reader reaches it"), not a spec citation.
+  - Negative controls confirmed live: perturbing one byte in a
+    `ParcelMgmtRecord.tail_raw`, a `RoadLink.raw_bytes`, a
+    `NameRecord.raw_bytes`, or a `MapFrame.tail_raw` each correctly breaks
+    the round-trip.
+  - **Coverage caveat, disclosed honestly**: all 4 test points are level 0
+    with identical `n_basic_map=3`/`n_ext_map=9`; the mfde-table-length
+    fallback path (used when no in-buffer offset exists among indices 0-2)
+    is untested on real data; other levels are unexercised. mfde entries
+    beyond index 2 whose offset resolves *outside* the buffer are inferred
+    (not confirmed) to be route-guidance-related content belonging to the
+    sibling route-planning layer, and are correctly left undereferenced —
+    a boundary point worth flagging to whichever agent owns that layer.
+  - This closes the last content-layer gap the 2026-08-25 `ALLDATA.KWI`
+    container/mesh-layer entry above left open ("Parcel content remains
+    untouched"). What's left for Phase 2's stated goal is unchanged:
+    whole-file reassembly of `IDX/*.IDX` (this pass didn't touch that), and
+    actual disc reassembly + in-vehicle testing.

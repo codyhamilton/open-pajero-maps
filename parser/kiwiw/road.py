@@ -22,15 +22,23 @@ def decode_road_frame(buf: bytes, bounds: BoundingBox) -> RoadFrame:
         n_display_classes=ndc,
         n_additional_data=nad,
         route_planning_level=route_planning_level,
+        header_size_raw=u16(buf, 0),
+        lvl_field_raw=lvl_field,
+        frame_size=len(buf),
     )
 
     off = 8
     for _dc in range(ndc):
-        xoff = sws(u16(buf, off))
-        npoly = extract(u16(buf, off + 2), 0, 11)
+        raw_offset_word = u16(buf, off)
+        raw_count_word = u16(buf, off + 2)
+        frame.display_class_table.append((raw_offset_word, raw_count_word))
+        xoff = sws(raw_offset_word)
+        npoly = extract(raw_count_word, 0, 11)
         if xoff != 0xFFFF:
+            frame.display_class_flags[_dc] = bytes(buf[xoff : xoff + 2])
             xoff += 2
             for _j in range(npoly):
+                link_start = xoff
                 hdr = u32(buf, xoff)
                 nnodes = extract(u16(buf, xoff + 4), 0, 10)
                 shape_len = sws(extract(u16(buf, xoff + 6), 0, 11))
@@ -83,15 +91,25 @@ def decode_road_frame(buf: bytes, bounds: BoundingBox) -> RoadFrame:
                         noff += 2
 
                 xoff += sws(extract(hdr, 16, 27))
+                link.raw_offset = link_start
+                link.raw_bytes = buf[link_start:xoff]
                 frame.links.append(link)
         off += 4
 
-    # Additional Data Management Records (7.2.1, [m] entries) -- offsets
-    # and sizes only; kiwiread.c never decodes their content either, and
-    # the Ch. 7.2 sub-tables for "additional data" weren't cross-referenced
-    # in this pass. Not surfaced in the IR beyond skipping past them
-    # correctly (they trail the display-class records in the header).
+    # Additional Data Management Records (7.2.1, [m] entries) -- kiwiread.c
+    # never decodes their content's meaning either, and the Ch. 7.2
+    # sub-tables for "additional data" weren't cross-referenced in this
+    # pass, but real disc data does have non-empty content at the offsets
+    # these entries declare (observed trailing the last polyline, right up
+    # to the frame's own end), so it's captured raw for round-tripping.
     for _i in range(nad):
+        raw_offset_word = u16(buf, off)
+        raw_size_word = u16(buf, off + 2)
+        frame.additional_data_table.append((raw_offset_word, raw_size_word))
         off += 4
+        aoff = sws(raw_offset_word)
+        asize = sws(raw_size_word)
+        if aoff != 0xFFFF and asize:
+            frame.additional_data_raw[_i] = bytes(buf[aoff : aoff + asize])
 
     return frame

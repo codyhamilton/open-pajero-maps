@@ -5,35 +5,49 @@ from __future__ import annotations
 
 from .bitutils import extract, sws, i8, u16, u32
 from .coordconv import decode_region_coord, xy_to_latlon
-from .model import BackgroundFrame, BackgroundShape, BoundingBox
+from .model import BackgroundElement, BackgroundFrame, BackgroundShape, BoundingBox
 from .roadtypes import background_type_label
 
 
 def decode_background_frame(buf: bytes, bounds: BoundingBox) -> BackgroundFrame:
-    hlen = sws(u16(buf, 0))
-    frame = BackgroundFrame()
+    header_size_raw = u16(buf, 0)
+    hlen = sws(header_size_raw)
+    frame = BackgroundFrame(header_size_raw=header_size_raw, frame_size=len(buf))
 
     off = 2
     while off < hlen:
-        poff = sws(u16(buf, off))
-        plen = sws(u16(buf, off + 2))
+        raw_offset_word = u16(buf, off)
+        raw_size_word = u16(buf, off + 2)
+        poff = sws(raw_offset_word)
+        plen = sws(raw_size_word)
         off += 4
         if poff == 0xFFFF:
+            frame.elements.append(BackgroundElement(
+                raw_offset_word=raw_offset_word, raw_size_word=raw_size_word))
             continue
 
-        n = u16(buf, poff)
+        n_raw = u16(buf, poff)
+        n = n_raw
         poff += 2
         counts = []
         shape_classes = []
+        unit_table_raw = []
         for _i in range(n):
-            _boff = sws(u16(buf, poff))
+            boff_word = u16(buf, poff)
             val = u16(buf, poff + 2)
+            unit_table_raw.append((boff_word, val))
             counts.append(extract(val, 0, 11))
             shape_classes.append(extract(val, 14, 15))
             poff += 4
 
+        frame.elements.append(BackgroundElement(
+            raw_offset_word=raw_offset_word, raw_size_word=raw_size_word,
+            n_raw=n_raw, unit_table_raw=unit_table_raw,
+        ))
+
         for i in range(n):
             for _j in range(counts[i]):
+                shape_start = poff
                 hdr = u16(buf, poff)
                 flag = u16(buf, poff + 2)
                 code = u16(buf, poff + 4)
@@ -72,7 +86,9 @@ def decode_background_frame(buf: bytes, bounds: BoundingBox) -> BackgroundFrame:
                         lat, lon = xy_to_latlon(xc, yc, bounds)
                         shape.coords.append((lat, lon))
 
-                frame.shapes.append(shape)
                 poff += rec_len
+                shape.raw_offset = shape_start
+                shape.raw_bytes = buf[shape_start:poff]
+                frame.shapes.append(shape)
 
     return frame

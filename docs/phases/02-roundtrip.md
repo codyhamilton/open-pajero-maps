@@ -5,14 +5,19 @@ Prove format understanding by re-serializing the parsed intermediate representat
 back into byte-identical (or documented-diff-only) files, then burning and testing
 that regenerated-but-unchanged disc in the vehicle.
 
-## Status: small files 7/7 byte-identical; ALLDATA.KWI container/mesh layer 3/3 byte-identical (2026-08-25)
+## Status: small files 7/7 byte-identical; ALLDATA.KWI container/mesh layer 3/3 byte-identical; IDX search-index structural writer 232/232 checks byte-identical; parcel content writer 8/8 checks byte-identical (2026-08-28)
 
-Two things have landed since this doc's first section was written, both
+Three things have landed since this doc's first section was written, all
 further down: the `SPEC.KWI`/`METADATA.KWI` whitespace fix (small files now
-7/7), and a writer for `ALLDATA.KWI`'s volume-header/LMR/BSMR/BMT layer
+7/7), a writer for `ALLDATA.KWI`'s volume-header/LMR/BSMR/BMT layer
 (3/3 regions, 25,184 bytes, byte-identical — see "ALLDATA.KWI container
-/mesh layer: byte-identical"). Parcel content (roads, background, names)
-still has no writer and is not claimed.
+/mesh layer: byte-identical"), and — the last remaining structural gap
+this note used to flag — a writer for parcel *content* itself: the Ch. 6
+Parcel Management Record a Block Management Table entry addresses, and the
+Ch. 7 Map Frame (header + mfde table + road/background/name sub-frames) a
+leaf entry of that record points at. See "Parcel content writer: 8/8
+checks byte-identical" below. Whole-disc reassembly and in-vehicle testing
+remain outstanding regardless (see "Not started yet").
 
 ## Status: 7/7 small metadata files byte-identical (2026-08-25 update — see below)
 
@@ -330,19 +335,332 @@ non-zero:
    (Data Volume, Management Header Table, PDMDH+LMR+BSMR+BMT) are
    byte-identical. Parcel content remains untouched, with a staged plan for
    it in that section's "next steps".
-3. Attempt a writer for the simplest `IDX/*.IDX` structure once the above
+3. ~~Attempt a writer for the simplest `IDX/*.IDX` structure once the above
    main-map work de-risks the general "write what you've verbatim-preserved"
    approach — likely the `DCTF` definition frame or a single fixed-shape
-   record type, not the full self-describing chain.
+   record type, not the full self-describing chain.~~ **Done, at the
+   structural-piece level** — see "`IDX/*.IDX` search-index structural
+   writer: 232/232 checks byte-identical" below: the full self-describing
+   chain (definition frames, matching records of every kind, DFSR headers,
+   Detailed Search Info Records, additional-address entries) round-trips
+   exactly against real bytes, well beyond "just the DCTF frame." Whole-file
+   reassembly (re-deriving *where* each piece lives in a from-scratch file)
+   remains outstanding — see that section's "explicitly NOT attempted."
 4. Only after real (not just plausible) round-trip success on a
    representative main-map and index-chain sample should an actual disc
    image be reassembled and burned for in-vehicle testing, per the original
    phase goal.
 
+## `IDX/*.IDX` search-index structural writer: 232/232 checks byte-identical (2026-08-28)
+
+Third Phase 2 pass, resolving "what remains" item 3 below (partially --
+see "explicitly not attempted" at the end of this section for the honest
+scope boundary). Target: the `IDX/*.IDX` search-index chain
+(`kiwiw/search_frame.py`), whose read side was already solved end-to-end as
+of 2026-08-25 (see `docs/00-overview.md`'s decision log,
+"Address/POI search chain SOLVED end-to-end").
+
+New code: `parser/kiwiw/index_writer.py` (inverse of `kiwiw/search_frame.py`),
+harness `parser/roundtrip_idx.py`, regression tests
+`parser/tests/test_roundtrip_idx.py`. `search_frame.py`/`index_data.py`
+themselves were not modified -- all new logic lives in `index_writer.py`.
+
+### Result
+
+Run against the real mounted disc (`/run/media/codyh/464210-8480`):
+
+```
+232/232 checks passed
+```
+
+covering, per `parser/roundtrip_idx.py`'s output:
+
+- **DFSR search-frame headers**: SADSR201.IDX's top-level header and its
+  nested address-range (SRT1) header, both byte-identical.
+- **92-byte Detailed Search Info Records** (`SRMX` street search, `SRHA`
+  city selection, `SRT1` address range, and POISR201.IDX's POI record):
+  4/4 byte-identical.
+- **SWS-halved "Additional \*\*\*Address" indirection-table entries**: 6/6
+  byte-identical, across both files and both the top-level and nested
+  frames -- this is the exact field that "bit us badly" on the read side
+  (see module docstrings in `index_data.py`/`search_frame.py`); getting the
+  halving direction right on write was the one place most likely to repeat
+  that mistake, and it didn't.
+- **`DCTF` Matching Data Definition Frames**: 3/3 byte-identical (street
+  records' 15-field frame, address-range records' 13-field frame, POI
+  records' 19-field frame).
+- **Matching Data Records -- the generic, highest-leverage piece**:
+  - **All 38,120 Street Name Search records in SADSR201.IDX** (full scan,
+    not a sample) round-trip byte-identical.
+  - Address-range records for **~85 sampled streets plus the three named
+    anchor streets** (GADEN ROAD: 1 record, GINGIN BROOK ROAD: 6 records,
+    GINGIN ROAD: 25 records) -- every one byte-identical.
+  - **2,000 sampled POI records in POISR201.IDX**, plus **all 3** records
+    matching **BURSWOOD CAR RENTALS** -- every one byte-identical.
+- **Negative controls** (all confirmed to actually change the output,
+  i.e. the passes above are not the harness comparing bytes to itself):
+  perturbing a street record's `STID`, perturbing a street record's `KYCH`
+  name, and perturbing one `FieldDef.count` in a definition frame each
+  produce different bytes than the unperturbed rebuild.
+
+### Design: one generic record writer, reused for every frame kind
+
+The read side's key insight -- every index file is self-describing via its
+`DCTF` definition frame plus each record's own `STFG` presence bitmap -- is
+exactly what makes the writer cheap: `index_writer.write_matching_record()`
+takes the dict `search_frame.parse_matching_record()` produces plus the
+frame's `FieldDef` list and re-emits the record, with **no per-frame-kind
+special-casing**. The same function, unmodified, produced byte-identical
+output for street records (`STFG=7f 00`), address-range records
+(`STFG=07`), and POI records (`STFG` varying per record, including the
+degenerate representative rows). This directly confirms the read side's
+"no hardcoded offsets" design inverts as cleanly as it decodes.
+
+Two format details the write direction had to get exactly right that a
+read-only parser could take for granted:
+
+1. **Nibble-packed `UH` fields** (`NXKD`/`NXFN`, `RPNK`/`RPNF`) must be
+   written back in adjacent pairs sharing one byte. A small `_BitWriter`
+   (mirroring `search_frame._BitReader`) raises loudly if a nibble is left
+   unpaired when a byte-aligned field is written or the record ends,
+   rather than silently dropping it.
+2. **Trailing pad-to-even-length byte.** Every real record sampled (street
+   and address-range alike) has a gap between the end of its last decoded
+   field and its declared length (`NFRL`, doubled) of either 0 or exactly
+   one zero byte -- CONFIRMED empirically across the whole 38,120-record
+   street scan plus every sampled address-range record. The writer applies
+   this as a flat rule ("pad to even length") rather than trusting the
+   stored `NFRL` value to derive padding length, and it held with zero
+   exceptions.
+
+### The SWS-halved indirection entry, the read side's known trap
+
+`index_writer.write_frame_ref_entry()` is the inverse of
+`search_frame._resolve_frame_ref()` / `index_data._resolve_additional_address()`
+-- the little `[4B halved absolute file offset][2B halved name length]
+[name]` struct that a previous read-side pass got backwards (using the
+offset raw instead of halved) and lost three investigation passes to. The
+writer halves the real offset back down (`file_offset // 2`) and raises if
+given an odd offset, mirroring `bitutils.unsws()`'s discipline. All 6 real
+entries tested (both files, both nesting levels) round-trip exactly.
+
+One branch is flagged rather than silently trusted: the function pads an
+odd-length filename with one NUL to keep the halved length field integral.
+Every filename actually observed on this disc (`IDX/SADSR201.IDX`,
+`IDX/POISR201.IDX`) is 16 ASCII bytes, already even -- so that padding
+branch has **never been exercised against a real byte** and is documented
+as UNVALIDATED in the docstring, not claimed as confirmed.
+
+### The Detailed Search Info Record: explicit fields + verbatim gaps
+
+`DetailedSearchInfoRaw` captures the 92-byte record as raw stored field
+values at every offset the read side's `parse_detailed_search_info()`
+decodes (record-relative sws32-encoded pointers, not resolved through the
+indirection above) plus two small gaps that are read but never decoded --
+12 bytes at record offset 4, and 12 bytes at offset 48 -- carried as
+verbatim hex, per the `COUNTRY.KWI` lesson from the earlier round-trip
+pass: don't force an unread/unmapped region through a lossy
+reinterpretation, replay it exactly. All 4 real records tested (SRMX, SRHA,
+and the nested SRT1, plus POISR201.IDX's own SRMX) round-trip exactly,
+which also confirms the offset map (`category_definition_raw` at +16,
+`matching_data_definition_raw` at +60, etc.) is correct -- a wrong offset
+would have silently shifted a decoded value into a "gap" and failed the
+byte-diff rather than being hidden by symmetrically re-deriving the same
+wrong value.
+
+### Explicitly NOT attempted
+
+**Full-file reassembly of a whole `SADSR*.IDX`/`POISR*.IDX` from scratch.**
+Every check in this pass validates one structural piece (a definition
+frame, a matching record, a DFSR header, a Detailed Search Info Record, an
+additional-address entry) against real bytes **at that piece's own byte
+range in the existing file** -- i.e. it proves "given where this thing
+already lives in the file, here are its exact bytes," not "here is where
+this thing should live in a from-scratch build." Nothing here re-derives:
+
+- where in the file each `DCTF` definition frame, matching-data frame, or
+  category table should itself be placed;
+- how the disc allocates/orders the additional-address indirection tables
+  relative to the records that point at them;
+- the category definition/data frames (`category_definition`/
+  `category_data` in `DetailedSearchInfoRaw`) -- these are resolved and
+  round-tripped as opaque pointer values, but their pointed-at *content*
+  (the category table itself) was never parsed or written.
+
+This is the disc's file-layout allocation strategy -- a materially bigger,
+separate problem from decoding the self-describing record format, and is
+left open here exactly the way `ALLDATA.KWI`'s parcel content was left open
+after the container/mesh-layer pass (see that section above). `ARCD`/`CTGY`
+*values* remain located-but-not-mapped-to-names, unchanged from the read
+side's confidence grading -- since the generic record writer passes them
+through as opaque integers rather than reinterpreting them, this doesn't
+block round-tripping, only semantic understanding of what a given category
+code means.
+
+### What this changes in "what remains"
+
+Item 3 of the original "what remains before Phase 2 can be considered
+complete" list (below) is **partially done**: a writer for the
+self-describing frame machinery, matching records, DFSR headers, Detailed
+Search Info Records, and additional-address entries is built and validated
+byte-for-byte against real SADSR201.IDX/POISR201.IDX data, including the
+specific anchor records named in the original ask (GADEN ROAD / GINGIN
+BROOK ROAD / GINGIN ROAD streets, BURSWOOD CAR RENTALS POI) plus a broad
+sample (all 38,120 street records, ~85+ sampled streets' address ranges,
+2,000 POI records). What remains outstanding for that item is whole-file
+reassembly (see "explicitly NOT attempted" above), which was out of scope
+for this pass and is a separate, larger undertaking. Item 4 (disc
+reassembly/in-vehicle testing) is unaffected and still outstanding.
+
+## Parcel content writer: 8/8 checks byte-identical (2026-08-28)
+
+Fourth Phase 2 pass, resolving "what remains" items 2-3 above (the
+Parcel Management Record layer and the Map Frame + road/background/name
+content layer). Target: `parser/kiwiw/parcel_writer.py` (new),
+`parser/roundtrip_parcel_content.py` (new harness), and
+`parser/tests/test_roundtrip_parcel_content.py` (new pytest wrapper).
+
+### Result
+
+For all 4 real, known-good test coordinates reused from `test_mesh.py`
+(Melbourne Docklands, Sydney Harbour, Sydney/Camellia-Granville, Perth
+CBD — spanning 3 different Australian cities), both the Block's Parcel
+Management Record and the leaf parcel's full Map Frame (header + mfde
+table + road + background + name content) round-trip byte-identical:
+
+```
+-- Melbourne (Docklands) (-37.813629, 144.963058), block dsa=1115153 size=779 --
+  PASS  block record: byte-identical (24928 bytes)
+  PASS  parcel @ sector 27441950: byte-identical (28160 bytes, 238 road links, 23 bg shapes, 82 names)
+-- Sydney Harbour (-33.86882, 151.20929), block dsa=1603084 size=776 --
+  PASS  block record: byte-identical (24832 bytes)
+  PASS  parcel @ sector 40009749: byte-identical (51808 bytes, 344 road links, 35 bg shapes, 193 names)
+-- Sydney (Camellia/Granville) (-33.8148, 151.0011), block dsa=1603084 size=776 --
+  PASS  block record: byte-identical (24832 bytes)
+  PASS  parcel @ sector 40112702: byte-identical (81920 bytes, 587 road links, 31 bg shapes, 282 names)
+-- Perth CBD (-31.95312, 115.86719), block dsa=1353743 size=770 --
+  PASS  block record: byte-identical (24640 bytes)
+  PASS  parcel @ sector 44232977: byte-identical (55552 bytes, 361 road links, 122 bg shapes, 241 names)
+
+8/8 parcel-content round-trip checks byte-identical (0 skipped)
+```
+
+`parser/tests/test_roundtrip_parcel_content.py` also includes four
+negative-control tests (perturb one byte inside a
+`ParcelMgmtRecord.tail_raw`, a `RoadLink.raw_bytes`, a
+`NameRecord.raw_bytes`, and a `MapFrame.tail_raw`, and confirm the
+round-trip check correctly fails) — all 4 pass, confirming these fields
+are actually load-bearing in the writer rather than dead weight.
+
+### Findings, with confidence levels
+
+1. **Parcel Management Record `routeoff` field (high confidence, spec-named).**
+   The 2-byte gap between a Parcel Management Record's type word and its
+   mapinfo array (previously an unexplained `header_gap_raw`) is
+   `kiwiread.c`'s own `struct parman_t.routeoff` field: a [D]-encoded
+   offset into a route-guidance parcel management list. Its target
+   content is out of this task's scope (route-planning layer), but the
+   field itself is now named and its bytes are preserved verbatim either
+   way.
+2. **Block-buffer trailing bytes (`ParcelMgmtRecord.tail_raw`) — medium
+   confidence, plausible but not spec-confirmed.** A Block Management
+   Table entry's declared size is consistently larger (8.3–12.5 KB more,
+   across all 4 test points: 24928/24832/24832/24640 bytes vs. what the
+   record tree itself reaches) than everything the recursive
+   `ParcelMgmtRecord` structure reaches. Cross-checked against
+   `kiwiread.c`'s `showbmt()`: the reference tool's own traversal never
+   reads past the same point either. Read as reserved/leftover disc space
+   (plausibly a mastering artifact) rather than an undecoded structure,
+   but this is an inference from "no known reader reaches it," not a
+   spec citation — a real structure here can't be ruled out. Preserved
+   byte-for-byte regardless.
+3. **Name Data Record length is `na`-derived, not `string_type`-derived
+   (high confidence, spec-documented).** The `na` field (offset 0, bits
+   0:11, [SWS]-encoded) is `kiwiread.c`'s own commented "Size of Minimum
+   Graphics Record" — it gives a Name Data Record's total byte length
+   directly, for every `string_type`. The previously-observed mystery
+   `string_type=0` records on every real parcel were a decode-alignment
+   bug, not a real record kind: the old per-type manual length
+   computation for `string_type=4` (Linear-B) was 2 bytes short,
+   cascading misalignment into every subsequent record in that list.
+   Fixed by making record-boundary derivation `na`-based unconditionally;
+   verified end-to-end on a 76-record real name-data-list (Melbourne)
+   with zero anomalies. A side effect: an unrecognized `string_type` no
+   longer aborts decoding of the rest of the list (record boundaries are
+   now known regardless of whether the type's content is understood).
+4. **Main Map Data Frame Entry (mfde) table length is self-describing, not
+   derivable from any single LMR field — medium confidence, empirically
+   derived, not spec-confirmed.** Neither `n_basic_map` (always 3 on this
+   disc), nor `n_basic_map + n_ext_map` (3+9=12), nor all four LMR
+   "numbers" nibbles combined (14) account for the table's true length.
+   Empirically, on every one of the 4 tested real parcels the table runs
+   to **exactly 20 entries**, ending precisely where the road sub-frame's
+   own content begins with no gap. `kiwiread.c`'s `showmap()` never reads
+   past index `n_basic_map` in its own loop, so it offers no ground truth
+   on the true length either. Fixed by deriving the table length directly
+   from the data: `(min in-buffer offset among indices 0-2 − de_off) // 6`,
+   falling back to `n_basic_map + n_ext_map` only if none of road/
+   background/name has an in-buffer offset (this fallback path is
+   **untested on real data** — all 4 test parcels took the primary path).
+   Whether 20 is a true disc-wide constant or coincidental across just
+   these 4 points (all level 0, all `n_basic_map=3`/`n_ext_map=9`) is not
+   confirmed.
+5. **mfde entries beyond index 2 — two kinds, distinguished by whether
+   their offset resolves in-buffer.** In-buffer ones are captured raw as
+   "Extended Data Frame" content (`MapFrame.ext_frame_raw`); ones whose
+   `sws()`-decoded offset is far larger than the buffer (looking like an
+   absolute disc sector address rather than an in-buffer `[D]` offset)
+   are preserved as table entries only, with no content dereferenced.
+   Read as route-guidance-related content belonging to the sibling
+   route-planning layer (out of this task's scope per the forbidden-files
+   boundary) — this is an inference from the numeric magnitude of the
+   values and the scope boundary, **not a confirmed cross-reference**
+   against route-planning code.
+6. **Road Data Frame "Display Flag" (high confidence, spec-documented).**
+   A 2-byte field `kiwiread.c`'s `dumproad()` reads (`dispflag`)
+   immediately before each display class's polyline list, previously
+   skipped by `road.py`. Fixed via `RoadFrame.display_class_flags`.
+7. **Road Data Frame "Additional Data Management Records" content (high
+   confidence, content presence confirmed on real data, semantics not
+   decoded).** The offset/size table (7.2.1) was already captured; the
+   content those offsets point at (trailing the last polyline, up to the
+   road frame's own end) was not. Fixed via `RoadFrame.additional_data_raw`
+   — captured and round-tripped verbatim, meaning not interpreted.
+8. **Map Frame buffer trailing bytes (`MapFrame.tail_raw`) — medium
+   confidence, same caveat as finding 2.** Analogous leftover region (6-16
+   bytes observed, some ASCII-looking fragments like "...REET"/"...RANT")
+   beyond everything the Map Frame's own structure reaches. Same
+   "no known reader reaches it" inference as the block-buffer tail; not
+   spec-confirmed as a mastering artifact vs. an unrecognized structure.
+
+### Coverage and honest gaps
+
+All 4 test points are level 0 (`n_basic_map=3`, `n_ext_map=9` on every one
+of the 7 levels checked; `n_basic_route` nonzero only on levels 0/2, never
+exercised by decoding). Not yet validated:
+- the mfde-table-length fallback path (no test point needed it);
+- whether the 20-entry table length holds on parcels with a different
+  `n_basic_map`/`n_ext_map` combination (none observed on this disc so
+  far, but not exhaustively surveyed);
+- levels other than 0.
+
+### What this changes in "what remains"
+
+Items 2 and 3 of the original "what remains" list (Map Frame header/mfde
+table, then road/background/name frame writers) are now **done** at the
+level tested (4 real parcels, both structural layers). Item 4 (disc
+reassembly, in-vehicle testing) is unaffected and still the only thing
+outstanding for Phase 2's stated goal.
+
 ## Not started yet (unchanged from before this pass)
 
-Full `ALLDATA.KWI` and `IDX/*.IDX` round-trip, disc reassembly, and
-in-vehicle testing of a regenerated-but-unchanged disc.
+Whole-file reassembly of `IDX/*.IDX` files (as opposed to the
+structural-piece-level writer above), disc reassembly, and in-vehicle
+testing of a regenerated-but-unchanged disc. Full `ALLDATA.KWI`
+parcel-content round-trip (the item this line used to flag as
+not-started) is now done — see "Parcel content writer: 8/8 checks
+byte-identical" above — though only at the coverage described in that
+section's "Coverage and honest gaps."
 
 ## Update: SPEC.KWI/METADATA.KWI whitespace loss fixed (2026-08-25)
 
