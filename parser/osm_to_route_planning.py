@@ -46,9 +46,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from kiwiw.bitutils import u8, u16, u24, u32, extract, geo_secs
-from kiwiw.route_planning import parse_rp_frame, BASIC_MGMT_FIELDS
+from kiwiw.route_planning import parse_rp_frame, parse_node_table, parse_road_reference_table, BASIC_MGMT_FIELDS
 from kiwiw.route_planning_writer import (
-    RpGraph, RpNode, RpLink, RpLinkCost,
+    RpGraph, RpNode, RpLink, RpLinkCost, RpAggregatedNode,
     write_node_record, write_link_record, write_regulation_record,
     write_between_links_cost_record, write_link_cost_header,
     write_link_cost_record, write_node_coord_header,
@@ -117,8 +117,8 @@ def encode_rp_frame(graph: RpGraph) -> bytes:
         # not padded.
         node_recs += write_node_record(
             is_boundary=node.is_boundary,
-            uppermost_identical_level=0,
-            is_aggregated=False,
+            uppermost_identical_level=(node.uppermost_identical_level // 2) if node.uppermost_identical_level else 0,
+            is_aggregated=node.is_aggregated,
             n_link_records=(14 if undecided else n_link_recs),
             is_parcel_boundary=False,
             has_traffic_light=False,
@@ -189,7 +189,8 @@ def encode_rp_frame(graph: RpGraph) -> bytes:
     )
     node_coord_subframe = nc_header + ref_grid + bytes(node_coord_recs)
 
-    road_ref_subframe = write_road_reference_table(0)
+    aggregated_nodes = [graph.aggregated[i] for i in sorted(graph.aggregated)]
+    road_ref_subframe = write_road_reference_table(aggregated_nodes)
 
     subframes = {
         "node": node_subframe,
@@ -393,12 +394,59 @@ def round_trip_check(graph: RpGraph, buf: bytes, n_basic: int = 9, n_ext: int = 
         if rec["grid_record_number"] != 0:
             problems.append(f"node_coord {i}: grid_record_number != 0")
 
+    # -- road reference table (Ch.10.13 aggregated-intersection clustering)
+    # -- decode with the SHARED kiwiw.route_planning decoder (not a local
+    # mirror like the record decoders above), since that is the module
+    # this project treats as the canonical Ch.10.13 reader.
+    road_ref_sub = rf.sub("road_ref")
+    node_records = None
+    if node_sub is not None and nh is not None:
+        try:
+            node_records = parse_node_table(buf, node_sub, nh)
+        except Exception as e:
+            problems.append(f"road_ref: node table re-decode failed: {e}")
+    decoded_aggregated = 0
+    if road_ref_sub is not None:
+        try:
+            aggs = parse_road_reference_table(buf, road_ref_sub, node_records)
+        except Exception as e:
+            problems.append(f"road_ref: decode failed: {e}")
+            aggs = []
+        decoded_aggregated = len(aggs)
+        if len(aggs) != len(graph.aggregated):
+            problems.append(
+                f"road_ref: decoded {len(aggs)} aggregated node records, "
+                f"graph has {len(graph.aggregated)}"
+            )
+        want_node_numbers = sorted(graph.aggregated)
+        got_node_numbers = [a.node_number for a in aggs]
+        if got_node_numbers != want_node_numbers:
+            problems.append(
+                f"road_ref: node_number sequence {got_node_numbers} != "
+                f"expected {want_node_numbers}"
+            )
+        for a in aggs:
+            want = graph.aggregated.get(a.node_number)
+            if want is None:
+                continue
+            if a.n_composition_links != len(want.composition_link_cost_numbers):
+                problems.append(f"road_ref node {a.node_number}: n_composition_links mismatch")
+            if a.n_subordinate_nodes != len(want.subordinate_node_offsets):
+                problems.append(f"road_ref node {a.node_number}: n_subordinate_nodes mismatch")
+            if a.composition_link_cost_numbers != want.composition_link_cost_numbers:
+                problems.append(f"road_ref node {a.node_number}: composition_link_cost_numbers mismatch")
+            if a.subordinate_node_offsets != want.subordinate_node_offsets:
+                problems.append(f"road_ref node {a.node_number}: subordinate_node_offsets mismatch")
+            if a.subordinate_node_order_by_link != want.subordinate_node_order_by_link:
+                problems.append(f"road_ref node {a.node_number}: subordinate_node_order_by_link mismatch")
+
     return {
         "problems": problems,
         "header_n_nodes": nh.n_nodes if nh else None,
         "header_n_links": nh.n_links if nh else None,
         "decoded_total_links": decoded_total_links,
         "decoded_total_regs": decoded_total_regs,
+        "decoded_aggregated": decoded_aggregated,
         "subframes": {s.name: (s.offset, s.size) for s in rf.basic},
         "buf_len": len(buf),
     }

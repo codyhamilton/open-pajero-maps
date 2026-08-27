@@ -56,11 +56,38 @@ assumed away):
     carries a region number, and there is no upper-level node/link table
     (matching the real disc's own near-zero population of upper_link /
     statistical_cost, per the phase-1 byte-population breakdown).
-  - Aggregated-intersection clustering (Road Reference Table, 10.13) is
-    not implemented; written with count=0 (a spec-legal empty case).
   - Link-cost "Link ID Number" (10.10.2 items 1-2) is synthetic
     (sequential), since no main-map link writer exists in this repo yet
     to cross-reference a real one.
+
+AGGREGATED-INTERSECTION CLUSTERING (Road Reference Table, 10.13):
+implemented as of 2026-08-27, following a real-disc survey
+(``survey_road_reference_table.py``) that found the table populated on
+89.6% of real regions (see docs/phases/01-format-analysis.md and
+docs/phases/03-osm-pipeline.md for the full measurement). Two candidate
+groups of OSM nodes are merged into one routing node each:
+  1. **Roundabouts**: every graph node lying on an OSM
+     ``junction=roundabout``/``circular`` way is merged into one node.
+  2. **Short internal links**: any two non-boundary graph nodes joined by
+     a link shorter than ``SHORT_LINK_THRESHOLD_M`` are merged (connected
+     components across the whole graph) -- intended to catch dual-
+     carriageway splits/joins and other tightly-coupled simple
+     intersections, which the real disc's own median of 2 composition
+     links / 1 subordinate node per aggregated record suggests is the
+     dominant real-world case.
+This is a best-effort, OSM-side heuristic -- there is no way to check it
+node-for-node against real disc "ground truth" (the real disc's own
+node/link contraction is independent of any specific OSM extract). It is
+only structurally validated: the written Road Reference Table round-trips
+through ``route_planning.parse_road_reference_table`` and produces
+records shaped like the real disc's own (envelope fields, composition-
+link/subordinate-node arrays; see that function's docstring for the
+byte-layout confidence breakdown). Cluster size is capped at 1
+representative + 5 subordinates (matching the real disc's observed max of
+5 subordinate nodes); larger candidate groups (e.g. big roundabouts) keep
+only the highest-degree node plus its 5 nearest members and leave the
+rest as ordinary standalone nodes -- a deliberate simplification, not a
+discovered structural limit.
 """
 from __future__ import annotations
 
@@ -71,7 +98,17 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from kiwiw.route_planning_writer import RpGraph, RpNode, RpLink, RpLinkCost
+from kiwiw.route_planning_writer import RpGraph, RpNode, RpLink, RpLinkCost, RpAggregatedNode
+
+# Links shorter than this (metres) are treated as candidates for
+# aggregated-intersection clustering -- see module docstring
+# "AGGREGATED-INTERSECTION CLUSTERING" above.
+SHORT_LINK_THRESHOLD_M = 20.0
+
+# Cap on total members (representative + subordinates) per cluster --
+# matches the real disc's observed max of 5 subordinate nodes (see
+# survey_road_reference_table.py).
+MAX_CLUSTER_MEMBERS = 6
 
 DEFAULT_PBF = str(
     Path.home() / "workspace" / "open-pajero-maps" / "australia-260824.osm.pbf"
@@ -164,6 +201,7 @@ class _WayCollector:
             "coords": coords,
             "highway": hw,
             "oneway": oneway,
+            "junction": w.tags.get("junction"),
         })
         for nid, _, _ in coords:
             self.node_ids.add(nid)
@@ -239,6 +277,191 @@ def _build_graph_topology(ways: list[dict]):
                     })
                 chain = [(nid, lat, lon)]
     return node_coord, refcount, segments
+
+
+def _roundabout_node_groups(ways: list[dict], node_index: dict[int, int]) -> list[set[int]]:
+    """Graph-node-index groups for each OSM ``junction=roundabout``/
+    ``circular`` way -- see module docstring."""
+    groups = []
+    for w in ways:
+        if w.get("junction") not in ("roundabout", "circular"):
+            continue
+        idxs = {node_index[nid] for nid, _, _ in w["coords"] if nid in node_index}
+        if len(idxs) >= 2:
+            groups.append(idxs)
+    return groups
+
+
+def cluster_nodes(graph: RpGraph, roundabout_groups: list[set[int]]) -> None:
+    """Merge groups of graph nodes representing one physical intersection
+    into single nodes (Ch.10.13 aggregated-intersection clustering -- see
+    module docstring). Mutates ``graph`` in place: ``graph.nodes`` shrinks
+    to one entry per cluster/unclustered node, all ``RpLink.adjacent_node``
+    and ``RpLinkCost.connected_node`` references are remapped, and
+    ``graph.aggregated`` is populated with one ``RpAggregatedNode`` per
+    cluster, keyed by the surviving (representative) node's new index.
+    """
+    n = len(graph.nodes)
+    if n == 0:
+        return
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[ra] = rb
+
+    for group in roundabout_groups:
+        idxs = [i for i in group if i < n]
+        for k in idxs[1:]:
+            union(idxs[0], k)
+
+    for i, node in enumerate(graph.nodes):
+        if node.is_boundary:
+            continue
+        for link in node.links:
+            j = link.adjacent_node
+            if j == i or graph.nodes[j].is_boundary:
+                continue
+            cost = graph.link_costs[link.link_cost_index]
+            if cost.length_m <= SHORT_LINK_THRESHOLD_M:
+                union(i, j)
+
+    from collections import defaultdict
+    raw_groups: dict[int, list[int]] = defaultdict(list)
+    for i in range(n):
+        raw_groups[find(i)].append(i)
+    clusters = [sorted(g) for g in raw_groups.values() if len(g) >= 2]
+    if not clusters:
+        return
+
+    old_to_new: dict[int, int] = {}
+    new_nodes: list[RpNode] = []
+    new_aggregated: dict[int, RpAggregatedNode] = {}
+    clustered_members: dict[int, list[int]] = {}  # new index -> old member indices (rep first)
+
+    clustered_old_ids = {i for c in clusters for i in c}
+    for old_i, node in enumerate(graph.nodes):
+        if old_i in clustered_old_ids:
+            continue
+        old_to_new[old_i] = len(new_nodes)
+        new_nodes.append(node)
+
+    for cluster in clusters:
+        members = sorted(cluster, key=lambda i: -len(graph.nodes[i].links))
+        kept = members[:MAX_CLUSTER_MEMBERS]
+        overflow = members[MAX_CLUSTER_MEMBERS:]
+        rep_old = kept[0]
+        new_idx = len(new_nodes)
+        rep_node = graph.nodes[rep_old]
+        merged = RpNode(
+            lat=rep_node.lat, lon=rep_node.lon, is_boundary=False,
+            rank=rep_node.rank, links=[], is_aggregated=len(kept) >= 2,
+        )
+        new_nodes.append(merged)
+        for i in kept:
+            old_to_new[i] = new_idx
+        clustered_members[new_idx] = kept
+        # Overflow members (beyond the cluster-size cap) become ordinary
+        # standalone nodes, unmodified.
+        for i in overflow:
+            old_to_new[i] = len(new_nodes)
+            new_nodes.append(graph.nodes[i])
+
+    # Second pass: remap every link's adjacent_node and every link-cost's
+    # connected_node, and (for cluster representatives) collect external
+    # links + internal composition links.
+    for new_idx, kept in clustered_members.items():
+        member_set = set(kept)
+        merged = new_nodes[new_idx]
+        seen_cost: set[int] = set()
+        composition_cost_idxs: list[int] = []
+        # external: (origin order within `kept`, old_i, old_local_idx, link)
+        external: list[tuple[int, int, int, RpLink]] = []
+        for order, old_i in enumerate(kept):
+            for old_local_idx, link in enumerate(graph.nodes[old_i].links):
+                if link.adjacent_node in member_set:
+                    if link.link_cost_index not in seen_cost:
+                        seen_cost.add(link.link_cost_index)
+                        composition_cost_idxs.append(link.link_cost_index)
+                    continue
+                external.append((order, old_i, old_local_idx, link))
+        composition_cost_idxs = composition_cost_idxs[:15]
+
+        subs_old = kept[1:]
+        rep_lat, rep_lon = graph.nodes[kept[0]].lat, graph.nodes[kept[0]].lon
+        offsets = []
+        for i in subs_old:
+            dlat_m = (graph.nodes[i].lat - rep_lat) * 111320.0
+            dlon_m = (graph.nodes[i].lon - rep_lon) * 111320.0 * math.cos(math.radians(rep_lat))
+            dy = int(max(-127, min(127, round(dlat_m))))
+            dx = int(max(-127, min(127, round(dlon_m))))
+            offsets.append((dx, dy))
+
+        # old (old_i, old_local_idx) -> new local index in merged.links,
+        # needed to remap between-links regulations (which reference the
+        # *same node's* own local link numbering) after the merge changes
+        # that numbering.
+        old_local_to_new_local: dict[tuple[int, int], int] = {
+            (old_i, old_local_idx): new_local
+            for new_local, (_, old_i, old_local_idx, _) in enumerate(external)
+        }
+
+        order_by_link = []
+        for order, old_i, _old_local_idx, link in external:
+            remapped_regs = []
+            for exit_no, passage_code in link.regulations:
+                if exit_no is None:
+                    remapped_regs.append((None, passage_code))
+                    continue
+                new_exit = old_local_to_new_local.get((old_i, exit_no))
+                if new_exit is not None:
+                    remapped_regs.append((new_exit, passage_code))
+                # else: the exit link was merged away as an internal
+                # composition link -- this regulation can no longer be
+                # expressed post-merge, so it is dropped (documented
+                # simplification; regulations are already a rare/simple-
+                # case-only feature in this prototype).
+            new_link = RpLink(
+                adjacent_node=old_to_new[link.adjacent_node],
+                link_cost_index=link.link_cost_index,
+                forward_direction=link.forward_direction,
+                angle_deg=link.angle_deg,
+                following_same_road=None,
+                road_class=link.road_class,
+                regulations=remapped_regs,
+            )
+            merged.links.append(new_link)
+            order_by_link.append(order)
+
+        if len(kept) >= 2:
+            new_aggregated[new_idx] = RpAggregatedNode(
+                node_number=new_idx,
+                subordinate_node_order_by_link=order_by_link,
+                composition_link_cost_numbers=composition_cost_idxs,
+                subordinate_node_offsets=offsets,
+                route_info=[],
+            )
+
+    # Remap links on every *unclustered* node (clustered nodes' own links
+    # were already rebuilt above).
+    for new_idx, node in enumerate(new_nodes):
+        if new_idx in clustered_members:
+            continue
+        for link in node.links:
+            link.adjacent_node = old_to_new[link.adjacent_node]
+
+    for cost in graph.link_costs:
+        cost.connected_node = old_to_new[cost.connected_node]
+
+    graph.nodes = new_nodes
+    graph.aggregated = new_aggregated
 
 
 def build_graph(pbf_path: str, bbox, region_no: int = 0) -> tuple[RpGraph, dict]:
@@ -331,14 +554,20 @@ def build_graph(pbf_path: str, bbox, region_no: int = 0) -> tuple[RpGraph, dict]
         graph.nodes[node_idx].links[entry_link].regulations.append((exit_link, passage_code))
         n_applied += 1
 
+    n_nodes_before_clustering = len(graph.nodes)
+    roundabout_groups = _roundabout_node_groups(ways, node_index)
+    cluster_nodes(graph, roundabout_groups)
+
     stats = {
         "n_osm_ways": len(ways),
         "n_osm_nodes_in_bbox": len(node_coord),
+        "n_graph_nodes_before_clustering": n_nodes_before_clustering,
         "n_graph_nodes": len(graph.nodes),
         "n_graph_links": sum(len(n.links) for n in graph.nodes),
         "n_link_costs": len(graph.link_costs),
         "n_restrictions_seen": len(restriction_rels),
         "n_restrictions_applied": n_applied,
+        "n_aggregated_nodes": len(graph.aggregated),
     }
     return graph, stats
 

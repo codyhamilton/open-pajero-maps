@@ -527,3 +527,51 @@ plausible-looking.
     section's population-wide ext total.
   - No external precedent search (web) was performed this pass — remains a
     genuinely open avenue, not a source ruled out.
+- 2026-08-27: **Aggregated-intersection clustering (Ch.10.13 Road Reference
+  Table) implemented — was previously deferred as a "decision," now
+  measured and built.** Full writeup: `docs/phases/01-format-analysis.md`,
+  "Ch.10.13 Road Reference Table (aggregated-intersection clustering,
+  2026-08-27)", and `docs/phases/03-osm-pipeline.md`, "Aggregated-
+  intersection clustering implemented". New/changed code:
+  `parser/survey_road_reference_table.py` (new), `parser/kiwiw/route_planning.py`
+  (`parse_road_reference_table` + node/link/link-cost record decoders
+  added), `parser/kiwiw/route_planning_writer.py` (`RpAggregatedNode`,
+  `write_aggregated_node_record`, non-empty `write_road_reference_table`),
+  `parser/build_route_graph.py` (`cluster_nodes`), `parser/osm_to_route_planning.py`
+  (wired in + road-ref round-trip check), `parser/tests/test_route_planning.py`
+  (new, 7 tests).
+  - **Measured, disc-wide (100% of 1,864 real regions), not assumed**: the
+    table is populated on 89.6% of regions (1,670/1,864), 218,440
+    Aggregated Node Information records total, 92.4% of them in level-8
+    regions. This falsifies the prior "always write it empty" prototype
+    simplification — it was NOT a safe no-op.
+  - **Clustering rule implemented** (best-effort OSM-side heuristic, since
+    there's no way to check it node-for-node against the real disc's own
+    clustering): merge (1) OSM `junction=roundabout`/`circular` node
+    rings, and (2) connected components of non-boundary nodes joined by
+    links shorter than 20 m — the latter targeting the real disc's own
+    dominant pattern (median 2 composition links / 1 subordinate node per
+    record, i.e. usually two nodes merging into one).
+  - **Byte layout**: the record's fixed envelope is HIGH confidence
+    (zero decode errors across all 218,440 records; `node_number`
+    100%-cross-validated against the Node Table's `is_aggregated` flag).
+    The internal variable-length arrays' padding rule was reverse-
+    engineered from byte arithmetic (the spec text for this item was
+    garbled in the archived PDF) — a "pad to the next even record-relative
+    offset" rule lands on exact byte-accounting for 95.6% of all real
+    records; documented as MEDIUM-HIGH/best-effort, not spec-confirmed.
+  - **Validation**: re-running the region-178 prototype (see the
+    2026-08-25 entry above) with clustering enabled drops the raw-OSM-vs-
+    real node ratio from 26.6x to **14.3x** (2,819 -> 1,518 nodes, 402
+    clusters), with a full RP-frame round trip through both the shared
+    decoder and this script's own record decoders reporting zero problems
+    — including a new check that the written road-reference table decodes
+    back to the exact cluster metadata produced. All 25 tests in
+    `parser/tests/` pass (18 pre-existing + 7 new).
+  - Independent of the parallel multi-level/CH-contraction work: this
+    clustering is a final post-processing pass on an already-built
+    single-region graph and doesn't touch cross-region boundary handling;
+    it does not yet propagate the `RpNode.global_id`/
+    `uppermost_identical_level` fields added by that parallel work onto
+    merged cluster nodes (currently just takes the representative's) —
+    flagged for whoever combines the two, not resolved here.

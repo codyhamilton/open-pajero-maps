@@ -1242,6 +1242,106 @@ already-decoded node coordinates — this would upgrade hypothesis 3 from
 "structurally suggestive" to "content-confirmed" without needing a burned
 disc.
 
+### Ch.10.13 Road Reference Table (aggregated-intersection clustering, 2026-08-27)
+
+Follow-up to the "Scope of work for a writer" note above, which listed
+"aggregated intersection clustering" as an open item folded into the
+prototype's Ch.10.13 no-op. Per project direction this was promoted from
+"deferred design decision" to "implement now" once measured, because the
+real disc turned out to use it heavily (below).
+
+**Methodology.** `parser/survey_road_reference_table.py` decodes the Road
+Reference Table (via a new `parse_road_reference_table()` added to the
+shared `parser/kiwiw/route_planning.py`) across all 1,864 real regions on
+`ALLDATA.KWI` (100% of population, not a sample).
+
+**Finding 1 — it is heavily used, not a rare edge case.** 1,670 / 1,864
+regions (89.6%) have a non-empty Road Reference Table, totalling 218,440
+Aggregated Node Information records. Population is concentrated at
+level 8 (the finest/local-network level): 1,355 / 1,357 level-8 regions
+(99.9%) have aggregation, holding 201,898 of the 218,440 records (92.4%
+of the total); levels 2/4/6 have aggregation in roughly half to all of
+their (far fewer) regions but contribute a small fraction of the total
+record count (5,280 / 5,533 / 5,729 records respectively). This
+conclusively falsifies the prior prototype's implicit assumption that
+leaving this table empty was a safe simplification.
+
+**Finding 2 — the clustering rule, from both spec prose and real
+statistics.** The archived spec's Ch.10.13 appendix (10.A4) gives a
+worked example describing four originally-separate main-map nodes being
+"combined into one node" in the route-planning graph — i.e. this table
+exists specifically to record which main-map nodes were merged into one
+route-planning node, and how to reconstruct the real path through that
+merge for routing/guidance purposes. Real-disc statistics corroborate a
+*simple, small* dominant case: `n_composition_links` (internal
+"identical" links subsumed by the merge) median 2, mean 2.6, max 12;
+`n_subordinate_nodes` (extra merged-in main-map nodes beyond the
+representative) median 1, mean 1.65, max 5; `n_route_info` (paths through
+the merge for the guidance system) median 1, mean 1.0, max 18. Read
+together: the overwhelmingly common real case is **two nearby main-map
+nodes merging into one route-planning node** (e.g. a divided-road
+crossover, a simple split/join, or a small roundabout), with rarer,
+more complex interchanges (up to 12 composition links / 5 subordinate
+nodes) also present.
+
+**Finding 3 — byte layout confidence, by field.**
+- **HIGH**: the record's fixed "envelope" — `size` (SWS-halved u16 at
+  offset 0, used to walk record-to-record — confirmed zero decode errors
+  across all 218,440 real records), `node_number` (u16 at offset 2, 100%
+  cross-validated against the corresponding Node Table entry's
+  `is_aggregated` flag over a 20,061-record spot check), `n_composition_links`
+  / `n_route_info` / `n_subordinate_nodes` (fixed byte offsets 4/5/6).
+- **MEDIUM-HIGH**: the internal variable-length arrays (the bit-packed
+  "subordinate node order by connected link" nibble array, the
+  composition-link-cost-number array, the subordinate-node signed-offset
+  array, and the route-info array) and their padding rule. The archived
+  PDF's text for this item and its padding was garbled/inconsistent on
+  extraction, so the padding rule was reverse-engineered from byte
+  arithmetic: each of these fields is padded so that the *record-relative*
+  byte offset immediately following it lands on an even (word) boundary,
+  counted from the start of the record (not the sub-frame). With this
+  rule, byte-accounting a full record's declared `size` against the sum
+  of every decoded field lands on exactly zero leftover bytes for
+  208,766 / 218,440 real records (95.6%); the remaining 4.4% are off by a
+  small, non-random residual (+4 bytes: 2.8% of records; +2 bytes: 0.2%;
+  +6 bytes and a few other small residuals: <0.1% combined) whose cause
+  was not identified in the time available for this pass (candidate
+  causes: a rarer field/parity case in the padding rule not covered by
+  this reasoning, or an occasional extra reserved field). This is
+  considered "structurally validated, not byte-perfect" — sufficient per
+  this task's own standard, since there is no way to check individual
+  field *values* against a second oracle.
+
+See `parser/kiwiw/route_planning.py`'s `AggregatedNodeInfo` docstring for
+the field-by-field confidence table this summarizes, and
+`parser/kiwiw/route_planning_writer.py`'s `RpAggregatedNode`/
+`write_aggregated_node_record()` for the writer counterpart, which
+encodes the same envelope and padding rule.
+
+**Implementation.** `parser/build_route_graph.py` gained
+`cluster_nodes()`, applied as the last step of `build_graph()`: OSM
+node groups that plausibly represent one physical intersection are
+merged into a single `RpNode`, producing an `RpAggregatedNode` (composition
+links, subordinate-node offsets, subordinate-node-order-by-link) consumed
+by `write_road_reference_table()`. Two candidate-group sources, combined
+via union-find so overlapping candidates merge together:
+1. **Roundabouts** — every graph node on one OSM `junction=roundabout`/
+   `circular` way.
+2. **Short internal links** — any two non-boundary graph nodes joined by
+   a link shorter than 20 m (connected components across the whole
+   graph) — aimed at the dominant real-disc case above (dual-carriageway
+   splits/joins, simple divided intersections).
+Cluster size is capped at 1 representative + 5 subordinates (matching
+the real disc's observed max); larger candidate groups keep only the
+highest-link-degree node plus its nearest 5 members, leaving the rest as
+ordinary standalone nodes — a deliberate simplification, not a
+discovered structural limit. This is a best-effort, OSM-side heuristic:
+**there is no way to check it node-for-node against the real disc's own
+clustering** (the real disc's contraction is independent of this
+project's specific OSM extract) — only structural validation is
+possible, which is what was done (see Phase 3 doc for the region-178
+before/after numbers and full round-trip result).
+
 ## Decisions / deviations from plan
 
 (record anything that didn't go as expected here)

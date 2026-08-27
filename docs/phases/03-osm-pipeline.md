@@ -76,11 +76,96 @@ major road classes."
 **Known simplifications in this prototype, explicitly not hidden**: single
 standalone region only — no multi-level 2/4/6/8 hierarchy tree or
 cross-region boundary-node bookkeeping yet; hierarchy/rank assignment is a
-first-pass OSM-highway-class heuristic, not real CH contraction; aggregated-
-intersection clustering unimplemented (road-ref table always written empty);
-turn restrictions only handle simple one-via-node cases; link-cost "Link ID
+first-pass OSM-highway-class heuristic, not real CH contraction; turn
+restrictions only handle simple one-via-node cases; link-cost "Link ID
 Number" fields are synthetic; upper_node/upper_link/passage_code/
 statistical_cost frames left absent (matches the real disc's near-zero use).
+
+## Aggregated-intersection clustering implemented (2026-08-27)
+
+Follow-up to the "aggregated-intersection clustering unimplemented" line
+above. Per project direction, this was promoted from a deferred design
+decision to in-scope-now work once measured against the real disc — see
+`docs/phases/01-format-analysis.md`, "Ch.10.13 Road Reference Table
+(aggregated-intersection clustering, 2026-08-27)" for the full survey.
+
+**Is it actually used on the real disc?** Yes, heavily: 89.6% of the
+1,864 real regions (1,670 regions) have a non-empty Ch.10.13 Road
+Reference Table, 218,440 Aggregated Node Information records in total,
+92.4% of them in level-8 (finest-grain) regions. The prior prototype's
+implicit assumption that an always-empty table was a safe simplification
+is falsified.
+
+**What was implemented**: `parser/build_route_graph.py`'s new
+`cluster_nodes()` merges two kinds of OSM node groups (each plausibly one
+physical intersection) into a single `RpNode`: (1) every graph node lying
+on an OSM `junction=roundabout`/`circular` way, and (2) connected
+components of non-boundary graph nodes joined by links shorter than 20 m
+(catching dual-carriageway splits/joins and similarly tight simple
+intersections — the real disc's own median of 2 composition links / 1
+subordinate node per record suggests this "two nodes merge into one" case
+dominates). Cluster size is capped at 1 representative + 5 subordinates,
+matching the real disc's observed max. `parser/kiwiw/route_planning_writer.py`
+gained `RpAggregatedNode` and `write_aggregated_node_record()`/an extended
+`write_road_reference_table()` that encodes non-empty tables matching the
+byte layout decoded from the real disc (see Phase 1 doc for the
+confidence breakdown per field — envelope fields HIGH confidence,
+internal variable-length arrays MEDIUM-HIGH/best-effort, since this
+table's internal padding rule was reverse-engineered from byte
+arithmetic, not read unambiguously off the (garbled) archived spec text).
+`parser/kiwiw/route_planning.py`'s decoder (`parse_road_reference_table`)
+was extended symmetrically, so writer and reader share one byte-layout
+understanding.
+
+**Validation — region 178, re-run with clustering enabled**: OSM
+extraction for the same bbox/road classes as the original prototype run
+now produces 2,819 raw graph nodes -> **1,518 after clustering** (402
+clusters merged), vs. the real region's 106 nodes — the contraction ratio
+drops from the previously-measured 26.6x to **14.3x** purely from this
+one clustering pass (still far from parity: reaching real-disc density
+requires the actual multi-level CH-hierarchy contraction, out of this
+task's scope — see the "real bottleneck" note in Phase 1). The full RP
+frame (`osm_to_route_planning.py`) encodes cleanly (94,626 bytes for this
+bbox) and round-trips through both the shared `kiwiw.route_planning`
+decoder and this script's own record-level decoders with **zero
+problems**, including a new road-reference-table check that decodes the
+written table and compares every field (`node_number` sequence,
+composition-link-cost-numbers, subordinate-node-offsets,
+subordinate-node-order-by-link) against what `cluster_nodes()` produced —
+402 aggregated records written, 402 decoded, exact field match.
+`parser/tests/test_route_planning.py` (new) adds 7 synthetic-graph unit
+tests covering the road-reference-table codec in isolation (empty case,
+single record with every variable-length array populated, multi-record
+walk) and `cluster_nodes()` (close-pair merge with link/cost/regulation
+remapping, no-op when nothing qualifies, a 4-node roundabout ring). All
+25 tests in `parser/tests/` (18 pre-existing + 7 new) pass.
+
+**Honesty about confidence**: the clustering *rule* (which OSM node
+groups to merge) is a best-effort heuristic that cannot be checked
+node-for-node against the real disc's own clustering — the real disc's
+contraction is independent of this project's specific OSM extract. Only
+structural validation was possible (round-trips through the decoder,
+shaped like real records) — not "matches what the real disc would do for
+this exact area." The byte *layout* the clustering feeds into, by
+contrast, is grounded in the real-disc survey above (HIGH confidence
+envelope, MEDIUM-HIGH confidence internal arrays, 95.6% exact
+byte-accounting across all 218,440 real records).
+
+**Interaction with the parallel multi-level/CH-contraction work**: this
+clustering pass operates purely within one already-built single-region
+`RpGraph` (post-hoc merge of graph nodes), independent of how that graph
+was assembled. It does not touch cross-region boundary-node handling or
+multi-level hierarchy construction, and should compose with that
+parallel work without changes on either side — a region built by the
+real multi-level pipeline can still be passed through `cluster_nodes()`
+as a final step before writing. If that work changes `RpNode`
+(e.g. `global_id`/`uppermost_identical_level`, added in parallel to this
+task), `cluster_nodes()` currently only reads `lat`/`lon`/`is_boundary`/
+`rank`/`links` and copies the representative node's `rank`/`lat`/`lon`
+into the merged node — it does not yet propagate `global_id` or
+`uppermost_identical_level` from cluster members, which would need a
+decision (e.g. keep the representative's) if/when the two lines of work
+are combined.
 
 **Scope-of-work impact**: reinforces rather than changes the prior estimate
 that the byte-encoding work is tractable (took roughly one session, matching

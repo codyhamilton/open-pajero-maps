@@ -149,6 +149,22 @@ class RpNode:
     is_boundary: bool
     rank: int
     links: list[RpLink] = field(default_factory=list)
+    # Ch.10.6.1.2 item 1: the highest region-hierarchy level (2/4/6/8) at
+    # which this same node still exists. 0 (not 2) is used as the "not
+    # set" default so callers that don't populate it (the original
+    # single-region prototype) keep writing what they always wrote.
+    uppermost_identical_level: int = 0
+    # global (cross-region) node id this RpNode was built from, e.g. an
+    # OSM node id -- used only by the multi-level orchestrator
+    # (build_route_hierarchy.py) to find the same node again in a
+    # neighbouring/parent region; not written to the disc format.
+    global_id: int | None = None
+    # True iff this node is the representative of a merged
+    # "aggregated intersection" cluster (Ch.10.13) -- see
+    # build_route_graph.cluster_nodes(). When True, ``graph.aggregated``
+    # (keyed by this node's index) carries the RpAggregatedNode record to
+    # write into the Road Reference Table.
+    is_aggregated: bool = False
 
 
 @dataclass
@@ -179,6 +195,10 @@ class RpGraph:
     nodes: list[RpNode] = field(default_factory=list)
     link_costs: list[RpLinkCost] = field(default_factory=list)
     region_no: int = 0
+    # node index -> RpAggregatedNode, for every node with is_aggregated
+    # True (Ch.10.13 Road Reference Table content). See
+    # build_route_graph.cluster_nodes().
+    aggregated: "dict[int, RpAggregatedNode]" = field(default_factory=dict)
 
 
 # ==========================================================================
@@ -516,17 +536,102 @@ def write_node_coord_record(grid_record_number: int, x: int, y: int) -> bytes:
     return _u32(v)
 
 
-def write_road_reference_table(n_aggregated_nodes: int = 0) -> bytes:
-    """Ch.10.13 Road Reference Table. This prototype does not implement
-    "aggregated intersection" clustering (see module docstring), so this
-    always writes the spec-legal empty case: a 2-byte count of 0 and no
-    Aggregated Node Information records."""
-    if n_aggregated_nodes:
-        raise NotImplementedError(
-            "aggregated-intersection encoding is not implemented in this "
-            "prototype; pass n_aggregated_nodes=0"
-        )
-    return _u16(0)
+@dataclass
+class RpAggregatedNode:
+    """Writer-side counterpart of ``route_planning.AggregatedNodeInfo`` --
+    one Ch.10.13.1 Aggregated Node Information record for a single
+    "clustered" node. See ``build_route_graph.cluster_nodes`` for how
+    these are derived from OSM topology (best-effort heuristic; see that
+    module's docstring for the confidence caveats), and
+    ``route_planning.AggregatedNodeInfo`` for the confidence level of the
+    byte layout this encodes (envelope: HIGH; internal arrays/padding:
+    MEDIUM, empirically fit against the real disc, not spec-confirmed)."""
+    node_number: int
+    subordinate_node_order_by_link: list[int] = field(default_factory=list)
+    composition_link_cost_numbers: list[int] = field(default_factory=list)
+    subordinate_node_offsets: list[tuple[int, int]] = field(default_factory=list)  # (dx, dy), signed, -128..127
+    route_info: list[dict] = field(default_factory=list)  # {"entry_link_no", "exit_link_no", "composition_link_relative_numbers"}
+
+
+def write_aggregated_node_record(rec: RpAggregatedNode) -> bytes:
+    """One variable-length Ch.10.13.1 Aggregated Node Information record.
+    Layout mirrors ``route_planning.parse_road_reference_table`` exactly
+    (same word-alignment padding rule, empirically fit against the real
+    disc -- see that function's docstring for the 95.6%-exact-byte-
+    accounting validation this is based on)."""
+    n_connected = len(rec.subordinate_node_order_by_link)
+    ncl = len(rec.composition_link_cost_numbers)
+    nsni = len(rec.subordinate_node_offsets)
+    nri = len(rec.route_info)
+    if ncl > 15:
+        raise ValueError("at most 15 composition links fit in a 4-bit count field")
+    if nri > 255 or nsni > 255:
+        raise ValueError("n_route_info/n_subordinate_nodes must fit a byte")
+
+    nibble_bytes = (n_connected + 1) // 2
+    padded = nibble_bytes + ((7 + nibble_bytes) % 2)
+    nibble_buf = bytearray(padded)
+    for k, nib in enumerate(rec.subordinate_node_order_by_link):
+        if not 0 <= nib <= 0xF:
+            raise ValueError("subordinate node order nibble must be 0..15")
+        byte_i, hi = k // 2, (k % 2 == 0)
+        if hi:
+            nibble_buf[byte_i] = (nibble_buf[byte_i] & 0x0F) | (nib << 4)
+        else:
+            nibble_buf[byte_i] = (nibble_buf[byte_i] & 0xF0) | nib
+
+    body = bytearray()
+    body += _u16(0)          # size placeholder, filled below
+    body += _u16(rec.node_number)
+    body += bytes([ncl & 0x0F])
+    body += bytes([nri])
+    body += bytes([nsni])
+    body += bytes(nibble_buf)
+    for v in rec.composition_link_cost_numbers:
+        body += _u16(v)
+    for dx, dy in rec.subordinate_node_offsets:
+        if not (-128 <= dx <= 127 and -128 <= dy <= 127):
+            raise ValueError("subordinate node offset must fit a signed byte")
+        body += bytes([dx & 0xFF, dy & 0xFF])
+    for item in rec.route_info:
+        entry = item["entry_link_no"] & 0xF
+        exitl = item["exit_link_no"] & 0xF
+        passing = item["composition_link_relative_numbers"]
+        n_passing = len(passing)
+        if n_passing > 0xF:
+            raise ValueError("at most 15 passing links per route-info entry")
+        entry_bytes = bytes([(entry << 4) | exitl, (n_passing << 4)]) + bytes(passing)
+        if (len(body) + len(entry_bytes)) % 2:
+            entry_bytes += b"\x00"
+        body += entry_bytes
+
+    if len(body) % 2:
+        body += b"\x00"
+    size = len(body)
+    body[0:2] = _u16(sws_enc(size))
+    return bytes(body)
+
+
+def write_road_reference_table(aggregated_nodes: "list[RpAggregatedNode] | int" = 0) -> bytes:
+    """Ch.10.13 Road Reference Table: a 2-byte record count followed by
+    that many Aggregated Node Information records (10.13.1).
+
+    ``aggregated_nodes`` is normally a list of ``RpAggregatedNode``. For
+    backward compatibility (and the still-legitimate no-clustering case),
+    an int (must be 0) is also accepted and writes the spec-legal empty
+    table."""
+    if isinstance(aggregated_nodes, int):
+        if aggregated_nodes:
+            raise NotImplementedError(
+                "pass a list[RpAggregatedNode] to encode non-empty "
+                "aggregated-node records; only 0 is accepted as an int"
+            )
+        return _u16(0)
+    out = bytearray()
+    out += _u16(len(aggregated_nodes))
+    for rec in aggregated_nodes:
+        out += write_aggregated_node_record(rec)
+    return bytes(out)
 
 
 def write_ext_frame_management_record(offset: int, size: int) -> bytes:
