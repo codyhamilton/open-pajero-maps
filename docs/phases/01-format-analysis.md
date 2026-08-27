@@ -1342,6 +1342,194 @@ project's specific OSM extract) — only structural validation is
 possible, which is what was done (see Phase 3 doc for the region-178
 before/after numbers and full round-trip result).
 
+### Ext-frame shape analysis (0xAF100100 / 0xAF100300) (2026-08-27)
+
+Dedicated structural follow-up to the "Ch.10.5/10.5.1 ext frame content
+census" section above, which left `0xAF100100` (medium confidence,
+"cost/distance-matrix-like") and `0xAF100300` (weak, "Upper Level Link
+substitute?") functionally unresolved. This pass does **not** attempt to
+close that semantic gap — per the prior section, that likely requires an
+in-vehicle test the project can't run yet — it instead asks a narrower,
+fully-answerable question: what is each code's byte-level *shape*
+(record size, sub-fields, scaling), established from 100% of the real
+disc's occurrences, not a sample. New script:
+`parser/analyze_ext_frame_shape.py` (kept, not scratch, matching this
+project's convention for rerunnable analysis code; does not modify
+`analyze_ext_frames.py`, `route_planning.py`, `route_planning_writer.py`,
+or `contraction.py` — those were only read for context, per instruction).
+Source disc: `ALLDATA.KWI` on the mounted reference disc (same one used
+throughout this document).
+
+#### 0xAF100100 (62.1% of ext bytes, present in all 1,864 real regions)
+
+- **HIGH confidence — no fixed record/unit size beyond the 16-bit word.**
+  Across all 1,864 real occurrences, the raw payload length is divisible
+  by 2 B in 100.00% of cases (as expected — it's built from 16-bit
+  fields) but by every larger candidate tested (4, 6, 8, 10, 12, 14, 16,
+  20, 24, 32 B) in well under half of cases (4 B: 50.2%; 6 B: 32.0%; 8 B:
+  24.8%; falling off further at larger sizes), and stripping the
+  previously-identified 16-byte constant preamble first doesn't improve
+  the fit at any candidate size. This rules out a clean fixed-width
+  record/matrix interpretation (e.g. a tidy NxN cost matrix, or a
+  fixed-tuple list) at any of the standard sizes tried — **whatever
+  `0xAF100100` is, its payload length is not simply
+  `preamble + k * record_size` for a constant `record_size` in this
+  range.** A per-region *variable* unit size (i.e. the "record size"
+  itself changes per region, keyed off some other per-region count) was
+  not ruled out by this test, but no single global constant fits.
+- **HIGH confidence — the payload is genuinely 16-bit-word structured**,
+  not byte-oriented: the `0x7FFF` sentinel's word-offset lands exactly at
+  the statistically expected uniform rate for every unit-size hypothesis
+  tested (1/word through 8/word) with **zero measurable deviation** (max
+  deviation 0.0 percentage points at every candidate in this pass) —
+  i.e. there is no smaller repeating field boundary at which `0x7FFF`
+  clusters or avoids; sentinel placement is uniform across whatever the
+  true (larger, variable) unit is. This is a purely structural,
+  100%-of-population fact, not a hypothesis.
+- **MEDIUM confidence — real (non-sentinel, non-zero) 16-bit values
+  skew large, consistent with distances/costs rather than small
+  indices.** Of 2,279,762 such words disc-wide (after the 16-byte
+  preamble), only 7.1% are `< 256` (small-index range), 15.4% fall in
+  256–4095, and **77.5% are `>= 4096`** (min 1, max 65,535, median
+  26,429, mean ~30,072) — i.e. most real content is large, high-entropy
+  16-bit values, not small counters or ID-like fields. This is more
+  consistent with the prior section's "cost/distance matrix" reading
+  than with an index/pointer table, though it's equally consistent with
+  other large-magnitude content (checksums, coordinates, encoded
+  costs at fine granularity) — this test cannot distinguish those.
+- **Confirms, does not newly establish — weak correlation with every
+  already-decoded per-region quantity.** Unit-count (both 2 B and 4 B
+  candidates) against `n_nodes`, `n_links`, `n_boundary_nodes` (both the
+  rank-header sum and the Node-Table-flag-counted actual value, which
+  agree exactly), `n_nodes²`, `n_boundary_nodes²`,
+  `n_nodes * n_boundary_nodes`, Road Reference Table record count,
+  `n_child_regions`, and a newly-added `n_escape_links` count (link
+  records belonging to boundary nodes, decoded via
+  `parse_node_links()` — the closest already-decoded analogue to a
+  "cross-region link structure") all give Pearson r in the 0.07–0.35
+  range and **0.00–0.16% exact-match rates** — i.e. none of these is
+  the payload's scaling variable, corroborating (with a wider set of
+  candidates, including the new escape-link count) the prior section's
+  finding that this isn't a simple linear function of any single known
+  field. **Net read: `0xAF100100`'s shape is consistent with a
+  variable-length, word-granular structure whose true governing
+  quantity is not yet identified among this repo's decoded per-region
+  fields** — this pass narrows what it *isn't* (not a fixed record size,
+  not linearly sized by node/link/boundary/child/escape-link counts) more
+  than it narrows what it *is*.
+
+#### 0xAF100300 (37.7% of ext bytes, level-8-only)
+
+This code's shape is now **solidly resolved at HIGH confidence** — a
+sharp contrast with `0xAF100100` above.
+
+- **HIGH confidence, 100% exact — fixed 4-byte header + fixed 12-byte
+  record, exactly matching `header_count * 12 + 4 == payload_len` for
+  all 1,326 real occurrences (100.00%)**, with zero fit at every other
+  candidate unit size tried (2 through 32 B, header-adjusted or not).
+  The header's first 16-bit word is `0x0002` in 1,326/1,326 cases
+  (100.00%, confirming the prior pass's spot-check), the second 16-bit
+  word is the exact record count used in the formula above. This is a
+  clean, fully general model — no residual/exception population exists,
+  unlike the Road Reference Table's 95.6%-with-residual case above.
+- **HIGH confidence — the 12-byte record decomposes into 5 clean
+  sub-fields**, refining the prior pass's approximate description
+  (`[4B ID][2B value][2B value repeated][2B 0000]`, which under-counted
+  by 2 bytes) against all 599,181 real records from the 1,326 exact-model
+  payloads:
+  - **offset 0–3, `u32` "ID"**: strictly increasing record-to-record
+    within a payload in 597,855/597,855 transitions checked (**100.00%**,
+    zero ties, zero decreases) — i.e. records are sorted/keyed by this
+    field within a region, with certainty.
+  - **offset 4–5, `u16` "small field"**: range 0–223, median 1 — small,
+    count-like.
+  - **offset 6–7 and offset 8–9, `u16` each**: **byte-identical to each
+    other in 599,181/599,181 records (100.00%)** — genuinely a repeated
+    value, not an approximation; range 0–14,105, median 627 — a
+    distance/cost-like magnitude, repeated verbatim rather than
+    resembling e.g. a from/to pair.
+  - **offset 10–11, `u16` "tail"**: `0x0000` in 599,181/599,181 records
+    (**100.00%**) — either reserved padding or a field that never takes a
+    nonzero value on this disc (can't distinguish from static evidence
+    alone, but safe to reproduce as constant zero).
+- **HIGH confidence — the `u32` "ID" field draws from a small, disc-wide
+  shared vocabulary, not a per-record-unique or per-region-local
+  identifier.** Only **3,165 distinct ID values** occur across all
+  599,181 record instances (mean reuse 189.3× per distinct value); 98.04%
+  of distinct IDs (3,103/3,165) appear in **more than one** region's
+  payload, and the single most-reused ID appears in **571 different
+  regions**. IDs range from 108,671 to 8,348,833 — too large and sparse
+  to be small region-local indices, yet far too reused (only ~3,165
+  distinct values for ~1,326 regions × ~452 records/region average) to be
+  literal per-link or per-node unique identifiers. **This rules out the
+  "ID = this region's own link/node ID" reading** implied by the prior
+  pass's informal description, and instead points toward a reference
+  into some small, disc-global, shared classification/registry (road
+  class code, named-route/highway identifier, or similar) — the
+  specific referent is NOT established by this pass, only that it must
+  be a small shared vocabulary, not a per-record-unique key.
+- **HIGH confidence, new finding — `0xAF100300` presence is the exact
+  logical inverse of having boundary nodes, at level 8.** Cross-tabulated
+  against the Node Table's own `is_boundary` flag (not just the rank
+  header sum — both agree exactly): of the 1,357 level-8 regions, the
+  1,326 that carry `0xAF100300` have **zero** boundary nodes in
+  **100.00%** of cases, and the 31 that do NOT carry `0xAF100300` have
+  **more than zero** boundary nodes in **100.00%** of cases (2 to 75
+  boundary nodes each). This is a clean, population-wide partition with
+  no exceptions on either side. Read together with `route_planning.py`'s
+  Node/Link records and `contraction.py`'s escape-link handling (both
+  read for this pass, not modified): a level-8 region either (a) touches
+  a neighboring region and gets ordinary boundary nodes/escape links via
+  the standard Ch.10.7 mechanism the writer already implements, **or**
+  (b) is fully interior with zero boundary nodes and instead carries
+  this vendor `0xAF100300` table. This structural mutual exclusivity is
+  the strongest evidence yet for the prior section's speculative
+  "vendor substitute for unused Upper Level Link machinery" hypothesis —
+  but note the *direction* differs from what "Upper Level Link"/
+  cross-region framing would predict: this pass finds the code where
+  boundary/cross-region structure is **absent**, not where it's densest,
+  so if `0xAF100300` really is filling an Upper-Level-Link-shaped gap,
+  it's doing so precisely for regions that have no real cross-region
+  links to describe — which argues against a literal
+  boundary-link-table reading and toward something else entirely
+  (MEDIUM confidence on the interpretation; HIGH confidence on the
+  100%-exact structural correlation itself).
+- **MEDIUM confidence — record count correlates moderately with
+  `n_links` and `n_nodes`, but not proportionally.** Pearson r = 0.778
+  vs. `n_links` and 0.776 vs. `n_nodes` (the strongest correlations found
+  for either target code in this pass), and r = 0.647 vs. Road Reference
+  Table record count — real signal, not noise — but the ratio
+  `record_count / n_links` has mean 0.102, median 0.081, and stdev 0.067
+  (min 0.0035, max 0.323) across all 1,326 regions: a two-order-of-
+  magnitude spread around the mean, not a tight linear scaling. **Read:
+  `0xAF100300`'s size grows loosely with region traffic-graph size but is
+  governed by some other, more specific quantity** (plausibly related to
+  the small shared ID vocabulary above — e.g. one record per distinct
+  road-class/route the region's interior links touch — but this pass
+  did not identify that quantity among already-decoded fields). No
+  candidate tested gives an exact-match rate above 0.23%.
+
+#### Net effect on prior open items
+
+- `0xAF100100` remains **medium confidence, functionally unresolved** —
+  this pass adds confidence about its *shape* (word-granular, no fixed
+  record size, skews toward large real values) without resolving *what
+  governs its length*, and does not change its "genuinely load-bearing,
+  not safe to omit" risk status from the prior section.
+- `0xAF100300`'s **shape is now fully resolved at high confidence**
+  (header + 12-byte record + all 5 sub-fields' ranges are pinned down
+  with 100%-of-population exactness), even though its
+  ultimate *semantic* meaning is still not confirmed. The new
+  boundary-node-inverse finding is a genuinely new, testable structural
+  fact (not present in the prior section) that should inform any future
+  attempt to reproduce this code on a from-scratch disc: a correct
+  writer would need to know, for each level-8 region, not just
+  "does this region touch a neighbor" (already handled by
+  `contraction.py`'s escape-link logic) but the same fact in inverse —
+  and the record content itself still requires the small-shared-ID-
+  vocabulary source to be identified before it could be regenerated
+  faithfully, which remains this code's one genuinely open question.
+
 ## Decisions / deviations from plan
 
 (record anything that didn't go as expected here)

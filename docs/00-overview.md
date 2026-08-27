@@ -100,12 +100,21 @@ plausible-looking.
   Identification ID" (confirmed = the disc-build stamp) and one of the four
   Data-Identification-Code types (a constant 4-byte version flag, `0xAF100600`) are
   now confirmed safe to reproduce as constants (~0.2% of ext bytes). The other two
-  types — `0xAF100100` (62.1% of ext bytes, present in every region, medium
-  confidence it's a real cost/distance table) and `0xAF100300` (37.7%, level-8-only,
-  weak circumstantial evidence it substitutes for the disc-unused basic
-  "Upper Level Link" subframe) — remain unresolved and are NOT safe to omit without
-  an in-vehicle test. See `docs/phases/01-format-analysis.md`'s dedicated ext-frame
-  census subsection for the full evidence and ranked hypotheses.
+  types — `0xAF100100` (62.1% of ext bytes, present in every region) and
+  `0xAF100300` (37.7%, level-8-only) — had their byte *shape* (not semantic meaning)
+  further analyzed 2026-08-27: `0xAF100300`'s record layout is now fully pinned (HIGH
+  confidence: 4-byte header + count×12-byte records, 100% exact fit, no exceptions),
+  and its presence was found to be the exact logical inverse of a region having
+  boundary nodes at level 8 — but *why* is still unknown, and `0xAF100100`'s shape
+  remains unresolved beyond ruling out a fixed-tuple/matrix layout. **Decision
+  2026-08-27: since purpose/semantics for both remain unresolved and cannot be
+  reproduced faithfully, the writer will proceed WITHOUT generating these two ext
+  types for the initial from-scratch build** (the disc-round-trip/regenerate-original
+  path is unaffected, since there we copy real bytes rather than needing to
+  synthesize them) — in-vehicle testing will show whether the head unit tolerates
+  their absence; if not, this is the first thing to revisit. See
+  `docs/phases/01-format-analysis.md`'s ext-frame census and shape-analysis
+  subsections for full evidence and ranked hypotheses.
 
 ## Decision log
 
@@ -636,3 +645,34 @@ plausible-looking.
     post-processing step; no shared files were modified by both efforts in
     a conflicting way. Turn restrictions, non-default ext frames unchanged
     (out of scope).
+- 2026-08-27: Dedicated ext-frame *shape* analysis (structure, not semantics) for
+  the two still-unresolved Data Identification Codes, via a new read-only script
+  `parser/analyze_ext_frame_shape.py` (100% of the 1,864 real regions, no
+  sampling). Findings (full detail + confidence levels in
+  `docs/phases/01-format-analysis.md`):
+  - **`0xAF100300` (level-8-only) — shape now fully pinned, HIGH confidence**:
+    100.00% exact fit as `4-byte header (tag 0x0002 + count) + count×12-byte
+    records`, zero exceptions across 1,326 occurrences. Each record decomposes
+    into `[u32 strictly-increasing ID][u16 field, range 0-223][u16 value][u16
+    duplicate of that value][u16 zero tail]`. The ID field draws from only 3,165
+    distinct values reused across 599,181 record instances (mean reuse 189x) —
+    looks like a small shared registry, not a per-link unique ID. New structural
+    finding: this code's presence is the *exact* logical inverse of a region
+    having boundary nodes at level 8 (100%, 1,357/1,357 regions, zero
+    exceptions) — directly relevant to the boundary/escape-link work above, but
+    the inverse relationship argues against a literal cross-region link table
+    reading. Semantic purpose still unknown.
+  - **`0xAF100100` (all regions, 62.1% of ext bytes) — shape still unresolved,
+    MEDIUM confidence at best**: no fixed record size fits cleanly at any tested
+    width (2-32 bytes), ruling out a simple fixed-tuple/matrix layout. The
+    `0x7FFF` sentinel is placed with perfectly uniform word-granularity.  77.5%
+    of non-sentinel 16-bit values are >=4096, consistent with cost/distance-style
+    content. Correlation tested against every known per-region quantity (nodes,
+    links, boundary nodes, boundary-nodes-squared, road-reference-table records,
+    child-region count, escape-link count) — none fits (r=0.07-0.35, near-zero
+    exact match). This pass narrows what it isn't more than what it is.
+  - **Decision**: since neither code's purpose/semantics is resolved, they
+    cannot be faithfully reproduced — see the "Open risks" entry above for the
+    resulting decision to build the from-scratch writer without generating
+    these two ext types for now, deferring to in-vehicle testing to see if
+    that's tolerated.
