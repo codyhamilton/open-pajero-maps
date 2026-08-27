@@ -97,6 +97,15 @@ def encode_rp_frame(graph: RpGraph) -> bytes:
         n_link_recs = len(node.links)
         undecided = n_link_recs > 14
         for link in node.links:
+            # Ch.10.7.1.1 item (8): the region_number field exists (8-byte
+            # link record) for EVERY link of a boundary node, not just the
+            # one(s) that actually cross into another region -- 0xFFFF ("no
+            # region") is written for the ones that don't, per the spec's
+            # literal wording. Non-boundary nodes keep the normal 6-byte
+            # record (region_number=None -> omitted).
+            region_number = None
+            if node.is_boundary:
+                region_number = link.region_number if link.region_number is not None else 0xFFFF
             link_buf += write_link_record(
                 adjacent_node=link.adjacent_node,
                 link_cost_index=link.link_cost_index,
@@ -105,6 +114,7 @@ def encode_rp_frame(graph: RpGraph) -> bytes:
                 is_reverse_direction=not link.forward_direction,
                 following_same_road=link.following_same_road,
                 angle_deg=link.angle_deg,
+                region_number=region_number,
             )
         regs = []
         for link_i, link in enumerate(node.links):
@@ -266,11 +276,16 @@ def decode_node_record(buf: bytes, off: int) -> dict:
     }
 
 
-def decode_link_record(buf: bytes, off: int) -> dict:
+def decode_link_record(buf: bytes, off: int, is_boundary: bool = False) -> dict:
+    """Decode one Ch.10.7.1.1 Link Record. ``is_boundary`` must match the
+    OWNING NODE's is_boundary flag (not a per-link property) -- per spec
+    item (8), the record is 8 bytes (region_number present) for EVERY link
+    of a boundary node, 6 bytes otherwise. Caller is responsible for
+    stepping by link_record_size(is_boundary) between records."""
     adj = u16(buf, off) & 0x1FFF
     cost_idx = u16(buf, off + 2) & 0x7FFF
     fsr = u16(buf, off + 4)
-    return {
+    out = {
         "adjacent_node": adj,
         "link_cost_index": cost_idx,
         "is_suburb": bool(fsr & (1 << 15)),
@@ -278,7 +293,15 @@ def decode_link_record(buf: bytes, off: int) -> dict:
         "is_reverse_direction": bool(fsr & (1 << 13)),
         "following_same_road": extract(fsr, 9, 12),
         "angle_deg": extract(fsr, 0, 8),
+        "region_number": None,
     }
+    if is_boundary:
+        out["region_number"] = u16(buf, off + 6)
+    return out
+
+
+def link_record_size(is_boundary: bool) -> int:
+    return 8 if is_boundary else 6
 
 
 def decode_regulation_record(buf: bytes, off: int) -> dict:
@@ -362,8 +385,9 @@ def round_trip_check(graph: RpGraph, buf: bytes, n_basic: int = 9, n_ext: int = 
         decoded_total_links += rec["n_link_records"]
         decoded_total_regs += rec["n_regulations"]
         link_off = link_sub.offset + rec["link_record_offset"]
+        lrec_size = link_record_size(rec["is_boundary"])
         for j in range(rec["n_link_records"]):
-            lrec = decode_link_record(buf, link_off + j * 6)
+            lrec = decode_link_record(buf, link_off + j * lrec_size, is_boundary=rec["is_boundary"])
             want = graph.nodes[i].links[j]
             if lrec["adjacent_node"] != want.adjacent_node:
                 problems.append(f"node {i} link {j}: adjacent_node mismatch")
@@ -371,7 +395,11 @@ def round_trip_check(graph: RpGraph, buf: bytes, n_basic: int = 9, n_ext: int = 
                 problems.append(f"node {i} link {j}: link_cost_index mismatch")
             if lrec["angle_deg"] != want.angle_deg:
                 problems.append(f"node {i} link {j}: angle mismatch")
-        reg_off = link_off + rec["n_link_records"] * 6
+            if rec["is_boundary"]:
+                want_region = want.region_number if want.region_number is not None else 0xFFFF
+                if lrec["region_number"] != want_region:
+                    problems.append(f"node {i} link {j}: region_number mismatch")
+        reg_off = link_off + rec["n_link_records"] * lrec_size
         for k in range(rec["n_regulations"]):
             decode_regulation_record(buf, reg_off + k * 2)  # just verify it parses
 

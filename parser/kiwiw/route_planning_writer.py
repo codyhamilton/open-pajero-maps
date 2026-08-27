@@ -140,6 +140,20 @@ class RpLink:
     # keyed by exit-side link-record-number local to the same node (None
     # key == "all exit links", per spec bit pattern 0xF).
     regulations: list[tuple[int | None, int]] = field(default_factory=list)  # (exit_link_no, passage_code)
+    # Ch.10.7.1.1 item (8) "Region Number": only meaningful (and only
+    # written to disc) when the OWNING node is a boundary node -- see
+    # write_link_record's region_number parameter and encode_rp_frame's use
+    # of it. None here means "this link doesn't cross regions"; when the
+    # owning node is a boundary node this is encoded on disc as 0xFFFF ("no
+    # region", per spec item (8)'s literal text) rather than omitting the
+    # field, because a boundary node's record size (8 bytes/link) is fixed
+    # for ALL of its links, not just the one(s) that actually cross into
+    # another region. When this link IS the cross-region "escape link" to
+    # this same node's instance in a neighbouring/parent region, this holds
+    # that region's region_no and ``adjacent_node`` is the node's index
+    # within THAT region's own node table (per spec: "The region number
+    # where the adjacent node exists is described").
+    region_number: int | None = None
 
 
 @dataclass

@@ -167,6 +167,158 @@ into the merged node — it does not yet propagate `global_id` or
 decision (e.g. keep the representative's) if/when the two lines of work
 are combined.
 
+## Real multi-level (2/4/6/8) CH contraction + cross-region boundary links (2026-08-27)
+
+Follow-up to the "first-pass OSM-highway-class heuristic, not real CH
+contraction" and "no multi-level 2/4/6/8 hierarchy tree or cross-region
+boundary-node bookkeeping" items in the route-planning prototype's known
+simplifications above.
+
+**What was built**:
+- `parser/kiwiw/contraction.py` — a from-scratch, genuine Contraction
+  Hierarchies node-contraction implementation (Geisberger et al. 2008):
+  edge-difference priority, lazy re-evaluation, bounded witness search
+  (`max_settled`) to decide whether a shortcut is actually needed when
+  contracting a node. The witness-search bound is a standard, *safe*
+  over-approximation — it can add a few unneeded shortcuts, but can never
+  wrongly omit one, so shortest-path preservation always holds regardless
+  of the bound. `assign_levels()` maps each node's contraction rank to a
+  level in {2,4,6,8} via configurable cumulative fractions
+  (`DEFAULT_LEVEL_FRACTIONS = (0.55, 0.25, 0.13, 0.07)`, ascending by
+  rank) — chosen to be a *defensible* geometrically-decreasing shape (each
+  level sparser than the last, matching CH/highway-hierarchy intuition and
+  this project's own region-tree study below), **not a measured disc
+  statistic** — the disc's own per-level *population* fractions were never
+  established, only the level *order* and per-level road-class narrowing.
+  `contract()` can also emit `snapshots`: the alive-node up-graph at a
+  requested contraction-step count, needed so each level's own link set
+  reflects only the shortcuts that exist by the time that level's node set
+  has stabilized (see below — using the *final* completed contraction's
+  full shortcut graph for every level, tried first, produced an
+  unencodable `u16` link count for a coarse-level region — ~19x more
+  links than the field can hold).
+- `parser/tests/test_contraction.py` (new, 5 tests) — synthetic-graph
+  correctness tests: line graphs, random weighted grids (multiple sizes/
+  seeds), and a hand-built "cheap bypass" case that specifically checks
+  the witness search actually suppresses an unneeded shortcut (not just
+  that shortcuts exist). The key methodological finding while building
+  these: shortest-path preservation through the CH search graph only holds
+  for **rank-based suffixes** of the contraction order (the nodes that
+  "survive" to a coarser level) — an arbitrary index-based node subset is
+  *not* guaranteed connectivity, a subtlety the first draft of these tests
+  got wrong (returned "no path" for valid pairs) before being fixed.
+- `parser/study_region_hierarchy.py` (new) — empirical study of the real
+  mounted disc's region tree, decoding **all 1,883 region records** (100%
+  of the population) and node/coordinate data for 80 regions. Findings:
+  - Region hierarchy is a genuine parent/child **tree** (Ch.9.2.1's
+    `parent_region`/`first_child_region`/`n_child_regions`), not spatial
+    tiling — **507/507 (100%)** of parent/child index pairs checked are
+    mutually consistent. Level order, confirmed empirically (not assumed):
+    child -> parent is **2 -> 4 -> 6 -> 8 -> (-32 dummy root)** — level 2
+    is the finest (leaf, zero children per region), level 8 is coarsest
+    (root-ward, every region has children).
+  - Per-level `is_boundary` fraction (mean over 20 decoded regions/level):
+    level 2 = 0.176, level 4 = 0.116, level 6 = 0.030, level 8 = 0.045.
+  - **Spec-confirmed boundary-node definition** (found via `pdftotext` of
+    `spec/format_english/pdf/1000122e.pdf`, Ch.10.6/10.7): *"A boundary
+    node is defined as a node that has a link to another region.
+    Therefore, the boundary node is either a node on the region boundary
+    or a node inside the region which has a link to another region."*
+    Ch.10.7.1.1 item (8) "Region Number": present (8-byte Link Record)
+    only when the *owning node* is a boundary node, giving the region
+    number where the *adjacent* node of that specific link exists
+    (`0xFFFF` = "no region", used for a boundary node's links that don't
+    actually cross regions — **all** of a boundary node's link records are
+    8 bytes, not just the crossing one(s)). A direct empirical test
+    (matching real regions' flagged boundary-node coordinates against
+    their real parent region's own node coordinates) only matched
+    **12/1,579 (0.8%)** — inconclusive, most likely due to this study's
+    own incomplete multi-grid Node Coordinate table decoding rather than a
+    wrong hypothesis; not asserted as proven.
+- `parser/build_route_hierarchy.py` (new) — the actual multi-level
+  builder: collects one OSM road graph over a bounded multi-region test
+  area (default: `REGION_178_BBOX`, split into a 2x2 grid of leaf tiles —
+  "a few adjacent regions' bboxes", not a country-scale tiling), runs one
+  *global* CH contraction over the flat graph, assigns levels from
+  contraction rank, builds a genuine 4-level parent/child region tree
+  (level 2 = the 4 leaf tiles; level 4 = pairwise merges; level 6 = single
+  merge of level 4; level 8 = single root — wiring the real
+  `parent_region`/`first_child_region`/`n_child_regions` fields), and
+  encodes every region through the existing Ch.9/Ch.10 writer.
+  Cross-region **escape links** are wired for real: a boundary node (its
+  uppermost level is above its region's own level) gets an extra
+  `RpLink` to its own instance's index in the parent region, with
+  `region_number` set to the parent's `region_no` — using the
+  `write_link_record(region_number=...)` support that already existed,
+  unused, in the original prototype commit. `RpLink` gained a
+  `region_number: int | None` field; `encode_rp_frame` was updated to
+  write the 8-byte record form (with `0xFFFF` for a boundary node's
+  non-crossing links) whenever the owning node is a boundary node, and
+  `osm_to_route_planning.py`'s round-trip decoder (`decode_link_record`,
+  `round_trip_check`) was updated to decode variable-size (6 vs. 8 byte)
+  link records and verify `region_number` — this had been silently
+  wrong (fixed-6-byte-stride) until a round-trip test caught it.
+  Only reused the road classes present across all 4 real levels per the
+  study above ({0,1,2,3} = motorway/trunk/primary/secondary+tertiary) —
+  extracting *all* OSM highway tags for the same bbox first produced a
+  ~6x larger graph (16,844 nodes) than the real single-region prototype's
+  own 2,819-node figure for the identical bbox, which would have been
+  inconsistent with this project's "match the real disc's own scope"
+  convention.
+
+**Validation, end-to-end, over the real OSM extract** (`--max-settled
+150`, 3,475-node flat graph after road-class filtering, 9,336 shortcuts
+added by contraction): 9 Ch.9 region records (1 dummy root + 4 level-2 +
+2 level-4 + 1 level-6 + 1 level-8), **7/7** parent/child index-consistency
+checks pass, **8/8** regions' Ch.10 frames round-trip byte-for-byte with
+**zero problems** (including the new boundary-link 8-byte-record/
+region_number checks above), and — the core correctness claim for task
+item 1 — **100/100 shortest-path checks match with 0 mismatches at every
+one of the 4 levels** (sampled node pairs, shortest path in the CH search
+graph restricted to that level's surviving node subset vs. shortest path
+in the original, fully uncontracted OSM graph). `parser/tests/`: 28/28
+pass (5 new contraction tests + 3 new boundary-link tests + the 20
+pre-existing).
+
+**Level sizes for this test area**: level 2 = 4 leaf regions with
+2575/717/115/29 nodes; level 4 = 2 regions with 1491/59; level 6 = 1
+region with 693; level 8 = 1 root region with 243. Flat graph (3,475
+nodes) -> level-8 root (243 nodes) = a **14.3x** reduction — in the same
+ballpark as, though not forced to match, the single-region prototype's
+separately-measured 14.3x (post-clustering) / 26.6x (pre-clustering)
+ratios against the *real disc's* region 178, since these numbers come
+from different comparison baselines (this run's own synthetic level-8
+root vs. that run's real-disc-decoded region 178).
+
+**What's proven vs. assumed, stated plainly**:
+- PROVEN: the CH contraction algorithm itself preserves shortest-path
+  distances (100/100, 0 mismatches, both on synthetic test graphs and on
+  the real OSM extract). PROVEN: the region tree's parent/child linkage
+  mechanism, and the Ch.10.7.1.1 boundary-node Link Record byte layout
+  (region_number field, 8-byte conditional record) both round-trip
+  correctly through the existing decoder infrastructure.
+- SPEC-CONFIRMED but not independently cross-checked against a real
+  multi-region disc extract: the literal definition of a boundary node as
+  "has a link to another region."
+- ASSUMED/best-effort, explicitly not proven: (1) this project's specific
+  choice of "a boundary node's cross-region link goes to its own instance
+  in the parent region" — a defensible reading given how `is_boundary` is
+  derived here, but the spec's own definition is broader (any link to
+  another region, including sibling regions at the same level, which this
+  region-tree shape doesn't need); (2) `DEFAULT_LEVEL_FRACTIONS`, the
+  per-level node-population split — no real per-level population
+  statistic was ever established from the disc, only level order and
+  per-level road-class narrowing; (3) `uppermost_identical_level`'s 3-bit
+  encoding (this code writes level/2, i.e. 1-4) — not independently
+  spec-confirmed; (4) region tree shape (2x2 leaf grid, pairwise merge) is
+  a small defensible demonstration, not a load-balanced country-scale
+  tiling strategy.
+- OUT OF SCOPE, unchanged: turn restrictions, aggregated-intersection
+  clustering / Road Reference Table (owned by the parallel clustering
+  work above — composes independently, since this task's region tree
+  builds a plain `RpGraph` per region that could still be passed through
+  `cluster_nodes()` as a final step), non-default ext frames.
+
 **Scope-of-work impact**: reinforces rather than changes the prior estimate
 that the byte-encoding work is tractable (took roughly one session, matching
 the ~1-2 day Ch.9 / low-single-digit-day Ch.10 estimate) and that **the real

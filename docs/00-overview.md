@@ -575,3 +575,64 @@ plausible-looking.
     `uppermost_identical_level` fields added by that parallel work onto
     merged cluster nodes (currently just takes the representative's) —
     flagged for whoever combines the two, not resolved here.
+- 2026-08-27: **Real multi-level (2/4/6/8) Contraction Hierarchies
+  implemented — replaces the OSM-highway-class heuristic with genuine CH
+  node contraction, and wires real cross-region boundary Link Records.**
+  Full writeup: `docs/phases/03-osm-pipeline.md`, "Real multi-level
+  (2/4/6/8) CH contraction + cross-region boundary links". New/changed
+  code: `parser/kiwiw/contraction.py` (new — edge-difference priority,
+  bounded witness search, level assignment by contraction rank),
+  `parser/study_region_hierarchy.py` (new — real-disc region-tree study),
+  `parser/build_route_hierarchy.py` (new — the multi-region orchestrator:
+  one flat OSM graph -> global CH contraction -> 4-level parent/child
+  region tree -> per-region `RpGraph`s -> Ch.9/Ch.10 encoding),
+  `parser/kiwiw/route_planning_writer.py` (`RpNode.uppermost_identical_level`/
+  `global_id` fields, `RpLink.region_number` field), `parser/osm_to_route_planning.py`
+  (variable-size 6/8-byte link-record decode + `region_number` wired
+  through `encode_rp_frame`), `parser/tests/test_contraction.py` (new, 5
+  tests), `parser/tests/test_boundary_links.py` (new, 3 tests).
+  - **Region tree confirmed a genuine parent/child tree, not spatial
+    tiling** — 507/507 (100%) parent/child index-consistency, decoded
+    across all 1,883 real region records (100% of the population). Level
+    order confirmed empirically (2 finest -> 8 coarsest), correcting an
+    initial wrong assumption (author first guessed the opposite direction,
+    caught by directly measuring mean area/children/nodes per level).
+  - **Spec-confirmed boundary-node definition** (via `pdftotext` on the
+    archived spec PDF): a boundary node is one with a link to another
+    region; Ch.10.7.1.1's Region Number field (present as an extra 2 bytes
+    on ALL of a boundary node's link records, not just the crossing one)
+    already had writer-side support in the very first prototype commit —
+    unused until now. Wired up as "escape links" from a boundary node to
+    its own instance in the parent region.
+  - **CH correctness validated, not just asserted**: 100/100 sampled
+    shortest-path checks match with 0 mismatches at every one of the 4
+    levels, both on synthetic graphs (`test_contraction.py`) and on the
+    real OSM extract's flat graph (`build_route_hierarchy.py`'s own
+    `validate()`), comparing shortest path in the CH-contracted graph
+    (restricted to that level's surviving nodes) against the original,
+    fully uncontracted graph.
+  - **End-to-end run over real OSM data**: a 3,475-node flat graph
+    (motorway/trunk/primary/secondary+tertiary classes, matching what's
+    actually present across the real disc's 4 levels per the study) built
+    a 9-region 4-level tree (4 level-2 + 2 level-4 + 1 level-6 + 1 level-8,
+    + the dummy root), 7/7 parent/child consistency, 8/8 regions
+    round-tripped byte-for-byte with zero problems including the new
+    boundary-link checks. `parser/tests/`: 28/28 pass.
+  - **What's still assumed, not proven**: the per-level node-population
+    split (`DEFAULT_LEVEL_FRACTIONS`) is a defensible geometric-decay
+    shape, not a measured disc statistic (no real per-level population
+    figure was ever established — only level order and per-level
+    road-class narrowing were). The specific choice of "boundary link goes
+    to the parent region" is one defensible reading of the spec's broader
+    "link to another region" definition (which also covers same-level
+    sibling regions, not exercised by this test area's tree shape).
+    `uppermost_identical_level`'s bit encoding is not independently
+    spec-confirmed. The region tree itself (2x2 leaf grid, pairwise merge)
+    is a small demonstration shape, not a load-balanced country-scale
+    tiling strategy — building that at scale remains future work.
+  - Independent of / composes with the parallel clustering work above:
+    this task's region tree produces a plain `RpGraph` per region, which
+    could still be passed through `cluster_nodes()` as a final
+    post-processing step; no shared files were modified by both efforts in
+    a conflicting way. Turn restrictions, non-default ext frames unchanged
+    (out of scope).
