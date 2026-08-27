@@ -15,3 +15,7 @@ __pycache__/
 
 # OSM source extracts (large, re-downloadable, not our content)
 *.osm.pbf
+
+# Regenerable script logs
+tag_crosstab.out
+tag_crosstab.err
