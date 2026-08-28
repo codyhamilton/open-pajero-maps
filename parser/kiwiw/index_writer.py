@@ -92,10 +92,23 @@ def write_field_def(fd: FieldDef) -> bytes:
 
 def write_definition_frame(fields: Sequence[FieldDef]) -> bytes:
     """Inverse of `search_frame.parse_definition_frame`: the 16-byte
-    'DCTF'/'REAL' declaration entry (CONFIRMED layout: `[4B 'DCTF']
-    [4B 'REAL'][2B zero][2B zero][2B zero][2B entry count, itself
-    included]`) followed by one 16-byte entry per field, in order."""
-    n_items = len(fields) + 1
+    'DCTF'/'REAL' declaration entry (layout: `[4B 'DCTF'][4B 'REAL']
+    [2B zero][2B zero][2B zero][2B entry count]`) followed by one 16-byte
+    entry per field, in order.
+
+    CORRECTED 2026-08-28 (whole-file assembly pass): the declaration's
+    entry-count field is the number of field entries *only* -- it does
+    NOT include the header itself, despite this function's (and
+    `search_frame.parse_definition_frame`'s pre-fix) docstrings previously
+    claiming otherwise. See `search_frame.parse_definition_frame`'s
+    docstring for the byte-level evidence (recomputing every real
+    definition frame's end-of-frame offset against its neighbour's already
+    -resolved anchor position, with zero exceptions once this is applied).
+    The previous `len(fields) + 1` was silently "consistent" with the
+    matching pre-fix over-subtraction on the read side, so the bug was
+    invisible until this pass needed the frame's *total byte length* (not
+    just a re-derived prefix) to place the next structure after it."""
+    n_items = len(fields)
     header = (
         b"DCTF" + b"REAL" + b"\x00\x00" + b"\x00\x00" + b"\x00\x00"
         + struct.pack(">H", n_items)

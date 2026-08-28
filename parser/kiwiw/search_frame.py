@@ -136,22 +136,61 @@ class FieldDef:
 
 
 def parse_definition_frame(buf: bytes, off: int) -> List[FieldDef]:
-    """Parse a ``DCTF`` definition frame at ``off``.  The declaration
-    entry's last 2 bytes give the number of entries *including itself*.
-    CONFIRMED (the counts match the real entry runs exactly in both
-    SADSR201.IDX and POISR201.IDX)."""
+    """Parse a ``DCTF`` definition frame at ``off``.
+
+    CORRECTED 2026-08-28 (whole-file `IDX` assembly pass, see
+    docs/phases/02-roundtrip.md "Whole-file IDX/*.IDX assembly"): the
+    declaration entry's last 2 bytes (``n_items``) give the number of
+    field entries *following* the header, **not** "including itself" as
+    previously documented/implemented (``range(1, n_items)``, one short).
+    This under-parsed every definition frame on this disc by exactly one
+    trailing field -- e.g. the street-record matching-data-definition
+    frame really has 16 fields (``...RPNS, RPNC``), not 15; the
+    address-range frame really has 14 (``...STYP, GDXY``), not 13; every
+    category-definition frame really has 8 (``...NEXT, NTSZ``), not 7.
+
+    This was invisible to every previous round-trip check because they
+    all compared ``buf[off:off+len(rebuilt)]`` -- a byte *prefix* -- never
+    the frame's full span out to the next known structure, and because
+    the missing trailing field happens to be STFG-gated and never
+    actually asserted present in any record on this disc (so omitting it
+    from the field list did not change a single decoded record value).
+    Confirmed by recomputing, for all 7 real `DCTF` definition frames in
+    SADSR201.IDX (2 top-level catdef, 2 top-level mdef, the nested
+    address-range frame's catdef/mdef, and its own SRT1 mdef), that
+    ``off + 16 * (n_items + 1)`` lands exactly on the next frame's known
+    anchor offset (its neighbour's already-resolved FrameRef file_offset)
+    with zero exceptions -- i.e. this is what makes whole-file byte
+    accounting close with no unexplained gap.  Fixing it does not change
+    ``parse_matching_record``'s output for any record already validated
+    (the extra field's presence bit is always 0), so the previously-
+    reported 232/232 structural-piece and 38,120-street full-scan results
+    are unaffected -- confirmed by re-running the full existing suite
+    after this change (see roundtrip_idx.py's own output)."""
     decl = buf[off : off + 4].decode("ascii", errors="replace")
     if decl != "DCTF":
         raise ValueError(f"expected 'DCTF' definition frame at {off}, got {decl!r}")
     n_items = _u16(buf, off + 14)
     fields: List[FieldDef] = []
-    for i in range(1, n_items):
+    for i in range(1, n_items + 1):
         e = off + 16 * i
         usage = buf[e : e + 4].decode("ascii", errors="replace")
         dtype = buf[e + 4 : e + 8].decode("ascii", errors="replace")
-        etype = buf[e + 8 : e + 10].decode("ascii", errors="replace").strip("\x00 ")
+        # CORRECTED 2026-08-28 (whole-file assembly pass): right-strip only,
+        # not `.strip()`. `write_field_def` always right-pads with NUL, so a
+        # genuine ASCII tag (e.g. "CMCH") never has leading NULs to worry
+        # about -- but a field like a category-definition frame's `DCSF`
+        # entry's "additional" slot is really a raw big-endian integer
+        # (0x00000003), which happens to *decode* as ASCII '\x00\x00\x00\x03'.
+        # The old `.strip("\x00 ")` silently dropped its leading NUL bytes,
+        # so `write_field_def` re-padded on the wrong side (right instead of
+        # left) and produced 0x03000000 instead of 0x00000003 -- invisible
+        # under the old prefix-only round-trip checks, caught only by this
+        # pass's full-frame byte comparison of a category_definition frame
+        # (offset 896 in SADSR201.IDX) that no earlier test exercised.
+        etype = buf[e + 8 : e + 10].decode("ascii", errors="replace").rstrip("\x00 ")
         raw_count = buf[e + 10 : e + 12]
-        addl = buf[e + 12 : e + 16].decode("ascii", errors="replace").strip("\x00 ")
+        addl = buf[e + 12 : e + 16].decode("ascii", errors="replace").rstrip("\x00 ")
         if dtype == "VRBL":
             count_type = raw_count.decode("ascii", errors="replace").strip("\x00 ")
             count = 1

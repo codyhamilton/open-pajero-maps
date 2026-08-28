@@ -5,19 +5,25 @@ Prove format understanding by re-serializing the parsed intermediate representat
 back into byte-identical (or documented-diff-only) files, then burning and testing
 that regenerated-but-unchanged disc in the vehicle.
 
-## Status: small files 7/7 byte-identical; ALLDATA.KWI container/mesh layer 3/3 byte-identical; IDX search-index structural writer 232/232 checks byte-identical; parcel content writer 8/8 checks byte-identical (2026-08-28)
+## Status: small files 7/7 byte-identical; ALLDATA.KWI container/mesh layer 3/3 byte-identical; IDX search-index structural writer 232/232 checks byte-identical; parcel content writer 8/8 checks byte-identical; ALLDATA.KWI whole-file allocation layer 87/87 in-place + 84/84 de novo (2026-08-28)
 
-Three things have landed since this doc's first section was written, all
+Four things have landed since this doc's first section was written, all
 further down: the `SPEC.KWI`/`METADATA.KWI` whitespace fix (small files now
 7/7), a writer for `ALLDATA.KWI`'s volume-header/LMR/BSMR/BMT layer
 (3/3 regions, 25,184 bytes, byte-identical — see "ALLDATA.KWI container
-/mesh layer: byte-identical"), and — the last remaining structural gap
-this note used to flag — a writer for parcel *content* itself: the Ch. 6
-Parcel Management Record a Block Management Table entry addresses, and the
-Ch. 7 Map Frame (header + mfde table + road/background/name sub-frames) a
-leaf entry of that record points at. See "Parcel content writer: 8/8
-checks byte-identical" below. Whole-disc reassembly and in-vehicle testing
-remain outstanding regardless (see "Not started yet").
+/mesh layer: byte-identical"), a writer for parcel *content* itself: the
+Ch. 6 Parcel Management Record a Block Management Table entry addresses,
+and the Ch. 7 Map Frame (header + mfde table + road/background/name
+sub-frames) a leaf entry of that record points at (see "Parcel content
+writer: 8/8 checks byte-identical"), and — the allocation/layout gap all
+three of those left explicitly open — a whole-block-set assembler that
+decides *where* each structure goes in a from-scratch build and rewrites
+its cross-reference pointers accordingly (level 8, all 6 real block sets:
+87/87 in-place byte-identical, 84/84 de novo re-parse-consistent; level 6,
+block set 0, 227 leaf parcels: 231/231 in-place, 228/228 de novo — see
+"Whole-file `ALLDATA.KWI` assembly: allocation/layout layer" below).
+Whole-disc reassembly and in-vehicle testing remain outstanding regardless
+(see "Not started yet").
 
 ## Status: 7/7 small metadata files byte-identical (2026-08-25 update — see below)
 
@@ -652,6 +658,227 @@ level tested (4 real parcels, both structural layers). Item 4 (disc
 reassembly, in-vehicle testing) is unaffected and still the only thing
 outstanding for Phase 2's stated goal.
 
+## Whole-file `ALLDATA.KWI` assembly: allocation/layout layer (2026-08-28)
+
+Fifth Phase 2 pass, resolving the remaining gap the "IDX structural
+writer" and "Parcel content writer" sections above both flagged
+explicitly: every prior `ALLDATA.KWI` writer (`volume_writer.py`,
+`parcel_writer.py`) only ever proves "given where a structure already
+lives in the real file, here are its exact bytes" — none of them decide
+*where* a structure should go in a from-scratch build, or rewrite the
+cross-reference pointers that follow from a new placement. This pass adds
+that missing layer.
+
+New code: `parser/kiwiw/alldata_writer.py` (new module — composes, does
+not modify, `volume_writer.py`/`parcel_writer.py`), harness
+`parser/roundtrip_alldata_full.py`, regression tests
+`parser/tests/test_roundtrip_alldata_full.py`. No existing file was
+modified in this pass (confirmed via `git status` before/after: only this
+pass's three new files are untracked; `kiwiw/index_writer.py` and
+`kiwiw/search_frame.py` show as modified in the working tree, but that is
+a different, concurrently-running task's change, not this one's — this
+pass never opened either file).
+
+### Scope: whole block sets, not hand-picked coordinates
+
+Unlike `roundtrip_parcel_content.py` (4 hand-picked coordinates),
+`load_region()` walks **every real (non-empty) Block Management Table
+entry** of one or more requested block sets at a given level, and **every
+leaf parcel each block's Parcel Management Record tree reaches**
+(including divided/integrated `pardiv1..3` recursion), decoding full Map
+Frame + road/background/name content for each. Two regions were exercised
+against the real mounted disc (`/run/media/codyh/464210-8480`):
+
+- **Level 8, all 6 real block sets** (indices 0,1,2,4,5,6 — the only ones
+  with data at this level): 6 blocks, 78 leaf parcels, 2,330,016 bytes of
+  de novo output.
+- **Level 6, block set 0** (1 block, 227 leaf parcels): a single larger
+  block set, chosen per the "ideally more" guidance, to check the
+  allocation logic on a region an order of magnitude bigger than the
+  level-8 default.
+
+### Two allocation modes, two different claims
+
+1. **In-place** (`assemble_inplace()`): re-serialize the header layer plus
+   every loaded block and every loaded leaf Map Frame at the **exact
+   original file offset**, then byte-diff against the real file there.
+   This is the "replicate the original's exact layout choices" half of
+   the task — a pass proves the allocation *rule* is understood, not
+   merely that the byte encoding is (which the prior two sections already
+   established).
+2. **De novo** (`assemble_denovo()`): pack the *same* loaded content into
+   a brand-new, freshly chosen, contiguous buffer — the genuinely new
+   problem, since every writer up to this point only ever wrote a
+   structure back to the offset it was read from. Every cross-reference
+   that addresses a relocated structure is recomputed and rewritten:
+   - the Management Header Table's own entry 0 `dsa` (which addresses the
+     PDMDH blob);
+   - each relocated block's `BmtEntry.dsa` inside the PDMDH's Block
+     Management Table;
+   - each relocated leaf's `ParcelMapInfoEntry.dsa` inside its owning
+     block's Parcel Management Record tree.
+   Validated by **re-parsing the de novo buffer with the unmodified
+   read-side parser** (`volume.parse_volume_header`,
+   `parse_management_header_table`, `parse_pdmdh_full`,
+   `parcel_mgmt.parse_parcel_mgmt_record`, `parcel.decode_parcel`) and
+   confirming every relocated pointer resolves to the right new offset
+   and decodes to the same semantic content (tail_raw, mfde table, road
+   links, background shapes, name records) as the original decode. **This
+   is explicitly NOT a byte-identity claim against the real file** — the
+   layout is deliberately different (see "PDMDH gap" below) — it is a
+   self-consistency claim only.
+
+### Results
+
+```
+$ python3 roundtrip_alldata_full.py --level 8 --blocksets 0 1 2 4 5 6
+Loaded 6 block(s), 78 leaf parcel(s).
+In-place: 87/87 regions byte-identical.
+De novo: 84/84 relocated structures re-parse consistently.
+OVERALL: PASS
+```
+
+(87 = 3 header/PDMDH regions + 6 blocks + 78 leaves; 84 = 6 blocks + 78
+leaves, header/PDMDH regions aren't part of the "relocated structure"
+count since only the leaf/block *pointers* into them are what moved.)
+
+The larger level-6/block-set-0 region (1 block, 227 leaves, checked via
+the standalone smoke test that preceded this section, not committed as a
+separate harness invocation) produced the same result at scale: **231/231
+in-place byte-identical, 228/228 de novo reparse-consistent** — the
+allocation logic held with zero exceptions at roughly 3x the content
+volume of the default region.
+
+`parser/tests/test_roundtrip_alldata_full.py` runs the level-8/all-6-
+block-sets region as its default (fast enough for routine regression use)
+and includes two negative controls: perturbing a `RoadLink.raw_bytes`
+inside the loaded region breaks the in-place byte-identity check;
+perturbing a block's `ParcelMgmtRecord.tail_raw` breaks the de novo
+re-parse's content-equality check. Both confirmed to actually fail before
+being asserted as passing.
+
+### The allocation rule found, and its confidence level
+
+**HIGH confidence — sector/logical-sector alignment (directly derived,
+not inferred).** `encode_sector_addr()` is the exact algebraic inverse of
+`volume.getsector()`: any byte offset can be expressed as a KIWI-W sector
+address only if it is a multiple of `logical_sz` (32 bytes on this disc)
+and its remainder within a `sector_sz`-sized (2048-byte) sector fits the
+address format's 6 low bits (i.e. `remainder // logical_sz <= 63`, which
+holds automatically since `2048 / 32 == 64`). `assemble_denovo()` packs
+every structure back-to-back at whatever multiple of `logical_sz` the
+previous structure's length lands on — content lengths on this disc
+(block/leaf sizes, all multiples of `logical_sz` themselves, since
+`BmtEntry.size`/`ParcelMapInfoEntry.size` are stored in logical-sector
+units) keep every subsequent offset aligned with no extra padding logic
+needed in the tested regions. This rule is proven, not guessed: every
+resulting sector address round-trips through the real, unmodified
+`getsector()` in the re-parse check above.
+
+**MEDIUM confidence — the real disc already packs a block set's blocks
+contiguously, in block-management-table (i.e. block-index) order.**
+Direct inspection of the loaded level-8 region's real file offsets:
+
+```
+entry_index  original_offset  length
+0            27456            224
+0            27680            320
+0            28000            224
+0            28224            224
+0            28448            224
+0            28672            224
+```
+
+Each block's real offset is exactly the previous block's offset plus its
+length — genuinely contiguous, in the same order the Block Management
+Tables are walked (block set 0, 1, 2, 4, 5, 6). This is an empirical
+observation from one region, not exhaustively checked across all 601
+block sets / 7 levels, but it is consistent with `assemble_denovo()`'s
+choice to pack blocks back-to-back in load order — i.e. the de novo mode
+happens to mirror a real pattern here, though this was not required for
+the de novo mode's own self-consistency proof (which holds regardless of
+placement order).
+
+**WEAK / not established — leaf (Map Frame) placement order across the
+whole disc.** The same region's leaf parcels' real offsets are
+increasing but *not* tightly contiguous (e.g. block 0's first ten leaves'
+real offsets: 26607840, 26609440, 26620896, 26622496, 26712736, 26714336,
+27197184, 27198784, 27287872, 27310784 — gaps of anywhere from 1,600 to
+~480,000 bytes between consecutive leaves, presumably other levels'/other
+block sets' content interleaved between them). No rule for *why* the real
+mastering tool left those particular gaps, or what fills them, was
+derived or tested — `assemble_denovo()` does not attempt to reproduce
+this; it packs leaves back-to-back with no gaps, which is a valid,
+self-consistent choice but not a claim about matching the original
+mastering tool's true leaf-placement algorithm.
+
+**Traversal order (HIGH confidence, directly reused from proven code).**
+Block-set/block/parcel indexing is exactly the row-major
+(lat-outer, lon-inner) grid confirmed in `mesh.py`'s `locate_parcel()`
+(itself cross-validated against `kiwiread.c` — see
+docs/01-format-analysis.md's "Parcel-index bug" entry). This pass's
+`_block_base_bounds()`/`_narrow_bounds()` in `alldata_writer.py` are a
+structural (array-index-driven) generalization of that same math — not a
+new hypothesis — enumerating bounds for *every* leaf in a block rather
+than following one query coordinate's single path. Cross-checked
+implicitly: every leaf's `bounds` computed this way was used to construct
+a valid `MeshLocation` that `parcel.decode_parcel()` accepted and
+round-tripped, for all 78 (level 8) and 227 (level 6) leaves tested.
+
+### What is byte-identical vs. self-consistent-only
+
+- **Byte-identical against the real disc**: the in-place mode's 87
+  regions (level 8) / 231 regions (level 6) — Data Volume, Management
+  Header Table, PDMDH+LMR+BSMR+BMT, every loaded block's Parcel Management
+  Record buffer, and every loaded leaf's full Map Frame (header + region
+  list + mfde table + road/background/name sub-frames), each diffed byte-
+  for-byte at its real file offset.
+- **Self-consistent only (re-parse verified, NOT byte-diffed against any
+  real file)**: the de novo mode's entire freshly-packed buffer. No claim
+  is made that this buffer matches, or was intended to match, any real
+  byte range on the disc — its purpose is to prove the pointer-rewriting
+  logic is internally coherent (every relocated `dsa` resolves through the
+  unmodified read-side parser to the structure that was actually placed
+  there, decoding to the same content as the original).
+
+### Regions still copied verbatim / explicitly out of scope
+
+- **File offsets 4096..6144** (the "other management frame" management
+  header record 29 points at, flagged as out of scope in "ALLDATA.KWI
+  container/mesh layer: byte-identical" above): `assemble_denovo()` does
+  not reproduce this gap at all — it places the PDMDH blob directly after
+  the Management Header Table (at offset 4096, not the real disc's 6144),
+  since recreating that separate frame's content is outside this pass's
+  scope. This is a deliberate, documented divergence between "in-place"
+  (which is byte-identical at the real 6144 offset) and "de novo" (which
+  places PDMDH at 4096 instead) — not an oversight.
+- **The route-planning layer's placement**: `MapFrame.mfde_raw` entries at
+  index >= 3 whose offset resolves *outside* the leaf's own buffer
+  (observed to look like absolute disc sector addresses — plausibly
+  route-guidance content, a sibling layer explicitly out of scope for
+  this task) are carried through as opaque table entries only, exactly as
+  `parcel_writer.write_map_frame()` already did; this pass does not decide
+  where route-planning content itself should live in a from-scratch file.
+- **Vendor Extended Data Frame content** (`ext_frame_raw`, in-buffer mfde
+  entries beyond index 2): passed through verbatim via the already-proven
+  `parcel_writer.write_map_frame()` path, unchanged by this pass.
+- **Category/index-chain allocation** (`IDX/*.IDX` whole-file reassembly):
+  explicitly out of scope for this pass (a separate, parallel task's
+  territory — see "Explicitly not attempted" under the IDX section
+  above), and this pass did not touch any IDX-related file.
+
+### What remains before Phase 2 can be considered complete
+
+Disc reassembly and in-vehicle testing (the original phase goal) are
+still outstanding, and now additionally require: (a) deciding what to do
+about the still-unreproduced 4096..6144 management frame in a real
+whole-file build (either derive/decode it, or accept a hybrid layout that
+keeps the original disc's own offset for it), and (b) extending this
+pass's whole-block-set coverage to the larger levels (0, 2, 4) that carry
+the bulk of the disc's real content, which this pass deliberately did not
+attempt (see "Scope" above — level 8/6 were chosen as tractable
+proof-of-concept regions, not as the largest available).
+
 ## Not started yet (unchanged from before this pass)
 
 Whole-file reassembly of `IDX/*.IDX` files (as opposed to the
@@ -660,7 +887,12 @@ testing of a regenerated-but-unchanged disc. Full `ALLDATA.KWI`
 parcel-content round-trip (the item this line used to flag as
 not-started) is now done — see "Parcel content writer: 8/8 checks
 byte-identical" above — though only at the coverage described in that
-section's "Coverage and honest gaps."
+section's "Coverage and honest gaps." Whole-file `ALLDATA.KWI` assembly
+(deciding *where* a structure goes in a from-scratch build, as opposed to
+reproducing/encoding it at a known offset) is now also done at the
+allocation-rule level — see "Whole-file `ALLDATA.KWI` assembly:
+allocation/layout layer" above — though only for levels 6 and 8, not the
+larger levels 0/2/4 that hold most of the disc's real content.
 
 ## Update: SPEC.KWI/METADATA.KWI whitespace loss fixed (2026-08-25)
 
@@ -776,3 +1008,280 @@ self-contained fix scoped to the two BNF-metadata files only.
 *(Later the same day: item 2 is now also done — see "ALLDATA.KWI
 container/mesh layer: byte-identical" above. Items 3 and 4 remain
 outstanding.)*
+
+## Whole-file `IDX/*.IDX` assembly (2026-08-28)
+
+This is the counterpart, for the `IDX/*.IDX` search-index chain, of the
+"Whole-file `ALLDATA.KWI` assembly" pass above: the "`IDX/*.IDX` search-index
+structural writer" section earlier in this document validated every
+structural piece (`DCTF` definition frames, Detailed Search Info Records,
+"Additional ***Address" indirection entries, matching-data records) against
+real bytes **at that piece's own byte range in the existing file** -- it
+never re-derived *where in the file* each piece should itself be placed.
+This pass closes that gap for `IDX/SADSR201.IDX`, using
+`parser/roundtrip_idx_full.py` and `parser/tests/test_roundtrip_idx_full.py`.
+
+### Two bugs found and fixed (both invisible to the previous per-piece checks)
+
+Both were found because a whole-file assembler needs a structural piece's
+*exact total byte span* (to place the next piece right after it), not just
+a byte-range comparison against a known-good prefix -- which is all the
+previous checks ever did.
+
+1. **`DCTF` definition frame field count was off by one** (read side:
+   `kiwiw/search_frame.py::parse_definition_frame`; write side:
+   `kiwiw/index_writer.py::write_definition_frame`). The declaration
+   entry's `n_items` field is the exact number of field entries that
+   follow, **not** "including the header itself". The old code
+   (`range(1, n_items)`) silently dropped the last field of every
+   definition frame on this disc. Confirmed against all 7 real `DCTF`
+   frames in SADSR201.IDX: `off + 16*(n_items+1)` (the corrected
+   end-of-frame offset) lands exactly on the next structure's own already
+   -resolved anchor offset, with zero exceptions. This was invisible before
+   because (a) every earlier check compared only a byte *prefix*, never
+   the frame's true end, and (b) the dropped field's `STFG` presence bit is
+   always 0 on every real record on this disc, so no previously-decoded
+   record value was ever wrong. The street matching-data-definition frame
+   really has 16 fields (`...RPNS, RPNC`), not 15; the address-range frame
+   really has 14 (`...STYP, GDXY`), not 13; every category-definition frame
+   really has 8 (`...NEXT, NTSZ`), not 7. Confidence: **HIGH** (exact,
+   zero-exception fit across all 7 instances).
+
+2. **A definition-frame field entry's "additional" (and "element type")
+   slot was parsed with `.strip("\x00 ")`** (`kiwiw/search_frame.py::parse_definition_frame`),
+   which destructively removes *leading* NUL bytes as well as trailing
+   ones. `write_field_def` only ever pads on the right, so this was a
+   silent, asymmetric round-trip bug for any field whose "additional" slot
+   is not really an ASCII tag but a raw big-endian integer that happens to
+   decode as mostly-NUL ASCII -- e.g. the category-definition frame's
+   `DCSF` entry, whose real "additional" bytes are `0x00000003` (an
+   integer, not the text "\x03"). The old code stripped the leading NULs
+   down to `'\x03'`, and `write_field_def` re-padded it on the wrong side,
+   producing `0x03000000` instead of `0x00000003`. Fixed by changing
+   `.strip(...)` to `.rstrip(...)` (right-strip only). This was never
+   caught before because no earlier test round-trip-compared a
+   `category_definition` frame's *full* rebuilt bytes against the real
+   file -- only the street `matching_data_definition` frame was checked,
+   whose fields don't hit this case. Confidence: **HIGH** (direct byte
+   diff, single clean fix, re-verified against the whole existing suite).
+
+Both fixes were re-verified against the full existing regression baseline
+before proceeding: `roundtrip_idx.py` still reports 232/232, and
+`parser/tests/test_roundtrip_idx.py` still reports 9/9 (with the street
+definition frame now correctly reporting 16 fields instead of 15).
+
+### Allocation rule discovered
+
+Every reachable byte of `IDX/SADSR201.IDX`, from offset 0 through
+15,375,908 (99.92% of the 15,387,684-byte file), is explained by a single,
+**zero-gap, zero-padding sequential-packing rule**, applied recursively to
+every `DFSR` frame (the top-level frame and every `next_level` nested frame
+alike):
+
+1. the 16-byte `DFSR` header;
+2. every Detailed Search Info Record's fixed-`rec_size` slot (`rec_size` is
+   itself read from the frame's own header -- it is **not** a global
+   constant: SADSR201.IDX's top-level and nested SRMX/SRHA frames use 440,
+   but the "ADDRESS RANGE" SRT1 frame uses 376), in record order, packed
+   with no gap after the header;
+3. for each record, **in record order**: its `category_definition` DCTF
+   frame, `matching_data_definition` DCTF frame, `category_data` blob, and
+   `matching_data_frame` matching-record chain -- whichever of these four
+   are present (`None` fields are simply skipped) -- each packed with zero
+   gap after the previous one;
+4. for each record, **in REVERSE record order**, recurse into its
+   `next_level` nested frame (steps 1-4 again) -- unless that exact
+   original file offset has already been placed by an earlier record's
+   `next_level` (see the shared-target case below).
+
+This was confirmed by recomputing every byte boundary, by hand, for all 4
+reachable Detailed Search Info Records (top-level SRMX @16, top-level SRHA
+@456, the SRMX record nested under SRHA's `next_level` @1,576,934, and the
+SRT1 address-range record @5,047,012) and finding **zero** unexplained
+gaps anywhere in the entire reachable tree -- e.g. `SRMX`'s
+`category_definition` (896) + its size (144) lands exactly on
+`matching_data_definition` (1040); that + its size (272) lands exactly on
+`category_data` (1312); that + `category_data_size` (233,060) lands
+exactly on `matching_data_frame` (234,372); that + `matching_data_frame_size`
+(1,283,208) lands exactly on `SRHA`'s `category_definition` (1,517,580) --
+i.e. the *next record's* local-fields block, confirming step 3 really is
+"per record in order", not "all records' one field-kind, then the next
+kind".
+
+**Shared next_level target** (confirms and refines step 4): both the
+top-level SRMX record and the SRMX record nested under SRHA point their
+`next_level` at the exact same original file offset, 5,046,996 (the
+"ADDRESS RANGE" SRT1 frame) -- this content is genuinely shared, not
+duplicated. The observed order for a 2-record top-level frame is: both
+records' local-fields blocks (in record order), then SRHA's `next_level`
+subtree recursed fully (which itself recurses into the shared SRT1 target,
+since SRHA's nested SRMX record reaches it first), then -- when the outer
+loop reaches SRMX's own `next_level` -- the target is already placed, so
+nothing more is emitted. This exact rule (packing + forward-order locals +
+reverse-order `next_level` recursion + dedup-by-original-offset) accounts
+for the entire reachable tree with no exceptions found.
+
+**Confidence: HIGH** for the zero-gap packing rule and the forward-order
+local-fields rule (exact, zero-exception fit across the whole reachable
+tree, three different frame shapes, three different `rec_size` values).
+**WEAK** for the *specific claim* that `next_level` recursion order is
+reversed relative to record order -- this is witnessed only once (a single
+2-record sibling group), so it is not independently confirmed across
+multiple sibling groups. The implementation in `roundtrip_idx_full.py`
+therefore documents this as "the order observed and replayed", not as a
+generally-proven allocator rule -- see the two allocation modes below.
+
+### Two required proofs, both implemented and passing
+
+`parser/roundtrip_idx_full.py` implements two allocation modes over the
+same recursively-parsed intermediate representation:
+
+- **`mode="replicate"`**: an allocator *constrained* to use the exact order
+  above (derived from, and specific to, the real disc's own layout) --
+  proves understanding of the real allocation rule by producing
+  **byte-identical** output.
+- **`mode="fromscratch"`**: a deliberately *different*, still-internally-consistent
+  order (each record's `next_level` is recursed into immediately, in
+  forward record order, rather than deferred to a second reverse-order
+  pass) -- proves this is a genuine from-scratch reallocation, not a replay
+  of recorded offsets, via **self-consistency after re-parse** (the
+  from-scratch buffer decodes to the same intermediate representation as
+  the original, even though every absolute offset in it differs).
+
+Both took the parsed IR only, never handed a writer raw disc bytes to copy
+through as its "product" without explanation (see "Not modelled" below for
+the narrow, explicitly-flagged exceptions), and poison-filled (`0xA5`)
+every output buffer before writing any chunk into it.
+
+```
+$ python3 roundtrip_idx_full.py
+replicate mode: 15387684 bytes (real file 15387684 bytes)
+  matching_data_frame @234372: verified (1283208 bytes)
+  matching_data_frame @1526372: verbatim (UnicodeEncodeError: 'ascii' codec can't encode characters in position 0-2: ordinal not in range(128))
+  matching_data_frame @2117136: verified (2929860 bytes)
+  matching_data_frame @5047628: verified (10328280 bytes)
+PASS: whole-file reassembly is BYTE-IDENTICAL to the real SADSR201.IDX
+fromscratch mode: 15375908 bytes (not expected to match real layout)
+PASS: fromscratch buffer's layout is provably different from the real file's (genuine reallocation)
+PASS: fromscratch buffer re-parses to a decode-EQUIVALENT tree (self-consistency via re-parse)
+```
+
+`parser/tests/test_roundtrip_idx_full.py` (5 tests, all passing) wraps
+both proofs plus two negative controls -- one perturbing a real street
+record's field before reassembly and confirming `compare_decoded_trees`
+actually detects the resulting decode mismatch (proving the comparison is
+discriminating, not vacuous), and one corrupting a single byte of the
+replicate-mode output and confirming the byte-identical assertion actually
+fails (proving that check isn't vacuous either).
+
+### A third bug found: one matching-record population never previously exercised
+
+Building the whole-file assembler required, for the first time, decoding
+and rebuilding **every** matching-record population reachable in the tree
+-- not just the ones earlier tests happened to sample. Three of the four
+populations decode-and-rebuild byte-identical across their **full**
+population (not sampled):
+
+- the top-level street name search records (offset 234,372, 38,120
+  records -- already known-good from the earlier "IDX/*.IDX search-index
+  structural writer" pass);
+- the nested "city selection" -> street search records (offset 2,117,136,
+  87,533 records -- **newly fully verified by this pass**, not previously
+  exercised by any test);
+- the "ADDRESS RANGE" records under SRT1 (offset 5,047,628, 344,276
+  records -- **newly fully verified by this pass** at 100% of population;
+  the earlier structural-writer pass had only spot-checked 3 named anchor
+  streets' address ranges, not the full population).
+
+The fourth population -- SRHA's own "city name" matching records (offset
+1,526,372, 1,285 records, the literal list of city/town names presented
+before street selection) -- **fails to decode correctly** with a
+pre-existing bug in `parse_matching_record`/`iter_matching_records`: the
+`NAME` field's decoded value overruns into subsequent records' bytes
+entirely (verified: `_consumed` bytes exceed the record's own `_nfrl`
+length by more than 100 bytes on the very first record). This schema was
+never exercised by any earlier test (SADSR201.IDX's only previously-tested
+matching-record populations were the street frame, POI records, and 3
+sampled address ranges). The root cause was not tracked down further within
+this pass's time budget -- `roundtrip_idx_full.py`'s `_matching_frame_bytes`
+detects this case (either an outright decode exception or a byte mismatch
+against the real file) and falls back to copying that one population's
+136-KB span **verbatim** from the real file, clearly flagged in its
+`report` output (`"verbatim"` vs `"verified"`) rather than silently
+succeeding or crashing the whole assembler. This is an **honest known gap**,
+not a silent one -- it is why the byte-identical replicate-mode proof above
+explicitly checks that at least 3 populations were reconstructed
+record-by-record (not just copied), so the byte-identical claim isn't
+trivially satisfied by copying everything.
+
+### Not modelled / explicitly out of scope (verbatim, per this project's established discipline)
+
+- Each Detailed Search Info Record's bytes from `+92` to `+rec_size` (the
+  "tail", which holds the up-to-5 embedded "Additional ***Address"
+  indirection entries) are copied **verbatim** from the original record,
+  not reconstructed field-by-field -- with one narrow, fully-explained
+  exception: the 4-byte absolute-file-offset word *inside* an indirection
+  entry is patched to the new location of the content it points at (its
+  *locator*, a record-relative `sws32` offset, is unaffected by relocating
+  the record and is left untouched). This is the same "preserve what isn't
+  understood as raw bytes" discipline already used for
+  `DetailedSearchInfoRaw`'s two 12-byte undecoded gap fields, just applied
+  to the larger, still-undecoded tail region beyond the known 92-byte
+  prefix.
+- `category_data` blob content is relocated as an opaque byte range,
+  never decoded -- consistent with this project's established
+  `ARCD`/`CTGY` category-table scope boundary.
+- SRHA's "city name" matching-record population (see bug #3 above) is
+  copied verbatim rather than reconstructed from IR.
+- The trailing 11,776-byte region of SADSR201.IDX (offset 15,375,908 to
+  EOF) remains **unresolved**. It begins with a well-formed `DFSR` header
+  (count=1, `rec_size`=440, `first_offset`=16) followed by a Detailed
+  Search Info Record declared `SRAL` -- a declaration never seen anywhere
+  else in this investigation -- but it is not reachable from any
+  `next_level` pointer anywhere in the tree: all 4 reachable Detailed
+  Search Info Records' `next_level` fields were checked directly (SRT1 has
+  none; the other 3 all resolve into the already-walked tree, one of them
+  twice, to the shared SRT1 target). The two 12-byte undecoded "gap"
+  fields in every Detailed Search Info Record's 92-byte prefix (offsets
+  4-16 and 48-60) were checked byte-by-byte, for all 4 reachable records,
+  as a candidate record-relative or absolute pointer to this offset; none
+  resolved to it -- one gap instead contains what reads as a short ASCII
+  tag (e.g. `KBA2`/`KBST`), not a pointer. This region is copied
+  **verbatim** by `assemble(..., include_trailing_tail=True)` in
+  `"replicate"` mode (which is why the whole-file byte-identical proof
+  above covers the full 15,387,684-byte file, not just the 15,375,908-byte
+  reachable tree) -- but it is not reconstructed from IR, and its true
+  structure and purpose are undocumented. This is the same status as
+  before this pass; no progress was made resolving it.
+
+### `IDX/POISR201.IDX`: attempted, not completed
+
+The task's secondary target was attempted but not completed within this
+pass's time budget. `POISR201.IDX` has a materially different top-level
+shape from `SADSR201.IDX` -- more sibling frames/populations at the top
+level (5 matching-record populations were found reachable, versus
+SADSR201.IDX's 4), and running the same `"replicate"`-mode assembler
+against it produces a first byte diff at offset 771 -- **before** any
+matching-frame content, meaning the DSIR/DCTF local-fields ordering itself
+does not follow the exact SADSR201.IDX pattern for this file (this was not
+investigated further). Of its 5 matching-record populations, only 1
+decode-and-rebuilds cleanly; the other 4 hit pre-existing decode bugs
+never previously exercised, including at least one `ValueError: odd number
+of nibble fields written before a byte-aligned field` (a POI-specific
+nibble-field-pairing case not present in any SADSR201.IDX population).
+None of this was investigated further -- it is recorded here as an honest
+"not done", not a hidden gap. `docs/00-overview.md`'s "what remains" list
+should treat `POISR201.IDX` whole-file assembly as still fully outstanding.
+
+### Regression check
+
+The full existing suite was re-run after this pass's two `search_frame.py`
+/ `index_writer.py` fixes, with no regressions: `parser/roundtrip_misc.py`
+(7/7), `roundtrip_alldata_header.py` (3/3 + documented not-attempted
+regions unchanged), `roundtrip_idx.py` (232/232), `roundtrip_parcel_content.py`
+(8/8), and every file under `parser/tests/` (`test_mesh.py`,
+`test_roundtrip_alldata_full.py`, `test_roundtrip_alldata_header.py`,
+`test_roundtrip_idx.py` [9/9], `test_roundtrip_misc.py`,
+`test_roundtrip_parcel_content.py`, `test_route_planning.py`,
+`test_boundary_links.py`, `test_contraction.py`) plus the new
+`test_roundtrip_idx_full.py` (5/5).

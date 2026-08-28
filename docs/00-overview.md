@@ -788,3 +788,52 @@ plausible-looking.
     untouched"). What's left for Phase 2's stated goal is unchanged:
     whole-file reassembly of `IDX/*.IDX` (this pass didn't touch that), and
     actual disc reassembly + in-vehicle testing.
+- 2026-08-28: **Whole-file assembly (allocation/layout) landed for both
+  `ALLDATA.KWI` and `IDX/*.IDX` — the last item "what remains" flagged after
+  every prior Phase 2 pass.** Two parallel efforts, full detail in
+  `docs/phases/02-roundtrip.md`'s new "Whole-file `ALLDATA.KWI` assembly"
+  and "Whole-file `IDX/*.IDX` assembly" sections.
+  - **`ALLDATA.KWI`** (new `parser/kiwiw/alldata_writer.py`, harness
+    `parser/roundtrip_alldata_full.py`, tests
+    `parser/tests/test_roundtrip_alldata_full.py`): reassembled whole real
+    block sets (level 8, all 6 block sets/78 leaf parcels; level 6, one
+    block set/227 leaf parcels) two ways — `assemble_inplace()` replicates
+    the original's own offsets (byte-identical, 87/87 and 231/231 checks)
+    and `assemble_denovo()` packs the same content into a fresh contiguous
+    layout with rewritten pointers (internally self-consistent via re-parse
+    only, 84/84 and 228/228). Allocation-rule confidence: sector alignment
+    HIGH (exact inverse of `getsector()`); a block set's blocks are packed
+    contiguously in block-index order — MEDIUM (one region's worth of
+    evidence); leaf (Map Frame) placement order across the disc — WEAK, no
+    rule found, real offsets increase but with unexplained gaps. Levels
+    0/2/4 (holding most of the disc's real content) are not yet exercised.
+  - **`IDX/*.IDX`** (new `parser/roundtrip_idx_full.py`, tests
+    `parser/tests/test_roundtrip_idx_full.py`): whole `SADSR201.IDX`
+    (15,387,684 bytes) reassembled byte-identical in "replicate" mode;
+    "fromscratch" mode proven decode-equivalent via re-parse only.
+    Allocation rule: zero-gap/zero-padding sequential packing, recursive —
+    HIGH confidence for forward ordering (zero exceptions across the whole
+    reachable tree), WEAK for `next_level` recursion order (reverse
+    record order, witnessed only once). `POISR201.IDX` attempted but not
+    completed — different top-level shape, decode bugs in 4 of 5 matching
+    populations, left fully outstanding.
+  - **Two genuine format bugs found and fixed** while chasing full-frame
+    (not just prefix) byte accounting: `DCTF` definition frames' entry
+    count excludes the header itself, not "including itself" as previously
+    documented (`search_frame.parse_definition_frame`,
+    `index_writer.write_definition_frame`) — under-parsed every definition
+    frame on the disc by exactly one trailing field, invisible until now
+    because that field is always STFG-gated off; and a `.strip("\x00 ")` vs
+    `.rstrip("\x00 ")` bug that silently mis-padded a raw-integer-valued
+    field decoded as ASCII. Both confirmed via the full existing suite
+    re-run afterward with zero regressions (`roundtrip_idx.py` still
+    232/232, all 38,120 street records still full-scan clean).
+  - A pre-existing decode-overrun bug in SRHA's own "city name" matching
+    records (1,285 records, never previously exercised) was found and
+    documented, not silently fixed — the assembler falls back to verbatim
+    copy for that population and flags it in its report rather than
+    crashing or hiding it.
+  - **Next / not yet done**: levels 0/2/4 of `ALLDATA.KWI`, `POISR201.IDX`
+    whole-file assembly, and — the actual Phase 2 goal — assembling a full
+    disc image (combining these with untouched loader/voice/image
+    resources) and burning it for in-vehicle testing.
