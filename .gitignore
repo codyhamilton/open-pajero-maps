@@ -19,3 +19,6 @@ __pycache__/
 # Regenerable script logs
 tag_crosstab.out
 tag_crosstab.err
+
+# Pipeline output (regenerable from PBF + build_alldata.py)
+output/

@@ -439,3 +439,291 @@ def assemble_denovo(region: LoadedRegion) -> DenovoResult:
 
     return DenovoResult(buf=bytes(buf), pdmdh_offset=pdmdh_offset,
                          block_offsets=block_offsets, leaf_offsets=leaf_offsets)
+
+
+# ---------------------------------------------------------------------
+# Synthetic ALLDATA.KWI builder
+# ---------------------------------------------------------------------
+
+from dataclasses import dataclass as _dataclass
+
+
+@_dataclass
+class SynthParcel:
+    """One synthetic parcel ready for assembly into an ALLDATA.KWI file.
+
+    ``ix`` / ``iy`` are the column / row indices within the parcel grid
+    (0-based, matching the TileGrid used when the map frame bytes were
+    encoded).  ``bounds`` must be the same BoundingBox used during encoding
+    so that pixel coordinates decode back to the correct lat/lon values.
+    ``map_frame_bytes`` is the output of ``synth.build_map_frame_bytes()``.
+    """
+    ix: int
+    iy: int
+    bounds: BoundingBox
+    map_frame_bytes: bytes
+
+
+def build_alldata_kwi(
+    parcels: list[SynthParcel],
+    coverage: BoundingBox,
+    level: int,
+    grid_nx: int,
+    grid_ny: int,
+    sector_sz: int = 2048,
+    logical_sz: int = 32,
+) -> bytes:
+    """Assemble a minimal but parseable ALLDATA.KWI from synthetic parcels.
+
+    Produces a file with:
+    - a synthetic Data Volume header (2048 bytes)
+    - a synthetic Management Header Table (2048 bytes)
+    - a synthetic PDMDH with one LMR / one BSMR / one BMT (one block)
+    - one block buffer (a flat Parcel Management Record)
+    - map frame bytes for each provided parcel
+
+    The file is readable by ``alldata_writer.load_region()`` for
+    verification.
+
+    Parameters
+    ----------
+    parcels:
+        List of encoded parcels.  Parcels outside (grid_nx, grid_ny) raise.
+    coverage:
+        Geographic bounding box stored in the PDMDH and volume header.
+    level:
+        Map level number (0, 2, 4, 6, 8 on the real disc).
+    grid_nx, grid_ny:
+        Total parcel grid dimensions; determines the Parcel Management
+        Record grid and the LMR n_parcels_* fields.
+    sector_sz, logical_sz:
+        Sector / logical-sector sizes (default: real disc values 2048/32).
+    """
+    import copy as _copy
+
+    from . import volume as _vol
+    from . import volume_writer as _vw
+    from .model import (
+        BlockSetMgmtRecord as _BSMR,
+        LevelMgmtRecord as _LMR,
+        ParcelMapInfoEntry as _PMI,
+        ParcelMgmtRecord as _PMR,
+    )
+
+    _POISON = POISON
+
+    # ---- helpers --------------------------------------------------------
+    def _u16b(v: int) -> bytes:
+        return bytes((v >> 8, v & 0xFF))
+
+    def _u32b(v: int) -> bytes:
+        return bytes(((v >> 24) & 0xFF, (v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF))
+
+    def _pad(data: bytes, granularity: int) -> bytes:
+        """Pad ``data`` to a multiple of ``granularity`` bytes with zeros."""
+        rem = len(data) % granularity
+        return data + bytes(granularity - rem) if rem else data
+
+    # ---- layout constants -----------------------------------------------
+    datavol_offset = 0
+    mht_offset     = _vol.DATAVOL_SIZE          # 2048
+    pdmdh_offset   = _vol.DATAVOL_SIZE + _vol.MHT_SIZE  # 4096
+
+    lmr_size = _vol.LMR_BASE_SIZE               # 40 bytes (no extended frame info)
+    bsmr_size_bytes = _vol.BSMR_SIZE            # 10 bytes
+    bmt_entry_size = _vol.BMT_SIZE              # 6 bytes (= 2 * bmr_sz where bmr_sz=3)
+    bmr_sz = bmt_entry_size // 2               # 3 (stored halved)
+
+    # PDMDH layout within its own buffer:
+    #   [0..29]  : 30-byte PDMDH header
+    #   [30..69] : 1 LMR (40 bytes)
+    #   [70..79] : 1 BSMR (10 bytes)  -- bsmr_table_offset = 70
+    #   [80..85] : 1 BMT entry (6 bytes)  -- bmt_offset_within_pdmdh = 80
+    bsmr_table_offset = 30 + lmr_size          # = 70
+    bmt_in_pdmdh      = bsmr_table_offset + bsmr_size_bytes  # = 80
+
+    pdmdh_record_size = bmt_in_pdmdh + bmt_entry_size   # = 86
+    pdmdh_total_size  = align_up(pdmdh_record_size, logical_sz)   # = 96
+    pdmdh_logical     = pdmdh_total_size // logical_sz    # = 3
+
+    # ---- block buffer ---------------------------------------------------
+    n_entries = grid_nx * grid_ny
+    block_data_size = 4 + n_entries * bmt_entry_size   # 4 + n*6
+    block_total_size = align_up(block_data_size, logical_sz)
+    block_logical    = block_total_size // logical_sz
+
+    block_offset = pdmdh_offset + pdmdh_total_size     # byte offset in file
+
+    # ---- map frame layout -----------------------------------------------
+    # Each map frame is padded to logical_sz; allocate slots for all entries.
+    # Entries with no parcel data get NO_DATA_DSA.
+    frame_slot_bytes: dict[int, bytes] = {}  # flat_index -> padded frame bytes
+    for sp in parcels:
+        if not (0 <= sp.ix < grid_nx and 0 <= sp.iy < grid_ny):
+            raise ValueError(
+                f"SynthParcel ({sp.ix}, {sp.iy}) outside grid "
+                f"{grid_nx}×{grid_ny}")
+        flat = sp.iy * grid_nx + sp.ix
+        frame_slot_bytes[flat] = _pad(sp.map_frame_bytes, logical_sz)
+
+    # Assign file offsets to each occupied slot.
+    frame_offsets: dict[int, int] = {}   # flat_index -> byte offset in file
+    cursor = block_offset + block_total_size
+    for idx in sorted(frame_slot_bytes):
+        frame_offsets[idx] = cursor
+        cursor += len(frame_slot_bytes[idx])
+
+    total_file_size = cursor
+
+    # ---- build Parcel Management Record entries -------------------------
+    entries: list[_PMI] = []
+    for flat in range(n_entries):
+        if flat in frame_offsets:
+            foff = frame_offsets[flat]
+            fsz  = len(frame_slot_bytes[flat])
+            dsa  = encode_sector_addr(foff, sector_sz, logical_sz)
+            sz   = fsz // logical_sz
+            entries.append(_PMI(dsa=dsa, size=sz))
+        else:
+            entries.append(_PMI(dsa=NO_DATA_DSA, size=0))
+
+    # Tail = padding bytes beyond the record footprint inside the block buf.
+    record_footprint = 4 + n_entries * bmt_entry_size   # = block_data_size
+    tail_len = block_total_size - record_footprint
+    root_pmr = _PMR(
+        parcel_type=0,
+        list_type=0,
+        offset=0,
+        entries=entries,
+        header_gap_raw=b"\x00\x00",
+        tail_raw=bytes(tail_len),
+    )
+
+    # ---- Pdmdh IR -------------------------------------------------------
+    # BMT entry for the one block.
+    block_dsa  = encode_sector_addr(block_offset, sector_sz, logical_sz)
+    bmt_entry  = _vol.BmtEntry(dsa=block_dsa, size=block_logical)
+
+    bmt_table = _vol.BmtTable(
+        blockset_ordinal=0,
+        offset=bmt_in_pdmdh,
+        entries=[bmt_entry],
+    )
+
+    # BlockSetMgmtRecord.
+    blockset = _BSMR(
+        level=level,
+        blockset_index=0,
+        bmt_offset=bmt_in_pdmdh,   # sws-decoded: stored as bmt_in_pdmdh // 2
+        bmt_size=bmt_entry_size,    # sws-decoded: 6 (stored as 3)
+    )
+
+    # LevelMgmtRecord (minimal, no extended frame-index tables).
+    lmr = _LMR(
+        level=level,
+        upper_level=level,
+        lower_level=level,
+        n_basic_map=3,
+        n_ext_map=0,
+        n_basic_route=0,
+        n_ext_route=0,
+        display_flags=[0] * 5,
+        n_blocksets_lat=0,
+        n_blocksets_lng=0,
+        n_blocks_lat=0,
+        n_blocks_lng=0,
+        n_parcels_lat=[grid_ny - 1, 0, 0, 0],
+        n_parcels_lng=[grid_nx - 1, 0, 0, 0],
+        bsmr_offset=bsmr_table_offset,   # = 70; stored as 35 in LMR
+        node_record_size=6,              # = sws(3); arbitrary typical value
+        grid_nx=grid_nx,
+        grid_ny=grid_ny,
+        n_road_frames=None,
+        raw_tail_hex="",
+    )
+
+    lat_span = coverage.lat_hi - coverage.lat_lo
+    lon_span = coverage.lon_hi - coverage.lon_lo   # assumes no anti-meridian wrap
+
+    pdmdh = _vol.Pdmdh(
+        coverage=coverage,
+        lmr_size=lmr_size,
+        bsmr_size=bsmr_size_bytes,
+        bmr_size=bmr_sz,
+        n_lmr=1,
+        n_bsmr=1,
+        levels=[lmr],
+        blocksets=[blockset],
+        bsmr_table_offset=bsmr_table_offset,
+        bmt_table_base=0,
+        record_size=pdmdh_record_size,
+        total_size=pdmdh_total_size,
+        header_gap_hex="00" * 6,
+        bmt_tables=[bmt_table],
+        trailing_padding_hex="00" * (pdmdh_total_size - pdmdh_record_size),
+    )
+
+    # ---- Volume Header --------------------------------------------------
+    mid_zero = _vol.Mid(lat=0.0, lon=0.0, lat_exponent=0, lon_exponent=0,
+                        floor=0, reserved=0, date=0)
+    extras = _vol.VolumeHeaderExtras(
+        mids=[mid_zero, mid_zero, mid_zero],
+        maker_defined_hex=["00" * 52, "00" * 52, "00" * 20],
+        contents_word0_low=0,
+        contents_words_1_3=[0, 0, 0],
+        coverage_exponents=[0, 0, 0, 0],
+        background_low=0,
+        reserved_478_hex="00" * 14,
+        level_mgmt_info_hex="00" * 256,
+        reserved_748_hex="00" * 1300,
+    )
+    from .model import VolumeHeader as _VH
+    hdr = _VH(
+        format_version="KIWI-W SYNTHETIC 001",
+        data_version="SYNTHETIC",
+        disk_title="OSM SYNTHETIC BUILD",
+        media_version="001",
+        system_specific_id="",
+        data_author_id="",
+        system_id="",
+        contents_main_map=True,
+        contents_route_planning=False,
+        contents_index_data=False,
+        coverage=coverage,
+        logical_sector_size=logical_sz,
+        sector_size=sector_sz,
+        background_in_map_is_sea=False,
+        background_out_of_map_is_sea=False,
+    )
+
+    # ---- Management Header Table ----------------------------------------
+    mht_entries = [
+        _vol.MhrEntry(index=i, dsa=0, size=0, name="")
+        for i in range(_vol.MHT_RECORD_COUNT)
+    ]
+    mht_entries[0].dsa  = encode_sector_addr(pdmdh_offset, sector_sz, logical_sz)
+    mht_entries[0].size = pdmdh_logical
+    mht = _vol.ManagementHeaderTable(
+        entries=mht_entries,
+        tail_hex="00" * (_vol.MHT_SIZE - _vol.MHT_RECORD_COUNT * _vol.MHR_SIZE),
+    )
+
+    # ---- Assemble block buffer ------------------------------------------
+    block_buf = bytearray([_POISON]) * block_total_size
+    parcel_writer.write_parcel_mgmt_record(root_pmr, block_buf)
+
+    # ---- Write everything into one buffer --------------------------------
+    buf = bytearray(total_file_size)
+
+    def _put_at(off: int, data: bytes) -> None:
+        buf[off:off + len(data)] = data
+
+    _put_at(datavol_offset, _vw.write_volume_header(hdr, extras))
+    _put_at(mht_offset,     _vw.write_management_header_table(mht))
+    _put_at(pdmdh_offset,   _vw.write_pdmdh(pdmdh))
+    _put_at(block_offset,   bytes(block_buf))
+
+    for idx, frame_bytes in frame_slot_bytes.items():
+        _put_at(frame_offsets[idx], frame_bytes)
+
+    return bytes(buf)
