@@ -422,9 +422,20 @@ def iter_matching_records(
     if end_offset is not None:
         while off < end_offset and (max_records is None or n < max_records):
             rec = parse_matching_record(buf, off, fields)
+            consumed = rec["_consumed"]
+            if off + consumed > end_offset:
+                # Record starts within the frame but its decoded content extends
+                # past end_offset -- this is trailing-padding territory (bytes
+                # beyond the true last record that look vaguely record-shaped but
+                # are actually an adjacent structure's header or opaque padding).
+                # Yielding it would read bytes from whatever follows the frame in
+                # the containing buffer, producing layout-dependent values that
+                # differ between the real file and a from-scratch reassembly even
+                # though the frame's own bytes are byte-identical. Stop here.
+                break
             yield rec
             n += 1
-            off += rec["_consumed"]
+            off += consumed
         return
     while 0 <= off < len(buf) and (max_records is None or n < max_records):
         rec = parse_matching_record(buf, off, fields)
