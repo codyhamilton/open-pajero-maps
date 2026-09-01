@@ -6,6 +6,287 @@ the KIWI-W structures identified in Phase 1, built up incrementally:
 roads only -> + names -> + POIs -> + address search, with an in-vehicle test after
 each sub-checkpoint.
 
+## Pipeline plan (synthesized 2026-09-01)
+
+This section is a concrete, gap-annotated implementation plan for the full
+OSM PBF → working disc image pipeline, written after Phase 2's byte-identical
+round-trip writers were all proven. It supersedes the "not started yet" stub
+that was here before. The detailed per-task progress notes from the
+out-of-sequence route-planning work follow below.
+
+### What the pipeline must produce
+
+Starting from an OSM PBF extract:
+
+1. `ALLDATA.KWI` — main map data (roads, background geometry, names, parcel
+   management records, route planning frames)
+2. `IDX/*.IDX` — address/POI search index chain (street names, address ranges,
+   POIs, city selection)
+3. `SPEC.KWI`, `METADATA.KWI`, `COUNTRY.KWI`, `VERSION.TXT`, `COVERAGE.BIN`,
+   `DN/CLUSTER.DAT`, `PCT2MNG.KWI` — small metadata files (regenerable from
+   new region parameters via `misc_writer.py` — already fully understood)
+4. Copy-through unchanged from the reference disc: `LOADING.KWI` (firmware,
+   ~31MB), `DICVCE56.KWI`, `GRA256D.KWI`, `KGRA256.KWI`, `PCT256D.KWI`,
+   `KPCT256.KWI`, `PCT2DAT.KWI`, `KPCT2DT.KWI`, `KGRPDAT.KWI`, `VAR256D.KWI`,
+   `COVERAGE/AUC.BMP`
+
+Unknown status: `HWMAP.KWI` (highway overview, not decoded), `INDEXDAT.KWI`
+(index data management, not decoded). Whether firmware requires these for
+basic routing/search is untested — safe to copy through unchanged initially
+and only invest in them if in-vehicle testing reveals a failure.
+
+### Stage 1 — OSM geometry extraction and parcel tiling
+
+**What exists**: `build_route_graph.py` extracts the routing intersection
+graph from OSM PBF via pyosmium (ways, node coordinates, turn restrictions)
+for a bounded bbox. No code exists for extracting display geometry — road
+polylines, background polygons, or place names.
+
+**What is missing**:
+
+- A parcel tiling strategy: given a target region (e.g. Western Australia),
+  decide how to carve it into block sets/blocks/parcels matching the KIWI-W
+  mesh structure. The real disc uses 7 levels (12/10/8/6/4/2/0) with
+  increasing tile density toward level 0. The tile counts (n_blocks_lat ×
+  n_blocks_lng per level) need to be chosen and encoded into the LMR. No
+  guidance on what counts to use — will need to be determined empirically or
+  derived from the real disc's own LMR values and scaled.
+
+- An OSM way geometry extractor that produces parcel-local road polyline
+  coordinate chains (the source material for RoadLink records), not just
+  intersection nodes. `build_route_graph.py` collapses each inter-node way
+  segment to a single link length, discarding intermediate shape nodes — those
+  shape nodes are needed for rendering.
+
+- An OSM area/multipolygon → background shape extractor (coastlines, land use,
+  water bodies, administrative boundaries that feed `BackgroundFrame`).
+
+- An OSM addr/name tag → name record extractor (street names, place names,
+  suburb names for `NameFrame`).
+
+**Complexity: Large.** This is the single largest gap in the pipeline. Nothing
+here exists yet; it is the prerequisite for building any real `ALLDATA.KWI`
+parcel content.
+
+### Stage 2 — Road-link encoder
+
+**What exists**: `parcel_writer.write_road_frame()` serializes a `RoadFrame`
+by replaying `RoadLink.raw_bytes` verbatim from the real disc. There is no
+encoder that takes semantic fields (coordinate chain, road class, speed,
+display class, connectivity flags) and produces new raw bytes.
+
+**What is missing**: A road-link encoder for the multilink/polyline format
+decoded by `road.py`. The format is high-confidence (kiwiread.c corroborates
+it): 16-byte link header (road type, display class, node count, shape length,
+connectivity flags, lattr), delta-encoded parcel-local coordinate pairs (6
+bytes per pair from `coordconv.decode_region_coord`), and a per-display-class
+display-flag word. The existing decoder in `road.py` shows every field but the
+writer only replays `raw_bytes` — no inverse of `decode_region_coord` /
+`encode_region_coord` has been written.
+
+**Complexity: Medium.** The format is well understood; the encoder is
+straightforward to build from the decoder. The fiddly part is the
+parcel-local coordinate system (delta encoding, parcel-local origin
+derived from the block bounds) — the inverse of `coordconv.xy_to_latlon`.
+Prerequisite for generating any new map parcel.
+
+### Stage 3 — Background and name frame encoders
+
+**What exists**: `parcel_writer.write_background_frame()` and
+`write_name_frame()` replay verbatim raw bytes. No encoder from semantic
+fields exists for either.
+
+**What is missing**:
+
+- Background: OSM polygon/area geometry → background shape records. The
+  background format (coordinate chains, background type codes, optional name/
+  auxdata trailers) is medium-confidence (Phase 1: "inferred, not
+  spec-confirmed"). The road-type code mapping from OSM tags to KIWI-W
+  background codes is only ~50% identified — an OSM→code mapping will
+  necessarily have gaps and best-effort choices for uncatalogued types.
+
+- Names: OSM name/addr tags → name records. The `string_type=4` (Linear-B)
+  format is now understood (Phase 2 parcel content pass fixed the 2-byte
+  miscount and confirmed `na`-derived record boundaries). Other string types
+  (0, 2, 3, 7) remain undecoded; only type 4 can be generated from scratch.
+  The name record's header word is currently replayed verbatim.
+
+**Complexity: Medium-large for background** (code-mapping uncertainty is the
+main risk; the format itself is tractable). **Medium for names** (type 4 is
+understood, but building the tag-extraction, deduplication, and coordinate
+assignment logic takes work).
+
+### Stage 4 — Route planning hierarchy (at scale)
+
+**What exists**: This is the most complete stage. `contraction.py` implements
+real Contraction Hierarchies; `build_route_hierarchy.py` builds a 4-level
+(2/4/6/8) region tree with boundary nodes and cross-region escape links;
+`route_planning_writer.py` encodes all Ch.9/Ch.10 record types including the
+Road Reference Table (aggregated-intersection clustering). Self-consistent
+round-trip confirmed over a small 2×2-tile test area. All 28 tests pass.
+
+**What is missing (honest gaps, from docs)**:
+
+- Scale: the current builder targets a small test area. Scaling to a full
+  region (thousands of regions across Australia) needs a spatial tiling
+  strategy, load-balanced region tree, and efficient multi-pass CH contraction.
+  The 26.6× node-density gap between raw OSM and real-disc level-2 regions is
+  measured; what it implies for CH contraction depth at country scale is not.
+
+- `DEFAULT_LEVEL_FRACTIONS` (the per-level node-population split: 55/25/13/7%)
+  is a defensible heuristic, not a measured disc statistic. The real per-level
+  population fractions were never established.
+
+- The `uppermost_identical_level` 3-bit encoding (`level/2`) is not
+  independently spec-confirmed.
+
+- `cluster_nodes()` does not yet propagate `global_id` / `uppermost_identical_level`
+  from cluster members — needs a decision when combined with the hierarchy builder.
+
+- **Cross-layer Link ID assignment**: the route-planning frame's "Link ID
+  Number" field (Ch.10.10.2) connects each RP link to its counterpart in the
+  main map's `RoadFrame`. Currently synthetic (sequential) because no main-map
+  link writer existed when this was built. A real pipeline needs Link IDs
+  assigned jointly across both layers during parcel geometry extraction (Stage 1).
+  This is the most critical inter-stage dependency.
+
+**Complexity: Encoding machinery is done. The outstanding work is Large at
+country scale** (spatial tiling, region tree, joint Link ID assignment).
+
+### Stage 5 — Address and POI search index generation
+
+**What exists**: `index_writer.py` and `roundtrip_idx_full.py` can write and
+reassemble `SADSR201.IDX` from a parsed intermediate representation
+(fromscratch mode: self-consistent after re-parse, byte-layout provably
+different from the original). The self-describing DCTF/matching-record format
+is fully understood. Street name search (38,120 records), address ranges
+(344,276 records, all fully verified by the full-file pass), and nested city
+selection frames all round-trip correctly for the real disc's data.
+
+**What is missing**:
+
+- No code to build the IR from OSM data. A new extractor is needed that reads
+  OSM PBF and populates: SRMX street name records (STID, KYCH name, NXST, NXCT
+  cross-reference fields); SRT1 address-range records (RLXY geocoded
+  coordinate, HSST/HSEN house-number range, Link ID); SRHA city-selection
+  records; POISR POI records (name, category, geocoded coordinate). All of
+  these need the DCTF field schema and STFG presence bitmaps to match.
+
+- The `category_data` blob (ARCD/CTGY tables) is not decoded and cannot be
+  regenerated. The real disc's category tables drive how streets/POIs are
+  classified for the on-screen category filter. This is a significant unknown;
+  the safest first approach is to copy the category blob verbatim from the
+  reference disc and only add new categories if the firmware rejects the file.
+
+- `POISR201.IDX` whole-file assembly is not complete: decode bugs remain
+  (nibble-field pairing, city-name matching records overrunning record
+  boundaries) from the Phase 2 full-file pass.
+
+- The city-name (SRHA) matching-record decode bug is pre-existing and unresolved.
+
+- 7 levels per index type (SADSR201..207, POISR201..207, etc.): only
+  SADSR201 (level 1) is proven. The other levels have the same format but have
+  never been assembled from scratch.
+
+**Complexity: Large.** Building a sorted, self-consistent street/POI database
+from OSM and encoding it into the KIWI-W schema — including handling the
+STID/NXST/NXCT cross-reference graph between city, street, and address-range
+frames — is the dominant unsolved problem for the address-search feature.
+
+### Stage 6 — Final file assembly
+
+**What exists**: `alldata_writer.py` assembles `ALLDATA.KWI` from loaded
+region data in de novo mode (self-consistent, tested on levels 6 and 8: 84
+structures, all re-parsed consistently). The metadata files are trivially
+regenerable via `misc_writer.py` (7/7 byte-identical for the reference disc).
+
+**What is missing**:
+
+- De novo assembly tested only on levels 6/8 (a few hundred parcels). Not
+  validated on the larger levels 0/2/4 that hold most of the disc's real
+  content; the allocation logic should be the same but at much higher volume.
+
+- The "management frame" at real-disc file offset 4096..6144 is not reproduced
+  by the de novo assembler. What it contains and whether the firmware requires
+  it for routing/search is unknown — the safe first approach is to copy it
+  from the reference disc or leave the slot empty and test in-vehicle.
+
+- Route-planning cross-layer placement: mfde entries in the `MapFrame` that
+  reference route-planning data (the entries with absolute-disc-sector-looking
+  offsets, carried as opaque table entries in Phase 2) need to be placed
+  correctly in the assembled file. This requires the joint Link ID assignment
+  from Stage 4 to be resolved first.
+
+- Volume header fields (coverage bounds, disc title, data version, maker
+  identification stamps) need updating for the new region/data.
+
+- POISR201.IDX full assembly not done; SADSR202..207 and POISR202..207 untested.
+
+**Complexity: Medium** for ALLDATA.KWI (extending proven de novo logic to more
+levels, updating pointer fields). **Large** for IDX full set (depends on Stage 5).
+
+### Recommended implementation order
+
+Ordered from highest-confidence/lowest-risk to hardest/most uncertain:
+
+1. **Metadata files** — regenerate `SPEC.KWI`, `METADATA.KWI`, `COUNTRY.KWI`,
+   `VERSION.TXT`, `COVERAGE.BIN` from new region parameters. Already fully
+   understood; a few-hour task. Prerequisite: final target coverage bounds.
+
+2. **Parcel-local coordinate encoder** (Stage 2 prerequisite) — implement
+   the inverse of `coordconv.decode_region_coord` / `xy_to_latlon` so that a
+   WGS84 lat/lon can be expressed as a parcel-local delta-encoded pair. Needed
+   by every subsequent encoding stage.
+
+3. **Road-link encoder** (Stage 2) — implement the `RoadLink` encoder from
+   semantic fields (coordinate chain, road class, display class, connectivity)
+   to raw bytes, tested against a hand-crafted minimal parcel. Medium
+   complexity; unblocks Stage 1.
+
+4. **Background and name encoders** (Stage 3) — implement encoders for Linear-B
+   name records and background shapes. Can be done in parallel with Stage 2
+   once the coordinate encoder exists.
+
+5. **OSM geometry extractor and parcel tiler** (Stage 1) — the largest new
+   engineering task. Build the OSM PBF → parcel geometry pipeline: road
+   polylines, background polygons, name records, and a tile tiling strategy.
+   Stages 2-4 must be done first so that each extracted OSM object can be
+   immediately encoded and tested.
+
+6. **ALLDATA.KWI full assembly at scale** (Stage 6 core) — extend the de novo
+   assembler to all 7 levels with the new tile grid, update LMR/BSMR/BMT.
+   Depends on Stage 5.
+
+7. **Route planning at scale** (Stage 4 extension) — extend the hierarchy
+   builder to the full target region, resolve joint Link ID assignment with
+   the main map layer. Depends on Stage 5.
+
+8. **Address index generation** (Stage 5 core) — extract street names, house
+   numbers, POIs from OSM and populate DCTF/matching-record format into a
+   self-consistent SADSR/POISR index set across all 7 levels. The largest
+   single unsolved problem in the pipeline; depends on nothing except
+   pyosmium and the existing index writer.
+
+9. **In-vehicle testing** after each sub-checkpoint: roads only → +names →
+   +POIs → +address search, per the original Phase 3 goal.
+
+### Where the real difficulty lies
+
+All the byte-encoding writers are complete or straightforwardly extensible.
+The hard work is not "how to encode a given structure's bytes" — that is
+solved — but "how to extract, tile, and organize OSM data into the right
+structure." Specifically:
+
+- **Stage 1 (parcel geometry extraction)** is the critical-path blocker for
+  any real ALLDATA.KWI content.
+- **Stage 5 (address index generation)** is the dominant unsolved problem for
+  address search and the largest single engineering task.
+- **Stage 4 (route planning at scale)** has working machinery but needs
+  substantial scale engineering and the joint Link ID assignment resolved.
+
+The category_data blob (ARCD/CTGY) and the POISR decode bugs are secondary
+risks that can be deferred past the first roads-only in-vehicle test.
+
 ## Not started yet (main sequence)
 The roads -> names -> POIs -> address-search sequence depends on Phase 2's
 round-trip succeeding on real hardware, and hasn't started.
