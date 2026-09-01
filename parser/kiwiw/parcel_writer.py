@@ -24,6 +24,7 @@ from __future__ import annotations
 from .bitutils import sws
 from .model import (
     BackgroundFrame,
+    BoundingBox,
     MapFrame,
     NameFrame,
     ParcelMgmtRecord,
@@ -54,13 +55,35 @@ def _put(buf: bytearray, off: int, data: bytes) -> None:
     buf[off:end] = data
 
 
-def write_road_frame(frame: RoadFrame) -> bytes:
+def write_road_frame(
+    frame: RoadFrame,
+    bounds: BoundingBox | None = None,
+    encode: bool = False,
+) -> bytes:
     """Inverse of `road.decode_road_frame()`. Table words are rebuilt from
-    their raw captured form (exact by construction); each multilink
-    record is re-emitted verbatim from `RoadLink.raw_bytes` at its
-    original `raw_offset`."""
+    their raw captured form (exact by construction); each multilink record
+    is placed at its original `raw_offset`.
+
+    Two modes, selected by the `encode` flag:
+
+    * ``encode=False`` (default, **replicate mode**): re-emits each
+      RoadLink verbatim from ``RoadLink.raw_bytes``.  The output is
+      byte-identical to the original disc data.  Existing callers --
+      including the round-trip regression tests -- use this mode and
+      pass no ``bounds`` argument.
+
+    * ``encode=True`` (**encode mode**): re-serialises each RoadLink from
+      its decoded semantic fields via ``road_writer.encode_road_link()``.
+      The output is functionally equivalent (decodes to the same fields)
+      but not necessarily byte-identical (the coordinate raw words use a
+      normalised encoding that may differ from the original).
+      ``bounds`` must be supplied in this mode.
+    """
     if frame.frame_size <= 0:
         raise ValueError("RoadFrame.frame_size is unset -- cannot size the output buffer")
+    if encode and bounds is None:
+        raise ValueError("bounds must be provided when encode=True")
+
     buf = bytearray([POISON]) * frame.frame_size
 
     _put(buf, 0, _u16(frame.header_size_raw))
@@ -94,10 +117,15 @@ def write_road_frame(frame: RoadFrame) -> bytes:
         if content is not None:
             _put(buf, sws(raw_offset_word), content)
 
-    for link in frame.links:
-        if not link.raw_bytes:
-            raise ValueError("RoadLink has no raw_bytes captured -- cannot round-trip")
-        _put(buf, link.raw_offset, link.raw_bytes)
+    if encode:
+        from .road_writer import encode_road_link
+        for link in frame.links:
+            _put(buf, link.raw_offset, encode_road_link(link, bounds))
+    else:
+        for link in frame.links:
+            if not link.raw_bytes:
+                raise ValueError("RoadLink has no raw_bytes captured -- cannot round-trip")
+            _put(buf, link.raw_offset, link.raw_bytes)
 
     return bytes(buf)
 

@@ -45,3 +45,43 @@ def decode_region_coord(raw: int) -> int:
     region = extract(raw, 13, 15)
     value = extract(raw, 0, 12)
     return value + region * 4096
+
+
+def encode_region_coord(xc: int) -> int:
+    """Inverse of decode_region_coord: encode a parcel-local pixel coordinate
+    to the raw 16-bit word form used throughout the road/background/name
+    shape encodings.
+
+    Uses region = xc // 4096, value = xc % 4096 (value always in 0..4095,
+    12 bits).  This is a valid inverse -- decode_region_coord(
+    encode_region_coord(xc)) == xc for any xc in 0..32767.
+
+    Note: the real disc may use different (but equally valid) raw values
+    for some coordinates -- this encoder will produce different bytes than
+    the original but decodes to the same pixel coordinate.
+    """
+    if not 0 <= xc <= int(COORD_RANGE) - 1:
+        raise ValueError(
+            f"pixel coordinate {xc} out of range 0..{int(COORD_RANGE) - 1}"
+        )
+    region = xc // 4096
+    value = xc % 4096
+    return value | (region << 13)
+
+
+def latlon_to_xy(lat: float, lon: float, bounds: BoundingBox) -> tuple[int, int]:
+    """Inverse of xy_to_latlon: convert geographic coordinates to
+    parcel-local pixel coordinates.
+
+    The result is rounded to the nearest integer pixel.  When called with
+    a (lat, lon) that xy_to_latlon() produced from integer (xc, yc), the
+    round-trip is exact (the floating-point cancellation is clean and
+    round() absorbs any residual epsilon).
+    """
+    xc = int(round(
+        (lon - bounds.lon_lo) / (bounds.lon_hi - bounds.lon_lo) * COORD_RANGE
+    ))
+    yc = int(round(
+        (bounds.lat_hi - lat) / (bounds.lat_hi - bounds.lat_lo) * COORD_RANGE
+    ))
+    return xc, yc
