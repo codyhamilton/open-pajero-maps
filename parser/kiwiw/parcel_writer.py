@@ -130,13 +130,33 @@ def write_road_frame(
     return bytes(buf)
 
 
-def write_background_frame(frame: BackgroundFrame) -> bytes:
+def write_background_frame(
+    frame: BackgroundFrame,
+    bounds: BoundingBox | None = None,
+    encode: bool = False,
+) -> bytes:
     """Inverse of `background.decode_background_frame()`. Element/type-unit
     table words are rebuilt from their raw captured form; each Minimum
-    Graphics Data Record is re-emitted verbatim from
-    `BackgroundShape.raw_bytes` at its original `raw_offset`."""
+    Graphics Data Record is placed at its original `raw_offset`.
+
+    Two modes, selected by the `encode` flag:
+
+    * ``encode=False`` (default, **replicate mode**): re-emits each
+      BackgroundShape verbatim from ``BackgroundShape.raw_bytes``.  The
+      output is byte-identical to the original disc data.  Existing
+      callers pass no ``bounds`` argument and use this mode.
+
+    * ``encode=True`` (**encode mode**): re-serialises each BackgroundShape
+      from its decoded semantic fields via
+      ``background_writer.encode_background_shape()``.  The output is
+      functionally equivalent (decodes to the same fields) but may not be
+      byte-identical when the disc used a non-canonical coordinate encoding.
+      ``bounds`` must be supplied in this mode.
+    """
     if frame.frame_size <= 0:
         raise ValueError("BackgroundFrame.frame_size is unset -- cannot size the output buffer")
+    if encode and bounds is None:
+        raise ValueError("bounds must be provided when encode=True")
     buf = bytearray([POISON]) * frame.frame_size
 
     _put(buf, 0, _u16(frame.header_size_raw))
@@ -156,24 +176,42 @@ def write_background_frame(frame: BackgroundFrame) -> bytes:
             _put(buf, p + 2, _u16(val_word))
             p += 4
 
-    for shape in frame.shapes:
-        if not shape.raw_bytes:
-            raise ValueError("BackgroundShape has no raw_bytes captured -- cannot round-trip")
-        _put(buf, shape.raw_offset, shape.raw_bytes)
+    if encode:
+        from .background_writer import encode_background_shape
+        for shape in frame.shapes:
+            _put(buf, shape.raw_offset, encode_background_shape(shape, bounds))
+    else:
+        for shape in frame.shapes:
+            if not shape.raw_bytes:
+                raise ValueError("BackgroundShape has no raw_bytes captured -- cannot round-trip")
+            _put(buf, shape.raw_offset, shape.raw_bytes)
 
     return bytes(buf)
 
 
-def write_name_frame(frame: NameFrame) -> bytes:
+def write_name_frame(frame: NameFrame, encode: bool = False) -> bytes:
     """Inverse of `name.decode_name_frame()`. Name-list table words are
-    rebuilt from their raw captured form; each Name Data Record is
-    re-emitted verbatim from `NameRecord.raw_bytes` at its original
-    `raw_offset`.
+    rebuilt from their raw captured form; each Name Data Record is placed
+    at its original `raw_offset`.
 
-    Raises if any decoded record has an unhandled `string_type` (0, 2, 3,
-    7) -- `name.py` cannot determine such a record's length, so it has no
-    `raw_bytes` to write back, and this is a real, not-yet-closed gap
-    rather than something to paper over (see docs/phases/02-roundtrip.md).
+    Two modes, selected by the `encode` flag:
+
+    * ``encode=False`` (default, **replicate mode**): re-emits each
+      NameRecord verbatim from ``NameRecord.raw_bytes``.  The output is
+      byte-identical to the original disc data.
+
+    * ``encode=True`` (**encode mode**): re-serialises each NameRecord from
+      its decoded semantic fields via
+      ``name_writer.encode_name_record()``.  For ``string_type == 4``
+      (Linear-B, the only fully-decoded type) this patches attr1/attr2
+      from the decoded fields; for all other types it falls back to
+      raw_bytes verbatim.  The output is functionally equivalent (decodes
+      to the same fields).
+
+    Raises if any decoded record has no ``raw_bytes`` (which name.py
+    captures via the `na`-derived length for every record type, even
+    unhandled ones -- so this should never trigger on well-formed disc
+    data).
     """
     if frame.frame_size <= 0:
         raise ValueError("NameFrame.frame_size is unset -- cannot size the output buffer")
@@ -187,14 +225,23 @@ def write_name_frame(frame: NameFrame) -> bytes:
         _put(buf, off + 2, _u16(lst.raw_count_word))
         off += 4
 
-    for rec in frame.records:
-        if not rec.raw_bytes:
-            raise ValueError(
-                f"NameRecord with string_type={rec.string_type} has no raw_bytes "
-                "-- name.py cannot determine the length of an unhandled string "
-                "type, so this name frame cannot be round-tripped byte-identically "
-                "(see docs/phases/02-roundtrip.md)")
-        _put(buf, rec.raw_offset, rec.raw_bytes)
+    if encode:
+        from .name_writer import encode_name_record
+        for rec in frame.records:
+            if not rec.raw_bytes:
+                raise ValueError(
+                    f"NameRecord with string_type={rec.string_type} has no raw_bytes "
+                    "-- cannot encode")
+            _put(buf, rec.raw_offset, encode_name_record(rec))
+    else:
+        for rec in frame.records:
+            if not rec.raw_bytes:
+                raise ValueError(
+                    f"NameRecord with string_type={rec.string_type} has no raw_bytes "
+                    "-- name.py cannot determine the length of an unhandled string "
+                    "type, so this name frame cannot be round-tripped byte-identically "
+                    "(see docs/phases/02-roundtrip.md)")
+            _put(buf, rec.raw_offset, rec.raw_bytes)
 
     return bytes(buf)
 
