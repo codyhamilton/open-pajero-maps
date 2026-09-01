@@ -40,22 +40,35 @@ ALLDATA_PATH = os.path.join(ROOT, "ALLDATA.KWI")
 LEVEL = 8
 BLOCKSETS = [0, 1, 2, 4, 5, 6]
 
+# Small, fast, real regression subsets at levels 4 and 2, added 2026-08-28
+# when whole-file assembly coverage was extended from levels 6/8 only to
+# 0/2/4 (see docs/phases/02-roundtrip.md for the full-population and
+# level-0-sample runs -- those are far too large/slow for a pytest
+# regression suite and were instead run ad hoc via
+# `roundtrip_alldata_full.py --level 4/2/0 --blocksets ...`, with every
+# check passing over the FULL level-4 population (20/20 block sets),
+# the FULL level-2 population (63/63 block sets), and an 18-block-set
+# level-0 sample). These two small subsets exist only so a plain `pytest`
+# run also exercises levels 4 and 2, not just level 8.
+LEVEL4 = 4
+BLOCKSETS4 = [1, 2]  # 2 of the 20 real level-4 block sets
 
-def _open_region():
+LEVEL2 = 2
+BLOCKSETS2 = [2, 3]  # 2 of the 63 real level-2 block sets
+
+
+def _open_region(level=LEVEL, blocksets=BLOCKSETS):
     if not os.path.exists(ALLDATA_PATH):
         print(f"SKIP: {ALLDATA_PATH} not present (disc not mounted)")
         return None
-    return aw.load_region(ALLDATA_PATH, LEVEL, BLOCKSETS)
+    return aw.load_region(ALLDATA_PATH, level, blocksets)
 
 
 # ---------------------------------------------------------------------
 # Positive: in-place byte-identity, across a whole level's real content.
 # ---------------------------------------------------------------------
 
-def test_inplace_byte_identical():
-    region = _open_region()
-    if region is None:
-        return
+def _check_inplace_byte_identical(region, level, blocksets):
     with open(ALLDATA_PATH, "rb") as fh:
         real_bytes = fh.read()
 
@@ -67,17 +80,35 @@ def test_inplace_byte_identical():
         assert ok, f"{c.name} @ {c.offset}: not byte-identical"
         n_pass += 1
     print(f"PASS: {n_pass}/{len(checks)} in-place regions byte-identical "
-          f"(level {LEVEL}, block sets {BLOCKSETS})")
+          f"(level {level}, block sets {blocksets})")
+
+
+def test_inplace_byte_identical():
+    region = _open_region()
+    if region is None:
+        return
+    _check_inplace_byte_identical(region, LEVEL, BLOCKSETS)
+
+
+def test_inplace_byte_identical_level4():
+    region = _open_region(LEVEL4, BLOCKSETS4)
+    if region is None:
+        return
+    _check_inplace_byte_identical(region, LEVEL4, BLOCKSETS4)
+
+
+def test_inplace_byte_identical_level2():
+    region = _open_region(LEVEL2, BLOCKSETS2)
+    if region is None:
+        return
+    _check_inplace_byte_identical(region, LEVEL2, BLOCKSETS2)
 
 
 # ---------------------------------------------------------------------
 # Positive: de novo re-parse self-consistency, same whole-level region.
 # ---------------------------------------------------------------------
 
-def test_denovo_reparse_self_consistent():
-    region = _open_region()
-    if region is None:
-        return
+def _check_denovo_reparse_self_consistent(region, level, blocksets):
     result = aw.assemble_denovo(region)
     buf = io.BytesIO(result.buf)
 
@@ -124,7 +155,28 @@ def test_denovo_reparse_self_consistent():
             n_checked += 1
 
     print(f"PASS: {n_checked} de novo relocated structures re-parse consistently "
-          f"(level {LEVEL}, block sets {BLOCKSETS})")
+          f"(level {level}, block sets {blocksets})")
+
+
+def test_denovo_reparse_self_consistent():
+    region = _open_region()
+    if region is None:
+        return
+    _check_denovo_reparse_self_consistent(region, LEVEL, BLOCKSETS)
+
+
+def test_denovo_reparse_self_consistent_level4():
+    region = _open_region(LEVEL4, BLOCKSETS4)
+    if region is None:
+        return
+    _check_denovo_reparse_self_consistent(region, LEVEL4, BLOCKSETS4)
+
+
+def test_denovo_reparse_self_consistent_level2():
+    region = _open_region(LEVEL2, BLOCKSETS2)
+    if region is None:
+        return
+    _check_denovo_reparse_self_consistent(region, LEVEL2, BLOCKSETS2)
 
 
 # ---------------------------------------------------------------------
@@ -215,6 +267,10 @@ def test_negative_control_denovo_tail_raw():
 
 if __name__ == "__main__":
     test_inplace_byte_identical()
+    test_inplace_byte_identical_level4()
+    test_inplace_byte_identical_level2()
     test_denovo_reparse_self_consistent()
+    test_denovo_reparse_self_consistent_level4()
+    test_denovo_reparse_self_consistent_level2()
     test_negative_control_inplace_road_link_raw_bytes()
     test_negative_control_denovo_tail_raw()

@@ -148,6 +148,30 @@ class _BitWriter:
             self.data.append((self._pending_nibble << 4) | v)
             self._pending_nibble = None
 
+    def flush_nibble_zero_padded(self) -> None:
+        """Explicitly complete a LONE pending nibble by zero-filling the low
+        nibble, rather than pairing it with a second nibble field.
+
+        Added 2026-08-28 for the SRHA decode-overrun fix (see
+        `search_frame.parse_matching_record`'s docstring): unlike
+        `NXKD`/`NXFN` (always a genuine adjacent pair sharing one byte),
+        SRHA's `RLXY` field's own `UH`-typed VRBL length prefix is a
+        standalone nibble with no paired nibble field following it -- the
+        read side (`search_frame._BitReader`) already handles this by
+        discarding the unused low nibble when the next byte-aligned read
+        happens (`_flush_nibble`). This is the write-side inverse: CONFIRMED
+        (all 1,285 real SRHA records in SADSR201.IDX, plus POISR201.IDX's
+        analogous population) that the discarded low nibble is always 0 on
+        this disc, so re-emitting it as 0 here reproduces the real bytes
+        exactly. This is a narrow, explicit call site -- only used where a
+        VRBL field's own count prefix is nibble-typed -- not a change to
+        `bytes()`'s general behavior, which still raises loudly on an
+        unexpected unflushed nibble anywhere else (e.g. a genuinely broken
+        `NXKD`-without-`NXFN` pairing)."""
+        if self._pending_nibble is not None:
+            self.data.append(self._pending_nibble << 4)
+            self._pending_nibble = None
+
     def finish(self) -> bytes:
         if self._pending_nibble is not None:
             raise ValueError("unflushed nibble at end of record")
@@ -155,7 +179,11 @@ class _BitWriter:
 
 
 def _write_scalar(bw: _BitWriter, type_: str, count: int, val) -> None:
-    if type_ == "UH":
+    if type_ in ("UH", "HB"):
+        # 'HB' ("Half Byte") is the same nibble-packed type as 'UH', just
+        # spelled differently in some field tables (SRHA's own NXKD/NXFN,
+        # Ch.11.A.2.4.2.4) -- see search_frame._read_scalar's matching fix
+        # and docstring for the full SRHA decode-overrun root cause.
         vals = val if count > 1 else [val]
         for v in vals:
             bw.nibble(v)
@@ -184,15 +212,41 @@ def _write_scalar(bw: _BitWriter, type_: str, count: int, val) -> None:
 def _write_field(bw: _BitWriter, fd: FieldDef, val) -> None:
     if fd.is_variable:
         count_type = fd.count_type or "UB"
+        is_p6_pair = (
+            fd.element_type == "BT"
+            and fd.additional == "CMP6"
+            and isinstance(val, tuple)
+            and len(val) == 2
+        )
         if fd.element_type == "CH":
             content = val.encode("ascii")
             n = len(content)
+        elif is_p6_pair:
+            # RLXY as declared on an SRHA matching-data frame -- see
+            # search_frame._read_variable's matching decode and docstring.
+            # Always a single geo_secs (lat, lon) pair encoded as 6 raw
+            # bytes, with a VRBL length prefix that is always observed to
+            # be 6 on this disc.
+            n = 6
         else:
             vals = val if isinstance(val, list) else [val]
             n = len(vals)
         _write_scalar(bw, count_type, 1, n)
+        if count_type in ("UH", "HB") and fd.element_type not in ("UH", "HB"):
+            # SRHA's RLXY count prefix is a LONE nibble (no paired nibble
+            # field follows it, since its element type is 'BT' not
+            # 'UH'/'HB') -- see _BitWriter.flush_nibble_zero_padded's
+            # docstring for why zero-padding it here is correct rather than
+            # an error. If a future frame ever pairs a nibble-typed VRBL
+            # count with nibble-typed elements, this guard intentionally
+            # leaves the nibble pending so it pairs with the first element
+            # write instead of being flushed prematurely.
+            bw.flush_nibble_zero_padded()
         if fd.element_type == "CH":
             bw.bytes(content)
+        elif is_p6_pair:
+            lat, lon = val
+            bw.bytes(geo_secs_bytes(lat) + geo_secs_bytes(lon))
         else:
             for v in vals:
                 _write_scalar(bw, fd.element_type, 1, v)

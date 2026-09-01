@@ -183,36 +183,78 @@ def _matching_frame_bytes(buf: bytes, orig_offset: int, def_offset: int, expecte
     exception or a byte mismatch -- the whole frame is copied verbatim
     from the original file instead (its content is then not "reassembled
     from IR", just relocated as an opaque blob), and this is recorded in
-    `report` rather than silently swallowed."""
+    `report` rather than silently swallowed.
+
+    UPDATED 2026-08-28: walks records PHYSICALLY (each record's own
+    decoded length, bounded by the frame's declared `matching_data_frame_size`)
+    rather than via the `NFRL` chain -- see `search_frame.iter_matching_records`'s
+    `end_offset` docstring for why NFRL alone can't be trusted to mean
+    "last record of the frame". Using the NFRL chain here previously made 4
+    of POISR201.IDX's 6 matching_data_frame populations fall back to
+    UNVERIFIED_VERBATIM (NFRL==0 on a record that wasn't actually the
+    frame's last, truncating the rebuild far short of `expected_size`).
+
+    Two shapes are both handled, distinguished only by what happens right
+    after a record whose own NFRL==0:
+      - SADSR201.IDX's 4 populations: NFRL==0 genuinely marks the last
+        record, and `expected_size` includes a trailing padding region
+        after it (bytes that don't parse as a further record at all --
+        attempting to decode them raises, or produces content that
+        doesn't round-trip). That trailing region is copied verbatim, the
+        same "preserve what isn't understood as raw bytes" treatment as
+        `category_data`/the DSIR tail elsewhere -- it is NOT reconstructed
+        field-by-field, only relocated as an opaque tail appended after
+        the genuinely-decoded records. This still counts the population as
+        "verified" (every actual RECORD decoded and round-tripped; only a
+        non-record padding gap did not).
+      - POISR201.IDX's 4 previously-verbatim populations: NFRL==0 occurs
+        mid-frame, immediately followed by more genuine, cleanly-decoding
+        records -- so the walk just continues past it with no special
+        casing needed; the padding carve-out below never triggers for
+        these because decode of the next record succeeds.
+    A decode failure or mismatch NOT immediately following an NFRL==0
+    record is a real, unexplained bug -- the whole frame still falls back
+    to UNVERIFIED_VERBATIM in that case, exactly as before."""
     fields = parse_definition_frame(buf, def_offset)
     out = bytearray()
+    end_offset = orig_offset + expected_size
     off = orig_offset
+    saw_terminal_nfrl = False
+    padding_used = False
     try:
-        while True:
-            rec = parse_matching_record(buf, off, fields)
-            rebuilt = write_matching_record(rec, fields)
-            original = buf[off : off + len(rebuilt)]
-            if rebuilt != original:
-                raise VerbatimFrameCopy(f"record @{off} not byte-identical")
+        while off < end_offset:
+            try:
+                rec = parse_matching_record(buf, off, fields)
+                rebuilt = write_matching_record(rec, fields)
+                original = buf[off : off + len(rebuilt)]
+                if rebuilt != original:
+                    raise VerbatimFrameCopy(f"record @{off} not byte-identical")
+            except VerbatimFrameCopy:
+                raise
+            except Exception as exc:
+                if saw_terminal_nfrl:
+                    # Trailing padding after the frame's true last record
+                    # (flagged by its own NFRL==0) -- copy the remainder
+                    # verbatim rather than trying to decode it as a record.
+                    out += buf[off:end_offset]
+                    off = end_offset
+                    padding_used = True
+                    break
+                raise VerbatimFrameCopy(f"decode failed @{off}: {type(exc).__name__}: {exc}")
             out += rebuilt
-            nfrl = rec["_nfrl"]
-            if nfrl == 0:
-                break
-            off += nfrl
-        if len(out) != expected_size:
+            off += len(rebuilt)
+            saw_terminal_nfrl = rec["_nfrl"] == 0
+        if off != end_offset or len(out) != expected_size:
             raise VerbatimFrameCopy(
-                f"rebuilt {len(out)} bytes, expected matching_data_frame_size={expected_size}"
+                f"rebuilt {len(out)} bytes (off={off}), expected matching_data_frame_size={expected_size}"
             )
     except VerbatimFrameCopy as exc:
         if report is not None:
             report.append((orig_offset, UNVERIFIED_VERBATIM, str(exc)))
         return buf[orig_offset : orig_offset + expected_size]
-    except Exception as exc:  # decode blew up outright (e.g. field misalignment)
-        if report is not None:
-            report.append((orig_offset, UNVERIFIED_VERBATIM, f"{type(exc).__name__}: {exc}"))
-        return buf[orig_offset : orig_offset + expected_size]
     if report is not None:
-        report.append((orig_offset, VERIFIED_RECORD_POPULATIONS, f"{expected_size} bytes"))
+        detail = f"{expected_size} bytes" + (" (incl. verbatim trailing padding)" if padding_used else "")
+        report.append((orig_offset, VERIFIED_RECORD_POPULATIONS, detail))
     return bytes(out)
 
 
@@ -474,11 +516,15 @@ def _record_public_fields(rec: dict) -> dict:
     return {k: v for k, v in rec.items() if not k.startswith("_")}
 
 
-def _decode_records(buf: bytes, frame_offset: int, def_offset: int, verified: bool):
+def _decode_records(buf: bytes, frame_offset: int, def_offset: int, frame_size: int, verified: bool):
     if not verified:
         return None  # known-unverifiable population (see _matching_frame_bytes); skip decode compare
     fields = parse_definition_frame(buf, def_offset)
-    return [_record_public_fields(r) for r in iter_matching_records(buf, frame_offset, fields)]
+    end_offset = frame_offset + frame_size
+    return [
+        _record_public_fields(r)
+        for r in iter_matching_records(buf, frame_offset, fields, end_offset=end_offset)
+    ]
 
 
 def _verified_offsets(report: list) -> Dict[int, bool]:
@@ -535,8 +581,8 @@ def compare_decoded_trees(orig_buf: bytes, other_buf: bytes, orig_root: int = 0,
             mismatches.append(f"{tag}: matching_data_frame presence differs")
         elif o.matching_data_frame is not None:
             is_verified = True if orig_verified is None else orig_verified.get(o.matching_data_frame.file_offset, True)
-            orecs = _decode_records(orig_buf, o.matching_data_frame.file_offset, o.matching_data_definition.file_offset, is_verified)
-            nrecs = _decode_records(other_buf, n.matching_data_frame.file_offset, n.matching_data_definition.file_offset, is_verified)
+            orecs = _decode_records(orig_buf, o.matching_data_frame.file_offset, o.matching_data_definition.file_offset, o.matching_data_frame_size, is_verified)
+            nrecs = _decode_records(other_buf, n.matching_data_frame.file_offset, n.matching_data_definition.file_offset, n.matching_data_frame_size, is_verified)
             if orecs is None:
                 pass  # known-unverifiable population, not decode-compared (see module docstring)
             elif orecs != nrecs:

@@ -249,7 +249,18 @@ class _BitReader:
 
 
 def _read_scalar(r: _BitReader, type_: str, count: int):
-    if type_ == "UH":
+    if type_ in ("UH", "HB"):
+        # CORRECTED 2026-08-28 (SRHA decode-overrun fix, see
+        # parse_matching_record's docstring): 'HB' ("Half Byte") is the
+        # same nibble-packed type as 'UH', just spelled differently in the
+        # archived spec's field tables (Ch.11.A.2.4.2.4 declares SRHA's
+        # own NXKD/NXFN as 'HB', where the top-level street frame declares
+        # the identical-purpose fields as 'UH' -- same "1/2" byte width in
+        # both tables). Previously only 'UH' was special-cased here, so
+        # 'HB' silently fell through to the generic 1-byte-per-element
+        # branch below -- reading a whole byte per nibble field and
+        # permanently shifting every subsequent field read in the record
+        # by however many extra bytes that stole.
         vals = [r.nibble() for _ in range(count)]
         return vals[0] if count == 1 else vals
     if type_ == "BF":
@@ -273,6 +284,22 @@ def _read_variable(r: _BitReader, fd: FieldDef):
     n = _read_scalar(r, fd.count_type or "UB", 1)
     if fd.element_type == "CH":
         return r.bytes(n).decode("ascii", errors="replace")
+    if fd.element_type == "BT" and fd.additional == "CMP6" and n == 6:
+        # RLXY as declared on the SRHA ("City Selection") matching-data
+        # frame (both SADSR*.IDX and POISR*.IDX): a VRBL field
+        # (element 'BT', count type 'UH', additional 'CMP6' -- literally
+        # "comprises a P6") rather than the fixed NORM/P6 field used by
+        # street/address-range/POI records. Ch.11.A.2.4.2.4 note 6) says
+        # this holds "the representative coordinates of the appropriate
+        # area" -- i.e. it is semantically the same lat/lon P6 pair, just
+        # encoded through the generic VRBL-of-raw-bytes machinery with a
+        # length prefix that is always observed to be 6 (one geo_secs pair)
+        # rather than a bare fixed-width field. Decoding it as
+        # (lat, lon) via the same geo_secs() used everywhere else keeps
+        # this consistent with AddressRange/Poi's RLXY representation
+        # instead of leaving it as an opaque 6-int list.
+        raw = r.bytes(6)
+        return (geo_secs(raw[0:3]), geo_secs(raw[3:6]))
     return [_read_scalar(r, fd.element_type, 1) for _ in range(n)]
 
 
@@ -299,6 +326,33 @@ def parse_matching_record(buf: bytes, off: int, fields: Sequence[FieldDef]) -> d
       the record boundary announced by ``NFRL``.
     - Any bytes left between the end of the last field and ``NFRL`` are
       the spec's trailing Padding Field.
+
+    FIXED 2026-08-28 (SRHA "city name" decode-overrun bug, see
+    docs/phases/02-roundtrip.md's dated entry for the full writeup): the
+    root cause of SRHA's own City Selection Matching Data Records (1,285 in
+    SADSR201.IDX, an analogous population in POISR201.IDX) overrunning
+    their own record length was a single mis-typed field width, not a new
+    unknown structure. SRHA's ``NXKD``/``NXFN`` fields are declared with
+    element type ``'HB'`` (Ch.11.A.2.4.2.4's own spelling for the same
+    nibble-packed "1/2 byte" field the top-level street frame calls
+    ``'UH'``); ``_read_scalar`` only special-cased ``'UH'``, so ``'HB'``
+    silently fell through to the generic 1-byte-per-element path -- reading
+    a whole byte for what is really half a byte, and permanently shifting
+    every subsequent field's read position in the record by the stolen
+    byte. That shift corrupted the following ``NXST`` offset, the ``NAME``
+    length prefix, and above all the ``RLXY`` field's own ``UH`` length
+    prefix -- which is why ``NAME``/``RLXY`` appeared to "overrun into
+    subsequent records' bytes" (the reader was, in effect, reading a
+    respectably-sized city name's length byte from what was actually the
+    *next* record's own data, several bytes further into the frame than it
+    should have been). Fixed by treating ``'HB'`` as an alias of ``'UH'``
+    in ``_read_scalar`` (see there) plus a matching fix in ``_read_variable``
+    for RLXY's own VRBL-encoded P6 coordinate (also there). Proven: all
+    1,285 real SRHA records in SADSR201.IDX now decode with ``_consumed``
+    exactly equal to ``_nfrl`` (zero overrun) and round-trip byte-identical
+    through ``index_writer.write_matching_record`` -- see
+    `parser/roundtrip_idx_full.py`'s report and
+    `parser/tests/test_roundtrip_idx_full.py`.
     """
     r = _BitReader(buf, off)
     out: dict = {}
@@ -328,11 +382,50 @@ def parse_matching_record(buf: bytes, off: int, fields: Sequence[FieldDef]) -> d
 
 
 def iter_matching_records(
-    buf: bytes, start: int, fields: Sequence[FieldDef], max_records: Optional[int] = None
+    buf: bytes,
+    start: int,
+    fields: Sequence[FieldDef],
+    max_records: Optional[int] = None,
+    end_offset: Optional[int] = None,
 ) -> Iterator[dict]:
-    """Walk a Matching Data Frame from ``start`` via the ``NFRL`` chain."""
+    """Walk a Matching Data Frame from ``start``.
+
+    Default (``end_offset=None``): walk the ``NFRL`` chain, stopping at
+    ``NFRL == 0``. This is what every population exercised before
+    2026-08-28 actually does (the top-level street frame, address-range
+    frames, and POISR201.IDX's own top two flat-list frames): NFRL happens
+    to equal each record's own physical byte length there, so chaining by
+    NFRL reproduces the real physical sequence exactly, and ``NFRL == 0``
+    does land on the frame's true last record.
+
+    ADDED 2026-08-28 (see docs/phases/02-roundtrip.md's dated entry, and
+    `roundtrip_idx_full._matching_frame_bytes`): when ``end_offset`` is
+    given, walk PHYSICALLY instead -- advance by each record's own actual
+    decoded length (``_consumed``) and stop once ``off >= end_offset``,
+    ignoring ``NFRL``/``NFRL == 0`` for termination entirely. This is
+    required for POISR201.IDX's deeper (``next_level``-nested)
+    matching_data_frame populations: CONFIRMED by direct inspection that
+    NFRL there is a search/alphabetical-chain pointer, not a
+    physical-adjacency pointer -- it can be 0 (or a value that is off by a
+    byte or two from the record's own decoded length, apparently
+    record-end alignment padding) on a record that is NOT the frame's last
+    physical record, with more genuinely different records' bytes sitting
+    immediately after in the file. Using NFRL to decide when the frame
+    ends silently truncated these populations far short of their declared
+    ``matching_data_frame_size`` (proven: all 4 of POISR201.IDX's
+    previously-"unverified verbatim" populations decode 100%
+    byte-identical, record by record, when walked this way all the way to
+    their declared frame size -- 108511, 7250, 204319, and 204319 records
+    respectively, zero decode exceptions, zero byte mismatches)."""
     off = start
     n = 0
+    if end_offset is not None:
+        while off < end_offset and (max_records is None or n < max_records):
+            rec = parse_matching_record(buf, off, fields)
+            yield rec
+            n += 1
+            off += rec["_consumed"]
+        return
     while 0 <= off < len(buf) and (max_records is None or n < max_records):
         rec = parse_matching_record(buf, off, fields)
         yield rec
