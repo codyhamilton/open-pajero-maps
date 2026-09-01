@@ -159,6 +159,14 @@ class RoadLink:
     # readability/cross-validation only, not used to reconstruct bytes.
     raw_offset: int = 0
     raw_bytes: bytes = b""
+    # IR-only metadata (NOT encoded into KWI bytes): positional index of this
+    # link within its parcel's RoadFrame link list (0-based), and the OSM way
+    # ID that this link was derived from (join key to the RP layer).  Both
+    # default to safe non-values so existing round-trip tests (which build
+    # RoadLinks from real disc data that carries no OSM provenance) are
+    # unaffected.
+    link_id: int = 0
+    osm_way_id: Optional[int] = None
 
 
 @dataclass

@@ -455,11 +455,17 @@ def _latlon_in_bounds(lat: float, lon: float, bounds: BoundingBox) -> bool:
 
 def _make_road_link(chain: list[tuple[float, float]],
                     highway: str,
-                    bounds: BoundingBox) -> RoadLink:
+                    bounds: BoundingBox,
+                    osm_way_id: Optional[int] = None) -> RoadLink:
     """Build a synthetic RoadLink for one parcel-clipped road sub-polyline.
 
     The chain is a list of (lat, lon) pairs already clipped to the parcel.
     Coordinate values outside [0, COORD_RANGE) are clamped.
+
+    ``osm_way_id`` is the OSM way ID this polyline was derived from; it is
+    stored as IR-only metadata (not encoded into KWI bytes) so that the RP
+    layer can later look up the corresponding link's positional index in the
+    parcel's RoadFrame via a ``LinkIdRegistry``.
     """
     road_type = HIGHWAY_TO_ROAD_TYPE.get(highway, 4)
     display_class = HIGHWAY_TO_DISPLAY_CLASS.get(highway, 2)
@@ -493,6 +499,7 @@ def _make_road_link(chain: list[tuple[float, float]],
         points=[(n.lat, n.lon) for n in nodes],
         raw_offset=0,
         raw_bytes=b"",   # no disc data -- synthetic link
+        osm_way_id=osm_way_id,
     )
 
 
@@ -629,7 +636,7 @@ class _GeomHandler:
         tags = w.tags
         hw = tags.get("highway")
         if hw in ROADS:
-            self.road_ways.append({"coords": coords, "highway": hw})
+            self.road_ways.append({"coords": coords, "highway": hw, "way_id": w.id})
             name = tags.get("name")
             if name:
                 clat, clon = _centroid(coords)
@@ -699,6 +706,7 @@ def extract_parcel_geometry(
     for way in handler.road_ways:
         coords = way["coords"]
         hw = way["highway"]
+        way_id = way.get("way_id")
         per_parcel = split_polyline_by_parcel(coords, grid)
         for (ix, iy), chains in per_parcel.items():
             if (ix, iy) not in target_cells:
@@ -706,7 +714,7 @@ def extract_parcel_geometry(
             bounds = parcel_bounds(ix, iy, grid)
             for chain in chains:
                 if len(chain) >= 2:
-                    link = _make_road_link(chain, hw, bounds)
+                    link = _make_road_link(chain, hw, bounds, osm_way_id=way_id)
                     result[(grid.level, ix, iy)]["roads"].append(link)
 
     # --- Backgrounds ---
