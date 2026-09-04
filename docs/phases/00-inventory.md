@@ -54,7 +54,7 @@ Top-level (sizes in bytes):
 | `EMGSR*.IDX`, `EM2SR.IDX`, `EM3SR.IDX` | Unconfirmed — possibly "emergency" services search category, or a genre/category tier. |
 | `FMCDT001.IDX` | Unconfirmed. |
 
-The repeated `*SR201..207.IDX` suffix pattern (7 files per prefix, e.g. `FWYSR201`–`FWYSR206`/`207`, `ITSSR201`–`207`, `POISR201`–`207`, `SADSR201`–`207`) almost certainly corresponds to the 7 zoom/display levels `kiwiread` found in `ALLDATA.KWI`'s LMR table (levels 12,10,8,6,4,2,0) — i.e. each search index is itself split per zoom level, matching the main map's own level hierarchy. Confirming this mapping precisely (which numeric suffix = which level) is a Phase 1 task.
+The repeated `*SR201..207.IDX` suffix pattern (7 files per prefix, e.g. `FWYSR201`–`FWYSR206`/`207`, `ITSSR201`–`207`, `POISR201`–`207`, `SADSR201`–`207`) almost certainly corresponds to the 7 zoom/display levels `kiwiread` found in `ALLDATA.KWI`'s LMR table (levels 12,10,8,6,4,2,0) — i.e. each search index is itself split per zoom level, matching the main map's own level hierarchy. Confirming this mapping precisely (which numeric suffix = which level) is a Phase 1 task. **Corrected 2026-09-04: the suffix is a state/territory partition, not a zoom level** — decoded address-range bounding boxes give 201=WA, 202=NT, 203=SA, 204=QLD, 205=NSW, 206=VIC, 207=TAS (all seven confirmed). See `docs/design/target-disc.md`.
 
 **Precise mapping of these index-file prefixes to spec sections is a Phase 1 task** — cross-reference against the now-archived Chapter 11 sub-section PDFs (`spec/format_english/pdf/11A2*.pdf`) rather than guessing further here.
 

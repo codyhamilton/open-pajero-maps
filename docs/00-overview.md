@@ -19,6 +19,18 @@ understand the on-disc format the MMCS expects — it is not redistributed.
   attempted all at once.
 - **Test access**: the user can burn and test discs directly in the vehicle relatively
   easily, so the plan favors frequent in-vehicle validation over purely offline proof.
+  **Superseded 2026-09-04**: in-vehicle testing is last-mile only; evaluation is
+  offline byte/structural comparison against the reference disc. See
+  `docs/design/target-disc.md`.
+
+## Program of record (2026-09-04)
+
+`docs/design/target-disc.md` defines the target disc (full Australia, all seven
+levels, every map-dependent file regenerated), the offline evaluation oracle,
+stage contracts, and the work-package sequence WP1–WP5. Work packages run as
+plan folders under `docs/plans/`. Where this file or `docs/phases/*` disagree
+with the design doc, the design doc wins; the phase docs remain the research
+record.
 
 ## Format identified
 
@@ -91,6 +103,11 @@ plausible-looking.
 - True scope of KIWI-W format drift between hardware/years — `kiwiread` was written
   against different source discs (Audi mentioned), so this disc's specific variant
   needs independent confirmation, not assumed compatibility.
+- The `2##` suffix on `IDX/*SR2##.IDX` files is a **state partition** (decoded
+  2026-09-04 from address-range bounding boxes: 201=WA, 202=NT, 203=SA, 204=QLD,
+  205=NSW, 206=VIC, 207=TAS),
+  not a zoom level as `docs/phases/00-inventory.md` guessed. Which table on the
+  disc (likely `INDEXDAT.KWI`) names the per-state files is not yet decoded.
 - Whether OSM data in the target region has sufficient tagging depth (speed limits,
   turn restrictions, addr:* completeness) to hit the "full parity" bar, especially for
   address search.

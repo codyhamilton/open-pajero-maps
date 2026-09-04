@@ -8,6 +8,15 @@ each sub-checkpoint.
 
 ## Pipeline plan (synthesized 2026-09-01)
 
+> **Status note 2026-09-04.** Stages 1–3 and the joint Link ID registry below
+> were implemented on 2026-09-02 (`osm_to_parcel_geometry.py`, `kiwiw/synth.py`,
+> `kiwiw/link_id_registry.py`, `osm_to_address_index.py`, `build_alldata.py`;
+> commits `83169fa`..`540433c`) but are not yet described in this file. Their
+> known deviations from the reference disc (name `string_type=1`, 3-entry mfde
+> table, single-level assembly, Perth-only defaults) and the corrected program
+> plan live in `docs/design/target-disc.md` and `docs/plans/`. The "in-vehicle
+> test after each sub-checkpoint" phasing in this file is superseded there.
+
 This section is a concrete, gap-annotated implementation plan for the full
 OSM PBF → working disc image pipeline, written after Phase 2's byte-identical
 round-trip writers were all proven. It supersedes the "not started yet" stub
