@@ -100,3 +100,24 @@ same commit.
   (defaults to the reference disc mounted at
   `/run/media/codyh/464210-8480/ALLDATA.KWI`; pass `--alldata` to point at a
   different mount). Re-running against the same disc is byte-identical.
+
+## `parser/refdata/profile/map.json` (committed, derived data)
+
+- **What**: the reference profile — a full per-level census of the mounted
+  reference disc's map layer (parcel/link/background/name counts and
+  vocabulary histograms, Map Frame size stats, the mfde entry-count/absent-
+  slot/nregion census, and the map-layer byte totals) that
+  `parser/harness/checks/{vocab,envelope,mfde}.py` judge a generated disc
+  against. Same rationale as `grid.json` above: committed so the harness
+  never needs the mounted disc to judge a build, documented here anyway
+  because it's derived and a re-derivation against a different reference
+  disc would change it.
+- **Source**: derived once from the mounted reference disc's `ALLDATA.KWI`
+  (`original-disc/pajero-whereis-2007.iso`, see above) by
+  `parser/harness/profile.py`'s `build_profile()`, invoked via
+  `parser/compare_disc.py --profile`.
+- **Reproduce**: `.venv-rp/bin/python parser/compare_disc.py --profile
+  --reference /run/media/codyh/464210-8480` (or any mount/path to the
+  reference disc's root or `ALLDATA.KWI`; `--profile-out` overrides the
+  output path). Re-running against the same disc is byte-identical
+  (confirmed twice during WP1 unit 03/03b, ~15 minutes wall time each).

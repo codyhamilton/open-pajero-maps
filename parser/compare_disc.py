@@ -25,8 +25,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from harness import registry, report
 from harness.context import Context
+from harness.profile import build_profile
 
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent / "refdata" / "harness.json"
+DEFAULT_PROFILE_OUT = Path(__file__).resolve().parent / "refdata" / "profile" / "map.json"
 
 
 def _resolve_alldata_path(p: str) -> str:
@@ -55,13 +57,25 @@ def main() -> int:
     ap.add_argument("--report", default="output/compare_report.json",
                      help="Path to write the JSON report")
     ap.add_argument("--profile", action="store_true",
-                     help="Write the checked-in reference profile split per layer "
-                          "(reserved for unit 03; not implemented yet)")
+                     help="Census --reference into the checked-in reference profile "
+                          "(parser/refdata/profile/map.json by default) instead of "
+                          "running checks")
+    ap.add_argument("--profile-out", help="Path to write the profile JSON "
+                                            "(default: parser/refdata/profile/map.json)")
     args = ap.parse_args()
 
     if args.profile:
-        print("profile not implemented", file=sys.stderr)
-        return 2
+        if not args.reference:
+            ap.error("--reference is required with --profile")
+        reference_path = _resolve_alldata_path(args.reference)
+        profile = build_profile(reference_path)
+        out_path = Path(args.profile_out) if args.profile_out else DEFAULT_PROFILE_OUT
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "w") as f:
+            json.dump(profile, f, indent=2, sort_keys=True)
+            f.write("\n")
+        print(f"wrote reference profile to {out_path}", file=sys.stderr)
+        return 0
 
     if not args.generated:
         ap.error("--generated is required unless --profile")

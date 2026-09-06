@@ -119,3 +119,136 @@ verified against their own done-evidence. Full test suite green at 152/152.
 Units 03–15 remain for a future `execute` invocation; their briefs are
 already written and unaffected by this run's deviations. No plan-folder
 close-out in this run — see Scope note above.
+
+## Run 2
+
+- Tool: Claude Code
+- Session/Run ID or session URL: https://claude.ai/code/session_01QRzfHS6ESmqmdTRpx1R6m3
+- Started: 2026-09-07T00:00:00Z
+
+### Scope of this run
+
+Executing the next two phases per the Execution Phases lane structure:
+Phase 3 = units 03, 04, 05 (all depend only on 02, which is done; dispatched
+alongside each other on disjoint files). Phase 4 = unit 03b (fresh agent,
+depends on 03's kickoff, verifies the real-disc runs and commits unit 03).
+Units 04 and 05 commit themselves directly per their briefs.
+
+## Unit 03 / 03b — Reference profile (census) and profile-based checks
+
+**Status: done, with three genuine findings recorded (not silently resolved).**
+
+Unit 03 (implementation worker) delivered `parser/harness/profile.py`,
+`parser/harness/checks/{vocab,envelope,mfde}.py`, the `--profile` branch of
+`parser/compare_disc.py`, and `parser/tests/test_harness_profile.py`
+(synthetic-fixture tests only, all passing). It started two real-disc
+background runs against the mounted reference disc and handed off per its
+brief's kickoff/handoff split.
+
+Unit 03b (this fresh agent) verified those runs, re-ran `--profile` a second
+time in the foreground (15m20s; `git status --porcelain parser/refdata/profile`
+shows no change once the first run's output is staged — byte-identical), ran
+`.venv-rp/bin/python -m pytest parser/tests -q` (164 passed), and committed
+the whole unit together with `parser/refdata/profile/map.json`.
+
+**The self-check (`--reference` and `--generated` both the reference disc)
+does NOT pass all three checks, contrary to the brief's done-evidence
+expectation.** All three FAILs were run down to root cause; none are fixed
+here per this unit's brief ("report it rather than editing unit 03's code to
+make it pass").
+
+1. **`vocab` FAIL — genuine finding, not a bug.** `string_type=1` occurs
+   1,042,019 times at level 0 across the full census (5.5% of level-0 name
+   records: histogram `{1: 1042019, 4: 8877667, 5: 7603420, 6: 1557999}`).
+   The 2026-09-05 refinement's "string type 1 never occurs at level 0" was a
+   one-city (Brisbane) spot check that does not hold at country scale. This
+   also surfaces a live contradiction between `PLAN.md`'s global acceptance
+   bullet ("`string_type=1` does not appear") and its own refinement findings
+   two paragraphs later ("String type 1 is legitimate at levels >= 2" /
+   "forbidden [only] at level 0") — `checks/vocab.py` already implements the
+   level-0-only reading and documents the contradiction inline, but `PLAN.md`
+   itself is not amended here (per this brief and the plan's own rule:
+   report contradictions, do not resolve them silently).
+2. **`mfde` FAIL — genuine finding, not a bug.** The full census shows mfde
+   entry count and `nregion` are NOT constant per level as the 2026-09-05
+   single-parcel-per-level spot check implied — each is a dominant value
+   plus a small minority tail (e.g. level 0 entry-count histogram
+   `{20: 3690753, 21: 5752, 22: 113, ..., 35: 32}`; level-0 `nregion` is
+   `{0: 65536, 1: 3639335}`, not uniformly 1). `checks/mfde.py` enforces
+   *every* parcel equal to the profile's *dominant* value, so a self-check
+   against a real disc whose own histograms have more than one key at a
+   level fails by construction — levels 0/2/4/6/8 (multi-valued) FAIL,
+   10/12 (single-valued) PASS, exactly matching the "10 mfde/nregion
+   failure(s)" reported (5 levels x 2 fields). The absent-slot encoding and
+   per-entry-index presence-class portions of the same check both PASS
+   (no offenders in `entry_index_class_offenders`, one absent value
+   `(0xFFFFFFFF, 0)` observed everywhere). This narrows the plan's open
+   question ("mfde entries 3..19") further for unit 06: entry count and
+   `nregion` both vary per parcel within a level in the real data, not just
+   per level.
+3. **`envelope` FAIL — likely a real bug in `profile.py`'s byte-total
+   accounting, not fixed here.** The capacity projection reports
+   `generated_map_bytes=4,707,306,016` against a 4,700,000,000 budget (over
+   by ~7.76 MB) -- but the actual `ALLDATA.KWI` on the mounted reference disc
+   is only 1,529,729,025 bytes. `build_profile()`'s `mapframes_bytes_total`
+   (summed from `walk.iter_parcels()`'s per-leaf `length`, i.e.
+   `entry.size * logical_sector_size` from `harness/walk.py`) is
+   4,680,715,968 bytes -- level 0 alone accounts for 4,543,141,152 of that --
+   already ~3x the entire physical file, which is impossible for a subset of
+   the file's own bytes. The independently-computed `blocks_bytes_total`
+   (summed straight from the PDMDH's BMT tables) is only 26,568,960 bytes,
+   ~176x smaller than the leaf-frame total it is supposed to contain, so the
+   two accounting paths disagree with each other as well as with the file
+   size. Likely candidates (not confirmed): leaf frames shared/aliased
+   across multiple parcel-index slots by the divided-parcel mechanism
+   (`briefs/13-divided-parcels.md`) being summed once per referencing slot
+   instead of once per unique on-disk byte range, or a units/field mismatch
+   in how `iter_parcels()` computes a leaf's `length` versus how BMT block
+   sizes are computed. Not fixed here; flagged for whoever owns
+   `checks/envelope.py`'s capacity projection (touches unit 06's slot
+   contract and the level-0 budget trade-off) to run down further.
+
+None of the three FALs were "waved away as expected" -- each was traced to
+either a corrected hypothesis (vocab, mfde) or a suspected code defect
+(envelope) using the full profile data now checked in, and is recorded here
+rather than silently patched.
+
+**Full per-level tables** (from `parser/refdata/profile/map.json`, the
+checked-in census):
+
+- **Leaf counts** (matches unit 02's independent decode check exactly):
+  L12=1, L10=9, L8=78, L6=939, L4=14511, L2=231564, L0=3,704,871.
+- **Name string-type histogram**: L0 `{1:1042019, 4:8877667, 5:7603420,
+  6:1557999}`; L2 `{1:25465, 5:14704}`; L4 `{1:4042}`; L6 `{1:1022}`;
+  L8 `{1:209}`; L10 `{1:8}`; L12 `{1:8}`.
+- **mfde entry-count histogram**: L0 `{20:3690753, 21:5752, 22:113, 23:22,
+  24:4163, 25:2308, 26:672, 27:16, 28:160, 29:448, 30:368, 31:48, 33:16,
+  35:32}`; L2 `{20:231532, 21:16, 22:16}`; L4 `{20:14433, 21:35, 22:28,
+  23:14, 25:1}`; L6 `{20:895, 21:20, 22:16, 23:8}`; L8 `{20:56, 21:9, 22:6,
+  23:5, 24:1, 26:1}`; L10 `{20:9}`; L12 `{12:1}`. Absent-slot value
+  `(0xFFFFFFFF, 0)` at every level, no other value ever observed.
+- **`nregion` histogram**: L0 `{0:65536, 1:3639335}`; L2 `{0:4096,
+  1:227468}`; L4 `{0:256, 1:14255}`; L6 `{0:16, 1:923}`; L8 `{0:1, 1:77}`;
+  L10 `{0:9}`; L12 `{0:1}`.
+- **Map-layer byte totals** (`byte_totals_by_layer`): `pdmdh_blob_bytes`
+  21,088; `blocks_bytes` 26,568,960; `mapframes_bytes` 4,680,715,968
+  (per-level: L0 4,543,141,152; L2 115,116,704; L4 14,917,536; L6 5,225,536;
+  L8 2,303,392; L10 7,840; L12 3,808); `total_bytes` 4,707,306,016.
+  `other_mht_entries` non-map total: 454,272 bytes. Real on-disk
+  `ALLDATA.KWI` size: 1,529,729,025 bytes (see finding 3 above for the
+  discrepancy).
+- **Road/display-class vocab**: matches the 2026-09-05 spot check
+  (L0 road types `{0,2,3,5,6,7,8}` / display classes `{3,4,7,9,10,12}`;
+  L2-8 types `{0,2,3}` / classes `{9,10,12}`) -- confirmed at full scale.
+
+**Wall times**: first `--profile` run (unit 03's kickoff background job):
+not separately timed (ran back-to-back with the self-check in one `&&`
+chain; see `/tmp/wp1-unit03-profile.log`). Second `--profile` run (this
+unit, foreground, for the reproducibility check): 15m20s. Self-check
+(`vocab,envelope,mfde` against the same disc): timing not isolated from the
+profile run in `/tmp/wp1-unit03-selfcheck.log`, but both commands together
+completed before this unit started.
+
+**Deviation from done evidence**: the brief's done-evidence bullet
+"`--checks vocab,envelope,mfde` -> all PASS" is not met -- all three FAIL,
+for the reasons above. Reported per the brief rather than edited to pass.
