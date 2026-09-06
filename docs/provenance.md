@@ -79,3 +79,24 @@ same commit.
 - **Why not committed**: regenerable output, not source material; ties to whichever
   OSM extract happened to be present when it ran (see date caveat above).
 - **Reproduce**: `python3 tag_crosstab.py > tag_crosstab.out 2> tag_crosstab.err`.
+
+## `parser/refdata/` (committed, derived data)
+
+- **What**: `grid.json` (reference disc PDMDH/LMR/BSMR parameters — coverage
+  box, per-level block-set/block/parcel counts, cell sizes) and
+  `mht29_frame.bin` (the 2048-byte language/country-code frame addressed by
+  management header record 29). Unlike the rest of this document, these
+  files *are* committed to git — the map-layer build reads them instead of
+  the mounted reference disc, per the Grid contract and copy-through
+  management data decisions in `docs/design/target-disc.md`.
+- **Source**: derived once from the mounted reference disc's `ALLDATA.KWI`
+  (`original-disc/pajero-whereis-2007.iso`, see above) by
+  `parser/extract_reference_data.py`.
+- **Why documented here anyway**: it is derived, not authored, and a future
+  re-derivation against a different reference disc would change it — so its
+  provenance and regeneration command belong in this BOM even though the
+  files themselves are tracked.
+- **Reproduce**: `.venv-rp/bin/python parser/extract_reference_data.py`
+  (defaults to the reference disc mounted at
+  `/run/media/codyh/464210-8480/ALLDATA.KWI`; pass `--alldata` to point at a
+  different mount). Re-running against the same disc is byte-identical.
