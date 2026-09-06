@@ -182,40 +182,94 @@ questions above and are inputs to the briefs, not new scope.
   its own (06) that depends only on the profile (03), so the RP spike can
   start as soon as 06 lands.
 
+### Re-refinement findings (2026-09-06)
+
+The units-01/02/07 execution run's cost post-mortem
+(`EXECUTION-COST-ANALYSIS.md` in this folder) found that busy-polling a
+long-running background subprocess from inside a single agent's own turns
+was the largest identifiable source of wasted cost: 39-58% of the calls
+made *after* each agent's last file write were poll/liveness checks on a
+subprocess, and resuming a bloated agent across a wait (rather than
+handing off to a fresh one) cost 6-8x a normal call regardless of how long
+the wait actually was, because the resume appears to invalidate the whole
+cached prefix. `../workflow-plugin` (this user's separate workflow-skills
+repo) was updated from this same post-mortem to require `refine` to split
+any unit whose done evidence depends on a 5-10+ minute subprocess at the
+kickoff boundary — a setup/start unit and a fresh wait/verify unit — rather
+than let one unit do both. That rule is applied here to the two remaining
+units whose done evidence requires a country-scale decode or build:
+
+- **Unit 03** (reference profile) required running the harness against the
+  full mounted reference disc twice — a `--profile` build and a self-check
+  decode, the same class of operation as unit 02's own 31-minute self-check.
+  Split into **03** (implementation, fast in-repo tests, starts both real-disc
+  runs in the background, hands off) and **03b** (fresh agent, waits, verifies,
+  writes `parser/refdata/profile/map.json`, commits).
+- **Unit 15** (full-Australia build) required a from-scratch country-scale
+  extraction (unit 07's own run of the same extractor took 1:27:24) plus a
+  full assembler pass, then a repeat build to check determinism — a
+  multi-hour wait. Split into **15** (kickoff only, no docs/code changes) and
+  **15b** (fresh agent, waits, verifies through the harness, writes the build
+  record, commits).
+- **Unit 12**'s optional full-spool `build_alldata.py` run (its done evidence
+  treats this as best-effort, not required) was left as one unit but amended
+  to forbid polling it in a loop: start it in the background, do one
+  liveness check, move on.
+- Units 04, 05, 06, 08, 09, 10, 11, 13, 14 do not touch the real reference
+  disc at country scale (04/05 do single-file or spot lookups; the rest are
+  code-only against fixtures) and were not split. Every remaining unit's
+  brief was amended to state explicitly that a non-trivial, non-blocking bug
+  found mid-implementation is reported, not fixed in place — the
+  post-mortem's other finding was that fixing in place on an
+  already-tens-of-thousands-of-tokens-deep agent cost ~35-40% more than the
+  same fix on a small fresh agent, and permanently taxed every later call in
+  that agent via a larger carried context.
+
 ## Execution Phases
 
-Definitive dispatch list (refined 2026-09-05). One brief per unit in
-`briefs/`; each brief is self-sufficient and is handed to its worker
-verbatim. Units that may run alongside each other own disjoint paths.
+Definitive dispatch list (refined 2026-09-05; re-refined 2026-09-06 to split
+long-running-subprocess units at their kickoff boundary — see the Decision
+Log entry below). One brief per unit in `briefs/`; each brief is
+self-sufficient and is handed to its worker verbatim. Units that may run
+alongside each other own disjoint paths.
 
 | # | Unit | Brief | Depends on | Runs alongside |
 |---|------|-------|-----------|----------------|
 | 01 | Reference container data (`kiwiw/grid.py`, `refdata/grid.json`, record-29 frame) | `briefs/01-reference-container-data.md` | — | — |
 | 02 | Harness core (`parser/harness/`, `compare_disc.py`, `decode`/`pointers`/`shape`/`mht29`) | `briefs/02-harness-core.md` | 01 | 07 |
-| 03 | Reference profile and profile checks (`vocab`, `envelope`, `mfde`, capacity) | `briefs/03-reference-profile.md` | 02 | 04, 05, 07 |
-| 04 | Container byte-diff with allowlist | `briefs/04-container-bytediff.md` | 02 | 03, 05, 07 |
-| 05 | Spot-check fixture table; `dump_parcel.py` JSON fix | `briefs/05-spot-checks-and-dump-fix.md` | 02 | 03, 04, 07 |
-| 06 | `DESIGN.md`: Map Frame shape, mfde/RP slot contract, ext-frame and divided-parcel policy | `briefs/06-slot-contract-design.md` | 03 | 04, 05, 07, 08 |
-| 07 | Extractor at country scale (one pass, all levels, spool, wrap-safe) | `briefs/07-extractor-scale.md` | 01 | 02, 03, 04, 05, 06 |
-| 08 | Data-driven vocabulary tables per level | `briefs/08-vocab-mapping.md` | 03, 07 | 06, 09 |
-| 09 | Map Frame shape in `synth.py` per `DESIGN.md` | `briefs/09-map-frame-shape.md` | 03, 06 | 08, 10 |
+| 03 | Reference profile and profile checks: implementation and kickoff of the real-disc runs | `briefs/03-reference-profile.md` | 02 | 04, 05, 07 |
+| 03b | Reference profile: verify the real-disc runs, check in the profile, commit | `briefs/03b-profile-verify.md` | 03 | 04, 05, 06, 07, 08 |
+| 04 | Container byte-diff with allowlist | `briefs/04-container-bytediff.md` | 02 | 03, 03b, 05, 07 |
+| 05 | Spot-check fixture table; `dump_parcel.py` JSON fix | `briefs/05-spot-checks-and-dump-fix.md` | 02 | 03, 03b, 04, 07 |
+| 06 | `DESIGN.md`: Map Frame shape, mfde/RP slot contract, ext-frame and divided-parcel policy | `briefs/06-slot-contract-design.md` | 03b | 04, 05, 07, 08 |
+| 07 | Extractor at country scale (one pass, all levels, spool, wrap-safe) | `briefs/07-extractor-scale.md` | 01 | 02, 03, 03b, 04, 05, 06 |
+| 08 | Data-driven vocabulary tables per level | `briefs/08-vocab-mapping.md` | 03b, 07 | 06, 09 |
+| 09 | Map Frame shape in `synth.py` per `DESIGN.md` | `briefs/09-map-frame-shape.md` | 03b, 06 | 08, 10 |
 | 10 | Link identity `(osm_way_id, ordinal)` | `briefs/10-link-ordinal-registry.md` | 08 | 09, 11 |
 | 11 | Name string types 4/5/6 at level 0, per-level types | `briefs/11-name-types.md` | 09, 10 | 12 |
 | 12 | Assembler: all seven levels, reference LMR/BSMR/BMT shape, record 29, wrap | `briefs/12-assembler-all-levels.md` | 01, 06, 07, 09 | 10, 11 |
 | 13 | Divided parcels (types 1..3) for oversize frames | `briefs/13-divided-parcels.md` | 12 | 14 |
-| 14 | Per-level feature selection matched to the census | `briefs/14-per-level-selection.md` | 03, 08, 10, 11 | 13 |
-| 15 | Full-Australia build through the harness; record deviations and capacity | `briefs/15-full-build-and-record.md` | 01–14 | — |
+| 14 | Per-level feature selection matched to the census | `briefs/14-per-level-selection.md` | 03b, 08, 10, 11 | 13 |
+| 15 | Full-Australia build: kickoff (start extraction + assembler, hand off) | `briefs/15-full-build-and-record.md` | 01–14 | — |
+| 15b | Full-Australia build: verify through the harness; record deviations and capacity | `briefs/15b-full-build-verify-and-record.md` | 15 | — |
 
-Lanes: 01 → {02, 07}; after 02 → {03, 04, 05}; after 03 → 06 and 08 (08 also
-waits on 07); after 06 → 09 → 10 → 11 and 12 (12 also waits on 07); after
-12 → 13; after 11 → 14; then 15. The critical path is 01 → 02 → 03 → 06 →
-09 → 10 → 11 → 14 → 15.
+Lanes: 01 → {02, 07}; after 02 → {03, 04, 05}; 03 → 03b (03b is a fresh
+agent, never a resume of 03 — see Decision Log); after 03b → 06 and 08 (08
+also waits on 07); after 06 → 09 → 10 → 11 and 12 (12 also waits on 07);
+after 12 → 13; after 11 → 14; then 15 → 15b (15b is a fresh agent, never a
+resume of 15). The critical path is 01 → 02 → 03 → 03b → 06 → 09 → 10 → 11
+→ 14 → 15 → 15b.
 
 Ownership hot spots and how they are serialised: `osm_to_parcel_geometry.py`
 is edited by 07, then 08, then 10, then 11, then 14, each on a named
 function only; `synth.py` by 09 then 11; `model.py` by 05 (`to_jsonable`),
 10 (`RoadLink`), 11 (`NameRecord`); `alldata_writer.py`/`build_alldata.py`
-by 12 then 13. No two units that run alongside touch the same file.
+by 12 then 13. No two units that run alongside touch the same file. 03/03b
+and 15/15b are not a concurrency split but a wait split: 03 and 15 leave
+their working-tree changes uncommitted for 03b/15b to pick up and commit,
+so no other unit may land a commit in between (03b runs alongside 04-08 in
+that none of them touch its one new file, `parser/refdata/profile/map.json`;
+15b runs alongside nothing since it's the terminal unit).
 
 WP2's format-analysis spike on RP placement may start in parallel once
 unit 06's `DESIGN.md` exists; it does not wait for units 07–15.

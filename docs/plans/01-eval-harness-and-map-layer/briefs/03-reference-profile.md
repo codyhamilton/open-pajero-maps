@@ -1,14 +1,25 @@
-# Brief: 03 — Reference profile (census) and profile-based checks
+# Brief: 03 — Reference profile (census) and profile-based checks: implementation and kickoff
 
 Consumer: implementation worker.
 Owned paths: `parser/harness/profile.py` (new), `parser/harness/checks/vocab.py` (new),
 `parser/harness/checks/envelope.py` (new), `parser/harness/checks/mfde.py` (new),
-`parser/refdata/profile/map.json` (new), `parser/tests/test_harness_profile.py` (new), and
-the `--profile` branch of `parser/compare_disc.py` (only that branch). Do not touch
-anything else.
-Commit to the current branch when done evidence passes; push.
+`parser/tests/test_harness_profile.py` (new), and the `--profile` branch of
+`parser/compare_disc.py` (only that branch). Do not touch anything else.
+**Do not commit.** Leave the working tree as-is (code plus the background run you start —
+see Kickoff below) for unit 03b, which owns verifying the real-disc runs, writing
+`parser/refdata/profile/map.json`, and committing the whole unit.
 Depends on: 02.
 Runs alongside: 04, 05, 07.
+
+This unit is split from the original single "reference profile" unit because its full done
+evidence requires running the harness against the real mounted reference disc, which is a
+country-scale decode (the same class of operation as unit 02's 31-minute self-check) —
+not something this unit should sit and poll for. See `EXECUTION-COST-ANALYSIS.md` in this
+plan folder: busy-polling a long subprocess inside one agent's turn was the single largest
+source of wasted cost in the units-01/02/07 run. This unit does the implementation and the
+fast, in-repo verification only, then starts the slow real-disc runs in the background and
+hands off. Unit 03b (a fresh agent, so it never pays a resume/cache-reset tax) picks up
+after they finish.
 
 ## Required reading, in order
 
@@ -107,17 +118,41 @@ a 3-entry table when the profile says 20.
 
 `checks/decode.py`, `checks/shape.py`, `walk.py`, `context.py`, `registry.py`.
 
-## Done evidence
+## Done evidence (this unit — fast, in-repo only)
 
-- `.venv-rp/bin/python parser/compare_disc.py --profile --reference /run/media/codyh/464210-8480` twice → `git status --porcelain parser/refdata/profile` shows no change after the second run.
-- `parser/refdata/profile/map.json` records, for level 0: string types `{4,5,6}` (and whether 1 appears anywhere at level 0 — report the count), mfde entry count 20, absent value `[4294967295, 0]`; for level 12: mfde entry count 12. Report every deviation from the hypotheses in the Contract section.
-- `.venv-rp/bin/python parser/compare_disc.py --reference <root> --generated <root>/ALLDATA.KWI --checks vocab,envelope,mfde` → all PASS (the reference passes its own profile).
-- `.venv-rp/bin/python -m pytest parser/tests -q` → all pass.
+- `.venv-rp/bin/python -m pytest parser/tests -q` → all pass, including the synthetic-disc
+  profile test and the hand-built-profile `vocab`/`envelope`/`mfde` FAIL-case tests.
+- The `--profile` and check code paths are implemented and exercised only against synthetic
+  fixtures here; judging them against the real reference disc is unit 03b's job, not this
+  unit's.
+
+## Kickoff: start the real-disc runs, then stop
+
+Once the code above is implemented and its own (fast) done evidence passes, start the two
+real-disc commands unit 03b needs, in the background, and end your turn — do not wait for
+them and do not poll them in a loop:
+
+```
+nohup bash -c '
+  .venv-rp/bin/python parser/compare_disc.py --profile --reference /run/media/codyh/464210-8480 \
+    > /tmp/wp1-unit03-profile.log 2>&1 &&
+  .venv-rp/bin/python parser/compare_disc.py --reference /run/media/codyh/464210-8480 \
+    --generated /run/media/codyh/464210-8480/ALLDATA.KWI --checks vocab,envelope,mfde \
+    > /tmp/wp1-unit03-selfcheck.log 2>&1
+' > /tmp/wp1-unit03-kickoff.log 2>&1 &
+disown
+```
+
+(Paths are a suggestion — pick any location outside the repo tree and say where in your
+report-back.) Confirm the process actually started (one liveness check, e.g. `pgrep -f
+compare_disc.py`), then stop. Do not `wait` on it, do not sleep-and-recheck, and do not use
+`Monitor` to sit on it — that is exactly the anti-pattern this split exists to avoid.
 
 ## Report back
 
-A short summary: the per-level tables for string types, road types, display classes, mfde
-presence by index, and `nregion`; the capacity numbers (map bytes and non-map bytes); the
-profile run wall time; anything you deviated from in this brief and why; and any
+A short summary: what you implemented, the synthetic-fixture test results, and any
 contradiction you found between this brief and the contracts it cites. **Do not resolve
-contradictions silently — report them.**
+contradictions silently — report them.** Then, structured for unit 03b to consume verbatim:
+the exact two commands you started, their log file paths, and the PID(s) if you captured
+them. Do not fix a non-trivial bug you find outside this unit's own contract — report it
+instead.

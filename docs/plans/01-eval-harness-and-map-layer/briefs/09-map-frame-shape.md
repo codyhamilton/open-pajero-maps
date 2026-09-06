@@ -6,7 +6,7 @@ helpers it needs; do not change `build_road_frame_bytes`, `build_background_fram
 `build_name_frame_bytes`), `parser/tests/test_synth_map_frame.py` (new). Do not touch
 anything else.
 Commit to the current branch when done evidence passes; push.
-Depends on: 06 (`DESIGN.md` is the spec for this unit), 03 (`checks/mfde.py` judges it).
+Depends on: 06 (`DESIGN.md` is the spec for this unit), 03b (`checks/mfde.py` judges it against the committed profile).
 Runs alongside: 08, 10.
 
 ## Required reading, in order
@@ -60,3 +60,8 @@ inputs → same bytes.
 A short summary: what you changed, anything you deviated from in this brief and why, and
 any contradiction you found between this brief, `DESIGN.md` and the decoder. **Do not
 resolve contradictions silently — report them.**
+
+If you find a non-trivial bug outside what your own done evidence requires — real
+debugging, not a one-line fix, and not blocking your own contract — do not fix it here.
+Report it (symptom, location, root cause if you found one) and leave it; the orchestrator
+will dispatch a small, fresh agent to resolve it.

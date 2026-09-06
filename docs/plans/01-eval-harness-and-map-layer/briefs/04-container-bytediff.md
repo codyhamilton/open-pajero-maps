@@ -6,7 +6,7 @@ Owned paths: `parser/harness/checks/container.py` (new), `parser/harness/bytedif
 `parser/refdata/harness.json` (only that key). Do not touch anything else.
 Commit to the current branch when done evidence passes; push.
 Depends on: 02.
-Runs alongside: 03, 05, 07.
+Runs alongside: 03, 03b, 05, 07.
 
 ## Required reading, in order
 
@@ -76,3 +76,8 @@ the LMR field.
 A short summary: what you changed, the final allowlist, anything you deviated from in this
 brief and why, and any contradiction you found between this brief and the contracts it
 cites. **Do not resolve contradictions silently — report them.**
+
+If you find a non-trivial bug outside what your own done evidence requires — real
+debugging, not a one-line fix, and not blocking your own contract — do not fix it here.
+Report it (symptom, location, root cause if you found one) and leave it; the orchestrator
+will dispatch a small, fresh agent to resolve it.

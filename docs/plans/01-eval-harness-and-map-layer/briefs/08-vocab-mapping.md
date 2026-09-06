@@ -7,7 +7,7 @@ Owned paths: `parser/kiwiw/vocab.py` (new), `parser/refdata/vocab/` (new: `road_
 `HIGHWAY_TO_DISPLAY_CLASS`, `_osm_tags_to_bg_type` and the two call sites that use them
 (replace with `vocab` lookups; no other edits to that file). Do not touch anything else.
 Commit to the current branch when done evidence passes; push.
-Depends on: 03 (the per-level vocabulary census), 07 (the extractor's call-site seam).
+Depends on: 03b (the per-level vocabulary census, committed), 07 (the extractor's call-site seam).
 Runs alongside: 06, 09.
 
 ## Required reading, in order
@@ -71,3 +71,8 @@ extractor's spool statistics (unit 07's report). Record each non-obvious choice 
 A short summary: the tables' rationale for the non-obvious values, the coverage numbers,
 anything you deviated from in this brief and why, and any contradiction you found between
 this brief and the contracts it cites. **Do not resolve contradictions silently — report them.**
+
+If you find a non-trivial bug outside what your own done evidence requires — real
+debugging, not a one-line fix, and not blocking your own contract — do not fix it here.
+Report it (symptom, location, root cause if you found one) and leave it; the orchestrator
+will dispatch a small, fresh agent to resolve it.

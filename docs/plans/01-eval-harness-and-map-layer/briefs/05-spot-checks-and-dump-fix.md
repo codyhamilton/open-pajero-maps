@@ -7,7 +7,7 @@ Owned paths: `parser/kiwiw/model.py` (function `to_jsonable` only), `parser/dump
 Do not touch anything else.
 Commit to the current branch when done evidence passes; push.
 Depends on: 02.
-Runs alongside: 03, 04, 07.
+Runs alongside: 03, 03b, 04, 07.
 
 ## Required reading, in order
 
@@ -80,3 +80,8 @@ a table row expecting it PASSes and a row expecting "Nowhere Road" FAILs.
 A short summary: the final fixture rows and the source of each expected name, anything you
 deviated from in this brief and why, and any contradiction you found between this brief and
 the contracts it cites. **Do not resolve contradictions silently — report them.**
+
+If you find a non-trivial bug outside what your own done evidence requires — real
+debugging, not a one-line fix, and not blocking your own contract — do not fix it here.
+Report it (symptom, location, root cause if you found one) and leave it; the orchestrator
+will dispatch a small, fresh agent to resolve it.

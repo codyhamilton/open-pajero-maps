@@ -86,7 +86,7 @@ copy-through at the reference's location (MHT entry 29: dsa 512, size 64 → byt
 
 - `.venv-rp/bin/python -m pytest parser/tests -q` → all pass.
 - Perth fixture end-to-end: `parser/osm_to_parcel_geometry.py --fixture perth --spool output/spool-perth` then `parser/build_alldata.py --spool output/spool-perth --out output/perth/ALLDATA.KWI`, then `parser/compare_disc.py --reference /run/media/codyh/464210-8480 --generated output/perth/ALLDATA.KWI --checks decode,pointers,shape,mht29,container,mfde` → `decode`, `pointers`, `shape`, `mht29`, `container` PASS; `mfde` PASS at every level; report each check's line.
-- `.venv-rp/bin/python parser/build_alldata.py` (no args, spool from unit 07's full run present) completes; record wall time and output size. If the full spool is not present, say so.
+- `.venv-rp/bin/python parser/build_alldata.py` (no args, spool from unit 07's full run present) completes; record wall time and output size. If the full spool is not present, say so. This is optional, best-effort evidence, not required for this unit's contract (unit 15/15b own the full-Australia build and its verification) — if you run it, start it in the background (`nohup ... & disown`), do one liveness check, and move on to your report-back rather than waiting on it. If it hasn't finished by the time the rest of this brief's done evidence passes, say so in your report and let it keep running or leave it; do not block your own commit on it and do not poll it in a loop.
 
 ## Report back
 
@@ -94,3 +94,8 @@ A short summary: the numbers above, the empty-blockset / empty-divided-type conv
 matched, anything you deviated from in this brief and why, and any contradiction you found
 between this brief, `DESIGN.md` and the contracts it cites. **Do not resolve contradictions
 silently — report them.**
+
+If you find a non-trivial bug outside what your own done evidence requires — real
+debugging, not a one-line fix, and not blocking your own contract — do not fix it here.
+Report it (symptom, location, root cause if you found one) and leave it; the orchestrator
+will dispatch a small, fresh agent to resolve it.

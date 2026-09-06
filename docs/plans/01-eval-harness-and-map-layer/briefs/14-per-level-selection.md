@@ -5,7 +5,7 @@ Owned paths: `parser/kiwiw/selection.py` (new), `parser/refdata/selection.json` 
 `parser/tests/test_selection.py` (new), and in `parser/osm_to_parcel_geometry.py` **only**
 the `level_filter` default (wire it to `selection.level_filter`). Do not touch anything else.
 Commit to the current branch when done evidence passes; push.
-Depends on: 08 (vocab tables), 10 and 11 (their extractor edits), 03 (profile).
+Depends on: 08 (vocab tables), 10 and 11 (their extractor edits), 03b (profile, committed).
 Runs alongside: 13.
 
 ## Required reading, in order
@@ -57,3 +57,8 @@ envelope with class selection alone, report the achievable numbers and stop.
 A short summary: the per-level table and the counts it achieved vs `R`, anything you
 deviated from in this brief and why, and any contradiction you found between this brief and
 the contracts it cites. **Do not resolve contradictions silently — report them.**
+
+If you find a non-trivial bug outside what your own done evidence requires — real
+debugging, not a one-line fix, and not blocking your own contract — do not fix it here.
+Report it (symptom, location, root cause if you found one) and leave it; the orchestrator
+will dispatch a small, fresh agent to resolve it.

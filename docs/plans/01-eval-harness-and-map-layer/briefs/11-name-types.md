@@ -71,3 +71,8 @@ A short summary: the type-selection table and its evidence, any placement field 
 not pin down (with bytes), anything you deviated from in this brief and why, and any
 contradiction you found between this brief and the contracts it cites — including the
 "no type 1" narrowing. **Do not resolve contradictions silently — report them.**
+
+If you find a non-trivial bug outside what your own done evidence requires — real
+debugging, not a one-line fix, and not blocking your own contract — do not fix it here.
+Report it (symptom, location, root cause if you found one) and leave it; the orchestrator
+will dispatch a small, fresh agent to resolve it.

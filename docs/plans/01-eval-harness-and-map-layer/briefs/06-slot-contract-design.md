@@ -4,7 +4,7 @@ Consumer: implementation worker (writing a design document; no code).
 Owned paths: `docs/plans/01-eval-harness-and-map-layer/DESIGN.md` (new). Do not touch
 anything else.
 Commit to the current branch when done evidence passes; push.
-Depends on: 03 (the profile is the evidence this document cites).
+Depends on: 03b (the committed profile is the evidence this document cites).
 Runs alongside: 04, 05, 07, 08.
 
 ## Required reading, in order
@@ -90,3 +90,8 @@ section 8 and in your report.
 A short summary of the decisions taken, the open questions left, anything you deviated
 from in this brief and why, and any contradiction you found between this brief, the profile
 and the contracts it cites. **Do not resolve contradictions silently — report them.**
+
+If you find a non-trivial bug outside what your own done evidence requires — real
+debugging, not a one-line fix, and not blocking your own contract — do not fix it here.
+Report it (symptom, location, root cause if you found one) and leave it; the orchestrator
+will dispatch a small, fresh agent to resolve it.

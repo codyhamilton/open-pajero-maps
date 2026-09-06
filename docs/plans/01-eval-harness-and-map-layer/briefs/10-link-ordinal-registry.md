@@ -55,3 +55,8 @@ return the same id; different ordinals for the same way return different ids.
 A short summary, anything you deviated from in this brief and why, and any contradiction
 you found between this brief and the contracts it cites. **Do not resolve contradictions
 silently — report them.**
+
+If you find a non-trivial bug outside what your own done evidence requires — real
+debugging, not a one-line fix, and not blocking your own contract — do not fix it here.
+Report it (symptom, location, root cause if you found one) and leave it; the orchestrator
+will dispatch a small, fresh agent to resolve it.
