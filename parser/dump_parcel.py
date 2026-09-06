@@ -25,7 +25,10 @@ from kiwiw.model import to_jsonable
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--alldata", required=True, help="Path to ALLDATA.KWI")
+    repo_root = Path(__file__).resolve().parent.parent
+    default_alldata = str(repo_root / "output" / "ALLDATA.KWI")
+    ap.add_argument("--alldata", default=default_alldata,
+                     help=f"Path to ALLDATA.KWI (default: {default_alldata})")
     ap.add_argument("--lat", type=float)
     ap.add_argument("--lon", type=float)
     ap.add_argument("--level", type=int, default=0, help="Map level (default 0 = finest)")

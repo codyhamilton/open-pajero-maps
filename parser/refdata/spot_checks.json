@@ -1,0 +1,58 @@
+[
+  {
+    "city": "Brisbane",
+    "lat": -27.4698,
+    "lon": 153.0251,
+    "levels": [0, 2],
+    "expect_road_names": ["Queen Street", "Adelaide Street"],
+    "expect_place_names": ["Brisbane"]
+  },
+  {
+    "city": "Sydney",
+    "lat": -33.8688,
+    "lon": 151.2093,
+    "levels": [0, 2],
+    "expect_road_names": ["York Street", "Kent Street", "Elizabeth Street"],
+    "expect_place_names": ["Sydney"]
+  },
+  {
+    "city": "Melbourne",
+    "lat": -37.8136,
+    "lon": 144.9631,
+    "levels": [0, 2],
+    "expect_road_names": ["Queen Street", "Swanston Street", "Collins Street"],
+    "expect_place_names": ["Melbourne"]
+  },
+  {
+    "city": "Perth",
+    "lat": -31.9505,
+    "lon": 115.8605,
+    "levels": [0, 2],
+    "expect_road_names": ["William Street", "Wellington Street", "Hay Street"],
+    "expect_place_names": ["Perth"]
+  },
+  {
+    "city": "Adelaide",
+    "lat": -34.9285,
+    "lon": 138.6007,
+    "levels": [0, 2],
+    "expect_road_names": ["King William Street", "Grenfell Street", "Pulteney Street"],
+    "expect_place_names": ["Adelaide"]
+  },
+  {
+    "city": "Hobart",
+    "lat": -42.8821,
+    "lon": 147.3272,
+    "levels": [0, 2],
+    "expect_road_names": ["Liverpool Street", "Murray Street", "Elizabeth Street"],
+    "expect_place_names": ["Hobart"]
+  },
+  {
+    "city": "Darwin",
+    "lat": -12.4634,
+    "lon": 130.8456,
+    "levels": [0, 2],
+    "expect_road_names": ["McMinn Street", "Cavenagh Street", "Bennett Street"],
+    "expect_place_names": ["Darwin"]
+  }
+]

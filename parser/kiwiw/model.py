@@ -17,6 +17,8 @@ def to_jsonable(obj):
     JSON-safe structures."""
     if dataclasses.is_dataclass(obj) and not isinstance(obj, type):
         return {k: to_jsonable(v) for k, v in dataclasses.asdict(obj).items()}
+    if isinstance(obj, (bytes, bytearray)):
+        return obj.hex()
     if isinstance(obj, (list, tuple)):
         return [to_jsonable(v) for v in obj]
     if isinstance(obj, dict):
