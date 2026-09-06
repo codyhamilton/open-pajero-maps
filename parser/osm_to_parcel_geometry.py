@@ -2,31 +2,25 @@
 """OSM PBF → ALLDATA.KWI parcel geometry extractor.
 
 Extracts road polylines, background polygons, and place names from an OSM PBF
-file and tiles them into the same parcel grid used by the real ALLDATA.KWI
-disc (grid parameters taken from the disc's LMR records).  The output is a
-dict keyed by (level, cell_ix, cell_iy) → {roads, backgrounds, names} that
-the parcel writer can consume.
+file and tiles them into the reference disc's own parcel grid (via
+``kiwiw.grid.ReferenceGrid`` -- see docs/design/target-disc.md, "Grid
+contract": grid parameters are checked-in data derived once from the
+reference disc; a build never reads the mounted reference). One pass over
+the PBF feeds every requested level at once, streaming output to an
+on-disk spool (``kiwiw.spool``) so memory stays bounded regardless of file
+size; per-level content is read back with ``SpoolReader.iter_level``.
 
 Usage::
 
-    # Dry-run: print tile grid stats, no output file
+    # Dry-run: print tile grid stats for every level, no extraction
     python3 parser/osm_to_parcel_geometry.py --dry-run
 
-    # Full extraction (requires OSM PBF)
+    # Full-Australia extraction, all seven levels, no bbox (full coverage)
     python3 parser/osm_to_parcel_geometry.py \\
-        --pbf ~/workspace/open-pajero-maps/australia-260824.osm.pbf \\
-        --level 8 \\
-        --out /tmp/perth_parcel_geometry.pkl
+        --pbf australia-260824.osm.pbf --spool output/spool
 
-Grid tiling strategy
---------------------
-The real disc's LMR defines a world-spanning tile grid at each map level.
-This script reads those LMR parameters (n_blocksets_lat/lng × n_blocks_lat/lng
-× n_parcels_lat/lng) from the real ALLDATA.KWI to reproduce the *same* cell
-size and layout, then restricts extraction to parcels that intersect a target
-bounding box (default: Perth metro, roughly −32.5 to −31.5 lat, 115.5 to
-116.5 lon).  All cell indices are global (relative to the full disc grid), not
-local to the target bbox.
+    # Perth-only fixture, for fast iteration
+    python3 parser/osm_to_parcel_geometry.py --fixture perth --spool /tmp/spool
 
 RoadLink / BackgroundShape / NameRecord construction
 ----------------------------------------------------
@@ -55,22 +49,25 @@ KNOWN SIMPLIFICATIONS (deliberately flagged, not silently assumed away)
 - Multi-polygon OSM relations are handled as individual outer-ring ways only;
   holes are ignored (inner rings).
 - Node/point features (natural=peak, amenity=*, etc.) are out of scope.
+- Every level receives the same feature set; per-level *selection* (which
+  ways appear at which level) is unit 14's -- the ``level_filter`` hook on
+  ``extract_parcel_geometry`` is the seam it fills.
 """
 from __future__ import annotations
 
 import argparse
 import math
 import os
-import pickle
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from kiwiw.coordconv import latlon_to_xy, COORD_RANGE
+from kiwiw.grid import ReferenceGrid
 from kiwiw.model import (
     BackgroundShape,
     BoundingBox,
@@ -80,15 +77,28 @@ from kiwiw.model import (
     RoadNode,
 )
 from kiwiw.roadtypes import background_type_label
+from kiwiw.spool import SpoolReader, SpoolWriter
 
-DEFAULT_ALLDATA = "/run/media/codyh/464210-8480/ALLDATA.KWI"
 DEFAULT_PBF = str(
-    Path.home() / "workspace" / "open-pajero-maps" / "australia-260824.osm.pbf"
+    Path(__file__).resolve().parent.parent / "australia-260824.osm.pbf"
 )
+DEFAULT_SPOOL_DIR = str(
+    Path(__file__).resolve().parent.parent / "output" / "spool"
+)
+DEFAULT_LEVELS = [12, 10, 8, 6, 4, 2, 0]
+PROGRESS_EVERY = 1_000_000
 
-# Perth metro target bbox (lon_left, lat_bottom, lon_right, lat_top)
-DEFAULT_BBOX = (115.5, -32.5, 116.5, -31.5)
-DEFAULT_LEVEL = 8
+# Perth metro fixture bbox (lon_left, lat_bottom, lon_right, lat_top).
+# Used only behind --fixture perth; never a default (docs/design/target-disc.md
+# decision 2: regional subsets are fixtures behind explicit flags).
+FIXTURE_BBOXES = {
+    "perth": (115.5, -32.5, 116.5, -31.5),
+}
+# Alias kept for import compatibility with parser/build_alldata.py (unit
+# 09/12's, not touched here); that script's own pipeline call still needs
+# updating for the new extract_parcel_geometry signature regardless -- see
+# this unit's report for the contradiction this surfaces.
+DEFAULT_BBOX = FIXTURE_BBOXES["perth"]
 
 # ---------------------------------------------------------------------------
 # Road-type mappings (mirrors build_route_graph.py)
@@ -257,6 +267,38 @@ class TileGrid:
         ix0, ix1, iy0, iy1 = r
         return [(ix, iy) for iy in range(iy0, iy1 + 1) for ix in range(ix0, ix1 + 1)]
 
+    @classmethod
+    def from_reference(cls, level: int, target: Optional[BoundingBox] = None) -> "TileGrid":
+        """Build the TileGrid for `level` from the checked-in reference grid
+        (`kiwiw.grid.ReferenceGrid`; see docs/design/target-disc.md, "Grid
+        contract" -- a build never reads the mounted reference disc).
+
+        `target=None` means the full reference coverage box (E90..W142,
+        crossing the antimeridian): the only grid a non-fixture run uses.
+        """
+        rg = ReferenceGrid.load()
+        c = rg.coverage
+        lg = rg.level(level)
+        lat_lo = c["lat_lo"]
+        lon_lo = c["lon_lo"]
+        lat_span = c["lat_hi"] - c["lat_lo"]
+        lon_span = _lon_span(c["lon_lo"], c["lon_hi"])
+        if target is None:
+            target = BoundingBox(
+                lat_lo=lat_lo, lat_hi=lat_lo + lat_span,
+                lon_lo=lon_lo, lon_hi=lon_lo + lon_span,
+            )
+        return cls(
+            level=level,
+            disc_lat_lo=lat_lo,
+            disc_lon_lo=lon_lo,
+            disc_lat_span=lat_span,
+            disc_lon_span=lon_span,
+            nx=lg.nx,
+            ny=lg.ny,
+            target=target,
+        )
+
 
 def _lon_span(lo: float, hi: float) -> float:
     span = hi - lo
@@ -301,57 +343,6 @@ def parcel_bounds(ix: int, iy: int, grid: TileGrid) -> BoundingBox:
         return v
     return BoundingBox(lat_lo=lat_lo, lat_hi=lat_hi,
                        lon_lo=norm(lon_lo_raw), lon_hi=norm(lon_hi_raw))
-
-
-# ---------------------------------------------------------------------------
-# Build TileGrid from real disc LMR
-# ---------------------------------------------------------------------------
-
-def build_tile_grid_from_lmr(alldata_path: str, level: int,
-                              target_bbox: tuple) -> TileGrid:
-    """Read ALLDATA.KWI, decode its PDMDH/LMR for `level`, and return a
-    TileGrid matching the real disc's grid parameters.
-
-    Parameters
-    ----------
-    alldata_path : path to ALLDATA.KWI
-    level : map level (0, 2, 4, 6, 8)
-    target_bbox : (lon_left, lat_bottom, lon_right, lat_top) tuple
-    """
-    from kiwiw import volume
-    with open(alldata_path, "rb") as fh:
-        raw_hdr = fh.read(volume.DATAVOL_SIZE)
-        hdr = volume.parse_volume_header(raw_hdr)
-        raw_mht = fh.read(volume.MHT_SIZE)
-        mht = volume.parse_management_header_table(raw_mht)
-        prdm = mht.entries[0]
-        off = volume.getsector(prdm.dsa, hdr.sector_size, hdr.logical_sector_size)
-        fh.seek(off)
-        raw_pdmdh = fh.read(prdm.size * hdr.logical_sector_size)
-    pdmdh = volume.parse_pdmdh(raw_pdmdh)
-
-    lmr = next((l for l in pdmdh.levels if l.level == level), None)
-    if lmr is None:
-        raise ValueError(f"No LMR for level {level}; available: "
-                         f"{[l.level for l in pdmdh.levels]}")
-
-    lon_lo = pdmdh.coverage.lon_lo
-    lat_lo = pdmdh.coverage.lat_lo
-    lat_span = pdmdh.coverage.lat_hi - pdmdh.coverage.lat_lo
-    lon_span = _lon_span(pdmdh.coverage.lon_lo, pdmdh.coverage.lon_hi)
-
-    target = BoundingBox(lat_lo=target_bbox[1], lat_hi=target_bbox[3],
-                         lon_lo=target_bbox[0], lon_hi=target_bbox[2])
-    return TileGrid(
-        level=level,
-        disc_lat_lo=lat_lo,
-        disc_lon_lo=lon_lo,
-        disc_lat_span=lat_span,
-        disc_lon_span=lon_span,
-        nx=lmr.grid_nx,
-        ny=lmr.grid_ny,
-        target=target,
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -566,96 +557,144 @@ def _is_name_feature(tags) -> bool:
                             or tags.get("highway") in ROADS)
 
 
-class _GeomHandler:
-    """pyosmium handler that collects roads, background features, and names.
+# Default no-op level_filter: every level receives the same feature set.
+# `level_filter(level, tags) -> bool` is the seam unit 14 fills with
+# per-level selection matched to the reference census; do not invent a
+# selection rule here.
+LevelFilter = Callable[[int, dict], bool]
 
-    Call `apply(pbf_path)` to run the streaming parse.  Results are in:
-      self.road_ways      list of {coords, highway}
-      self.bg_ways        list of {ring, type_code}
-      self.name_points    list of {text, lat, lon, type_code}
-      self.name_ways      list of {text, coords, type_code}  (centroid used)
+
+def _default_level_filter(level: int, tags: dict) -> bool:
+    return True
+
+
+class _GeomHandler:
+    """pyosmium handler that tiles roads, background features, and names into
+    every requested level's grid *as each way/node is read* and spools the
+    result -- nothing is retained across the whole file, so memory stays
+    bounded regardless of PBF size.
     """
 
-    def __init__(self, target_bbox):
-        self.target_bbox = target_bbox  # (lon_left, lat_bottom, lon_right, lat_top)
-        self.road_ways: list[dict] = []
-        self.bg_ways: list[dict] = []
-        self.name_points: list[dict] = []
-        self.name_ways: list[dict] = []
-
-    def _in_bbox(self, lats, lons) -> bool:
-        lon_l, lat_b, lon_r, lat_t = self.target_bbox
-        return (max(lons) >= lon_l and min(lons) <= lon_r
-                and max(lats) >= lat_b and min(lats) <= lat_t)
+    def __init__(self, grids: dict[int, "TileGrid"], spool: SpoolWriter,
+                 level_filter: LevelFilter, progress_every: int = PROGRESS_EVERY):
+        self.grids = grids
+        self.spool = spool
+        self.level_filter = level_filter
+        self.progress_every = progress_every
+        self.target_cells: dict[int, set] = {
+            level: set(grid.target_cells()) for level, grid in grids.items()
+        }
+        self.n_ways = 0
+        self.n_nodes = 0
 
     def apply(self, pbf_path: str) -> None:
         import osmium
 
-        class Handler(osmium.SimpleHandler):
-            def __init__(h_self):
-                osmium.SimpleHandler.__init__(h_self)
+        outer = self
 
+        class Handler(osmium.SimpleHandler):
             def way(h_self, w):
-                self._handle_way(w)
+                outer._handle_way(w)
 
             def node(h_self, n):
-                self._handle_node(n)
+                outer._handle_node(n)
 
         h = Handler()
         h.apply_file(pbf_path, locations=True, idx="flex_mem")
 
     def _handle_node(self, n) -> None:
+        self.n_nodes += 1
         if not n.location.valid():
-            return
-        lat, lon = n.location.lat, n.location.lon
-        lon_l, lat_b, lon_r, lat_t = self.target_bbox
-        if not (lat_b <= lat <= lat_t and lon_l <= lon <= lon_r):
             return
         tags = n.tags
         name = tags.get("name")
         if not name:
             return
         place = tags.get("place")
-        if place in ("suburb", "city", "town", "village", "locality"):
-            type_code = 0x134 if place in ("suburb",) else 0x132
-            self.name_points.append({"text": name, "lat": lat, "lon": lon,
-                                     "type_code": type_code})
+        if place not in ("suburb", "city", "town", "village", "locality"):
+            return
+        tags_dict = dict(tags)
+        lat, lon = n.location.lat, n.location.lon
+        type_code = 0x134 if place == "suburb" else 0x132
+        for level, grid in self.grids.items():
+            if not self.level_filter(level, tags_dict):
+                continue
+            par = assign_to_parcel(lat, lon, grid)
+            if par is None or par not in self.target_cells[level]:
+                continue
+            ix, iy = par
+            rec = _make_name_record(name, lat, lon, type_code=type_code)
+            self.spool.add(level, ix, iy, names=[rec])
 
     def _handle_way(self, w) -> None:
+        self.n_ways += 1
+        if self.n_ways % self.progress_every == 0:
+            print(f"  ... {self.n_ways} ways, {self.n_nodes} nodes processed",
+                  flush=True)
         try:
             coords = [(nd.lat, nd.lon) for nd in w.nodes if nd.location.valid()]
         except Exception:
             return
         if len(coords) < 2:
             return
-        lats = [c[0] for c in coords]
-        lons = [c[1] for c in coords]
-        if not self._in_bbox(lats, lons):
-            return
 
-        tags = w.tags
+        tags = dict(w.tags)
         hw = tags.get("highway")
-        if hw in ROADS:
-            self.road_ways.append({"coords": coords, "highway": hw, "way_id": w.id})
-            name = tags.get("name")
-            if name:
-                clat, clon = _centroid(coords)
-                self.name_ways.append({"text": name, "lat": clat, "lon": clon,
-                                       "type_code": 0x134})
+        is_road = hw in ROADS
+        bg_type = None if is_road else _osm_tags_to_bg_type(tags)
+        if not is_road and bg_type is None:
             return
+        way_id = w.id
+        name = tags.get("name")
 
-        type_code = _osm_tags_to_bg_type(dict(tags))
-        if type_code is not None and len(coords) >= 3:
-            # Close the ring if not already closed
+        ring = None
+        if not is_road and len(coords) >= 3:
             ring = list(coords)
             if ring[0] != ring[-1]:
                 ring.append(ring[0])
-            self.bg_ways.append({"ring": ring, "type_code": type_code})
-            name = tags.get("name")
+
+        for level, grid in self.grids.items():
+            if not self.level_filter(level, tags):
+                continue
+            tcells = self.target_cells[level]
+
+            if is_road:
+                per_parcel = split_polyline_by_parcel(coords, grid)
+                any_link = False
+                for (ix, iy), chains in per_parcel.items():
+                    if (ix, iy) not in tcells:
+                        continue
+                    bounds = parcel_bounds(ix, iy, grid)
+                    links = [
+                        _make_road_link(chain, hw, bounds, osm_way_id=way_id)
+                        for chain in chains if len(chain) >= 2
+                    ]
+                    if links:
+                        self.spool.add(level, ix, iy, roads=links)
+                        any_link = True
+                if name and any_link:
+                    clat, clon = _centroid(coords)
+                    par = assign_to_parcel(clat, clon, grid)
+                    if par is not None and par in tcells:
+                        nix, niy = par
+                        rec = _make_name_record(name, clat, clon, type_code=0x134)
+                        self.spool.add(level, nix, niy, names=[rec])
+                continue
+
+            # Background way (ring is not None: len(coords) >= 3 checked above)
+            if ring is None:
+                continue
+            clat, clon = _centroid(ring)
+            par = assign_to_parcel(clat, clon, grid)
+            if par is None or par not in tcells:
+                continue
+            ix, iy = par
+            bounds = parcel_bounds(ix, iy, grid)
+            shape = _make_background_shape(ring, bg_type, bounds)
+            self.spool.add(level, ix, iy, backgrounds=[shape])
             if name:
-                clat, clon = _centroid(ring)
-                self.name_ways.append({"text": name, "lat": clat, "lon": clon,
-                                       "type_code": type_code})
+                rec = _make_name_record(name, clat, clon, type_code=bg_type)
+                self.spool.add(level, ix, iy, names=[rec])
 
 
 # ---------------------------------------------------------------------------
@@ -668,90 +707,37 @@ ParcelContent = dict  # {'roads': [...], 'backgrounds': [...], 'names': [...]}
 
 def extract_parcel_geometry(
     pbf_path: str,
-    grid: TileGrid,
-    verbose: bool = False,
-) -> dict[ParcelKey, ParcelContent]:
-    """Extract OSM geometry and tile it into parcels.
+    grids: dict[int, "TileGrid"],
+    spool: SpoolWriter,
+    level_filter: Optional[LevelFilter] = None,
+    verbose: bool = True,
+    progress_every: int = PROGRESS_EVERY,
+) -> SpoolWriter:
+    """One streaming pass over `pbf_path` that tiles every way/node into
+    every level in `grids` as it is read, spooling per-parcel content to
+    `spool` (see `kiwiw.spool`).  Nothing from the PBF is retained beyond
+    the current record and the small per-parcel flush buffers inside
+    `spool`, so memory stays bounded regardless of file size.
 
-    Returns
-    -------
-    dict mapping (level, cell_ix, cell_iy) → {
-        'roads':       list[RoadLink],
-        'backgrounds': list[BackgroundShape],
-        'names':       list[NameRecord],
-    }
-    Only parcels that intersect ``grid.target`` and have at least one feature
-    are included.
+    `level_filter(level, tags) -> bool` (default: every level, always True)
+    is the seam unit 14 fills with per-level feature selection; here every
+    level receives the same feature set.
+
+    Returns `spool`, closed (its index files are finalized) so callers can
+    immediately construct a `SpoolReader` over it.
     """
-    target_cells = set(grid.target_cells())
+    if level_filter is None:
+        level_filter = _default_level_filter
 
-    handler = _GeomHandler(target_bbox=(
-        grid.target.lon_lo, grid.target.lat_lo,
-        grid.target.lon_hi, grid.target.lat_hi,
-    ))
+    handler = _GeomHandler(grids, spool, level_filter, progress_every=progress_every)
     if verbose:
-        print(f"  Streaming {pbf_path} ...", flush=True)
+        print(f"Streaming {pbf_path} ...", flush=True)
     handler.apply(pbf_path)
     if verbose:
-        print(f"  Collected {len(handler.road_ways)} road ways, "
-              f"{len(handler.bg_ways)} background ways, "
-              f"{len(handler.name_points) + len(handler.name_ways)} name features",
+        print(f"Done: {handler.n_ways} ways, {handler.n_nodes} nodes processed",
               flush=True)
-
-    result: dict[ParcelKey, ParcelContent] = defaultdict(
-        lambda: {"roads": [], "backgrounds": [], "names": []}
-    )
-
-    # --- Roads ---
-    for way in handler.road_ways:
-        coords = way["coords"]
-        hw = way["highway"]
-        way_id = way.get("way_id")
-        per_parcel = split_polyline_by_parcel(coords, grid)
-        for (ix, iy), chains in per_parcel.items():
-            if (ix, iy) not in target_cells:
-                continue
-            bounds = parcel_bounds(ix, iy, grid)
-            for chain in chains:
-                if len(chain) >= 2:
-                    link = _make_road_link(chain, hw, bounds, osm_way_id=way_id)
-                    result[(grid.level, ix, iy)]["roads"].append(link)
-
-    # --- Backgrounds ---
-    for bg in handler.bg_ways:
-        ring = bg["ring"]
-        type_code = bg["type_code"]
-        # Assign background to parcel of its centroid (no clipping for polygons)
-        clat, clon = _centroid(ring)
-        par = assign_to_parcel(clat, clon, grid)
-        if par is None or par not in target_cells:
-            continue
-        ix, iy = par
-        bounds = parcel_bounds(ix, iy, grid)
-        shape = _make_background_shape(ring, type_code, bounds)
-        result[(grid.level, ix, iy)]["backgrounds"].append(shape)
-
-    # --- Names (point nodes) ---
-    for np_ in handler.name_points:
-        par = assign_to_parcel(np_["lat"], np_["lon"], grid)
-        if par is None or par not in target_cells:
-            continue
-        ix, iy = par
-        rec = _make_name_record(np_["text"], np_["lat"], np_["lon"],
-                                 type_code=np_["type_code"])
-        result[(grid.level, ix, iy)]["names"].append(rec)
-
-    # --- Names (from road/bg way centroids) ---
-    for nw in handler.name_ways:
-        par = assign_to_parcel(nw["lat"], nw["lon"], grid)
-        if par is None or par not in target_cells:
-            continue
-        ix, iy = par
-        rec = _make_name_record(nw["text"], nw["lat"], nw["lon"],
-                                 type_code=nw["type_code"])
-        result[(grid.level, ix, iy)]["names"].append(rec)
-
-    return dict(result)
+    spool.close()
+    return spool
 
 
 # ---------------------------------------------------------------------------
@@ -759,87 +745,59 @@ def extract_parcel_geometry(
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--alldata", default=DEFAULT_ALLDATA,
-                    help="Path to ALLDATA.KWI (disc file, default: %(default)s)")
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except AttributeError:
+        pass
+
+    ap = argparse.ArgumentParser(description=__doc__,
+                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--pbf", default=DEFAULT_PBF,
                     help="OSM PBF input file (default: %(default)s)")
-    ap.add_argument("--level", type=int, default=DEFAULT_LEVEL,
-                    help="Map level to extract (default: %(default)s)")
-    ap.add_argument("--bbox", nargs=4, type=float,
-                    metavar=("LON_LEFT", "LAT_BOTTOM", "LON_RIGHT", "LAT_TOP"),
-                    default=list(DEFAULT_BBOX),
-                    help="Target bbox (default: Perth metro)")
-    ap.add_argument("--out", default=None,
-                    help="Output pickle path (omit for dry-run)")
+    ap.add_argument("--levels", nargs="+", type=int, default=DEFAULT_LEVELS,
+                    help="Map levels to extract (default: %(default)s)")
+    ap.add_argument("--fixture", choices=sorted(FIXTURE_BBOXES), default=None,
+                    help="Restrict extraction to a named dev fixture bbox "
+                         "(e.g. 'perth'); omit for the full reference coverage box")
+    ap.add_argument("--spool", default=DEFAULT_SPOOL_DIR,
+                    help="Output spool directory (default: %(default)s)")
     ap.add_argument("--dry-run", action="store_true",
-                    help="Print stats and exit without writing output")
+                    help="Print per-level grid stats and exit without extracting")
     args = ap.parse_args()
 
-    bbox = tuple(args.bbox)
+    target = None
+    if args.fixture is not None:
+        lon_l, lat_b, lon_r, lat_t = FIXTURE_BBOXES[args.fixture]
+        target = BoundingBox(lat_lo=lat_b, lat_hi=lat_t, lon_lo=lon_l, lon_hi=lon_r)
 
-    # --- Build tile grid ---
-    if not os.path.exists(args.alldata):
-        print(f"SKIP: {args.alldata} not found (disc not mounted?)", file=sys.stderr)
-        sys.exit(1)
-
-    print(f"Loading LMR from {args.alldata} for level {args.level} …")
-    grid = build_tile_grid_from_lmr(args.alldata, args.level, bbox)
-
-    print(f"\nTile grid (level {grid.level}):")
-    print(f"  Disc coverage:  lat [{grid.disc_lat_lo:.4f}, "
-          f"{grid.disc_lat_lo + grid.disc_lat_span:.4f}], "
-          f"lon_lo={grid.disc_lon_lo:.4f}, lon_span={grid.disc_lon_span:.4f}")
-    print(f"  Grid:           {grid.nx} × {grid.ny} cells globally")
-    print(f"  Cell size:      {grid.cell_lat:.6f}° lat × {grid.cell_lon:.6f}° lon")
-    print(f"  Target bbox:    lat [{grid.target.lat_lo}, {grid.target.lat_hi}], "
-          f"lon [{grid.target.lon_lo}, {grid.target.lon_hi}]")
-    cells = grid.target_cells()
-    print(f"  Parcels in target: {len(cells)}")
-
-    # Sample parcel info
-    if cells:
-        ix0, iy0 = cells[0]
-        b0 = parcel_bounds(ix0, iy0, grid)
-        print(f"\n  Sample parcel ({ix0}, {iy0}): "
-              f"lat [{b0.lat_lo:.5f}, {b0.lat_hi:.5f}], "
-              f"lon [{b0.lon_lo:.5f}, {b0.lon_hi:.5f}]")
+    grids: dict[int, TileGrid] = {}
+    for level in args.levels:
+        grid = TileGrid.from_reference(level, target=target)
+        grids[level] = grid
+        cells = grid.target_cells()
+        print(f"Level {level:>2}: grid {grid.nx}x{grid.ny} cells, "
+              f"cell {grid.cell_lat:.6f}° lat x {grid.cell_lon:.6f}° lon, "
+              f"{len(cells)} parcels in target", flush=True)
 
     if args.dry_run:
-        print("\n(--dry-run: no extraction performed, no output written)")
+        print("\n(--dry-run: no extraction performed, no spool written)")
         return
 
-    # --- Full extraction ---
     if not os.path.exists(args.pbf):
         print(f"ERROR: PBF not found: {args.pbf}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"\nExtracting geometry from {args.pbf} …")
-    geometry = extract_parcel_geometry(args.pbf, grid, verbose=True)
+    print(f"\nExtracting geometry from {args.pbf} into spool {args.spool} ...",
+          flush=True)
+    writer = SpoolWriter(args.spool)
+    extract_parcel_geometry(args.pbf, grids, writer, verbose=True)
 
-    # Summary
-    n_parcels = len(geometry)
-    n_roads = sum(len(v["roads"]) for v in geometry.values())
-    n_bgs = sum(len(v["backgrounds"]) for v in geometry.values())
-    n_names = sum(len(v["names"]) for v in geometry.values())
-    print(f"\nExtraction complete:")
-    print(f"  Non-empty parcels: {n_parcels}")
-    print(f"  Road links:        {n_roads}")
-    print(f"  Background shapes: {n_bgs}")
-    print(f"  Name records:      {n_names}")
-
-    # Sample parcel detail
-    if geometry:
-        sample_key = next(iter(geometry))
-        v = geometry[sample_key]
-        print(f"\nSample parcel {sample_key}:")
-        print(f"  roads={len(v['roads'])}, backgrounds={len(v['backgrounds'])}, "
-              f"names={len(v['names'])}")
-
-    if args.out:
-        with open(args.out, "wb") as fh:
-            pickle.dump(geometry, fh, protocol=4)
-        print(f"\nOutput written to {args.out}")
+    reader = SpoolReader(args.spool)
+    print("\nExtraction complete:")
+    for level in args.levels:
+        st = reader.stats(level)
+        print(f"  level {level:>2}: parcels={st['parcels']} roads={st['roads']} "
+              f"backgrounds={st['backgrounds']} names={st['names']}")
 
 
 if __name__ == "__main__":

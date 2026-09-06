@@ -59,22 +59,61 @@ def test_n_basic_route_by_level():
     assert g.to_level_mgmt_record(4).n_basic_route == 0
 
 
+def _decode_disc_level_grid(disc_path: str, level: int):
+    """Read `disc_path`'s PDMDH/LMR for `level` and return an object with
+    `.nx`, `.ny`, `.cell_lat`, `.cell_lon` -- the same fields
+    `osm_to_parcel_geometry.TileGrid.from_reference()` derives from the
+    checked-in `ReferenceGrid`.
+
+    This duplicates (deliberately -- it is a live cross-check, not part of
+    any build path) the small decode that
+    `osm_to_parcel_geometry.build_tile_grid_from_lmr` used to perform before
+    unit 07 removed it: a build never reads the mounted reference disc
+    (docs/design/target-disc.md, "Grid contract"), but this *test* still may,
+    to prove the checked-in `grid.json` matches `R`'s own LMR.
+    """
+    from collections import namedtuple
+    from kiwiw import volume
+
+    with open(disc_path, "rb") as fh:
+        raw_hdr = fh.read(volume.DATAVOL_SIZE)
+        hdr = volume.parse_volume_header(raw_hdr)
+        raw_mht = fh.read(volume.MHT_SIZE)
+        mht = volume.parse_management_header_table(raw_mht)
+        prdm = mht.entries[0]
+        off = volume.getsector(prdm.dsa, hdr.sector_size, hdr.logical_sector_size)
+        fh.seek(off)
+        raw_pdmdh = fh.read(prdm.size * hdr.logical_sector_size)
+    pdmdh = volume.parse_pdmdh(raw_pdmdh)
+
+    lmr = next((l for l in pdmdh.levels if l.level == level), None)
+    if lmr is None:
+        raise ValueError(f"No LMR for level {level}; available: "
+                         f"{[l.level for l in pdmdh.levels]}")
+
+    lat_span = pdmdh.coverage.lat_hi - pdmdh.coverage.lat_lo
+    lon_span_raw = pdmdh.coverage.lon_hi - pdmdh.coverage.lon_lo
+    lon_span = lon_span_raw + 360.0 if lon_span_raw < 0 else lon_span_raw
+
+    Dims = namedtuple("Dims", "nx ny cell_lat cell_lon")
+    return Dims(
+        nx=lmr.grid_nx, ny=lmr.grid_ny,
+        cell_lat=lat_span / lmr.grid_ny, cell_lon=lon_span / lmr.grid_nx,
+    )
+
+
 def test_matches_disc_lmr_decode():
     if not os.path.exists(DISC):
         print("SKIP: disc not mounted")
         return
 
-    from osm_to_parcel_geometry import build_tile_grid_from_lmr
     from kiwiw import volume
 
     g = ReferenceGrid.load()
-    # Any bbox works for this check -- build_tile_grid_from_lmr only uses
-    # it to populate TileGrid.target, not the disc-derived grid fields.
-    dummy_bbox = (110.0, -40.0, 150.0, -10.0)
 
     for level in LEVEL_ORDER:
         want = g.level(level)
-        got = build_tile_grid_from_lmr(DISC, level, dummy_bbox)
+        got = _decode_disc_level_grid(DISC, level)
         assert got.nx == want.nx, level
         assert got.ny == want.ny, level
         assert got.cell_lat == want.cell_lat, level

@@ -299,6 +299,99 @@ class TestCoordinateRoundtrip:
 # Additional sanity: parcel_bounds geometry
 # ---------------------------------------------------------------------------
 
+class TestAntimeridianWrap:
+    """A grid whose coverage box crosses 180°E must tile a crossing way
+    correctly: cells on both sides, with correct (unwrapped) bounds."""
+
+    def _make_wrap_grid(self):
+        # Coverage: lon 170 .. -170 (raw span -340, wraps to +20), i.e.
+        # crosses the antimeridian; lon_lo=170, lon_span=20 -> covers
+        # [170, 190) which is [170,180) U [-180,-170).
+        return _make_grid(lat_lo=-30.0, lon_lo=170.0, lat_span=10.0, lon_span=20.0,
+                          nx=20, ny=10)
+
+    def test_endpoints_on_both_sides_distinct_cells(self):
+        grid = self._make_wrap_grid()
+        # cell_lon = 1.0deg; lon=175 -> dlon=5 -> ix=5; lon=-175 (=185 wrapped)
+        # -> dlon=185-170=15 -> ix=15
+        par_west = assign_to_parcel(-25.0, 175.0, grid)
+        par_east = assign_to_parcel(-25.0, -175.0, grid)
+        assert par_west is not None and par_east is not None
+        assert par_west != par_east
+        assert par_west[0] == 5
+        assert par_east[0] == 15
+
+    def test_way_crossing_180_splits_both_sides(self):
+        grid = self._make_wrap_grid()
+        coords = [(-25.0, 175.0), (-25.0, -175.0)]
+        result = split_polyline_by_parcel(coords, grid)
+        pars = set(result.keys())
+        # Endpoint cells (ix=5 for lon=175, ix=15 for lon=-175) must both be
+        # represented; the binary-search splitter also emits intermediate
+        # cells crossed along the way, all sharing the same iy row.
+        assert (5, 5) in pars
+        assert (15, 5) in pars
+        rows = {iy for _ix, iy in pars}
+        assert rows == {5}
+        # Every emitted chain must lie entirely on one side of the antimeridian
+        # or the other: ix in [0,5] (east-of-meridian side of the box) or
+        # ix in [15,19] (west-of-meridian side); nothing in between (that
+        # region is not on the way's path at all -- it isn't part of the
+        # coverage box crossing).
+        assert all(ix <= 5 or ix >= 15 for ix in {ix for ix, _iy in pars})
+
+    def test_bounds_correct_on_each_side(self):
+        grid = self._make_wrap_grid()
+        # ix=5 -> lon [175, 176), entirely on the "east of prime meridian" side
+        b_west = parcel_bounds(5, 5, grid)
+        assert b_west.lon_lo == pytest.approx(175.0)
+        assert b_west.lon_hi == pytest.approx(176.0)
+        # ix=15 -> raw lon [185, 186); parcel_bounds' norm() only wraps values
+        # outside [-180, 360), so this stays 185..186 (equivalent to -175..-174
+        # on the other side of the antimeridian, but not renormalised there).
+        b_east = parcel_bounds(15, 5, grid)
+        assert b_east.lon_lo == pytest.approx(185.0)
+        assert b_east.lon_hi == pytest.approx(186.0)
+        # The query point (-25, -175) that assign_to_parcel places in ix=15
+        # falls inside this bound once wrapped back by 360.
+        assert (b_east.lon_lo - 360.0) == pytest.approx(-175.0)
+        # ix=19 (last column) -> raw lon [189, 190)
+        b_last = parcel_bounds(19, 5, grid)
+        assert b_last.lon_lo == pytest.approx(189.0)
+        assert b_last.lon_hi == pytest.approx(190.0)
+
+
+class TestTileGridFromReference:
+    """TileGrid.from_reference builds a grid from the checked-in reference
+    data (kiwiw.grid.ReferenceGrid), never a mounted disc."""
+
+    def test_full_coverage_default(self):
+        grid = TileGrid.from_reference(0)
+        assert grid.nx == 4096
+        assert grid.ny == 4096
+        # target defaults to the full coverage box
+        assert grid.target.lat_lo == pytest.approx(grid.disc_lat_lo)
+        assert grid.target.lon_lo == pytest.approx(grid.disc_lon_lo)
+
+    def test_matches_reference_grid_dims(self):
+        from kiwiw.grid import ReferenceGrid
+        rg = ReferenceGrid.load()
+        for level in (12, 10, 8, 6, 4, 2, 0):
+            g = TileGrid.from_reference(level)
+            lg = rg.level(level)
+            assert g.nx == lg.nx
+            assert g.ny == lg.ny
+            assert g.cell_lat == pytest.approx(lg.cell_lat)
+            assert g.cell_lon == pytest.approx(lg.cell_lon)
+
+    def test_explicit_target_restricts_cells(self):
+        full = TileGrid.from_reference(12)
+        restricted = TileGrid.from_reference(
+            12, target=BoundingBox(lat_lo=-35.0, lat_hi=-30.0, lon_lo=140.0, lon_hi=150.0)
+        )
+        assert len(restricted.target_cells()) <= len(full.target_cells())
+
+
 class TestParcelBounds:
     def test_bounds_tile_correctly(self):
         """Adjacent parcels share edges (no gap, no overlap)."""
