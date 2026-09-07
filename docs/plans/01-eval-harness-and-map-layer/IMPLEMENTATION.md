@@ -478,8 +478,28 @@ reference disc (`--checks container`) → PASS, 0 allowed diffs.
 
 ## Ad-hoc brief 17 — `checks/mfde.py` tolerate real per-parcel distributions
 
-**Status: pending** (dispatched alongside 18; not yet landed as of this
-entry — see next `IMPLEMENTATION.md` update once its worker reports).
+**Status: done, committed (`9e57bb0`), pushed.**
+
+Widened the entry-count and `nregion` checks from dominant-value-only to
+full-histogram subset tests (`g_values - set(ref_hist.keys())`), matching
+the pattern the per-index presence-class check already used. Removed the
+now-unused `_dominant_key`. New `parser/tests/test_harness_mfde.py`
+covers non-dominant-but-profiled PASS, out-of-profile FAIL (both checks),
+and a dominant-only regression case. 180 tests passing at commit time.
+
+**Contradiction found (reported, not resolved here):** the brief's
+contract assumption — "WP1 today only ever emits the dominant entry count"
+— is wrong for the mfde *table shape* itself: `synth.py`'s
+`build_map_frame_bytes()` (the function the real `build_alldata.py`
+pipeline calls) hardcodes `n_mfde=3` (road/background/name only), not the
+20-entry table with absent-sentinel slots 3-19 `DESIGN.md` specifies. So
+today's actual pipeline output has `entry_count=3` at every level, which
+FAILs the mfde check regardless of this brief's widening (it also failed
+before, under dominant-only comparison — not a regression). Worked around
+for done evidence by hand-building a 20-entry fixture directly, bypassing
+`synth.py` (out of this brief's owned paths). **This gap is exactly unit
+09's scope** (`briefs/09-map-frame-shape.md`, dispatched alongside this
+brief) — no separate follow-up needed, noted here for traceability.
 
 ## Unit 09 — Map Frame shape (`synth.py`)
 
