@@ -363,3 +363,85 @@ header offsets 12-27 are sample-based (49 reads) not a full census.
 
 No deviations from the brief's required structure/scope; no non-trivial
 bugs found outside this unit's own scope.
+
+## Unit 08 — Data-driven vocabulary tables per level
+
+**Status: done, committed (`24d800d`), pushed.**
+
+Its first worker built the tables and validated them with a background
+extraction (`osm_to_parcel_geometry.py --fixture perth --levels 0 2`
+against the full Australia PBF) but hit its own turn limit waiting on that
+run; per this run's no-resume rule, a fresh agent picked up the completed
+extraction output and landed it rather than resuming the stalled worker.
+Replaced the hard-coded `HIGHWAY_TO_ROAD_TYPE`/`HIGHWAY_TO_DISPLAY_CLASS`
+dicts and `_osm_tags_to_bg_type`'s literal tag matching with checked-in,
+level-ranged vocab tables (`parser/refdata/vocab/{road_type,display_class,
+bg_type}.json`) loaded by new `parser/kiwiw/vocab.py`, per
+`target-disc.md`'s "Vocabulary is data, not code." Coverage against the
+reference census (`parser/refdata/profile/map.json`) enforced by new
+`parser/tests/test_vocab.py`. Call sites in `osm_to_parcel_geometry.py`
+became level-aware (bg_type lookup moved inside the per-level loop, since
+`R`'s background vocabulary differs by level; `_make_road_link` gained a
+`level` parameter and can now return `None`). `test_extractor_scale.py`
+updated accordingly (levels 10/12 now correctly expect zero road
+links/names, matching `R`'s empty census there). The finishing agent also
+renamed the two module-level `Vocab` handles from
+`HIGHWAY_TO_ROAD_TYPE`/`HIGHWAY_TO_DISPLAY_CLASS` to
+`_ROAD_TYPE_VOCAB`/`_DISPLAY_CLASS_VOCAB` (matching the existing
+`_BG_TYPE_VOCAB` convention) since the old names still matched the brief's
+done-evidence grep despite now holding `Vocab` objects, not dicts. 175
+tests passing (both this unit and brief 16 landed together).
+
+**Could not run** one done-evidence command (`build_alldata.py --levels 0`
++ `compare_disc.py --checks vocab`): `build_alldata.py` has been
+non-functional (`ImportError: cannot import name 'DEFAULT_ALLDATA'`) since
+unit 07 landed — confirmed pre-existing, not introduced by this unit; stays
+broken until unit 12's rewrite per unit 07's prior report.
+
+**Contradictions found (reported, not resolved here), recorded in
+`parser/refdata/vocab/README.md`:** (a) spec Ch.7.A (`07A1122e.pdf`), cited
+as the code-meaning source, has no extractable numeric code table in this
+PDF revision — value assignments instead derive from `roadtypes.py`'s
+existing labels plus profile-frequency ranking; (b) the brief's fallback
+method (comparing an OSM class's share of unit 07's spool statistics
+against the profile) isn't executable — unit 07's report has no
+per-highway-tag frequency breakdown; (c) the brief's one-`default`-per-file
+schema can't express level-10/12's "always omit" vs. level-0/2-8's
+"non-null wherever plausible" simultaneously — worked around with
+exhaustive per-range rule lists; (d) the committed `profile/map.json`
+census (levels 2-8 road-type/DC sets) diverges from `PLAN.md`'s stale
+2026-09-05 refinement prose — the tables follow the committed profile per
+the brief's own instruction, not `PLAN.md`.
+
+## Ad-hoc brief 16 — Fix `mapframes_bytes_total` double-counting
+
+**Status: done, committed (`eea6e4d`), pushed.**
+
+Root cause confirmed against the real reference disc: a divided parcel's
+(`parcel_type` 1..3) sibling leaf slots legitimately reference the *same*
+on-disk `(dsa, size)` — a direct probe of the first 500 non-empty blocks
+found 223 with duplicate `(dsa, size)` pairs among their leaves (one
+example repeated 16 times). `walk.iter_parcels()`'s one-yield-per-slot
+semantics are correct (every other consumer needs it); the bug was
+`build_profile()` summing `wp.length` once per yield instead of deduping
+by `(file_offset, length)`. Fixed in `parser/harness/profile.py` only —
+no change needed in `walk.py`, `parcel.py`, or `checks/envelope.py`.
+Real-disc before/after: `mapframes_bytes` 4,680,715,968 -> 497,995,008;
+`total_bytes` 4,707,306,016 -> 524,585,056; envelope self-check capacity
+projection now PASSes (525,039,328 <= 4,700,000,000 budget). Regenerated
+and committed `parser/refdata/profile/map.json` with the corrected totals.
+165 tests passing at commit time (new regression test added, monkeypatching
+`iter_parcels()` to reproduce the observed aliasing pattern, since
+`alldata_writer.build_alldata_kwi` cannot yet produce a real divided-parcel
+fixture and extending it was outside this brief's owned paths — reported
+as a deviation, not resolved).
+
+**Contradiction found (reported, not resolved here):** `compare_disc.py`'s
+`--profile` branch returns immediately after regenerating the profile file
+and silently ignores `--checks` when both flags are passed together — the
+brief's own done-evidence command 2 (`--profile --checks envelope`
+together) does not actually run the envelope check as written. Worked
+around by running the two flags separately (`--profile` to regenerate, then
+`--checks envelope` alone for the verdict). Whoever owns `compare_disc.py`'s
+CLI should either make `--profile --checks X` run both or make the CLI
+reject that combination outright, since it currently fails silently.
