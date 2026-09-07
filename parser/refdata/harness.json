@@ -7,6 +7,8 @@
      "reason": "build/format version stamp differs per build"},
     {"region": "volume_header", "field": "data_version",
      "reason": "data version string differs per build"},
+    {"region": "volume_header", "field": "media_version",
+     "reason": "media version string (Ch. 5.1 Data Volume, offset 424..456, distinct from format_version/data_version) differs per build -- confirmed on the reference disc: R='V 05.07.20' vs G's synthetic '001'"},
     {"region": "volume_header", "field": "disk_title",
      "reason": "disk title string differs per build"},
     {"region": "mht", "field": "dsa",

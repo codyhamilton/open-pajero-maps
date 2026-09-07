@@ -26,18 +26,22 @@ NX, NY = 2, 2
 LEVEL = 0
 
 
-def _build(coverage: BoundingBox = _BOUNDS, disk_title: str | None = None) -> bytes:
+def _build(coverage: BoundingBox = _BOUNDS, disk_title: str | None = None,
+           media_version: str | None = None) -> bytes:
     """A tiny 2x2, single-level, parcel-free `ALLDATA.KWI` (no map frames
     needed for this check -- it never reads leaf content, only the
     container skeleton)."""
     raw = build_alldata_kwi(parcels=[], coverage=coverage, level=LEVEL,
                              grid_nx=NX, grid_ny=NY)
-    if disk_title is None:
+    if disk_title is None and media_version is None:
         return raw
     buf = bytearray(raw)
     hdr = _volume.parse_volume_header(bytes(buf[:_volume.DATAVOL_SIZE]))
     extras = _volume.parse_volume_header_extras(bytes(buf[:_volume.DATAVOL_SIZE]))
-    hdr.disk_title = disk_title
+    if disk_title is not None:
+        hdr.disk_title = disk_title
+    if media_version is not None:
+        hdr.media_version = media_version
     from kiwiw import volume_writer as _vw
     buf[0:_volume.DATAVOL_SIZE] = _vw.write_volume_header(hdr, extras)
     return bytes(buf)
@@ -47,6 +51,7 @@ def _ctx(reference_path: str, generated_path: str) -> Context:
     return Context(reference=reference_path, generated=generated_path,
                    config={"layers_present": ["map"], "container_allowlist": [
                        {"region": "volume_header", "field": "disk_title", "reason": "test"},
+                       {"region": "volume_header", "field": "media_version", "reason": "test"},
                    ]})
 
 
@@ -68,6 +73,25 @@ def test_container_classifies_allowed_title_and_violation_coverage(tmp_path):
     assert "coverage" in violation_fields
     coverage_violations = [v for v in result.details["violations"] if v["field"] == "coverage"]
     assert all(v["region"] == "pdmdh" for v in coverage_violations)
+
+
+def test_container_classifies_media_version_as_allowed(tmp_path):
+    """Brief 18 ambiguity (a): `media_version` (Ch. 5.1 Data Volume, offset
+    424..456) is a spec field distinct from `format_version`/`data_version`,
+    confirmed legitimately variable between R and G on the real reference
+    disc (R='V 05.07.20' vs the synthetic writer's '001') -- it belongs on
+    the allowlist, same as the other version/title strings."""
+    r_path = tmp_path / "R.KWI"
+    g_path = tmp_path / "G.KWI"
+    r_path.write_bytes(_build(coverage=_BOUNDS, media_version="V 05.07.20"))
+    g_path.write_bytes(_build(coverage=_BOUNDS, media_version="001"))
+
+    ctx = _ctx(str(r_path), str(g_path))
+    result = container_checks._run_container(ctx)
+
+    assert result.details["allowed_counts"].get("volume_header.media_version") == 1
+    violation_fields = {v["field"] for v in result.details["violations"]}
+    assert "media_version" not in violation_fields
 
 
 def test_container_passes_when_identical(tmp_path):
