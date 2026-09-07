@@ -445,3 +445,46 @@ around by running the two flags separately (`--profile` to regenerate, then
 `--checks envelope` alone for the verdict). Whoever owns `compare_disc.py`'s
 CLI should either make `--profile --checks X` run both or make the CLI
 reject that combination outright, since it currently fails silently.
+
+## Ad-hoc brief 18 — Resolve unit 04's container-allowlist ambiguities
+
+**Status: done, committed (`3987582`), pushed.**
+
+Grounded in `DESIGN.md` (unit 06). All three ambiguities investigated:
+
+- **(a) `media_version`**: real spec field (Ch.5.1, offset 424..456),
+  already named in `bytediff.py`'s field map but never allowlisted.
+  Confirmed legitimately variable: `R` = `'V 05.07.20'` vs. the synthetic
+  writer's hardcoded `'001'`. Allowlisted with a reason; regression test
+  added.
+- **(b) MHT absent-layer handling**: investigated, deliberately left
+  unresolved and reported rather than resolved, per the brief's own scope
+  escape hatch — fixing it properly would require a new per-layer
+  `harness.json` key (outside the owned `container_allowlist` key) plus a
+  fix in `alldata_writer.py` (not an owned path). **Bonus finding
+  surfaced, not fixed**: `R` uses `0xFFFFFFFF` as the absent-entry
+  sentinel in the MHT, while `G`'s writer zero-fills (`dsa=0`) instead —
+  the current blanket `dsa` allowlist masks this discrepancy. Worth a
+  follow-up brief against `alldata_writer.py` if wanted.
+- **(c) `record_size`/`trailing_padding` naming**: confirmed correct as
+  named — matches `volume.py`'s `Pdmdh.record_size` /
+  `trailing_padding_hex` (via the same `_hex`-suffix-stripping convention
+  `bytediff.py` already uses elsewhere). `target-disc.md` doesn't name
+  these fields, so there's no competing intent to reconcile. Closed, no
+  rename.
+
+181 tests passing at commit time. Self-check against the mounted
+reference disc (`--checks container`) → PASS, 0 allowed diffs.
+
+## Ad-hoc brief 17 — `checks/mfde.py` tolerate real per-parcel distributions
+
+**Status: pending** (dispatched alongside 18; not yet landed as of this
+entry — see next `IMPLEMENTATION.md` update once its worker reports).
+
+## Unit 09 — Map Frame shape (`synth.py`)
+
+**Status: pending** (dispatched; depends on 06, done).
+
+## Unit 10 — Link ordinal registry
+
+**Status: pending** (dispatched; depends on 08, done).
