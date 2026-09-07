@@ -169,6 +169,14 @@ class RoadLink:
     # unaffected.
     link_id: int = 0
     osm_way_id: Optional[int] = None
+    # Sub-polyline ordinal within osm_way_id, 0-based, assigned in chain
+    # order along the way's node sequence at parcel-split time (see
+    # docs/design/target-disc.md, "Link identity": a link's on-disc identity
+    # is (osm_way_id, ordinal), and that pair is the join key `LinkIdRegistry`
+    # keys on -- osm_way_id alone is not a unique key once a way is split
+    # across parcels). Defaults to 0 so pre-existing round-trip RoadLinks
+    # (single implicit chain) are unaffected.
+    ordinal: int = 0
 
 
 @dataclass

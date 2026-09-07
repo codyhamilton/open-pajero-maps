@@ -315,6 +315,18 @@ def _split_segment(p1: tuple, p2: tuple, grid: TileGrid,
             + _split_segment(mid, p2, grid, depth + 1))
 
 
+class _Chain(list):
+    """A per-parcel sub-polyline chain: behaves exactly like a plain
+    ``list[tuple[float, float]]`` of (lat, lon) points (same construction,
+    indexing, ``len()``, iteration -- existing callers that treat a chain as
+    a plain list are unaffected), plus one extra attribute: ``ordinal``, the
+    0-based index of this chain in the order it was produced along the way's
+    node sequence (see docs/design/target-disc.md, "Link identity": a link's
+    on-disc identity is ``(osm_way_id, ordinal)``).
+    """
+    ordinal: int = 0
+
+
 def split_polyline_by_parcel(
     coords: list[tuple[float, float]],
     grid: TileGrid,
@@ -330,13 +342,21 @@ def split_polyline_by_parcel(
     -------
     dict mapping (ix, iy) → list of sub-polyline coord lists.  Each
     sub-polyline is contiguous within that parcel.  Segments outside the
-    disc coverage (None key) are not included.
+    disc coverage (None key) are not included.  Each returned chain is a
+    ``_Chain`` (a `list` subclass) whose ``.ordinal`` attribute is the
+    0-based index of that chain in the order it was produced along the
+    way's node sequence -- the same chain order the on-disc link identity
+    `(osm_way_id, ordinal)` (docs/design/target-disc.md, "Link identity")
+    is keyed on. Chains dropped for lying outside disc coverage do not
+    consume an ordinal.
     """
     if len(coords) < 2:
         if len(coords) == 1:
             par = assign_to_parcel(coords[0][0], coords[0][1], grid)
             if par is not None:
-                return {par: [list(coords)]}
+                chain = _Chain(coords)
+                chain.ordinal = 0
+                return {par: [chain]}
         return {}
 
     # Build the full split list
@@ -349,6 +369,16 @@ def split_polyline_by_parcel(
     if not all_segs:
         return {}
 
+    next_ordinal = 0
+
+    def _emit(par, chain_points: list) -> None:
+        nonlocal next_ordinal
+        if par is not None and len(chain_points) >= 2:
+            chain = _Chain(chain_points)
+            chain.ordinal = next_ordinal
+            next_ordinal += 1
+            result[par].append(chain)
+
     cur_par = all_segs[0][2]
     cur_chain: list[tuple] = [all_segs[0][0], all_segs[0][1]]
 
@@ -357,13 +387,11 @@ def split_polyline_by_parcel(
         if par == cur_par:
             cur_chain.append(p_b)
         else:
-            if cur_par is not None and len(cur_chain) >= 2:
-                result[cur_par].append(cur_chain)
+            _emit(cur_par, cur_chain)
             cur_par = par
             cur_chain = [p_a, p_b]
 
-    if cur_par is not None and len(cur_chain) >= 2:
-        result[cur_par].append(cur_chain)
+    _emit(cur_par, cur_chain)
 
     return dict(result)
 
@@ -394,7 +422,8 @@ def _make_road_link(chain: list[tuple[float, float]],
                     level: int,
                     tags: dict,
                     bounds: BoundingBox,
-                    osm_way_id: Optional[int] = None) -> Optional[RoadLink]:
+                    osm_way_id: Optional[int] = None,
+                    ordinal: int = 0) -> Optional[RoadLink]:
     """Build a synthetic RoadLink for one parcel-clipped road sub-polyline, or
     None if `tags` has no road_type/display_class mapping at `level`
     (per-level vocab lookup; docs/design/target-disc.md, "Vocabulary is
@@ -408,6 +437,11 @@ def _make_road_link(chain: list[tuple[float, float]],
     stored as IR-only metadata (not encoded into KWI bytes) so that the RP
     layer can later look up the corresponding link's positional index in the
     parcel's RoadFrame via a ``LinkIdRegistry``.
+
+    ``ordinal`` is this chain's 0-based position in the order
+    ``split_polyline_by_parcel`` produced it along the way's node sequence
+    (its ``_Chain.ordinal``); together with ``osm_way_id`` it is the link's
+    on-disc identity (docs/design/target-disc.md, "Link identity").
     """
     road_type = _ROAD_TYPE_VOCAB.lookup(level, tags)
     display_class = _DISPLAY_CLASS_VOCAB.lookup(level, tags)
@@ -444,6 +478,7 @@ def _make_road_link(chain: list[tuple[float, float]],
         raw_offset=0,
         raw_bytes=b"",   # no disc data -- synthetic link
         osm_way_id=osm_way_id,
+        ordinal=ordinal,
     )
 
 
@@ -621,7 +656,10 @@ class _GeomHandler:
                     bounds = parcel_bounds(ix, iy, grid)
                     links = [
                         link for link in (
-                            _make_road_link(chain, level, tags, bounds, osm_way_id=way_id)
+                            _make_road_link(
+                                chain, level, tags, bounds, osm_way_id=way_id,
+                                ordinal=getattr(chain, "ordinal", 0),
+                            )
                             for chain in chains if len(chain) >= 2
                         ) if link is not None
                     ]

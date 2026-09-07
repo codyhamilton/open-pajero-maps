@@ -1,142 +1,98 @@
 """Link ID Registry: joint assignment of Link IDs between the main map layer
 (``RoadFrame``/``RoadLink``) and the route-planning layer (Ch.10 RP links).
 
-On the real disc each ``RoadLink`` is identified by its *positional index*
-within its parcel's ``RoadFrame`` link list (0-based).  The Ch.10 Link Cost
-Record's "Link ID Number" fields (``link_id_origin`` / ``link_id_dest_delta``)
-reference these indices.
+Link identity (docs/design/target-disc.md, "Link identity", settled): "A
+road link's identity is ``(osm_way_id, ordinal)``, ordinal assigned at split
+time in the map-layer stage, and it is the same key in every layer that
+references a link." ``osm_way_id`` alone is *not* a unique key: a single OSM
+way is clipped into one sub-polyline ("chain") per parcel it crosses, and
+each chain becomes its own ``RoadLink`` with its own ``ordinal`` (0-based,
+assigned in chain order along the way's node sequence at the moment
+``osm_to_parcel_geometry.split_polyline_by_parcel`` produces it -- see that
+function's docstring and ``RoadLink.ordinal`` in ``kiwiw/model.py``).
 
-The ``LinkIdRegistry`` maps an OSM way ID to the ``(parcel_key, positional_index)``
-of the ``RoadLink`` derived from that way.  When building the RP layer the
-caller looks up each OSM way ID in the registry to retrieve the positional
-index and writes it into the ``RpLinkCost.link_id_origin`` field.
+Ordinals are per *level*: the parcel split (and therefore the set of chains
+and their ordinals) is computed independently at each zoom level, so the
+same way can legitimately split differently -- and get different ordinals
+-- at different levels. This registry is shared across levels, so its key
+is the triple ``(level, osm_way_id, ordinal)``, not just ``(osm_way_id,
+ordinal)``.
 
-Usage (typical pipeline order)
--------------------------------
-1.  Build map-layer parcels (``RoadFrame`` lists) -- e.g. from
-    ``osm_to_parcel_geometry.extract_parcel_geometry``.
-2.  Call ``LinkIdRegistry.from_parcels(parcel_dict)`` to derive the registry
-    from all parcel ``RoadLink`` objects that carry a non-None ``osm_way_id``.
-3.  Call ``registry.assign_link_ids(parcel_dict)`` to stamp each
-    ``RoadLink.link_id`` with its positional index (so the map-layer IR is
-    self-consistent even before the RP layer consumes it).
-4.  When building ``RpGraph`` objects, call
-    ``registry.lookup(osm_way_id)`` for each RP link to get the positional
-    index, and store it as ``RpLinkCost.link_id_origin``.
+Usage
+-----
+1.  Build map-layer parcels (``RoadFrame``/``RoadLink`` lists) per level --
+    e.g. from ``osm_to_parcel_geometry.extract_parcel_geometry`` -- so every
+    synthetic ``RoadLink`` carries its ``osm_way_id`` and ``ordinal``.
+2.  Call ``registry.assign(level, osm_way_id, ordinal)`` for each such link
+    to get its ``link_id``. Calling it again with the same key is
+    idempotent: it returns the same ``link_id``.
+3.  When building RP-layer (Ch.10) records that reference a link, call
+    ``registry.lookup(level, osm_way_id, ordinal)`` to resolve the same id.
 
-Note: ``osm_way_id`` is the primary join key.  A single OSM way can split
-into *multiple* sub-polylines when clipped to parcel boundaries, so the
-registry stores only the **first** occurrence encountered (lowest parcel key,
-lowest position within that parcel).  In practice, the RP layer uses the same
-splitting logic and assigns one cost record per (parcel, sub-polyline) pair,
-so callers that need finer granularity should build their own per-(way, chain)
-mapping on top of this registry.
+Note on scope: this registry mints stable, arbitrary ``link_id`` values
+keyed on the design doc's join key. It does not itself compute positional
+indices within an on-disc ``RoadFrame`` link list; a caller that needs a
+link's position in its parcel's link list still derives that from the
+parcel's own link ordering (unrelated to this registry).
 """
 from __future__ import annotations
 
-from typing import Optional
+from typing import Iterator, Optional
 
-# A parcel key is whatever the caller uses to identify a parcel.  In
-# osm_to_parcel_geometry.py it is a (level, cell_ix, cell_iy) tuple;
-# in tests it can be any hashable value.
-ParcelKey = object
+# The registry key: (level, osm_way_id, ordinal). See module docstring for
+# why level is part of the key (ordinals are per-level, not global).
+LinkKey = tuple[int, int, int]
 
 
 class LinkIdRegistry:
-    """Map ``osm_way_id → (parcel_key, positional_index_in_parcel)``."""
+    """Map ``(level, osm_way_id, ordinal) → link_id``.
+
+    ``link_id`` values are minted in first-assign order (0, 1, 2, ...);
+    re-assigning an already-known key returns the same id it was first
+    given. Different ordinals for the same ``(level, osm_way_id)`` are
+    different keys and therefore get different ids.
+    """
 
     def __init__(self) -> None:
-        # {osm_way_id: (parcel_key, index)}
-        self._table: dict[int, tuple[object, int]] = {}
+        self._table: dict[LinkKey, int] = {}
 
     # ------------------------------------------------------------------
     # Build
     # ------------------------------------------------------------------
 
-    def register(self, osm_way_id: int, parcel_key: object, index: int) -> None:
-        """Register one entry.  If ``osm_way_id`` is already present, the
-        existing entry is kept (first-in-wins policy -- see module docstring).
+    def assign(self, level: int, osm_way_id: int, ordinal: int) -> int:
+        """Return the ``link_id`` for ``(level, osm_way_id, ordinal)``,
+        minting a new one (the next unused integer) on first sight and
+        returning the existing one on every subsequent call with the same
+        key.
         """
-        if osm_way_id not in self._table:
-            self._table[osm_way_id] = (parcel_key, index)
-
-    @classmethod
-    def from_parcels(
-        cls,
-        parcel_dict: "dict[object, list]",
-    ) -> "LinkIdRegistry":
-        """Build a registry from a dict of ``parcel_key → list[RoadLink]``.
-
-        Only ``RoadLink`` objects whose ``osm_way_id`` is not ``None`` are
-        indexed.  The positional index is the 0-based position of each link
-        within its parcel's list.
-
-        ``parcel_dict`` can be either:
-        - a plain ``dict`` mapping parcel key to a ``list[RoadLink]``, or
-        - a ``dict`` mapping parcel key to a sub-dict ``{"roads": list[RoadLink], ...}``
-          (the shape produced by ``osm_to_parcel_geometry.extract_parcel_geometry``).
-        """
-        registry = cls()
-        for parcel_key, content in parcel_dict.items():
-            if isinstance(content, dict):
-                links = content.get("roads", [])
-            else:
-                links = content
-            for idx, link in enumerate(links):
-                way_id = getattr(link, "osm_way_id", None)
-                if way_id is not None:
-                    registry.register(way_id, parcel_key, idx)
-        return registry
+        key: LinkKey = (level, osm_way_id, ordinal)
+        link_id = self._table.get(key)
+        if link_id is None:
+            link_id = len(self._table)
+            self._table[key] = link_id
+        return link_id
 
     # ------------------------------------------------------------------
     # Query
     # ------------------------------------------------------------------
 
-    def lookup(
-        self,
-        osm_way_id: int,
-        fallback_index: int = 0,
-    ) -> tuple[Optional[object], int]:
-        """Return ``(parcel_key, positional_index)`` for ``osm_way_id``.
-
-        If ``osm_way_id`` is not in the registry (e.g. the way was filtered
-        out of the map layer), returns ``(None, fallback_index)``.
+    def lookup(self, level: int, osm_way_id: int, ordinal: int) -> Optional[int]:
+        """Return the ``link_id`` already assigned to
+        ``(level, osm_way_id, ordinal)``, or ``None`` if it has never been
+        assigned (e.g. the way/chain was filtered out of the map layer).
         """
-        if osm_way_id in self._table:
-            return self._table[osm_way_id]
-        return None, fallback_index
+        return self._table.get((level, osm_way_id, ordinal))
 
-    def index_for(self, osm_way_id: int, fallback_index: int = 0) -> int:
-        """Convenience: return only the positional index (most common use
-        when building ``RpLinkCost.link_id_origin``)."""
-        return self.lookup(osm_way_id, fallback_index)[1]
-
-    # ------------------------------------------------------------------
-    # Side-effect: stamp RoadLink.link_id fields
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def assign_link_ids(parcel_dict: "dict[object, list]") -> None:
-        """Stamp each ``RoadLink.link_id`` with its 0-based positional index
-        within its parcel's road list.  This mutates the ``RoadLink`` objects
-        in place.
-
-        Call this after building the map-layer parcels so the IR is
-        self-consistent (``RoadLink.link_id`` always equals the link's position
-        in the list, matching the on-disc implicit numbering convention).
-
-        Accepts the same ``parcel_dict`` shapes as ``from_parcels``.
+    def items(self) -> Iterator[tuple[LinkKey, int]]:
+        """Yield ``((level, osm_way_id, ordinal), link_id)`` pairs in
+        deterministic order (sorted by key), independent of assignment
+        order.
         """
-        for content in parcel_dict.values():
-            if isinstance(content, dict):
-                links = content.get("roads", [])
-            else:
-                links = content
-            for idx, link in enumerate(links):
-                link.link_id = idx
+        return iter(sorted(self._table.items()))
 
     def __len__(self) -> int:
         return len(self._table)
 
-    def __contains__(self, osm_way_id: int) -> bool:
-        return osm_way_id in self._table
+    def __contains__(self, key: LinkKey) -> bool:
+        return key in self._table

@@ -1,242 +1,151 @@
-"""Tests for LinkIdRegistry: joint Link ID assignment between the main map
-layer (RoadFrame/RoadLink) and the route-planning layer (Ch.10 RP links).
+"""Tests for LinkIdRegistry: the (level, osm_way_id, ordinal) -> link_id
+join registry shared between the main map layer and the route-planning
+layer (docs/design/target-disc.md, "Link identity").
 
-All tests are self-contained (synthetic data only -- no real disc or OSM PBF).
+All tests are self-contained (synthetic data only -- no real disc or OSM
+PBF).
 """
 from __future__ import annotations
 
-import struct
 import sys
-from dataclasses import dataclass, field
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from kiwiw.link_id_registry import LinkIdRegistry
-from kiwiw.model import BoundingBox, RoadFrame, RoadLink, RoadNode
-from kiwiw.route_planning_writer import (
-    RpGraph,
-    RpLink,
-    RpLinkCost,
-    RpNode,
-)
+from kiwiw.model import BoundingBox
+from osm_to_parcel_geometry import TileGrid, split_polyline_by_parcel
 
 
-# ---------------------------------------------------------------------------
-# Minimal RoadLink factory (no raw_bytes -- IR-only synthetic links)
-# ---------------------------------------------------------------------------
-
-def _make_link(osm_way_id=None, link_id=0) -> RoadLink:
-    node = RoadNode(x=100, y=200, lat=-32.0, lon=115.9, oneway=0,
-                    planned=0, tunnel=False, bridge=False)
-    return RoadLink(
-        display_class=2,
-        road_type=5,
-        altitude_flag=False,
-        route_type_guidance_flag=False,
-        pseudo3d_updown=0,
-        route_planning_tag=False,
-        link_id_flag=False,
-        selected_link_flag=False,
-        toll_flag=False,
-        route_number_flag=False,
-        infra_link_flag=False,
-        link_id_number_flag=False,
-        n_nodes=1,
-        nodes=[node],
-        osm_way_id=osm_way_id,
-        link_id=link_id,
+def _make_grid(
+    lat_lo: float = -35.0,
+    lon_lo: float = 113.0,
+    lat_span: float = 10.0,
+    lon_span: float = 20.0,
+    nx: int = 100,
+    ny: int = 50,
+    level: int = 8,
+) -> TileGrid:
+    """Synthetic TileGrid (same shape as test_parcel_geometry.py's helper)."""
+    target = BoundingBox(
+        lat_lo=lat_lo, lat_hi=lat_lo + lat_span,
+        lon_lo=lon_lo, lon_hi=lon_lo + lon_span,
+    )
+    return TileGrid(
+        level=level,
+        disc_lat_lo=lat_lo,
+        disc_lon_lo=lon_lo,
+        disc_lat_span=lat_span,
+        disc_lon_span=lon_span,
+        nx=nx,
+        ny=ny,
+        target=target,
     )
 
 
 # ---------------------------------------------------------------------------
-# test 1 -- basic registry construction and lookup
+# test 1 -- a way crossing two parcels yields two links / two ordinals / two ids
 # ---------------------------------------------------------------------------
 
-def test_registry_basic():
-    """Construct a synthetic LinkIdRegistry with 5 entries, look up 3, assert
-    correct (parcel_key, index) returned; assert missing key returns fallback.
+def test_way_crossing_two_parcels_gets_two_ordinals_and_ids():
+    """A way whose polyline crosses a parcel boundary splits into two
+    chains; each chain's ordinal is 0-based in node-sequence order, and
+    registering both yields two distinct link ids.
     """
+    grid = _make_grid(lat_lo=-35.0, lon_lo=113.0, lat_span=10.0, lon_span=20.0,
+                       nx=100, ny=50)
+    # Crosses the iy=5/iy=6 boundary at lat=-33.0 within a single ix column
+    # (same setup as test_parcel_geometry.py's test_cross_boundary_splits).
+    p1 = (-34.05, 114.05)
+    p2 = (-33.85, 114.05)
+
+    per_parcel = split_polyline_by_parcel([p1, p2], grid)
+    assert len(per_parcel) == 2, "test setup: way must cross exactly one boundary"
+
+    chains = [chain for chains in per_parcel.values() for chain in chains]
+    assert len(chains) == 2
+    ordinals = sorted(chain.ordinal for chain in chains)
+    assert ordinals == [0, 1]
+
+    level = 0
+    way_id = 42
     registry = LinkIdRegistry()
-    entries = [
-        (1001, "parcel_A", 0),
-        (1002, "parcel_A", 1),
-        (1003, "parcel_A", 2),
-        (2001, "parcel_B", 0),
-        (2002, "parcel_B", 1),
-    ]
-    for way_id, parcel_key, idx in entries:
-        registry.register(way_id, parcel_key, idx)
+    ids = [registry.assign(level, way_id, chain.ordinal) for chain in chains]
+    assert len(set(ids)) == 2, "two ordinals of the same way must get two distinct ids"
+    assert len(registry) == 2
 
-    assert len(registry) == 5
-
-    # Correct lookups
-    assert registry.lookup(1001) == ("parcel_A", 0)
-    assert registry.lookup(2001) == ("parcel_B", 0)
-    assert registry.lookup(2002) == ("parcel_B", 1)
-
-    # Missing key returns (None, fallback)
-    assert registry.lookup(9999) == (None, 0)
-    assert registry.lookup(9999, fallback_index=42) == (None, 42)
-
-    # index_for convenience method
-    assert registry.index_for(1003) == 2
-    assert registry.index_for(9999, fallback_index=7) == 7
-
-    # First-in-wins: registering a duplicate should not overwrite
-    registry.register(1001, "parcel_X", 99)
-    assert registry.lookup(1001) == ("parcel_A", 0)
-
-    # __contains__
-    assert 1001 in registry
-    assert 9999 not in registry
-
-    print("PASS: test_registry_basic")
+    print("PASS: test_way_crossing_two_parcels_gets_two_ordinals_and_ids")
 
 
 # ---------------------------------------------------------------------------
-# test 2 -- RpLink uses registry values in encoded link cost records
+# test 2 -- re-registering the same key returns the same id (idempotent)
 # ---------------------------------------------------------------------------
 
-def _u32(buf, off):
-    return struct.unpack_from(">I", buf, off)[0]
-
-
-def _u16(buf, off):
-    return struct.unpack_from(">H", buf, off)[0]
-
-
-def test_rp_link_uses_registry():
-    """Build a minimal RpGraph whose RpLinkCost.link_id_origin values come
-    from a LinkIdRegistry lookup, encode via encode_rp_frame (from
-    osm_to_route_planning), decode the link_cost subframe bytes manually,
-    and assert the decoded link_id_origin fields match the registry values.
-    """
-    # Import encode_rp_frame here (not at top) to keep the import inside
-    # the test's own sys.path setup.
-    import osm_to_route_planning as ortp
-
-    # Registry: three OSM ways with known positions in their (synthetic) parcel
+def test_reassign_same_key_returns_same_id():
     registry = LinkIdRegistry()
-    registry.register(101, "p1", 0)   # way 101 -> index 0
-    registry.register(102, "p1", 1)   # way 102 -> index 1
-    registry.register(103, "p1", 4)   # way 103 -> index 4
+    level, way_id, ordinal = 0, 101, 0
 
-    osm_way_ids = [101, 102, 103]
-    expected_origins = [registry.index_for(w) for w in osm_way_ids]  # [0, 1, 4]
+    first = registry.assign(level, way_id, ordinal)
+    second = registry.assign(level, way_id, ordinal)
+    assert first == second
+    assert len(registry) == 1
 
-    # Build a minimal 2-node, 3-link graph (nodes A and B, three directed
-    # edges A->B to give us three distinct link cost records).
-    node_a = RpNode(lat=-32.0, lon=115.9, is_boundary=False, rank=2)
-    node_b = RpNode(lat=-32.1, lon=116.0, is_boundary=False, rank=2)
+    # A different ordinal for the same way is a different key -> different id.
+    other = registry.assign(level, way_id, ordinal + 1)
+    assert other != first
+    assert len(registry) == 2
 
-    for i, way_id in enumerate(osm_way_ids):
-        cost_idx = i
-        origin = registry.index_for(way_id)
-        graph_lc = RpLinkCost(
-            link_id_origin=origin,
-            link_id_dest_delta=0,
-            length_m=100.0 * (i + 1),
-            connected_node=1,   # node B's index
-            road_class=5,
-        )
-        node_a.links.append(RpLink(
-            adjacent_node=1,
-            link_cost_index=cost_idx,
-            forward_direction=True,
-            angle_deg=90,
-            following_same_road=None,
-            road_class=5,
-        ))
-        if i == 0:
-            graph = RpGraph(
-                lat_top=-31.9, lat_bottom=-32.2,
-                lon_left=115.8, lon_right=116.1,
-                nodes=[node_a, node_b],
-                link_costs=[],
-            )
-        graph.link_costs.append(graph_lc)
-
-    buf = ortp.encode_rp_frame(graph)
-
-    # Decode just the link_cost subframe: use parse_rp_frame to get offsets
-    from kiwiw.route_planning import parse_rp_frame
-    rf = parse_rp_frame(buf, n_basic=9, n_ext=6)
-    lc_sub = rf.sub("link_cost")
-
-    # Link cost header: 6 bytes (sws(6), n_with_time, n_without_time)
-    lc_header_size = _u16(buf, lc_sub.offset) * 2  # SWS decode: *2
-    # (the header value stored as sws_enc(6) so sws_dec = *2 = 6 + 0 padding? no)
-    # Actually sws_enc(6) = 6//2 = 3 => stored as 3; sws decode = *2 = 6.
-    # But we can just use the constant 6 (link_cost_header = fixed 6 bytes
-    # as written by write_link_cost_header).
-    LC_HEADER = 6
-    LC_REC_SIZE = 14  # no avg_travel_time in this graph
-
-    for i, expected_origin in enumerate(expected_origins):
-        rec_off = lc_sub.offset + LC_HEADER + i * LC_REC_SIZE
-        decoded_origin = _u32(buf, rec_off)
-        assert decoded_origin == expected_origin, (
-            f"link_cost {i}: expected link_id_origin={expected_origin}, "
-            f"got {decoded_origin}"
-        )
-
-    print("PASS: test_rp_link_uses_registry")
-
-
-# ---------------------------------------------------------------------------
-# test 3 -- from_parcels builds the expected mapping from a synthetic parcel
-# ---------------------------------------------------------------------------
-
-def test_map_layer_join():
-    """Build a synthetic parcel with 3 RoadLinks having known osm_way_ids,
-    derive positional indices, assert LinkIdRegistry.from_parcels produces
-    the expected mapping.  Also test assign_link_ids stamps link_id correctly.
-    """
-    links = [
-        _make_link(osm_way_id=201),
-        _make_link(osm_way_id=202),
-        _make_link(osm_way_id=None),  # no way id -- should be skipped
-        _make_link(osm_way_id=203),
-    ]
-
-    parcel_dict = {
-        "parcel_X": links,
-    }
-
-    registry = LinkIdRegistry.from_parcels(parcel_dict)
-
-    # Only the 3 non-None entries are indexed
+    # A different level for the same (way_id, ordinal) is also a different key.
+    other_level = registry.assign(level + 1, way_id, ordinal)
+    assert other_level != first
     assert len(registry) == 3
-    assert registry.lookup(201) == ("parcel_X", 0)
-    assert registry.lookup(202) == ("parcel_X", 1)
-    assert registry.lookup(203) == ("parcel_X", 3)  # index 2 was the None-id link
-    assert registry.lookup(999) == (None, 0)
 
-    # Also test the sub-dict form ({"roads": [...], ...})
-    parcel_dict2 = {
-        "parcel_Y": {"roads": [
-            _make_link(osm_way_id=301),
-            _make_link(osm_way_id=302),
-        ], "backgrounds": [], "names": []},
-    }
-    registry2 = LinkIdRegistry.from_parcels(parcel_dict2)
-    assert len(registry2) == 2
-    assert registry2.lookup(301) == ("parcel_Y", 0)
-    assert registry2.lookup(302) == ("parcel_Y", 1)
+    assert registry.lookup(level, way_id, ordinal) == first
+    assert registry.lookup(level, way_id, ordinal + 1) == other
+    assert registry.lookup(level + 1, way_id, ordinal) == other_level
+    assert registry.lookup(level, way_id, 999) is None
+    assert (level, way_id, ordinal) in registry
+    assert (level, way_id, 999) not in registry
 
-    # assign_link_ids stamps link_id = positional index
-    LinkIdRegistry.assign_link_ids(parcel_dict)
-    for expected_idx, link in enumerate(links):
-        assert link.link_id == expected_idx, (
-            f"link at position {expected_idx} has link_id={link.link_id}"
-        )
+    print("PASS: test_reassign_same_key_returns_same_id")
 
-    print("PASS: test_map_layer_join")
+
+# ---------------------------------------------------------------------------
+# test 3 -- determinism across runs
+# ---------------------------------------------------------------------------
+
+def test_determinism_across_runs():
+    """Two independently-built registries, fed the same assign() calls in
+    the same order, produce identical id assignments and identical
+    ``items()`` output.
+    """
+    keys = [
+        (0, 101, 0),
+        (0, 101, 1),
+        (0, 102, 0),
+        (2, 101, 0),
+        (0, 101, 1),  # repeat -- must not mint a new id
+    ]
+
+    def build():
+        r = LinkIdRegistry()
+        ids = [r.assign(*k) for k in keys]
+        return r, ids
+
+    registry_a, ids_a = build()
+    registry_b, ids_b = build()
+
+    assert ids_a == ids_b
+    assert list(registry_a.items()) == list(registry_b.items())
+    # items() is sorted by key regardless of assignment order.
+    assert list(registry_a.items()) == sorted(registry_a.items())
+    assert len(registry_a) == 4  # one repeat among the 5 assign() calls
+
+    print("PASS: test_determinism_across_runs")
 
 
 if __name__ == "__main__":
-    test_registry_basic()
-    test_rp_link_uses_registry()
-    test_map_layer_join()
+    test_way_crossing_two_parcels_gets_two_ordinals_and_ids()
+    test_reassign_same_key_returns_same_id()
+    test_determinism_across_runs()
     print("All link_id_registry tests passed.")
