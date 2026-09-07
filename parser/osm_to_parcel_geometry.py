@@ -510,20 +510,95 @@ def _make_background_shape(ring: list[tuple[float, float]],
     )
 
 
+def _bearing_deg(geometry: list[tuple[float, float]]) -> float:
+    """Compass bearing (0=north, clockwise, spec 7.4.2.1.6.1(4)) from the
+    first to the last point of ``geometry``, using a flat-earth
+    approximation (fine at name-label scale). Returns 0.0 for degenerate
+    input (fewer than 2 points, or a closed/zero-length span)."""
+    if not geometry or len(geometry) < 2:
+        return 0.0
+    lat1, lon1 = geometry[0]
+    lat2, lon2 = geometry[-1]
+    dlat = lat2 - lat1
+    dlon = (lon2 - lon1) * math.cos(math.radians((lat1 + lat2) / 2.0))
+    if dlat == 0.0 and dlon == 0.0:
+        return 0.0
+    return math.degrees(math.atan2(dlon, dlat)) % 360.0
+
+
 def _make_name_record(text: str, lat: float, lon: float,
-                      type_code: int = 0x134) -> NameRecord:
-    """Build a synthetic NameRecord (string_type=1, Barycentric point label)."""
+                      type_code: int = 0x134,
+                      level: int = 0,
+                      kind: str = "place",
+                      geometry: Optional[list[tuple[float, float]]] = None,
+                      ) -> NameRecord:
+    """Build a synthetic NameRecord for one named feature.
+
+    ``kind`` is one of "road", "background", "place" and selects the
+    level-0 on-disc encoding, per Ch.7.4 and a census of R's real level-0
+    name records (docs/plans/01-eval-harness-and-map-layer/briefs/
+    11-name-types.md; see also kiwiw/synth.py's "Names" section docstring
+    for the level-0 vocabulary rule and its contradiction with the
+    full-country profile):
+
+    - "road": string_type=5 (Linear-C: single position + display angle).
+      type_code is fixed at 0x210 (528, "road type 0") -- R's level-0
+      string_type=5 records use exactly this type_code, unconditionally
+      (7,603,420 of 7,603,420 in parser/refdata/profile/map.json
+      levels["0"].name, both string_type_hist[5] and type_code_hist[528]).
+      ``geometry`` (the road's full point list, pre-parcel-split) supplies
+      the display angle via ``_bearing_deg``; ``type_code`` is ignored.
+    - "background": string_type=6 (Symbol+String: position, no angle),
+      type_code = the caller's ``type_code`` (the feature's own background
+      type code). Matches R: sampled Brisbane/Hobart level-0 parcels show
+      type-6 records for named park features ("PRINCES PARK") carrying
+      type_code=0x141 (321), the park's own background type code.
+    - "place" (suburb/city/town/village/locality point labels with no
+      background shape): **not pinned down -- open question, reported per
+      the brief.** No level-0 parcel sampled (7 state-capital CBDs from
+      parser/refdata/spot_checks.json) contains a standalone point label
+      for the locality itself, under any string type; R's level-0
+      type_code census has no address-level codes (0x131/0x132/0x134) at
+      all. The likely real mechanism is the string_type=4 "A=<locality>,
+      <region>" comment records observed attached to road links (e.g.
+      "A=BRISBANE CBD, BRISBANE,QUEENSLAND", repeated once per road-type
+      group) -- but type 4 is out of scope here (see synth.py). Absent
+      better evidence this falls back to string_type=6 with
+      type_code=0x120 (288): R's second most common level-0 type_code
+      (2,203,664 occurrences) that isn't already accounted for by a
+      road-type small-integer code or a documented background code, chosen
+      by elimination and NOT confirmed against real "place" records.
+    """
+    if level == 0 and kind == "road":
+        string_type = 5
+        chosen_type_code = 0x210
+        angle_deg = _bearing_deg(geometry or [])
+    elif level == 0 and kind == "background":
+        string_type = 6
+        chosen_type_code = type_code
+        angle_deg = None
+    elif level == 0:
+        # kind == "place": unresolved, see docstring -- best-effort
+        # fallback, not a zero-fill (a real, decodable, spec-legal record).
+        string_type = 6
+        chosen_type_code = 0x120
+        angle_deg = None
+    else:
+        string_type = 1
+        chosen_type_code = type_code
+        angle_deg = None
+
     return NameRecord(
-        string_type=1,
-        type_code=type_code,
-        type_label=background_type_label(type_code),
+        string_type=string_type,
+        type_code=chosen_type_code,
+        type_label=background_type_label(chosen_type_code),
         priority=5,
         vertical=False,
         display_scale_flag=0,
         text=text,
         lat=lat,
         lon=lon,
-        angle_deg=None,
+        angle_deg=angle_deg,
         raw_offset=0,
         raw_bytes=b"",   # synthetic
     )
@@ -611,7 +686,8 @@ class _GeomHandler:
             if par is None or par not in self.target_cells[level]:
                 continue
             ix, iy = par
-            rec = _make_name_record(name, lat, lon, type_code=type_code)
+            rec = _make_name_record(name, lat, lon, type_code=type_code,
+                                     level=level, kind="place")
             self.spool.add(level, ix, iy, names=[rec])
 
     def _handle_way(self, w) -> None:
@@ -671,7 +747,9 @@ class _GeomHandler:
                     par = assign_to_parcel(clat, clon, grid)
                     if par is not None and par in tcells:
                         nix, niy = par
-                        rec = _make_name_record(name, clat, clon, type_code=0x134)
+                        rec = _make_name_record(name, clat, clon,
+                                                 level=level, kind="road",
+                                                 geometry=coords)
                         self.spool.add(level, nix, niy, names=[rec])
                 continue
 
@@ -689,7 +767,8 @@ class _GeomHandler:
             shape = _make_background_shape(ring, bg_type, bounds)
             self.spool.add(level, ix, iy, backgrounds=[shape])
             if name:
-                rec = _make_name_record(name, clat, clon, type_code=bg_type)
+                rec = _make_name_record(name, clat, clon, type_code=bg_type,
+                                         level=level, kind="background")
                 self.spool.add(level, ix, iy, names=[rec])
 
 

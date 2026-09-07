@@ -68,6 +68,7 @@ def decode_name_frame(buf: bytes, bounds: BoundingBox) -> NameFrame:
 
             lat = lon = None
             angle_deg = None
+            angle_flags = 0
             text = ""
             type_label = f"UNHANDLED string_type={st} (kiwiread.c aborts here)"
 
@@ -104,6 +105,7 @@ def decode_name_frame(buf: bytes, bounds: BoundingBox) -> NameFrame:
                 slen = u16(buf, body + 8) * 2
                 text = _cstr(buf, body + 10, slen)
                 angle_deg = extract(ang, 0, 8) - 90
+                angle_flags = extract(ang, 9, 15)
                 type_label = background_type_label(attr2)
             elif st == 6:
                 # 7.4.2.1.7 Symbol+String
@@ -117,6 +119,7 @@ def decode_name_frame(buf: bytes, bounds: BoundingBox) -> NameFrame:
                 priority=priority, vertical=vertical, display_scale_flag=ds,
                 raw_offset=rec_start, raw_bytes=buf[rec_start:toff],
                 text=text, lat=lat, lon=lon, angle_deg=angle_deg,
+                angle_flags=angle_flags,
             ))
 
     return frame

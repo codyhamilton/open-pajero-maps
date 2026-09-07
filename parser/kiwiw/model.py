@@ -264,6 +264,16 @@ class NameRecord:
     lat: Optional[float] = None
     lon: Optional[float] = None
     angle_deg: Optional[float] = None
+    # string_type=5 (Linear-C) only: the raw upper 7 bits (15:9) of the
+    # "Display Angle Information" word (spec 7.4.2.1.6.1) that `angle_deg`
+    # doesn't capture -- rotation-angle flag, character display
+    # orientation, and string rotation mode. `name.py` decodes this so a
+    # real Display Angle word round-trips byte-identical through
+    # `synth.py`'s type-5 encoder; default 0 means "fixed angle, normal to
+    # screen, no per-string rotation" (the spec's literal zero-bit
+    # meaning, used for synthetic/OSM-derived records, not an unknown-byte
+    # placeholder).
+    angle_flags: int = 0
     # Round-trip support: absolute offset + verbatim bytes of the whole
     # Name Data Record, including the "Name Data Header" (`na`) word never
     # decoded by name.py (7.4.2.1.1, size-of-minimum-graphics-record +

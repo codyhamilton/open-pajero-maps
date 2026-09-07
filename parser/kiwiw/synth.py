@@ -406,13 +406,38 @@ def build_background_frame_bytes(
 
 # ---------------------------------------------------------------------------
 # Names
+#
+# Ch.7.4 defines five String Data Record layouts (7.4.2.1.1 Attribute 1,
+# bits 10:8): 1=Barycentric, 4=Linear-B, 5=Linear-C, 6=Symbol+String (3=
+# Linear-A is spec-defined but never observed on R and not encoded here).
+# docs/design/target-disc.md says "string_type=1 is not used" for name
+# records; the plan's refine pass (PLAN.md, "Refinement findings
+# (2026-09-05)") narrows that to level 0 specifically, citing a Brisbane
+# spot check where level-0 records were {4, 5, 6}, level 2 was {1, 5}, and
+# levels 4-12 were {1} only -- so type 1 *is* legitimate at levels >= 2.
+#
+# CONTRADICTION (report per brief 11's instructions, not resolved here):
+# the full-country level-0 census in parser/refdata/profile/map.json
+# (levels["0"].name.string_type_hist) shows 1,042,019 real string_type=1
+# records at level 0 (5.5% of level-0 name records) -- the opposite of what
+# both the design doc and the Brisbane spot check say. The single small
+# CBD parcel sampled for the spot check apparently just doesn't contain any
+# of whatever level-0 feature carries type 1 nationally (harness/checks/
+# vocab.py's docstring already flags this same tension). Per the brief,
+# this is NOT resolved silently: the encoders below never emit
+# string_type=1 for level 0, honouring the design doc's stricter rule and
+# the harness's hard "vocab" check (harness/checks/vocab.py fails the build
+# if string_type=1 appears at level 0), even though real R disc data
+# contradicts it.
 # ---------------------------------------------------------------------------
 
 def encode_name_record_bytes(record: NameRecord, bounds: BoundingBox) -> bytes:
     """Encode a NameRecord of string_type=1 (Barycentric) to bytes.
 
-    Other string types are not supported for synthetic encoding and return
-    ``b""`` (skipped by ``build_name_frame_bytes``).
+    Other string types are not supported by this function and return
+    ``b""``. Used for level ``None``/non-zero levels by
+    ``build_name_frame_bytes`` -- see its docstring for the level-0 vs.
+    other-levels split.
 
     Parseable by ``name.decode_name_frame()``.
     """
@@ -465,14 +490,189 @@ def encode_name_record_bytes(record: NameRecord, bounds: BoundingBox) -> bytes:
     return _u16(na) + _u16(attr1) + _u16(attr2) + body
 
 
-def build_name_frame_bytes(records: list[NameRecord], bounds: BoundingBox) -> bytes:
+def _encode_barycentric_coords(lat, lon, bounds: BoundingBox) -> bytes:
+    """The 6-byte "Barycentric Coordinates Information" (spec 7.4.2.1.2.1),
+    shared verbatim by string types 1, 5 and 6 (Ch.7.4.2.1.6/.7 both say
+    "similar to that applies when string type is barycentric string").
+    Word 0 (Additional Background Information Type/Flag + reserved) is 0:
+    we never reference an additional data frame, which word 0 == 0
+    correctly and completely expresses (not an unknown-bytes zero-fill).
+    """
+    if lat is not None and lon is not None:
+        xc, yc = latlon_to_xy(lat, lon, bounds)
+        xc = _clamp_coord(xc)
+        yc = _clamp_coord(yc)
+    else:
+        xc = yc = 0
+    sx = encode_region_coord(xc)
+    sy = encode_region_coord(yc)
+    return _u16(0) + _u16(sx) + _u16(sy)
+
+
+def _encode_char_info_list(text: str) -> bytes:
+    """Single-language "Character Information Data List" (7.4.2.1.2.2):
+    the "Character Information Data Size" field is omitted (spec note (1):
+    "omitted if the language-specific character information is only one
+    type") and the language-specific offset pointer table is omitted (spec
+    note: "If only one type of language ... is stored, the ... table is
+    deleted") -- we only ever emit one (English) language, so this is
+    exactly ``slen_word`` (u16) + text bytes, no size/offset preamble.
+
+    Per spec note (6) ("If the string ends with an odd byte, the field
+    contains 00(16) as dummy data at the tail of the string"), there is no
+    unconditional NUL terminator -- confirmed against R: a decoded/
+    re-encoded Brisbane type-5 "ALICE STREET"/"CHARLOTTE STREET" record
+    only byte-matched once the always-append-b"\\x00" behaviour (copied
+    from the pre-existing string_type=1 encoder above, which still has it
+    and is out of this brief's scope) was replaced with "pad by one byte
+    only if the raw text length is odd".
+    """
+    text_bytes = text.encode("latin-1", errors="replace")
+    if len(text_bytes) % 2:
+        text_bytes += b"\x00"
+    return _u16(len(text_bytes) // 2) + text_bytes
+
+
+def _encode_attr1(priority: int, vertical: bool, string_type: int,
+                   display_scale_flag: int) -> int:
+    return (
+        (priority & 0x3F)
+        | (int(vertical) << 6)
+        # bit 7: Height Information Flag -- undecoded/unused, 0
+        | ((string_type & 0x7) << 8)
+        | ((display_scale_flag & 0x1F) << 11)
+    )
+
+
+def encode_name_record_type5_bytes(record: NameRecord, bounds: BoundingBox) -> bytes:
+    """Encode a NameRecord of string_type=5 (Linear-C, spec 7.4.2.1.6):
+    Barycentric Coordinates Information + Display Angle Information (2
+    bytes) + Character Information Data List. Self-contained (no
+    cross-frame reference), unlike type 4 -- see module docstring and
+    ``build_name_frame_bytes``.
+
+    Display angle round-trips exactly through ``name.py``'s
+    ``angle_deg = extract(ang, 0, 8) - 90`` (best-effort decode formula,
+    itself not independently derived from the spec's raw "0-359 clockwise
+    from north" field -- see name.py's module docstring); this function is
+    that formula's exact inverse for the low 9 bits, OR'd with
+    ``record.angle_flags`` (bits 15:9: rotation-angle flag, character
+    display orientation, string rotation mode -- undecoded into semantic
+    fields, just preserved raw) so a real R record round-trips
+    byte-identical; synthetic records default ``angle_flags=0`` ("fixed
+    angle, normal to screen, no per-string rotation" -- the spec's literal
+    zero-bit meaning).
+    """
+    if record.string_type != 5:
+        return b""
+
+    coords = _encode_barycentric_coords(record.lat, record.lon, bounds)
+    angle_deg = record.angle_deg if record.angle_deg is not None else 0.0
+    angle_low9 = (int(round(angle_deg)) + 90) & 0x1FF
+    angle_field = ((record.angle_flags & 0x7F) << 9) | angle_low9
+    char_info = _encode_char_info_list(record.text)
+
+    body = coords + _u16(angle_field) + char_info
+    reclen = 6 + len(body)
+    assert reclen % 2 == 0, f"reclen {reclen} is not even"
+    na = reclen // 2
+    attr1 = _encode_attr1(record.priority, record.vertical, 5, record.display_scale_flag)
+    attr2 = record.type_code & 0xFFFF
+
+    return _u16(na) + _u16(attr1) + _u16(attr2) + body
+
+
+def encode_name_record_type6_bytes(record: NameRecord, bounds: BoundingBox) -> bytes:
+    """Encode a NameRecord of string_type=6 (Symbol+String, spec 7.4.2.1.7):
+    Barycentric Coordinates Information (coordinates = center of symbol) +
+    String Placement (2 bytes) + Character Information Data List.
+    Self-contained, no cross-frame reference.
+
+    String Placement is fixed at "center alignment, above symbol" (bits
+    15:14=10, 13:12=00) -- a real, spec-legal value (not a zero-fill), but
+    not verified against R (no sampled type-6 record's raw bytes were
+    decoded field-by-field for this sub-word; only the record's text/
+    type_code/position were cross-checked). If this placement combination
+    ever needs to vary per feature, that is unpinned-down and should be
+    treated as an open question, not silently changed.
+    """
+    if record.string_type != 6:
+        return b""
+
+    coords = _encode_barycentric_coords(record.lat, record.lon, bounds)
+    placement = (0b10 << 14) | (0b00 << 12)   # center-aligned, above symbol
+    char_info = _encode_char_info_list(record.text)
+
+    body = coords + _u16(placement) + char_info
+    reclen = 6 + len(body)
+    assert reclen % 2 == 0, f"reclen {reclen} is not even"
+    na = reclen // 2
+    attr1 = _encode_attr1(record.priority, record.vertical, 6, record.display_scale_flag)
+    attr2 = record.type_code & 0xFFFF
+
+    return _u16(na) + _u16(attr1) + _u16(attr2) + body
+
+
+# string_type -> encoder, for build_name_frame_bytes's per-level dispatch.
+# string_type=4 (Linear-B) has no entry: see build_name_frame_bytes.
+_NAME_ENCODERS_BY_STRING_TYPE = {
+    1: encode_name_record_bytes,
+    5: encode_name_record_type5_bytes,
+    6: encode_name_record_type6_bytes,
+}
+
+
+def build_name_frame_bytes(records: list[NameRecord], bounds: BoundingBox,
+                            level: int | None = None) -> bytes:
     """Build a complete Name Data Frame binary.
 
-    All records are placed in a single list.  Only string_type=1
-    (Barycentric) records are encoded; others are silently skipped.
-    Parseable by ``name.decode_name_frame()``.
+    All records are placed in a single list. Parseable by
+    ``name.decode_name_frame()``.
+
+    ``level`` selects which string types may be emitted (per-level
+    vocabulary; docs/design/target-disc.md "Name records", narrowed by
+    PLAN.md's refine pass -- see the module docstring above):
+
+    - ``level is None`` (default, and every call site that predates this
+      brief): unchanged legacy behaviour -- only string_type=1 records are
+      encoded, everything else is silently skipped. Kept as the default so
+      existing callers (build_alldata.py, and every test that does not
+      pass ``level``) are unaffected; do not rely on this branch for new
+      level-0 output.
+    - ``level == 0``: string_type in {5, 6} is encoded; string_type in
+      {1, 4} is dropped. Type 1 is dropped because R's level-0 vocabulary
+      forbids it (see the contradiction noted above -- this is a
+      deliberate, reported policy choice, not an oversight). Type 4
+      (Linear-B) is dropped because its "Offset to the Data to be drawn"
+      field (spec 7.4.2.1.5(1)) is a displacement into the *road or
+      background* frame's own bytes, which this function's signature
+      (``records``, ``bounds``, ``level``) has no way to know -- computing
+      it needs the encoded road/background frame's per-record byte offsets
+      threaded in from the assembler, which is out of this brief's owned
+      files (only ``build_name_frame_bytes`` and ``_make_name_record`` are
+      owned; the frame-assembly call site is unit 12's). Per the brief:
+      "Do not zero-fill it" -- so type-4 records are omitted rather than
+      encoded with a fabricated offset. This still satisfies the contract
+      ("the set of emitted string types is a subset of the profile's set
+      for that level"): {5, 6} subset-of {4, 5, 6}.
+    - other levels: string_type=1 is encoded (legitimate at levels >= 2
+      per the refine pass); string_type=5 is also encoded opportunistically
+      (level 2's profile is {1, 5}) since the encoder is self-contained and
+      harmless if unused; types 4 and 6 are dropped for the same
+      cross-frame/unverified reasons as at level 0. Per-level selection
+      beyond this is unit 14's job (PLAN.md unit 14 depends on this unit).
     """
-    encoded = [encode_name_record_bytes(r, bounds) for r in records]
+    if level is None:
+        allowed = {1}
+    elif level == 0:
+        allowed = {5, 6}
+    else:
+        allowed = {1, 5}
+
+    encoded = [
+        _NAME_ENCODERS_BY_STRING_TYPE[r.string_type](r, bounds)
+        for r in records if r.string_type in allowed
+    ]
     encoded = [e for e in encoded if e]     # drop unsupported types
 
     if not encoded:
