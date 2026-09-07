@@ -82,7 +82,9 @@ def _build_fixture_bytes() -> bytes:
             bounds = _cell_bounds(ix, iy)
             links = [_make_link(bounds)]
             road_bytes = build_road_frame_bytes(links, bounds)
-            frame_bytes = build_map_frame_bytes(road_bytes, None, None, bounds)
+            frame_bytes = build_map_frame_bytes(
+                LEVEL, (bounds.lat_lo, bounds.lon_lo), (0, 0),
+                road_bytes, None, None)
             synth_parcels.append(SynthParcel(ix=ix, iy=iy, bounds=bounds,
                                               map_frame_bytes=frame_bytes))
     return build_alldata_kwi(parcels=synth_parcels, coverage=_BOUNDS, level=LEVEL,

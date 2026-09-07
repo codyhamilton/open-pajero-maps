@@ -17,7 +17,7 @@ unit 03b's job, not this unit's.
   level-0 link count is wildly different from the generated disc's; assert
   PASS (exempt) with the ratio still reported.
 - `test_mfde_fails_on_entry_count_mismatch`: a reference profile claiming a
-  20-entry mfde table when the generated disc's parcels have 3; assert FAIL.
+  12-entry mfde table when the generated disc's parcels have 20; assert FAIL.
 """
 from __future__ import annotations
 
@@ -116,7 +116,9 @@ def _build_fixture_bytes(display_classes=None) -> bytes:
             road_bytes = build_road_frame_bytes([link], bounds)
             bg_bytes = build_background_frame_bytes([_make_background_shape()], bounds)
             name_bytes = build_name_frame_bytes([_make_name_record(bounds)], bounds)
-            frame_bytes = build_map_frame_bytes(road_bytes, bg_bytes, name_bytes, bounds)
+            frame_bytes = build_map_frame_bytes(
+                LEVEL, (bounds.lat_lo, bounds.lon_lo), (0, 0),
+                road_bytes, bg_bytes, name_bytes)
             synth_parcels.append(SynthParcel(ix=ix, iy=iy, bounds=bounds,
                                               map_frame_bytes=frame_bytes))
     return build_alldata_kwi(parcels=synth_parcels, coverage=_BOUNDS, level=LEVEL,
@@ -172,7 +174,7 @@ def test_build_profile_structure(tmp_path):
     assert lvl0["name"]["string_type_hist"] == {"1": n_parcels}
     assert lvl0["name"]["max_text_length"] == len("TEST ST")
 
-    assert lvl0["mfde"]["entry_count_hist"] == {"3": n_parcels}
+    assert lvl0["mfde"]["entry_count_hist"] == {"20": n_parcels}
     assert lvl0["nregion_hist"] == {"0": n_parcels}
 
     assert profile["byte_totals_by_layer"]["map"]["total_bytes"] > 0
@@ -232,17 +234,17 @@ def test_envelope_exempts_level0_link_count(tmp_path):
 def test_mfde_fails_on_entry_count_mismatch(tmp_path):
     path = _write_fixture(tmp_path)
     g_profile = profile_mod.build_profile(path)
-    assert g_profile["levels"]["0"]["mfde"]["entry_count_hist"] == {"3": NX * NY}
+    assert g_profile["levels"]["0"]["mfde"]["entry_count_hist"] == {"20": NX * NY}
 
     ref_profile = copy.deepcopy(g_profile)
-    ref_profile["levels"]["0"]["mfde"]["entry_count_hist"] = {"20": NX * NY}
+    ref_profile["levels"]["0"]["mfde"]["entry_count_hist"] = {"12": NX * NY}
 
     ctx = _ctx(path)
     ctx._profile_cache["map"] = ref_profile
 
     result = mfde_checks._run_mfde(ctx)
     assert result.status == "FAIL", result.message
-    assert any("3" in f and "20" in f for f in result.details["failures"])
+    assert any("20" in f and "12" in f for f in result.details["failures"])
 
 
 # ---------------------------------------------------------------------

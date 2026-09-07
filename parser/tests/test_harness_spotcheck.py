@@ -32,7 +32,8 @@ def _build_fixture_bytes() -> bytes:
         lat=_CENTRE_LAT, lon=_CENTRE_LON,
     )
     name_bytes = build_name_frame_bytes([name_record], _BOUNDS)
-    frame_bytes = build_map_frame_bytes(None, None, name_bytes, _BOUNDS)
+    frame_bytes = build_map_frame_bytes(
+        LEVEL, (_BOUNDS.lat_lo, _BOUNDS.lon_lo), (0, 0), None, None, name_bytes)
     parcel = SynthParcel(ix=0, iy=0, bounds=_BOUNDS, map_frame_bytes=frame_bytes)
     return build_alldata_kwi(parcels=[parcel], coverage=_BOUNDS, level=LEVEL,
                               grid_nx=1, grid_ny=1)

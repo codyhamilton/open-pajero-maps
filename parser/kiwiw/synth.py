@@ -517,53 +517,114 @@ def build_name_frame_bytes(records: list[NameRecord], bounds: BoundingBox) -> by
 # Map frame
 # ---------------------------------------------------------------------------
 
+_MFDE_LEN_DEFAULT = 20   # levels 0-10 (DESIGN.md section 4)
+_MFDE_LEN_LEVEL_12 = 12  # level 12's table stops at n_basic_map + n_ext_map
+_ABSENT_MFDE = (0xFFFFFFFF, 0)   # DESIGN.md section 4: R's own "not present" sentinel
+_HEADER_DSFLAG = 0x0064   # DESIGN.md section 2: WP1 emission (scale 1/10000 constant)
+_HEADER_RG_ADDR_ABSENT = 0xFFFFFFFF   # DESIGN.md section 2: no route-guidance model in WP1
+_HEADER_RG_SIZE_ABSENT = 0
+
+
+def mfde_table_len(level: int) -> int:
+    """Table length for *level*, per `DESIGN.md` section 4: 12 at level 12,
+    20 at every other level (0-10). WP1 does not generate divided parcels
+    (the long tail of 21-35-entry tables on `R`; unit 13's job)."""
+    return _MFDE_LEN_LEVEL_12 if level == 12 else _MFDE_LEN_DEFAULT
+
+
+def _pad_even(b: bytes | None) -> bytes | None:
+    """Ensure a sub-frame has even byte length (required for unsws); ``None``
+    or empty input means "no sub-frame" and passes through as ``None``."""
+    if b is None or len(b) == 0:
+        return None
+    return b if len(b) % 2 == 0 else b + bytes(1)
+
+
 def build_map_frame_bytes(
+    level: int,
+    llpid: tuple[float, float],
+    llcode: tuple[int, int],
     road_bytes: bytes | None,
     bg_bytes: bytes | None,
     name_bytes: bytes | None,
-    bounds: BoundingBox,
+    *,
+    region_list: bytes | None = None,
+    ext_frames: dict[int, bytes] | None = None,
 ) -> bytes:
-    """Build a complete Map Frame binary.
+    """Build a complete Map Frame binary, shaped per `DESIGN.md` sections 2-4.
 
-    The output is parseable by ``parcel.decode_parcel()``.  Sub-frames are
-    placed contiguously starting at byte 54 (= 36-byte header + 0-byte
-    region list + 3 * 6-byte mfde entries).
+    The output is parseable by ``parcel.decode_parcel()``. The mfde table is
+    sized from *level* (``mfde_table_len``); indices 0-2 are filled from
+    road/background/name when present, indices named in *ext_frames* are
+    filled from their bytes, and every other index in range is the profile-
+    confirmed absent sentinel ``(0xFFFFFFFF, 0)`` -- never zero-fill (target-
+    disc.md's Unknown bytes policy).
+
+    All present sub-frames (basic indices 0-2, then any *ext_frames* entries
+    in ascending index order) are placed contiguously starting right after
+    the mfde table, with the basic ones first. This keeps
+    ``parcel.decode_parcel()``'s table-length derivation (the lowest
+    in-buffer offset among indices 0-2) valid: that derivation only looks at
+    indices 0-2, so at least one present basic sub-frame must sit at the
+    very first post-table byte, or the decoded table length would come out
+    wrong.
 
     Parameters
     ----------
-    road_bytes:
-        Encoded road sub-frame (from ``build_road_frame_bytes``), or None.
-    bg_bytes:
-        Encoded background sub-frame (from ``build_background_frame_bytes``),
-        or None.
-    name_bytes:
-        Encoded name sub-frame (from ``build_name_frame_bytes``), or None.
-    bounds:
-        Geographic bounding box of this parcel -- used only for the Map Frame
-        Header's llpid lat/lon fields.
+    level:
+        Map layer level (12, 10, 8, 6, 4, 2, or 0) -- determines the mfde
+        table length (`DESIGN.md` section 4).
+    llpid:
+        ``(lat_deg, lon_deg)`` of the Lower Left Reference Parcel (header
+        offset 2, `pid_t`) -- computed by the caller from the parcel's
+        bounds.
+    llcode:
+        ``(cx, cy)`` Lower Left Ref. Parcel Location Code (header offset 10,
+        each a byte 0-255) -- computed by the caller.
+    road_bytes, bg_bytes, name_bytes:
+        Encoded sub-frames (from ``build_road_frame_bytes`` /
+        ``build_background_frame_bytes`` / ``build_name_frame_bytes``), or
+        None for "not present".
+    region_list:
+        Encoded region-list bytes (`DESIGN.md` section 3), a multiple of 4
+        bytes long. ``None`` (the default) emits what `DESIGN.md` says WP1
+        emits at every level: ``nregion=0``, no region-list bytes.
+    ext_frames:
+        ``{index: bytes}`` for in-buffer Extended Data Frame content at mfde
+        indices 3..(table length - 1). ``None``/omitted (unit 12's case)
+        leaves every such index absent; WP2 fills these later.
     """
-    de_off = _MAP_FRAME_HEADER_SIZE          # = 36 (nregion=0 → no region list)
-    n_mfde = 3                               # road, background, name
-    mfde_table_size = n_mfde * 6            # 18 bytes
-    first_sf_offset = de_off + mfde_table_size   # = 54
+    region_list = region_list if region_list is not None else b""
+    if len(region_list) % 4:
+        raise ValueError(
+            f"region_list must be a multiple of 4 bytes, got {len(region_list)}")
+    nregion = len(region_list) // 4
 
-    # Ensure all sub-frames have even byte length (required for unsws).
-    def _pad_even(b: bytes | None) -> bytes | None:
-        if b is None or len(b) == 0:
-            return None
-        return b if len(b) % 2 == 0 else b + bytes(1)
+    ext_frames = ext_frames or {}
+    mfde_len = mfde_table_len(level)
+    max_ext_index = mfde_len - 1
+    for idx in ext_frames:
+        if not (3 <= idx <= max_ext_index):
+            raise ValueError(
+                f"ext_frames index {idx} out of range for level {level} "
+                f"(table has {mfde_len} entries; ext indices are 3..{max_ext_index})")
 
-    sub_frames = [_pad_even(road_bytes), _pad_even(bg_bytes), _pad_even(name_bytes)]
+    basic = [(0, _pad_even(road_bytes)), (1, _pad_even(bg_bytes)), (2, _pad_even(name_bytes))]
+    ext = sorted((idx, _pad_even(b)) for idx, b in ext_frames.items())
 
-    # Compute sub-frame byte offsets within the map frame buffer.
-    offsets: list[int | None] = []
+    de_off = _MAP_FRAME_HEADER_SIZE + nregion * 4
+    first_sf_offset = de_off + mfde_len * 6
+
+    # Present sub-frames, basic (index order) first then ext (index order) --
+    # see docstring for why this order matters to the decoder.
+    ordered = [(i, b) for i, b in basic if b is not None]
+    ordered += [(i, b) for i, b in ext if b is not None]
+
+    slots: dict[int, tuple[int, int]] = {}   # index -> (offset, length)
     cursor = first_sf_offset
-    for sf in sub_frames:
-        if sf is not None:
-            offsets.append(cursor)
-            cursor += len(sf)
-        else:
-            offsets.append(None)
+    for idx, b in ordered:
+        slots[idx] = (cursor, len(b))
+        cursor += len(b)
 
     total_size = cursor
     if total_size % 2:
@@ -571,35 +632,57 @@ def build_map_frame_bytes(
 
     buf = bytearray(total_size)
 
-    # 36-byte Map Frame Header (raw_bytes):
-    #   bytes 0-1:  0 (undecoded)
-    #   bytes 2-4:  lat_lo as 3-byte geonum
-    #   byte  5:    exp = 0
-    #   bytes 6-8:  lon_lo as 3-byte geonum
-    #   byte  9:    exp = 0
-    #   bytes 10-11: llcode = 0
-    #   bytes 12-33: zeros (undecoded fields)
-    #   bytes 34-35: nregion = 0
-    buf[2:5] = geo_secs_bytes(bounds.lat_lo)
-    buf[6:9] = geo_secs_bytes(bounds.lon_lo)
-    # nregion at [34:36] = 0 (already zero)
+    # 36-byte Map Frame Header (Ch.7.1.1 "Main Map Distribution Header"),
+    # every field per DESIGN.md section 2's WP1-emission column:
+    #   bytes 0-1:   Header Size (SWS) -- matches this buffer's total size
+    #   bytes 2-4:   llpid lat as 3-byte geonum; byte 5: exp = 0
+    #   bytes 6-8:   llpid lon as 3-byte geonum; byte 9: exp = 0
+    #   bytes 10-11: llcode (byte 10 = cy, byte 11 = cx -- matches
+    #                parcel.py's decode: llcode_cx = low byte, llcode_cy =
+    #                high byte)
+    #   bytes 12-13: dipid = 0x0000 (not divided) until unit 13
+    #   bytes 14-17: pmcode = 0x00000000
+    #   bytes 18-19: dsflag = 0x0064
+    #   bytes 20-23: rlx/rly = 0x0000 (not emitted by WP1)
+    #   bytes 24-27: geomagnetic strength/declination = 0x0000
+    #   bytes 28-31: rg_addr = 0xFFFFFFFF (absent -- no route-guidance model)
+    #   bytes 32-33: rg_size = 0x0000
+    #   bytes 34-35: nregion
+    buf[0:2] = _u16(total_size // 2)
+    lat_lo, lon_lo = llpid
+    buf[2:5] = geo_secs_bytes(lat_lo)
+    buf[5] = 0
+    buf[6:9] = geo_secs_bytes(lon_lo)
+    buf[9] = 0
+    cx, cy = llcode
+    buf[10] = cy & 0xFF
+    buf[11] = cx & 0xFF
+    # bytes 12-17 (dipid, pmcode) already zero.
+    buf[18:20] = _u16(_HEADER_DSFLAG)
+    # bytes 20-27 (rlx, rly, geomagnetic) already zero.
+    buf[28:32] = _u32(_HEADER_RG_ADDR_ABSENT)
+    buf[32:34] = _u16(_HEADER_RG_SIZE_ABSENT)
+    buf[34:36] = _u16(nregion)
 
-    # mfde table (3 entries × 6 bytes, starting at de_off=36).
-    for i, (sf, off) in enumerate(zip(sub_frames, offsets)):
+    # Region list (DESIGN.md section 3).
+    if region_list:
+        buf[36:36 + len(region_list)] = region_list
+
+    # mfde table.
+    for i in range(mfde_len):
         eoff = de_off + i * 6
-        if sf is not None and off is not None:
-            assert off % 2 == 0 and len(sf) % 2 == 0
-            raw_off  = off       // 2   # unsws: sws(raw_off) = off
-            raw_size = len(sf)   // 2   # unsws: sws(raw_size) = len(sf)
-            buf[eoff:eoff + 4] = _u32(raw_off)
-            buf[eoff + 4:eoff + 6] = _u16(raw_size)
+        if i in slots:
+            off, size = slots[i]
+            assert off % 2 == 0 and size % 2 == 0
+            buf[eoff:eoff + 4] = _u32(off // 2)     # unsws: sws(v) = off
+            buf[eoff + 4:eoff + 6] = _u16(size // 2)  # unsws: sws(v) = size
         else:
-            buf[eoff:eoff + 4] = _u32(0xFFFFFFFF)   # "not present" sentinel
-            buf[eoff + 4:eoff + 6] = _u16(0)
+            buf[eoff:eoff + 4] = _u32(_ABSENT_MFDE[0])
+            buf[eoff + 4:eoff + 6] = _u16(_ABSENT_MFDE[1])
 
-    # Write sub-frames at their declared positions.
-    for sf, off in zip(sub_frames, offsets):
-        if sf is not None and off is not None:
-            buf[off:off + len(sf)] = sf
+    # Sub-frame content at its declared position.
+    for idx, b in ordered:
+        off, _size = slots[idx]
+        buf[off:off + len(b)] = b
 
     return bytes(buf)

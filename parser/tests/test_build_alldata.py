@@ -137,7 +137,8 @@ class TestPipelineTiny:
                 ]
                 road_bytes = build_road_frame_bytes(links, cell_bounds)
                 frame_bytes = build_map_frame_bytes(
-                    road_bytes, None, None, cell_bounds
+                    self.LEVEL, (cell_bounds.lat_lo, cell_bounds.lon_lo), (0, 0),
+                    road_bytes, None, None
                 )
                 synth_parcels.append(SynthParcel(
                     ix=ix, iy=iy,
@@ -284,7 +285,8 @@ class TestEmptyParcel:
 
     def test_empty_map_frame_parseable(self):
         """A fully-empty map frame decodes without error."""
-        frame_bytes = build_map_frame_bytes(None, None, None, self.BOUNDS)
+        frame_bytes = build_map_frame_bytes(
+            0, (self.BOUNDS.lat_lo, self.BOUNDS.lon_lo), (0, 0), None, None, None)
         parcel = _decode_from_bytes(frame_bytes, self.BOUNDS)
         assert parcel.road is None
         assert parcel.background is None
@@ -292,7 +294,8 @@ class TestEmptyParcel:
 
     def test_empty_parcel_in_kwi(self):
         """build_alldata_kwi handles a single empty parcel."""
-        frame_bytes = build_map_frame_bytes(None, None, None, self.BOUNDS)
+        frame_bytes = build_map_frame_bytes(
+            0, (self.BOUNDS.lat_lo, self.BOUNDS.lon_lo), (0, 0), None, None, None)
         sp = SynthParcel(ix=0, iy=0, bounds=self.BOUNDS, map_frame_bytes=frame_bytes)
         coverage = self.BOUNDS
         kwi_bytes = build_alldata_kwi(
@@ -335,7 +338,8 @@ class TestRoadLinkFieldSurvival:
                 setattr(link, k, v)
 
         road_bytes = build_road_frame_bytes([link], self.BOUNDS)
-        frame_bytes = build_map_frame_bytes(road_bytes, None, None, self.BOUNDS)
+        frame_bytes = build_map_frame_bytes(
+            0, (self.BOUNDS.lat_lo, self.BOUNDS.lon_lo), (0, 0), road_bytes, None, None)
         parcel = _decode_from_bytes(frame_bytes, self.BOUNDS)
         assert parcel.road is not None
         assert len(parcel.road.links) == 1
@@ -364,7 +368,8 @@ class TestRoadLinkFieldSurvival:
         from kiwiw.coordconv import COORD_RANGE
         link = _make_link(display_class=0, road_type=0, bounds=self.BOUNDS, n_nodes=3)
         road_bytes = build_road_frame_bytes([link], self.BOUNDS)
-        frame_bytes = build_map_frame_bytes(road_bytes, None, None, self.BOUNDS)
+        frame_bytes = build_map_frame_bytes(
+            0, (self.BOUNDS.lat_lo, self.BOUNDS.lon_lo), (0, 0), road_bytes, None, None)
         parcel = _decode_from_bytes(frame_bytes, self.BOUNDS)
         dec_link = parcel.road.links[0]
         for j, (dn, on) in enumerate(zip(dec_link.nodes, link.nodes)):
