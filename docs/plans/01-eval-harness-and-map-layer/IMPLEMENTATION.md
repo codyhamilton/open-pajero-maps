@@ -507,4 +507,26 @@ brief) — no separate follow-up needed, noted here for traceability.
 
 ## Unit 10 — Link ordinal registry
 
-**Status: pending** (dispatched; depends on 08, done).
+**Status: done, committed (`bcbacb5`), pushed.**
+
+Added `RoadLink.ordinal: int = 0` (`model.py`); `split_polyline_by_parcel`
+now stamps a 0-based ordinal per emitted chain (in emission order, skipping
+dropped out-of-coverage chains) via a small `_Chain` list subclass, kept
+backward-compatible for the two other test files calling the same function
+outside this unit's owned paths. `LinkIdRegistry` fully re-keyed on
+`(level, osm_way_id, ordinal)`: `assign`, `lookup`, `items()`
+(deterministic, sorted), `__len__`/`__contains__`; first-in-wins
+`osm_way_id`-only keying removed. Rewrote `test_link_id_registry.py` per
+the brief's three cases. 181 tests passing at commit time.
+
+**Deviations/contradictions found (reported, not resolved silently):**
+1. Brief named `parser/link_id_registry.py`; the real (only) module is
+   `parser/kiwiw/link_id_registry.py` — edited the real path.
+2. Removed the prior registry's extra surface (`register`, `from_parcels`,
+   `index_for`, `assign_link_ids` — an unrelated positional-index scheme)
+   after confirming via grep no non-test production code referenced them.
+   Flagged in case a downstream WP2 unit expected to reuse them.
+3. `lookup`/`items()` exact signatures weren't specified by the brief;
+   inferred `lookup(level, osm_way_id, ordinal) -> Optional[int]` and
+   `items() -> Iterator[((level, osm_way_id, ordinal), link_id)]` sorted by
+   key — noted in case a consuming unit expects something different.
