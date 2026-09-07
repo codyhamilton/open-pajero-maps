@@ -252,3 +252,71 @@ completed before this unit started.
 **Deviation from done evidence**: the brief's done-evidence bullet
 "`--checks vocab,envelope,mfde` -> all PASS" is not met -- all three FAIL,
 for the reasons above. Reported per the brief rather than edited to pass.
+
+## Unit 04 — Container byte-diff check with allowlist
+
+**Status: done, committed (`c25c55d`), pushed.**
+
+Delivered `parser/harness/bytediff.py` (`field_map`/`diff_regions`, named
+constants for `volume.py`'s offsets), `parser/harness/checks/container.py`
+(the `container` check; NA without `--reference`), and
+`parser/tests/test_harness_container.py`. Updated only the
+`container_allowlist` key of `parser/refdata/harness.json`, per its owned
+paths. Initial allowlist covers build/format-version and data-version and
+disk-title strings, every sector-address/size field in the MHT and PDMDH
+(`dsa`/`size`, BSMR `bmt_offset`/`bmt_size`, BMT entries, PDMDH
+`record_size`/trailing padding). Reported ambiguities (not resolved here,
+left for follow-up): (a) whether a `media_version` field should be
+allowlisted, (b) MHT absent-layer handling (sentinel vs. `R`'s pointer) is
+folded into one blanket rule rather than driven per-layer from
+`harness.json`'s config, (c) `record_size`/`trailing_padding` field-name
+interpretation may not match the design doc's exact intent. All pytest
+passing at commit time.
+
+## Unit 05 — Spot-check fixture table; `dump_parcel.py` JSON fix
+
+**Status: done, committed (`7c43efe`), pushed.**
+
+Delivered the `bytes`/`bytearray` → hex-string branch in
+`parser/kiwiw/model.py`'s `to_jsonable` (fixes a real crash on IR `bytes`
+fields, a regression from the 2026-09-02 IR additions), `--alldata`
+defaulting to `output/ALLDATA.KWI` in `dump_parcel.py`, the new
+`harness.checks.spotcheck` check, and `parser/refdata/spot_checks.json`
+(seed rows for all seven state capitals, sourced from
+`australia-260824.osm.pbf`, verified by direct way/node lookup near each
+coordinate). New tests `test_dump_parcel.py`, `test_harness_spotcheck.py`.
+No contradictions reported. All pytest passing at commit time.
+
+## Run 2 — closing note
+
+Phase 3 (units 03, 04, 05) and Phase 4 (unit 03b) are complete, committed
+(`926eb7c`..`2d2a30e`), pushed. Full suite: 164 passed. Three genuine
+findings from unit 03/03b's self-check, and three allowlist ambiguities
+from unit 04, are carried forward as follow-up work — see Run 3 below.
+
+## Run 3
+
+- Tool: Claude Code
+- Session/Run ID or session URL: https://claude.ai/code/session_01QRzfHS6ESmqmdTRpx1R6m3
+- Started: 2026-09-07T00:00:00Z
+
+### Scope of this run
+
+Continuing WP1 past Phase 4. Per the Execution Phases lane structure ("after
+03b → 06 and 08 (08 also waits on 07, already done)"), the next dispatchable
+units are 06 and 08, disjoint files, run in parallel. Alongside them, an ad
+hoc brief (`briefs/16-fix-mapframes-byte-accounting.md`, authored by this
+orchestrator, not `refine`) resolves unit 03/03b's finding 3 (the
+`mapframes_bytes_total` double-counting bug) — disjoint from 06 and 08's
+owned paths, so it runs alongside them rather than blocking. The
+`string_type=1` PLAN.md wording contradiction (finding 1) was a mechanical
+one-line doc correction, fixed directly by this orchestrator rather than via
+a subagent (no debugging involved; unit 03/03b's report already supplied the
+correct level-0-only reading and the exact evidence). Two follow-ups are
+deferred until unit 06's `DESIGN.md` lands, since both need its settled
+mfde/slot contract as their reference: unit 03/03b's finding 2
+(`checks/mfde.py`'s dominant-value-only logic needs to tolerate real
+per-parcel distributions) and unit 04's allowlist ambiguities (a, b, c
+above). After 06/08/16 land, this run continues to units 09 and 10 (the
+next lane per the dispatch table), and dispatches the mfde/allowlist
+follow-ups once 06's `DESIGN.md` exists to ground them.

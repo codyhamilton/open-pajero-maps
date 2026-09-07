@@ -286,7 +286,7 @@ User-facing (entry point → action → observable result):
 Non-user-facing (observable statement):
 
 - Every parcel at every level of the generated `ALLDATA.KWI` decodes through the existing `load_region`/`decode_parcel` path with zero errors. Every BMT and parcel-management pointer resolves inside its buffer. mfde entries 0..2 resolve inside the parcel buffer; entries ≥3 are either the censused absent-slot value or resolve to a valid sector inside the file.
-- The generated disc's road-type, display-class, background type-code and name string-type value sets are subsets of the reference profile's sets; `string_type=1` does not appear.
+- The generated disc's road-type, display-class, background type-code and name string-type value sets are subsets of the reference profile's sets, per level; `string_type=1` does not appear **at level 0** (it is legitimate at levels ≥2 — see unit 03/03b's census: 1,042,019 level-0 occurrences on the reference disc, 5.5% of level-0 name records, confirming this is a level-0-only rule, not a global one).
 - Per level 12..2, generated road-link counts are within the design doc's envelope of the reference's; at level 0 no Map Frame exceeds the reference's per-level maximum size and the harness reports the count ratio without failing on it.
 - Per level, the generated LMR/BSMR/BMT shape (block-set, block and parcel counts, cell sizes, coverage box) equals the reference's; the mfde entry count and absent-slot encoding match the profile on every parcel; the record-29 frame at 4096..6144 is byte-identical to `R`.
 - The container byte-diff check passes with every difference inside the allowlist.
