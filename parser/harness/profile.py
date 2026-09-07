@@ -18,6 +18,19 @@ pre-existing contract from unit 02's `harness/checks/decode.py`
 across the whole census (the refinement note recorded exactly one:
 `(0xFFFFFFFF, 0)`). The per-level, per-entry-index mfde detail this unit's
 own `checks/mfde.py` needs lives under `levels.<level>.mfde` instead.
+
+Byte-total accounting note (bug found by unit 03/03b, fixed by brief 16):
+a divided parcel's (parcel_type 1..3) sibling leaf slots can reference the
+*same* on-disk Map Frame byte range -- confirmed against the real
+reference disc, where a single physical Map Frame is legitimately shared
+by every sub-cell of a pardiv1..3 grid rather than each sub-cell owning
+its own frame. `walk.iter_parcels()` correctly yields once per
+*referencing slot* (every other consumer -- decode/pointers/shape/vocab/
+mfde/spotcheck -- needs one yield per slot, not one per unique frame), so
+`mapframes_bytes_total` (and the per-level `mapframe_size.byte_total`)
+dedupe by `(file_offset, length)` while accumulating, instead of summing
+every yield's `length` directly -- otherwise a shared frame gets counted
+once per referencing sibling and the total balloons past the file size.
 """
 from __future__ import annotations
 
@@ -57,6 +70,8 @@ class _LevelAccumulator:
     def __init__(self) -> None:
         self.parcel_count_by_type: Counter = Counter()
         self.mapframe_sizes: list = []
+        self._seen_frame_ranges: set = set()  # (file_offset, length) -- see add_leaf()
+        self.mapframe_bytes_total = 0
         self.frame_kind_bytes: Counter = Counter()  # road/background/name/ext_in_buffer/tail
         self.frame_kind_max_bytes: dict = {
             "road": 0, "background": 0, "name": 0, "ext_in_buffer": 0,
@@ -88,6 +103,18 @@ class _LevelAccumulator:
     def add_leaf(self, wp) -> None:
         self.parcel_count_by_type[wp.parcel_type] += 1
         self.mapframe_sizes.append(wp.length)
+        # Divided-parcel (pardiv1..3) sibling leaf slots can reference the
+        # *same* on-disk Map Frame byte range (real disc layout, confirmed
+        # against R -- see profile.py's build_profile() docstring note on
+        # `mapframes_bytes_total`): dedupe this level's byte total by
+        # (file_offset, length) so it counts each unique range once, while
+        # `mapframe_sizes` (feeding min/max/mean/p95) is left as one entry
+        # per referencing slot -- those describe the size distribution of
+        # what a leaf slot points at, not a total.
+        range_key = (wp.file_offset, wp.length)
+        if range_key not in self._seen_frame_ranges:
+            self._seen_frame_ranges.add(range_key)
+            self.mapframe_bytes_total += wp.length
 
         parcel = wp.parcel
         if parcel is None or parcel.frame is None:
@@ -183,7 +210,7 @@ class _LevelAccumulator:
                 "max": sizes[-1] if n else 0,
                 "mean": mean,
                 "p95": _percentile95(sizes),
-                "byte_total": sum(sizes),
+                "byte_total": self.mapframe_bytes_total,
             },
             "frame_kind_bytes": _counter_to_dict(self.frame_kind_bytes),
             "frame_kind_max_bytes": dict(self.frame_kind_max_bytes),
@@ -275,12 +302,22 @@ def build_profile(alldata_path: str) -> dict:
                 blocks_bytes_total += entry.size * logical_sz
 
     # --- one streaming pass over every leaf Map Frame ---
+    # `mapframes_bytes_total` is deduped by (file_offset, length): a
+    # divided parcel's sibling leaf slots can share the same on-disk Map
+    # Frame byte range (confirmed against the real reference disc -- see
+    # this module's docstring), so `iter_parcels()` legitimately yields
+    # that range once per referencing slot, and this total must count it
+    # once, not once per slot, to stay bounded by the file size.
     mapframes_bytes_total = 0
+    seen_mapframe_ranges: set = set()
     for wp in walk.iter_parcels(alldata_path):
         if wp.leaf_path == ():
             continue  # whole-block parse failure; not this census's concern
         acc(wp.level).add_leaf(wp)
-        mapframes_bytes_total += wp.length
+        range_key = (wp.file_offset, wp.length)
+        if range_key not in seen_mapframe_ranges:
+            seen_mapframe_ranges.add(range_key)
+            mapframes_bytes_total += wp.length
 
     levels_out = {}
     global_absent_values: Counter = Counter()

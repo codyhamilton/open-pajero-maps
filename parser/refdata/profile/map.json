@@ -2,9 +2,9 @@
   "byte_totals_by_layer": {
     "map": {
       "blocks_bytes": 26568960,
-      "mapframes_bytes": 4680715968,
+      "mapframes_bytes": 497995008,
       "pdmdh_blob_bytes": 21088,
-      "total_bytes": 4707306016
+      "total_bytes": 524585056
     },
     "other_mht_entries": {
       "1": 160,
@@ -149,7 +149,7 @@
         "road": 106114
       },
       "mapframe_size": {
-        "byte_total": 4543141152,
+        "byte_total": 360420192,
         "max": 136096,
         "mean": 1226.261630162022,
         "min": 320,
@@ -2644,7 +2644,7 @@
       0
     ]
   },
-  "profiled_at_commit": "7c43efe4483b29808e9a2676dc849dfe4ae395a6",
+  "profiled_at_commit": "18094e69b83c5a5b3d9ad3c46cc8aea2c2062268",
   "source": {
     "data_version": "DATA VERSION 07/12/21/01\n",
     "disk_title": "AU \n"

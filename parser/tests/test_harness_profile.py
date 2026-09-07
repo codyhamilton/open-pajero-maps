@@ -40,6 +40,7 @@ from kiwiw.synth import (
 )
 
 from harness import profile as profile_mod
+from harness import walk as walk_mod
 from harness.checks import envelope as envelope_checks
 from harness.checks import mfde as mfde_checks
 from harness.checks import vocab as vocab_checks
@@ -242,3 +243,74 @@ def test_mfde_fails_on_entry_count_mismatch(tmp_path):
     result = mfde_checks._run_mfde(ctx)
     assert result.status == "FAIL", result.message
     assert any("3" in f and "20" in f for f in result.details["failures"])
+
+
+# ---------------------------------------------------------------------
+# mapframes_bytes_total: dedupe aliased divided-parcel leaf slots
+# (brief 16 -- unit 03/03b's "envelope FAIL, likely a real bug in
+# profile.py's byte-total accounting" finding). Confirmed against the
+# real reference disc (probed directly, not asserted here): a divided
+# parcel's (parcel_type 1..3) sibling leaf slots legitimately share one
+# on-disk Map Frame byte range, so `walk.iter_parcels()` yields that same
+# `(file_offset, length)` once per referencing slot -- correct per-leaf
+# semantics every other consumer (decode/pointers/shape/vocab/mfde/
+# spotcheck) needs -- and `build_profile()` must not sum `wp.length` once
+# per yield or the total balloons past the file size.
+#
+# NOTE ON DEVIATION FROM THE BRIEF: the brief asks for this fixture to be
+# "a synthetic ALLDATA.KWI built with alldata_writer.build_alldata_kwi
+# using a divided parcel (type 1, 2 or 3)". As of this brief,
+# `build_alldata_kwi()`/`SynthParcel` only support a single flat,
+# parcel_type-0 grid -- there is no way to ask it for a subrecord tree or
+# for two leaf slots that alias the same `dsa`/`size`, and extending it is
+# outside this brief's owned paths (`parser/kiwiw/alldata_writer.py` is
+# not listed). This test instead exercises the exact seam that changed
+# (`build_profile()`'s accumulation over `walk.iter_parcels()` yields) by
+# monkeypatching `iter_parcels()` to yield the real-disc-observed
+# aliasing pattern directly: N leaf slots sharing one `(file_offset,
+# length)`, alongside one distinct range, against a real (flat) synthetic
+# container so `read_container()`/`blocks_bytes_total` still see valid
+# structure. Report this contradiction rather than silently building a
+# fixture the brief's own wording didn't anticipate.
+def test_mapframes_bytes_total_dedupes_aliased_leaf_slots(tmp_path):
+    path = _write_fixture(tmp_path)
+    file_size = len(_build_fixture_bytes())
+
+    aliased_offset, aliased_length = 4096, 512          # one shared physical Map Frame
+    distinct_offset, distinct_length = 4096 + 512, 256  # one more, unrelated, frame
+    n_siblings = 4  # e.g. a pardiv1 2x2 grid, all pointing at the same frame
+
+    def _fake_iter_parcels(_path):
+        for i in range(n_siblings):
+            yield walk_mod.WalkedParcel(
+                level=0, blockset_index=0, block_index=0, parcel_type=1,
+                leaf_path=(i,), bounds=_BOUNDS,
+                file_offset=aliased_offset, length=aliased_length,
+                parcel=None, error=None)
+        yield walk_mod.WalkedParcel(
+            level=0, blockset_index=0, block_index=1, parcel_type=0,
+            leaf_path=(0,), bounds=_BOUNDS,
+            file_offset=distinct_offset, length=distinct_length,
+            parcel=None, error=None)
+
+    real_iter_parcels = profile_mod.walk.iter_parcels
+    profile_mod.walk.iter_parcels = _fake_iter_parcels
+    try:
+        profile = profile_mod.build_profile(path)
+    finally:
+        profile_mod.walk.iter_parcels = real_iter_parcels
+
+    expected_unique_total = aliased_length + distinct_length
+    map_bytes = profile["byte_totals_by_layer"]["map"]
+
+    # The bug: summing every yield would give
+    # n_siblings * aliased_length + distinct_length, several times the
+    # unique on-disk region and, on the real disc, several times the file
+    # size. The fix: each unique (file_offset, length) counts once.
+    assert map_bytes["mapframes_bytes"] == expected_unique_total
+    assert map_bytes["mapframes_bytes"] != (
+        n_siblings * aliased_length + distinct_length)
+    assert map_bytes["mapframes_bytes"] <= file_size
+
+    lvl0 = profile["levels"]["0"]
+    assert lvl0["mapframe_size"]["byte_total"] == expected_unique_total
