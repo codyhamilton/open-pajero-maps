@@ -503,7 +503,55 @@ brief) — no separate follow-up needed, noted here for traceability.
 
 ## Unit 09 — Map Frame shape (`synth.py`)
 
-**Status: pending** (dispatched; depends on 06, done).
+**Status: done, committed (`28fa0ef`), pushed.**
+
+`build_map_frame_bytes` rewritten to the contract signature `(level, llpid,
+llcode, road_bytes, bg_bytes, name_bytes, *, region_list=None,
+ext_frames=None)`. mfde table length now derives from `level` (12 at level
+12, 20 elsewhere) via a new `mfde_table_len()` helper; every slot not
+filled by road/bg/name or `ext_frames` is the profile-confirmed absent
+sentinel `(0xFFFFFFFF, 0)` (never zero-fill), basic frames laid out before
+ext frames so `decode_parcel()`'s table-length derivation stays valid.
+Header now emits `DESIGN.md` section 2's WP1-emission column values
+(dsflag `0x0064`, rg_addr `0xFFFFFFFF`/rg_size 0, etc.); region list
+defaults to `nregion=0`/no bytes per section 3. New
+`parser/tests/test_synth_map_frame.py` covers all seven levels: table
+length/nregion/per-index presence, header fields, `ext_frames` round-trip,
+out-of-range ext index rejection, determinism. 199 tests passing at commit
+time.
+
+**Deviation (following unit 07's own precedent):** the signature change
+broke four out-of-owned-path callers; updated their call sites only
+(mechanical arg changes) — `test_harness_core.py`,
+`test_harness_profile.py`, `test_harness_spotcheck.py`,
+`test_build_alldata.py`. Also corrected two `test_harness_profile.py`
+assertions that had encoded the old, incorrect 3-entry mfde table as
+expected shape (a pre-existing test bug the old encoder happened to
+match).
+
+**Contradictions found (reported, not resolved):**
+1. `DESIGN.md` section 2 marks header offset 0-1 ("Header Size") as
+   "already decoded," but nothing in `parcel.py` actually reads/exposes
+   it — inaccurate claim, flagged.
+2. Brief 09's done-evidence bullet 2 (`build_alldata.py --levels 0`
+   producing an mfde PASS) is unsatisfiable independent of this unit's
+   change — `build_alldata.py` has been broken since unit 07
+   (`DEFAULT_ALLDATA` import error, already documented, "stays broken
+   until unit 12"). Verified independently; not this unit's regression.
+3. `DESIGN.md` section 8's mfde 12-19 ownership question (route-guidance
+   vs. adjacency) is inherited unresolved — doesn't block this unit's
+   contract (WP1 leaves those slots absent either way) but remains open
+   for unit 12/WP2.
+
+## Lane closing note (units 09/10, ad-hoc 17/18)
+
+All four units of this lane are done, committed, pushed:
+`3987582`(18) → `9e57bb0`(17) → `bcbacb5`(10) → `28fa0ef`(09), interleaved
+with their `IMPLEMENTATION.md` recording commits. Full suite green at 199
+passed as of unit 09's commit. Per the Execution Phases dispatch table,
+the next lane is units 11 (name types, depends on 08+10) and 12
+(assembler all levels, depends on 09+10+11) — 12 also needs 11 first, so
+11 is next to dispatch; 12 follows once 11 lands.
 
 ## Unit 10 — Link ordinal registry
 
