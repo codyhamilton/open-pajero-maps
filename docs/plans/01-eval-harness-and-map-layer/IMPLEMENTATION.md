@@ -320,3 +320,46 @@ per-parcel distributions) and unit 04's allowlist ambiguities (a, b, c
 above). After 06/08/16 land, this run continues to units 09 and 10 (the
 next lane per the dispatch table), and dispatches the mfde/allowlist
 follow-ups once 06's `DESIGN.md` exists to ground them.
+
+## Unit 06 — `DESIGN.md`: Map Frame shape, mfde/RP slot contract, ext-frame policy
+
+**Status: done, committed (`b8093a8`), pushed.**
+
+Delivered `docs/plans/01-eval-harness-and-map-layer/DESIGN.md` (254 lines,
+all eight required sections). Decoded the full 36-byte Map Frame header
+against spec Ch.7.1.1 (previously marked "undecoded" in `parcel.py`'s
+comment) plus a 49-read (7 cities x 7 levels) live census against the
+mounted reference disc; resolved `dipid`, `pmcode`, `dsflag`, `rlx`/`rly`,
+and `rg_addr`/`rg_size` (offset 28-33, "Offset/Size of Route Guidance Data
+Frame," level-0-only, `0xFFFFFFFF`-absent elsewhere). Region list decoded
+as (RP-tree-level, region-number) per spec note (12), matching
+`target-disc.md`'s region-tree levels; WP1 emits `nregion=0`. mfde table
+confirmed 20 entries at levels 0-10, 12 at level 12; every WP1 emission is
+the profile-confirmed absent sentinel `(0xFFFFFFFF, 0)`, never zero-fill.
+Divided/integrated parcel types 1/2/3 confirmed as 2x2/4x4/1x1; documented
+divide-first-with-2x2 for unit 13. Disambiguated Map Frame ext (mfde 3-11)
+from the unrelated Ch.10.5 RP-region ext.
+
+**Contradiction found (reported, not resolved here):** `PLAN.md`'s
+refinement finding frames mfde indices 12-19 as "out-of-buffer
+route-guidance pointers" (WP2-owned). Evidence from spec Ch.7.1.1 note (13)
+("Adjacent Parcel Address Information," 8 directions, each a
+4B-offset+2B-size entry, byte-identical in shape to an mfde entry) plus
+clean arithmetic (3 basic + 9 ext + 8 adjacency = 20, and level 12's table
+stopping at 12 entries with zero adjacency slots -- consistent with the
+single coarsest parcel having no neighbours) points instead to these being
+adjacent-*map*-parcel pointers, a WP1-scope concern, not WP2
+route-guidance. This changes Section 7's handoff-table ownership from
+given to contested; `DESIGN.md` recommends WP2's placement spike resolve
+it by decoding what one of these offsets actually points to. **Not
+resolved here per this run's rule — carried forward as a WP2-adjacent open
+question**, and does not block units 09-14 since `DESIGN.md`'s emission
+rule (absent sentinel unless decoded) already covers either reading.
+
+**Open questions left** (`DESIGN.md` section 8): the mfde-12..19 ownership
+question above; a `nregion=0` population (65,536 at level 0) larger than
+and not cleanly explained by divided-parcel or block-occupancy counts;
+header offsets 12-27 are sample-based (49 reads) not a full census.
+
+No deviations from the brief's required structure/scope; no non-trivial
+bugs found outside this unit's own scope.
