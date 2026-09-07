@@ -1,0 +1,23 @@
+{
+  "levels": [[0, 0], [2, 8], [10, 12]],
+  "rules": [
+    {"levels": 0, "match": {"highway": ["motorway", "motorway_link"]}, "value": 12},
+    {"levels": 0, "match": {"highway": ["trunk", "trunk_link"]}, "value": 0},
+    {"levels": 0, "match": {"highway": ["primary", "primary_link"]}, "value": 4},
+    {"levels": 0, "match": {"highway": ["secondary", "secondary_link"]}, "value": 3},
+    {"levels": 0, "match": {"highway": ["tertiary", "tertiary_link"]}, "value": 9},
+    {"levels": 0, "match": {"highway": ["unclassified", "road", "residential", "living_street"]}, "value": 7},
+    {"levels": 0, "match": {"highway": ["service", "busway"]}, "value": 2},
+    {"levels": 0, "match": {"highway": ["track"]}, "value": 10},
+
+    {"levels": 2, "match": {"highway": ["motorway", "motorway_link"]}, "value": 12},
+    {"levels": 2, "match": {"highway": ["trunk", "trunk_link"]}, "value": 0},
+    {"levels": 2, "match": {"highway": ["primary", "primary_link"]}, "value": 4},
+    {"levels": 2, "match": {"highway": [
+      "secondary", "secondary_link", "tertiary", "tertiary_link",
+      "unclassified", "road", "residential", "living_street",
+      "service", "busway", "track"
+    ]}, "value": 10}
+  ],
+  "default": null
+}

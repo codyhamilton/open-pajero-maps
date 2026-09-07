@@ -78,6 +78,7 @@ from kiwiw.model import (
 )
 from kiwiw.roadtypes import background_type_label
 from kiwiw.spool import SpoolReader, SpoolWriter
+from kiwiw import vocab
 
 DEFAULT_PBF = str(
     Path(__file__).resolve().parent.parent / "australia-260824.osm.pbf"
@@ -110,84 +111,29 @@ ROADS = {
     "unclassified", "residential", "living_street", "service", "track", "road", "busway",
 }
 
-# OSM highway=* → 4-bit road_type for RoadLink.road_type
-# (mirrors ROAD_CLASS from build_route_graph.py / Ch. 32.2 codes)
-HIGHWAY_TO_ROAD_TYPE: dict[str, int] = {
-    "motorway": 0, "motorway_link": 0,
-    "trunk": 1, "trunk_link": 1,
-    "primary": 2, "primary_link": 2,
-    "secondary": 3, "secondary_link": 3,
-    "tertiary": 3, "tertiary_link": 3,
-    "unclassified": 4, "road": 4,
-    "residential": 5,
-    "living_street": 6,
-    "service": 7, "track": 7, "busway": 7,
-}
-
-# OSM highway=* → display_class (0 = most prominent, higher = less)
-HIGHWAY_TO_DISPLAY_CLASS: dict[str, int] = {
-    "motorway": 0, "motorway_link": 0,
-    "trunk": 0, "trunk_link": 0,
-    "primary": 1, "primary_link": 1,
-    "secondary": 1, "secondary_link": 1,
-    "tertiary": 2, "tertiary_link": 2,
-    "unclassified": 2, "road": 2,
-    "residential": 2, "living_street": 2,
-    "service": 3, "track": 3, "busway": 3,
-}
+# OSM highway=* → 4-bit road_type for RoadLink.road_type, and
+# OSM highway=* → display_class, both per-level and data-driven
+# (docs/design/target-disc.md, "Vocabulary is data, not code"; tables +
+# rationale in parser/refdata/vocab/{road_type,display_class}.json and
+# parser/refdata/vocab/README.md; loader in kiwiw/vocab.py). Coverage
+# against the reference census is enforced by parser/tests/test_vocab.py.
+_ROAD_TYPE_VOCAB = vocab.load("road_type")
+_DISPLAY_CLASS_VOCAB = vocab.load("display_class")
 
 # ---------------------------------------------------------------------------
 # Background type-code mapping (OSM tags → disc type codes from roadtypes.py)
 # ---------------------------------------------------------------------------
 
-def _osm_tags_to_bg_type(tags: dict) -> Optional[int]:
-    """Map an OSM tag dict to a background type_code, or None if not mapped."""
-    natural = tags.get("natural")
-    landuse = tags.get("landuse")
-    boundary = tags.get("boundary")
-    admin_level = tags.get("admin_level")
-    leisure = tags.get("leisure")
-    aeroway = tags.get("aeroway")
+_BG_TYPE_VOCAB = vocab.load("bg_type")
 
-    if natural == "coastline":
-        return 0x121  # water system (shore line, ocean, bay, sea, creek)
-    if natural == "water":
-        return 0x122  # water system (lake, marsh, pond)
-    if natural in ("bay", "sea", "ocean"):
-        return 0x121
-    if natural in ("wetland",):
-        return 0x122
-    if natural in ("river", "stream"):
-        return 0x123  # water system (river)
-    if natural in ("wood", "scrub", "heath"):
-        return 0x141  # green belt, park
-    if landuse in ("reservoir",):
-        return 0x122
-    if landuse in ("grass", "meadow", "farmland", "forest"):
-        return 0x141
-    if leisure == "park":
-        return 0x141
-    if landuse == "industrial":
-        return 0x142  # factory, factory site
-    if landuse == "cemetery" or tags.get("amenity") == "grave_yard":
-        return 0x408  # cemetery
-    if aeroway == "aerodrome":
-        return 0x280  # airport
-    if landuse == "university" or tags.get("amenity") == "university":
-        return 0x464  # university
-    if tags.get("amenity") == "hospital":
-        return 0x480  # hospital
-    if tags.get("leisure") == "golf_course":
-        return 0x6180  # golf course
-    if boundary == "administrative":
-        level = admin_level
-        if level == "2":
-            return 0x131  # country
-        if level == "4":
-            return 0x132  # state
-        if level in ("6", "8"):
-            return 0x134  # municipality
-    return None
+
+def _osm_tags_to_bg_type(tags: dict, level: int = 0) -> Optional[int]:
+    """Map an OSM tag dict to a background type_code for `level`, data-driven
+    (parser/refdata/vocab/bg_type.json + README.md), or None if not mapped
+    at this level. `level` defaults to 0 for callers that are not yet
+    level-aware (docs/design/target-disc.md, "Vocabulary is data, not
+    code")."""
+    return _BG_TYPE_VOCAB.lookup(level, tags)
 
 
 # ---------------------------------------------------------------------------
@@ -445,10 +391,15 @@ def _latlon_in_bounds(lat: float, lon: float, bounds: BoundingBox) -> bool:
 # ---------------------------------------------------------------------------
 
 def _make_road_link(chain: list[tuple[float, float]],
-                    highway: str,
+                    level: int,
+                    tags: dict,
                     bounds: BoundingBox,
-                    osm_way_id: Optional[int] = None) -> RoadLink:
-    """Build a synthetic RoadLink for one parcel-clipped road sub-polyline.
+                    osm_way_id: Optional[int] = None) -> Optional[RoadLink]:
+    """Build a synthetic RoadLink for one parcel-clipped road sub-polyline, or
+    None if `tags` has no road_type/display_class mapping at `level`
+    (per-level vocab lookup; docs/design/target-disc.md, "Vocabulary is
+    data, not code" -- a null vocab entry means "omit this feature at this
+    level", not "guess a default").
 
     The chain is a list of (lat, lon) pairs already clipped to the parcel.
     Coordinate values outside [0, COORD_RANGE) are clamped.
@@ -458,8 +409,10 @@ def _make_road_link(chain: list[tuple[float, float]],
     layer can later look up the corresponding link's positional index in the
     parcel's RoadFrame via a ``LinkIdRegistry``.
     """
-    road_type = HIGHWAY_TO_ROAD_TYPE.get(highway, 4)
-    display_class = HIGHWAY_TO_DISPLAY_CLASS.get(highway, 2)
+    road_type = _ROAD_TYPE_VOCAB.lookup(level, tags)
+    display_class = _DISPLAY_CLASS_VOCAB.lookup(level, tags)
+    if road_type is None or display_class is None:
+        return None
     limit = int(COORD_RANGE) - 1
 
     nodes = []
@@ -641,9 +594,6 @@ class _GeomHandler:
         tags = dict(w.tags)
         hw = tags.get("highway")
         is_road = hw in ROADS
-        bg_type = None if is_road else _osm_tags_to_bg_type(tags)
-        if not is_road and bg_type is None:
-            return
         way_id = w.id
         name = tags.get("name")
 
@@ -652,6 +602,10 @@ class _GeomHandler:
             ring = list(coords)
             if ring[0] != ring[-1]:
                 ring.append(ring[0])
+        if not is_road and ring is None:
+            # Not a road and not enough coords for a background ring: cannot
+            # be emitted at any level.
+            return
 
         for level, grid in self.grids.items():
             if not self.level_filter(level, tags):
@@ -666,8 +620,10 @@ class _GeomHandler:
                         continue
                     bounds = parcel_bounds(ix, iy, grid)
                     links = [
-                        _make_road_link(chain, hw, bounds, osm_way_id=way_id)
-                        for chain in chains if len(chain) >= 2
+                        link for link in (
+                            _make_road_link(chain, level, tags, bounds, osm_way_id=way_id)
+                            for chain in chains if len(chain) >= 2
+                        ) if link is not None
                     ]
                     if links:
                         self.spool.add(level, ix, iy, roads=links)
@@ -681,8 +637,10 @@ class _GeomHandler:
                         self.spool.add(level, nix, niy, names=[rec])
                 continue
 
-            # Background way (ring is not None: len(coords) >= 3 checked above)
-            if ring is None:
+            # Background way (ring is not None: checked above for every
+            # non-road way, before the per-level loop).
+            bg_type = _osm_tags_to_bg_type(tags, level)
+            if bg_type is None:
                 continue
             clat, clon = _centroid(ring)
             par = assign_to_parcel(clat, clon, grid)

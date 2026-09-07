@@ -1,0 +1,32 @@
+{
+  "levels": [[0, 0], [2, 8], [10, 12]],
+  "rules": [
+    {"levels": 0, "match": {"natural": ["coastline", "bay", "sea", "ocean"]}, "value": 289},
+    {"levels": 0, "match": {"natural": ["water", "wetland"]}, "value": 290},
+    {"levels": 0, "match": {"landuse": ["reservoir"]}, "value": 290},
+    {"levels": 0, "match": {"natural": ["river", "stream"]}, "value": 291},
+    {"levels": 0, "match": {"waterway": ["river", "stream", "canal"]}, "value": 291},
+    {"levels": 0, "match": {"natural": ["wood", "scrub", "heath"]}, "value": 321},
+    {"levels": 0, "match": {"landuse": ["grass", "meadow", "farmland", "forest"]}, "value": 321},
+    {"levels": 0, "match": {"leisure": ["park"]}, "value": 321},
+    {"levels": 0, "match": {"landuse": ["industrial"]}, "value": 322},
+    {"levels": 0, "match": {"railway": ["rail"]}, "value": 578},
+    {"levels": 0, "match": {"aeroway": ["aerodrome"]}, "value": 640},
+    {"levels": 0, "match": {}, "value": 288},
+
+    {"levels": 2, "match": {"natural": ["coastline", "bay", "sea", "ocean"]}, "value": 289},
+    {"levels": 2, "match": {"natural": ["water", "wetland"]}, "value": 290},
+    {"levels": 2, "match": {"landuse": ["reservoir"]}, "value": 290},
+    {"levels": 2, "match": {"natural": ["river", "stream"]}, "value": 291},
+    {"levels": 2, "match": {"waterway": ["river", "stream", "canal"]}, "value": 291},
+    {"levels": 2, "match": {"natural": ["wood", "scrub", "heath"]}, "value": 321},
+    {"levels": 2, "match": {"landuse": ["grass", "meadow", "farmland", "forest"]}, "value": 321},
+    {"levels": 2, "match": {"leisure": ["park"]}, "value": 321},
+    {"levels": 2, "match": {}, "value": 288},
+
+    {"levels": 10, "match": {"natural": ["coastline", "bay", "sea", "ocean", "water", "wetland", "river", "stream"]}, "value": 289},
+    {"levels": 10, "match": {"waterway": ["river", "stream", "canal"]}, "value": 289},
+    {"levels": 10, "match": {"boundary": ["administrative"], "admin_level": ["4"]}, "value": 306}
+  ],
+  "default": null
+}

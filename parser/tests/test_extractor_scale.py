@@ -129,8 +129,20 @@ class TestExtractorScale:
 
         for level in LEVELS:
             grid = grids[level]
-            expected_road_parcels = _expected_road_parcels(grid)
-            expected_road_chains = _expected_road_chain_count(grid)
+            # Levels 10/12 have zero road_type/display_class values in R's
+            # census (parser/refdata/vocab/README.md, "Levels 10/12"), so
+            # kiwiw.vocab's road_type/display_class tables both return None
+            # for every highway= tag there and `_make_road_link` omits the
+            # feature -- no road links (and, since a road name is only
+            # emitted "if name and any_link", no road-derived names either)
+            # are produced at level 12, unlike levels 0/2.
+            roads_expected_at_level = level not in (10, 12)
+            expected_road_parcels = (
+                _expected_road_parcels(grid) if roads_expected_at_level else set()
+            )
+            expected_road_chains = (
+                _expected_road_chain_count(grid) if roads_expected_at_level else 0
+            )
 
             seen_parcels = {}
             for ix, iy, content in reader.iter_level(level):
@@ -147,10 +159,12 @@ class TestExtractorScale:
             total_bgs = sum(len(v["backgrounds"]) for v in seen_parcels.values())
             assert total_bgs == 1, level
 
-            # Names: suburb (1) + one per road way that produced a link (3)
-            # + background name (1) = 5.
+            # Names: suburb (1) + one per road way that produced a link (3,
+            # only when roads are expected at this level) + background name
+            # (1).
             total_names = sum(len(v["names"]) for v in seen_parcels.values())
-            assert total_names == 5, level
+            expected_names = 5 if roads_expected_at_level else 2
+            assert total_names == expected_names, level
 
             stats = reader.stats(level)
             assert stats["parcels"] == len(seen_parcels)
@@ -161,7 +175,12 @@ class TestExtractorScale:
     def test_split_way_yields_expected_chains(self, pbf_path, tmp_path):
         """WAY_SPLIT crosses level-0 parcel boundaries (checked directly
         against split_polyline_by_parcel) but stays within a single parcel
-        at level 12 (its span is far smaller than a level-12 cell)."""
+        at level 12 (its span is far smaller than a level-12 cell). At
+        level 12 itself, R's census has zero road links (parser/refdata/
+        vocab/README.md, "Levels 10/12") and kiwiw.vocab's road_type/
+        display_class tables return None there for every highway= tag, so
+        WAY_SPLIT (highway=residential) yields zero links at level 12 even
+        though it geometrically fits in one parcel."""
         grids = _grids()
         grid0 = grids[0]
         grid12 = grids[12]
@@ -188,7 +207,7 @@ class TestExtractorScale:
         links0 = links_for_way(0)
         links12 = links_for_way(12)
         assert len({(ix, iy) for ix, iy, _ in links0}) == len(expected0)
-        assert len({(ix, iy) for ix, iy, _ in links12}) == 1
+        assert len({(ix, iy) for ix, iy, _ in links12}) == 0
 
     def test_iter_level_order_deterministic_byte_identical(self, pbf_path, tmp_path):
         grids = _grids()
