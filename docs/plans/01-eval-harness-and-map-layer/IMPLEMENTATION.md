@@ -543,6 +543,59 @@ match).
    contract (WP1 leaves those slots absent either way) but remains open
    for unit 12/WP2.
 
+## Unit 11 — Name records: string types 4/5/6 at level 0
+
+**Status: done, committed (`9838389`), pushed.** (Type 4 not implemented —
+see deviation below.)
+
+Type-selection table, evidence-backed from `refdata/profile/map.json` and
+sampled Brisbane/Hobart level-0 parcels: road names → type 5 (Linear-C,
+fixed `type_code=0x210`, matches R's level-0 census exactly —
+`type_code_hist[528] == string_type_hist[5]`); background-attached names
+(parks etc.) → type 6, carrying the feature's own background type_code;
+place/locality labels → type 6 with `type_code=0x120` chosen by
+elimination, **not confirmed** against a real record (no sampled level-0
+parcel contains a standalone locality point label). Type-5 placement uses
+a flat-earth bearing over the way's endpoint geometry; type-6 uses a fixed
+placement word `0x8000` (spec-legal, only partially cross-checked). 205
+tests passing at commit time.
+
+**Deviations:**
+- `build_name_frame_bytes` kept its legacy `(records, bounds, level=None)`
+  signature rather than the brief's `(level, records)`, to avoid breaking
+  unowned callers/tests; `level=None` preserves old (type-1-only) behavior.
+- **Type 4 not encoded at all** (brief asked for 4/5/6). Root cause:
+  type-4's Linear-B placement field is a cross-frame displacement into the
+  sibling road/background frame's own bytes, which `build_name_frame_bytes`
+  has no visibility into — that plumbing is unit 12's frame-assembly job,
+  not this unit's. `{5,6} ⊆ {4,5,6}` still satisfies the level-0 vocab
+  subset contract, so this doesn't fail the harness, but **unit 12 needs to
+  either wire that plumbing through and pick up type 4, or explicitly
+  accept the 5/6-only emission** — flagged for unit 12's brief.
+- Place-node type_code `0x120` unconfirmed (see table above) — same
+  category of open question as `DESIGN.md` section 8's items.
+- `name.py`'s type-4 placement-record decode not completed (determined
+  unnecessary since the round-trip test only exercises types 5/6).
+
+**Contradiction found (reported, not resolved):** `target-disc.md`/this
+brief's "no type 1 at level 0" instruction conflicts with real data —
+R's own level-0 census shows 1,042,019 genuine string_type=1 records
+(5.5% of level-0 name records, per `PLAN.md`'s own acceptance-criteria
+citation). Followed the brief's explicit instruction (harness's `vocab.py`
+hard rule) over the 5.5% minority; documented at length in `synth.py`'s
+docstring, left open here.
+
+**Bug found outside scope, not fixed:** `parser/build_alldata.py` is
+broken independent of this unit's changes (confirmed via `git stash`) —
+`ImportError: cannot import name 'DEFAULT_ALLDATA'` plus stale
+`build_map_frame_bytes`/`extract_parcel_geometry` call signatures, and its
+`build_name_frame_bytes` call never passes `level` (would silently stay on
+the legacy type-1-only path even once import-fixed). Consistent with
+unit 07's already-documented "stays broken until unit 12" note — flagged
+again so unit 12 doesn't assume the CLI path currently works. Done
+evidence for this unit was produced by driving the lower-level encoder
+APIs directly instead.
+
 ## Lane closing note (units 09/10, ad-hoc 17/18)
 
 All four units of this lane are done, committed, pushed:

@@ -6,8 +6,20 @@ Owned paths: `parser/kiwiw/alldata_writer.py`, `parser/build_alldata.py`,
 touch anything else (in particular not `synth.py`, the extractor, or the harness).
 Commit to the current branch when done evidence passes; push.
 Depends on: 01 (`ReferenceGrid`, `mht29_frame_bytes`), 06 (`DESIGN.md`), 07 (spool reader),
-09 (Map Frame signature).
+09 (Map Frame signature), 11 (name-frame level wiring, see amendment below).
 Runs alongside: 10, 11.
+
+**Amendment (post-11, orchestrator):** unit 11 landed (`9838389`) but kept
+`build_name_frame_bytes`'s legacy `(records, bounds, level=None)` signature rather than the
+originally-planned `(level, records)`, to avoid breaking unowned callers at the time. Whatever
+call site this unit adds to build a level's name frame **must pass `level=<the level being
+built>` explicitly** — omitting it silently reverts to the legacy type-1-only path instead of
+unit 11's type-5/6 encoding, and would pass tests while emitting the wrong string types.
+Also: unit 11 did not implement string type 4 at all (its Linear-B placement needs a
+cross-frame byte offset into this unit's own frame assembly, which unit 11 could not see);
+if this unit's owned paths end up being the natural place to wire that offset through, do so
+and pick up type 4, otherwise leave 4 unemitted (type 5/6 alone still satisfies the level-0
+vocab subset check) and note the decision in your report.
 
 ## Required reading, in order
 
