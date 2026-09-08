@@ -144,6 +144,36 @@ Units 13 and 14 are both done. Per the Execution Phases dispatch list,
 the next lane is 15 (full-Australia build kickoff) → 15b (verify/record),
 both depending on 01–14.
 
+## Unit 15 — Full-Australia build: kickoff
+
+**Status: kickoff confirmed, running in background. No commit (per brief:
+no owned paths, no repo file changes).**
+
+From a clean tree, ran the brief's exact commands: `rm -rf output/`, then
+a backgrounded `osm_to_parcel_geometry.py && build_alldata.py` chain (no
+flag overrides — both read/write their default paths), logs under
+`/tmp/wp1-unit15-logs/`. PIDs 854485 (`time -v` wrapper) / 854486
+(extractor). Confirmed live via `pgrep`; `output/spool/` and
+`extract.out.log` are being written to.
+
+**Duration context:** unit 07's prior full-Australia extraction alone took
+1:27:24 at ~9.7 GB peak RSS — a floor, not a guarantee; `build_alldata.py`
+over a full 7-level spool has no prior full-scale benchmark.
+
+**Disk space flagged, not resolved (orchestrator follow-up):** the
+kickoff worker measured `/home` at 19 GB free (94% used); orchestrator
+re-checked immediately after and found 42 GB free (87% used) on the same
+filesystem — the two checks likely raced a transient sampling difference,
+not a real 23 GB free-up. Unit 07's original spool (unfiltered, pre-unit
+14) was ~21 GB; the current run applies unit 14's `level_filter` at
+extraction time, which should make the new spool substantially smaller
+than 21 GB (levels 2-12 alone were cut by 0.5x-2x of `R`'s much smaller
+per-level counts vs. unfiltered content), but the actual size is
+unmeasured until this run's spool completes. **Unit 15b should check
+`df -h /home` if either stage fails partway, and treat a disk-full
+condition as a distinct failure mode from a process crash**, not
+something this unit's brief anticipated.
+
 ## Unit 01 — Reference container data
 
 **Status: done.** Commit `e58b08f` (pushed to `origin/master`).
