@@ -43,14 +43,22 @@ envelope with class selection alone, report the achievable numbers and stop.
 - `selection.json` + loader with validation; `level_filter` wired as the extractor default.
 - Tests: the filter admits motorways at 12 and residential only at 0/2 (or whatever the
   table says — the test reads the table); a unit test for the length threshold.
-- Calibration run: re-run the extractor on the full PBF (or, if the full run is too slow to
-  iterate, on the spool stats via a dry-run mode that only counts — add it to `selection.py`,
-  not the extractor) and tune the table until the envelope passes at levels 2..12.
+- Calibration run: tune the table using the spool stats via a dry-run mode that only counts
+  (add it to `selection.py`, not the extractor) until the envelope passes at levels 2..12.
+  Do not run a full-Australia extract+build to iterate — unit 07's own run took 1:27:24 for
+  extraction alone; use the cheap counting path for every tuning pass.
 
 ## Done evidence
 
 - `.venv-rp/bin/python -m pytest parser/tests -q` → all pass.
-- Full build via `build_alldata.py` (no args) then `compare_disc.py --reference … --checks envelope,capacity` → `envelope` PASS at levels 2..12; `capacity` PASS or the report gives the level-0 overshoot and the trade-off unit 15 must record.
+- Dry-run counts (spool stats via `selection.py`'s counting mode) show `envelope` inside
+  `count_ratio` at levels 2..12 and `capacity` within bound, or the report gives the
+  level-0 overshoot and the trade-off unit 15 must record.
+- **Do not run `build_alldata.py` (no args) or `compare_disc.py` against a full-Australia
+  build in this unit** — that duplicates unit 15's own multi-hour build. The real
+  envelope/capacity PASS confirmation against the full build happens in unit 15b, against
+  the one full build unit 15 kicks off; this unit's job is to land `selection.json` in a
+  state that build is expected to pass with, using only the cheap dry-run path.
 
 ## Report back
 
