@@ -174,6 +174,18 @@ unmeasured until this run's spool completes. **Unit 15b should check
 condition as a distinct failure mode from a process crash**, not
 something this unit's brief anticipated.
 
+**Orchestration note:** a first unit-15b agent was dispatched to wait for
+this build and verify it, but it ended its own turn after only starting a
+background monitor of its own (rather than blocking on the wait itself),
+leaving a stalled/waiting worker with no path to resume without paying a
+full cache re-embed — exactly the failure mode the kickoff/wait split
+exists to avoid. Per the plan's Long-Running Work rule, that agent was
+not resumed. The orchestrator is doing the wait itself instead (a
+legitimate orchestrator wait, not implementation work) and will dispatch
+a second, fresh unit-15b agent once the build has actually finished, so
+that agent's own work is purely the deterministic verify/record steps
+with no wait embedded in it.
+
 ## Unit 01 — Reference container data
 
 **Status: done.** Commit `e58b08f` (pushed to `origin/master`).
