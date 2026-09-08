@@ -13,6 +13,76 @@ lands. Units 03–15 are out of scope for this run and remain for a future
 `execute` invocation. No close-out in this run — the plan folder stays in
 place with the remaining units pending.
 
+## Run (continuation)
+
+- Tool: Claude Code
+- Session/Run ID or session URL: https://claude.ai/code/session_01GUoz3qj2N9czSfWTifD6rM
+- Started: 2026-09-09T00:00:00Z
+- Scope: units 01–12 are done (recorded below, committed through `2805b0b`);
+  refine re-validated and amended briefs 13/14 against landed unit-12 code
+  (commit `74e7393`). This continuation dispatches units 13 (divided
+  parcels) and 14 (per-level selection), which run alongside each other,
+  both depending only on 12. Units 15/15b remain for a later phase.
+
+## Unit 13 — Divided parcels (types 1/2)
+
+**Status: done, committed (`3ed14a6`), pushed.**
+
+`parser/kiwiw/divide.py` (new): `plan_divisions()` re-tiles an oversize
+parcel into a type-1 (2×2) sub-grid, escalating to type-2 (4×4) only if a
+type-1 quadrant is still oversize. Threshold is `min(profile
+mapframe_size.max for the level, 131070)` per the brief's Amendment.
+Writer gained a `divided=` parameter on the multilevel path (nested
+`ParcelMgmtRecord`s, `dsa` as an even in-block offset). `test_divide.py`
+5/5 pass; full suite 224 passed (2 pre-existing failures, not this unit's
+— see below).
+
+**Perth fixture build, `compare_disc.py --checks decode,pointers,shape,envelope`:**
+decode/pointers/shape all PASS. **envelope FAILs at every level (38
+failures)**, wider than the brief's Amendment anticipated ("except
+possibly level 12"). Two distinct, separately-reported causes:
+1. Count-ratio failures nearly everywhere — comparing the Perth-only
+   fixture against the nationwide reference profile; a pre-existing
+   harness scoping gap (`envelope.py` has no fixture-scoping), orthogonal
+   to this unit.
+2. Size-ceiling failures at levels 12, 10, 2 (mapframe-max) and 0, 4, 6, 8
+   (subframe-max): dense OSM content at levels whose reference grid is a
+   single macro-cell (12, 10 especially) exceeds even type-2 (4×4)
+   division's capacity by up to ~60x — the level-12 overshoot the
+   Amendment flagged, but reaching further levels than anticipated.
+
+**Deviation worth flagging forward:** because `synth.py` hard-raises past
+the u16 ceiling rather than merely producing an oversize-but-encodable
+frame, and further recursive division past type-2 is out of this unit's
+scope, `divide.py` added a **lossy bisection fallback** at the final
+accepted (type-2) tier: it drops road/background/name items until the
+sub-frame becomes encodable, logging the exact drop count per cell to
+stderr (e.g. level 12 cell (1,0): dropped 601,884/602,700 items). This is
+a stopgap, not a real fix — unit 14's per-level selection (run
+concurrently) is the actual mechanism meant to keep content within
+capacity before it ever reaches `divide.py`. Once unit 14's selection
+table is in the real build path, this fixture should be re-run to confirm
+the bisection fallback stops triggering (or triggers far less); if it
+still triggers materially at 15b's full-Australia build, that's a real
+capacity finding for unit 15b to record, not a bug in this unit.
+
+**Other deviations (reported per brief, not resolved silently):**
+- `llcode` changed from `ix % dims["npc_lng"]`/`ix % dims["npc_lat"]` to
+  `ix % 256` (no established decode semantics anywhere in the codebase).
+- `dipid` left at 0 (hardcoded in off-limits `synth.py`) — safe, not
+  semantically complete.
+- Per-node road attributes (`oneway`/`tunnel`/`bridge`) dropped on
+  re-split chains (source spool data has no per-node metadata).
+- `(osm_way_id, ordinal)` link identity preserved unchanged across
+  re-split sub-chains per the brief, so it can become non-unique after
+  division — flagged in the module docstring for WP2's `LinkIdRegistry`.
+
+**Bug found outside scope, not fixed:** `test_extractor_scale.py` —
+`SpoolWriter` doesn't create `level_12.data` when a level has zero road
+content in a small synthetic PBF, but the test expects the file. Unit
+14's concurrent agent was already touching this exact test file, so left
+untouched pending its report.
+
 ## Unit 01 — Reference container data
 
 **Status: done.** Commit `e58b08f` (pushed to `origin/master`).
