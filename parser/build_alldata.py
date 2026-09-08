@@ -1,30 +1,32 @@
 #!/usr/bin/env python3
-"""Build ALLDATA.KWI from an OSM PBF file.
+"""Build ALLDATA.KWI from a spool written by `osm_to_parcel_geometry.py`.
 
 End-to-end pipeline:
-  1. Accepts a PBF path, bounding box, and list of levels.
-  2. Constructs a synthetic TileGrid for each level (or reads from the real
-     disc LMR if it is mounted).
-  3. Calls ``extract_parcel_geometry`` to extract road/background/name data
-     per parcel.
-  4. Encodes each parcel to a Map Frame binary using the synthetic frame
-     encoders in ``kiwiw/synth.py``.
-  5. Calls ``build_alldata_kwi`` to assemble a complete ALLDATA.KWI file.
-  6. Writes the output (default: ``output/ALLDATA.KWI``).
-  7. Verifies the output by calling ``decode_parcel`` on each map frame and
-     checking that road/background/name record counts match.
+  1. Reads a spool directory (`kiwiw.spool.SpoolReader`) written by
+     `osm_to_parcel_geometry.py`'s extraction pass -- never reads a PBF or
+     touches OSM data itself.
+  2. For each requested level, encodes every spooled parcel's road/
+     background/name content into a Map Frame (`kiwiw.synth`), passing
+     `level=` explicitly to `build_name_frame_bytes()` (unit 11's amendment:
+     omitting it silently reverts to the legacy type-1-only string path).
+  3. Calls `kiwiw.alldata_writer.build_alldata_kwi()` to assemble the whole
+     container: the reference's per-level LMR/BSMR/BMT shape
+     (`kiwiw.grid.ReferenceGrid`), the record-29 copy-through frame, and
+     the wrap-safe coverage box -- all from checked-in `grid.json`, never
+     a mounted disc (docs/design/target-disc.md, "Grid contract").
+  4. Writes the output file and a `manifest.json` beside it.
 
 Usage::
 
-    python3 parser/build_alldata.py \\
-        --pbf ~/workspace/open-pajero-maps/australia-260824.osm.pbf \\
-        --out output/ALLDATA.KWI
-
-    python3 parser/build_alldata.py --dry-run   # print stats, no file written
+    python3 parser/build_alldata.py                      # spool at output/spool, all 7 levels
+    python3 parser/build_alldata.py --fixture perth \\
+        --spool output/spool-perth --out output/perth/ALLDATA.KWI
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 import sys
 from pathlib import Path
@@ -32,333 +34,168 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from kiwiw import alldata_writer as aw
-from kiwiw.alldata_writer import SynthParcel, build_alldata_kwi
-from kiwiw.model import BoundingBox, MeshLocation
-from kiwiw.parcel import decode_parcel
-from kiwiw.synth import (
-    build_background_frame_bytes,
-    build_map_frame_bytes,
-    build_name_frame_bytes,
-    build_road_frame_bytes,
-)
-from osm_to_parcel_geometry import (
-    DEFAULT_ALLDATA,
-    DEFAULT_BBOX,
-    DEFAULT_PBF,
-    TileGrid,
-    build_tile_grid_from_lmr,
-    extract_parcel_geometry,
-    parcel_bounds,
-)
+from kiwiw import synth
+from kiwiw.grid import ReferenceGrid
+from kiwiw.spool import SpoolReader
 
-DEFAULT_OUT = str(
-    Path(__file__).resolve().parent.parent / "output" / "ALLDATA.KWI"
-)
-DEFAULT_LEVELS = [0]   # default to level 0 only (Perth metro proof-of-concept)
+# Read-only imports from the extractor: TileGrid/parcel_bounds are pure
+# geometry helpers with no OSM/PBF dependency of their own (build_alldata.py
+# never calls extract_parcel_geometry() -- that is unit 07/osm_to_parcel_
+# geometry.py's own job, run as a separate, prior step). Not touching that
+# module's own contents; this is the same "TileGrid.from_reference()" every
+# extraction run already uses to agree on cell boundaries.
+from osm_to_parcel_geometry import FIXTURE_BBOXES, TileGrid, assign_to_parcel, parcel_bounds
+
+DEFAULT_SPOOL = str(Path(__file__).resolve().parent.parent / "output" / "spool")
+DEFAULT_OUT = str(Path(__file__).resolve().parent.parent / "output" / "ALLDATA.KWI")
+DEFAULT_LEVELS = [12, 10, 8, 6, 4, 2, 0]
+
+# This unit populates only the main map layer; route-planning/index-data
+# flags in the copy-through Volume Header (see alldata_writer.py) describe
+# R's own disc contents, not this build's -- record what's actually built
+# here so the harness's `layers_present` config can be checked against it.
+LAYERS_PRESENT = ["map"]
 
 
-# ---------------------------------------------------------------------------
-# Synthetic tile grid (used when the real disc is not mounted)
-# ---------------------------------------------------------------------------
-
-_SYNTH_CELL_SIZES: dict[int, float] = {
-    0: 0.25,   # ~25 km cells at Perth latitude
-    2: 0.125,
-    4: 0.0625,
-    6: 0.03125,
-    8: 0.015625,
-}
-
-
-def _make_synth_grid(level: int, bbox: tuple) -> TileGrid:
-    """Build a synthetic TileGrid for *level* covering *bbox*.
-
-    The grid is defined entirely from the bbox (no real disc needed).
-    Cell size is taken from ``_SYNTH_CELL_SIZES``; the number of cells
-    is chosen so the grid exactly tiles the bbox (rounded up).
-    """
-    import math
-
-    cell_size = _SYNTH_CELL_SIZES.get(level, 0.25)
-    lon_l, lat_b, lon_r, lat_t = bbox
-    lat_span = lat_t - lat_b
-    lon_span = lon_r - lon_l
-    ny = math.ceil(lat_span / cell_size)
-    nx = math.ceil(lon_span / cell_size)
-    if ny < 1:
-        ny = 1
-    if nx < 1:
-        nx = 1
-
-    target = BoundingBox(lat_lo=lat_b, lat_hi=lat_t, lon_lo=lon_l, lon_hi=lon_r)
-    return TileGrid(
-        level=level,
-        disc_lat_lo=lat_b,
-        disc_lon_lo=lon_l,
-        disc_lat_span=lat_span,
-        disc_lon_span=lon_span,
-        nx=nx,
-        ny=ny,
-        target=target,
+def _level_dims(grid: ReferenceGrid, level: int) -> dict:
+    lvl = grid._level_dict(level)
+    return dict(
+        npc_lat=1 + lvl["n_parcels_lat"][0],
+        npc_lng=1 + lvl["n_parcels_lng"][0],
     )
 
 
-# ---------------------------------------------------------------------------
-# Per-parcel encoding
-# ---------------------------------------------------------------------------
-
-def encode_parcel(
-    parcel_key: tuple[int, int, int],
-    content: dict,
-    grid: TileGrid,
-) -> tuple[SynthParcel, tuple[int, int, int]]:
-    """Encode one parcel's geometry to a ``SynthParcel`` + verification tuple.
-
-    Returns ``(SynthParcel, (n_links, n_shapes, n_names))``.
-    """
-    level, ix, iy = parcel_key
-    from osm_to_parcel_geometry import parcel_bounds as _pb
-    bounds = _pb(ix, iy, grid)
-
-    roads  = content.get("roads", [])
-    bgs    = content.get("backgrounds", [])
-    names  = content.get("names", [])
-
-    road_bytes = build_road_frame_bytes(roads, bounds) if roads else None
-    bg_bytes   = build_background_frame_bytes(bgs, bounds) if bgs else None
-    name_bytes = build_name_frame_bytes(names, bounds) if names else None
-
-    frame_bytes = build_map_frame_bytes(road_bytes, bg_bytes, name_bytes, bounds)
-
-    sp = SynthParcel(ix=ix, iy=iy, bounds=bounds, map_frame_bytes=frame_bytes)
-    return sp, (len(roads), len(bgs), len(names))
+def _fixture_cell_range(level: int, fixture: str, tile_grid: TileGrid) -> tuple[int, int, int, int]:
+    """(ix_lo, ix_hi, iy_lo, iy_hi) inclusive global-cell range covering a
+    named fixture bbox at `level`, via the same `assign_to_parcel()` the
+    extractor itself uses -- so `--fixture perth` restricts to exactly the
+    same global cells `osm_to_parcel_geometry.py --fixture perth` would
+    have populated, regardless of what else the input spool contains."""
+    lon_l, lat_b, lon_r, lat_t = FIXTURE_BBOXES[fixture]
+    corners = [
+        assign_to_parcel(lat_b, lon_l, tile_grid),
+        assign_to_parcel(lat_b, lon_r, tile_grid),
+        assign_to_parcel(lat_t, lon_l, tile_grid),
+        assign_to_parcel(lat_t, lon_r, tile_grid),
+    ]
+    ixs = [c[0] for c in corners if c is not None]
+    iys = [c[1] for c in corners if c is not None]
+    return min(ixs), max(ixs), min(iys), max(iys)
 
 
-# ---------------------------------------------------------------------------
-# Verification
-# ---------------------------------------------------------------------------
+def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
+                   fixture: str | None) -> tuple[list[tuple[int, int, bytes]], int, int]:
+    """Encode every spooled parcel at `level`. Returns (parcels,
+    n_parcels, total_frame_bytes)."""
+    tile_grid = TileGrid.from_reference(level)
+    dims = _level_dims(grid, level)
+    cell_range = _fixture_cell_range(level, fixture, tile_grid) if fixture else None
 
-def verify_parcel(sp: SynthParcel, expected: tuple[int, int, int]) -> list[str]:
-    """Decode the map frame bytes and check record counts.
+    out: list[tuple[int, int, bytes]] = []
+    n_bytes = 0
+    for ix, iy, content in reader.iter_level(level):
+        if cell_range is not None:
+            ix_lo, ix_hi, iy_lo, iy_hi = cell_range
+            if not (ix_lo <= ix <= ix_hi and iy_lo <= iy <= iy_hi):
+                continue
 
-    Returns a list of error strings (empty = all checks passed).
-    """
-    errors: list[str] = []
-    loc = MeshLocation(
-        level=0, parcel_type=0,
-        blockset_index=0, block_index=0, parcel_index=0,
-        bounds=sp.bounds,
-        sector_addr=0, size_logical_sectors=1,
-    )
-    try:
-        parcel = decode_parcel(loc, sp.map_frame_bytes, n_basic_map=3, n_ext_map=0)
-    except Exception as exc:
-        errors.append(f"  decode_parcel raised: {exc}")
-        return errors
+        bounds = parcel_bounds(ix, iy, tile_grid)
+        roads = content.get("roads") or []
+        bgs = content.get("backgrounds") or []
+        names = content.get("names") or []
 
-    n_links, n_shapes, n_names = expected
+        road_bytes = synth.build_road_frame_bytes(roads, bounds) if roads else None
+        bg_bytes = synth.build_background_frame_bytes(bgs, bounds) if bgs else None
+        # Amendment (post-11, orchestrator): `level=` must be passed
+        # explicitly -- omitting it silently reverts to the legacy
+        # type-1-only string path instead of unit 11's type-5/6 encoding.
+        name_bytes = synth.build_name_frame_bytes(names, bounds, level=level) if names else None
 
-    actual_links  = len(parcel.road.links)      if parcel.road        else 0
-    actual_shapes = len(parcel.background.shapes) if parcel.background else 0
-    actual_names  = len(parcel.name.records)    if parcel.name        else 0
+        llpid = (bounds.lat_lo, bounds.lon_lo)
+        # llcode ("Lower Left Ref. Parcel Location Code", header offset 10):
+        # no established semantic constraint anywhere in this codebase
+        # (confirmed by grep across kiwiw/ -- nothing decodes or checks its
+        # value). Used here as the block-relative parcel position, an
+        # unverified-but-reasonable choice; see this unit's report.
+        llcode = (ix % dims["npc_lng"], iy % dims["npc_lat"])
 
-    if actual_links != n_links:
-        errors.append(
-            f"  road links: encoded {n_links}, decoded {actual_links}")
-    if actual_shapes != n_shapes:
-        errors.append(
-            f"  bg shapes: encoded {n_shapes}, decoded {actual_shapes}")
-    if actual_names != n_names:
-        errors.append(
-            f"  name records: encoded {n_names}, decoded {actual_names}")
+        frame_bytes = synth.build_map_frame_bytes(
+            level, llpid, llcode, road_bytes, bg_bytes, name_bytes)
+        out.append((ix, iy, frame_bytes))
+        n_bytes += len(frame_bytes)
 
-    return errors
+    return out, len(out), n_bytes
 
 
-# ---------------------------------------------------------------------------
-# Main pipeline
-# ---------------------------------------------------------------------------
-
-def run(
-    pbf_path: str,
-    bbox: tuple,
-    levels: list[int],
-    out_path: str | None,
-    dry_run: bool = False,
-    verbose: bool = False,
-    alldata_path: str = DEFAULT_ALLDATA,
-) -> int:
-    """Run the end-to-end build pipeline.
-
-    Returns 0 on success, non-zero on failure.
-    """
-    print(f"build_alldata: PBF={pbf_path}, bbox={bbox}, levels={levels}")
-
-    # ------------------------------------------------------------------ grids
-    grids: dict[int, TileGrid] = {}
-    for level in levels:
-        if os.path.exists(alldata_path):
-            try:
-                grids[level] = build_tile_grid_from_lmr(alldata_path, level, bbox)
-                print(f"  Level {level}: grid from real disc "
-                      f"({grids[level].nx}×{grids[level].ny} cells)")
-            except Exception as exc:
-                print(f"  Level {level}: real disc LMR failed ({exc}); "
-                      f"using synthetic grid")
-                grids[level] = _make_synth_grid(level, bbox)
-        else:
-            grids[level] = _make_synth_grid(level, bbox)
-            if verbose:
-                g = grids[level]
-                print(f"  Level {level}: synthetic grid {g.nx}×{g.ny} cells, "
-                      f"cell {g.cell_lat:.5f}°×{g.cell_lon:.5f}°")
-
-    # ---------------------------------------------------------------- extract
-    if not os.path.exists(pbf_path):
-        print(f"ERROR: PBF not found: {pbf_path}", file=sys.stderr)
+def run(spool_dir: str, out_path: str, levels: list[int],
+        fixture: str | None, disk_title: str) -> int:
+    if not os.path.isdir(spool_dir):
+        print(f"ERROR: spool directory not found: {spool_dir}", file=sys.stderr)
         return 1
 
-    all_synth: list[SynthParcel] = []
-    all_expected: list[tuple] = []
-    per_level_grids: dict[int, TileGrid] = {}
+    reader = SpoolReader(spool_dir)
+    available = set(reader.levels())
+    grid = ReferenceGrid.load()
 
-    # For build_alldata_kwi we only support single-level for now.
-    # Multi-level: produce one file per level (extend as needed).
+    spool_stats = {lvl: reader.stats(lvl) for lvl in levels}
+
+    level_builds: dict[int, aw.LevelBuild] = {}
+    manifest_levels: dict[str, dict] = {}
     for level in levels:
-        grid = grids[level]
-        per_level_grids[level] = grid
-        print(f"\nLevel {level}: extracting geometry from {pbf_path} …")
-        geometry = extract_parcel_geometry(pbf_path, grid, verbose=verbose)
-
-        n_non_empty = len(geometry)
-        n_links  = sum(len(v["roads"])       for v in geometry.values())
-        n_bgs    = sum(len(v["backgrounds"]) for v in geometry.values())
-        n_names  = sum(len(v["names"])       for v in geometry.values())
-        print(f"  Non-empty parcels: {n_non_empty}")
-        print(f"  Road links:        {n_links}")
-        print(f"  Background shapes: {n_bgs}")
-        print(f"  Name records:      {n_names}")
-
-        if dry_run:
-            # In dry-run, just show what *would* be built.
-            total_frames = sum(
-                (1 if v["roads"] else 0)
-                + (1 if v["backgrounds"] else 0)
-                + (1 if v["names"] else 0)
-                for v in geometry.values()
-            )
-            print(f"  (dry-run) Total non-empty sub-frames: {total_frames}")
+        print(f"level {level}: encoding ...", flush=True)
+        if level not in available:
+            print(f"level {level}: no spooled content, skipping", flush=True)
+            level_builds[level] = aw.LevelBuild(level=level, parcels=[])
+            manifest_levels[str(level)] = {"parcels": 0, "bytes": 0}
             continue
+        parcels, n_parcels, n_bytes = _encode_level(level, grid, reader, fixture)
+        level_builds[level] = aw.LevelBuild(level=level, parcels=parcels)
+        manifest_levels[str(level)] = {"parcels": n_parcels, "bytes": n_bytes}
+        print(f"level {level}: {n_parcels} parcels, {n_bytes:,} frame bytes", flush=True)
 
-        # Encode parcels.
-        print(f"  Encoding {n_non_empty} parcels …")
-        for key, content in geometry.items():
-            sp, counts = encode_parcel(key, content, grid)
-            all_synth.append(sp)
-            all_expected.append(counts)
+    print("assembling ALLDATA.KWI ...", flush=True)
+    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+    data = aw.build_alldata_kwi(level_builds, grid, disk_title=disk_title, out_path=out_path)
+    print(f"wrote {out_path} ({len(data):,} bytes)", flush=True)
 
-    if dry_run:
-        print("\n(--dry-run: no file written)")
-        return 0
+    sha256 = hashlib.sha256(data).hexdigest()
+    manifest = {
+        "spool_dir": spool_dir,
+        "spool_stats": {str(k): v for k, v in spool_stats.items()},
+        "levels": manifest_levels,
+        "total_size": len(data),
+        "sha256": sha256,
+        "layers_present": LAYERS_PRESENT,
+        "fixture": fixture,
+    }
+    manifest_path = os.path.join(os.path.dirname(out_path) or ".", "manifest.json")
+    with open(manifest_path, "w") as fh:
+        json.dump(manifest, fh, indent=2)
+    print(f"wrote {manifest_path}", flush=True)
 
-    if not all_synth:
-        print("WARNING: no parcels encoded (empty geometry?)")
+    return 0
 
-    # ---------------------------------------------------------------- assemble
-    # Determine coverage and grid from the first level processed.
-    first_level = levels[0]
-    g0 = per_level_grids[first_level]
-    coverage = BoundingBox(
-        lat_lo=g0.disc_lat_lo,
-        lat_hi=g0.disc_lat_lo + g0.disc_lat_span,
-        lon_lo=g0.disc_lon_lo,
-        lon_hi=g0.disc_lon_lo + g0.disc_lon_span,
-    )
-
-    print(f"\nAssembling ALLDATA.KWI …")
-    kwi_bytes = build_alldata_kwi(
-        parcels=all_synth,
-        coverage=coverage,
-        level=first_level,
-        grid_nx=g0.nx,
-        grid_ny=g0.ny,
-    )
-    print(f"  Total output size: {len(kwi_bytes):,} bytes")
-
-    # ------------------------------------------------------------------ verify
-    print("\nVerifying all parcels …")
-    n_ok = n_fail = 0
-    for sp, expected in zip(all_synth, all_expected):
-        errs = verify_parcel(sp, expected)
-        if errs:
-            n_fail += 1
-            print(f"  FAIL parcel ({sp.ix},{sp.iy}):")
-            for e in errs:
-                print(e)
-        else:
-            n_ok += 1
-
-    print(f"Verification: {n_ok} OK, {n_fail} FAILED")
-
-    # ------------------------------------------------------------------ write
-    if out_path is not None:
-        os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        with open(out_path, "wb") as fh:
-            fh.write(kwi_bytes)
-        print(f"\nOutput written to {out_path}")
-    else:
-        print("\n(no --out specified; output not written)")
-
-    return 0 if n_fail == 0 else 1
-
-
-# ---------------------------------------------------------------------------
-# CLI entry point
-# ---------------------------------------------------------------------------
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument(
-        "--pbf", default=DEFAULT_PBF,
-        help="OSM PBF input file (default: %(default)s)"
-    )
-    ap.add_argument(
-        "--bbox", nargs=4, type=float,
-        metavar=("LON_LEFT", "LAT_BOTTOM", "LON_RIGHT", "LAT_TOP"),
-        default=list(DEFAULT_BBOX),
-        help="Target bounding box (default: Perth metro)"
-    )
-    ap.add_argument(
-        "--levels", type=int, nargs="+", default=DEFAULT_LEVELS,
-        help="Map levels to build (default: %(default)s)"
-    )
-    ap.add_argument(
-        "--out", default=DEFAULT_OUT,
-        help="Output KWI path (default: %(default)s)"
-    )
-    ap.add_argument(
-        "--alldata", default=DEFAULT_ALLDATA,
-        help="Real disc ALLDATA.KWI for LMR parameters (optional)"
-    )
-    ap.add_argument(
-        "--dry-run", action="store_true",
-        help="Print stats only; do not write output"
-    )
-    ap.add_argument(
-        "--verbose", action="store_true",
-        help="Enable verbose progress messages"
-    )
+    ap = argparse.ArgumentParser(description=__doc__,
+                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--spool", default=DEFAULT_SPOOL,
+                     help="Spool directory written by osm_to_parcel_geometry.py "
+                          "(default: %(default)s)")
+    ap.add_argument("--out", default=DEFAULT_OUT,
+                     help="Output ALLDATA.KWI path (default: %(default)s)")
+    ap.add_argument("--levels", type=int, nargs="+", default=DEFAULT_LEVELS,
+                     help="Map levels to build (default: %(default)s)")
+    ap.add_argument("--fixture", choices=sorted(FIXTURE_BBOXES), default=None,
+                     help="Restrict the build to a named dev fixture's cells "
+                          "(e.g. 'perth'); container shape stays the full 7-level "
+                          "structure regardless")
+    ap.add_argument("--disk-title", default="AU ",
+                     help="Volume Header disk title (default: %(default)r)")
     args = ap.parse_args()
 
-    return run(
-        pbf_path=args.pbf,
-        bbox=tuple(args.bbox),
-        levels=args.levels,
-        out_path=None if args.dry_run else args.out,
-        dry_run=args.dry_run,
-        verbose=args.verbose,
-        alldata_path=args.alldata,
-    )
+    return run(spool_dir=args.spool, out_path=args.out, levels=args.levels,
+               fixture=args.fixture, disk_title=args.disk_title)
 
 
 if __name__ == "__main__":

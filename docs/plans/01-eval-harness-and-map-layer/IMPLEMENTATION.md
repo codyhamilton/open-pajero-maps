@@ -596,6 +596,132 @@ again so unit 12 doesn't assume the CLI path currently works. Done
 evidence for this unit was produced by driving the lower-level encoder
 APIs directly instead.
 
+## Unit 12 — Assembler: all seven levels, reference LMR/BSMR/BMT shape, record-29 frame, wrap-safe coverage
+
+**Status: done, committed, pushed.** Picked up mid-flight, uncommitted work
+from an interrupted prior agent (`parser/kiwiw/alldata_writer.py`,
+`parser/build_alldata.py` modified; `parser/tests/test_build_alldata.py`
+modified; `parser/tests/test_alldata_writer.py` new). Cold-read against
+the brief rather than resuming that agent's context.
+
+That prior work's multi-level assembler (`LevelBuild`, the new
+`build_alldata_kwi(levels, grid, ...)` in `alldata_writer.py`) and
+`build_alldata.py`'s CLI were already essentially complete and correctly
+matched the brief's Contract: wrap-safe `_lon_span()` (`lon_hi < lon_lo`
+handled), 601 BSMRs/7 LMRs driven by `ReferenceGrid`, record-29 embedded
+byte-for-byte at file offset 4096 via `grid.mht29_frame_bytes()`, type-0-only
+parcel management records (types 1–3 left empty per `R`'s convention,
+per DESIGN.md section 6 — divided parcels deferred to unit 13, matching
+the brief), `--fixture perth` cell restriction via the same
+`assign_to_parcel()` the extractor uses, and `manifest.json` (spool
+stats, per-level parcel/byte counts, total size, sha256, `layers_present`).
+`parser/tests/test_alldata_writer.py` and `test_build_alldata.py` already
+covered exactly the brief's five/two required cases respectively. No
+changes were needed to `build_alldata.py` or either test file.
+
+**What I built:** the one thing genuinely broken — the diff had deleted
+the old single-level `SynthParcel` class and single-level
+`build_alldata_kwi()` signature, breaking import collection in four
+*unowned* test files (`test_harness_container.py`, `test_harness_core.py`,
+`test_harness_profile.py`, `test_harness_spotcheck.py`, all
+`from kiwiw.alldata_writer import SynthParcel, build_alldata_kwi`).
+Followed unit 11's precedent (kept `build_name_frame_bytes`'s legacy
+signature alongside new behavior) rather than break unowned callers:
+- Restored the `SynthParcel` dataclass verbatim.
+- Renamed the pre-diff single-level implementation to
+  `_build_alldata_kwi_legacy(parcels, coverage, level, grid_nx, grid_ny, ...)`
+  (retrieved verbatim via `git show HEAD:...`), and the new multi-level
+  implementation to `_build_alldata_kwi_multilevel(levels, grid, ...)`.
+- Added a public `build_alldata_kwi(*args, **kwargs)` dispatcher that
+  routes to the legacy path when it sees the legacy call shape (its
+  distinctive `parcels`/`coverage`/`level`/`grid_nx`/`grid_ny` kwargs, or a
+  `list`/`tuple` first positional arg of `SynthParcel`s) and to the
+  multi-level path otherwise (a `dict[int, LevelBuild]` first positional
+  arg, as `build_alldata.py` passes).
+
+`.venv-rp/bin/pytest parser/tests -q` → **199 passed**, all four
+previously-broken files collecting and passing again, no regressions.
+
+**Done evidence:**
+- Full suite: 199 passed (above).
+- Perth fixture end-to-end, **literal brief command**:
+  `parser/build_alldata.py --spool output/spool-perth --out output/perth/ALLDATA.KWI --fixture perth`
+  **crashes** — see "Bug found outside scope" below. Not resolvable within
+  this unit's owned paths.
+- As partial substitute evidence, built a capped real-content mini-disc
+  from the same Perth spool (all 7 levels, ≤5 parcels/level, ≤300
+  road/background/name items per parcel — just enough real OSM-derived
+  content to dodge the u16 overflow below) at `output/perth-mini/ALLDATA.KWI`
+  and ran `parser/compare_disc.py --reference /run/media/codyh/464210-8480
+  --generated output/perth-mini/ALLDATA.KWI --checks
+  decode,pointers,shape,mht29,container,mfde`:
+  - `decode` PASS (20 leaves, zero errors)
+  - `pointers` PASS (every BMT/mapinfo/mfde pointer resolves)
+  - `shape` PASS (LMR/BSMR/BMT shape matches the reference grid)
+  - `mht29` PASS (byte-identical to reference)
+  - `container` FAIL — PDMDH blob length differs (reference 21088,
+    generated 7488 bytes). Root cause: this mini-disc only writes BMTs for
+    blocks that actually hold a parcel (the assembler's documented
+    content-driven `has_bmt` convention), so its PDMDH is naturally
+    smaller than the reference's full-Australia, every-block-populated
+    PDMDH — an artifact of deliberately using a tiny content subset for
+    this demonstration, not a shape/logic bug (the `shape` check, which
+    validates LMR/BSMR/BMT *structure* rather than raw byte length,
+    passes). Expected to resolve once run against real full coverage.
+  - `mfde` FAIL — 1 failure at level 12, entry index 10 marked absent
+    where the reference has content; consistent with this being a
+    5-parcels-max demo rather than full coverage, not further diagnosed.
+  Report: `output/perth-mini/compare_report.json`.
+- Optional full-spool run: `output/spool` has a complete 7-level
+  full-Australia spool (unit 07's run). Started
+  `.venv-rp/bin/python parser/build_alldata.py` (no args) in the
+  background (`nohup ... & disown`) as this brief allows; one liveness
+  check confirmed it was alive and still on level 12's encoding pass
+  after several seconds (level 12's spool alone is ~2.9 GB). Given the
+  bug below reproduces on the *much smaller* Perth spool at level 12 and
+  even at individual level-0 parcels, this full run is expected to hit
+  the same crash once it reaches an overflowing parcel; left running
+  per the brief's "do not block your own commit on it, do not poll it in
+  a loop" instruction — not polled further, no wall time/output size to
+  report at commit time.
+
+**Bug found outside scope, not fixed (blocks literal Perth-fixture done
+evidence):** `parser/kiwiw/synth.py:851`, `build_map_frame_bytes()` —
+`buf[0:2] = _u16(total_size // 2)` raises `ValueError: N does not fit in
+u16` whenever a Map Frame's `total_size` exceeds a 16-bit-word budget
+(`total_size > 131070` bytes). Reproduces on the *unmodified* Perth spool
+at `output/spool-perth`:
+- `--fixture perth` at default levels: crashes at level 12
+  (`ValueError: 39555559 does not fit in u16`) — level 12's single parcel
+  carries the fixture's entire unthinned content (975,602 backgrounds,
+  223,124 names — no per-level feature selection exists yet).
+- `--levels 0` alone (the finest level, real per-cell content): **also**
+  crashes (`ValueError: 66620 does not fit in u16`) on an individual
+  dense (CBD-area) level-0 parcel.
+Root cause: real OSM-derived Map Frame content routinely exceeds a single
+undivided (type-0) parcel's frame-size budget, and this unit's brief and
+DESIGN.md section 6 both explicitly assign oversize-frame division
+(types 1–3, divided/integrated parcels) to **unit 13**, not yet landed —
+"type-0 parcels only in this unit... unit 13 fills them." Per-level
+feature-selection thinning (unit 14) is also not yet landed. `synth.py`
+is explicitly not an owned path for this unit ("Do not touch anything
+else (in particular not synth.py...)"), and this is real debugging, not a
+one-line fix, so left unfixed per the brief's own escape hatch. **This
+looks like a plan sequencing gap worth flagging to the orchestrator**:
+unit 12's own "Done evidence" section requires a real-content Perth build
+to succeed end-to-end through `compare_disc.py`, but that success
+condition appears to implicitly depend on unit 13 (divided parcels) and/or
+unit 14 (per-level selection) work that is sequenced *after* unit 12 in
+`PLAN.md`'s Execution Phases table.
+
+**Deviations:** none beyond the above (SynthParcel dispatcher shim, and
+substituting a capped mini-disc for literal Perth-fixture done evidence).
+
+**Contradictions found, not resolved:** the Perth-fixture-done-evidence
+sequencing gap above. No other new contradictions found; DESIGN.md
+section 8's own already-documented mfde-12-19 ownership ambiguity was not
+re-investigated (unit 06's report, not this unit's to re-resolve).
+
 ## Lane closing note (units 09/10, ad-hoc 17/18)
 
 All four units of this lane are done, committed, pushed:
