@@ -8,6 +8,19 @@ Commit to the current branch when done evidence passes; push.
 Depends on: 08 (vocab tables), 10 and 11 (their extractor edits), 03b (profile, committed).
 Runs alongside: 13.
 
+**Amendment (post-12, orchestrator):** unit 12's done evidence hit a real crash your work is
+partly the fix for: `parser/kiwiw/synth.py:851` raises `ValueError: N does not fit in u16`
+when a level's Map Frame exceeds a 131,070-byte format ceiling. On the unmodified Perth
+fixture, level 12 (which has exactly one global parcel — no per-cell tiling exists at that
+level) hit 39,555,559 bytes, ~300x over budget: unit 13's oversize-frame division tops out at
+a 4×4 (16x) reduction, so **level 12 cannot be brought under budget by division alone — your
+selection is the only thing that can get it there.** Your envelope already covers levels 2..12
+(level 0 is exempt from the count ratio, not from capacity), so this isn't new scope, but
+treat level 12 as the level where your selection is load-bearing for unit 13's own done
+evidence, not just for census-matching — size it aggressively enough that the post-selection
+level-12 frame is plausibly divisible into budget, and say what count you landed on and why in
+your report.
+
 ## Required reading, in order
 
 1. `docs/design/target-disc.md` — check-table rows **Profile envelope** and **Capacity**;

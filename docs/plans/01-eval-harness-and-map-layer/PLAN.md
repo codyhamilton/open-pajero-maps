@@ -225,6 +225,33 @@ units whose done evidence requires a country-scale decode or build:
   same fix on a small fresh agent, and permanently taxed every later call in
   that agent via a larger carried context.
 
+### Re-refinement findings (2026-09-09)
+
+Unit 12's done evidence hit a real, reproducible crash while re-validating briefs 13/14 against
+the landed code (commit `2805b0b`): `parser/kiwiw/synth.py:851` raises `ValueError: N does not
+fit in u16` whenever a Map Frame exceeds 131,070 bytes — a hard format ceiling on the header's
+16-bit word-count field, not merely a profile-derived guideline. This is exactly the failure
+unit 13 (DESIGN.md section 6) and unit 14 exist to prevent, and does not change the dependency
+graph: 13 and 14 still both depend only on 12, still run alongside each other on disjoint
+paths, and their joint real-build success is still verified downstream at 15b, not by either
+unit alone. Two things it does change, both applied to the briefs directly (not recorded here
+as new scope):
+
+- The size threshold unit 13 divides against must be `min(profile mapframe_size.max for the
+  level, 131070)`, not the profile max alone — Perth-fixture evidence showed a level-0 parcel
+  at ~133,240 bytes, inside the profile's observed max (136,096) but still over the u16
+  ceiling, meaning some of `R`'s own profiled level-0 parcels are themselves already divided
+  sub-frames.
+- Level 12 (one global parcel, no per-cell tiling) hit 39,555,559 bytes on the unmodified
+  fixture — ~300x the ceiling, far beyond what unit 13's maximum division (4×4, 16x) can
+  recover alone. Unit 14's selection is load-bearing for level 12 specifically, not just for
+  census-matching; unit 13's own done evidence may still show a level-12 overshoot after
+  division until unit 14's thinning lands, which is expected, not a defect in either unit's
+  work, and is reported rather than treated as a blocking failure in each unit's own scope.
+- `_build_alldata_kwi_multilevel`'s `divided` parameter does not exist yet in the landed
+  code (unit 12's docstring reserves the path but the parameter itself is unit 13's to add) —
+  brief 13 corrected to say so, since the prior text implied it was already there.
+
 ## Execution Phases
 
 Definitive dispatch list (refined 2026-09-05; re-refined 2026-09-06 to split
