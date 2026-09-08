@@ -49,9 +49,9 @@ KNOWN SIMPLIFICATIONS (deliberately flagged, not silently assumed away)
 - Multi-polygon OSM relations are handled as individual outer-ring ways only;
   holes are ignored (inner rings).
 - Node/point features (natural=peak, amenity=*, etc.) are out of scope.
-- Every level receives the same feature set; per-level *selection* (which
-  ways appear at which level) is unit 14's -- the ``level_filter`` hook on
-  ``extract_parcel_geometry`` is the seam it fills.
+- Per-level *selection* (which ways appear at which level) is driven by
+  the ``level_filter`` hook on ``extract_parcel_geometry``, defaulting to
+  ``kiwiw.selection.level_filter`` (unit 14, ``parser/refdata/selection.json``).
 """
 from __future__ import annotations
 
@@ -78,6 +78,7 @@ from kiwiw.model import (
 )
 from kiwiw.roadtypes import background_type_label
 from kiwiw.spool import SpoolReader, SpoolWriter
+from kiwiw import selection
 from kiwiw import vocab
 
 DEFAULT_PBF = str(
@@ -620,14 +621,19 @@ def _is_name_feature(tags) -> bool:
                             or tags.get("highway") in ROADS)
 
 
-# Default no-op level_filter: every level receives the same feature set.
 # `level_filter(level, tags) -> bool` is the seam unit 14 fills with
-# per-level selection matched to the reference census; do not invent a
-# selection rule here.
+# per-level selection matched to the reference census. The default is
+# `kiwiw.selection.level_filter`, backed by the checked-in
+# `parser/refdata/selection.json` table (unit 14); a caller may still pass
+# an explicit `level_filter=` to override it (e.g. `_default_level_filter`
+# below, kept for tests/fixtures that want "every feature at every level").
 LevelFilter = Callable[[int, dict], bool]
 
 
 def _default_level_filter(level: int, tags: dict) -> bool:
+    """No-op level_filter: every level receives the same feature set. Not
+    the extractor's default (see `extract_parcel_geometry`); kept for
+    tests and fixtures that want unfiltered extraction."""
     return True
 
 
@@ -794,15 +800,16 @@ def extract_parcel_geometry(
     the current record and the small per-parcel flush buffers inside
     `spool`, so memory stays bounded regardless of file size.
 
-    `level_filter(level, tags) -> bool` (default: every level, always True)
-    is the seam unit 14 fills with per-level feature selection; here every
-    level receives the same feature set.
+    `level_filter(level, tags) -> bool` defaults to `kiwiw.selection.level_filter`
+    (unit 14's per-level selection, matched to the reference census via
+    `parser/refdata/selection.json`); pass an explicit `level_filter=` (e.g.
+    `_default_level_filter`, "every feature at every level") to override it.
 
     Returns `spool`, closed (its index files are finalized) so callers can
     immediately construct a `SpoolReader` over it.
     """
     if level_filter is None:
-        level_filter = _default_level_filter
+        level_filter = selection.level_filter
 
     handler = _GeomHandler(grids, spool, level_filter, progress_every=progress_every)
     if verbose:

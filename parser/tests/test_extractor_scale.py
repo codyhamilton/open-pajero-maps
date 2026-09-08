@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from kiwiw.spool import SpoolReader, SpoolWriter
 from osm_to_parcel_geometry import (
     TileGrid,
+    _default_level_filter,
     assign_to_parcel,
     extract_parcel_geometry,
     split_polyline_by_parcel,
@@ -122,7 +123,7 @@ class TestExtractorScale:
         grids = _grids()
         spool_dir = tmp_path / "spool"
         writer = SpoolWriter(spool_dir, flush_threshold=1)  # flush aggressively
-        extract_parcel_geometry(pbf_path, grids, writer, verbose=False)
+        extract_parcel_geometry(pbf_path, grids, writer, verbose=False, level_filter=_default_level_filter)
 
         reader = SpoolReader(spool_dir)
         assert sorted(reader.levels()) == sorted(LEVELS)
@@ -193,7 +194,7 @@ class TestExtractorScale:
 
         spool_dir = tmp_path / "spool"
         writer = SpoolWriter(spool_dir, flush_threshold=1)
-        extract_parcel_geometry(pbf_path, grids, writer, verbose=False)
+        extract_parcel_geometry(pbf_path, grids, writer, verbose=False, level_filter=_default_level_filter)
         reader = SpoolReader(spool_dir)
 
         def links_for_way(level):
@@ -214,11 +215,11 @@ class TestExtractorScale:
 
         spool_a = tmp_path / "spool_a"
         writer_a = SpoolWriter(spool_a, flush_threshold=1)
-        extract_parcel_geometry(pbf_path, grids, writer_a, verbose=False)
+        extract_parcel_geometry(pbf_path, grids, writer_a, verbose=False, level_filter=_default_level_filter)
 
         spool_b = tmp_path / "spool_b"
         writer_b = SpoolWriter(spool_b, flush_threshold=1)
-        extract_parcel_geometry(pbf_path, grids, writer_b, verbose=False)
+        extract_parcel_geometry(pbf_path, grids, writer_b, verbose=False, level_filter=_default_level_filter)
 
         for level in LEVELS:
             data_a = (spool_a / f"level_{level}.data").read_bytes()

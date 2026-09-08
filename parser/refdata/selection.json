@@ -1,0 +1,109 @@
+{
+  "_comment": [
+    "Per-level feature selection, calibrated against parser/refdata/profile/map.json",
+    "(R's census) so a from-scratch build's per-level content counts land inside",
+    "harness.json's envelopes.count_ratio at levels 2..12 (level 0 exempt from the",
+    "road-link count ratio only -- background_count/name_count ARE checked at level 0",
+    "too, see parser/harness/checks/envelope.py's _COUNT_FIELDS). Format loaded by",
+    "parser/kiwiw/selection.py; see that module's docstring for the exact contract",
+    "and parser/tests/test_selection.py for the coverage/shape tests.",
+    "",
+    "Calibration method: a lightweight tags-only osmium pass over",
+    "australia-260824.osm.pbf (no location index, no geometry, no parcel tiling --",
+    "~20-50s per full-file pass instead of unit 07's 1:27:24 full extraction) that",
+    "tallies national way/node counts per OSM class, cross-checked against",
+    "parser/refdata/profile/map.json's per-level counts. Background shapes are not",
+    "clipped per parcel (osm_to_parcel_geometry._make_background_shape: one shape",
+    "per way, centroid-assigned), so a national way count for an admitted class is",
+    "directly comparable to R's shape_count with no per-parcel-split correction.",
+    "Road links ARE split per parcel (split_polyline_by_parcel), so a national",
+    "admitted-highway-class way count under-approximates the real post-split link",
+    "count by an amount this table's own comment records per level -- see the",
+    "'calibration note' fields below and this unit's report for the full caveat."
+  ],
+
+  "levels": [[0, 0], [2, 2], [4, 4], [6, 6], [8, 8], [10, 10], [12, 12]],
+
+  "rules": [
+    {
+      "levels": 0,
+      "_calibration_note": "R link_count=9,897,898 (exempt from ratio at level 0, capacity-bound instead). Admitting the extractor's full ROADS set nationally: ~2,320,289 ways pre-split (matches output/spool/level_12.idx's pre-vocab roads=2,320,273 almost exactly, since level 12 has one global parcel with no splitting -- a useful cross-check). Real level-0 link count after parcel splitting was 3,015,057 in unit 07's original unfiltered spool, still well under R's count, so no further road restriction is needed for count purposes at level 0; unit 13's division and this table's implicit byte-size effect are what keep level-0 parcels under the capacity/u16 ceiling. Background: R background_count=9,445,322, envelope [4,722,661, 18,890,644] -- background_count/name_count ARE checked at level 0 (only link_count is level0-exempt, see parser/harness/checks/envelope.py). parser/refdata/vocab/bg_type.json declares a catch-all `{levels:0, match:{}, value:288}` rule, so at level 0 the real extractor already treats *every* non-road way with a ring as some background type regardless of tags; explicit key/value predicates cannot express that, so this rule sets background_all=true (dry-run cross-check: total_ways=11,464,956 minus ROADS-admitted=2,320,289 = 9,144,667 candidate non-road ways, ratio 0.968x -- centred in the envelope). Place: set to the full name-eligible set (_handle_node's own gate, osm_to_parcel_geometry.py:683) since that gate is stricter than this one anyway; place-node names are a small fraction of R's level-0 name_count=19,081,105 next to the ~2.3M dominant road-name driver already admitted via the highway list above.",
+      "highway": [
+        "motorway", "motorway_link", "trunk", "trunk_link",
+        "primary", "primary_link", "secondary", "secondary_link",
+        "tertiary", "tertiary_link", "unclassified", "residential",
+        "living_street", "service", "track", "road", "busway"
+      ],
+      "background_all": true,
+      "place": ["suburb", "city", "town", "village", "locality"]
+    },
+    {
+      "levels": 2,
+      "_calibration_note": "R link_count=95,877, envelope [47,938.5, 191,754]. motorway+trunk+primary (no _link variants) = 14,004+67,557+85,859 = 167,420 ways nationally, ratio 1.75x -- inside the envelope on the raw way count. Real post-split link count will be somewhat higher (unit 07's level-0 split inflation was ~30% over its raw ROADS way count); if that inflation carries through here the ratio could approach or exceed the 2.0x ceiling -- flagged as an approximation risk in this unit's report, to be confirmed by 15b's real build.",
+      "highway": ["motorway", "trunk", "primary"],
+      "background": [
+        {"key": "natural", "value": "water"},
+        {"key": "natural", "value": "coastline"}
+      ],
+      "place": ["city", "town"]
+    },
+    {
+      "levels": 4,
+      "_calibration_note": "R link_count=41,786, envelope [20,893, 83,572]. motorway+trunk = 14,004+67,557 = 81,561 ways, ratio 1.95x -- inside the envelope but close to the ceiling; same post-split inflation caveat as level 2, more likely to overshoot here.",
+      "highway": ["motorway", "trunk"],
+      "background": [
+        {"key": "natural", "value": "wetland"}
+      ],
+      "place": ["city"]
+    },
+    {
+      "levels": 6,
+      "_calibration_note": "R link_count=20,738, envelope [10,369, 41,476]. motorway alone = 14,004 ways, ratio 0.676x -- inside the envelope, with margin against post-split inflation.",
+      "highway": ["motorway"],
+      "background": [
+        {"key": "natural", "value": "heath"},
+        {"key": "natural", "value": "beach"},
+        {"key": "natural", "value": "ridge"}
+      ],
+      "place": ["city"]
+    },
+    {
+      "levels": 8,
+      "_calibration_note": "R link_count=7,663, envelope [3,831.5, 15,326]. motorway alone = 14,004 ways, ratio 1.83x -- inside the envelope but close to the ceiling; no finer OSM class exists below 'motorway' to split this further, so this is the best achievable class-level selection (see report).",
+      "highway": ["motorway"],
+      "background": [
+        {"key": "natural", "value": "reef"},
+        {"key": "natural", "value": "mud"}
+      ],
+      "place": []
+    },
+    {
+      "levels": 10,
+      "_calibration_note": "R link_count=0 (empty road_type_hist/display_class_hist in the profile) -- no highway class is admitted, matching R exactly. R background shape_count=25; natural=dune alone = 38 ways nationally, ratio 1.52x -- inside the envelope. R name record_count=8, all type_code 308 = 0x134, which osm_to_parcel_geometry._handle_node only ever assigns when place=='suburb' -- so R's 8 level-10/12 name records are place=suburb nodes. But _handle_node itself (osm_to_parcel_geometry.py:683) only calls level_filter for place in {suburb,city,town,village,locality} in the first place, so any other 'place' value here (an earlier draft used place=territory, matching a raw node tag census by coincidence -- 9 hits nationally, ratio 1.125x) is dead code: it can never admit a name record, because that upstream gate discards everything else before level_filter is even consulted. The only real lever is place=suburb itself, but its national count is 4,233 (this unit's node tag-count scan) -- ratio 529x over the [4,16] envelope around R's target of 8. No tags-only rule (this format has no population= threshold or explicit place-name allowlist) can hit 8 without either drastically overshooting (admit suburb) or landing at 0 (admit nothing); left at 0 here as the smaller of two bad options and reported as an unresolved shortfall per this unit's brief (report, don't pad with a guess).",
+      "highway": [],
+      "background": [
+        {"key": "natural", "value": "dune"}
+      ],
+      "place": []
+    },
+    {
+      "levels": 12,
+      "_calibration_note": "Same as level 10: R link_count=0 (this is the level the amendment flags as load-bearing for unit 13's u16/capacity ceiling -- level 12 is one global parcel with no per-cell tiling, so zero admitted roads here is required, not just census-matched). Background selection mirrors level 10's (natural=dune, ratio 1.52x). Place: same unreachable-target finding as level 10 -- R's 8 name records are place=suburb (type_code 0x134); the national place=suburb count is 4,233, ~529x over the [4,16] envelope; any place value other than the 5 osm_to_parcel_geometry._handle_node itself recognises is dead code (never reaches level_filter). Left empty, reported as an unresolved shortfall.",
+      "highway": [],
+      "background": [
+        {"key": "natural", "value": "dune"}
+      ],
+      "place": []
+    }
+  ],
+
+  "min_length_m": {
+    "0": 0,
+    "2": 0,
+    "4": 50,
+    "6": 100,
+    "8": 200,
+    "10": 500,
+    "12": 1000
+  }
+}
