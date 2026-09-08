@@ -83,6 +83,67 @@ content in a small synthetic PBF, but the test expects the file. Unit
 14's concurrent agent was already touching this exact test file, so left
 untouched pending its report.
 
+## Unit 14 — Per-level feature selection
+
+**Status: done, committed (`dfe4d7d`), pushed.**
+
+`parser/kiwiw/selection.py` (new) + `parser/refdata/selection.json` (new):
+data-driven `level_filter(level, tags)` table, wired as
+`osm_to_parcel_geometry.py`'s `extract_parcel_geometry` default. Calibrated
+via a cheap tags-only osmium dry-run pass (no location index/geometry,
+~2 min after a perf fix — see below) against `refdata/profile/map.json`.
+`test_selection.py`; full suite re-verified by the orchestrator after both
+units 13 and 14 landed: `.venv-rp/bin/python -m pytest parser/tests -q` →
+227 passed.
+
+**Envelope result (dry-run counts vs. `R`):** all of levels 2–12 land
+inside `count_ratio` `[0.5x, 2.0x]` for both link and background counts;
+level 0's background count is in range too (link count is the only
+level-0-exempt metric). Levels 4 and 8 sit close to the 2.0x ceiling with
+no finer OSM class available to split further — flagged as approximation
+risk since these are raw way counts, not post-parcel-split link counts.
+
+**Level 12 is confirmed load-bearing per the Amendment:** selection admits
+zero highway classes at level 12, only `natural=dune` backgrounds — this
+is what makes unit 13's division ceiling (4x4, ~16x) even plausible
+against a level that measured 39,555,559 bytes (~300x the u16 ceiling)
+unthinned.
+
+**Unresolved shortfall (reported, not fixed):** `R`'s level-10/12
+`name.record_count=8` is entirely `place=suburb` nodes, but the national
+`place=suburb` count is 4,233 — ~529x over the `[4,16]` envelope around 8,
+and no tags-only rule can hit 8 without a large overshoot or landing at 0.
+Left at 0, documented in `selection.json`'s calibration notes.
+
+**Contradiction found (reported, not resolved):** `min_length_m` is
+recorded per level, but `level_filter`'s `(level, tags)` signature has no
+way to carry geometric length, and `_handle_way` calls it before any
+length computation exists — wiring it needs a signature/call-site change
+outside this unit's owned paths.
+
+**Non-trivial bug found outside scope, not fixed:** `_GeomHandler` in
+`osm_to_parcel_geometry.py` only registers `way()`/`node()`, never
+`relation()` — OSM administrative-boundary/multipolygon relations are
+never extracted at all.
+
+**Deviation beyond stated owned paths (self-reported):** touched
+`parser/tests/test_extractor_scale.py` at 4 call sites, adding explicit
+`level_filter=_default_level_filter` so those pre-existing
+pipeline-mechanics tests keep testing unfiltered behaviour instead of
+picking up unit 14's new filtering default. Mechanical, minimal, and
+verified (by the orchestrator, via `git diff`) not to conflict with unit
+13's concurrent changes to the same file area. No further amendment
+needed — accepted as-is.
+
+**Also fixed within own file (not a deviation):** `count_dry_run`'s node
+callback originally materialized `dict(n.tags)` for every one of 134.7M
+nodes just to check `place`, taking 18+ minutes; changed to
+`n.tags.get("place")` (native scan), cutting the dry-run to ~2 minutes.
+
+Units 13 and 14 are both done. Per the Execution Phases dispatch list,
+the next lane is 15 (full-Australia build kickoff) → 15b (verify/record),
+both depending on 01–14.
+
 ## Unit 01 — Reference container data
 
 **Status: done.** Commit `e58b08f` (pushed to `origin/master`).
