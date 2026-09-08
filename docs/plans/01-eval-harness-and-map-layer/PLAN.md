@@ -343,3 +343,115 @@ Q&A turns, agent decisions and the adversarial-review findings.
   Link ID join are a work package of their own; WP1 only reserves the slots.
 - **Development fixtures stay:** the Perth bbox and 2×2 region tree remain
   as explicit-flag fixtures for fast iteration; they stop being defaults.
+
+## Build record (2026-09-09)
+
+Full-Australia build, units 15/15b. Commands run exactly as the extractor's/
+`build_alldata.py`'s own `--help` defaults (no `--pbf`, `--levels`, `--fixture`
+or bbox flags), matching the "no bbox or level flags" acceptance bullet:
+
+```
+.venv-rp/bin/python parser/osm_to_parcel_geometry.py   # PBF -> spool
+.venv-rp/bin/python parser/build_alldata.py             # spool -> ALLDATA.KWI
+```
+
+**Timing/memory** (`/usr/bin/time -v`, logs in `/tmp/wp1-unit15-logs/`, not
+committed — regenerable, see `docs/provenance.md`):
+
+| Stage | Wall clock | Peak RSS | Exit |
+|---|---|---|---|
+| Extraction (`osm_to_parcel_geometry.py`) | 33:23.02 | 8,188,004 KB | 0 |
+| Assembly (`build_alldata.py`), first run | 6:44.39 | 3,358,432 KB | 0 |
+| Assembly, repeat (determinism check) | 6:44.96 | 3,359,180 KB | 0 |
+
+**Output**: `output/ALLDATA.KWI` 814,121,408 bytes; `output/spool/` 6.9 GB
+(not committed, regenerable — see `docs/provenance.md`). SHA-256
+`5f0fa9f4d57950316a8ea35f05d6c894662733a05696e7a4ffba0f9cb3b0be66`, identical
+between the first build and a from-spool repeat run — **the build is
+deterministic** (last Acceptance Criteria bullet: met).
+
+Five `WARNING [kiwiw.divide]` lines at levels 8 and 0 (5 cells total) report
+content dropped after 4x4 division still exceeded the u16 format ceiling —
+the lossy fallback documented as expected in unit 13's outcome
+(`IMPLEMENTATION.md`), not a new deviation.
+
+**`compare_disc.py --reference /run/media/codyh/464210-8480 --generated
+output/ALLDATA.KWI --report output/report.json`** — exit code 1 (correctly
+non-zero: the tool's own contract is "exit 0 only when every applicable
+check passes," and several did not; a `| tail` wrapper masks this exit code
+with the pipe's own status, confirmed as a red herring during this unit's
+own verification, not a harness defect).
+
+| Check | Status | Notes |
+|---|---|---|
+| container | FAIL | 1 unallowlisted PDMDH-blob-length byte diff (R=21088, G=18624 bytes, extra tail not zero) — see deviations below |
+| decode | PASS | 454,153 leaves, zero errors |
+| pointers | PASS | every BMT/mapinfo/mfde pointer resolves, no poison |
+| envelope | FAIL | 20 failures across levels 8/6/4/2/0 (parcel/name counts outside [0.5,2.0]x, several sub-frame maxes over R's) — see deviations below |
+| mfde | FAIL | 5 failures: `nregion` never 1 (expected — WP2 slot, DESIGN.md §7); mfde entry-count never >20 and entry-index-1 always "absent" where R sometimes has content (not a declared WP2 slot — see deviations) |
+| mht29 | PASS | record-29 frame byte-identical to R |
+| shape | PASS | LMR/BSMR/BMT shape matches R at every level |
+| spotcheck | FAIL | 3 of 14 rows missing expected names (Sydney L0: 3/3 road names missing; Melbourne L0: 2/3 missing; Perth L2: place name missing) |
+| vocab | FAIL | name_type_code offenders at 5 levels (288/289/290/306/321/578 appearing where R's per-level census doesn't have them) |
+
+Levels 10 and 12 are **entirely absent from every check's per-level report**
+(not reported as FAIL, not reported at all) because the extractor spooled
+zero content at both levels this run — see "Recon finding" below. This is a
+harness blind spot, not a passing result: `parser/harness/checks/envelope.py`
+(and the other per-level checks) iterate the *generated* profile's levels
+only, so a level R has real content for but G has none for is silently
+skipped rather than flagged. Reported per this unit's contract, not fixed
+(outside the owned-paths list).
+
+**Recon finding — levels 10/12 empty, root cause identified**: unit 14's
+`parser/refdata/selection.json` admits `natural=dune` ways at levels 10 and
+12 (calibrated to R's ~38-way national count, "ratio 1.52x -- inside the
+envelope"). But `parser/refdata/vocab/bg_type.json` (unit 08's table) has
+**no rule mapping `natural=dune` to any background type code, at any
+level** — grep confirms zero occurrences of "dune" in that file. In
+`osm_to_parcel_geometry.py`'s `_handle_way`, `_osm_tags_to_bg_type(tags,
+level)` therefore returns `None` for every `natural=dune` way, and the
+background branch's `if bg_type is None: continue` drops it before
+`spool.add` is ever called — independent of ring closure or any geometry
+gate. Since `natural=dune` was the *only* admitted class at levels 10/12
+(no highway, no place), both levels spool zero content. This is a genuine
+selection/vocab wiring bug (unit 14's selection.json vs. unit 08's
+vocab/bg_type.json), not a geometry-pipeline artifact and not explained by
+unit 14's own calibration caveats. Fix is outside this unit's owned paths
+(`parser/refdata/vocab/bg_type.json` or `parser/refdata/selection.json`);
+reported for a follow-up fixer per this unit's brief.
+
+Acceptance-list bullets (PLAN.md, verbatim) checked individually:
+
+- `compare_disc.py --reference ... --generated ...` prints table + JSON, exit
+  0 only if all pass: **command behaves as specified; this run's exit was 1**
+  because container/envelope/mfde/spotcheck/vocab checks failed (see table
+  above) — not a defect in the command's own contract.
+- `compare_disc.py --profile` byte-identical on a second run: **not
+  re-verified by this unit** (already confirmed twice in unit 03/03b per
+  `docs/provenance.md`); out of this unit's scope to re-run.
+- `build_alldata.py --pbf australia-<date>.osm.pbf --out output/ALLDATA.KWI`
+  with no bbox/level flags: **contradiction found and not resolved
+  silently** — `build_alldata.py` takes no `--pbf` or `--out` flag at all
+  (its actual flags are `--spool`/`--out`/`--levels`/`--fixture`/
+  `--disk-title`; it never reads a PBF, only a spool directory written by
+  the separate `osm_to_parcel_geometry.py`). The real pipeline is two
+  commands (extractor --pbf ... --spool ...; then build_alldata.py reading
+  that spool), exactly as unit 15's kickoff ran it and as this record's
+  commands above show. The one-command-with-`--pbf` acceptance bullet does
+  not match either script's actual CLI; reported here, not edited into the
+  bullet's wording (out of this unit's owned paths).
+- `dump_parcel.py --lat -27.4698 --lon 153.0251 --level 0` (Brisbane) prints
+  valid JSON with Queen Street and Adelaide Street: **PASS, exit 0**, both
+  names present (verified directly and via the harness's own spotcheck row).
+  The same table's other six cities/levels: **PASS except Sydney L0,
+  Melbourne L0 (partial) and Perth L2** — see spotcheck row above.
+- Full build completes in one run, wall time and size recorded: **met** (see
+  timing table above).
+- `pytest parser/tests`: **227 passed, 0 failed, exit 0**.
+- Two runs on the same input produce byte-identical output: **met** (see
+  SHA-256 above).
+
+No contradiction in the LinkIdRegistry/`(osm_way_id, ordinal)` bullet was
+checked in this unit (it is exercised by `parser/tests`, which passed in
+full; not independently re-verified against the full-Australia output).

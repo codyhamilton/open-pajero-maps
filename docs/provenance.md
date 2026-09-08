@@ -121,3 +121,57 @@ same commit.
   reference disc's root or `ALLDATA.KWI`; `--profile-out` overrides the
   output path). Re-running against the same disc is byte-identical
   (confirmed twice during WP1 unit 03/03b, ~15 minutes wall time each).
+
+## `output/spool/`
+
+- **What**: on-disk spool of per-(level, ix, iy) parcel content (roads,
+  backgrounds, names) written by `osm_to_parcel_geometry.py`'s one-pass OSM
+  extraction, and read back by `build_alldata.py` to encode Map Frames.
+  Intermediate pipeline state, not a deliverable.
+- **Source**: `.venv-rp/bin/python parser/osm_to_parcel_geometry.py` (no
+  flags — full-Australia default, all seven levels) against the dated
+  Australia OSM PBF extract. WP1 units 15/15b's full run: 6.9 GB, 33:23.02
+  wall clock, 8,188,004 KB peak RSS.
+- **Why not committed**: large (multi-GB), fully regenerable from the PBF.
+- **Reproduce**: the command above. Non-deterministic input dependency: the
+  OSM PBF extract's own date/content, not the code, determines its bytes.
+
+## `output/ALLDATA.KWI`
+
+- **What**: the generated, full-Australia map-layer container — WP1's
+  deliverable, built from `output/spool/` by `build_alldata.py`.
+- **Source**: `.venv-rp/bin/python parser/build_alldata.py` (no flags —
+  reads `output/spool` by default, writes `output/ALLDATA.KWI`). WP1 units
+  15/15b's full run: 814,121,408 bytes, SHA-256
+  `5f0fa9f4d57950316a8ea35f05d6c894662733a05696e7a4ffba0f9cb3b0be66`,
+  confirmed byte-identical across two independent runs from the same spool
+  (6:44.39 and 6:44.96 wall clock respectively, ~3.36 GB peak RSS each).
+- **Why not committed**: large (814 MB), fully regenerable from
+  `output/spool/`.
+- **Reproduce**: the command above, given a matching `output/spool/`.
+
+## `output/manifest.json`
+
+- **What**: `build_alldata.py`'s own per-run manifest — spool stats, per-level
+  parcel/byte counts and divided-parent counts, total size and SHA-256 of the
+  `ALLDATA.KWI` it just wrote.
+- **Source**: written automatically alongside `output/ALLDATA.KWI` by the
+  same `build_alldata.py` invocation.
+- **Why not committed**: regenerable output tied 1:1 to `output/ALLDATA.KWI`.
+- **Reproduce**: the command above.
+
+## `output/report.json`
+
+- **What**: `compare_disc.py`'s per-check JSON report (container, decode,
+  pointers, envelope, mfde, mht29, shape, spotcheck, vocab) for the
+  2026-09-09 full-Australia build against the mounted reference disc. See
+  `docs/plans/01-eval-harness-and-map-layer/PLAN.md`'s "Build record
+  (2026-09-09)" and `docs/design/target-disc.md`'s file table for the
+  findings this report drove.
+- **Source**: `.venv-rp/bin/python parser/compare_disc.py --reference
+  /run/media/codyh/464210-8480 --generated output/ALLDATA.KWI --report
+  output/report.json`.
+- **Why not committed**: regenerable output tied to a specific build and to
+  the mounted reference disc's availability.
+- **Reproduce**: the command above, given a matching `output/ALLDATA.KWI`
+  and the reference disc mounted at the given path.

@@ -62,26 +62,26 @@ and layers exist in `G`.
 
 ## Target disc: file by file
 
-| File | Source | Owning work package |
-|---|---|---|
-| `ALLDATA.KWI` map layer (Ch.5–7: volume, MHT, PDMDH/LMR/BSMR/BMT, parcel mgmt, road/background/name frames) | generate | WP1 |
-| `ALLDATA.KWI` management header record 29 frame (file offset 4096..6144; spec Ch.5.2 record 30, RESERVED extended part 1; content is a language/country code list) | copy verbatim | WP1 |
-| `ALLDATA.KWI` route-planning layer (Ch.9/10), ext frames `0xAF1001xx/03xx/06xx`, build stamp | generate | WP2 |
-| `ALLDATA.KWI` route-guidance parcel list (`routeoff`) and mfde entries 3..19 | generate | WP1 (census, absent-slot values) / WP2 (generate) |
-| `IDX/SADSR2##.IDX` (address, one file per state: 201=WA 202=NT 203=SA 204=QLD 205=NSW 206=VIC 207=TAS, all seven decoded from address-range bboxes) | generate ×7 | WP3 |
-| `IDX/POISR2##.IDX` (POI search, per state) | generate ×7 | WP3 |
-| `IDX/POIAS2##.IDX`, `IDX/POIDT0##.IDX` (POI information, Ch.11.A.2.14 family) | generate | WP4 |
-| `IDX/ITSSR2##.IDX` (intersection search) | generate ×7 | WP4 |
-| `IDX/FWYSR2##.IDX` (freeway search) | generate | WP4 |
-| `IDX/AGMSR*.IDX`, `ARGSR*.IDX`, `ARSNC2##.IDX`, `ARSSR.IDX` (the `DB0/JG0/LR0/MB0/MZ0/ND0/NF0/NS0/VL0` suffix set is unexplained) | generate | WP4 |
-| `IDX/EMGSR*.IDX`, `EM2SR.IDX`, `EM3SR.IDX`, `FMCDT001.IDX` | generate | WP4 |
-| `IDX/ZONEVSRC.IDX`, `ZONEZSRC.IDX`, `ZSEL*.IDX` (zone selection, Ch.11.A.2.2/3) | generate | WP4 |
-| `INDEXDAT.KWI` (likely Ch.11.2 index data management, naming the per-state files) | generate | WP4 |
-| `HWMAP.KWI` (likely highway overview) | generate | WP4 |
-| `SPEC.KWI`, `METADATA.KWI`, `COUNTRY.KWI`, `VERSION.TXT`, `COVERAGE.BIN`, `DN/CLUSTER.DAT`, `PCT2MNG.KWI` | generate | WP5 |
-| `COVERAGE/AUC.BMP` | generate if coverage changes, else copy | WP5 |
-| `LOADING.KWI`, `DICVCE56.KWI`, `GRA256D.KWI`, `KGRA256.KWI`, `PCT256D.KWI`, `KPCT256.KWI`, `PCT2DAT.KWI`, `KPCT2DT.KWI`, `KGRPDAT.KWI`, `VAR256D.KWI` (content-independent) | copy | WP5 |
-| Disc image (UDF bridge: ISO 9660 + UDF, volume id `464210-8480`) | generate | WP5 |
+| File | Source | Owning work package | Deviations |
+|---|---|---|---|
+| `ALLDATA.KWI` map layer (Ch.5–7: volume, MHT, PDMDH/LMR/BSMR/BMT, parcel mgmt, road/background/name frames) | generate | WP1 | **2026-09-09 full-Australia build (WP1 units 15/15b), `compare_disc.py` report:** container FAIL (1 unallowlisted PDMDH-blob-length diff, R=21,088 G=18,624 bytes, non-zero extra tail — cause not isolated); envelope FAIL (20 failures, levels 8/6/4/2/0: parcel_count and name_count outside the [0.5,2.0]x envelope — unit 14's `selection.json` calibration under/over-shoots on several counts it flagged as approximation risk; several background/name sub-frame maxes exceed R's per-level max); mfde FAIL (`nregion` never 1 — expected, see WP2 slot row below; mfde entry-count never exceeds 20 where R sometimes has 21–35, and entry-index 1 is always "absent" where R sometimes has content — **not** a declared WP2 slot, unresolved); spotcheck FAIL (Sydney level 0 missing all 3 expected road names; Melbourne level 0 missing 2 of 3; Perth level 2 missing its place name); vocab FAIL (name_type_code values 288/289/290/306/321/578 appear at levels where R's per-level census does not have them — likely background-type codes leaking into name records' type_code field beyond R's own per-level name vocabulary, and `bg_type.json`'s `railway=rail → 578` rule at level 0 in particular has no corresponding entry in R's level-0 name census). decode/pointers/mht29/shape all PASS. **Levels 10 and 12 spooled zero content** (root cause identified as a real bug, not fixed here: `selection.json` admits `natural=dune` at levels 10/12, but `vocab/bg_type.json` has no mapping for `natural=dune` at any level, so `_osm_tags_to_bg_type` returns `None` and every such way is silently dropped before `spool.add`; unit 14's own selection.json vs. unit 08's vocab/bg_type.json are inconsistent). Separately, `compare_disc.py`'s per-level checks only iterate the *generated* profile's levels, so R-vs-G level 10/12 discrepancies are not even reported as FAIL — a harness gap, not a passing result. Full report: `output/report.json`, `docs/plans/01-eval-harness-and-map-layer/PLAN.md`'s "Build record (2026-09-09)". |
+| `ALLDATA.KWI` management header record 29 frame (file offset 4096..6144; spec Ch.5.2 record 30, RESERVED extended part 1; content is a language/country code list) | copy verbatim | WP1 | None — `mht29` check PASS, byte-identical to R (2026-09-09 full build). |
+| `ALLDATA.KWI` route-planning layer (Ch.9/10), ext frames `0xAF1001xx/03xx/06xx`, build stamp | generate | WP2 | |
+| `ALLDATA.KWI` route-guidance parcel list (`routeoff`) and mfde entries 3..19 | generate | WP1 (census, absent-slot values) / WP2 (generate) | WP1's absent-slot emission (`nregion=0`, `(0xFFFFFFFF,0)`) is in place and censused (DESIGN.md §7); the 2026-09-09 build's mfde entry-count/index-1 discrepancy noted in the map-layer row above falls in this row's WP1-owned "census" half and is not a declared WP2 slot — unresolved, see PLAN.md's build record. |
+| `IDX/SADSR2##.IDX` (address, one file per state: 201=WA 202=NT 203=SA 204=QLD 205=NSW 206=VIC 207=TAS, all seven decoded from address-range bboxes) | generate ×7 | WP3 | |
+| `IDX/POISR2##.IDX` (POI search, per state) | generate ×7 | WP3 | |
+| `IDX/POIAS2##.IDX`, `IDX/POIDT0##.IDX` (POI information, Ch.11.A.2.14 family) | generate | WP4 | |
+| `IDX/ITSSR2##.IDX` (intersection search) | generate ×7 | WP4 | |
+| `IDX/FWYSR2##.IDX` (freeway search) | generate | WP4 | |
+| `IDX/AGMSR*.IDX`, `ARGSR*.IDX`, `ARSNC2##.IDX`, `ARSSR.IDX` (the `DB0/JG0/LR0/MB0/MZ0/ND0/NF0/NS0/VL0` suffix set is unexplained) | generate | WP4 | |
+| `IDX/EMGSR*.IDX`, `EM2SR.IDX`, `EM3SR.IDX`, `FMCDT001.IDX` | generate | WP4 | |
+| `IDX/ZONEVSRC.IDX`, `ZONEZSRC.IDX`, `ZSEL*.IDX` (zone selection, Ch.11.A.2.2/3) | generate | WP4 | |
+| `INDEXDAT.KWI` (likely Ch.11.2 index data management, naming the per-state files) | generate | WP4 | |
+| `HWMAP.KWI` (likely highway overview) | generate | WP4 | |
+| `SPEC.KWI`, `METADATA.KWI`, `COUNTRY.KWI`, `VERSION.TXT`, `COVERAGE.BIN`, `DN/CLUSTER.DAT`, `PCT2MNG.KWI` | generate | WP5 | |
+| `COVERAGE/AUC.BMP` | generate if coverage changes, else copy | WP5 | |
+| `LOADING.KWI`, `DICVCE56.KWI`, `GRA256D.KWI`, `KGRA256.KWI`, `PCT256D.KWI`, `KPCT256.KWI`, `PCT2DAT.KWI`, `KPCT2DT.KWI`, `KGRPDAT.KWI`, `VAR256D.KWI` (content-independent) | copy | WP5 | |
+| Disc image (UDF bridge: ISO 9660 + UDF, volume id `464210-8480`) | generate | WP5 | |
 
 Implementation status per file lives in each work package's plan folder and
 close-out record, not here.
@@ -147,6 +147,17 @@ Contracts that every work package must honour:
   dataset's, so the budget is expected to bind at level 0; the harness
   reports the trade-off, and the decision (drop minor ways, or confirm
   dual-layer support on the head unit) is the user's.
+  **2026-09-09 full-Australia build (WP1 units 15/15b):** map layer 814,121,408
+  bytes; `compare_disc.py`'s capacity projection (map layer + R's non-map MHT
+  entries) is 814,569,536 bytes against the 4,700,000,000 byte budget —
+  **well under budget, not binding**. Level 0 was not the trade-off point
+  this run expected: unit 14's per-level selection thinning (not just
+  unit 13's division) kept the whole build small, at the cost of the
+  envelope/spotcheck deviations recorded in the file table above (fewer
+  parcels/names selected than R at several levels). The budget question the
+  design doc anticipated ("drop minor ways vs. confirm dual-layer support")
+  did not arise; it may resurface if a later unit relaxes `selection.json`
+  to close the envelope/spotcheck gaps.
 
 ## Work-package sequence
 
