@@ -836,6 +836,7 @@ def _build_alldata_kwi_multilevel(
     out_path: str | None = None,
     sector_sz: int = 2048,
     logical_sz: int = 32,
+    divided: dict[int, Iterable[tuple[int, int, int, int, int, bytes]]] | None = None,
 ) -> bytes:
     """Assemble a whole-of-coverage ALLDATA.KWI: the reference's own
     per-level LMR/BSMR/BMT shape (`grid`), the record-29 copy-through
@@ -849,11 +850,23 @@ def _build_alldata_kwi_multilevel(
     7-level build (`build_alldata.py`) passes all seven, which reproduces
     the reference's full 601-entry BSMR array.
 
-    Only type-0 (undivided) parcels are placed; ``entries`` for the
-    other divided/integrated parcel types (1..3) are never generated in
-    this unit -- the same "no subrecord, no data" state `R` uses for any
-    unused divided-parcel slot (unit 13 adds real ones later without
-    changing this signature).
+    `divided` (unit 13): per level, an iterable of ``(ix, iy, parcel_type,
+    sub_ix, sub_iy, map_frame_bytes)`` -- the divided-parcel-type (1 or 2)
+    output of ``kiwiw.divide.plan_divisions()`` -- for parent cells whose
+    whole-cell Map Frame was too large to place directly. ``(ix, iy)`` is
+    the *parent* cell's global grid position (the same coordinate space as
+    ``levels[level].parcels``; a given ``(ix, iy)`` must appear in at most
+    one of ``levels``/``divided``, never both -- ``plan_divisions()`` never
+    yields both for the same parent). Each parent's own
+    ``ParcelMapInfoEntry`` gets ``size=0`` and a [D]-encoded (halved)
+    in-buffer offset to a nested ``ParcelMgmtRecord`` (Ch.6 divided/
+    integrated-parcel subrecord) written into the *same* block buffer,
+    right after that block's own root record; every ``(sub_ix, sub_iy)``
+    frame becomes its own leaf, sector-addressed exactly like a type-0
+    parcel's frame. ``None``/omitted (every caller before unit 13) leaves
+    every parcel type-0, unchanged from before this parameter existed --
+    `entries` for divided/integrated parcel types 1..3 are only ever
+    generated for parents this parameter actually names.
     """
     from . import volume as _vol
     from . import volume_writer as _vw
@@ -905,6 +918,24 @@ def _build_alldata_kwi_multilevel(
             raise ValueError(
                 f"level {lmr.level}: to_level_mgmt_record() produced a "
                 f"{got}-byte LMR, pdmdh declares lmr_size={lmr_size}")
+    lmr_by_level = {lmr.level: lmr for lmr in lmrs}
+
+    # ---- bucket divided-parcel sub-frames by parent block/slot ----------
+    # divided_index[(level, blockset_index, block_index)][local_idx] ->
+    # list[(parcel_type, sub_ix, sub_iy, map_frame_bytes)], one list per
+    # parent cell that plan_divisions() split (parcel_type is the same for
+    # every item in one parent's list -- plan_divisions() picks one type
+    # per parent, never mixes 1 and 2 for the same cell).
+    divided = divided or {}
+    divided_index: dict[tuple[int, int, int], dict[int, list[tuple[int, int, int, bytes]]]] = {}
+    for level, items in divided.items():
+        d = dims[level]
+        for ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes in items:
+            bsidx, blidx, local_ix, local_iy = _locate(ix, iy, d)
+            key = (level, bsidx, blidx)
+            local_idx = local_iy * d["npc_lng"] + local_ix
+            divided_index.setdefault(key, {}).setdefault(local_idx, []).append(
+                (parcel_type, sub_ix, sub_iy, frame_bytes))
 
     # ---- bucket every (ix, iy, frame_bytes) into its block -------------
     # block_slots[(level, blockset_index, block_index)] -> list[bytes|None],
@@ -926,6 +957,27 @@ def _build_alldata_kwi_multilevel(
                 raise ValueError(
                     f"level {level}: duplicate parcel at ix={ix} iy={iy}")
             slots[local_idx] = _pad_zero(frame_bytes, logical_sz)
+            n_parcels_placed += 1
+
+    # Seed a block_slots entry (all-None) for any block that has divided
+    # parcels but no type-0 parcels of its own -- the loop above only
+    # creates an entry when it sees a `levels[level].parcels` item, which
+    # a divided-only block never contributes.
+    for (level, bsidx, blidx), local_map in divided_index.items():
+        d = dims[level]
+        n_slots = d["npc_lat"] * d["npc_lng"]
+        key = (level, bsidx, blidx)
+        slots = block_slots.get(key)
+        if slots is None:
+            slots = [None] * n_slots
+            block_slots[key] = slots
+        for local_idx in local_map:
+            if slots[local_idx] is not None:
+                raise ValueError(
+                    f"level {level}: block ({bsidx},{blidx}) local slot "
+                    f"{local_idx} has both a type-0 parcel and divided "
+                    f"sub-frames -- plan_divisions() should never yield both "
+                    f"for the same parent cell")
             n_parcels_placed += 1
 
     # has_bmt is content-driven, not copied from grid.json's own boolean:
@@ -986,8 +1038,16 @@ def _build_alldata_kwi_multilevel(
 
     for (level, bsidx, blidx), slots in sorted(block_slots.items()):
         d = dims[level]
+        divided_here = divided_index.get((level, bsidx, blidx), {})
         entries: list[_PMI] = []
-        for slot in slots:
+        for local_idx, slot in enumerate(slots):
+            if local_idx in divided_here:
+                # Patched below, once the nested subrecord's own in-buffer
+                # offset is known -- entries list must be fully allocated
+                # first so record_footprint (and thus every subrecord's
+                # offset) is fixed before any subrecord is placed.
+                entries.append(_PMI(dsa=NO_DATA_DSA, size=0))
+                continue
             if slot is None:
                 entries.append(_PMI(dsa=NO_DATA_DSA, size=0))
                 continue
@@ -998,10 +1058,41 @@ def _build_alldata_kwi_multilevel(
                                  size=len(slot) // logical_sz))
 
         record_footprint = 4 + len(entries) * bmt_entry_size
-        block_total = align_up(record_footprint, logical_sz)
+
+        # ---- divided-parcel subrecords: nested ParcelMgmtRecords placed
+        # in this SAME block buffer, right after the root record's own
+        # footprint (record_footprint is always even -- 4 plus a multiple
+        # of 6 -- so this starting offset is always a valid [D]-encodable
+        # (even) in-buffer offset without further alignment).
+        lmr = lmr_by_level[level]
+        sub_cursor = record_footprint
+        for local_idx, items in sorted(divided_here.items()):
+            parcel_type = items[0][0]
+            gn_lat = 1 + lmr.n_parcels_lat[parcel_type]
+            gn_lng = 1 + lmr.n_parcels_lng[parcel_type]
+            gn = gn_lat * gn_lng
+            sub_entries: list[_PMI] = [_PMI(dsa=NO_DATA_DSA, size=0) for _ in range(gn)]
+            for _pt, sub_ix, sub_iy, frame_bytes in items:
+                padded = _pad_zero(frame_bytes, logical_sz)
+                foff = cursor
+                frame_regions.append((foff, padded))
+                cursor += len(padded)
+                pos_idx = sub_iy * gn_lng + sub_ix
+                sub_entries[pos_idx] = _PMI(
+                    dsa=encode_sector_addr(foff, sector_sz, logical_sz),
+                    size=len(padded) // logical_sz)
+
+            sub_off = sub_cursor
+            assert sub_off % 2 == 0, "in-buffer subrecord offset must be even ([D]-encodable)"
+            sub_rec = _PMR(parcel_type=parcel_type, list_type=0, offset=sub_off,
+                            entries=sub_entries, header_gap_raw=b"\x00\x00", tail_raw=b"")
+            entries[local_idx] = _PMI(dsa=sub_off // 2, size=0, subrecord=sub_rec)
+            sub_cursor += 4 + gn * bmt_entry_size
+
+        block_total = align_up(sub_cursor, logical_sz)
         root = _PMR(parcel_type=0, list_type=0, offset=0, entries=entries,
                     header_gap_raw=b"\x00\x00",
-                    tail_raw=bytes(block_total - record_footprint))
+                    tail_raw=bytes(block_total - sub_cursor))
         buf = bytearray([POISON]) * block_total
         parcel_writer.write_parcel_mgmt_record(root, buf)
 
