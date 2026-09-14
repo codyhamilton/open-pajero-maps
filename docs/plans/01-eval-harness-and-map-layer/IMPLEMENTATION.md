@@ -1022,3 +1022,44 @@ uncatalogued `dipid` bits15:14 code (`10`) present on all 6 samples.
 its own mfde table, so unit 13's sibling-leaf division approach isn't missing anything.
 The real open question is folded into `DESIGN.md` section 8 item 1 (amended in place) as
 a WP2/route-planning-layer investigation, not a further WP1 follow-up brief.
+
+**Group 2 (briefs 20+22, envelope calibration / spotcheck missing names) — done, worktree
+branch `worktree-agent-aef9389608cc68603`, integrated.**
+
+Two independent fixes, dispatched together only because their owned paths collided:
+
+1. `parser/kiwiw/divide.py`'s `_shrink_to_fit` drop priority was backwards — dropping
+   roads/backgrounds/names in an order that zeroed out names first under byte-budget
+   pressure, contradicting the module's own stated intent. Reversed to drop roads first,
+   then backgrounds, then names. Root cause of the Sydney/Melbourne level-0 spotcheck FAIL
+   (not a side effect of brief 20 — brief 20 made no selection.json calibration change,
+   since reproducing `output/report.json` needs a full-Australia rebuild, out of scope).
+2. `parser/osm_to_parcel_geometry.py`'s `_handle_node` assigned type_code 0x132 (address
+   level 2/state) to every non-suburb `place=*` node — absent from R's real per-level name
+   census, and (after brief 23's vocab-safety guard landed just before this in Wave A)
+   silently dropped, which is what caused Perth's undiagnosed level-2 place-name gap.
+   Fixed to assign the census-backed 0x134 (308), same as `place=="suburb"` already used.
+   Root-caused and fixed (not left open) via a live `--fixture perth` extraction, verified
+   by a synthetic-PBF regression test.
+
+Tests: 238 passed (36-second scan of both fixes' regression tests plus the full suite).
+Cherry-picked onto master as `aa8f27d`; full suite re-verified post-merge: 238 passed.
+
+**Still open (documented, not fixed, out of scope for this session):** the aggregate
+`envelope` FAIL itself (parcel_count/name_count ratios out of [0.5, 2.0]x at levels
+0/2/4/6/8) needs a `selection.json` admission-rate recalibration validated against a
+full-Australia rebuild + fresh `output/report.json` — recorded in brief 20's amendment.
+
+## Execute run summary — all 4 groups complete
+
+All 6 ad-hoc briefs (19-24), grouped into 4 independent root causes, are now resolved and
+integrated onto master:
+- Group 1 (19+24): fixed — `natural=dune` to `natural=bay` selection swap.
+- Group 2 (20+22): fixed — divide.py drop-order + Perth place type_code; envelope
+  recalibration itself remains open pending a full rebuild.
+- Group 3 (21): resolved by investigation — not a WP1 gap, folded into DESIGN.md section 8.
+- Group 4 (23): fixed — `_make_name_record` returns None on uncensused type codes.
+
+Full suite: 238 passed at final integration. Remaining open items for a future session:
+Perth-class full-Australia container/envelope re-verification, and the envelope admission
+recalibration noted above.
