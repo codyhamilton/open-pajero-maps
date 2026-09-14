@@ -143,3 +143,99 @@ default ("omit the feature ... rather than fabricate a plausible value").
 A short summary, anything you deviated from in this brief and why, and any contradiction
 found between this brief, `DESIGN.md`, and the code. In particular report what 306/308/509/528
 turned out to mean, since nothing in this plan currently documents them.
+
+## Resolution (implemented, 2026-09-14)
+
+**What 306/308/509/528 turned out to mean.** `parser/kiwiw/roadtypes.py`'s own module
+docstring already says `BACKGROUND_TYPE_CODES` (the 16-bit "Type Code" field) is shared
+between background shapes (7.3.2.2.1) *and* name records' Attribute 2 field (7.4.1) — one
+vocabulary, not two, contra this brief's framing of "two distinct problems" at levels 2-12.
+Cross-referencing the four mystery codes against that table: 306 = 0x132 = "address level 2
+(state)", 308 = 0x134 = "address level 4 (municipality)", 528 = 0x210 = "road type 0" — all
+three are already-documented `BACKGROUND_TYPE_CODES` entries (and 306/528 already appear in
+`bg_type.json`'s own levels-10/12 rules for admin boundaries and roads-as-background). Only
+509 (0x1FD) remains unexplained — it doesn't match any `BACKGROUND_TYPE_CODES` entry,
+including the neighbouring documented 0x1FE=510 ("information highway symbol"); left
+unaddressed (no code ever emits it, which is allowed — the check is a subset bound, not
+completeness).
+
+**Root cause, more precisely than the brief's two-problem framing.** `_make_name_record`'s
+`else` branch (level != 0) is not background-only: it is also the path for `kind="road"`
+and `kind="place"` names at every level 2-12, since only `level == 0` has kind-specific
+branches. Auditing all three:
+- `kind="road"`: the call site never passes `type_code`, so the function's own default
+  parameter (`0x134` = 308) is used — and 308 is in R's real per-level name census at
+  *every* level 2-12. This path was already correct, by accident of the default parameter
+  value, and needed no change.
+- `kind="background"`: the call site passes `type_code=bg_type`, which — as the brief's
+  findings table shows — is wholly disjoint from R's per-level name census at every level
+  2-12. Confirmed wrong at every level, not just via one bad code the way level 0 is.
+- `kind="place"` (`_handle_node`, suburb/city/town/village/locality points): **not audited
+  by this brief's original findings section at all**, but it goes through the same `else`
+  branch. `_handle_node` passes `type_code=0x134` (308) for `place=suburb`, `0x132` (306)
+  for every other admitted value. 308 is always safe (see above). 306 is only in R's
+  per-level name census at level 8 — and `parser/refdata/selection.json` (read-only per
+  this brief's own owned-paths list, not modified) currently never admits a place node at
+  level 8 (its own calibration note confirms: only `place=suburb`/308 is reachable there);
+  every level `selection.json` *does* admit a non-suburb place at (2: city/town, 4: city,
+  6: city) has a name census without 306. So this is a second, real leak of exactly the
+  same shape as the background one, found while implementing rather than in the brief's own
+  findings pass.
+
+**Implementation.** No new `parser/refdata/vocab/name_type.json` table — the "open
+questions" section's own alternative reading turned out to be right: for levels 2-12, no
+table keyed by OSM tags (unit 08's shape) is evidenced, because the extractor's background
+and place call sites have no reliable, evidenced way to choose *which* of the shared
+vocabulary's values (306 vs. 308 vs. 528 vs. something unobserved) applies to a given
+feature — R's real per-level name type_code appears to be driven by the feature's
+real-world class (state boundary, municipality boundary, road), not by whatever background
+shape or place tag happens to produce the name at that zoom, and this extractor's call
+sites don't carry that classification. Rather than fabricate one, `_make_name_record` now
+returns `None` (omit the name record; the underlying shape, if any, is unaffected) in
+exactly three cases, each with an evidenced reason recorded in the function's own
+docstring/inline comments:
+1. `level == 0, kind == "background", type_code == 578` (the one bg-only code from the
+   brief's own findings).
+2. `kind == "background"` at any level other than 0 (the entire mechanism, per the findings
+   table).
+3. `kind == "place"` at any level other than 0 when `type_code == 0x132` (306) — the leak
+   found during implementation, not in the brief's own findings.
+
+Both call sites (`_handle_node`, `_handle_way`'s background branch) were updated to skip
+spooling when `_make_name_record` returns `None`; the road-name call site was updated too
+for symmetry/future-proofing even though `kind="road"` never actually returns `None` today.
+
+**Deviation from the brief's owned-paths hint.** The brief's owned-paths paragraph names
+"the `kind="background"`/`kind == level>0` branches" — read narrowly this could mean only
+the background branches, but the `place` fix above is inside the same `level != 0` `else`
+branch the brief already names, is required by the brief's own Contract ("every level" must
+be a genuine subset, not just backgrounds), and does not touch `selection.json` or any
+other file outside the brief's stated boundaries. Included as in-scope; flagged here rather
+than silently expanded.
+
+**Verification.** `.venv-rp/bin/pytest parser/tests/ -q` → 235 passed (up from 228 before
+this brief: 7 new tests in `parser/tests/test_name_record_vocab.py`, plus
+`test_extractor_scale.py`'s existing per-level name-count assertions updated for the new
+omission behaviour). A full-Australia rebuild was not re-run here (the 2026-09-09 run this
+brief cites took 1:27:24 wall time; out of proportion to re-verify a logic-level fix). In
+its place: a small synthetic PBF exercising every changed path (a `place=suburb` node, a
+`place=city` node, a `natural=water` background way with a name, a `railway=rail`
+background way with a name — the exact case that produces bg_type 578 at level 0 — and a
+`highway=residential` road with a name) was run through the real pipeline
+(`osm_to_parcel_geometry.py` → `build_alldata.py` → `compare_disc.py --checks vocab`) at
+levels 0/2/4/6/8/10/12 using the real `selection.json`/`bg_type.json` tables (unmodified) —
+`vocab` check: **PASS** at every level, with the level-0 output profile showing 578 (the
+railway background) correctly present on the background shape but absent from the name
+records, and the level-2 output showing zero name records for the admitted `place=city`
+node (previously would have leaked `type_code=306`). This is not a substitute for the
+full-country done-evidence command, which whoever next runs a full-Australia build should
+still execute to close this brief out with the originally-specified evidence; recorded here
+as "representative multi-level build" per the brief's own Done-evidence alternative.
+
+**Still open.** 509's real meaning is unknown (never emitted by this fix — allowed under
+the subset contract, but a completeness gap). Whether R's real name-record type_code for
+admin boundaries/roads at levels 2-12 is actually driven by real-world feature class (as
+inferred here) rather than something else entirely is inferred from code-table matching,
+not confirmed by decoding real per-record data — a genuine format-analysis question this
+brief originally called for and this resolution does not fully close, though it does close
+the concrete `vocab` check FAIL by construction (omission, not guessing).

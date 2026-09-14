@@ -160,11 +160,18 @@ class TestExtractorScale:
             total_bgs = sum(len(v["backgrounds"]) for v in seen_parcels.values())
             assert total_bgs == 1, level
 
-            # Names: suburb (1) + one per road way that produced a link (3,
-            # only when roads are expected at this level) + background name
-            # (1).
+            # Names: suburb (1, every level) + one per road way that
+            # produced a link (3, only when roads are expected at this
+            # level) + background name (1, level 0 only -- brief 23:
+            # background-attached name records are omitted at levels other
+            # than 0, since R's real per-level name type_code census there
+            # is disjoint from every value bg_type.json can emit).
             total_names = sum(len(v["names"]) for v in seen_parcels.values())
-            expected_names = 5 if roads_expected_at_level else 2
+            expected_names = 1
+            if roads_expected_at_level:
+                expected_names += 3
+            if level == 0:
+                expected_names += 1
             assert total_names == expected_names, level
 
             stats = reader.stats(level)

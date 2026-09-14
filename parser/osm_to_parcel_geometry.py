@@ -532,8 +532,11 @@ def _make_name_record(text: str, lat: float, lon: float,
                       level: int = 0,
                       kind: str = "place",
                       geometry: Optional[list[tuple[float, float]]] = None,
-                      ) -> NameRecord:
-    """Build a synthetic NameRecord for one named feature.
+                      ) -> Optional[NameRecord]:
+    """Build a synthetic NameRecord for one named feature, or ``None`` if
+    no record can be emitted without violating the per-level name
+    type_code vocabulary (docs/plans/01-eval-harness-and-map-layer/briefs/
+    23-vocab-name-type-leak.md; callers must handle ``None``).
 
     ``kind`` is one of "road", "background", "place" and selects the
     level-0 on-disc encoding, per Ch.7.4 and a census of R's real level-0
@@ -553,7 +556,40 @@ def _make_name_record(text: str, lat: float, lon: float,
       type_code = the caller's ``type_code`` (the feature's own background
       type code). Matches R: sampled Brisbane/Hobart level-0 parcels show
       type-6 records for named park features ("PRINCES PARK") carrying
-      type_code=0x141 (321), the park's own background type code.
+      type_code=0x141 (321), the park's own background type code. Exception:
+      type_code=578 (0x242, "very high speed railway / JR line", added to
+      `bg_type.json` by unit 08 after this unit's evidence pass) never
+      appears in R's level-0 `name.type_code_hist` census at all -- brief 23
+      found this is the one bg_type value the "reuse the background's own
+      type code" generalization does not hold for. Returns ``None`` (omit
+      the name record; the background shape itself is unaffected) rather
+      than emit an uncensused value.
+
+    At levels other than 0, background-attached names hit the branch below
+    (not this one). Brief 23's findings show the "reuse the background's
+    own type code" mechanism this branch implements is level-0-specific:
+    R's real per-level `name.type_code_hist` at levels 2-12 ({306, 308,
+    509, 528} -- see brief 23's table) is *disjoint* from every value
+    `bg_type.json` emits at those levels ({288, 289, 290, 291, 321, 322,
+    578, 640, 1024, ...}), so passing `bg_type` through unconditionally
+    the way the old `else` branch did is wrong at every level 2-12, not
+    just for one code the way level 0 is. 306/308/528 are independently
+    explained by `kiwiw/roadtypes.py`'s `BACKGROUND_TYPE_CODES` table
+    (which that module's docstring already says doubles as name records'
+    Attribute 2 field, Ch.7.4.1): 306=0x132 "address level 2 (state)",
+    308=0x134 "address level 4 (municipality)", 528=0x210 "road type 0".
+    That is consistent with names at these levels belonging to
+    administrative-boundary and road features, not to whatever background
+    shape happens to sit under the label point -- but the extractor's
+    background call site has no admin-level classification and no
+    evidenced way to choose 306 vs. 308 vs. 528 for a given background
+    feature (509 is present in the census too and remains completely
+    unexplained -- it does not match any value in `BACKGROUND_TYPE_CODES`,
+    including the neighbouring documented code 0x1FE=510 "information
+    highway symbol"). Per this brief's contract ("prefer omitting a name
+    record entirely ... over emitting one with a type_code that isn't in
+    R's per-level census", unit 08's own precedent), background-attached
+    names at levels other than 0 are omitted rather than fabricated.
     - "place" (suburb/city/town/village/locality point labels with no
       background shape): **not pinned down -- open question, reported per
       the brief.** No level-0 parcel sampled (7 state-capital CBDs from
@@ -569,12 +605,30 @@ def _make_name_record(text: str, lat: float, lon: float,
       (2,203,664 occurrences) that isn't already accounted for by a
       road-type small-integer code or a documented background code, chosen
       by elimination and NOT confirmed against real "place" records.
+
+    At levels other than 0, "place" nodes (`_handle_node`) hit the same
+    branch that road and background names fall through to: `type_code` is
+    whatever the caller passed, unmodified. `_handle_node` passes 0x134
+    (308, suburb) or 0x132 (306, every other admitted `place=` value --
+    currently city/town at level 2, city at levels 4/6 per
+    `selection.json`). 308 is in R's per-level name census at every level
+    2-12 (see brief 23's findings table); 306 is not, at any level
+    `selection.json` currently reaches with a non-suburb place value (it
+    is in the census only at level 8, where `selection.json` admits no
+    place nodes at all). Emitting 306 there would be the same kind of
+    uncensused leak as the background case above, so it is omitted too
+    (see below).
     """
     if level == 0 and kind == "road":
         string_type = 5
         chosen_type_code = 0x210
         angle_deg = _bearing_deg(geometry or [])
     elif level == 0 and kind == "background":
+        if type_code == 578:
+            # 0x242, "very high speed railway / JR line" -- present in
+            # R's level-0 background census but never in its level-0 name
+            # census. See docstring and brief 23.
+            return None
         string_type = 6
         chosen_type_code = type_code
         angle_deg = None
@@ -584,6 +638,25 @@ def _make_name_record(text: str, lat: float, lon: float,
         string_type = 6
         chosen_type_code = 0x120
         angle_deg = None
+    elif kind == "background":
+        # Levels 2-12: the "reuse the background's own type code"
+        # mechanism has no evidence at these levels (see docstring and
+        # brief 23) -- every value bg_type.json can emit there is absent
+        # from R's real per-level name census. Omit rather than fabricate.
+        return None
+    elif kind == "place" and type_code == 0x132:
+        # Levels 2-12, non-suburb place node (_handle_node assigns 0x132
+        # to every place value other than "suburb"): 306 (0x132, "address
+        # level 2 (state)") is in R's per-level name census only at level
+        # 8, and selection.json currently never admits a place node at
+        # level 8 (its own calibration note: only place=suburb, code
+        # 0x134, is ever reachable there) -- so every level currently
+        # capable of emitting a 0x132 place name (2, 4, 6, per
+        # selection.json) has a name census *without* 306 (brief 23's
+        # findings table: L2={308,509,528}, L4={308,509}, L6={308,509}).
+        # Omit rather than emit an uncensused value; revisit if
+        # selection.json ever admits place nodes at level 8.
+        return None
     else:
         string_type = 1
         chosen_type_code = type_code
@@ -694,7 +767,8 @@ class _GeomHandler:
             ix, iy = par
             rec = _make_name_record(name, lat, lon, type_code=type_code,
                                      level=level, kind="place")
-            self.spool.add(level, ix, iy, names=[rec])
+            if rec is not None:
+                self.spool.add(level, ix, iy, names=[rec])
 
     def _handle_way(self, w) -> None:
         self.n_ways += 1
@@ -756,7 +830,8 @@ class _GeomHandler:
                         rec = _make_name_record(name, clat, clon,
                                                  level=level, kind="road",
                                                  geometry=coords)
-                        self.spool.add(level, nix, niy, names=[rec])
+                        if rec is not None:
+                            self.spool.add(level, nix, niy, names=[rec])
                 continue
 
             # Background way (ring is not None: checked above for every
@@ -775,7 +850,8 @@ class _GeomHandler:
             if name:
                 rec = _make_name_record(name, clat, clon, type_code=bg_type,
                                          level=level, kind="background")
-                self.spool.add(level, ix, iy, names=[rec])
+                if rec is not None:
+                    self.spool.add(level, ix, iy, names=[rec])
 
 
 # ---------------------------------------------------------------------------
