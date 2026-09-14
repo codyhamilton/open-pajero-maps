@@ -930,3 +930,26 @@ the brief's three cases. 181 tests passing at commit time.
    inferred `lookup(level, osm_way_id, ordinal) -> Optional[int]` and
    `items() -> Iterator[((level, osm_way_id, ordinal), link_id)]` sorted by
    key — noted in case a consuming unit expects something different.
+
+## Execute run — ad-hoc briefs 19–24 (WP1 15b follow-up)
+
+## Run
+- Tool: Claude Code
+- Session/Run ID or session URL: https://claude.ai/code/session_01DhkvFw9N65esECHikEbfuP
+- Started: 2026-09-14T00:00:00Z
+
+Grouped the 6 ad-hoc briefs into 4 independent root causes per their overlapping owned
+paths / shared symptom:
+
+1. **Dune-drop / background-selection consistency** (briefs 19+24) — same root cause,
+   both own `selection.json`/`bg_type.json`/README.
+2. **Envelope calibration / spotcheck missing names** (briefs 20+22) — same territory
+   (divide.py capacity/calibration machinery), brief 22 explicitly gated on 20.
+3. **mfde entry-count generation gap** (brief 21) — format-analysis skewed, disjoint
+   files (divide.py/synth.py), no owned paths pre-assigned.
+4. **Vocab name-type leak at levels 2-12** (brief 23) — format-analysis skewed, disjoint
+   files (new name_type.json + osm_to_parcel_geometry.py's _make_name_record).
+
+Dispatch order: Wave A = groups 1, 3, 4 in parallel (disjoint owned-path surfaces).
+Wave B = group 2 alone, after Wave A lands on master (its likely paths — selection.json,
+divide.py, osm_to_parcel_geometry.py — overlap all three Wave A groups).
