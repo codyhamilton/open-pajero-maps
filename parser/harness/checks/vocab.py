@@ -51,7 +51,12 @@ def _run_vocab(ctx) -> CheckResult:
     offenders: dict = {}
     string_type_1_at_level_0 = False
 
-    for level_str, g_level_data in g_levels.items():
+    # Iterate the union of R's and G's levels, not just G's -- see
+    # envelope.py's identical fix and docs/design/target-disc.md's map
+    # layer row ("harness level-iteration gap").
+    all_level_strs = sorted(set(ref_levels) | set(g_levels), key=int)
+    for level_str in all_level_strs:
+        g_level_data = g_levels.get(level_str, {})
         ref_level_data = ref_levels.get(level_str)
         level_offenders: dict = {}
         for field_name, path in _VOCAB_FIELDS:
