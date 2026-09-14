@@ -60,6 +60,34 @@ def test_pipeline_writes_output_and_manifest(tmp_path):
     assert manifest["layers_present"] == ["map"]
 
 
+def test_background_mfde_slot_always_in_buffer(tmp_path):
+    """DESIGN.md section 4 / mfde index 1: `R` never emits `absent` for the
+    background sub-frame, even when a parcel has zero background shapes --
+    `_encode_one()` must call `build_background_frame_bytes()`
+    unconditionally (a real bug: it used to skip the call, and thus emit
+    the absent sentinel, whenever a parcel's `backgrounds` list was empty --
+    the 2026-09-09 full-Australia build's mfde entry-index-1 discrepancy).
+    This fixture's spool has names only, no backgrounds, at every cell."""
+    from harness.profile import generated_profile
+
+    spool_dir = tmp_path / "spool"
+    _make_spool(spool_dir)
+
+    out_path = tmp_path / "out" / "ALLDATA.KWI"
+    rc = build_alldata.run(
+        spool_dir=str(spool_dir), out_path=str(out_path), levels=[0],
+        fixture=None, disk_title="TEST",
+    )
+    assert rc == 0
+
+    profile = generated_profile(str(out_path))
+    idx1_classes = profile["levels"]["0"]["mfde"]["per_entry_index_class_hist"]["1"]
+    assert idx1_classes.get("absent", 0) == 0, (
+        "mfde index 1 (background) must never be absent, even with zero "
+        f"background shapes -- got {idx1_classes}")
+    assert idx1_classes.get("in_buffer", 0) == 3
+
+
 def test_missing_spool_exits_nonzero(tmp_path):
     missing = tmp_path / "does-not-exist"
     out_path = tmp_path / "out" / "ALLDATA.KWI"

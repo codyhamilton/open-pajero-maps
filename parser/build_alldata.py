@@ -132,7 +132,16 @@ def _encode_one(level: int, ix: int, iy: int, bounds, content: dict) -> bytes:
     names = content.get("names") or []
 
     road_bytes = synth.build_road_frame_bytes(roads, bounds) if roads else None
-    bg_bytes = synth.build_background_frame_bytes(bgs, bounds) if bgs else None
+    # DESIGN.md section 4 / mfde index 1: `R` carries a background sub-frame
+    # (in_buffer) at 100% of parcels, every level -- never absent, even for
+    # a parcel with zero background shapes (`build_background_frame_bytes`
+    # returns a 2-byte minimal-empty frame for `shapes=[]`, matching
+    # `test_synth_map_frame.py`'s `_fixture_bg_bytes()`/
+    # `test_absent_slot_sentinel_when_no_content`). Unlike road/name (which
+    # really are legitimately absent on `R` when a parcel has no such
+    # content -- DESIGN.md indices 0/2), background must always be called
+    # unconditionally here, not gated behind `if bgs`.
+    bg_bytes = synth.build_background_frame_bytes(bgs, bounds)
     # Amendment (post-11, orchestrator): `level=` must be passed
     # explicitly -- omitting it silently reverts to the legacy
     # type-1-only string path instead of unit 11's type-5/6 encoding.
