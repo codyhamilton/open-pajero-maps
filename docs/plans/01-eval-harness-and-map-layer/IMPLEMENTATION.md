@@ -977,3 +977,29 @@ Tests: new `parser/tests/test_name_record_vocab.py` (7 tests) + updated
 pipeline run (small synthetic multi-level PBF) — `vocab` check PASS at levels 0/2/4/6/8/10/12.
 Did not re-run the full-Australia build (1h27m); flagged as outstanding follow-up in the
 brief's own amendment.
+
+**Group 1 (briefs 19+24, dune-drop / background-selection consistency) — done, worktree
+branch `worktree-agent-a8d93074c8cf22927`, not yet integrated.**
+
+Fix: `selection.json`'s levels-10/12 `background` predicate changed from `natural=dune`
+(silently unmappable — 0 content spooled, the dune-drop bug) to `natural=bay` (26 ways
+nationally vs. R's `shape_count=25`, 1.04x — already covered by `bg_type.json`'s existing
+`289` rule, no vocab-table change needed). `bg_type.json` itself intentionally left
+unchanged — no catch-all added, since R has no catch-all-shaped code at these levels to
+anchor one (per brief 24's own instruction not to force an unreferenced value). Added a
+regression test asserting every `selection.json` background predicate maps to a non-null
+`bg_type.json` value at its level.
+
+Structural finding (amended into both briefs): `boundary=administrative`+`admin_level=4`
+(the `306` code some briefs expected as a selection target) is unreachable from way-level
+OSM tags in this dataset at all — Australian state boundaries are relation-tagged, and the
+extractor only reads way-level tags for multi-polygon outer rings; a national scan found
+zero ways anywhere carry `admin_level=4`.
+
+Tests: 229 passed. Dry-run calibration (real PBF, counting mode) confirms both levels at
+26 vs R's 25 (in_range). Brief 19's FAIL (PDMDH blob-length) confirmed fixed **by
+mechanism** via a local `--fixture perth --levels 10 12` build (level 12 goes from
+zero-content to 2 parcels/5,382 bytes, `has_bmt` now includes that blockset) — not
+confirmed by an actual full-Australia byte-level container check against R (not run:
+~87min/~21GB, worktree only had ~27GB free). Flagged as outstanding follow-up for whoever
+next runs a full build.
