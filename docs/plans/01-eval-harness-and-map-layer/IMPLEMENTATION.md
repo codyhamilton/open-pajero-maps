@@ -1003,3 +1003,22 @@ zero-content to 2 parcels/5,382 bytes, `has_bmt` now includes that blockset) —
 confirmed by an actual full-Australia byte-level container check against R (not run:
 ~87min/~21GB, worktree only had ~27GB free). Flagged as outstanding follow-up for whoever
 next runs a full build.
+
+**Group 3 (brief 21, mfde entry-count generation gap) — done, worktree branch
+`worktree-agent-a75782051787d87a0`, not yet integrated. No code change (correctly, per
+the brief's own scope).**
+
+Reference disc was available (mounted); this was a full format spike. Sampled 6 real
+level-0 R parcels with 21-24 mfde entries. Both of the brief's hypotheses were ruled out:
+not the parcel's own division (its `dipid` decodes as not-divided), and the >20 entries
+resolve to ordinary, coherent Map Frames at whole separate grid cells 4 cell-widths from
+the parent — not sub-tiles of the parent's own footprint. Best-supported third reading:
+indices 12+ are one contiguous run (merging with the already-known DESIGN.md section 8
+item 1 finding), plausibly Ch.7.1.1's "Adjacent Parcel Address Information" at a coarser
+4-parcel stride, unrelated to whether the parcel itself was divided. Found a previously
+uncatalogued `dipid` bits15:14 code (`10`) present on all 6 samples.
+
+**Conclusion: not a WP1 gap.** No evidence R ever inlines a divided parcel's children into
+its own mfde table, so unit 13's sibling-leaf division approach isn't missing anything.
+The real open question is folded into `DESIGN.md` section 8 item 1 (amended in place) as
+a WP2/route-planning-layer investigation, not a further WP1 follow-up brief.
