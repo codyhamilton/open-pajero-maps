@@ -953,3 +953,27 @@ paths / shared symptom:
 Dispatch order: Wave A = groups 1, 3, 4 in parallel (disjoint owned-path surfaces).
 Wave B = group 2 alone, after Wave A lands on master (its likely paths — selection.json,
 divide.py, osm_to_parcel_geometry.py — overlap all three Wave A groups).
+
+**Group 4 (brief 23, vocab name-type leak) — done, worktree branch `worktree-agent-ad97279a557b56a6e`, not yet integrated.**
+
+Root cause: `_make_name_record`'s `level != 0` branch passed through whatever `type_code`
+the caller gave unconditionally, leaking uncensused values into name records at levels
+2-12 from two call sites (background-attached names passing raw `bg_type`; place nodes in
+`_handle_node` passing `0x132`/306 at levels 2/4/6) plus one level-0 case (railway 578,
+on R's background census but not its name census). Also found: `roadtypes.py`'s own
+docstring already documents `BACKGROUND_TYPE_CODES` as one shared vocabulary between
+background shapes and name records (Ch.7.4.1) — contradicts the brief's "two distinct
+problems" framing; amended in the brief. 306/308/528 are already documented codes
+(address-level-2/4, road-type-0); 509 remains unexplained (never emitted, so no violation,
+just an open completeness gap).
+
+Fix: no new vocab table — per the brief's own contract, `_make_name_record` returns `None`
+in the three uncensused cases and both call sites skip spooling on `None`, rather than
+fabricating a mapping. `kind="road"`'s existing default (308) was already valid at every
+level and is untouched.
+
+Tests: new `parser/tests/test_name_record_vocab.py` (7 tests) + updated
+`test_extractor_scale.py` expectations — full suite 235 passed. Verified against a real
+pipeline run (small synthetic multi-level PBF) — `vocab` check PASS at levels 0/2/4/6/8/10/12.
+Did not re-run the full-Australia build (1h27m); flagged as outstanding follow-up in the
+brief's own amendment.
