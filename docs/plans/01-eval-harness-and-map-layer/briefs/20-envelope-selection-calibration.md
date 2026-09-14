@@ -85,6 +85,61 @@ reasons:
    restructuring (e.g. decoupling `divide.py`'s split threshold from raw content volume,
    or a real name-count-aware calibration pass), needs the missing report.json data.
 
+## Amendment (implementation worker, this session): overshoot hypothesis contradicted
+
+The "expected shape of the failure" reasoning above (overshoot on `parcel_count`/
+`name_count`, built from unit 14's levels-4/8-near-ceiling notes) is contradicted by
+`docs/design/target-disc.md`'s own "Capacity accounting" section (not the `ALLDATA.KWI`
+map layer row this brief's Required Reading item 1 points at — a different section
+further down the same file, added in the same commit, `eda5c09`, that recorded the
+envelope FAIL): "unit 14's per-level selection thinning ... kept the whole build small,
+**at the cost of the envelope/spotcheck deviations** ... (**fewer parcels/names selected
+than R** at several levels)". That is an explicit, contemporaneous (written with the real
+`output/report.json` in hand, before it was deleted as regenerable) claim of *undershoot*,
+not overshoot — the opposite direction from this brief's hypothesis. This brief's own
+required reading list did not point the original investigation at that section, so the
+contradiction was never surfaced there.
+
+Undershoot is also the shape brief 22
+(`docs/plans/01-eval-harness-and-map-layer/briefs/22-spotcheck-missing-names.md`)
+independently found for the Sydney/Melbourne `spotcheck` FAIL: `divide.py`'s
+`_shrink_to_fit` lossy fallback was dropping `NameRecord`s to zero under a tight byte
+budget (roads kept first, names dropped first) in the handful of cells it triggers on.
+Both findings point the same direction — selection.json's per-level thinning (unit 14)
+and divide.py's drop order (unit 13) both *remove* content relative to R, not add it —
+which is consistent with `target-disc.md`'s "fewer parcels/names selected than R" and
+inconsistent with this brief's "an overshoot ... is the expected shape" paragraph above.
+
+**Resolution taken this session:** `divide.py`'s `_shrink_to_fit` drop order was fixed
+(roads now dropped first, names/backgrounds preserved preferentially — see brief 22 and
+`parser/kiwiw/divide.py`'s updated docstring) as a bounded, low-risk correction that is
+undershoot-shaped and therefore points the right direction for this brief's failure too.
+Separately (also brief 22, same session), Perth's level-2 `spotcheck` place-name gap was
+diagnosed and fixed: `_handle_node` was assigning a name-record type_code (0x132, 306)
+that R's real per-level name census never contains at any level `selection.json`
+currently admits a place node at, so brief 23's (correctly evidenced) vocab fix then
+dropped it as uncensused -- `_handle_node` now assigns the census-backed code (0x134,
+308) to every admitted place value, verified against a live `--fixture perth` re-run of
+the real PBF and a new unit test (`parser/tests/test_name_record_vocab.py::
+test_handle_node_assigns_308_to_nonsuburb_place`). This is also undershoot-shaped
+(a name that should exist was never emitted) and is further evidence for this brief's
+corrected direction, though it is a `name.type_code` vocabulary bug (unit 08/brief 23's
+territory), not a `selection.json` admission-list or `divide.py` capacity issue -- it
+would not by itself explain the aggregate `parcel_count`/`name_count` envelope ratios
+this brief tracks, only Perth's specific missing record.
+This is **not** a `selection.json` calibration change and does not by itself close the
+gap: `_shrink_to_fit` only fires on the ~5 cells (of hundreds of thousands) that still
+exceed the format's hard 131,070-byte ceiling after 4x4 division per the 2026-09-09 build
+log, so its effect on aggregate per-level `parcel_count`/`name_count` ratios (summed
+across every cell at a level) is expected to be small, not a full fix. The broader
+per-level thinning `target-disc.md` describes as the primary driver still requires
+`selection.json` changes that this brief's own "Why this is a brief" analysis correctly
+identifies as needing exact `report.json` numbers to calibrate safely — that constraint
+is unchanged by this amendment, only the *direction* (loosen admission, not thin it
+further) is now better evidenced. No `output/report.json` was reproduced this session
+(no full-Australia re-run was attempted — 33+6 minutes wall clock, explicitly out of
+scope per this brief's own text); the open questions below stand.
+
 ## Required reading, in order
 
 1. `docs/design/target-disc.md` — the `ALLDATA.KWI` map layer row (search "envelope").

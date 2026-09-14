@@ -192,9 +192,18 @@ def _shrink_to_fit(encode: EncodeFn, level: int, ix: int, iy: int,
     encoded even at the largest division this module implements (type 2) --
     see module docstring's "Deviation found during the Perth fixture's
     done-evidence build". Bisects the combined road-chain+background+name
-    item count until `encode()` stops raising, discarding the tail (roads
-    first, since a fixture cell this far over the ceiling is typically
-    road-chain-dominated -- see the level-8 case in this unit's report).
+    item count until `encode()` stops raising, discarding roads first (a
+    fixture cell this far over the ceiling is typically road-chain-dominated
+    -- see the level-8 case in this unit's report), then backgrounds, and
+    only then names -- names are kept preferentially because they are the
+    smallest, highest-value-per-byte class (a dropped `NameRecord` fails
+    `spotcheck`'s fixture contract outright, whereas the corresponding road
+    geometry going missing from an already-lossy, five-cells-out-of-hundreds
+    of thousands fallback is a softer degradation). See brief 22
+    (`docs/plans/01-eval-harness-and-map-layer/briefs/22-spotcheck-missing-names.md`)
+    -- this ordering was previously roads-preserved-first/names-dropped-first,
+    which is what caused Sydney/Melbourne level-0 `spotcheck` FAILs; the
+    ordering below is the fix.
     Returns `(frame_bytes, n_items_dropped)`; raises the original
     `ValueError` if even a single item still doesn't fit (nothing left to
     shrink)."""
@@ -204,11 +213,16 @@ def _shrink_to_fit(encode: EncodeFn, level: int, ix: int, iy: int,
     total = len(roads) + len(bgs) + len(names)
 
     def _attempt(keep: int) -> bytes | None:
-        keep_roads = roads[:keep] if keep <= len(roads) else roads
-        remaining = max(0, keep - len(roads))
+        # Drop priority (lowest priority first): roads, then backgrounds,
+        # then names. `keep` items are kept starting from the *end* of this
+        # priority order (names first, then backgrounds, then whatever
+        # budget remains for roads) so names and backgrounds survive a tight
+        # budget preferentially over road geometry.
+        keep_names = names[:keep] if keep <= len(names) else names
+        remaining = max(0, keep - len(names))
         keep_bgs = bgs[:remaining] if remaining <= len(bgs) else bgs
         remaining = max(0, remaining - len(bgs))
-        keep_names = names[:remaining]
+        keep_roads = roads[:remaining]
         trial = dict(content, roads=keep_roads, backgrounds=keep_bgs, names=keep_names)
         return _try_encode(encode, level, ix, iy, bounds, trial)
 

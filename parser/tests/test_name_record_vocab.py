@@ -20,7 +20,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from osm_to_parcel_geometry import _make_name_record  # noqa: E402
+from osm_to_parcel_geometry import (  # noqa: E402
+    TileGrid,
+    _make_name_record,
+    extract_parcel_geometry,
+)
+from kiwiw.spool import SpoolReader, SpoolWriter  # noqa: E402
 
 PROFILE_PATH = (
     Path(__file__).resolve().parent.parent / "refdata" / "profile" / "map.json"
@@ -69,12 +74,20 @@ def test_levels_2_to_12_background_names_are_omitted():
 
 
 def test_levels_2_to_12_nonsuburb_place_names_are_omitted():
-    """_handle_node assigns type_code=0x132 (306) to every admitted
-    place= value other than 'suburb' (city/town at level 2, city at
-    levels 4/6, per selection.json). 306 is absent from R's real name
-    census at every level selection.json currently reaches with a
-    non-suburb place -- it is only present at level 8, which
-    selection.json never admits place nodes at."""
+    """`_make_name_record` still rejects an 0x132 (306, "address level 2
+    (state)") place-kind type_code at every level 2-12 as a defensive
+    no-op -- 306 is absent from R's real name census at every level
+    selection.json currently admits a place node at (2/4/6: only 3
+    occurrences at level 8, where selection.json admits no place nodes at
+    all). As of brief 22
+    (docs/plans/01-eval-harness-and-map-layer/briefs/
+    22-spotcheck-missing-names.md), `_handle_node` itself no longer ever
+    passes 0x132 -- it was found to be the root cause of the Perth
+    level-2 `spotcheck` FAIL (place=city nodes silently dropped here) and
+    was changed to always pass 0x134 (308) instead, see
+    `test_handle_node_assigns_308_to_nonsuburb_place` below. This test
+    exercises `_make_name_record`'s own guard directly, independent of
+    what any caller currently passes."""
     for level in (2, 4, 6, 10, 12):
         rec = _make_name_record("PERTH", -27.0, 153.0, type_code=0x132,
                                  level=level, kind="place")
@@ -101,3 +114,38 @@ def test_levels_2_to_12_road_names_unaffected():
         assert rec is not None
         assert rec.type_code == 0x134 == 308
         assert 308 in _profile_name_type_codes(level)
+
+
+def test_handle_node_assigns_308_to_nonsuburb_place(tmp_path):
+    """End-to-end regression for brief 22
+    (docs/plans/01-eval-harness-and-map-layer/briefs/
+    22-spotcheck-missing-names.md): a real `place=city` OSM node (like
+    Perth's) run through the actual extractor (`_handle_node`, via
+    `extract_parcel_geometry` with the real `selection.json`-backed
+    level_filter, not the test-only `_default_level_filter`) must produce
+    a `NameRecord` with type_code=308 at level 2 -- not be silently
+    dropped the way 0x132 (306) was before this fix."""
+    import osmium
+    from osmium.osm.mutable import Node
+
+    pbf_path = tmp_path / "city_node.osm.pbf"
+    writer = osmium.SimpleWriter(str(pbf_path))
+    try:
+        writer.add_node(Node(
+            id=1, location=(115.8605784, -31.9558967),
+            tags={"place": "city", "name": "Test City"},
+        ))
+    finally:
+        writer.close()
+
+    grids = {2: TileGrid.from_reference(2)}
+    spool_dir = tmp_path / "spool"
+    spool_writer = SpoolWriter(spool_dir, flush_threshold=1)
+    extract_parcel_geometry(str(pbf_path), grids, spool_writer, verbose=False)
+
+    reader = SpoolReader(spool_dir)
+    names = [n for _ix, _iy, content in reader.iter_level(2) for n in content["names"]]
+    matches = [n for n in names if n.text == "Test City"]
+    assert len(matches) == 1, names
+    assert matches[0].type_code == 308
+    assert 308 in _profile_name_type_codes(2)

@@ -608,16 +608,23 @@ def _make_name_record(text: str, lat: float, lon: float,
 
     At levels other than 0, "place" nodes (`_handle_node`) hit the same
     branch that road and background names fall through to: `type_code` is
-    whatever the caller passed, unmodified. `_handle_node` passes 0x134
-    (308, suburb) or 0x132 (306, every other admitted `place=` value --
-    currently city/town at level 2, city at levels 4/6 per
-    `selection.json`). 308 is in R's per-level name census at every level
-    2-12 (see brief 23's findings table); 306 is not, at any level
-    `selection.json` currently reaches with a non-suburb place value (it
-    is in the census only at level 8, where `selection.json` admits no
-    place nodes at all). Emitting 306 there would be the same kind of
-    uncensused leak as the background case above, so it is omitted too
-    (see below).
+    whatever the caller passed, unmodified. As of brief 22
+    (docs/plans/01-eval-harness-and-map-layer/briefs/
+    22-spotcheck-missing-names.md), `_handle_node` always passes 0x134
+    (308, "address level 4 (municipality)") for every admitted `place=`
+    value, not just "suburb" -- 308 is in R's per-level name census at
+    every level `selection.json` currently admits a place node (2, 4, 6:
+    10200/532/454 occurrences, `parser/refdata/profile/map.json`), and
+    0x132 (306, "address level 2 (state)") is not, at any of those levels
+    (only 3 occurrences at level 8, where `selection.json` admits no place
+    nodes at all, vs. 206 of 308 at that same level). Previously
+    `_handle_node` passed 0x132 for every non-suburb place value (Perth's
+    `place=city` among them), which the branch below correctly drops as
+    uncensused -- that was traced as the root cause of the Sydney/
+    Melbourne-adjacent Perth level-2 `spotcheck` FAIL (brief 22): Perth's
+    "city" label was never emitted at all. The `type_code == 0x132` branch
+    below is kept as a defensive no-op (this call site no longer produces
+    0x132, but nothing else guarantees that) rather than removed.
     """
     if level == 0 and kind == "road":
         string_type = 5
@@ -757,7 +764,26 @@ class _GeomHandler:
             return
         tags_dict = dict(tags)
         lat, lon = n.location.lat, n.location.lon
-        type_code = 0x134 if place == "suburb" else 0x132
+        # 0x134 (308, "address level 4 (municipality)") for every admitted
+        # place value, not just "suburb" -- R's real per-level name
+        # type_code census (parser/refdata/profile/map.json) has 308 at
+        # every level selection.json currently admits a place node (2, 4,
+        # 6: 10200/532/454 occurrences) and 0x132 (306, "address level 2
+        # (state)") nowhere in that set (only 3 occurrences at level 8,
+        # which currently admits no place value at all, vs. 206 of 308 at
+        # that same level). Brief 22
+        # (docs/plans/01-eval-harness-and-map-layer/briefs/
+        # 22-spotcheck-missing-names.md) traced Perth's level-2 spotcheck
+        # FAIL to this: place=city was assigned 0x132, which brief 23's
+        # fix (parser/osm_to_parcel_geometry.py's _make_name_record,
+        # kind=="place" and type_code==0x132 branch) then correctly
+        # dropped as an uncensused value -- so Perth's city label was
+        # never emitted at level 2. Using 0x134 unconditionally is the
+        # census-evidenced code, not a guess: it was already what
+        # place=="suburb" used, and it is also what R actually assigns to
+        # place=city/town/village/locality at every level that carries a
+        # place-node census.
+        type_code = 0x134
         for level, grid in self.grids.items():
             if not self.level_filter(level, tags_dict):
                 continue

@@ -115,7 +115,77 @@ Confirming either requires re-running the extractor+build against a PBF (33+6 mi
 clock per unit 15b's own timing table) and inspecting the real spool/output directly — this
 investigation did not have that data or the time budget to reproduce it.
 
-## Open question for whoever picks this up
+## Amendment (implementation worker, this session): both findings resolved
+
+**Collision check (per this brief's own instruction):** the envelope-check investigation
+(brief 20, `docs/plans/01-eval-harness-and-map-layer/briefs/
+20-envelope-selection-calibration.md`) was checked before starting work here, in the
+same session. It made no `selection.json` calibration change (its own conclusion:
+`output/report.json` is not reproducible without a full-Australia re-run, out of scope)
+and no other change to `divide.py`/`osm_to_parcel_geometry.py` beyond what this brief's
+own fix touches (see brief 20's Amendment). No collision.
+
+**Sydney/Melbourne (`divide.py`'s lossy fallback, drop order): fixed.** `_shrink_to_fit`'s
+`_attempt()` helper previously kept roads first, backgrounds second, and only whatever
+budget remained for names -- so a tight budget (the 5 warned cells at levels 8/0 in the
+2026-09-09 build) truncated names to zero first. This was the reverse of the module's own
+stated intent ("discarding the tail (roads first...)" -- the old code actually discarded
+names first, roads last; a docstring/code mismatch). Fixed by reordering the bisection to
+keep names first, backgrounds second, and roads last (`parser/kiwiw/divide.py`,
+`_shrink_to_fit`) -- consistent with the docstring's original "road-chain-dominated cells,
+drop roads first" intent, and with `NameRecord`s being the highest-value-per-byte content
+(a dropped name fails `spotcheck`'s fixture contract outright). Verified with a new unit
+test, `parser/tests/test_divide.py::test_shrink_to_fit_preserves_names_and_backgrounds_over_roads`
+(a synthetic 30-road/3-background/2-name cell under a 10-item budget: previously would
+have dropped both names and one background; now drops only 25 of 30 roads, both names and
+all backgrounds survive intact). This investigation could not confirm from inside this
+worktree that Sydney's/Melbourne's specific level-0 cells were among the five warned
+cells in the 2026-09-09 build (same constraint as before: no PBF/spool/logs from that
+exact run are present) -- the fix addresses the mechanism `_shrink_to_fit` implements
+regardless of which specific cells triggered it, and does not require confirming that to
+be correct or safe (it strictly improves name/background survival under the same budget,
+never regresses it, per the test above).
+
+**Perth level-2 place name: root cause found and fixed.** A live re-run this session --
+`osm_to_parcel_geometry.py --fixture perth --levels 2` against the real
+`australia-260824.osm.pbf` (present in the main repo checkout, `/home/codyh/workspace/
+open-pajero-maps/australia-260824.osm.pbf`, not copied into this worktree but reachable
+by absolute path) -- confirmed the mechanism the "Open question" section below predicted:
+before this fix, no name record containing "Perth" existed anywhere in the level-2 spool
+output at all (verified by iterating the real `SpoolReader` output for cell (206, 216),
+the same cell this investigation computed by hand). Root cause: `_handle_node`
+(`parser/osm_to_parcel_geometry.py`) assigned type_code 0x134 (308) only to
+`place=suburb` nodes and 0x132 (306, "address level 2 (state)") to every other admitted
+`place=` value (city/town/village/locality) -- and brief 23's fix (landed just before
+this session, `5fba981`), correctly evidenced from `parser/refdata/profile/map.json`'s
+real per-level name census, made `_make_name_record` drop any place-kind record carrying
+0x132 as an uncensused value at every level 2-12. Perth is `place=city`, so it was
+assigned 0x132 and then silently dropped -- brief 23's vocab fix and this spotcheck FAIL
+are the same root cause, landing back to back. The actual census data
+(`parser/refdata/profile/map.json`) shows 308 present at levels 2/4/6 (10200/532/454
+occurrences) and never 306 there (306 has only 3 occurrences, at level 8, where
+`selection.json` currently admits no place nodes regardless) -- so 308 is the
+evidence-backed code for *every* admitted place value, not just suburb. Fixed by changing
+`_handle_node` to always assign 0x134 (`parser/osm_to_parcel_geometry.py`). Verified:
+(1) the same live Perth-fixture re-run after the fix now produces exactly one name record
+for "Perth" in cell (206, 216), type_code=308; (2) a new end-to-end unit test,
+`parser/tests/test_name_record_vocab.py::test_handle_node_assigns_308_to_nonsuburb_place`,
+builds a synthetic `place=city` OSM node and runs it through the real
+`extract_parcel_geometry` + `selection.json`-backed level filter, asserting the resulting
+record's type_code is 308 and that 308 is in R's real level-2 census. The existing
+`test_levels_2_to_12_nonsuburb_place_names_are_omitted` test (which pins
+`_make_name_record`'s 0x132 guard) was kept and its docstring updated to note it now
+tests defensive behavior only -- no caller currently produces 0x132 for a place record.
+
+No `selection.json` change was made for either finding; both fixes are in
+`parser/kiwiw/divide.py` and `parser/osm_to_parcel_geometry.py`. Neither fix required or
+performed a full-Australia re-run -- the Perth diagnosis used a `--fixture perth`
+scoped extraction (a few minutes, one pass over the PBF, no `build_alldata.py` assembly
+stage needed since the spool content itself already answers the question), and the
+Sydney/Melbourne fix was verified with a synthetic unit test rather than reproducing the
+specific warned cells.
+
+## Open question for whoever picks this up (superseded by the Amendment above)
 
 Coordinate with whoever is fixing the envelope check's capacity/calibration findings before
 choosing a fix direction for the Sydney/Melbourne piece — the two most plausible fixes

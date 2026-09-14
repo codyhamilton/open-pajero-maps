@@ -204,3 +204,61 @@ def test_oversize_after_type2_does_not_crash():
     levels = {LEVEL: aw.LevelBuild(level=LEVEL, parcels=[])}
     data = aw.build_alldata_kwi(levels, grid, disk_title="TEST", divided={LEVEL: out})
     assert isinstance(data, (bytes, bytearray))
+
+
+# ---------------------------------------------------------------------------
+# 6. `_shrink_to_fit()` drop order: names/backgrounds preserved over roads
+# ---------------------------------------------------------------------------
+
+def _size_capped_encode(max_items: int):
+    """A fake `encode()` whose only notion of "size" is the combined
+    road+background+name item count in `content` -- returns a byte string
+    whose length equals that count if <= `max_items`, else raises
+    `ValueError` (mirrors `synth.build_map_frame_bytes()`'s hard-ceiling
+    `ValueError` on oversize content, without needing real synth-encodable
+    road/background/name objects -- `_shrink_to_fit()` only ever slices the
+    content lists, it never inspects the items themselves)."""
+    def _encode_capped(level, ix, iy, bounds, content):
+        n = (len(content.get("roads") or [])
+             + len(content.get("backgrounds") or [])
+             + len(content.get("names") or []))
+        if n > max_items:
+            raise ValueError(f"{n} items exceeds cap {max_items}")
+        return b"x" * max(n, 1)
+    return _encode_capped
+
+
+def test_shrink_to_fit_preserves_names_and_backgrounds_over_roads():
+    # 30 roads (the dominant class, as in the real Sydney/Melbourne
+    # road-chain-dominated cells brief 22 traced this to), plus a handful of
+    # backgrounds and names -- budget only large enough for the
+    # non-road content plus a few roads.
+    content = {
+        "roads": [f"road{i}" for i in range(30)],
+        "backgrounds": [f"bg{i}" for i in range(3)],
+        "names": [f"name{i}" for i in range(2)],
+    }
+    encode = _size_capped_encode(max_items=10)
+
+    frame_bytes, dropped = divide._shrink_to_fit(
+        encode, LEVEL, _IX, _IY, _BOUNDS, content)
+
+    assert dropped == 30 + 3 + 2 - 10
+    # Re-derive what was kept the same way `_shrink_to_fit()` does, to
+    # confirm names and backgrounds both survived in full and only roads
+    # were truncated -- this is the brief-22 fix: previously roads were
+    # preserved first and names were the first thing dropped to zero.
+    assert len(frame_bytes) == 10
+    # With keep=10: all 2 names + all 3 backgrounds + 5 of 30 roads.
+    # Directly exercise _attempt-equivalent slicing via a second capped
+    # encode that only succeeds when names/backgrounds are intact.
+    def _assert_names_bgs_intact(level, ix, iy, bounds, c):
+        assert len(c.get("names") or []) == 2, "a name was dropped before roads"
+        assert len(c.get("backgrounds") or []) == 3, "a background was dropped before all roads"
+        n = len(c.get("roads") or []) + len(c.get("backgrounds") or []) + len(c.get("names") or [])
+        if n > 10:
+            raise ValueError("still oversize")
+        return b"x" * n
+    frame_bytes2, dropped2 = divide._shrink_to_fit(
+        _assert_names_bgs_intact, LEVEL, _IX, _IY, _BOUNDS, content)
+    assert dropped2 == 25  # only roads dropped (30 -> 5)
