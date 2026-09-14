@@ -210,6 +210,74 @@ code available at this zoom) and `306` (`boundary=administrative` +
 `admin_level=4`); everything else is omitted (`default: null`) at these
 levels.
 
+**Levels 10/12 addendum (brief 24, ad hoc): selection/vocab consistency,
+and a structural finding on `306`.** Unit 14's original `selection.json`
+levels-10/12 rule admitted `natural=dune` as the only background
+candidate, chosen purely because its national way count (38, ratio
+1.52x against R's `shape_count=25`) fell inside the harness's
+`count_ratio` envelope — without checking that this table can ever map
+`natural=dune` to anything. It can't: no natural/vegetation code exists
+in R's real level-10/12 census at all (`{289, 306, 528}` only, see
+above), and this table's `[10, 12]` range has no catch-all (unlike
+`[0, 0]`/`[2, 8]`), so every `natural=dune` way resolved to `bg_type=None`
+and was dropped before `spool.add` — levels 10/12 spooled **zero**
+background content despite selection admitting 38 candidate ways per
+build. This was traced (see `docs/plans/01-eval-harness-and-map-layer/
+briefs/19-container-pdmdh-blob-tail.md`) as the root cause of a
+downstream container-check FAIL: zero content at these levels means
+`alldata_writer.py` never places a block for their blocksets, so no
+Block Management Table is built for them, so the generated PDMDH blob
+comes out shorter than R's by exactly the size of R's real BMT tables
+there.
+
+Brief 24's fix, entirely in `selection.json` (this table is unchanged —
+`natural=bay` was already part of the `289` rule's match list above): re-
+selected levels 10/12 background to `natural=bay` only. Of the full `289`
+source-tag set (`natural=coastline/bay/sea/ocean/water/wetland/river/
+stream`, `waterway=river/stream/canal`), `bay` is the only individual tag
+whose national way count (26, ratio 1.04x) lands inside the `[12.5, 50]`
+envelope around R's `shape_count=25` — every other member of the set
+overshoots by two to three orders of magnitude nationally (`coastline`
+16,516; `water` 291,701; `wetland` 43,704; `waterway=stream` 642,632;
+`waterway=river` 45,400; `waterway=canal` 13,884; `sea`/`ocean`/
+`natural=river` do not occur at all in the `australia-260824.osm.pbf`
+extract used for this calibration). See `selection.json`'s level-10
+`_calibration_note` for the full count table.
+
+`306` remains **not reachable** through this table's existing rule, for a
+reason beyond selection tuning: a national tags-only scan of
+`australia-260824.osm.pbf` found zero ways carrying `admin_level=4`
+anywhere (`boundary=administrative` ways carry `admin_level=2`, the
+national-boundary segments — 73 of them — or no `admin_level` tag at all
+— 6 — nothing else). Australian state/territory boundaries are modelled
+in OSM as relations (`boundary=administrative`+`admin_level=4` on the
+*relation*, not its member ways), and
+`parser/osm_to_parcel_geometry.py`'s own docstring records that
+"multi-polygon OSM relations are handled as individual outer-ring ways
+only" — member ways carry no `admin_level` tag of their own. So this
+table's `306` rule (`boundary=administrative` + `admin_level=4`) can
+never fire from way-level tags in the real dataset regardless of what
+`selection.json` admits; admitting `boundary=administrative` there would
+only reproduce the `natural=dune` bug in a new shape (selected, silently
+unmappable). This is a genuine, unresolved gap — closing it needs either
+relation-tag propagation onto member ways in the extractor (out of this
+ad hoc brief's owned paths) or a different geometry source for state
+boundaries, not a `selection.json`/`bg_type.json` edit. Reported, not
+resolved here.
+
+No catch-all rule was added to this table's `[10, 12]` range. Unlike
+`288` at levels 0/2 (a real, censused "everything else" code), R's
+level-10/12 census has no catch-all-shaped code the way `288` serves
+that role elsewhere — inventing one would not be reference-backed, so
+`default: null` stays as-is; any tag other than the `289` water set and a
+never-reachable `306` predicate continues to be correctly omitted at
+these levels, per this table's original contract.
+
+`528` (roads-as-background) remains **out of scope**, unchanged from
+above — 8 of R's 25 level-10/12 background shapes (32%), needing the
+road-geometry→background bridge this table's original writeup already
+flagged as future work.
+
 ## Extractor call-site changes
 
 `parser/osm_to_parcel_geometry.py`'s `_osm_tags_to_bg_type` computation

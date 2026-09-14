@@ -134,3 +134,40 @@ catch-all was added (and its value/rationale, or why not), and any remaining gap
 real `{289, 306, 528}` census (expect `528` to remain unaddressed — that's a separate,
 larger unit). Do not resolve the `528` gap silently by inventing a tag-driven proxy for it —
 report it as still open, per the vocab README's existing note.
+
+## Amendment (post-implementation, resolving a contradiction with the brief's own text)
+
+The brief's "Goal" #1 phrasing ("the tag set `bg_type.json`'s `[10, 12]` range actually
+maps") reads as if the full `289` source-tag set plus the `306` (`boundary=administrative`+
+`admin_level=4`) predicate were both viable selection targets once re-aligned with
+`bg_type.json`. Implementation found this is not achievable as written, for two independent
+reasons, each confirmed against a real tags-only osmium pass over
+`australia-260824.osm.pbf`:
+
+1. **The full `289` source-tag set (`natural=coastline/bay/sea/ocean/water/wetland/river/
+   stream`, `waterway=river/stream/canal`) overshoots the envelope by 2-3 orders of
+   magnitude** if admitted together (national way counts: `coastline` 16,516; `water`
+   291,701; `wetland` 43,704; `waterway=stream` 642,632; `waterway=river` 45,400;
+   `waterway=canal` 13,884; `sea`/`ocean`/`natural=river` do not occur in this extract at
+   all). Only `natural=bay` (26 ways nationally, ratio 1.04x against R's `shape_count=25`)
+   lands inside `[0.5, 2.0]x`. The implemented fix therefore admits `natural=bay` only, not
+   the full source-tag set — a narrower selection than the brief's Goal #1 phrasing implied,
+   for the same magnitude-envelope reason levels 4/6/8 already narrow to single/few-tag
+   subsets of a broader OSM class.
+2. **`boundary=administrative`+`admin_level=4` (the `306` predicate) is structurally
+   unreachable from way-level tags in this dataset, not just a selection-tuning question.**
+   A national scan found zero ways carrying `admin_level=4` at all (`boundary=administrative`
+   ways carry `admin_level=2`, the national-boundary segments — 73 of them — or no
+   `admin_level` tag — 6 — nothing else). Australian state/territory boundaries are modelled
+   as OSM relations with `admin_level=4` on the *relation*, and
+   `osm_to_parcel_geometry.py`'s own docstring records that multi-polygon relations are
+   handled "as individual outer-ring ways only" — member ways carry no `admin_level` tag of
+   their own. Admitting `boundary=administrative` into `selection.json` would therefore
+   reproduce the exact `natural=dune` bug this brief fixes (selected, but unmappable by
+   `bg_type.json`'s `admin_level=4` predicate, so silently dropped) rather than resolve it.
+   Not implemented; recorded in `vocab/README.md`'s "Levels 10/12 addendum" as a structural
+   gap outside this brief's (data-calibration-only) scope.
+
+No `bg_type.json` catch-all was added (Goal #3): R's level-10/12 census has no catch-all-
+shaped code the way `288` serves that role at levels 0/2, so `default: null` stays as-is —
+reported per the brief's own instruction not to force an unreferenced catch-all.

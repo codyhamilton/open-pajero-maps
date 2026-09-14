@@ -155,3 +155,57 @@ Which component(s) of R's `{289, 306, 528}` composition were implemented vs. del
 left out and why, whether the container check's PDMDH-length violation actually closed or
 only narrowed, and any new contradiction found between `selection.json` and `bg_type.json`'s
 contracts. **Do not resolve contradictions silently — report them.**
+
+## Amendment (post-implementation, resolving a contradiction with the brief's own "Changes")
+
+This brief's "Changes" section expected, "at minimum," a `boundary=administrative` selection
+rule at levels 10/12 in `selection.json` to start populating `306`. Implementation (done
+jointly with brief 24, which owns the same paths) found this does not work: a national
+tags-only osmium scan of `australia-260824.osm.pbf` found **zero** ways anywhere carrying
+`admin_level=4` (`boundary=administrative` ways carry `admin_level=2`, the national-boundary
+segments — 73 — or no `admin_level` tag — 6 — nothing else). Australian state/territory
+boundaries are OSM relations with `admin_level=4` on the *relation*, not on member ways, and
+`osm_to_parcel_geometry.py` only reads way-level tags for multi-polygon outer rings (per its
+own docstring). So `bg_type.json`'s `306` rule (`boundary=administrative` + `admin_level=4`)
+cannot fire from real way-level data regardless of what `selection.json` admits — adding
+`boundary=administrative` there would reproduce this brief's own root-cause pattern (selected,
+unmappable, silently dropped) rather than close it. Not implemented; `306` stays unreachable,
+recorded in `vocab/README.md`.
+
+The implemented fix instead re-selects levels 10/12 background to `natural=bay` (26 ways
+nationally, ratio 1.04x against R's `shape_count=25`) — the only individual tag from the `289`
+source-tag set whose national count lands inside the envelope; the rest of that set (coastline/
+water/wetland/river/stream/waterway) overshoots by 2-3 orders of magnitude if admitted
+together. See brief 24's own amendment for the full count table.
+
+**Root-cause mechanism, confirmed (not assumed):** a `--fixture perth --levels 10 12` local
+extraction + build (`parser/osm_to_parcel_geometry.py` then `parser/build_alldata.py`,
+disk/time-bounded alternative to a full-Australia rebuild — see "Done evidence" below) shows
+level 12 going from "no spooled content, skipping" (the pre-fix `natural=dune` behaviour) to
+2 real parcels / 5,382 encoded frame bytes with the new `natural=bay` selection. Reading
+`parser/kiwiw/alldata_writer.py`'s `has_bmt` computation (content-driven: `{(level, bsidx) for
+(level, bsidx, _blidx) in block_slots}`) confirms that a blockset with real placed content now
+lands in `has_bmt` and gets a real, non-empty `BmtTable` (`bmt_offset`/`bmt_size` populated),
+where the pre-fix zero-content build would have emitted `EMPTY_BMT_OFFSET`/`EMPTY_BMT_SIZE`
+for that same blockset — exactly the mechanism this brief's "Root cause" section traced from
+the PDMDH-length symptom back to zero spooled content. This confirms the fix addresses the
+traced root cause.
+
+**What was not confirmed, and why (reported per this brief's own "do not silently resolve"
+instruction):** a full-Australia rebuild + `compare_disc.py --checks container` run against
+the mounted reference disc at `/run/media/codyh/464210-8480` was not performed. The full
+extraction pipeline spools ~21 GB (per `selection.py`'s own module docstring) and takes
+~1:27:24 for the extraction pass alone (unit 07's report) plus additional `build_alldata.py`
+time; this worktree's filesystem had ~27 GB free, too close to the spool's own footprint to
+risk safely, and the runtime is well beyond what this session could respond to interactively.
+The Perth-fixture build above is a disk/time-bounded substitute that confirms the *mechanism*
+(content-driven `has_bmt` now includes a previously-empty level-10/12 blockset) but not the
+literal byte-for-byte PDMDH length against R, nor whether *every* level-10/12 blockset that
+was previously empty now has content (the Perth fixture's bbox happened to intersect zero of
+`natural=bay`'s 26 national ways at level 10's finer 4x4 grid, only at level 12's single
+national cell — a full-Australia build would place `natural=bay` ways into whichever
+level-10/12 blocksets they geographically fall in, which this session did not enumerate).
+So: **root cause confirmed fixed by mechanism, not confirmed closed (or how far narrowed) by
+an actual container-check byte comparison against R.** Whoever next runs a full-Australia
+build should re-run `compare_disc.py --checks container` and report the result against this
+brief's original FAIL.

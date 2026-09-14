@@ -20,7 +20,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from kiwiw import selection  # noqa: E402
+from kiwiw import selection, vocab  # noqa: E402
 
 SELECTION_PATH = (
     Path(__file__).resolve().parent.parent / "refdata" / "selection.json"
@@ -253,3 +253,36 @@ def test_level_10_and_12_have_no_road_links_in_reference_profile():
     for level in ("10", "12"):
         assert profile["levels"][level]["road"]["link_count"] == 0
         assert profile["levels"][level]["road"]["road_type_hist"] == {}
+
+
+# --- selection/vocab consistency (brief 24: every background predicate
+# selection.json admits at a level must actually map to a non-null
+# parser/refdata/vocab/bg_type.json value at that level, or the way is
+# selected, extracted and then silently dropped before spool.add -- the
+# exact "natural=dune at levels 10/12" bug this brief fixes. See
+# selection.json's level-10 _calibration_note and vocab/README.md's
+# "Levels 10/12 addendum" for the full writeup. ----------------------------
+
+
+def test_background_predicates_are_mappable_by_bg_type_at_every_level():
+    """A selection.json background predicate that bg_type.json can never
+    map at that level wastes extraction work and, worse, produces zero
+    real content while looking calibrated on way-count alone (unit 14's
+    original natural=dune choice). Guard against that class of bug
+    reappearing: every {key, value} predicate admitted at a level must
+    resolve to a non-null bg_type.json value there."""
+    raw = _raw_table()
+    bg_type = vocab.load("bg_type")
+    failures = []
+    for rule in raw["rules"]:
+        level = rule["levels"]
+        for pred in rule.get("background", []):
+            tags = {pred["key"]: pred["value"]}
+            value = bg_type.lookup(level, tags)
+            if value is None:
+                failures.append(
+                    f"level {level}: background predicate {pred} is admitted by "
+                    f"selection.json but bg_type.json maps it to None (silently "
+                    f"dropped before spool.add)"
+                )
+    assert not failures, "\n".join(failures)
