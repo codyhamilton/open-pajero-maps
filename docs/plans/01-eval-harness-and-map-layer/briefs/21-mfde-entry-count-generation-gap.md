@@ -122,3 +122,65 @@ speculative. Recommend whether the fix belongs to WP1 (unit 13's natural continu
 the divided-parcel grid is already WP1's) or needs escalation to the user as a new open
 format question (`DESIGN.md` section 8 already has one contested item; this may become a
 second).
+
+## Resolution (2026-09-14, worker)
+
+The reference disc **was** mounted and available (`/run/media/codyh/464210-8480/ALLDATA.KWI`,
+loop-mounted via `udisksctl` after the mount point wasn't present at session start). The spike
+ran to completion: `harness.walk.iter_parcels()` over level 0 found the first six real parcels
+with `n_mfde_entries` > 20 in block (blockset=23, block=9), entries 516-521, with 21 and 24
+entries respectively (script: adjacent scratch files, not committed — see the exact decode
+steps below, reproducible against the same mounted disc).
+
+**Neither hypothesis 1 nor hypothesis 2 as originally stated is confirmed. A third reading is
+now the best-supported one, and it merges this brief's question with `DESIGN.md` Section 8's
+already-contested mfde-12-19 item rather than resolving a separate WP1 question.**
+
+Raw evidence, one sampled parcel (level 0, bs=23, block=9, path=(520,), file_offset=182202688,
+n_mfde_entries=24, `dipid=0xa033`: bits15:14=`10` [not previously catalogued — DESIGN.md only
+documented `01` and `11`], bit13 adjinfo=`1`, bits9:8 type=`00` **[not divided by the type
+subfield]**, parent `llpid`=(-43.0, 147.25)):
+
+| idx | raw (DSA, SWS-size) | resolved file_offset | decode at resolved address |
+|---|---|---|---|
+| 12 | `(0x00500003, 0x0000)` | 41943136 | size=0, high-entropy bytes, does not decode as a Map Frame header — outlier, structurally different from 13-23 |
+| 13 | `(0x015cb73a, 0x0ffb)` size=8182 | 182828864 | `decode_map_frame_header()` succeeds: `llpid=(-42.9167, 147.3750)`, `nregion=1`, index-0 in-buffer at offset 184 |
+| 14 | `(0x015bbe3e, 0x01fe)` size=1020 | 182319040 | succeeds: `llpid=(-43.0000, 147.3750)`, `nregion=1`, index-0 in-buffer at offset 166 |
+| 20 | `(0x015bdc05, 0x00c6)` size=396 | 182378656 | succeeds: `llpid=(-42.9167, 147.2500)`, `nregion=1`, index-0 in-buffer at offset 160 |
+
+Indices 13-23 (11 consecutive entries, spanning both the contested 12-19 range and this
+brief's 20+ range) share one DSA neighbourhood (~22.7-22.8M in raw sector-address units) and
+each resolves to a genuine, independently-decodable 36-byte Map Frame header — not opaque
+content, not a BMT-style pointer array (that reading was tried and rejected: `entry[0]`'s own
+`llpid` decode is out of range, -216°/-279°). Index 12 alone is the odd one out (size 0,
+DSA far outside that cluster) and did not decode as anything recognisable.
+
+This **rules out hypothesis 1 as literally phrased**: the resolved `llpid`s (Tasmania-area
+cluster, ~-42.9 to -43.0°S / 147.25-147.375°E) differ from the parent's own `llpid`
+(-43.0, 147.25) by **exactly 4 grid-cell-widths** (level-0 cell size 0.03125° lon /
+0.0208333° lat, confirmed via `AllData.pdmdh`/`lmr.grid_nx`/`grid_ny`) — i.e. these are whole,
+separate top-level parcels elsewhere on the grid, not sub-tiles of this parcel's own bounds
+(which a 2×2/4×4 divided child would be, a fraction of the parent footprint, not a
+whole-parcel-multiple offset). It also doesn't cleanly confirm hypothesis 2 ("something else
+entirely, undecoded") — the targets decode cleanly as ordinary Map Frames, so they are not
+opaque/unidentified content either.
+
+What the evidence *does* support: indices 12+ (the already-contested 12-19 range and this
+brief's 20+ range) are **one contiguous run of the same mechanism** — most plausibly the
+Ch.7.1.1 note (13) "Adjacent Parcel Address Information" reading `DESIGN.md` Section 8 already
+flagged as contested, addressed at a coarser-than-immediate (4-parcel) stride rather than
+literal 8-neighbour touching, with a parcel's table growing past the base 20 (12 base +
+8 direction slots) when it has more than 8 such reference entries. Critically, **the growth is
+not gated by this parcel's own division**: every sampled long-tail parcel decoded `dipid` type
+= `00` (not divided). `DESIGN.md` Sections 4 and 8 have been amended in place with this finding
+(see the "Correction"/"Update" blocks added there) rather than resolved silently, and Section
+8's item 1 now documents this brief's decode as the missing piece it deferred to WP2.
+
+**Recommendation:** this is **not** a WP1 `divide.py`/`synth.py` gap — there is no evidence `R`
+ever inlines a divided parcel's children into its own mfde table; `divide.py`'s
+separate-sibling-leaf approach (per Ch.6 subrecord recursion) remains the only division
+mechanism WP1 needs, and nothing here contradicts unit 13's implementation. The real open
+question (what indices 12+ point to, and why some parcels need more than 8) is a WP2/
+route-planning-layer question, already tracked as `DESIGN.md` Section 8 item 1 — treat that as
+the second, now-updated, open format question rather than spinning a new one. No code changes
+were made in this unit, per its own scope.

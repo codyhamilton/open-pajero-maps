@@ -33,7 +33,7 @@ reads; not exhaustive, so "sample" confidence below is lower than
 | 0 | 2 | Header Size (SWS) | — | matches buffer size | high (already decoded) |
 | 2 | 8 | Lower Left Reference Parcel ID (`llpid`, PID) | per-parcel lat/lon | computed from parcel bounds | high (already decoded) |
 | 10 | 2 | Lower Left Ref. Parcel Location Code (`llcode`) | per-parcel block-relative x/y | computed | high (already decoded) |
-| 12 | 2 | Divided/Integrated Parcel Identifier (`dipid`) | bits15:14 div/int/not-div flag, bit13 adjacent-info-present flag, bits9:8 division type 1..3, bits7:4/3:0 relative lat/lng or size-1. Sample: level 0/2 CBD parcels decode as `01` (Divided) type 1 pos (0,0); level 12 decodes as `11` (Not divided/integrated) | `0x0000` (not divided) until unit 13 lands | high for the bit layout (spec-confirmed + sample matches); sample too small to give the full population's split |
+| 12 | 2 | Divided/Integrated Parcel Identifier (`dipid`) | bits15:14 div/int/not-div flag, bit13 adjacent-info-present flag, bits9:8 division type 1..3, bits7:4/3:0 relative lat/lng or size-1. Sample: level 0/2 CBD parcels decode as `01` (Divided) type 1 pos (0,0); level 12 decodes as `11` (Not divided/integrated). **Brief 21 (2026-09-14) sampled six real level-0 parcels with `n_mfde_entries`>20 and found a third bits15:14 code, `10` (decimal 2), not previously catalogued here — every one of them also had bits9:8 (division type) = `00`, i.e. *not divided* by the type subfield, and bit13 (adjacent-info-present) = `1`; see Section 4's correction. The `01`/`10`/`11` meanings are not yet distinguished against spec Ch.7.1.1 note (3)/(3-1) beyond what's stated here — flagged, not resolved.** | `0x0000` (not divided) until unit 13 lands | high for the bit layout (spec-confirmed + sample matches); sample too small to give the full population's split; the `10` code's meaning is unconfirmed |
 | 14 | 4 | Practical Management Code (`pmcode`) | sample constant `0x00000000` at every level/city sampled | `0x00000000` | medium (sample only, 49 reads, could hide rare non-zero area-number bytes) |
 | 18 | 2 | Data Source Flag (`dsflag`) | sample constant `0x0064` at every level/city: bit14=0 (scale standard 1/100), bits13:0=100 → data source scale 1/10000, per spec's own worked example | `0x0064` | medium (sample only, but the constant value plus the spec's example matching to the byte is a strong signal for a single-source 2007 commercial dataset) |
 | 20 | 2 | Real-length Data, X (`rlx`) | varies with level as expected for a per-LSB physical-distance field: level 0 samples ≈`0x0051`-`0x0054` (bit15=0 → 0.01 m units, ≈0.7-0.8 m/LSB); level 12 sample `0x8a02` (bit15=1 → whole metres, 2562 m/LSB) | not emitted (WP1's synth grid cell sizes are checked-in `grid.json` data, not derived per-parcel); leave `0x0000` until a per-parcel value is needed | low — plausible decode, not verified against a second, independent source |
@@ -89,11 +89,57 @@ tree exists.
 Table length: `entry_count_hist` is dominant at 20 for levels 0-10 and
 exactly 12 at level 12 (profile: level 12 `{"12": 1}`). This confirms
 `PLAN.md`'s refinement finding exactly. Levels 0-10 also show a long tail of
-21-35-entry parcels (e.g. level 0: 21..35, thousands of parcels) — these are
-the divided/integrated parcels (Section 6); a non-divided parcel always has
-exactly 20 (or 12 at level 12) entries; a divided parent parcel's own frame
-can carry more. Entry byte size is fixed regardless of table length: 6
-bytes (`u32` offset `D` + `u16` size `SWS`), per `parcel.py`'s `_read_entry`.
+21-35-entry parcels (e.g. level 0: 21..35, thousands of parcels). Entry byte
+size is fixed regardless of table length: 6 bytes (`u32` offset `D` + `u16`
+size `SWS`), per `parcel.py`'s `_read_entry`.
+
+**Correction (brief 21, 2026-09-14, spike against the mounted reference
+disc): the "divided parent parcel's own frame carries the extra entries"
+reading above is not supported by real data and is superseded by this
+finding — do not treat it as a resolved design.** Six real level-0 parcels
+with `n_mfde_entries` in 21-24 were sampled (`docs/plans/.../briefs/
+21-mfde-entry-count-generation-gap.md` has the full spike script/output).
+Every one of them decodes `dipid` bits9:8 (division **type**) as `00` —
+i.e. **not divided** by the type subfield, even though the table has more
+than 20 entries — so table length above 20 is *not* gated by this parcel
+being a divided type-1/2/3 parcel at all; that correlation in the profile
+census is coincidental (dense/CBD content drives both axes independently).
+What *is* consistently set on every long-tail sample is `dipid` bit 13
+("adjacent-info-present flag"). Indices 12+ (both the already-contested
+12-19 range, Section 8, and this brief's 20+ range) are uniformly absolute
+DSA pointers (not in-buffer `[D]` offsets — `sws()`-decoded offset is far
+larger than the frame buffer, same shape kiwiread.c never dereferences).
+Resolving three of them (indices 13, 14, 20 on one sampled parcel) via
+`getsector()` and decoding the bytes found there with `decode_map_frame_
+header()` **succeeds**: each resolves to a real, independently-decodable
+36-byte Map Frame header with a plausible `nregion` and an in-buffer index-0
+(road) entry immediately after the header+region-list — i.e. these are
+genuine Map Frames elsewhere on disc, not opaque/undecoded content. Their
+`llpid` geocoordinates are a tight, real-world-plausible cluster (~-43.0°S,
+147.25-147.375°E — Tasmania) that differs from the sampled parent's own
+`llpid` (-43.0, 147.25) by **exactly 4 grid-cell-widths** in lat and/or lon
+(cell size at level 0 is 0.03125° lon / 0.0208333° lat, confirmed via
+`AllData.pdmdh`/`grid_nx`/`grid_ny`) — not a fraction of the parent's own
+footprint the way a 2×2/4×4 divided sub-cell would be. **This rules out
+hypothesis 1 as DESIGN.md originally phrased it** ("pointer into one of the
+parent's own divided sub-cells' Map Frame bytes"): the targets are whole,
+separate top-level parcels 4 parcel-widths away, not sub-tiles of this
+parcel's own bounds. It also doesn't cleanly match a literal "immediate
+8-neighbour" reading of Ch.7.1.1 note (13) either (that would predict a
+1-parcel-width stride, not 4) — so the finding narrows the field to a third
+reading: **indices 12+ are one contiguous run of the same adjacent/
+reference-parcel-address mechanism** (Section 8's open question), addressed
+at a coarser-than-immediate stride, and a parcel's table grows past 20 when
+it has more than the base 8 such reference entries — not because *this*
+parcel was itself divided. See Section 8's item 1, which this supersedes/
+merges with. **WP1 implication:** since the growth is not driven by this
+parcel's own division, `divide.py`/`synth.py` (which only ever emit
+standard-length 20/12-entry tables for whole-cell and divided-sub-cell
+frames alike, confirmed structurally unable to produce a longer table) are
+not missing a "carry the children inline" feature — there is no evidence
+such a feature exists on `R` at all. Recommend this stays a WP2/route-
+planning-layer question (same owner as Section 8's contested item), not a
+WP1 `divide.py` follow-up brief.
 
 Per-index table (indices 0-19; level 12's table stops at 11 — see note
 below). "Presence class" names match `checks/mfde.py`'s
@@ -223,6 +269,26 @@ Slots WP1 leaves absent for WP2, and what WP2 must update to populate them:
    whether the address at mfde index 12 (say) resolves into the Ch.9/10
    RP region-frame layer or into another parcel's own Map Frame; whichever
    it is settles both this table's ownership and ends the ambiguity.
+
+   **Update (brief 21, 2026-09-14):** the decode this item deferred to WP2
+   has now been done, for indices 13/14/20 on one real level-0 parcel (see
+   Section 4's correction above, same brief). The resolved address decodes
+   cleanly as **another parcel's own Map Frame** (valid header, plausible
+   `nregion`, in-buffer index-0 road entry) — not the Ch.9/10 RP
+   region-frame layer (no RP-frame decoder was run against it, but the
+   bytes parse as a Map Frame header on the first attempt with no
+   ambiguity, and the resolved `llpid` is a real, in-range geocoordinate,
+   which a raw RP-layer blob interpreted this way would not reliably
+   produce). This favours the adjacency reading over route-guidance, but
+   with a wrinkle the "8 immediate directions" framing doesn't predict: the
+   sampled targets sit **4 grid-cell-widths** away from the parent, not 1
+   — so if this is Ch.7.1.1 note (13)'s adjacency mechanism, it is indexed
+   at a coarser-than-immediate stride (or note (13)'s own text, which this
+   brief did not re-consult beyond DESIGN.md's existing summary, describes
+   something other than literal 8-neighbour touching). Brief 21's index
+   20+ finding and this item are now understood to be **the same
+   mechanism and the same open question**, not two separate ones — treat
+   them as merged going forward rather than resolving either in isolation.
 
 2. **`nregion=0` on `R` for a nontrivial minority of parcels (65536 at
    level 0) that is larger than the divided-parcel population** — not
