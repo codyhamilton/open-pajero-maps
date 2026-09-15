@@ -124,7 +124,67 @@ landed as their own PR; units 06–15 depend on them.
 
 ## Assumption Ledger
 
-None — interactive session; see `PROVENANCE.md`.
+None for the original interactive planning session; see `PROVENANCE.md`. The
+following entries were added headlessly on 2026-09-15, when this plan folder
+was extended to cover the full-Australia rebuild-confirmation and envelope
+recalibration units (below) — dispatched by an orchestrator with no
+interactive user in the loop for this specific extension.
+
+### Assumption 1
+
+- **Question:** The 2026-09-14 execute run left two items open (confirm
+  group 1's dune→bay fix at full-Australia scale; recalibrate `selection.json`
+  admission against a fresh `report.json`), both explicitly needing "a full
+  build," but did not say whether one full-Australia rebuild can serve both or
+  whether each needs its own. Which is it?
+- **Answer chosen:** One rebuild serves the first purpose (confirm group 1)
+  and supplies the *input data* for designing the recalibration, but the
+  recalibration itself needs a **second**, separate full-Australia rebuild
+  afterward to confirm the fix actually closes the envelope gap at scale —
+  four units total (25 kickoff / 25b verify+record; 26 recalibrate+kickoff /
+  26b verify+record), not two, not one.
+- **Rationale:** Brief 20's own analysis (`briefs/20-envelope-selection-calibration.md`,
+  "Why this is a brief, not a direct fix") establishes that `parcel_count` and
+  `name_count` are downstream, non-linear consequences of `selection.json`
+  admission (routed through `divide.py`'s byte-size-driven splitting and
+  `_handle_way`/`_handle_node`'s name-record emission), not levers
+  `selection.json` controls directly. A calibration change therefore cannot be
+  self-certified by the same rebuild that motivated it — the fixed
+  `selection.json` must be run through the real pipeline again to know whether
+  the new numbers land inside `[0.5, 2.0]x`. This also mirrors the plan's own
+  established pattern (units 03/03b, 15/15b): a country-scale build is
+  unit-of-work enough to warrant its own kickoff/verify split, not a
+  side-effect of a different unit.
+- **If wrong:** If a single rebuild does turn out sufficient (e.g. if the
+  recalibration is designed conservatively enough that a dry-run
+  tags-only count pass — the same method unit 14 originally used — is judged
+  close enough to the real pipeline's behavior to skip the second full
+  rebuild), unit 26b collapses into unit 26 and one rebuild is saved. That
+  judgment call is deferred to whoever implements unit 26, not decided here,
+  since it depends on how large the calibration change turns out to be.
+
+### Assumption 2
+
+- **Question:** Should the full-Australia rebuild units (25/25b, 26b) follow
+  the same kickoff/wait-split shape as units 03/03b and 15/15b (a fresh agent
+  waits and verifies, never a resume across the wait), even though the
+  post-group-1/2-fix build is expected to be somewhat faster (the 2026-09-09
+  build's actual wall time was 33:23 extraction + 6:44 assembly, not the
+  worst-case 1:27:24 figure quoted for unit 07's earlier *unfiltered* run)?
+- **Answer chosen:** Yes, apply the same split. Treat each rebuild as its own
+  kickoff unit (no owned files, starts the background run, hands off) plus its
+  own fresh verify/record unit.
+- **Rationale:** 33+7 minutes is still squarely in the class of operation the
+  2026-09-06 re-refinement's cost post-mortem targeted ("any unit whose done
+  evidence depends on a 5-10+ minute subprocess... split at the kickoff
+  boundary"), and the same failure mode it was written to prevent (a resumed,
+  bloated agent paying 6-8x cost across a poll loop) applies regardless of
+  which specific run is faster than which other one.
+- **If wrong:** If a future worker finds the rebuild reliably completes in
+  well under 5 minutes end-to-end (unlikely given the historical timings
+  above, but possible if e.g. only a subset of checks are re-run), the kickoff
+  and verify units can be collapsed back into one — a cheap correction to
+  make at `refine` time, not a reason to block this plan.
 
 ## Open Questions
 
@@ -252,11 +312,56 @@ as new scope):
   code (unit 12's docstring reserves the path but the parameter itself is unit 13's to add) —
   brief 13 corrected to say so, since the prior text implied it was already there.
 
+### Re-refinement findings (2026-09-15)
+
+The 2026-09-14 execute run (ad-hoc briefs 19-24, see `IMPLEMENTATION.md`'s
+"Execute run — ad-hoc briefs 19-24") landed four root-cause fixes on master
+(group 1: dune→bay `selection.json` fix, briefs 19+24; group 2: `divide.py`
+drop-order + Perth place `type_code`, briefs 20+22; group 3: mfde
+investigation, brief 21, no code change — folded into `DESIGN.md` section 8;
+group 4: name-record vocab leak fix, brief 23). Two items were explicitly
+left open by that run:
+
+1. Group 1's fix was verified only against a local `--fixture perth --levels
+   10 12` build (2 parcels, 5,382 bytes) — never against a full-Australia
+   byte-level `container` check against the mounted reference disc `R`, per
+   brief 19's own amendment ("What was not confirmed... a full-Australia
+   rebuild + `compare_disc.py --checks container`... was not performed").
+2. Group 2's fix left the aggregate `envelope` check's `parcel_count`/
+   `name_count` ratio FAILs (levels 0/2/4/6/8) genuinely unresolved — brief
+   20's own text is explicit that any `selection.json` numeric change without
+   a fresh `report.json` "is a guess, not a calibration."
+
+Both blocked on the same missing artifact: a full-Australia `report.json`
+produced *after* groups 1/2/3/4 landed. Confirmed during this planning pass
+that `output/report.json` (and `output/ALLDATA.KWI`, sha256
+`5f0fa9f4d57950316a8ea35f05d6c894662733a05696e7a4ffba0f9cb3b0be66`) still
+present in this worktree is the **stale 2026-09-09 build**, byte-identical to
+the one recorded in "Build record (2026-09-09)" below — i.e. it predates
+every one of the 2026-09-14 fixes and cannot be reused as evidence for either
+item. A genuinely fresh rebuild is required.
+
+Also checked in this pass: ad-hoc brief 17 (`checks/mfde.py` tolerate
+real per-parcel distributions) is **not** part of this open work — it was
+completed and committed (`9e57bb0`) well before the 2026-09-14 run, recorded
+in `IMPLEMENTATION.md`'s "Ad-hoc brief 17" section and its "Lane closing note
+(units 09/10, ad-hoc 17/18)". No action needed; not folded into the units
+below.
+
+New units added to the dispatch table below: **25/25b** (full-Australia
+rebuild; confirms group 1's `container` fix at scale and produces the fresh
+`report.json` item 2's calibration needs) and **26/26b** (envelope admission
+recalibration, designed from 25b's fresh data, then confirmed by its own
+rebuild). See Assumption Ledger entries 1 and 2 above for why this is four
+units, not one or two.
+
 ## Execution Phases
 
 Definitive dispatch list (refined 2026-09-05; re-refined 2026-09-06 to split
-long-running-subprocess units at their kickoff boundary — see the Decision
-Log entry below). One brief per unit in `briefs/`; each brief is
+long-running-subprocess units at their kickoff boundary — see the
+"Re-refinement findings (2026-09-06)" subsection above, under Open
+Questions, which is where this rule was actually recorded). One brief per
+unit in `briefs/`; each brief is
 self-sufficient and is handed to its worker verbatim. Units that may run
 alongside each other own disjoint paths.
 
@@ -279,13 +384,70 @@ alongside each other own disjoint paths.
 | 14 | Per-level feature selection matched to the census | `briefs/14-per-level-selection.md` | 03b, 08, 10, 11 | 13 |
 | 15 | Full-Australia build: kickoff (start extraction + assembler, hand off) | `briefs/15-full-build-and-record.md` | 01–14 | — |
 | 15b | Full-Australia build: verify through the harness; record deviations and capacity | `briefs/15b-full-build-verify-and-record.md` | 15 | — |
+| 25 | Full-Australia rebuild #2: kickoff (post-group-1/2/3/4-fixes; check/free disk space, clear stale `output/`, start extraction + assembler, hand off) | *(brief pending `refine`)* | 15b, ad-hoc 19-24 (all landed on master) | — |
+| 25b | Full-Australia rebuild #2: verify group 1's `container` fix at scale via `compare_disc.py`; record a fresh `output/report.json` for unit 26 | *(brief pending `refine`)* | 25 | — |
+| 26 | Envelope admission-rate recalibration: design and implement a `selection.json` (and/or `divide.py` threshold) change from 25b's fresh per-level `parcel_count`/`name_count` data, then check/free disk space and kick off a confirmation rebuild | *(brief pending `refine`)* | 25b | — |
+| 26b | Full-Australia rebuild #3: verify the recalibration closes (or narrows, reported) the envelope FAIL at scale; record final report | *(brief pending `refine`)* | 26 | — |
 
 Lanes: 01 → {02, 07}; after 02 → {03, 04, 05}; 03 → 03b (03b is a fresh
-agent, never a resume of 03 — see Decision Log); after 03b → 06 and 08 (08
-also waits on 07); after 06 → 09 → 10 → 11 and 12 (12 also waits on 07);
+agent, never a resume of 03 — see the 2026-09-06 re-refinement findings
+above, which is where this rule was actually recorded); after 03b → 06 and 08
+(08 also waits on 07); after 06 → 09 → 10 → 11 and 12 (12 also waits on 07);
 after 12 → 13; after 11 → 14; then 15 → 15b (15b is a fresh agent, never a
 resume of 15). The critical path is 01 → 02 → 03 → 03b → 06 → 09 → 10 → 11
 → 14 → 15 → 15b.
+
+After 15b and the 2026-09-14 ad-hoc groups 1-4 (briefs 19-24, all landed):
+25 → 25b (25b is a fresh agent, never a resume of 25, same rule as 03/03b and
+15/15b) → 26 → 26b (26b is a fresh agent, never a resume of 26). Nothing runs
+alongside 25/25b/26/26b — each is the sole thing touching `output/` and the
+mounted reference disc at that point, and 26's `selection.json`/`divide.py`
+edits have no other unit sharing those files at this point in the plan.
+
+**Deliberate deviation from the 15/25 kickoff shape, flagged here rather than
+left implicit:** unit 15's and unit 25's kickoff units are explicitly
+code/docs-change-free (start the background run, hand off, nothing else).
+Unit 26 is heavier — it bundles a real design decision plus a
+`selection.json`/`divide.py` code change with its own rebuild kickoff, rather
+than splitting the design from the kickoff into two units. This is accepted
+here (not treated as a gap `refine` must fix) because the design step itself
+is expected to be small and fast (reading 25b's `report.json`, adjusting
+admission thresholds or `divide.py`'s split logic) relative to the rebuild it
+triggers, and because brief 20 already narrows the decision space to a short,
+enumerated set of options (see brief 20's "Open questions for the next
+worker") rather than leaving it open-ended. If `refine` or unit 26's worker
+finds the design step is not in fact small, splitting it into its own unit
+ahead of a 26-kickoff is a legitimate amendment, not a plan violation.
+
+**Disk space, carried forward from unit 15's and brief 19's findings (not
+newly resolved here):** unit 15's kickoff observed 19-42GB free on `/home`
+(a likely transient-sampling discrepancy, never fully explained); brief 19's
+amendment separately found a worktree with only ~27GB free "too close to the
+[~21GB unfiltered] spool's own footprint to risk safely" and skipped its own
+full-Australia rebuild for that reason. `df -h /home` at the time this
+planning pass ran showed the same ~27GB free on this exact machine. Since
+unit 14's per-level selection thinning brought the *actual* 2026-09-09 spool
+down to ~6.9GB (not the ~21GB unfiltered figure), 27GB free is probably
+adequate for one rebuild at a time — but units 25 and 26 each run a full
+rebuild sequentially, and neither this plan nor the table above prescribes
+clearing the prior run's `output/spool/` first. This is called out in the
+table's unit-25/26 descriptions above ("check/free disk space, clear stale
+`output/`") as a required kickoff step, not assumed away — `refine`'s briefs
+for 25 and 26 must include an explicit `df -h` check and `rm -rf output/`
+(or equivalent) before starting extraction, and must treat a disk-full
+condition as its own failure mode per unit 15's original note, not a process
+crash to debug blindly.
+
+**Envelope harness blind spot, carried forward for 26b specifically:** the
+2026-09-09 Build record documented that `envelope.py` and its sibling
+per-level checks iterate the *generated* profile's levels only, so a level
+`R` has content for but `G` does not is silently absent from the report
+rather than reported as FAIL. Unit 26b's acceptance bullet (below) is
+worded to require this explicitly: a level missing from the fresh report
+because `G` spooled zero content there does not count as that level's ratio
+being "inside range" — 26b's worker must positively confirm every level `R`
+has content for also appears in `G`'s report before treating the envelope
+check's pass as real.
 
 Ownership hot spots and how they are serialised: `osm_to_parcel_geometry.py`
 is edited by 07, then 08, then 10, then 11, then 14, each on a named
@@ -322,6 +484,9 @@ Non-user-facing (observable statement):
 - `LinkIdRegistry` resolves `(osm_way_id, ordinal)` for every sub-polyline of a way split across parcels, and a test covers a way spanning two parcels.
 - `.venv-rp/bin/python -m pytest parser/tests` passes with no regression in replicate-mode byte-identical tests; new tests cover the harness's profile checks, the grid-data loader, and the name-type/mfde encoders on synthetic input.
 - The build is deterministic: two runs on the same input, on a machine without the reference disc, produce byte-identical output.
+- **(units 25/25b)** A full-Australia rebuild produced *after* ad-hoc briefs 19-24 land on master (not the stale 2026-09-09 `output/` artifact — its sha256 must differ from `5f0fa9f4d57950316a8ea35f05d6c894662733a05696e7a4ffba0f9cb3b0be66`) is checked with `compare_disc.py --checks container` against the mounted reference disc; the PDMDH-blob-length violation recorded in "Build record (2026-09-09)" below is gone or the report states a new, different cause (not silently re-confirmed as the same unfixed gap).
+- **(units 25b/26)** The same rebuild's fresh `output/report.json` records per-level `parcel_count`/`name_count` generated/reference/ratio values (not present in any currently checked-in artifact); unit 26's recalibration is designed from those numbers, not from the stale 2026-09-09 figures.
+- **(units 26/26b)** A second post-recalibration full-Australia rebuild's `compare_disc.py --checks envelope` report shows every level's `parcel_count`/`name_count` ratio inside `[0.5, 2.0]x`, or the report names which level(s) remain out of range and why (per brief 20's own escape hatch — a residual gap is reported, not silently dropped). Every level `R` has content for is confirmed present in the fresh report before this bullet is treated as met — a level silently absent because `G` spooled zero content there (the harness blind spot the 2026-09-09 Build record documented) does not count as "inside range."
 
 ## Provenance Notes
 
@@ -343,6 +508,19 @@ Q&A turns, agent decisions and the adversarial-review findings.
   Link ID join are a work package of their own; WP1 only reserves the slots.
 - **Development fixtures stay:** the Perth bbox and 2×2 region tree remain
   as explicit-flag fixtures for fast iteration; they stop being defaults.
+- **Why units 25/25b/26/26b exist (2026-09-15):** the 2026-09-14 ad-hoc
+  execute run fixed group 1 (dune→bay) and group 2 (divide.py drop-order,
+  Perth place type_code) but validated both only against small fixtures —
+  never against a byte-level full-Australia `container` check, and never
+  with a fresh `report.json` to calibrate the still-open aggregate `envelope`
+  FAIL against. `output/`'s current contents were confirmed (by sha256) to
+  be the unmodified 2026-09-09 pre-fix build, not usable as evidence for
+  either. See "Re-refinement findings (2026-09-15)" above for the full
+  reasoning and the Assumption Ledger for why this became four units
+  (25/25b/26/26b) rather than one shared rebuild.
+- **Ad-hoc brief 17 status (checked 2026-09-15, no action):** already done
+  and committed (`9e57bb0`) prior to the 2026-09-14 run; it is unrelated to
+  and does not block units 25/25b/26/26b.
 
 ## Build record (2026-09-09)
 
