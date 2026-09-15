@@ -1063,3 +1063,10 @@ integrated onto master:
 Full suite: 238 passed at final integration. Remaining open items for a future session:
 Perth-class full-Australia container/envelope re-verification, and the envelope admission
 recalibration noted above.
+
+## Execute run — units 25/25b/26/26b (WP1 remaining work: rebuild #2 + envelope recalibration)
+
+## Run
+- Tool: Claude Code
+- Session/Run ID or session URL: https://claude.ai/code/session_01DhkvFw9N65esECHikEbfuP
+- Started: 2026-09-15T00:00:00Z
