@@ -648,3 +648,121 @@ Acceptance-list bullets (PLAN.md, verbatim) checked individually:
 No contradiction in the LinkIdRegistry/`(osm_way_id, ordinal)` bullet was
 checked in this unit (it is exercised by `parser/tests`, which passed in
 full; not independently re-verified against the full-Australia output).
+
+## Build record (2026-09-16)
+
+Full-Australia rebuild #2, units 25/25b, run *after* ad-hoc briefs 19-24
+(groups 1-4 fixes) landed on master. Same two-command pipeline as the
+2026-09-09 record (unit 15's kickoff pattern, no `--pbf`/`--levels`/
+`--fixture`/bbox flags):
+
+```
+.venv-rp/bin/python parser/osm_to_parcel_geometry.py   # PBF -> spool
+.venv-rp/bin/python parser/build_alldata.py             # spool -> ALLDATA.KWI
+```
+
+Kicked off by unit 25 (background, PID 2993404 for the extractor, chained to
+`build_alldata.py` on completion). `output/` was cleared first (confirmed
+stale via sha256 match to the 2026-09-09 baseline below); 27 GB free before
+clearing, 35 GB free after, comfortably above the ~13.8 GB stop-line
+threshold unit 25 used.
+
+**Timing/memory** (`/usr/bin/time -v`, logs in `/tmp/wp1-unit25-logs/`, not
+committed — regenerable, see `docs/provenance.md`):
+
+| Stage | Wall clock | Peak RSS | Exit |
+|---|---|---|---|
+| Extraction (`osm_to_parcel_geometry.py`) | 33:21.58 | 8,187,720 KB | 0 |
+| Assembly (`build_alldata.py`) | 6:41.82 | 3,355,348 KB | 0 |
+
+**Output**: `output/ALLDATA.KWI` 813,629,120 bytes; `output/spool/` 6.9 GB
+(not committed, regenerable — see `docs/provenance.md`). SHA-256
+`d0c37a69a159beb21f538760a05f3cfc613996aef68b8b877a5f41e5bd9d89da` —
+**differs from the 2026-09-09 stale baseline**
+(`5f0fa9f4d57950316a8ea35f05d6c894662733a05696e7a4ffba0f9cb3b0be66`), and
+`output/manifest.json`'s own recorded `sha256` and `total_size` fields match
+this value exactly (cross-checked). This confirms the rebuild reflects
+briefs 19-24, not the stale pre-fix build.
+
+Five `WARNING [kiwiw.divide]` lines at levels 8 (4 cells) and 0 (1 cell)
+report content dropped after 4x4 division still exceeded the u16 format
+ceiling — same expected lossy-fallback pattern as the 2026-09-09 build (unit
+13's outcome), not a new deviation.
+
+**`compare_disc.py --reference /run/media/codyh/464210-8480 --generated
+output/ALLDATA.KWI --report output/report.json`** — exit code 1 (several
+checks FAIL; matches the tool's own "exit 0 only when every applicable check
+passes" contract).
+
+| Check | Status | Notes |
+|---|---|---|
+| container | FAIL | 1 unallowlisted byte diff — PDMDH blob length differs (reference=21,088, generated=18,624), extra 2,464 bytes not all zero — **byte-for-byte identical symptom to the 2026-09-09 record**, see "Container fix NOT confirmed" below |
+| decode | PASS | 454,147 leaves, zero errors |
+| pointers | PASS | every BMT/mapinfo/mfde pointer resolves, no poison |
+| envelope | FAIL | 23 failures — see per-level table below |
+| mfde | FAIL | 1 failure (down from 5 in the 2026-09-09 record; groups 3/4 fixes narrowed this) |
+| mht29 | PASS | record-29 frame byte-identical to R |
+| shape | PASS | LMR/BSMR/BMT shape matches R at every level |
+| spotcheck | FAIL | 3 row/level(s) missing an expected name or parcel (unchanged from 2026-09-09: Sydney L0, Melbourne L0 partial, Perth L2) |
+| vocab | PASS | **flipped from FAIL in the 2026-09-09 record** — every enumerated value in G is now a subset of R's per-level vocabulary (group 4's fix, brief 23) |
+
+**Container fix NOT confirmed closing at full scale — contradiction with the
+plan's own framing, reported per this unit's "do not resolve contradictions
+silently" instruction.** Levels 10 and 12 now spool and encode real content
+(10: 4 parcels/26 backgrounds; 12: 2 parcels/26 backgrounds — the
+`natural=bay` re-selection from brief 19's amendment is confirmed working,
+matching brief 19's Perth-fixture mechanism check). But the `container`
+check's PDMDH-blob-length violation is **not gone and not a new, different
+cause** — it is byte-identical to the pre-fix 2026-09-09 symptom: same
+`reference=21,088`/`generated=18,624` byte counts, same "extra tail not all
+zero" description, same single violation. Brief 19's own amendment flagged
+this as the open question a full-Australia run would answer ("whether every
+level-10/12 blockset that was previously empty now has content" — this
+run's manifest shows both levels are non-empty, so content presence is not
+the gap); the still-empty-somewhere-else root cause (which level-10/12
+blockset(s), if any, still land zero content and drive PDMDH short by
+exactly 2,464 bytes) was not isolated by this unit — out of this unit's
+owned paths (`parser/kiwiw/` or `parser/refdata/`), reported for a
+follow-up fixer.
+
+**Envelope per-level `parcel_count`/`name_count` — generated/reference/ratio
+(unit 26's required input, quoted in full, not summarized away):**
+
+| Level | parcel_count (G/R/ratio) | in range | name_count (G/R/ratio) | in range |
+|---|---|---|---|---|
+| 0 | 429,084 / 3,704,871 / 0.1158x | NO | 1,759,290 / 19,081,105 / 0.0922x | NO |
+| 2 | 22,991 / 231,564 / 0.0993x | NO | 160,112 / 40,169 / 3.9860x | NO |
+| 4 | 1,758 / 14,511 / 0.1211x | NO | 79,089 / 4,042 / 19.5668x | NO |
+| 6 | 243 / 939 / 0.2588x | NO | 14,009 / 1,022 / 13.7074x | NO |
+| 8 | 65 / 78 / 0.8333x | yes | 13,937 / 209 / 66.6842x | NO |
+| 10 | 4 / 9 / 0.4444x | NO | 0 / 8 / 0.0x | NO |
+| 12 | 2 / 1 / 2.0x | yes | 0 / 8 / 0.0x* | NO |
+
+\* level 12's `name_count` ratio field reads 0.0 in the report despite
+generated=0/reference=8 (division-by-zero-safe placeholder, not a
+computed ratio); flagged here for unit 26, not resolved (harness code is
+outside this unit's owned paths).
+
+Every level R has content for (0/2/4/6/8/10/12) is present in this fresh
+report — the 2026-09-09 harness-blind-spot (levels 10/12 silently absent
+because G spooled zero content) does not recur; both levels now have real
+generated content and appear in every per-level check.
+
+`pytest parser/tests -q`: **238 passed, 0 failed** (up from 227 at the
+2026-09-09 record — groups 1-4's own test additions/fixes accumulated in
+between), no regression in replicate-mode byte-identical tests.
+
+**Contradiction with the plan's acceptance-criteria framing, reported per
+this unit's instruction not to resolve it silently:** PLAN.md's `(units
+25/25b)` bullet is phrased as if group 1's fix closing the container FAIL
+"at scale" were the expected/likely outcome ("the PDMDH-blob-length
+violation ... is gone or the report states a new, different cause").
+Neither disjunct is true here: the violation is not gone, and the cause is
+not new/different — it is the identical symptom, unnarrowed. Brief 19's own
+amendment already flagged this as an open, unconfirmed question rather than
+a settled fix, so this is not a surprise relative to brief 19's own honesty
+about its evidence — but it does mean the plan's framing (implicitly
+expecting confirmation) does not match what a full-scale run actually
+shows. This unit's Done evidence bullet ("PASS, or FAIL with a named cause
+different from the 2026-09-09 PDMDH-blob-length diff") is **not met by
+either disjunct**; recorded here rather than silently marked met.
