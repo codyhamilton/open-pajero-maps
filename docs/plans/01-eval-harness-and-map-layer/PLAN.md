@@ -384,10 +384,10 @@ alongside each other own disjoint paths.
 | 14 | Per-level feature selection matched to the census | `briefs/14-per-level-selection.md` | 03b, 08, 10, 11 | 13 |
 | 15 | Full-Australia build: kickoff (start extraction + assembler, hand off) | `briefs/15-full-build-and-record.md` | 01–14 | — |
 | 15b | Full-Australia build: verify through the harness; record deviations and capacity | `briefs/15b-full-build-verify-and-record.md` | 15 | — |
-| 25 | Full-Australia rebuild #2: kickoff (post-group-1/2/3/4-fixes; check/free disk space, clear stale `output/`, start extraction + assembler, hand off) | *(brief pending `refine`)* | 15b, ad-hoc 19-24 (all landed on master) | — |
-| 25b | Full-Australia rebuild #2: verify group 1's `container` fix at scale via `compare_disc.py`; record a fresh `output/report.json` for unit 26 | *(brief pending `refine`)* | 25 | — |
-| 26 | Envelope admission-rate recalibration: design and implement a `selection.json` (and/or `divide.py` threshold) change from 25b's fresh per-level `parcel_count`/`name_count` data, then check/free disk space and kick off a confirmation rebuild | *(brief pending `refine`)* | 25b | — |
-| 26b | Full-Australia rebuild #3: verify the recalibration closes (or narrows, reported) the envelope FAIL at scale; record final report | *(brief pending `refine`)* | 26 | — |
+| 25 | Full-Australia rebuild #2: kickoff (post-group-1/2/3/4-fixes; check/free disk space, clear stale `output/`, start extraction + assembler, hand off) | `briefs/25-full-australia-rebuild2-kickoff.md` | 15b, ad-hoc 19-24 (all landed on master) | — |
+| 25b | Full-Australia rebuild #2: verify group 1's `container` fix at scale via `compare_disc.py`; record a fresh `output/report.json` for unit 26 | `briefs/25b-full-australia-rebuild2-verify-and-record.md` | 25 | — |
+| 26 | Envelope admission-rate recalibration: design and implement a `selection.json` (and/or `divide.py` threshold) change from 25b's fresh per-level `parcel_count`/`name_count` data, then check/free disk space and kick off a confirmation rebuild | `briefs/26-envelope-recalibration-design-and-kickoff.md` | 25b | — |
+| 26b | Full-Australia rebuild #3: verify the recalibration closes (or narrows, reported) the envelope FAIL at scale; record final report | `briefs/26b-envelope-recalibration-verify-and-record.md` | 26 | — |
 
 Lanes: 01 → {02, 07}; after 02 → {03, 04, 05}; 03 → 03b (03b is a fresh
 agent, never a resume of 03 — see the 2026-09-06 re-refinement findings
@@ -448,6 +448,21 @@ because `G` spooled zero content there does not count as that level's ratio
 being "inside range" — 26b's worker must positively confirm every level `R`
 has content for also appears in `G`'s report before treating the envelope
 check's pass as real.
+
+**Refine-time finding (2026-09-15, not resolved silently):** the paragraph above,
+carried forward unchanged from the 2026-09-09 Build record, is stale. Commit
+`e629b91` ("Fix harness level-iteration gap: per-level checks now cover R's
+levels too", 2026-09-14 — the day *before* this plan folder's 2026-09-15
+extension was authored) already changed `envelope.py`, `vocab.py` and
+`mfde.py` to iterate the union of reference and generated level keys, so a
+level missing from `G` is now treated as an all-zero level and genuinely
+FAILs rather than being silently skipped. The blind spot this paragraph
+describes does not exist in the currently-landed code. Brief 26b (below) is
+written to have its worker confirm this directly (grep for the fix's own
+comment) rather than either re-implementing a fix that already exists or
+trusting this paragraph's now-outdated claim; the acceptance bullet's
+explicit level-coverage check is kept as a belt-and-suspenders verification
+step regardless, since it costs nothing to confirm.
 
 Ownership hot spots and how they are serialised: `osm_to_parcel_geometry.py`
 is edited by 07, then 08, then 10, then 11, then 14, each on a named
