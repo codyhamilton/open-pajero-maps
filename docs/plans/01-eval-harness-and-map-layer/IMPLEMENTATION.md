@@ -1081,3 +1081,25 @@ the ~13.8GB stop-line threshold. Started extraction (`osm_to_parcel_geometry.py`
 logs under `/tmp/wp1-unit25-logs/`. Confirmed live via `pgrep` and `output/spool/` being
 written. No contradictions or bugs found. Unit 25b (fresh agent) will wait for completion,
 run the full `compare_disc.py` report, and record it.
+
+**Unit 25b (full-Australia rebuild #2: verify and record) — done, contradiction found and
+reported (not resolved silently).**
+
+Fresh rebuild verified (sha256 `d0c37a69...` differs from stale `5f0fa9f4...`), full harness
+run, results committed to `PLAN.md`'s new "Build record (2026-09-16)" section (`9409687`).
+238 tests pass, 0 regressions. vocab flipped FAIL→PASS and mfde narrowed 5→1 failures
+(groups 3/4 confirmed at scale). Levels 10/12 now spool real content, confirming brief 19's
+`natural=bay` re-selection mechanism works at full scale as predicted.
+
+**Contradiction: the `container` check's PDMDH-blob-length FAIL is byte-identical to the
+pre-fix 2026-09-09 symptom** (R=21,088/G=18,624, same 2,464-byte gap), not gone and not a
+new/different cause. Neither disjunct of `PLAN.md`'s `(units 25/25b)` acceptance bullet is
+met. Group 1's brief 19/24 fix is confirmed *mechanistically correct* (natural=bay content
+now present at levels 10/12) but does *not* close the container check — some other
+PDMDH-contributing gap remains unisolated. This needs a follow-up investigation brief (same
+pattern as ad-hoc brief 17), not further work under units 25/25b's own contract.
+
+Envelope per-level data recorded for unit 26 — magnitudes are far more severe than brief
+20's original framing suggested (e.g. level 4 name_count G/R ratio 19.6x, level 8 66.7x;
+several levels' parcel_count ratios below 0.15x). See `PLAN.md`'s Build record for the full
+table.
