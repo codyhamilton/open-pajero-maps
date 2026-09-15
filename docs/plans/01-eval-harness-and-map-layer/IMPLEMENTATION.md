@@ -1070,3 +1070,14 @@ recalibration noted above.
 - Tool: Claude Code
 - Session/Run ID or session URL: https://claude.ai/code/session_01DhkvFw9N65esECHikEbfuP
 - Started: 2026-09-15T00:00:00Z
+
+**Unit 25 (full-Australia rebuild #2: kickoff) — done.**
+
+Disk space: 27GB free before, `output/` was 7.6GB (6.9GB spool, matching unit 14's real
+footprint) and confirmed stale via sha256 (`5f0fa9f4d5...`, matches PLAN.md's recorded
+2026-09-09 pre-fix hash). Cleared with `rm -rf output/`; 35GB free after, comfortably above
+the ~13.8GB stop-line threshold. Started extraction (`osm_to_parcel_geometry.py`, PID
+2993404) → assembler (`build_alldata.py`) pipeline in the background per unit 15's pattern,
+logs under `/tmp/wp1-unit25-logs/`. Confirmed live via `pgrep` and `output/spool/` being
+written. No contradictions or bugs found. Unit 25b (fresh agent) will wait for completion,
+run the full `compare_disc.py` report, and record it.
