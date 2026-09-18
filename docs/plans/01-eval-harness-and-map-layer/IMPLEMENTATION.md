@@ -1403,3 +1403,15 @@ Started 2026-09-19 06:24 AEST via `setsid nohup /usr/bin/time -v .venv-rp/bin/py
 (own session), python PID 3356738 (time wrapper 3356737); logs `/tmp/wp1-unit32-logs/build.out.log` and
 `build.time.log`. Liveness confirmed after 5 s. Expected ~11 min plus L0 halo encode time (~06:35-06:45 AEST), ~6.8 GB RSS.
 Verification: 32c.
+
+### Unit 32c (verify and record, rebuild #5) -- 2026-09-19
+
+Rebuild #5 (assembly only, 17:29 wall, 6.85 GB RSS, exit 0) ALLDATA.KWI 1,428,540,032 B, sha256 `c978b840...c2c44`
+(differs from `ed2d37ec...`; matches manifest); all fallback warnings new-form. Harness: PASS container, decode,
+pointers, mfde, mht29, shape, vocab, spotcheck (14/14); FAIL envelope (3: L0 name_count 0.149x, L12 parcel_count
+3.0x, L8 road sub-frame 121,080 > 99,794). pytest 278 passed. TRIM: L0 bg 1.460% (214 sub-cells), L8 name 12.9%,
+L8 bg 12.96% / L8 road 8.67% (fallback, 1 cell each), L2 bg 0.948%, others <0.3%. halo_names {"0": 871,359}. Encode
+timing: assembly 17:29 (rebuild #4: 11:01), max frame bytes L0 115,716 / L8 127,142. Capacity ~30% of 4.7 GB. No
+code changed. Tables: PLAN.md "Build record (2026-09-19, rebuild #5)". WP1 verdict: not complete; WP1 fix = L8
+road budget; proposed deviations awaiting user: L0 name_count, L12 parcel_count, L0 bg / L8 name (and L8 fallback)
+trim >1%.

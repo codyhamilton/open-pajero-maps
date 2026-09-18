@@ -950,3 +950,81 @@ is accepted on the user's behalf):
 - Not verifiable by this unit: build determinism (two runs), LinkIdRegistry tests beyond pytest pass.
 **Verdict: WP1 is not complete.** 5 envelope + 2 spotcheck FAILs remain; 2 need acceptance, 5 need WP1 fixes
 (3 envelope rows sharing one root cause, 2 spotcheck rows).
+
+## Build record (2026-09-19, rebuild #5)
+
+Assembly-only rebuild #5 (unit 32b, verified by 32c) after brief 32 (per-kind budgets in the ceiling fallback,
+L0 road-name halo, fe93c4c). Reused `output/spool`. Logs in `/tmp/wp1-unit32-logs/` (not committed; regenerable).
+
+| Stage | Wall clock | Peak RSS | Exit |
+|---|---|---|---|
+| Assembly (incl. L0 halo encode) | 17:28.96 | 6,852,088 KB | 0 |
+
+`output/ALLDATA.KWI` 1,428,540,032 bytes, SHA-256
+`c978b84077700046380af60e234beb9198400a98c07709f247976e267cff2c44` (matches `output/manifest.json`
+`sha256`/`total_size`; differs from rebuild #4's `ed2d37ec...`). No old-form "hard 131,070-byte ceiling" warnings;
+the 3 fallback warnings all read "hard-ceiling fallback ... (brief 32)" (L8 (3,3) background 1471/2346, L8 (3,0)
+road 1215/2417, plus L0). Harness `compare_disc.py --reference /run/media/codyh/464210-8480 --generated
+output/ALLDATA.KWI --report output/report.json` (22:05); `pytest parser/tests -q`: 278 passed (137 s).
+
+| Check | Status | Notes |
+|---|---|---|
+| container | PASS | 3142 allowed diffs |
+| decode | PASS | 3,967,170 leaves, zero errors |
+| pointers | PASS | |
+| envelope | FAIL | 3 failures (was 5), below |
+| mfde | PASS | |
+| mht29 | PASS | |
+| shape | PASS | |
+| spotcheck | PASS | 14/14 (Perth Hay Street, Adelaide Pulteney Street fixed by halo; was 12/14) |
+| vocab | PASS | |
+
+**Envelope failures (all three):**
+- L0 name_count 2,842,451 / 19,081,105 = 0.149x (was 0.103x; halo added 871,359 records). Proposed declared deviation.
+- L12 parcel_count 3 / 1 = 3.0x. Proposed declared deviation.
+- L8 road sub-frame max 121,080 > R 99,794 (**new form**: fallback now applies the road kind budget but the
+  budget/ceiling still leaves road above R; was 121,712). WP1-scope fix (tighten L8 road budget in the fallback
+  path, or declare a deviation if the user prefers); not self-accepted.
+L0 bg sub-frame max 25,908 = R (fixed), L8 bg 120,882 <= R 120,946 (fixed). All other kind maxima <= R.
+mapframe_max G/R: L0 115,744/136,096; L2 110,624/129,952; L4 119,584/146,368; L6 99,136/158,560; L8 127,168/151,712;
+L10 1,568/2,336; L12 3,552/3,808.
+
+**parcel_count / name_count (G / R / ratio):**
+
+| Level | parcel_count | ratio | name_count | ratio |
+|---|---|---|---|---|
+| 0 | 3,719,692 / 3,704,871 | 1.0040x | 2,842,451 / 19,081,105 | 0.149x NO |
+| 2 | 231,725 / 231,564 | 1.0007x | 30,286 / 40,169 | 0.754x |
+| 4 | 14,634 / 14,511 | 1.0085x | 3,353 / 4,042 | 0.830x |
+| 6 | 966 / 939 | 1.0288x | 1,223 / 1,022 | 1.197x |
+| 8 | 136 / 78 | 1.7436x | 250 / 209 | 1.196x |
+| 10 | 14 / 9 | 1.5556x | 8 / 8 | 1.000x |
+| 12 | 3 / 1 | 3.0000x NO | 8 / 8 | 1.000x |
+
+parcel_count identical to rebuild #4; L2-L10 name_count unchanged (halo affects L0 only).
+
+**TRIM table (`trimmed_items`, now including fallback drops; dropped/total, %, sub-cells):**
+
+| Level | Kind | Dropped / total | % | Sub-cells | >1% blocker |
+|---|---|---|---|---|---|
+| 0 | background | 110,144 / 7,546,320 | 1.460% | 214 | **YES** |
+| 0 | name | 371 / 1,971,463 | 0.019% | 2 | no |
+| 2 | background | 2,938 / 309,857 | 0.948% | 10 | no |
+| 4 | name | 1 / 3,354 | 0.030% | 1 | no |
+| 6 | background | 39 / 19,410 | 0.201% | 1 | no |
+| 8 | name | 37 / 287 | 12.892% | 6 | **YES** |
+| 8 | background | 1,471 / 11,347 | 12.964% | 1 | **YES** (fallback) |
+| 8 | road | 1,215 / 14,012 | 8.671% | 1 | **YES** (fallback) |
+
+`halo_names`: {"0": 871,359} (all other levels none). Max frame bytes per level: L0 115,716; L2 110,624; L4 119,560;
+L6 99,106; L8 127,142; L10 1,562; L12 3,546 (thresholds 131,070 / 129,952 / 3,808 / 2,336); brief 30 caveat: no
+overflow, L8 now 3.9 KB below ceiling. Capacity: 1,428,540,032 B (+ R non-map 454,272) vs 4.7 GB: ~30%.
+
+**WP1 acceptance evaluation** (no ticks added; nothing accepted on the user's behalf):
+- Met: everything met in rebuild #4 plus spotcheck 14/14, L0 bg and L8 bg sub-frame maxima, all fallbacks per-kind.
+- Not met, WP1-scope: L8 road sub-frame max 121,080 vs R 99,794.
+- Proposed declared deviations (need user acceptance): L0 name_count 0.149x; L12 parcel_count G=3 vs R=1; L0
+  background trim 1.460% (>1%); L8 name trim 12.9%; also L8 background/road fallback trims (12.96% / 8.67%, one
+  sub-cell each) reported for the same decision.
+**Verdict: WP1 is not complete.** 1 WP1-scope FAIL (L8 road) plus 2 envelope FAILs and 4-5 trim blockers awaiting
+user acceptance of deviations. No code changed.
