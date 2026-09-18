@@ -1,184 +1,24 @@
-# Brief: 26 — Envelope admission-rate recalibration: design, implement, kick off rebuild #3
+# Brief: 26 — Envelope recalibration: rebuild #3 KICKOFF ONLY (revised 2026-09-19)
 
-Consumer: implementation worker. This unit deliberately bundles a design decision and a code
-change with a rebuild kickoff — a justified deviation from the kickoff/wait-split shape units
-15/25 and 03/03b use (see "Why this unit's shape is different" below). Do not treat this as a
-gap to silently split further; the plan already considered and accepted the bundling. It does
-**not** license skipping the kickoff/wait split at the *rebuild* boundary — the rebuild itself
-still hands off to a fresh unit (26b), exactly like 25/25b.
-Owned paths: `parser/refdata/selection.json`, `parser/kiwiw/divide.py` (whichever of these, or
-both, your chosen calibration lever touches — see Changes). Do not touch
-`parser/harness/checks/envelope.py` or any other harness file: the harness's tolerance is the
-thing this recalibration is judged against, and loosening it from inside the unit it judges would
-be self-certification, not a fix.
-Do not commit. Leave the code change and this brief's report in the working tree for unit 26b to
-verify and commit as one unit — the same wait-split commit convention units 03/03b and 15/15b use
-(the design's correctness is only proven once 26b's rebuild passes the harness; committing before
-that is proven would mean landing an unverified calibration change).
-Depends on: 25b (must have produced `output/report.json` with fresh per-level
-`parcel_count`/`name_count` data).
-Runs alongside: nothing.
+Supersedes the original bundled 26 (design+implement+kickoff), which stopped at its escape
+valve (see IMPLEMENTATION.md, unit 26). The design is now split out: **26a** (name-emission
+decoupling + name recalibration) and **26c** (parcel_count occupancy diagnosis/fill) land first,
+committed and pushed. This unit is now only the kickoff, in the 15/25 wait-split shape.
+Owned paths: none in the repo (writes `/tmp/wp1-unit26-logs/`, clears `output/`).
+Do not edit code or `selection.json`. Depends on: 26a and 26c committed (`git log` confirms
+both; if 26c ended in the "declared deviation" branch it counts as done) and the concurrent
+assembler/PDMDH work committed. Runs alongside: nothing.
 
-## Why this unit's shape is different (read before objecting to it)
-
-`PLAN.md`'s "Deliberate deviation from the 15/25 kickoff shape" paragraph explains this
-explicitly: unit 26 bundles a real design decision with its own rebuild kickoff, rather than
-splitting the design into its own separate unit ahead of a pure kickoff. This is accepted because
-(a) the design step is expected to be small and fast relative to the rebuild it triggers, and (b)
-brief 20 already narrows the decision space to a short, enumerated set of options. **If you find
-the design step is not in fact small** (e.g. it turns out to need new plumbing — decoupling
-`divide.py`'s split threshold from raw content volume, or a way to admit a road/background
-class's geometry without also emitting its name record) — **stop before implementing a large
-change**, report exactly what you found and why it's larger than the plan expected, and recommend
-splitting a design-only unit ahead of a fresh kickoff. That is the escape valve `PLAN.md` itself
-names, not a plan violation.
-
-## Required reading, in order
-
-1. Unit 25b's report-back and `output/report.json` — the fresh per-level `parcel_count`/
-   `name_count` generated/reference/ratio values. This is the binding input for your design; a
-   `selection.json`/`divide.py` change based on the stale 2026-09-09 numbers instead is exactly
-   what brief 20 called "a guess, not a calibration."
-2. `docs/plans/01-eval-harness-and-map-layer/briefs/20-envelope-selection-calibration.md` — in
-   full, especially "Open questions for the next worker to resolve" (the enumerated decision
-   space this unit chooses from) and the "Amendment" section (the undershoot-vs-overshoot
-   direction correction, and briefs 22/24's related fixes already landed).
-3. `docs/plans/01-eval-harness-and-map-layer/PLAN.md` — the Acceptance Criteria bullet marked
-   `(units 26/26b)`, the "Deliberate deviation..." paragraph, and the "Disk space, carried
-   forward..." paragraph (this unit runs its own rebuild and must handle disk space explicitly,
-   same as unit 25).
-4. `parser/refdata/selection.json` — current per-level rules and `_calibration_note` fields,
-   especially levels 0, 2, 4, 6, 8.
-5. `parser/kiwiw/divide.py` — `divide_oversize_parcels`, `_retile_content`, and `_shrink_to_fit`
-   (already amended by brief 22 to drop roads before names/backgrounds) — for how `parcel_count`
-   is actually produced and where a threshold-logic lever would live if selection alone isn't
-   enough.
-6. `parser/harness/checks/envelope.py` — read only, to see exactly what is compared
-   (`_COUNT_FIELDS`, the `[0.5, 2.0]x` ratio, the per-level union-of-levels iteration). Do not
-   edit this file.
-
-## Goal
-
-From 25b's real per-level numbers, decide and implement the calibration change that brings
-`parcel_count`/`name_count` at levels 0/2/4/6/8 into `[0.5, 2.0]x` of the reference — or narrows
-the gap with the remainder explicitly named, per brief 20's own escape hatch — then check/free
-disk space and kick off a third full-Australia rebuild for unit 26b to verify at scale.
-
-## Contract
-
-`PLAN.md`'s Acceptance Criteria bullet marked `(units 26/26b)`, verbatim: every level's
-`parcel_count`/`name_count` ratio inside `[0.5, 2.0]x`, or the report names which level(s) remain
-out of range and why — a residual gap is reported, not silently dropped. The harness's tolerance
-(`envelope.py`'s `[0.5, 2.0]x` constant and its per-level union-of-levels iteration) is settled
-and not open for you to change.
-
-## Changes
-
-1. From 25b's fresh numbers, determine per level (0, 2, 4, 6, 8) whether `parcel_count` and
-   `name_count` are over or under `[0.5, 2.0]x`, and by how much. Brief 20's "Amendment" section
-   already found the 2026-09-09 direction was undershoot (fewer parcels/names than R), not the
-   overshoot brief 20's original hypothesis assumed — confirm whether that still holds with
-   25b's fresh, post-fix numbers, since briefs 19/20/22/24's fixes may have shifted it.
-2. Choose a lever per brief 20's enumerated options: (a) loosen/trim `selection.json` admission
-   per level, (b) change `divide.py`'s split-threshold logic (if `parcel_count` is genuinely
-   structural, not admission-driven), or (c) some combination. Do not choose "redefine the
-   envelope check's tolerance" — that is the harness's contract, out of this unit's owned paths
-   and explicitly forbidden above.
-3. Implement the chosen change(s) in `selection.json` and/or `divide.py`.
-4. Fast, in-repo verification before committing to a full rebuild: `.venv-rp/bin/python -m
-   pytest parser/tests -q`, and a `--fixture perth --levels <affected levels>` local build to
-   sanity-check the change doesn't break the byte-identical replicate path or crash outright
-   (this is not a substitute for the full rebuild — it is a cheap gate before spending 30-40
-   minutes on one).
-5. **Before clearing `output/`:** the numbers you need from 25b's `output/report.json` are
-   already in your report so far (step 1) — confirm you have quoted every number you'll want to
-   compare against post-rebuild, since the next step deletes the file. If in doubt, copy
-   `output/report.json` to a location outside the repo tree (e.g. `/tmp/wp1-unit26-prior-
-   report.json`) before proceeding, so you (or unit 26b) can diff before/after.
-6. Disk-space check, same as unit 25's step 1: `df -h /home`, `du -sh output/`, confirm
-   post-`rm -rf output/` free space is comfortably above the ~6.9GB real spool footprint plus
-   the ~814MB built `ALLDATA.KWI` plus a safety margin. Stop and report if not adequate — do not
-   proceed blindly.
-7. `rm -rf output/`.
-8. Start the extraction + assembler pipeline in the background, following units 15/25's exact
-   pattern:
-
-```
-mkdir -p /tmp/wp1-unit26-logs
-nohup bash -c '
-  /usr/bin/time -v .venv-rp/bin/python parser/osm_to_parcel_geometry.py \
-    2> /tmp/wp1-unit26-logs/extract.time.log \
-    > /tmp/wp1-unit26-logs/extract.out.log &&
-  /usr/bin/time -v .venv-rp/bin/python parser/build_alldata.py \
-    2> /tmp/wp1-unit26-logs/build.time.log \
-    > /tmp/wp1-unit26-logs/build.out.log
-' > /tmp/wp1-unit26-logs/kickoff.log 2>&1 &
-disown
-```
-
-9. Confirm the process started (one liveness check). Do not wait on it, do not poll in a loop.
-   End your turn once confirmed.
-
-### Keep untouched
-
-Everything in `selection.json`/`divide.py` not touched by your chosen lever — do not use this as
-an opportunity to tidy unrelated calibration notes or thresholds.
-
-## Done evidence
-
-- `selection.json`/`divide.py` diff (uncommitted, in the working tree) shows the chosen
-  calibration change, with its rationale tied to 25b's actual numbers (not the stale 2026-09-09
-  ones).
-- `pytest parser/tests -q` passes.
-- The local fixture sanity build (step 4) completes without crashing.
-- Disk-space numbers recorded, with an explicit go/no-go judgment.
-- `pgrep -f osm_to_parcel_geometry.py` confirms the background process is running; logs exist at
-  `/tmp/wp1-unit26-logs/`.
-- 25b's `output/report.json` numbers are either already fully quoted in a report or preserved
-  outside the repo tree before `output/` was cleared.
+## Steps
+1. Copy `output/report.json` (if present) to `/tmp/wp1-unit26-prior-report.json` (already
+   exists from the aborted attempt; keep it).
+2. `.venv-rp/bin/python -m pytest parser/tests -q` must pass on the committed tree.
+3. Disk check: `df -h /home`, `du -sh output/`; after `rm -rf output/` need comfortably more
+   than ~6.9 GB spool + ~0.8 GB `ALLDATA.KWI` (+ 26c's filled empty frames, use 26c's capacity
+   number) + margin. Stop and report if not adequate.
+4. `rm -rf output/`, then start the pipeline exactly as brief 25 does (nohup, logs in
+   `/tmp/wp1-unit26-logs/`: extract then `build_alldata.py`, both under `/usr/bin/time -v`).
+5. One liveness check (`pgrep -f osm_to_parcel_geometry.py`); end the turn. Do not poll.
 
 ## Report back
-
-Which lever(s) you chose and why, tied explicitly to 25b's numbers; whether the undershoot
-direction still held; the disk-space numbers and judgment; the exact commands, log paths and
-PIDs for unit 26b to pick up; whether the design step turned out small as the plan expected or
-should have been split into its own unit (an explicit judgment call the plan defers to you); and
-any contradiction you found between this brief, brief 20, and the contracts they cite. **Do not
-resolve contradictions silently — report them.** If you find a non-trivial bug outside this
-unit's own contract, report it (symptom, location, root cause if found) and leave it — do not fix
-it here.
-
-## Amendment (2026-09-19): design step NOT small -- unit stopped before implementing; split required
-
-The worker executing this brief applied the "If you find the design step is not in fact
-small" escape valve. No `selection.json`/`divide.py` change was made, `output/` was NOT
-cleared, and NO rebuild #3 was started. Only `output/report.json` was copied to
-`/tmp/wp1-unit26-prior-report.json` (harmless). Findings, from 25b's numbers (PLAN.md
-"Build record (2026-09-16)"):
-
-- **Direction does not match brief 20's Amendment (contradiction, reported).** The two
-  counts go opposite ways. `name_count` OVERSHOOTS at levels 2/4/6/8 (3.99x / 19.6x /
-  13.7x / 66.7x) and undershoots at 0 (0.09x) and 10/12 (0/8). `parcel_count` undershoots
-  at 0/2/4/6 (0.12x/0.10x/0.12x/0.26x) and 10 (0.44x). "Undershoot, not overshoot" only
-  holds for parcel_count and level 0/10/12 names.
-- **name_count overshoot is not reachable via selection.json.** At level 8, place=[] and
-  only `motorway` is admitted (14,004 ways) and generates 13,937 names vs R=209: every
-  named admitted road emits a NameRecord (`osm_to_parcel_geometry._handle_way`). Cutting
-  it means dropping the road class (which breaks link_count, already in range) -- i.e. it
-  needs new plumbing: admit road geometry without its name record (brief 20's own named
-  open question), e.g. a per-rule `road_names` flag or name-density cap in selection.py
-  plus the extractor. That is a change to `parser/kiwiw/selection.py` and
-  `osm_to_parcel_geometry.py`, outside this brief's owned paths.
-- **parcel_count 0.1x at level 0/2/4 is structural**, not admission-driven: G has ~9x
-  fewer parcels than R at level 0 (429,084 vs 3,704,871) despite the fully admitted
-  content, so it depends on which cells are emitted / divided-parcel accounting, not on
-  what `selection.json` admits. Needs an investigation of how `parcel_count` is derived
-  in envelope.py vs how G's cells/divided sub-parcels are counted; unresolved.
-- Level 0 name_count (0.09x) needs more names, level 2-8 need far fewer: the same
-  per-class lever must be able to go both ways.
-
-**Recommendation:** split into (26-design) a design-only unit covering (i) name-emission
-decoupling plumbing, (ii) diagnosing the parcel_count gap, then a fresh 26/26b kickoff
-+verify pair. Also note the `container` PDMDH regression from 25b is still unresolved and
-independent. Also flagged: level 12 `name_count` ratio field reads 0.0 for G=0/R=8
-(placeholder, not computed) -- harness file, not touched.
+Commit SHAs of 26a/26c verified, disk numbers and go/no-go, PIDs, log paths.

@@ -1113,3 +1113,21 @@ admission) reasons. Direction contradicts brief 20's "undershoot" amendment for 
 code changed, `output/` untouched, no rebuild started (nothing to verify). 25b's report copied
 to `/tmp/wp1-unit26-prior-report.json`. Brief 26 amended with details; recommend a
 design-only unit before a fresh kickoff/verify pair. Unit 26b has nothing to verify until then.
+
+**Unit 26-design (envelope diagnosis + split into 26a/26c) — design done; briefs authored, no code changed.**
+
+`parcel_count` gap diagnosed (strongly indicated, unproven until 26c step 1): the metric counts
+emitted leaf frames; `_encode_level` emits frames only for spooled (content-bearing) cells, while R
+emits a frame for a much larger contiguous mask of cells (R L2 mean 497 B / min 320 B floor;
+R L0 3.7M frames ~= 1.7x the Australian bbox's land cells). Ratio ~0.1x at L0/2/4, 0.26x L6,
+converging at L8; divided-parcel accounting and selection are ruled out. `name_count`: overshoot
+at L2-8 is emission-driven (every named admitted road emits a NameRecord; R has place names only
+there), undershoot at L0 (0.09x) and L10/12 needs more name sources -- so a per-rule name gate
+(`road_names`, `background_names`, `name_nodes`, optional cap) decoupled from geometry admission.
+Briefs: **26a** (selection.py/json + extractor name gates, tally-driven recalibration, tests);
+**26c** (offline R-vs-G cell-occupancy analysis, then empty-frame fill from a checked-in mask or a
+declared deviation; touches `build_alldata.py` only after the concurrent assembler work lands);
+**26** rewritten as kickoff-only; **26b** amended to verify/record only. Proposed deviation for
+PLAN.md acceptance (if 26c refutes fill): parcel_count at L0/2/4/6/10 outside [0.5,2]x because R
+frames cells not derivable from OSM (WP2/out of scope). Brief 20's "undershoot" amendment is
+contradicted for names (they overshoot at L2-8). Container PDMDH regression remains independent.

@@ -1,3 +1,10 @@
+> **Revised 2026-09-19:** unit 26 was split. The calibration change is no longer
+> uncommitted in the working tree: it is committed by units 26a (names) and 26c (parcel_count
+> fill or declared deviation). Ignore "commit unit 26's change" below; 26b now verifies the
+> rebuild, records results, and lists any residual level as a declared deviation proposed for
+> PLAN.md acceptance (no self-acceptance, no harness loosening). Owned paths for code files
+> below are read-only for this unit.
+
 # Brief: 26b — Full-Australia rebuild #3: verify the recalibration at scale; record final report
 
 Consumer: implementation worker (fresh agent — do not resume unit 26's agent, same reasoning as
