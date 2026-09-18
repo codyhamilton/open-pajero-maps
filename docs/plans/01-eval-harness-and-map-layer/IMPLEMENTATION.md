@@ -1415,3 +1415,12 @@ timing: assembly 17:29 (rebuild #4: 11:01), max frame bytes L0 115,716 / L8 127,
 code changed. Tables: PLAN.md "Build record (2026-09-19, rebuild #5)". WP1 verdict: not complete; WP1 fix = L8
 road budget; proposed deviations awaiting user: L0 name_count, L12 parcel_count, L0 bg / L8 name (and L8 fallback)
 trim >1%.
+
+## Brief 33 -- Pinned motorway/trunk roads vs the road kind budget (2026-09-19)
+
+Diagnosis (read-only): the remaining L8 road FAIL (121,080 > 99,794) is not the fallback cell (3,0) (now 99,766 B)
+but L8 parcel (6,2) type-2 sub-cell (3,1): 2,011 motorway/trunk links, whole frame under the ceiling, so
+`_trim_kinds` floors at `n_pinned` = all links and drops nothing (also (7,3) sub-cell (2,0), 118,462 B). Fix:
+`_trim_kinds` releases the pin when the pinned prefix alone exceeds the kind budget (R's max is the budget, so no
+R content is lost). Real L8 spool: road max 99,786, bg 119,896, name 356, all <= R. pytest 279 passed. Details
+`briefs/33-pinned-road-budget.md`; verification 33b (kickoff), 33c.

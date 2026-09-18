@@ -370,11 +370,29 @@ def test_road_trim_order_and_pinning():
     assert [r.osm_way_id for r in ordered] == [2, 4, 3, 1, 9]  # ties -> highest way id last
     _o, p0 = divide._road_keep_order(0, roads)
     assert p0 == 0
-    # trim to zero budget still keeps the pinned links
+    # budget that the 2 pinned links fit: pinned kept, the rest trimmed
     content = {"roads": roads, "backgrounds": [], "names": []}
     fb, dropped = divide._trim_kinds(_fake_measure(), 2, 0, 0, _BOUNDS, content,
-                                     {"road": 0}, None)
+                                     {"road": 20}, None)
     assert dropped == 3
+
+
+def test_pinned_roads_trimmed_when_they_alone_exceed_budget():
+    """Brief 33: an L>=2 cell of only motorway/trunk links over the road
+    budget is trimmed to the budget in priority order (pin is not a floor)."""
+    def rd(way, n):
+        return SimpleNamespace(road_type=12, points=[(0, 0)] * n, osm_way_id=way, ordinal=0)
+    roads = [rd(i, 10 - i) for i in range(8)]  # all pinned; longest first
+    stats: dict = {}
+    fb, dropped = divide._trim_kinds(_fake_measure(), 2, 0, 0, _BOUNDS,
+                                     {"roads": roads, "backgrounds": [], "names": []},
+                                     {"road": 50}, stats)
+    assert dropped == 3 and stats["dropped"]["road"] == 3 and len(fb) == 50
+    # zero budget drops everything, still deterministic
+    _fb, d0 = divide._trim_kinds(_fake_measure(), 2, 0, 0, _BOUNDS,
+                                 {"roads": roads, "backgrounds": [], "names": []},
+                                 {"road": 0}, None)
+    assert d0 == 8
 
 
 # ---------------------------------------------------------------------------

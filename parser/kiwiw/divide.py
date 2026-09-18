@@ -340,6 +340,14 @@ def _shrink_to_fit(encode: EncodeFn, level: int, ix: int, iy: int,
     return best_bytes, dropped
 
 
+def _try_pinned(measure, level, ix, iy, bounds, cur, key, items):
+    """Kind sizes of `cur` with `key` set to `items`; None if over the ceiling."""
+    try:
+        return measure(level, ix, iy, bounds, dict(cur, **{key: items}))[1]
+    except ValueError:
+        return None
+
+
 def _trim_kinds(measure: MeasureFn, level: int, ix: int, iy: int,
                 bounds: BoundingBox, content: dict, kind_limits: dict,
                 stats: dict | None) -> tuple[bytes, int]:
@@ -370,6 +378,16 @@ def _trim_kinds(measure: MeasureFn, level: int, ix: int, iy: int,
                 return measure(level, ix, iy, bounds, trial)
             except ValueError:
                 return None
+
+        if n_pinned:
+            # Brief 33: the pin is a preference, not a floor above the
+            # budget. R's own road sub-frame never exceeds the budget (it
+            # *is* R's max), so if the pinned links alone overflow it, they
+            # are trimmed too (still in priority order, motorway first).
+            floor = _try_pinned(measure, level, ix, iy, bounds, cur, key,
+                                ordered[:n_pinned])
+            if floor is None or floor.get(kind, 0) > limit:
+                n_pinned = 0
 
         lo, hi = n_pinned, len(ordered)
         best = n_pinned
