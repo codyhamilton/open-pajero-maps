@@ -1357,3 +1357,11 @@ report the 31b trim table before deciding.
 Verified that the Adelaide L0 coordinate `(-34.9285, 138.6007)` resolves to a divided parcel in both R and G. The reference disc R itself lacks "Grenfell Street" at this location—it contains only "King William Street" and "Pulteney Street". Confirmed by running `compare_disc.py --checks spotcheck` against the existing `output/ALLDATA.KWI` and verifying via the fixed reader that R yields only the two matched names.
 
 Updated `parser/refdata/spot_checks.json` Adelaide L0 `expect_road_names` from `["King William Street", "Grenfell Street", "Pulteney Street"]` to `["King William Street", "Pulteney Street"]`. Spotcheck now PASSes: 14/14 row/level checks. All other expectations remain unchanged.
+
+## Brief 31 -- Rebuild #4 (assembly only) kickoff
+
+- Started 2026-09-19 05:30 AEST: `.venv-rp/bin/python parser/build_alldata.py` under `/usr/bin/time -v`, reusing `output/spool` from rebuild #3 (no extraction). PID 3300685 (time wrapper 3300683); confirmed alive with progress (level 4 divided/trimmed, level 2 encoding).
+- Logs: `/tmp/wp1-unit31-logs/build.out.log`, `/tmp/wp1-unit31-logs/build.time.log`. Prior report copy: `/tmp/wp1-unit31-prior-report.json` (sha256 `319a42b7...bea33`); old ALLDATA.KWI sha256 `16329332...a7e8d8`.
+- Preflight: pytest parser/tests 274 passed (140 s); 7 level_*.idx in spool; /home 59G free (81% used).
+- Commits on master: brief 28 b711e20, 29 a610b26, 30 10b69c2, Adelaide spot_checks fix 29f377c.
+- Expected completion ~05:40-05:45 AEST (~9-10 min, ~6.6 GB RSS). Brief 30 caveat: at L6+ the mfde idx-10 copy adds name-frame bytes not counted in brief 29 budgets; size overshoots may surface; 31b records them.
