@@ -62,6 +62,12 @@ DEFAULT_LEVELS = [12, 10, 8, 6, 4, 2, 0]
 # represent undivided.
 U16_MAPFRAME_BYTE_CEILING = 131070
 
+# Brief 32: levels where a divided sub-cell also receives the nearby road
+# names its point-based re-tiling left with a neighbouring sub-cell. Only L0:
+# R's L0 name density is ~10x G's (name_count 0.10x, declared deviation), so
+# added road names move toward R; L2-L8 name counts are already at 0.75-1.2x.
+NAME_HALO_LEVELS = (0,)
+
 _PROFILE_MAP_PATH = (
     Path(__file__).resolve().parent / "refdata" / "profile" / "map.json"
 )
@@ -222,7 +228,8 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
                    fixture: str | None, threshold_bytes: int,
                    mask: dict[int, tuple[int, int, int, int]] | None = None,
                    kind_limits: dict[str, int] | None = None,
-                   trim_stats: dict | None = None
+                   trim_stats: dict | None = None,
+                   name_halo: bool = False
                    ) -> tuple[list[tuple[int, int, bytes]],
                               list[tuple[int, int, int, int, int, bytes]], int, int]:
     """Encode every spooled parcel at `level`, splitting any parcel whose
@@ -269,7 +276,7 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
     for ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes in divide.plan_divisions(
             level, cells_iter(), threshold_bytes, _encode_one,
             kind_limits=kind_limits, measure=_measure_one,
-            trim_stats=trim_stats):
+            trim_stats=trim_stats, name_halo=name_halo):
         if parcel_type == 0:
             out.append((ix, iy, frame_bytes))
         else:
@@ -293,6 +300,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     thresholds = _load_level_thresholds()
     kind_budgets = _load_level_kind_budgets()
     trimmed_items: dict[str, dict] = {}
+    halo_names: dict[str, int] = {}
 
     spool_stats = {lvl: reader.stats(lvl) for lvl in levels}
 
@@ -310,7 +318,13 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         trim_stats: dict = {}
         parcels, divided_parcels, n_parcels, n_bytes = _encode_level(
             level, grid, reader, fixture, threshold_bytes, mask=mask,
-            kind_limits=kind_budgets.get(level) or None, trim_stats=trim_stats)
+            kind_limits=kind_budgets.get(level) or None, trim_stats=trim_stats,
+            name_halo=(level in NAME_HALO_LEVELS))
+        if trim_stats.get("halo_names"):
+            print(f"level {level}: name halo added {trim_stats['halo_names']:,} "
+                  f"neighbouring road-name records to divided sub-cells (brief 32)",
+                  flush=True)
+            halo_names[str(level)] = trim_stats["halo_names"]
         dropped = trim_stats.get("dropped", {})
         if dropped:
             total = trim_stats.get("total", {})
@@ -356,6 +370,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         "sha256": sha256,
         "layers_present": LAYERS_PRESENT,
         "trimmed_items": trimmed_items,
+        "halo_names": halo_names,
         "fixture": fixture,
     }
     manifest_path = os.path.join(os.path.dirname(out_path) or ".", "manifest.json")

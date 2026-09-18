@@ -375,3 +375,108 @@ def test_road_trim_order_and_pinning():
     fb, dropped = divide._trim_kinds(_fake_measure(), 2, 0, 0, _BOUNDS, content,
                                      {"road": 0}, None)
     assert dropped == 3
+
+
+# ---------------------------------------------------------------------------
+# Brief 32: per-kind budgets in the hard-ceiling fallback; road-name halo
+# ---------------------------------------------------------------------------
+
+def _ceiling_measure(max_items=100, per_item=10):
+    """Fake measure that raises ValueError (the format's hard ceiling) when
+    the total item count exceeds `max_items`."""
+    base = _fake_measure(per_item)
+
+    def m(level, ix, iy, bounds, content):
+        n = sum(len(content.get(k) or []) for k in ("roads", "backgrounds", "names"))
+        if n > max_items:
+            raise ValueError("over ceiling")
+        return base(level, ix, iy, bounds, content)
+    return m
+
+
+def _rd(rt, n, way):
+    return SimpleNamespace(road_type=rt, points=[(0, 0)] * n, osm_way_id=way, ordinal=0)
+
+
+def test_shrink_priority_applies_kind_budgets_and_priority():
+    roads = [_rd(7, 5, i) for i in range(60)] + [_rd(4, 3, 100)]
+    bgs = [SimpleNamespace(coords=[(0, 0), (i + 1, 0), (0, i + 1)]) for i in range(80)]
+    names = ([_name("Queen Street", 5)] + [_name(f"Shop{i}", 6) for i in range(30)]
+             + [_name("Queen Street", 5)])
+    content = {"roads": roads, "backgrounds": bgs, "names": names}
+    limits = {"road": 200, "background": 300, "name": 250}  # 20 / 30 / 25 items
+    stats: dict = {}
+    fb, sizes = divide._shrink_priority(_ceiling_measure(), 0, 0, 0, _BOUNDS,
+                                        content, limits, stats)
+    assert sizes["road"] <= 200 and sizes["background"] <= 300 and sizes["name"] <= 250
+    # 20+30+25 = 75 <= 100 ceiling: budgets alone suffice; nothing more dropped
+    assert (sizes["road"], sizes["background"], sizes["name"]) == (200, 300, 250)
+    assert stats["dropped"] == {"road": 41, "background": 50, "name": 7}
+    # road names survive: the kept names are the first 25 in priority order
+    kept = divide._name_keep_order(names)[:25]
+    assert [r.text for r in kept][:2] == ["Queen Street", "Shop0"] or kept[0].text == "Queen Street"
+    # deterministic
+    fb2, s2 = divide._shrink_priority(_ceiling_measure(), 0, 0, 0, _BOUNDS,
+                                      content, limits, None)
+    assert (fb2, s2) == (fb, sizes)
+
+
+def test_shrink_priority_ceiling_drops_roads_before_names():
+    roads = [_rd(7, 5, i) for i in range(50)]
+    bgs = [SimpleNamespace(coords=[(0, 0), (1, 0), (0, 1)]) for _ in range(40)]
+    names = [_name(f"R{i} Street", 5) for i in range(30)]
+    content = {"roads": roads, "backgrounds": bgs, "names": names}
+    # budgets sum to 120 items > ceiling of 100
+    limits = {"road": 500, "background": 400, "name": 300}
+    _fb, sizes = divide._shrink_priority(_ceiling_measure(100), 0, 0, 0, _BOUNDS,
+                                         content, limits, None)
+    assert sizes["name"] == 300 and sizes["background"] == 400  # 30 + 40 kept
+    assert sizes["road"] == 300  # roads absorbed the overshoot: 100 - 70 items
+
+
+def test_hard_ceiling_path_uses_kind_budgets_in_plan_divisions(monkeypatch):
+    content = _quadrant_content(n_per_quadrant=20)
+    calls = []
+    real = divide._shrink_priority
+
+    def spy(*a, **k):
+        calls.append(a[3:5])
+        return real(*a, **k)
+    monkeypatch.setattr(divide, "_shrink_priority", spy)
+
+    def m(level, ix, iy, bounds, c):
+        n = len(c.get("backgrounds") or [])
+        if n > 10:  # hard ceiling: every tier holds 20 per sub-cell
+            raise ValueError("ceiling")
+        return b"y" * (10 * n), {"road": 0, "background": 10 * n, "name": 0}
+
+    stats: dict = {}
+    out = list(divide.plan_divisions(LEVEL, [(0, 0, content)], 10**6, _encode,
+                                     kind_limits={"background": 50}, measure=m,
+                                     trim_stats=stats))
+    assert {r[2] for r in out} == {2} and len(out) == 4 and len(calls) == 4
+    assert all(len(r[5]) == 50 for r in out)  # 5 items each: kind budget honoured
+    assert stats["dropped"] == {"background": 60}
+
+
+def test_name_halo_adds_neighbour_road_names_within_budget():
+    b = BoundingBox(lat_lo=0.0, lat_hi=1.0, lon_lo=0.0, lon_hi=1.0)
+
+    def nm(text, st, lat, lon):
+        return SimpleNamespace(text=text, string_type=st, lat=lat, lon=lon)
+    sub = [nm("Here Street", 5, 0.5, 0.5)]
+    parent = sub + [nm("Hay Street", 5, 1.3, 0.5),        # within 1 sub-cell: halo
+                    nm("Far Street", 5, 3.0, 0.5),        # too far
+                    nm("Cafe", 6, 1.2, 0.5),              # not a road name
+                    nm("Here Street", 5, 1.1, 0.5),       # text already present
+                    nm("Hay Street", 5, 1.6, 0.5)]        # farther duplicate
+    cands = divide._halo_candidates(parent, sub, b)
+    assert [c.text for c in cands] == ["Hay Street"]
+    assert cands[0].lat < 1.0 and (cands[0].lat, cands[0].lon) == (0.99, 0.5)
+    content = {"roads": [], "backgrounds": [], "names": sub}
+    m = _fake_measure()
+    fb0 = m(0, 0, 0, b, content)[0]
+    fb, n = divide._add_name_halo(m, 0, 0, 0, b, content, parent, {"name": 20}, 10**6, fb0)
+    assert n == 1 and len(fb) == 20
+    fb, n = divide._add_name_halo(m, 0, 0, 0, b, content, parent, {"name": 10}, 10**6, fb0)
+    assert n == 0 and fb == fb0  # never exceeds the name budget

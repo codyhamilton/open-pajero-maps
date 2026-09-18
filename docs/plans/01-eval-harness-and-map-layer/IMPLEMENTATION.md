@@ -1379,3 +1379,16 @@ residual envelope rows. Brief 30 caveat: no overflow, L8 max frame 131,068 of 13
 4.7 GB. No code changed. Full tables: PLAN.md "Build record (2026-09-19, rebuild #4)". WP1 verdict: not
 complete; follow-ups = per-kind budgets in the hard-ceiling path, spotcheck Perth/Adelaide diagnosis, decide
 L0 bg / L8 name trim, and user acceptance of the two proposed deviations.
+
+## Brief 32 -- Ceiling-fallback kind budgets and L0 road-name halo (2026-09-19)
+
+Root causes (read-only on rebuild #4 output): (1) last-tier hard-ceiling fallback `_shrink_to_fit` re-measured
+kind sizes on the un-shrunk content, got `ValueError`, so `sizes=None` and neither per-kind budgets nor the
+priority trim ever ran on the 3 fallback cells (L8 (3,3), (3,0), L0 (2,1)) -> the 3 envelope sub-frame rows.
+(2) Perth/Adelaide spotcheck regressions are brief 29's kind-driven escalation to type 2: names are assigned
+by point, and the query leaf no longer contains Hay Street (0.0017 deg away) / Pulteney Street (0.0045 deg); not
+trim, not dedupe. Fix: `divide._shrink_priority` (budgets + priority in the fallback; pin not honoured there)
+and an L0-only road-name halo (`plan_divisions(name_halo=True)`, `build_alldata.NAME_HALO_LEVELS`). L8 name trim
+left unchanged (idx-2 budget; the brief 30 copy is a separate frame). Evidence in
+`briefs/32-ceiling-fallback-kind-budgets-and-road-name-halo.md`; pytest 278 passed; Perth fixture
+`/tmp/perth32` all kinds <= R, Hay Street resolved; real L8 spool clean. Verification: 32b (kickoff), 32c.

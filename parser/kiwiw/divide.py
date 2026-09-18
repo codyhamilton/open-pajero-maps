@@ -402,6 +402,186 @@ def _trim_kinds(measure: MeasureFn, level: int, ix: int, iy: int,
     return fb, dropped_total
 
 
+def _ordered_kind(level: int, kind: str, items: list) -> tuple[list, int]:
+    """`(priority-ordered items, n_pinned)` for one kind (best first)."""
+    if kind == "road":
+        return _road_keep_order(level, items)
+    if kind == "background":
+        return _bg_keep_order(items), 0
+    return _name_keep_order(items), 0
+
+
+def _shrink_priority(measure: MeasureFn, level: int, ix: int, iy: int,
+                     bounds: BoundingBox, content: dict, kind_limits: dict,
+                     stats: dict | None) -> tuple[bytes, dict]:
+    """Brief 32: hard-ceiling fallback (last tier, `measure` raises because
+    the whole frame exceeds the format's 131,070-byte ceiling) that honours
+    the per-kind budgets and the same priority order as `_trim_kinds`,
+    instead of bisecting an unprioritised item count.
+
+    1. Each budgeted kind is cut to its priority-ordered prefix that meets
+       its own budget. Sub-frame kinds are encoded independently, so the kind
+       size is measured with the other kinds emptied (no ceiling error).
+    2. If the frame still exceeds the ceiling (budgets can sum past it),
+       reduce kinds lowest-value first -- roads, then backgrounds, then
+       names (road names last) -- each to the largest priority prefix that
+       encodes. The L>=2 motorway/trunk pin of `_trim_kinds` is *not*
+       honoured here: it still orders the roads first, but a cell that
+       reaches this last-resort path (L8 cell of 2,417 motorway/trunk links,
+       136,924 B > the 99,794 B budget) cannot meet its budget with the pin.
+    Returns `(frame_bytes, sizes)`; raises `ValueError` if nothing fits."""
+    orig = {k: list(content.get(_CONTENT_KEY[k]) or []) for k in KINDS}
+    cur = dict(content)
+    ordered: dict[str, list] = {}
+    for kind in KINDS:
+        ordered[kind], _pin = _ordered_kind(level, kind, orig[kind])
+        cur[_CONTENT_KEY[kind]] = ordered[kind]
+
+    def _solo(kind: str, k: int):
+        trial = {"roads": [], "backgrounds": [], "names": []}
+        trial[_CONTENT_KEY[kind]] = ordered[kind][:k]
+        try:
+            return measure(level, ix, iy, bounds, trial)[1].get(kind, 0)
+        except ValueError:
+            return None
+
+    for kind in KINDS:
+        limit = kind_limits.get(kind)
+        if limit is None:
+            continue
+        lo, hi, best = 0, len(ordered[kind]), 0
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            sz = _solo(kind, mid)
+            if sz is not None and sz <= limit:
+                best, lo = mid, mid + 1
+            else:
+                hi = mid - 1
+        cur[_CONTENT_KEY[kind]] = ordered[kind][:best]
+
+    def _whole(c):
+        try:
+            return measure(level, ix, iy, bounds, c)
+        except ValueError:
+            return None
+
+    res = _whole(cur)
+    for kind in KINDS:
+        if res is not None:
+            break
+        key = _CONTENT_KEY[kind]
+        items = cur[key]
+        lo, hi, best, best_res = 0, len(items), 0, None
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            r = _whole(dict(cur, **{key: items[:mid]}))
+            if r is not None:
+                best, best_res, lo = mid, r, mid + 1
+            else:
+                hi = mid - 1
+        cur[key] = items[:best]
+        res = best_res if best_res is not None else _whole(cur)
+    if res is None:
+        raise ValueError(
+            f"cannot encode ({ix},{iy}) at ({level=}) even with all content dropped")
+
+    fb, sizes = res
+    total_dropped = 0
+    for kind in KINDS:
+        d = len(orig[kind]) - len(cur[_CONTENT_KEY[kind]])
+        if not d:
+            continue
+        total_dropped += d
+        print(f"WARNING [kiwiw.divide]: level {level} sub-cell ({ix},{iy}): "
+              f"hard-ceiling fallback trimmed {kind} {d}/{len(orig[kind])} items by "
+              f"priority to meet kind budget / 131,070-byte ceiling (brief 32)",
+              file=sys.stderr)
+        if stats is not None:
+            dd = stats.setdefault("dropped", {})
+            dd[kind] = dd.get(kind, 0) + d
+            cc = stats.setdefault("cells", {})
+            cc[kind] = cc.get(kind, 0) + 1
+    return fb, sizes
+
+
+def _halo_candidates(parent_names: list, sub_names: list, bounds: BoundingBox) -> list:
+    """Road names (string_type 5) of the parent cell that sit outside this
+    sub-cell (assigned to a neighbour by point) but within one sub-cell
+    width/height of its bounds, and whose text the sub-cell does not
+    already carry. Nearest instance per text; ordered (distance, text).
+    Returned records have lat/lon pinned just inside the sub-cell edge."""
+    have = {r.text.lower() for r in sub_names if r.string_type == 5}
+    h = bounds.lat_hi - bounds.lat_lo
+    w = bounds.lon_hi - bounds.lon_lo
+    inset_lat, inset_lon = h * 0.01, w * 0.01
+    best: dict[str, tuple[float, float, float, object]] = {}
+    for rec in parent_names:
+        if rec.string_type != 5 or rec.lat is None or rec.lon is None:
+            continue
+        t = rec.text.lower()
+        if t in have:
+            continue
+        dlat = max(bounds.lat_lo - rec.lat, 0.0, rec.lat - bounds.lat_hi)
+        dlon = max(bounds.lon_lo - rec.lon, 0.0, rec.lon - bounds.lon_hi)
+        if dlat == 0.0 and dlon == 0.0:
+            continue  # inside: already assigned to this sub-cell
+        if dlat > h or dlon > w:
+            continue
+        d = (dlat / h) ** 2 + (dlon / w) ** 2
+        cur = best.get(t)
+        if cur is None or (d, rec.lat, rec.lon) < (cur[0], cur[1], cur[2]):
+            best[t] = (d, rec.lat, rec.lon, rec)
+    out = []
+    for t in sorted(best, key=lambda t: (best[t][0], t)):
+        rec = best[t][3]
+        lat = min(max(rec.lat, bounds.lat_lo + inset_lat), bounds.lat_hi - inset_lat)
+        lon = min(max(rec.lon, bounds.lon_lo + inset_lon), bounds.lon_hi - inset_lon)
+        try:
+            new = dataclasses.replace(rec, lat=lat, lon=lon, raw_offset=0, raw_bytes=b"")
+        except TypeError:  # non-dataclass record (tests)
+            import copy
+            new = copy.copy(rec)
+            new.lat, new.lon = lat, lon
+        out.append(new)
+    return out
+
+
+def _add_name_halo(measure: MeasureFn, level: int, ix: int, iy: int,
+                   bounds: BoundingBox, content: dict, parent_names: list,
+                   kind_limits: dict | None, threshold_bytes: int,
+                   fb: bytes) -> tuple[bytes, int]:
+    """Brief 32: append to a divided sub-cell the nearby road names its
+    point-based re-tiling left with a neighbour, as many (nearest first)
+    as still meet the name kind budget and the frame threshold. Never
+    displaces existing content. Returns `(frame_bytes, n_added)`."""
+    cands = _halo_candidates(parent_names, content.get("names") or [], bounds)
+    if not cands:
+        return fb, 0
+    name_limit = (kind_limits or {}).get("name")
+    base = list(content.get("names") or [])
+
+    def _try(k: int):
+        try:
+            res = measure(level, ix, iy, bounds, dict(content, names=base + cands[:k]))
+        except ValueError:
+            return None
+        if len(res[0]) > threshold_bytes:
+            return None
+        if name_limit is not None and res[1].get("name", 0) > name_limit:
+            return None
+        return res
+
+    lo, hi, best, best_fb = 1, len(cands), 0, fb
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        r = _try(mid)
+        if r is not None:
+            best, best_fb, lo = mid, r[0], mid + 1
+        else:
+            hi = mid - 1
+    return best_fb, best
+
+
 def plan_divisions(
     level: int,
     parcels: Iterable[tuple[int, int, dict]],
@@ -410,6 +590,7 @@ def plan_divisions(
     kind_limits: dict | None = None,
     measure: MeasureFn | None = None,
     trim_stats: dict | None = None,
+    name_halo: bool = False,
 ) -> Iterator[tuple[int, int, int, int, int, bytes]]:
     """For every `(ix, iy, content)` in `parcels`, encode it whole via
     `encode(level, ix, iy, bounds, content)`; if the result fits in
@@ -477,6 +658,7 @@ def plan_divisions(
             sub_content = _retile_content(content, sub_grid)
 
             frames: dict[tuple[int, int], bytes] = {}
+            no_halo: set = set()
             oversize = False
             last_tier = parcel_type == 2
             for cell, c in sub_content.items():
@@ -489,6 +671,14 @@ def plan_divisions(
                     # Last tier and still unrepresentable at the format's
                     # hard ceiling -- shrink content until it fits (see
                     # module docstring's "Deviation found ..." note).
+                    if use_kinds:
+                        # Brief 32: per-kind budgets + priority order.
+                        fb, _sz = _shrink_priority(
+                            measure, level, cell[0], cell[1], sub_bounds, c,
+                            kind_limits, trim_stats)
+                        frames[cell] = fb
+                        no_halo.add(cell)
+                        continue
                     fb, _dropped = _shrink_to_fit(
                         encode, level, cell[0], cell[1], sub_bounds, c)
                     sizes = None
@@ -501,9 +691,23 @@ def plan_divisions(
                         if last_tier:
                             fb, _n = _trim_kinds(measure, level, cell[0], cell[1],
                                                  sub_bounds, c, kind_limits, trim_stats)
+                            if _n:
+                                no_halo.add(cell)
                         else:
                             oversize = True
                 frames[cell] = fb
+
+            if name_halo and use_kinds and (not oversize or parcel_type == 2):
+                parent_names = content.get("names") or []
+                for cell, c in sub_content.items():
+                    if cell in no_halo or cell not in frames:
+                        continue
+                    sb = parcel_bounds(cell[0], cell[1], sub_grid)
+                    frames[cell], _n = _add_name_halo(
+                        measure, level, cell[0], cell[1], sb, c, parent_names,
+                        kind_limits, threshold_bytes, frames[cell])
+                    if _n and trim_stats is not None:
+                        trim_stats["halo_names"] = trim_stats.get("halo_names", 0) + _n
 
             chosen_type = parcel_type
             chosen_frames = frames
