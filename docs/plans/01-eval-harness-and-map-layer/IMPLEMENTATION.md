@@ -1223,3 +1223,27 @@ admits all); brief 26c's "R L0 ~22% of grid" holds, and its ".bin RLE mask" is s
 rectangles (brief amended). Out-of-scope note: `walk.iter_parcels` decodes every leaf and takes >10
 min for L2 alone under a single-level filter; the occupancy script avoids it by reading the index
 tree only.
+
+**Unit 26a (name emission decoupled from geometry; per-level name_count recalibrated) — code done, no rebuild.**
+`selection.json` rules gained `road_names`, `background_names`, `name_nodes` (`place` kept as alias) and
+`name_cap_per_cell` (absent = legacy); `selection.name_filter_way/name_filter_node` are called in
+`osm_to_parcel_geometry.py` right before `_make_name_record` at the road, background and node sites
+(geometry admission untouched). The extractor's hardcoded 5-value place check moved into the gate
+(explicit `level_filter=` overrides keep the legacy behaviour). `count_dry_run` now tallies name
+candidates per source. Tests: 245 pass (`pytest parser/tests -q`); Perth clip fixture, levels 0-8,
+extracts clean: L0 names 118,899 (roads 171,058), L2 445 (roads 18,059), L4 24, L6 16, L8 1.
+
+Dry-run tally (national, tags-only) vs R and [0.5,2]x: L0 1,984,178 / 19,081,105 = 0.10x (OUT);
+L2 30,307 / 40,169 = 0.75x; L4 3,354 / 4,042 = 0.83x; L6 1,223 / 1,022 = 1.20x; L8 287 / 209 = 1.37x;
+L10 8 / 8 and L12 8 / 8 = 1.00x. Lever at L2-L10/12: `road_names=false`, `background_names=false`,
+place-class set only (classes and per-class tallies are in each rule's `_calibration_note`); no cap
+needed.
+
+**Declared deviation: level 0 name_count cannot reach the envelope.** Everything OSM offers is admitted
+(all named roads 1.29M, named bg ways 0.46M, all named place nodes, all named amenity/shop/tourism/
+historic/natural/leisure nodes = 0.23M): ~1.98M = 0.10x, floor is 9.54M. R's 19M names include strings
+OSM Australia does not carry (address/house-number style). Padding is not possible without fabricating
+names; needs a WP-level decision (widen level-0 name envelope or a new name source). Also: 26's
+brief-20 "undershoot" amendment is wrong for names at 2-8 (they overshot), as the brief says; the
+level-10/12 "suburb-only, unreachable" note in selection.json is superseded (state/country/continent = 8).
+Caveat: L10/12 counts assume the single-parcel cells are target cells; real-build confirmation is 26's.

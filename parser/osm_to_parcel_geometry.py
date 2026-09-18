@@ -717,6 +717,36 @@ def _default_level_filter(level: int, tags: dict) -> bool:
     return True
 
 
+class _LegacyNameGate:
+    """Pre-26a name behaviour: names follow geometry admission."""
+
+    def __init__(self, level_filter: LevelFilter):
+        self._lf = level_filter
+
+    def way(self, level: int, tags: dict, kind: str) -> bool:
+        return True
+
+    def node(self, level: int, tags: dict) -> bool:
+        return (tags.get("place") in ("suburb", "city", "town", "village", "locality")
+                and self._lf(level, tags))
+
+    def cap(self, level: int):
+        return None
+
+
+class _SelectionNameGate:
+    """Name gate backed by `kiwiw.selection`'s name_* rules."""
+
+    def way(self, level: int, tags: dict, kind: str) -> bool:
+        return selection.name_filter_way(level, tags, kind)
+
+    def node(self, level: int, tags: dict) -> bool:
+        return selection.name_filter_node(level, tags)
+
+    def cap(self, level: int):
+        return selection.name_cap_per_cell(level)
+
+
 class _GeomHandler:
     """pyosmium handler that tiles roads, background features, and names into
     every requested level's grid *as each way/node is read* and spools the
@@ -725,10 +755,21 @@ class _GeomHandler:
     """
 
     def __init__(self, grids: dict[int, "TileGrid"], spool: SpoolWriter,
-                 level_filter: LevelFilter, progress_every: int = PROGRESS_EVERY):
+                 level_filter: LevelFilter, progress_every: int = PROGRESS_EVERY,
+                 name_gate=None):
         self.grids = grids
         self.spool = spool
         self.level_filter = level_filter
+        # Name-emission gate, decoupled from geometry admission (brief 26a).
+        # `name_gate` provides way(level, tags, kind) / node(level, tags) /
+        # cap(level). Default (an explicit level_filter override with no
+        # gate) is the legacy behaviour: every admitted named way emits,
+        # and named place nodes in the legacy 5-value set that pass
+        # level_filter emit.
+        if name_gate is None:
+            name_gate = _LegacyNameGate(level_filter)
+        self.name_gate = name_gate
+        self._name_counts: dict = {}
         self.progress_every = progress_every
         self.target_cells: dict[int, set] = {
             level: set(grid.target_cells()) for level, grid in grids.items()
@@ -751,6 +792,20 @@ class _GeomHandler:
         h = Handler()
         h.apply_file(pbf_path, locations=True, idx="flex_mem")
 
+    def _cap_ok(self, level: int, ix: int, iy: int, kind: str) -> bool:
+        """`name_cap_per_cell` safety valve: first N names per (level, cell,
+        kind) in PBF order (ids ascend, so lowest id wins; all synthetic
+        names share priority 5). Deterministic."""
+        cap = self.name_gate.cap(level)
+        if cap is None:
+            return True
+        key = (level, ix, iy, kind)
+        n = self._name_counts.get(key, 0)
+        if n >= cap:
+            return False
+        self._name_counts[key] = n + 1
+        return True
+
     def _handle_node(self, n) -> None:
         self.n_nodes += 1
         if not n.location.valid():
@@ -758,9 +813,6 @@ class _GeomHandler:
         tags = n.tags
         name = tags.get("name")
         if not name:
-            return
-        place = tags.get("place")
-        if place not in ("suburb", "city", "town", "village", "locality"):
             return
         tags_dict = dict(tags)
         lat, lon = n.location.lat, n.location.lon
@@ -785,12 +837,14 @@ class _GeomHandler:
         # place-node census.
         type_code = 0x134
         for level, grid in self.grids.items():
-            if not self.level_filter(level, tags_dict):
+            if not self.name_gate.node(level, tags_dict):
                 continue
             par = assign_to_parcel(lat, lon, grid)
             if par is None or par not in self.target_cells[level]:
                 continue
             ix, iy = par
+            if not self._cap_ok(level, ix, iy, "node"):
+                continue
             rec = _make_name_record(name, lat, lon, type_code=type_code,
                                      level=level, kind="place")
             if rec is not None:
@@ -848,11 +902,14 @@ class _GeomHandler:
                     if links:
                         self.spool.add(level, ix, iy, roads=links)
                         any_link = True
-                if name and any_link:
+                if (name and any_link
+                        and self.name_gate.way(level, tags, "road")):
                     clat, clon = _centroid(coords)
                     par = assign_to_parcel(clat, clon, grid)
                     if par is not None and par in tcells:
                         nix, niy = par
+                        if not self._cap_ok(level, nix, niy, "road"):
+                            continue
                         rec = _make_name_record(name, clat, clon,
                                                  level=level, kind="road",
                                                  geometry=coords)
@@ -873,7 +930,8 @@ class _GeomHandler:
             bounds = parcel_bounds(ix, iy, grid)
             shape = _make_background_shape(ring, bg_type, bounds)
             self.spool.add(level, ix, iy, backgrounds=[shape])
-            if name:
+            if (name and self.name_gate.way(level, tags, "background")
+                    and self._cap_ok(level, ix, iy, "background")):
                 rec = _make_name_record(name, clat, clon, type_code=bg_type,
                                          level=level, kind="background")
                 if rec is not None:
@@ -910,10 +968,13 @@ def extract_parcel_geometry(
     Returns `spool`, closed (its index files are finalized) so callers can
     immediately construct a `SpoolReader` over it.
     """
+    name_gate = None
     if level_filter is None:
         level_filter = selection.level_filter
+        name_gate = _SelectionNameGate()
 
-    handler = _GeomHandler(grids, spool, level_filter, progress_every=progress_every)
+    handler = _GeomHandler(grids, spool, level_filter, progress_every=progress_every,
+                           name_gate=name_gate)
     if verbose:
         print(f"Streaming {pbf_path} ...", flush=True)
     handler.apply(pbf_path)

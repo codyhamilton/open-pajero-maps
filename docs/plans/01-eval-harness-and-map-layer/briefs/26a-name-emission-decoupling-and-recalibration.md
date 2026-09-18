@@ -69,3 +69,8 @@ land in the envelope is named with its blocker (candidate deviation, see 26c/IMP
 Chosen lever per level and tallies; any level left outside the envelope and why; contradictions
 found. Do not silently resolve contradictions with brief 20 (its "undershoot" amendment is wrong
 for names: they overshoot at 2-8).
+
+## Amendment (26a outcome)
+Level 0 name_count is unreachable: the maximum OSM-derived total (all named roads, bg ways, place
+and POI nodes) is ~1.98M vs a floor of 9.54M; all classes are admitted and the shortfall is a
+declared deviation. The L10/L12 rule is satisfied by place=state|country|continent (8 records).

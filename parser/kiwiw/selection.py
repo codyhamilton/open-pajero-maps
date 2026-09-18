@@ -58,6 +58,15 @@ Selection table format (`parser/refdata/selection.json`)
       key/value predicate list cannot express that.
     - ``place``: list of OSM ``place=`` values admitted at this level for
       place-node name records (empty/omitted = none admitted).
+    - ``road_names`` (true|false|[highway classes], absent = true): whether an
+      admitted road way emits a NameRecord (brief 26a); classes must be a
+      subset of the rule's ``highway`` list.
+    - ``background_names`` (true|false|[{key,value}], absent = true): same for
+      admitted background ways.
+    - ``name_nodes``: [{key, value}] (value "*" or omitted = any) named-node
+      predicates admitted as name-only records; ``place`` is an alias.
+    - ``name_cap_per_cell`` (int): safety valve, max name records per parcel
+      per record class per level (first N in PBF/id order; deterministic).
   A range with no rule entry admits nothing at any level in that range.
 - ``min_length_m``: per-level minimum way length in metres, for
   generalisation at levels >= 4. **Not wired into the extractor by this
@@ -119,6 +128,11 @@ class _LevelRule:
     highway: frozenset
     background: tuple  # tuple of (key, value) pairs
     place: frozenset
+    # Name-emission gates (brief 26a); None = key absent = legacy behaviour.
+    road_names: object = None  # None/True/False or frozenset of highway classes
+    background_names: object = None  # None/True/False or tuple of (key, value)
+    name_nodes: tuple = ()  # (key, value) predicates; value "*" = any value
+    name_cap_per_cell: Optional[int] = None
     background_all: bool = False  # see level_filter() and selection.json's
     # level-0 rule: parser/refdata/vocab/bg_type.json declares a catch-all
     # `{"levels": 0, "match": {}, "value": 288}` rule (and the same for
@@ -176,6 +190,50 @@ class SelectionTable:
             if tags.get(key) == value:
                 return True
         return False
+
+    def name_filter_way(self, level: int, tags: dict, kind: str) -> bool:
+        """Name-emission gate for an *admitted* way (geometry admission is
+        `level_filter`'s job and is unchanged). `kind` is "road" or
+        "background". Absent rule key = True (legacy: every admitted named
+        way emits a NameRecord)."""
+        rule = self._rule_for_level(level)
+        if rule is None:
+            return False
+        if kind == "road":
+            rn = rule.road_names
+            if rn is None or rn is True:
+                return True
+            if rn is False:
+                return False
+            return tags.get("highway") in rn
+        if kind == "background":
+            bn = rule.background_names
+            if bn is None or bn is True:
+                return True
+            if bn is False:
+                return False
+            return any(tags.get(k) == v for k, v in bn)
+        raise ValueError(f"unknown name kind {kind!r}")
+
+    def name_filter_node(self, level: int, tags: dict) -> bool:
+        """Name-only node gate: True if a named node with `tags` emits a
+        NameRecord at `level`. Admits `name_nodes` predicates plus the
+        `place` list (alias for `{"key":"place","value":v}`)."""
+        rule = self._rule_for_level(level)
+        if rule is None:
+            return False
+        place = tags.get("place")
+        if place is not None and place in rule.place:
+            return True
+        for k, v in rule.name_nodes:
+            tv = tags.get(k)
+            if tv is not None and (v == "*" or tv == v):
+                return True
+        return False
+
+    def name_cap_per_cell(self, level: int) -> Optional[int]:
+        rule = self._rule_for_level(level)
+        return None if rule is None else rule.name_cap_per_cell
 
     def min_length_m(self, level: int) -> float:
         """Minimum way length in metres for generalisation at `level`
@@ -281,7 +339,67 @@ def _validate_and_build(data: dict) -> SelectionTable:
             raise SelectionError(
                 f"selection table: rule {i} 'background_all' must be a bool")
 
+        road_names = raw_rule.get("road_names")
+        if road_names is None or isinstance(road_names, bool):
+            pass
+        elif (isinstance(road_names, list)
+              and all(isinstance(v, str) for v in road_names)):
+            bad = [v for v in road_names if v not in highway]
+            if bad:
+                raise SelectionError(
+                    f"selection table: rule {i} 'road_names' classes {bad} "
+                    f"are not in the rule's own 'highway' list")
+            road_names = frozenset(road_names)
+        else:
+            raise SelectionError(
+                f"selection table: rule {i} 'road_names' must be a bool or a "
+                f"list of highway classes")
+
+        bg_names = raw_rule.get("background_names")
+        if bg_names is None or isinstance(bg_names, bool):
+            pass
+        elif isinstance(bg_names, list):
+            preds = []
+            for j, pred in enumerate(bg_names):
+                if (not isinstance(pred, dict) or not isinstance(pred.get("key"), str)
+                        or not isinstance(pred.get("value"), str)):
+                    raise SelectionError(
+                        f"selection table: rule {i} background_names predicate "
+                        f"{j} must be an object with string 'key' and 'value'")
+                preds.append((pred["key"], pred["value"]))
+            bg_names = tuple(preds)
+        else:
+            raise SelectionError(
+                f"selection table: rule {i} 'background_names' must be a bool "
+                f"or a list of {{key,value}}")
+
+        nn_raw = raw_rule.get("name_nodes", [])
+        if not isinstance(nn_raw, list):
+            raise SelectionError(f"selection table: rule {i} 'name_nodes' must be a list")
+        name_nodes = []
+        for j, pred in enumerate(nn_raw):
+            if not isinstance(pred, dict) or not isinstance(pred.get("key"), str):
+                raise SelectionError(
+                    f"selection table: rule {i} name_nodes predicate {j} needs "
+                    f"a string 'key'")
+            value = pred.get("value", "*")
+            if not isinstance(value, str):
+                raise SelectionError(
+                    f"selection table: rule {i} name_nodes predicate {j} "
+                    f"'value' must be a string")
+            name_nodes.append((pred["key"], value))
+
+        cap = raw_rule.get("name_cap_per_cell")
+        if cap is not None and (not isinstance(cap, int) or isinstance(cap, bool)
+                                or cap < 1):
+            raise SelectionError(
+                f"selection table: rule {i} 'name_cap_per_cell' must be a positive int")
+
         rules[range_lo] = _LevelRule(
+            road_names=road_names,
+            background_names=bg_names,
+            name_nodes=tuple(name_nodes),
+            name_cap_per_cell=cap,
             highway=frozenset(highway),
             background=tuple(background),
             place=frozenset(place),
@@ -326,6 +444,21 @@ def level_filter(level: int, tags: dict) -> bool:
     `osm_to_parcel_geometry.py`'s `level_filter` default. Lazily loads and
     caches `parser/refdata/selection.json` on first call."""
     return _table().level_filter(level, tags)
+
+
+def name_filter_way(level: int, tags: dict, kind: str) -> bool:
+    """Module-level name-emission gate for admitted ways (see
+    `SelectionTable.name_filter_way`)."""
+    return _table().name_filter_way(level, tags, kind)
+
+
+def name_filter_node(level: int, tags: dict) -> bool:
+    """Module-level name-only node gate (see `SelectionTable.name_filter_node`)."""
+    return _table().name_filter_node(level, tags)
+
+
+def name_cap_per_cell(level: int) -> Optional[int]:
+    return _table().name_cap_per_cell(level)
 
 
 def meets_length_threshold(level: int, length_m: float) -> bool:
@@ -385,6 +518,15 @@ class DryRunCounts:
     highway: dict  # level -> count of ROADS-matching ways admitted
     background: dict  # level -> count of background-candidate ways admitted
     place: dict  # level -> count of place nodes admitted
+    # Name-emission tallies (brief 26a); level -> candidate NameRecord count
+    # by source. Compare sum of the three against R's name record_count.
+    name_road: dict = field(default_factory=dict)
+    name_background: dict = field(default_factory=dict)
+    name_node: dict = field(default_factory=dict)
+
+    def name_total(self, level: int) -> int:
+        return (self.name_road.get(level, 0) + self.name_background.get(level, 0)
+                + self.name_node.get(level, 0))
 
 
 def count_dry_run(table: SelectionTable, pbf_path: str = DEFAULT_PBF,
@@ -405,6 +547,9 @@ def count_dry_run(table: SelectionTable, pbf_path: str = DEFAULT_PBF,
     highway_counts = {lv: 0 for lv in levels}
     background_counts = {lv: 0 for lv in levels}
     place_counts = {lv: 0 for lv in levels}
+    name_road = {lv: 0 for lv in levels}
+    name_bg = {lv: 0 for lv in levels}
+    name_node = {lv: 0 for lv in levels}
 
     outer_levels = list(levels)
 
@@ -416,11 +561,18 @@ def count_dry_run(table: SelectionTable, pbf_path: str = DEFAULT_PBF,
             highway = w.tags.get("highway")
             tags = dict(w.tags)
             is_road = highway in ROADS
+            has_name = bool(tags.get("name"))
             for lv in outer_levels:
                 if not table.level_filter(lv, tags):
                     continue
                 if is_road:
                     highway_counts[lv] += 1
+                    if has_name and table.name_filter_way(lv, tags, "road"):
+                        name_road[lv] += 1
+                elif len(w.nodes) >= 3:
+                    background_counts[lv] += 1
+                    if has_name and table.name_filter_way(lv, tags, "background"):
+                        name_bg[lv] += 1
                 else:
                     background_counts[lv] += 1
 
@@ -434,12 +586,14 @@ def count_dry_run(table: SelectionTable, pbf_path: str = DEFAULT_PBF,
             # the ~134.7M-35k that carry no `place` tag -- the earlier,
             # unoptimised version of this loop took >18 minutes and was
             # still climbing before this fix (see this unit's report).
-            if n.tags.get("place") is None:
+            if n.tags.get("name") is None:
                 return
             tags = dict(n.tags)
             for lv in outer_levels:
-                if table.level_filter(lv, tags):
+                if tags.get("place") is not None and table.level_filter(lv, tags):
                     place_counts[lv] += 1
+                if table.name_filter_node(lv, tags):
+                    name_node[lv] += 1
 
     if verbose:
         print(f"selection dry-run: scanning {pbf_path} "
@@ -450,7 +604,8 @@ def count_dry_run(table: SelectionTable, pbf_path: str = DEFAULT_PBF,
         print("selection dry-run: done.", flush=True)
 
     return DryRunCounts(highway=highway_counts, background=background_counts,
-                         place=place_counts)
+                         place=place_counts, name_road=name_road,
+                         name_background=name_bg, name_node=name_node)
 
 
 def report_envelope(counts: DryRunCounts, profile: dict,
@@ -521,6 +676,11 @@ def main() -> None:
     for lv in sorted(report.keys()):
         entry = report[lv]
         print(f"level {lv}:")
+        ref_names = profile["levels"][str(lv)]["name"]["record_count"]
+        g = counts.name_total(lv)
+        print(f"  names: road={counts.name_road[lv]} bg={counts.name_background[lv]} "
+              f"node={counts.name_node[lv]} total={g} reference={ref_names} "
+              f"ratio={g / ref_names if ref_names else float('nan'):.3f}")
         for kind in ("link", "background", "place"):
             d = entry[kind]
             gkey = "generated_ways" if kind != "place" else "generated_nodes"

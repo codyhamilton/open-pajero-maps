@@ -286,3 +286,118 @@ def test_background_predicates_are_mappable_by_bg_type_at_every_level():
                     f"dropped before spool.add)"
                 )
     assert not failures, "\n".join(failures)
+
+
+# ---------------------------------------------------------------------------
+# Brief 26a: name-emission gates
+# ---------------------------------------------------------------------------
+
+def _mini(rule_extra: dict, highway=("motorway", "primary")) -> dict:
+    return {
+        "levels": [[0, 0], [2, 2], [4, 4], [6, 6], [8, 8], [10, 10], [12, 12]],
+        "rules": [dict({"levels": 0, "highway": list(highway),
+                        "place": ["city"]}, **rule_extra)],
+    }
+
+
+def test_defaults_preserve_legacy_name_behaviour():
+    t = selection._validate_and_build(_mini({}))
+    assert t.name_filter_way(0, {"highway": "motorway"}, "road")
+    assert t.name_filter_way(0, {"natural": "water"}, "background")
+    assert t.name_filter_node(0, {"place": "city"})
+    assert not t.name_filter_node(0, {"place": "town"})
+    assert t.name_cap_per_cell(0) is None
+
+
+def test_road_names_class_list_and_validation():
+    t = selection._validate_and_build(_mini({"road_names": ["motorway"]}))
+    assert t.name_filter_way(0, {"highway": "motorway"}, "road")
+    assert not t.name_filter_way(0, {"highway": "primary"}, "road")
+    with pytest.raises(selection.SelectionError):
+        selection._validate_and_build(_mini({"road_names": ["residential"]}))
+    with pytest.raises(selection.SelectionError):
+        selection._validate_and_build(_mini({"road_names": "yes"}))
+
+
+def test_background_names_and_name_nodes():
+    t = selection._validate_and_build(_mini({
+        "background_names": [{"key": "leisure", "value": "park"}],
+        "name_nodes": [{"key": "amenity"}, {"key": "natural", "value": "peak"}],
+        "name_cap_per_cell": 3,
+    }))
+    assert t.name_filter_way(0, {"leisure": "park"}, "background")
+    assert not t.name_filter_way(0, {"leisure": "pitch"}, "background")
+    assert t.name_filter_node(0, {"amenity": "cafe"})
+    assert t.name_filter_node(0, {"natural": "peak"})
+    assert not t.name_filter_node(0, {"natural": "bay"})
+    assert t.name_filter_node(0, {"place": "city"})  # place alias
+    assert t.name_cap_per_cell(0) == 3
+    off = selection._validate_and_build(_mini({"road_names": False,
+                                                "background_names": False}))
+    assert not off.name_filter_way(0, {"highway": "motorway"}, "road")
+    assert not off.name_filter_way(0, {"natural": "water"}, "background")
+    with pytest.raises(selection.SelectionError):
+        selection._validate_and_build(_mini({"name_cap_per_cell": 0}))
+
+
+def test_shipped_l2_l8_emit_no_road_or_background_names():
+    t = _table()
+    for lv in (2, 4, 6, 8):
+        assert not t.name_filter_way(lv, {"highway": "motorway", "name": "x"}, "road")
+        assert not t.name_filter_way(lv, {"natural": "water"}, "background")
+    assert t.name_filter_way(0, {"highway": "motorway"}, "road")
+
+
+def test_extractor_name_gating_synthetic():
+    import osm_to_parcel_geometry as g
+
+    class Gate:
+        def way(self, level, tags, kind):
+            return kind == "background"
+
+        def node(self, level, tags):
+            return tags.get("place") == "city"
+
+        def cap(self, level):
+            return 1
+
+    class Spool:
+        def __init__(self):
+            self.names = []
+
+        def add(self, level, ix, iy, names=None, **kw):
+            self.names.extend(names or [])
+
+    class Loc:
+        lat, lon = -31.95, 115.86
+
+        def valid(self):
+            return True
+
+    class Node:
+        def __init__(self, tags):
+            self.tags = tags
+            self.location = Loc()
+
+    class Grid:
+        pass
+
+    h = g._GeomHandler.__new__(g._GeomHandler)
+    h.n_nodes = 0
+    h.spool = Spool()
+    h.name_gate = Gate()
+    h._name_counts = {}
+    h.level_filter = lambda lv, t: True
+    grid = Grid()
+    h.grids = {2: grid}
+    h.target_cells = {2: {(1, 1)}}
+    orig = g.assign_to_parcel
+    g.assign_to_parcel = lambda lat, lon, gr: (1, 1)
+    try:
+        h._handle_node(Node({"name": "A", "place": "city"}))
+        h._handle_node(Node({"name": "B", "place": "city"}))   # capped
+        h._handle_node(Node({"name": "C", "place": "town"}))   # gated
+        h._handle_node(Node({"name": "D", "amenity": "cafe"}))  # gated
+    finally:
+        g.assign_to_parcel = orig
+    assert [r.text for r in h.spool.names] == ["A"]
