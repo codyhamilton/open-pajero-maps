@@ -1103,3 +1103,13 @@ Envelope per-level data recorded for unit 26 — magnitudes are far more severe 
 20's original framing suggested (e.g. level 4 name_count G/R ratio 19.6x, level 8 66.7x;
 several levels' parcel_count ratios below 0.15x). See `PLAN.md`'s Build record for the full
 table.
+
+**Unit 26 (envelope recalibration design + rebuild #3 kickoff) — stopped at design step; escape valve used.**
+
+Design is not small: name_count overshoots 4x-67x at levels 2/4/6/8 (driven by names of
+admitted named roads, e.g. level 8: 13,937 names from 14,004 motorway ways vs R=209) and
+needs new name-emission plumbing; parcel_count is 0.1x at levels 0/2/4 for structural (not
+admission) reasons. Direction contradicts brief 20's "undershoot" amendment for names. No
+code changed, `output/` untouched, no rebuild started (nothing to verify). 25b's report copied
+to `/tmp/wp1-unit26-prior-report.json`. Brief 26 amended with details; recommend a
+design-only unit before a fresh kickoff/verify pair. Unit 26b has nothing to verify until then.

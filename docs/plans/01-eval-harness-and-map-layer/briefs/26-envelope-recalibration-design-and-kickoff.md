@@ -147,3 +147,38 @@ any contradiction you found between this brief, brief 20, and the contracts they
 resolve contradictions silently — report them.** If you find a non-trivial bug outside this
 unit's own contract, report it (symptom, location, root cause if found) and leave it — do not fix
 it here.
+
+## Amendment (2026-09-19): design step NOT small -- unit stopped before implementing; split required
+
+The worker executing this brief applied the "If you find the design step is not in fact
+small" escape valve. No `selection.json`/`divide.py` change was made, `output/` was NOT
+cleared, and NO rebuild #3 was started. Only `output/report.json` was copied to
+`/tmp/wp1-unit26-prior-report.json` (harmless). Findings, from 25b's numbers (PLAN.md
+"Build record (2026-09-16)"):
+
+- **Direction does not match brief 20's Amendment (contradiction, reported).** The two
+  counts go opposite ways. `name_count` OVERSHOOTS at levels 2/4/6/8 (3.99x / 19.6x /
+  13.7x / 66.7x) and undershoots at 0 (0.09x) and 10/12 (0/8). `parcel_count` undershoots
+  at 0/2/4/6 (0.12x/0.10x/0.12x/0.26x) and 10 (0.44x). "Undershoot, not overshoot" only
+  holds for parcel_count and level 0/10/12 names.
+- **name_count overshoot is not reachable via selection.json.** At level 8, place=[] and
+  only `motorway` is admitted (14,004 ways) and generates 13,937 names vs R=209: every
+  named admitted road emits a NameRecord (`osm_to_parcel_geometry._handle_way`). Cutting
+  it means dropping the road class (which breaks link_count, already in range) -- i.e. it
+  needs new plumbing: admit road geometry without its name record (brief 20's own named
+  open question), e.g. a per-rule `road_names` flag or name-density cap in selection.py
+  plus the extractor. That is a change to `parser/kiwiw/selection.py` and
+  `osm_to_parcel_geometry.py`, outside this brief's owned paths.
+- **parcel_count 0.1x at level 0/2/4 is structural**, not admission-driven: G has ~9x
+  fewer parcels than R at level 0 (429,084 vs 3,704,871) despite the fully admitted
+  content, so it depends on which cells are emitted / divided-parcel accounting, not on
+  what `selection.json` admits. Needs an investigation of how `parcel_count` is derived
+  in envelope.py vs how G's cells/divided sub-parcels are counted; unresolved.
+- Level 0 name_count (0.09x) needs more names, level 2-8 need far fewer: the same
+  per-class lever must be able to go both ways.
+
+**Recommendation:** split into (26-design) a design-only unit covering (i) name-emission
+decoupling plumbing, (ii) diagnosing the parcel_count gap, then a fresh 26/26b kickoff
++verify pair. Also note the `container` PDMDH regression from 25b is still unresolved and
+independent. Also flagged: level 12 `name_count` ratio field reads 0.0 for G=0/R=8
+(placeholder, not computed) -- harness file, not touched.
