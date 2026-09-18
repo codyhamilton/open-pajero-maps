@@ -1365,3 +1365,17 @@ Updated `parser/refdata/spot_checks.json` Adelaide L0 `expect_road_names` from `
 - Preflight: pytest parser/tests 274 passed (140 s); 7 level_*.idx in spool; /home 59G free (81% used).
 - Commits on master: brief 28 b711e20, 29 a610b26, 30 10b69c2, Adelaide spot_checks fix 29f377c.
 - Expected completion ~05:40-05:45 AEST (~9-10 min, ~6.6 GB RSS). Brief 30 caveat: at L6+ the mfde idx-10 copy adds name-frame bytes not counted in brief 29 budgets; size overshoots may surface; 31b records them.
+
+### Unit 31b (verify and record, rebuild #4) -- 2026-09-19
+
+Rebuild #4 (assembly only, 11:01 wall, 6.75 GB RSS, exit 0) ALLDATA.KWI 1,402,524,224 B, sha256
+`ed2d37ec...cb339` (differs from `16329332...`; matches manifest). Harness: PASS container, decode, pointers,
+mfde (brief 30), mht29, shape, vocab; FAIL envelope (5: L0 name_count 0.103x, L12 parcel_count 3.0x, L0 bg
+130,106>25,908, L8 road 121,712>99,794, L8 bg 130,558>120,946) and spotcheck (Perth L0 Hay Street, Adelaide L0
+Pulteney Street missing; new regressions after brief 29). pytest 274 passed. Brief 29 TRIM: L0 bg 1.388% (213
+sub-cells) and L8 name 12.9% (37 items) trigger the >1% blocker; L2 bg 0.948%, others <0.3%. 3 non-brief-29
+warnings: hard-ceiling fallback at L8 (3,3), L8 (3,0), L0 (2,1), which bypasses per-kind budgets and explains the 3
+residual envelope rows. Brief 30 caveat: no overflow, L8 max frame 131,068 of 131,070. Capacity 1.40 GB of
+4.7 GB. No code changed. Full tables: PLAN.md "Build record (2026-09-19, rebuild #4)". WP1 verdict: not
+complete; follow-ups = per-kind budgets in the hard-ceiling path, spotcheck Perth/Adelaide diagnosis, decide
+L0 bg / L8 name trim, and user acceptance of the two proposed deviations.

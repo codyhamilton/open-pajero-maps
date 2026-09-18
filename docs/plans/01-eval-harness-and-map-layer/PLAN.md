@@ -839,3 +839,114 @@ checkmark added and no harness config loosened.
 - spotcheck Brisbane/Sydney/Melbourne L0: WP1-scope, needs investigation; likely tied to the L0
   name shortfall but the missing strings are named roads OSM does carry, so admission or the
   divide.py fallback is suspect rather than data absence.
+
+## Build record (2026-09-19, rebuild #4)
+
+Assembly-only rebuild #4 (unit 31, verified by 31b) after brief 28 (locate_parcel, b711e20), brief 29
+(per-kind sub-frame budgets, a610b26), brief 30 (mfde[10] name copy at L>=6, 10b69c2) and the Adelaide
+spot-check amendment (29f377c). Reused rebuild #3's `output/spool` (no extraction). Logs in
+`/tmp/wp1-unit31-logs/` (not committed; regenerable, see `docs/provenance.md`).
+
+| Stage | Wall clock | Peak RSS | Exit |
+|---|---|---|---|
+| Assembly | 11:01.39 | 6,750,196 KB | 0 |
+
+`output/ALLDATA.KWI` 1,402,524,224 bytes, SHA-256
+`ed2d37ecfee0c7058e0c9dce1c1f2f627dd2ff16ba60edc6ec5cbdcf581cb339` (matches `output/manifest.json`
+`sha256`/`total_size`; differs from rebuild #3's `16329332...`). build.time.log carries 236 WARNING lines:
+233 are brief 29 trim warnings; **3 are not** (see "Unexpected warnings"). Harness
+`compare_disc.py --reference /run/media/codyh/464210-8480 --generated output/ALLDATA.KWI --report
+output/report.json`; `pytest parser/tests -q`: 274 passed (137.9 s).
+
+| Check | Status | Notes |
+|---|---|---|
+| container | PASS | 3142 allowed diffs |
+| decode | PASS | 3,967,170 leaves, zero errors |
+| pointers | PASS | |
+| envelope | FAIL | 5 failures (was 15), below |
+| mfde | PASS | (was FAIL; brief 30) |
+| mht29 | PASS | |
+| shape | PASS | |
+| spotcheck | FAIL | 2 rows (was 3; different rows), below |
+| vocab | PASS | |
+
+**Envelope failures (all five):**
+- L0 name_count 1,971,092 / 19,081,105 = 0.1033x (proposed declared deviation, unchanged).
+- L12 parcel_count 3 / 1 = 3.0x (proposed declared deviation, unchanged).
+- L0 background sub-frame max 130,106 > R 25,908.
+- L8 road sub-frame max 121,712 > R 99,794.
+- L8 background sub-frame max 130,558 > R 120,946.
+All L0/2/4/6 kind maxima now <= R (L2 road 102,642/110,132, bg 31,130/31,132, name 1,136/1,152; L4 bg
+71,074/73,148, name 360/370; L6 bg 48,236/48,270, name 610/610; L0 name 24,554/24,568; L8 name 364/366; L10
+bg 1,322/1,802). 13 sub-frame rows before, 3 now. mapframe_max G/R: L0 131,072/136,096; L2 110,624/129,952;
+L4 119,584/146,368; L6 99,136/158,560; L8 131,072/151,712.
+
+**parcel_count / name_count (G / R / ratio) vs the 26b table:**
+
+| Level | parcel_count (26b -> now) | ratio | name_count | ratio |
+|---|---|---|---|---|
+| 0 | 3,706,928 -> 3,719,692 / 3,704,871 | 1.0040x | 1,971,092 / 19,081,105 | 0.1033x NO |
+| 2 | 231,598 -> 231,725 / 231,564 | 1.0007x | 30,286 / 40,169 | 0.754x |
+| 4 | 14,521 -> 14,634 / 14,511 | 1.0085x | 3,353 / 4,042 | 0.830x |
+| 6 | 930 -> 966 / 939 | 1.0288x | 1,223 / 1,022 | 1.197x |
+| 8 | 110 -> 136 / 78 | 1.7436x | 250 / 209 | 1.196x |
+| 10 | 11 -> 14 / 9 | 1.5556x | 8 / 8 | 1.000x |
+| 12 | 3 -> 3 / 1 | 3.0000x NO | 8 / 8 | 1.000x |
+
+Per-kind division added divided leaves at every level; all remain in [0.5, 2.0]x except L12.
+
+**Brief 29 TRIM table (`manifest.json` `trimmed_items`; dropped/total, % of kind, sub-cells):**
+
+| Level | Kind | Dropped / total | % | Sub-cells | >1% blocker |
+|---|---|---|---|---|---|
+| 0 | background | 104,780 / 7,546,320 | 1.388% | 213 | **YES** |
+| 0 | name | 371 / 1,971,463 | 0.019% | 2 | no |
+| 2 | background | 2,938 / 309,857 | 0.948% | 10 | no (just under) |
+| 4 | name | 1 / 3,354 | 0.030% | 1 | no |
+| 6 | background | 39 / 19,410 | 0.201% | 1 | no |
+| 8 | name | 37 / 287 | 12.892% | 6 | **YES** |
+
+No road trim at any level. The >1% blocker **triggers** at L0 background (1.388%) and L8 name (12.9%,
+small absolute count: 37 names). Brief 29 said to report before deciding a declared deviation; not decided here.
+
+**Unexpected warnings (not brief 29 trim):** 3 "content still exceeds the format's hard 131,070-byte ceiling
+after type-2 (4x4) division" warnings: L8 cell (3,3) dropped 579/2346 and L8 cell (3,0) 368/2461
+(road/background/name), L0 cell (2,1) 364/6828. These are the pre-existing hard-ceiling fallback path in
+`divide.py`, which does not apply per-kind budgets; it is the cause of the L0 background 130,106, L8 road
+121,712 and L8 background 130,558 residuals (brief 29's kind trim only runs in the final-tier path for cells that
+fit the total ceiling). These drops are not counted in `trimmed_items`.
+
+**Brief 30 caveat (mfde[10] copy vs size budgets):** the build did not overflow (no struct error; L6+
+frames all <= 131,070). Per-level max frame bytes: L6 99,106, L8 131,068 (threshold 131,070), L10 1,562,
+L12 3,546 (threshold 3,808). L8 sits 2 bytes under the hard ceiling, i.e. the copy is absorbed by division/the
+hard-ceiling fallback rather than causing an error. Reported mapframe_max at L6 (99,136) and L8 (131,072) stay
+under R (158,560 / 151,712). No L10/L12 size breach. The per-kind budget still does not count the name copy
+twice, so L8 name budget (366 B) gives at most 366 B of duplicate per leaf; not a failing check.
+
+**Spotcheck (2 rows fail, 12/14):** Brisbane, Sydney, Melbourne L0 pass (brief 28) and Adelaide L0 no longer
+expects Grenfell. New regressions vs the 28 result (14/14 on the rebuild #3 output): Perth L0 missing "Hay
+Street" (matched William, Wellington) and Adelaide L0 missing "Pulteney Street" (matched King William). Cause
+is not isolated here (code read-only); the only build changes since are brief 29's per-kind division/trim and
+brief 30, and L0 name trim hit 2 sub-cells (3,3) and (3,0). Hypothesis: a road-name record dropped by L0 name
+trim or moved into a different sub-frame by kind escalation. Needs a WP1 fix/diagnosis brief.
+
+**Capacity projection:** generated map 1,402,518,080 B + R non-map 454,272 B = 1,402,972,352 B vs 4,700,000,000
+budget: under budget (29.9%).
+
+**Level coverage:** report levels {0,2,4,6,8,10,12} equal `map.json` level keys.
+
+**WP1 acceptance evaluation** (PLAN.md's Acceptance Criteria has no checkboxes; no ticks added; nothing here
+is accepted on the user's behalf):
+- Met: compare_disc CLI/profile, build CLI progress and exit 0, decode/pointers/vocab, mfde/shape/mht29/
+  container PASS, capacity projection, build completes in one run (11:01 assembly + 33:49 extraction),
+  pytest passes, unit 25/25b and 26/26b bullets (26/26b via named-residual escape hatch).
+- Not met, WP1-scope fixes: (1) envelope L0 background, L8 road, L8 background sub-frame maxima (per-kind
+  budget in the hard-ceiling fallback); (2) spotcheck Perth L0 Hay Street and Adelaide L0 Pulteney Street
+  (user-facing dump_parcel bullet); (3) TRIM >1% at L0 background and L8 name need a decision (fix or
+  declared deviation).
+- Proposed declared deviations (pending user acceptance): L0 name_count 0.103x; L12 parcel_count G=3 vs R=1.
+  The "at level 0 ... the harness reports the count ratio without failing on it" wording covers L0 counts only
+  partly (the name_count row is in the failure list).
+- Not verifiable by this unit: build determinism (two runs), LinkIdRegistry tests beyond pytest pass.
+**Verdict: WP1 is not complete.** 5 envelope + 2 spotcheck FAILs remain; 2 need acceptance, 5 need WP1 fixes
+(3 envelope rows sharing one root cause, 2 spotcheck rows).
