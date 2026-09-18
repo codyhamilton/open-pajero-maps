@@ -1166,3 +1166,60 @@ no 27b kickoff/verify split.
    paths. The container check no longer surfaces it; envelope/shape checks are where it must be
    judged.
 2. Brief 19's expectation that the dune->bay fix would close `container` is superseded by this entry.
+
+## Brief 26c — parcel_count occupancy: diagnosis and fill
+
+**Status: done, committed and pushed. Gate decision: FILL (step 3 implemented).** No rebuild
+here (26 owns it); effect below is predicted from cell counts, not measured.
+
+**Step 1 (`parser/tools/parcel_occupancy.py`, read-only, ~14 s).** R's populated cell set decoded
+from the PDMDH block tree (indexing validated: 99.98% of G's L0 cells fall in R's set).
+
+| L | \|R\| | \|G\| | R&G | R-G | G-R | R-G at 320 B | R-G <=500 B | R-G median B |
+|---|---|---|---|---|---|---|---|---|
+| 0 | 3,704,832 | 427,210 | 427,112 | 3,277,720 | 98 | 192,891 (6%) | 2,788,977 (85%) | 448 |
+| 2 | 231,552 | 22,930 | 22,918 | 208,634 | 12 | 175,088 (84%) | 185,785 (89%) | 320 |
+| 4 | 14,472 | 1,667 | 1,666 | 12,806 | 1 | 9,730 (76%) | 10,404 (81%) | 320 |
+| 6 | 918 | 224 | 221 | 697 | 3 | 0 | 520 (75%) | 384 |
+| 8 | 63 | 29 | 28 | 35 | 1 | 0 | 0 | 1,600 |
+| 10 | 9 | 2 | 2 | 7 | 0 | 5 | 5 | 320 |
+| 12 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | - |
+
+Key finding beyond the brief's hypothesis: **R's populated set is an exact, gap-free rectangle at
+every level** (bbox fill 1.0, every row a single run; L0 ix 576..2303 x iy 0..2143, i.e. it includes
+sea/outback). So the "coverage mask" is 4 integers per level, not a bitmap. R-G frames are
+overwhelmingly near-empty (L0 p95 1,984 B; total R-G bytes 2.14 GB L0, 80 MB L2), ~176 of 320 bytes
+non-zero in the floor frames (R's empty frame is header + mfde tables, not a 2-byte stub). L0 has a
+minority tail of R-G frames with real content (sea/foreign-land backgrounds not in the OSM extract);
+not fabricated (WP2 scope) -- fill supplies the frame, not that content, so L0 byte totals stay low
+and `bytes` checks remain a separate declared gap. G-R cells (98 at L0) lie outside the rectangle
+and are kept.
+
+**Step 3 implemented.** `parser/refdata/parcel_mask.json` (rectangles; provenance entry added);
+`build_alldata.load_parcel_mask`, `_fill_masked` (ordered merge, spooled cells byte-identical),
+`_encode_level(..., mask=)`, `run(..., fill_mask=False)` (library default off so existing fixtures
+are untouched), CLI default fill with `--no-fill-mask`. Under `--fixture` the mask is clipped to the
+fixture window. G's empty frame is 158 B (`_encode_one` with `{}`; R's is 320 B -- a shape/bytes
+matter, unchanged). Tests: `parser/tests/test_parcel_mask.py` (loader, fill-only-masked-absent,
+byte stability, ordering); suite 244 passed.
+
+**Capacity.** Added frames = 3,277,720+208,634+12,806+697+35+7 ~ 3.50M x <=160 B (32 B-granular)
+~ 0.56 GB, plus BMT/index growth: output ~0.8 GB -> ~1.4 GB, well under the 4.7 GB budget. Expected
+post-fill parcel_count: L0 ~3.71M (R 3.70M), L2 ~231.6k (231.6k), L4 ~14.5k, L6 ~920, L10 ~11
+(R 9; 1.2x). Peak RSS of the encode step grows (~3.5M more tuples; est. <1 GB) -- verify on 26's rebuild.
+
+**Blockset coverage gap (brief 27's declared deviation).** Filling the full rectangle should populate
+the ~60 R-only blocksets and close most of the BMT-count difference (R 165 tables/2,307 entries vs
+G 110/1,898); the ~12 G-only blocksets correspond to the G-R cells outside the rectangle. Predicted,
+to be confirmed by rebuild: brief 27's deviation 1 should mostly disappear for cell coverage.
+
+**L12 2/1.** G's 2 is a divided pair: the single L12 cell's content exceeds R's max L12 frame
+(threshold 3,808 B) and is split by `divide.plan_divisions`. Not fixed: shrinking to fit would drop
+content (selection scope, 26a). Declared deviation: L12 parcel_count 2/1 = 2.0x edge (boundary of
+[0.5,2]).
+
+**Contradictions.** Briefs 20/25b's implication that the gap is selection-driven is refuted (L0
+admits all); brief 26c's "R L0 ~22% of grid" holds, and its ".bin RLE mask" is superseded by
+rectangles (brief amended). Out-of-scope note: `walk.iter_parcels` decodes every leaf and takes >10
+min for L2 alone under a single-level filter; the occupancy script avoids it by reading the index
+tree only.

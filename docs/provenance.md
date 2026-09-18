@@ -80,6 +80,18 @@ same commit.
   OSM extract happened to be present when it ran (see date caveat above).
 - **Reproduce**: `python3 tag_crosstab.py > tag_crosstab.out 2> tag_crosstab.err`.
 
+## `parser/refdata/parcel_mask.json` (committed, derived data)
+
+- **What**: per-level coverage rectangle `{ix_lo, ix_hi, iy_lo, iy_hi}` inside which
+  the reference disc has a Map Frame for every cell (its populated set is a full
+  rectangle at all 7 levels; L0 1728x2144 = 3,704,832 cells). Read by
+  `build_alldata.load_parcel_mask()`; `_encode_level` emits empty frames for masked
+  cells the spool lacks (brief 26c).
+- **Source**: the reference disc's `ALLDATA.KWI` PDMDH/block index tree.
+- **Reproduce**: `.venv-rp/bin/python parser/tools/parcel_occupancy.py --write-mask
+  parser/refdata/parcel_mask.json` (needs the mounted disc and `output/spool`; refuses
+  if R's set is not an exact rectangle).
+
 ## `parser/refdata/` (committed, derived data)
 
 - **What**: `grid.json` (reference disc PDMDH/LMR/BSMR parameters — coverage

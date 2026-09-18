@@ -63,3 +63,9 @@ scope or declare.
 ## Report back
 Occupancy table, the gate decision, evidence for/against the hypothesis, capacity delta,
 any contradiction with brief 20/25b. Non-trivial out-of-scope bugs: report, do not fix.
+
+## Amendment (post-execution)
+Step 1 showed R's populated set is an exact full rectangle at every level, so the mask is stored
+as `parser/refdata/parcel_mask.json` (4 integers per level), not `parcel_mask_L{n}.bin` RLE. Gate
+chose FILL. R's empty frame is 320 B (not the 2-byte stub); G's `_encode_one({})` is 158 B. L12 2/1
+is a divided pair (content > R's 3,808 B max frame): declared, not fixed. See IMPLEMENTATION.md.

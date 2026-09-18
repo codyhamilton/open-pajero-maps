@@ -154,8 +154,48 @@ def _encode_one(level: int, ix: int, iy: int, bounds, content: dict) -> bytes:
         level, llpid, llcode, road_bytes, bg_bytes, name_bytes)
 
 
+_PARCEL_MASK_PATH = Path(__file__).resolve().parent / "refdata" / "parcel_mask.json"
+
+
+def load_parcel_mask(path: str | os.PathLike | None = None) -> dict[int, tuple[int, int, int, int]]:
+    """Per-level coverage rectangle `(ix_lo, ix_hi, iy_lo, iy_hi)` (inclusive)
+    inside which `R` materialises a Map Frame for every cell (brief 26c:
+    R's populated cell set is a full rectangle at every level)."""
+    import json
+    with open(path or _PARCEL_MASK_PATH) as fh:
+        raw = json.load(fh)
+    return {int(k): (v["ix_lo"], v["ix_hi"], v["iy_lo"], v["iy_hi"]) for k, v in raw.items()}
+
+
+def _fill_masked(cells, mask_rect, empty_factory):
+    """Merge a `(iy, ix)`-ascending stream of `(ix, iy, content)` with every
+    cell of `mask_rect`: cells the stream lacks are yielded with empty
+    content; stream cells outside the mask are passed through unchanged."""
+    ix_lo, ix_hi, iy_lo, iy_hi = mask_rect
+
+    def _mask():
+        for iy in range(iy_lo, iy_hi + 1):
+            for ix in range(ix_lo, ix_hi + 1):
+                yield (iy, ix)
+
+    m = _mask()
+    nxt = next(m, None)
+    for ix, iy, content in cells:
+        key = (iy, ix)
+        while nxt is not None and nxt < key:
+            yield nxt[1], nxt[0], empty_factory()
+            nxt = next(m, None)
+        if nxt == key:
+            nxt = next(m, None)
+        yield ix, iy, content
+    while nxt is not None:
+        yield nxt[1], nxt[0], empty_factory()
+        nxt = next(m, None)
+
+
 def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
-                   fixture: str | None, threshold_bytes: int
+                   fixture: str | None, threshold_bytes: int,
+                   mask: dict[int, tuple[int, int, int, int]] | None = None
                    ) -> tuple[list[tuple[int, int, bytes]],
                               list[tuple[int, int, int, int, int, bytes]], int, int]:
     """Encode every spooled parcel at `level`, splitting any parcel whose
@@ -178,12 +218,24 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
                     continue
             yield ix, iy, content
 
+    cells_iter = _cells
+    rect = mask.get(level) if mask else None
+    if rect is not None:
+        if cell_range is not None:  # fixture: clip the mask to the fixture window
+            rect = (max(rect[0], cell_range[0]), min(rect[1], cell_range[1]),
+                    max(rect[2], cell_range[2]), min(rect[3], cell_range[3]))
+        if rect[0] <= rect[1] and rect[2] <= rect[3]:
+            from kiwiw.spool import _empty_content
+
+            def cells_iter():
+                return _fill_masked(_cells(), rect, _empty_content)
+
     out: list[tuple[int, int, bytes]] = []
     divided_out: list[tuple[int, int, int, int, int, bytes]] = []
     n_bytes = 0
     n_parcels = 0
     for ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes in divide.plan_divisions(
-            level, _cells(), threshold_bytes, _encode_one):
+            level, cells_iter(), threshold_bytes, _encode_one):
         if parcel_type == 0:
             out.append((ix, iy, frame_bytes))
         else:
@@ -195,12 +247,13 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
 
 
 def run(spool_dir: str, out_path: str, levels: list[int],
-        fixture: str | None, disk_title: str) -> int:
+        fixture: str | None, disk_title: str, fill_mask: bool = False) -> int:
     if not os.path.isdir(spool_dir):
         print(f"ERROR: spool directory not found: {spool_dir}", file=sys.stderr)
         return 1
 
     reader = SpoolReader(spool_dir)
+    mask = load_parcel_mask() if fill_mask else None
     available = set(reader.levels())
     grid = ReferenceGrid.load()
     thresholds = _load_level_thresholds()
@@ -219,7 +272,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
             continue
         threshold_bytes = thresholds.get(level, U16_MAPFRAME_BYTE_CEILING)
         parcels, divided_parcels, n_parcels, n_bytes = _encode_level(
-            level, grid, reader, fixture, threshold_bytes)
+            level, grid, reader, fixture, threshold_bytes, mask=mask)
         level_builds[level] = aw.LevelBuild(level=level, parcels=parcels)
         if divided_parcels:
             divided_builds[level] = divided_parcels
@@ -278,10 +331,14 @@ def main() -> int:
                           "structure regardless")
     ap.add_argument("--disk-title", default="AU ",
                      help="Volume Header disk title (default: %(default)r)")
+    ap.add_argument("--no-fill-mask", action="store_true",
+                     help="Do not emit empty frames for R's coverage-rectangle cells "
+                          "the spool lacks (brief 26c; default: fill)")
     args = ap.parse_args()
 
     return run(spool_dir=args.spool, out_path=args.out, levels=args.levels,
-               fixture=args.fixture, disk_title=args.disk_title)
+               fixture=args.fixture, disk_title=args.disk_title,
+               fill_mask=not args.no_fill_mask)
 
 
 if __name__ == "__main__":
