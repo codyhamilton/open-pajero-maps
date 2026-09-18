@@ -1433,3 +1433,16 @@ Master includes brief 33 (ff51ffa); pytest 279 passed. Preflight: 7 `output/spoo
 `setsid nohup /usr/bin/time -v .venv-rp/bin/python parser/build_alldata.py`; PID 3413144 (time wrapper 3413143),
 alive at +5 s. Logs `/tmp/wp1-unit33-logs/build.out.log`, `build.time.log`. Expected ~17 min (done ~07:35).
 Verification: 33c.
+
+### Unit 33c (verify and record, rebuild #6) -- 2026-09-19
+
+Rebuild #6 (assembly only, 17:28 wall, 6.85 GB RSS, exit 0) ALLDATA.KWI 1,428,500,032 B, sha256 `76fca44c...e318a`
+(differs from `c978b840...`; matches manifest). Harness: PASS container, decode, pointers, mfde, mht29, shape, vocab,
+spotcheck (14/14); FAIL envelope (2 only: L0 name_count 0.149x, L12 parcel_count 3.0x). L8 road sub-frame max 99,786
+<= R 99,794 (brief 33 fix confirmed); all kind maxima <= R. pytest 279 passed. TRIM: L0 bg 1.460% (214 sub-cells), L8
+road 2,631/14,012 = 18.777% (3 cells; up from 8.67% after pin release), L8 name 12.9%, L8 bg 12.96%, L2 bg 0.948%,
+others <0.3%. halo_names {"0": 871,359}. Max frame bytes L0 115,716 / L8 121,038. Capacity ~30% of 4.7 GB. No code
+changed. Tables and the consolidated proposed-deviation list: PLAN.md "Build record (2026-09-19, rebuild #6)". WP1
+verdict: no WP1-scope fix remains; complete pending user acceptance of the 9 proposed deviations (L0 name_count, L12
+parcel_count, L0 bg / L8 name / L8 bg / L8 road trims, blockset coverage, brief 27 container tolerance, Adelaide
+oracle amendment).

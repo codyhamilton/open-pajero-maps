@@ -1028,3 +1028,84 @@ overflow, L8 now 3.9 KB below ceiling. Capacity: 1,428,540,032 B (+ R non-map 45
   sub-cell each) reported for the same decision.
 **Verdict: WP1 is not complete.** 1 WP1-scope FAIL (L8 road) plus 2 envelope FAILs and 4-5 trim blockers awaiting
 user acceptance of deviations. No code changed.
+
+## Build record (2026-09-19, rebuild #6)
+
+Assembly-only rebuild #6 (unit 33b, verified by 33c) after brief 33 (release the motorway/trunk pin when pinned roads
+alone exceed the kind budget, ff51ffa). Reused `output/spool`. Logs in `/tmp/wp1-unit33-logs/` (not committed;
+regenerable); prior report `/tmp/wp1-unit33-prior-report.json`.
+
+| Stage | Wall clock | Peak RSS | Exit |
+|---|---|---|---|
+| Assembly (incl. L0 halo encode) | 17:28.14 | 6,851,920 KB | 0 |
+
+`output/ALLDATA.KWI` 1,428,500,032 bytes, SHA-256
+`76fca44c972081b1c4bf018165b4a73e219b097f93580e0e9d3c5d766e1e318a` (matches `output/manifest.json`
+`sha256`/`total_size`; differs from rebuild #5's `c978b840...`). Harness `compare_disc.py --reference
+/run/media/codyh/464210-8480 --generated output/ALLDATA.KWI --report output/report.json` (22:03);
+`pytest parser/tests -q`: 279 passed (138 s).
+
+| Check | Status | Notes |
+|---|---|---|
+| container | PASS | 3142 allowed diffs |
+| decode | PASS | 3,967,170 leaves, zero errors |
+| pointers | PASS | |
+| envelope | FAIL | 2 failures (was 3), below |
+| mfde | PASS | |
+| mht29 | PASS | |
+| shape | PASS | |
+| spotcheck | PASS | 14/14 |
+| vocab | PASS | |
+
+**Envelope failures (both, exactly the two expected):** L0 name_count 2,842,451 / 19,081,105 = 0.149x; L12
+parcel_count 3 / 1 = 3.0x. L8 road sub-frame max is now 99,786 <= R 99,794 (FIXED by brief 33).
+
+Sub-frame maxima G / R (all <= R): L0 road 71,944/106,114, bg 25,908/25,908, name 24,558/24,568; L2 road
+102,642/110,132, bg 31,130/31,132, name 1,136/1,152; L4 106,060/124,952, 71,074/73,148, 360/370; L6 68,354/124,220,
+48,236/48,270, 610/610; L8 99,786/99,794, 120,882/120,946, 364/366; L10 road 0/0, bg 1,322/1,802, name 80/174.
+mapframe_max G/R: L0 115,744/136,096; L2 110,624/129,952; L4 119,584/146,368; L6 99,136/158,560; L8 121,056/151,712;
+L10 1,568/2,336; L12 3,552/3,808.
+
+**parcel_count / name_count (G / R / ratio):** identical to rebuild #5 (L0 3,719,692/3,704,871 = 1.004x, names
+2,842,451/19,081,105 = 0.149x NO; L2 1.0007x / 0.754x; L4 1.0085x / 0.830x; L6 1.029x / 1.197x; L8 136/78 = 1.744x /
+1.196x; L10 14/9 = 1.556x / 1.000x; L12 3/1 = 3.000x NO / 1.000x).
+
+**TRIM table (`trimmed_items`; dropped/total, %, sub-cells):**
+
+| Level | Kind | Dropped / total | % | Sub-cells | >1% blocker |
+|---|---|---|---|---|---|
+| 0 | background | 110,144 / 7,546,320 | 1.460% | 214 | **YES** |
+| 0 | name | 371 / 1,971,463 | 0.019% | 2 | no |
+| 2 | background | 2,938 / 309,857 | 0.948% | 10 | no |
+| 4 | name | 1 / 3,354 | 0.030% | 1 | no |
+| 6 | background | 39 / 19,410 | 0.201% | 1 | no |
+| 8 | road | 2,631 / 14,012 | 18.777% | 3 | **YES (new; was 8.671%/1 cell in #5, cost of the brief 33 pin release)** |
+| 8 | name | 37 / 287 | 12.892% | 6 | **YES** |
+| 8 | background | 1,471 / 11,347 | 12.964% | 1 | **YES** (fallback) |
+
+`halo_names`: {"0": 871,359}. Max frame bytes per level: L0 115,716; L2 110,624; L4 119,560; L6 99,106; L8 121,038;
+L10 1,562; L12 3,546 (thresholds 131,070 / 129,952 / 131,070 / 131,070 / 131,070 / 2,336 / 3,808); no overflow. 3
+"hard-ceiling fallback" warnings remain in the log. Capacity: 1,428,500,032 B (+ R non-map 454,272) vs 4.7 GB: ~30%.
+
+**WP1 acceptance evaluation** (no ticks added; nothing accepted on the user's behalf):
+- Met: container/decode/pointers/mfde/mht29/shape/vocab PASS, spotcheck 14/14, every sub-frame kind maximum <= R,
+  capacity, single-run build, pytest.
+- Not met, WP1-scope fixes: none. Every remaining FAIL and every >1% trim is a proposed declared deviation.
+- Remaining FAILs: (1) L0 name_count 0.149x, (2) L12 parcel_count 3 vs 1. Both = proposed deviation, not WP1-fixable
+  without fabricating names / dropping content.
+**Verdict: WP1 is functionally complete pending user acceptance of the deviations below; it cannot be declared
+complete (nor acceptance ticked) until the user accepts or rejects them.** No code changed.
+
+### Proposed declared deviations awaiting user acceptance (consolidated; none self-accepted)
+
+| # | Deviation | G vs R | Evidence (R-vs-G) |
+|---|---|---|---|
+| 1 | L0 name_count | 2,842,451 vs 19,081,105 (0.149x; envelope [0.5,2]) | `output/report.json` envelope counts L0; IMPLEMENTATION.md "Unit 26a" (all OSM names admitted, ~1.98M max before halo; R's 19M includes address-style strings OSM lacks); halo (+871,359 road-name copies) is brief 32 |
+| 2 | L12 parcel_count | 3 vs 1 (3.0x) | IMPLEMENTATION.md brief 31 "Proposed declared deviations": one cell, 26 `natural=bay` shapes 4,458 B > R ceiling 3,808 B, so type-2 divided |
+| 3 | L0 background trim | 110,144/7,546,320 = 1.460% in 214 sub-cells (bg sub-frame max 25,908 = R) | build.out.log L0 TRIM; `manifest.json` `trimmed_items`; IMPLEMENTATION.md brief 29 (dense small polygons vs 25,908 B budget) |
+| 4 | L8 name trim | 37/287 = 12.892% in 6 sub-cells | same sources; L8 has 6 blocks/136 parcels so few items |
+| 5 | L8 background trim (fallback) | 1,471/11,347 = 12.964%, 1 sub-cell (bg max 120,882 <= R 120,946) | build.out.log L8 TRIM background; fallback warning "L8 (3,3)" |
+| 6 | L8 road trim | 2,631/14,012 = 18.777% in 3 sub-cells (road max 99,786 <= R 99,794); includes motorway/trunk links released from pin by brief 33 | IMPLEMENTATION.md "Brief 33"; build.out.log L8 TRIM road. Alternative to a deviation: none in WP1 without exceeding R's road max |
+| 7 | Blockset coverage | R has 165 BMT tables/2,307 entries, G 110/1,898 as of brief 27; ~60 R-only blocksets (offshore/sea fill), ~12 G-only. Post-26c rectangle fill expected to close most; not re-measured at rebuild #6 (shape/container PASS) | IMPLEMENTATION.md "Ad-hoc brief 27" and "Brief 26c"; brief 27 deviation 1 |
+| 8 | Container PDMDH tolerance (brief 27) | container PASS via `_bmt_explains_length` (length differs only by 6 B x BMT entries; 3142 allowed diffs) | IMPLEMENTATION.md "Ad-hoc brief 27"; `parser/harness/checks/container.py` |
+| 9 | Adelaide spot-check oracle amendment | `parser/refdata/spot_checks.json` Adelaide L0 `expect_road_names` drops "Grenfell Street" (R itself lacks it at (-34.9285, 138.6007); R has only King William and Pulteney) | IMPLEMENTATION.md "Amendment: Spotcheck expectation for Adelaide L0" (commit 29f377c) |
