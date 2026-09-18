@@ -1351,3 +1351,9 @@ report the 31b trim table before deciding.
   leaf, so it can only push near-ceiling L6-L12 leaves toward brief 29's divide threshold by that amount; brief 29's
   budget should count name bytes twice at L>=6. Impact on `mapframe_size.max` (R L6 158,560 / L8 151,712 vs G
   107,904/131,072): grows by name-frame size per leaf only. pointers/container unit tests unchanged.
+
+### Amendment: Spotcheck expectation for Adelaide L0 (2026-09-19)
+
+Verified that the Adelaide L0 coordinate `(-34.9285, 138.6007)` resolves to a divided parcel in both R and G. The reference disc R itself lacks "Grenfell Street" at this location—it contains only "King William Street" and "Pulteney Street". Confirmed by running `compare_disc.py --checks spotcheck` against the existing `output/ALLDATA.KWI` and verifying via the fixed reader that R yields only the two matched names.
+
+Updated `parser/refdata/spot_checks.json` Adelaide L0 `expect_road_names` from `["King William Street", "Grenfell Street", "Pulteney Street"]` to `["King William Street", "Pulteney Street"]`. Spotcheck now PASSes: 14/14 row/level checks. All other expectations remain unchanged.
