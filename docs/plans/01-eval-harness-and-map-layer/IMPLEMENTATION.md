@@ -1424,3 +1424,12 @@ but L8 parcel (6,2) type-2 sub-cell (3,1): 2,011 motorway/trunk links, whole fra
 `_trim_kinds` releases the pin when the pinned prefix alone exceeds the kind budget (R's max is the budget, so no
 R content is lost). Real L8 spool: road max 99,786, bg 119,896, name 356, all <= R. pytest 279 passed. Details
 `briefs/33-pinned-road-budget.md`; verification 33b (kickoff), 33c.
+
+## Brief 33b -- Rebuild #6 assembly kickoff (2026-09-19)
+
+Master includes brief 33 (ff51ffa); pytest 279 passed. Preflight: 7 `output/spool/level_*.idx` present; 59 GB free on
+/home (>= 3 GB); prior report copied to `/tmp/wp1-unit33-prior-report.json`; old ALLDATA.KWI sha256
+`c978b84077700046380af60e234beb9198400a98c07709f247976e267cff2c44`. Assembly started 07:17 AEST via
+`setsid nohup /usr/bin/time -v .venv-rp/bin/python parser/build_alldata.py`; PID 3413144 (time wrapper 3413143),
+alive at +5 s. Logs `/tmp/wp1-unit33-logs/build.out.log`, `build.time.log`. Expected ~17 min (done ~07:35).
+Verification: 33c.
