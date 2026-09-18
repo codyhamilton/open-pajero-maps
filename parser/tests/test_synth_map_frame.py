@@ -103,7 +103,12 @@ def test_mfde_table_shape_per_level(level):
 
     # Every remaining index (3..expected_len-1) is absent -- WP1 does not
     # populate ext frames or the 12-19 group by default.
+    # (brief 30: idx 10 duplicates the name frame at level >= 6.)
     for idx in range(3, expected_len):
+        if idx == 10 and level >= 6:
+            assert parcel.frame.ext_frame_raw[10] == parcel.frame.ext_frame_raw.get(10)
+            assert parcel.frame.mfde_raw[10][1] == parcel.frame.mfde_raw[2][1]
+            continue
         assert parcel.frame.mfde_raw[idx] == _ABSENT, (
             f"level {level} index {idx}: expected absent {_ABSENT}, "
             f"got {parcel.frame.mfde_raw[idx]}")
@@ -204,3 +209,42 @@ def test_determinism():
         0, _LLPID, _LLCODE, road_bytes, bg_bytes, name_bytes,
         ext_frames={4: b"stable payload"})
     assert c == d
+
+
+# --- brief 30: mfde[10] duplicates the name sub-frame at level >= 6 ---------
+
+@pytest.mark.parametrize("level", [12, 10, 8, 6])
+def test_idx10_duplicates_name_frame_high_levels(level):
+    name = _fixture_name_bytes()
+    fb = build_map_frame_bytes(level, _LLPID, _LLCODE, _fixture_road_bytes(),
+                               _fixture_bg_bytes(), name)
+    p = _decode(fb)
+    padded = name + b"\x00" if len(name) % 2 else name
+    assert p.frame.ext_frame_raw[10] == padded
+    assert p.frame.mfde_raw[10][1] == p.frame.mfde_raw[2][1] != 0
+
+
+@pytest.mark.parametrize("level", [12, 10, 8, 6])
+def test_idx10_absent_without_name(level):
+    fb = build_map_frame_bytes(level, _LLPID, _LLCODE, _fixture_road_bytes(),
+                               _fixture_bg_bytes(), None)
+    assert _decode(fb).frame.mfde_raw[10] == _ABSENT
+
+
+@pytest.mark.parametrize("level", [4, 2, 0])
+def test_idx10_absent_low_levels(level):
+    fb = build_map_frame_bytes(level, _LLPID, _LLCODE, _fixture_road_bytes(),
+                               _fixture_bg_bytes(), _fixture_name_bytes())
+    assert _decode(fb).frame.mfde_raw[10] == _ABSENT
+
+
+def test_idx10_explicit_override_wins():
+    fb = build_map_frame_bytes(12, _LLPID, _LLCODE, None, _fixture_bg_bytes(),
+                               _fixture_name_bytes(), ext_frames={10: b"ABCD"})
+    assert _decode(fb).frame.ext_frame_raw[10] == b"ABCD"
+
+
+def test_idx10_total_size_ceiling_still_raises():
+    big = b"\x00" * 70000   # alone fits u16 half-words; with the copy it does not
+    with pytest.raises(Exception):
+        build_map_frame_bytes(12, _LLPID, _LLCODE, None, _fixture_bg_bytes(), big)

@@ -1339,3 +1339,15 @@ report the 31b trim table before deciding.
   spot expectation is not satisfiable even on R with the fixed reader; needs a `spot_checks.json` follow-up
   (not in this brief's owned paths). See brief 28 amendment.
 - Other `locate_parcel` callers (disc.py, roundtrip_parcel_content.py, tests): all tests green, none moved.
+## Brief 30 -- mfde[10] name-frame duplicate (done)
+- `synth.build_map_frame_bytes`: at level >= 6 with a name sub-frame and no caller `ext_frames[10]`, mfde[10] is a
+  byte-identical copy of the padded name frame (placed after the basic frames; size accounting includes it).
+  L0-L4 unchanged (absent). Caller `ext_frames` wins. DESIGN.md section 4 idx-10 row and section 8 slot row updated
+  (target-disc.md had no idx-10 wording to change).
+- Tests: 8 new + `test_mfde_table_shape_per_level` adjusted (idx 10 at L>=6 now == name size). test_synth_map_frame
+  31 pass. Full suite: only pre-existing env failures (`osmium` not installed: test_extractor_scale, test_name_record_vocab).
+- Note: the builder has no explicit total-size check; the u16 half-word header field overflows (struct error) at
+  >131,070 B, which the ceiling test exercises (name 70,000 B + its copy). Duplicate adds <= name-frame bytes per
+  leaf, so it can only push near-ceiling L6-L12 leaves toward brief 29's divide threshold by that amount; brief 29's
+  budget should count name bytes twice at L>=6. Impact on `mapframe_size.max` (R L6 158,560 / L8 151,712 vs G
+  107,904/131,072): grows by name-frame size per leaf only. pointers/container unit tests unchanged.
