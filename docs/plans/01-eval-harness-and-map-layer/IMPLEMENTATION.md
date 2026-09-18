@@ -1392,3 +1392,14 @@ and an L0-only road-name halo (`plan_divisions(name_halo=True)`, `build_alldata.
 left unchanged (idx-2 budget; the brief 30 copy is a separate frame). Evidence in
 `briefs/32-ceiling-fallback-kind-budgets-and-road-name-halo.md`; pytest 278 passed; Perth fixture
 `/tmp/perth32` all kinds <= R, Hay Street resolved; real L8 spool clean. Verification: 32b (kickoff), 32c.
+
+## Brief 32b -- Rebuild #5 assembly kickoff (2026-09-19)
+
+Assembly only (spool unchanged; no `rm -rf output/`). Preflight: master includes 32 (`fe93c4c`); pytest parser/tests
+278 passed; all 7 `output/spool/level_*.idx` present; `/home` 59 GB free (>= 3 GB). Prior `output/report.json` copied to
+`/tmp/wp1-unit32-prior-report.json` (report sha256 `e98cbe24...caf81e`). Old `ALLDATA.KWI` sha256
+`ed2d37ecfee0c7058e0c9dce1c1f2f627dd2ff16ba60edc6ec5cbdcf581cb339`.
+Started 2026-09-19 06:24 AEST via `setsid nohup /usr/bin/time -v .venv-rp/bin/python parser/build_alldata.py`
+(own session), python PID 3356738 (time wrapper 3356737); logs `/tmp/wp1-unit32-logs/build.out.log` and
+`build.time.log`. Liveness confirmed after 5 s. Expected ~11 min plus L0 halo encode time (~06:35-06:45 AEST), ~6.8 GB RSS.
+Verification: 32c.
