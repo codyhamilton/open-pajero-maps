@@ -1247,3 +1247,15 @@ names; needs a WP-level decision (widen level-0 name envelope or a new name sour
 brief-20 "undershoot" amendment is wrong for names at 2-8 (they overshot), as the brief says; the
 level-10/12 "suburb-only, unreachable" note in selection.json is superseded (state/country/continent = 8).
 Caveat: L10/12 counts assume the single-parcel cells are target cells; real-build confirmation is 26's.
+
+### Unit 26 (kickoff-only, rebuild #3) — started 2026-09-19 03:33 AEST
+
+Verified master contains 26a (2b6bf4a) and 26c (cbeca79); tree clean, in sync with origin/master;
+`pytest parser/tests -q` 249 passed. Disk before clear: 60G free on /home, `output/` 7.6G; after
+`rm -rf output/`: 68G free (need ~6.9G spool + ~0.8G KWI + 26c fill growth to ~1.4G total): GO.
+Prior report kept at `/tmp/wp1-unit26-prior-report.json`. Memory: 30G total, ~17G available.
+Pipeline started via nohup (extract then `build_alldata.py`, both under `/usr/bin/time -v`);
+logs in `/tmp/wp1-unit26-logs/` (`extract.{out,time}.log`, `build.{out,time}.log`, `kickoff.log`).
+Extraction confirmed alive and `output/spool` being written. Expected ~35-45 min extraction plus
+~7+ min assembly (unit 15 floor: 33:23 + 6:44; 26c fill adds encode work). Verification is a
+separate unit.
