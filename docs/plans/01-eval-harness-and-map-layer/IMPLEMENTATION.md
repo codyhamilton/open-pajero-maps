@@ -1259,3 +1259,15 @@ logs in `/tmp/wp1-unit26-logs/` (`extract.{out,time}.log`, `build.{out,time}.log
 Extraction confirmed alive and `output/spool` being written. Expected ~35-45 min extraction plus
 ~7+ min assembly (unit 15 floor: 33:23 + 6:44; 26c fill adds encode work). Verification is a
 separate unit.
+
+### Unit 26b (verify and record, rebuild #3) — 2026-09-19
+
+Rebuild #3 finished (extract 33:49 / 8.3 GB RSS; assembly 8:33 / 6.6 GB RSS); ALLDATA.KWI 1,388,969,920 B,
+sha256 `16329332...a7e8d8`. Full harness: PASS container (brief 27), decode, pointers, mht29, shape,
+vocab; FAIL envelope (15), mfde (1), spotcheck (3 rows). pytest 249 passed. Full tables and
+dispositions in PLAN.md "Build record (2026-09-19)". Level coverage confirmed against map.json.
+Remaining FAILs: envelope L0 name_count 0.103x and L12 parcel_count 3/1 = 3.0x (proposed declared
+deviations; note L12 is 3, not the 2 the kickoff assumed); envelope sub-frame maxima at L0/2/4/6/8/10
+(WP1-scope, needs brief); mfde L12 entry-index 10 absent (WP1-scope); spotcheck Brisbane/Sydney/
+Melbourne L0 road names (WP1-scope). No code changed. Stale PLAN.md blind-spot text noted (fix already
+in e629b91).

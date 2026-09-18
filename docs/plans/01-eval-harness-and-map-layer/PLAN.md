@@ -766,3 +766,76 @@ expecting confirmation) does not match what a full-scale run actually
 shows. This unit's Done evidence bullet ("PASS, or FAIL with a named cause
 different from the 2026-09-09 PDMDH-blob-length diff") is **not met by
 either disjunct**; recorded here rather than silently marked met.
+
+## Build record (2026-09-19)
+
+Full-Australia rebuild #3, units 26/26b, after 26a (name gating, 2b6bf4a), 26c (parcel-mask fill,
+cbeca79) and brief 27 (container PDMDH tolerance, 2e8ee7e). Same two-command pipeline as 2026-09-16.
+Logs in `/tmp/wp1-unit26-logs/` (not committed; regenerable, see `docs/provenance.md`).
+
+| Stage | Wall clock | Peak RSS | Exit |
+|---|---|---|---|
+| Extraction | 33:48.89 | 8,289,360 KB | 0 |
+| Assembly | 8:32.93 | 6,649,160 KB | 0 |
+
+`output/ALLDATA.KWI` 1,388,969,920 bytes, SHA-256
+`16329332006a500d64befe0929ade047431bd146429cf09fd1adb9df15e7a8d8` (matches `output/manifest.json`
+`sha256`/`total_size`; differs from the 2026-09-16 `d0c37a69...`). No `WARNING` lines in build.out.log.
+Harness: `compare_disc.py --reference /run/media/codyh/464210-8480 --generated output/ALLDATA.KWI
+--report output/report.json`, 21:42 wall. `pytest parser/tests -q`: 249 passed.
+
+| Check | Status | Notes |
+|---|---|---|
+| container | PASS | 3085 allowed diffs (flipped from FAIL via brief 27 tolerance) |
+| decode | PASS | 3,954,101 leaves, zero errors |
+| pointers | PASS | |
+| envelope | FAIL | 15 failures (was 23), listed below |
+| mfde | FAIL | 1: level 12 entry-index 10 presence class `absent` not in R |
+| mht29 | PASS | |
+| shape | PASS | |
+| spotcheck | FAIL | Brisbane/Sydney/Melbourne L0 road names missing (Perth, Adelaide, Hobart, Darwin L0 and all L2 pass) |
+| vocab | PASS | |
+
+**Envelope per-level parcel_count / name_count (G / R / ratio):**
+
+| Level | parcel_count | in range | name_count | in range |
+|---|---|---|---|---|
+| 0 | 3,706,928 / 3,704,871 / 1.0006x | yes | 1,971,463 / 19,081,105 / 0.1033x | NO |
+| 2 | 231,598 / 231,564 / 1.0001x | yes | 30,286 / 40,169 / 0.7540x | yes |
+| 4 | 14,521 / 14,511 / 1.0007x | yes | 3,354 / 4,042 / 0.8298x | yes |
+| 6 | 930 / 939 / 0.9904x | yes | 1,223 / 1,022 / 1.1967x | yes |
+| 8 | 110 / 78 / 1.4103x | yes | 287 / 209 / 1.3732x | yes |
+| 10 | 11 / 9 / 1.2222x | yes | 8 / 8 / 1.0000x | yes |
+| 12 | 3 / 1 / 3.0000x | NO | 8 / 8 / 1.0000x | yes |
+
+Remaining envelope failures beyond the two count ratios (all sub-frame max size, G > R max):
+L0 background 130,106 > 25,908 and name 42,930 > 24,568; L2 road 114,370 > 110,132, background
+101,242 > 31,132, name 3,048 > 1,152; L4 background 116,746 > 73,148, name 700 > 370; L6 background
+107,650 > 48,270, name 1,298 > 610; L8 road 121,906 > 99,794, background 130,558 > 120,946, name
+1,118 > 366; L10 background 1,858 > 1,802.
+
+**Level coverage:** report levels {0,2,4,6,8,10,12} equal `parser/refdata/profile/map.json` level keys
+{0,10,12,2,4,6,8}; none silently absent.
+
+**PLAN.md stale-text discrepancy:** the "harness blind spot, carried forward for 26b" paragraph is
+stale. `envelope.py` (line 61), `vocab.py` (54) and `mfde.py` (42) carry the "Iterate the union of
+R's and G's levels" fix from e629b91; no workaround was needed or added.
+
+**Outcome vs the (units 26/26b) bullet:** parcel/name ratios are inside [0.5, 2.0]x at L2-L10 for
+both fields and L0/L12 parcel_count... except two residuals, named here: L0 name_count 0.103x
+(declared deviation from 26a: OSM cannot supply R's 19M names) and L12 parcel_count 3/1 = 3.0x
+(brief expected declared 2/1; actual is 3, from the single-parcel-cell/26c fill, same declared
+cause but a larger overshoot). Bullet met via the named-residual escape hatch; no acceptance
+checkmark added and no harness config loosened.
+
+**Proposed dispositions of the remaining FAILs (for acceptance, not self-accepted):**
+- envelope L0 name_count, envelope L12 parcel_count: proposed declared deviations (see above).
+- envelope sub-frame max sizes (13 rows): WP1-scope, needs a fix brief. G's background/name
+  sub-frames run 2-4x R's maxima (e.g. L2 background 3.2x); these are encoding-size ceilings
+  relevant to head-unit safety, not count deviations. Road overshoots at L2 (+4%) and L8 (+22%),
+  L10 background (+3%) are the same class.
+- mfde L12 entry-index 10 `absent`: WP1-scope, small fix brief (generated omits an entry-index
+  that R populates at level 12).
+- spotcheck Brisbane/Sydney/Melbourne L0: WP1-scope, needs investigation; likely tied to the L0
+  name shortfall but the missing strings are named roads OSM does carry, so admission or the
+  divide.py fallback is suspect rather than data absence.
