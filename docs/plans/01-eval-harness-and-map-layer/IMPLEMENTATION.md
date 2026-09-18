@@ -1271,3 +1271,35 @@ deviations; note L12 is 3, not the 2 the kickoff assumed); envelope sub-frame ma
 (WP1-scope, needs brief); mfde L12 entry-index 10 absent (WP1-scope); spotcheck Brisbane/Sydney/
 Melbourne L0 road names (WP1-scope). No code changed. Stale PLAN.md blind-spot text noted (fix already
 in e629b91).
+
+## Units 28-31 -- WP1 residual FAILs after rebuild #3: diagnosis + briefs (design only, no code or output/ changed) -- 2026-09-19
+
+Root causes (read-only against live `output/ALLDATA.KWI` and R; scripts in `/tmp/diag28/`):
+- **Spotcheck L0 (Brisbane/Sydney/Melbourne): reader bug, not data.** `kiwiw/mesh.py::locate_parcel`
+  re-narrows `bounds` at the depth-1 subparcel descent (already the cell), so divided parcels resolve to
+  a ~9 m wrong sub-frame. With depth-1 narrowing removed (monkeypatch), all expected names are present
+  (Queen/Adelaide, York/Kent/Elizabeth, Queen/Swanston/Collins). Brief **28**; no rebuild needed.
+- **Envelope sub-frame maxima (13 rows): division triggers on total frame size only.** Frames fit the
+  131,070 B / R-mapframe-max total while one kind is 2-5x R's per-kind max (R L0 bg 25,908 vs G whole-cell
+  125,760). ~2.2k L0 leaves, plus L2/4/6/8/10; some leaves are already type 2 and need a priority trim.
+  Brief **29** (per-kind budgets = R `frame_kind_max_bytes`, escalate, then deterministic trim).
+- **mfde L12 idx 10: R's mfde[10] is a byte-identical duplicate of the name sub-frame** (L12: 236 B ==
+  mfde[2]; L6-L12: in_buffer iff name present, same size, 100%). G emits absent. Brief **30** (synth emits the
+  copy at L>=6; L0-L4 keep absent, R's dominant class; variant rule at L0/L2/L4 remains undecoded).
+- Rebuild: assembly-only (spool from rebuild #3 remains valid; 28/29/30 act after extraction). Kickoff **31**,
+  verify **31b**.
+
+Parallelism: 28, 29, 30 are file-disjoint (mesh.py+test_mesh; divide.py+build_alldata.py+test_divide/
+test_build_alldata; synth.py+test_synth_map_frame+design docs) and run in parallel; 31 waits for all
+three, 31b for 31.
+
+Proposed declared deviations (for acceptance, not self-accepted):
+- **L12 parcel_count G=3 vs R=1 (3.0x).** R's L12 is one undivided 3,808 B leaf (25 bg shapes of types
+  289/306/528 = 3,212 B, 8 names). G's single L12 cell holds 26 `natural=bay` shapes = 4,458 B of
+  background (+236 B names) so the whole frame exceeds R's 3,808 B ceiling and is divided (type 2) into 3
+  populated quadrants (3,456/160/1,440 B). The bg content differs in kind (R: 6 water polygons + 19
+  boundary-type lines; OSM way tags give no reliable 306/528 lines), so G cannot match R's byte budget
+  without dropping the content brief 19 added. Declared figure: G = 3 leaves (one cell, type-2 divided),
+  R = 1; unaffected by 29 (bg budget 3,212 B < whole-cell 4,458 B still divides) and 30.
+- L0 name_count 0.103x: unchanged from 26a/26b (OSM cannot supply R's 19M names; max OSM total ~1.98M).
+No item was found WP2-scoped or unreachable, except the two above.
