@@ -143,3 +143,35 @@ def test_container_flags_one_byte_lmr_change_by_field_name(tmp_path):
     assert result.status == "FAIL", result.message
     violation_fields = {v["field"] for v in result.details["violations"]}
     assert f"lmr[{LEVEL}].dispflag" in violation_fields
+
+
+# --- unit 27: PDMDH length differences explained by per-build BMT tables ---
+
+def _fake_pdmdh(n_tables: int, prefix: int = 100, entries: int = 4):
+    from types import SimpleNamespace as NS
+    tables = [NS(offset=prefix + i * entries * _volume.BMT_SIZE, entries=[None] * entries)
+              for i in range(n_tables)]
+    return NS(bmt_tables=tables, record_size=prefix + n_tables * entries * _volume.BMT_SIZE)
+
+
+_BMT_ALLOW = {"record_size", "bsmr_bmt_size"}
+
+
+def test_bmt_explains_length_when_only_table_count_differs():
+    r, g = _fake_pdmdh(5), _fake_pdmdh(3)
+    assert container_checks._bmt_explains_length(r, g, _BMT_ALLOW)
+    # ... and the length mismatch is then not reported even with a non-zero tail.
+    rr, gg = bytes([1]) * 200, bytes([1]) * 150
+    r_t, g_t, viol = container_checks._pdmdh_common(rr, gg, bmt_explained=True)
+    assert viol is None and len(r_t) == len(g_t) == 150
+    _, _, viol = container_checks._pdmdh_common(rr, gg, bmt_explained=False)
+    assert viol is not None and viol["field"] == "pdmdh_length"
+
+
+def test_bmt_explanation_requires_allowlist_and_identical_prefix():
+    r, g = _fake_pdmdh(5), _fake_pdmdh(3)
+    assert not container_checks._bmt_explains_length(r, g, {"record_size"})
+    assert not container_checks._bmt_explains_length(r, _fake_pdmdh(3, prefix=124), _BMT_ALLOW)
+    g_bad = _fake_pdmdh(3)
+    g_bad.record_size += 6  # unexplained extra bytes beyond prefix + BMT tables
+    assert not container_checks._bmt_explains_length(r, g_bad, _BMT_ALLOW)

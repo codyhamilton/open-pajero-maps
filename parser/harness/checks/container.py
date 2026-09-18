@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from harness import bytediff, walk
 from harness.context import Check, CheckResult
-from kiwiw.volume import DATAVOL_SIZE, MHT_SIZE
+from kiwiw.volume import BMT_SIZE, DATAVOL_SIZE, MHT_SIZE
 
 NO_DATA_DSA = 0xFFFFFFFF
 RECORD29_FRAME_SIZE = 2048
@@ -37,7 +37,30 @@ def _read_bytes(path: str, offset: int, length: int) -> bytes:
         return fh.read(length)
 
 
-def _pdmdh_common(r_raw: bytes, g_raw: bytes) -> tuple[bytes, bytes, dict | None]:
+def _bmt_explains_length(r_pdmdh, g_pdmdh, allow_pdmdh: set[str]) -> bool:
+    """True when a PDMDH length difference is *entirely* a consequence of
+    allowlisted per-build fields: `record_size` and `bsmr_bmt_size` are
+    both allowlisted, the fixed prefix (header + LMR table + BSMR table,
+    i.e. everything before the first Block Management Table) is the same
+    length in R and G, and the record-size difference equals the
+    difference in total BMT bytes. Block Management Tables are emitted
+    only for blocksets that hold content, so a build whose geographic
+    content coverage differs from R's legitimately has a different number
+    of them (unit 27)."""
+    if not {"record_size", "bsmr_bmt_size"} <= allow_pdmdh:
+        return False
+    def prefix(p):
+        return min((t.offset for t in p.bmt_tables), default=p.record_size)
+    def bmt_total(p):
+        return sum(len(t.entries) for t in p.bmt_tables) * BMT_SIZE
+    if prefix(r_pdmdh) != prefix(g_pdmdh):
+        return False
+    return (r_pdmdh.record_size == prefix(r_pdmdh) + bmt_total(r_pdmdh)
+            and g_pdmdh.record_size == prefix(g_pdmdh) + bmt_total(g_pdmdh))
+
+
+def _pdmdh_common(r_raw: bytes, g_raw: bytes,
+                   bmt_explained: bool = False) -> tuple[bytes, bytes, dict | None]:
     """Trim both PDMDH blobs to their common length for the field-level
     diff below, and separately report a length mismatch as a violation
     unless the longer blob's extra tail is entirely zero (i.e. the only
@@ -47,7 +70,7 @@ def _pdmdh_common(r_raw: bytes, g_raw: bytes) -> tuple[bytes, bytes, dict | None
     common = min(len(r_raw), len(g_raw))
     longer = r_raw if len(r_raw) > len(g_raw) else g_raw
     extra = longer[common:]
-    if all(b == 0 for b in extra):
+    if bmt_explained or all(b == 0 for b in extra):
         return r_raw[:common], g_raw[:common], None
     return r_raw[:common], g_raw[:common], {
         "region": "pdmdh", "field": "pdmdh_length", "offset": common, "length": len(extra),
@@ -101,7 +124,9 @@ def _run_container(ctx) -> CheckResult:
                                r_container.pdmdh.total_size)
     g_pdmdh_raw = _read_bytes(ctx.generated, g_container.prdm_offset,
                                g_container.pdmdh.total_size)
-    r_trim, g_trim, length_violation = _pdmdh_common(r_pdmdh_raw, g_pdmdh_raw)
+    r_trim, g_trim, length_violation = _pdmdh_common(
+        r_pdmdh_raw, g_pdmdh_raw,
+        _bmt_explains_length(r_container.pdmdh, g_container.pdmdh, allow["pdmdh"]))
     if length_violation:
         violations.append(length_violation)
     fields = bytediff.field_map("pdmdh", r_container.pdmdh)

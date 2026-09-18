@@ -1131,3 +1131,38 @@ declared deviation; touches `build_alldata.py` only after the concurrent assembl
 PLAN.md acceptance (if 26c refutes fill): parcel_count at L0/2/4/6/10 outside [0.5,2]x because R
 frames cells not derivable from OSM (WP2/out of scope). Brief 20's "undershoot" amendment is
 contradicted for names (they overshoot at L2-8). Container PDMDH regression remains independent.
+
+## Ad-hoc brief 27 — container PDMDH blob-length FAIL after the dune->bay fix
+
+**Root cause (established from the live `output/ALLDATA.KWI` vs the reference, no rebuild).**
+Brief 19's diagnosis was wrong about what closes the gap. The PDMDH length is
+`prefix (7230 B, identical in R and G) + 6 B x (BMT entries)`, and `alldata_writer.has_bmt` emits a
+Block Management Table only for blocksets that hold content in *this* build. R has 165 BMT tables
+(2,307 entries), G has 110 (1,898): 2,464 bytes = the sector-rounded difference. The blockset sets
+differ in both directions, so this is geographic content coverage, not a missing-level bug: R has
+content (24-32 blocks each at level 0, 4 at level 2, 1 at levels 4-6) in ~60 blocksets where G has
+none (e.g. level 0 blocksets 2-5, 18-20, 24, 114-115, 120, 130-136; level 2 similarly), and G has
+1-7 blocks in ~12 blocksets R considers empty (level 0: 0, 9, 25, 26, 32, 57, 89, 112, 113;
+level 2: 57, 112, 113). Levels 10/12 are now near-parity (level 12 1/1; level 10 has 5 R-only, 1
+shared). Brief 19's dune->bay fix was mechanistically right but a minority of the gap.
+
+**Fix (WP1 scope, `parser/harness/checks/container.py`).** The harness allowlist already declares
+`record_size`, `bsmr_bmt_offset/size`, `bmt_dsa/size` build-specific, yet `_pdmdh_common` still
+failed on the resulting length difference: an internal inconsistency in the check, not a generator
+bug. Added `_bmt_explains_length`: the length mismatch is tolerated only when `record_size` and
+`bsmr_bmt_size` are allowlisted, the fixed prefix (up to the first BMT) is equal in R and G, and each
+side's `record_size == prefix + 6 x BMT entries`. Anything else (prefix change, unexplained bytes,
+missing allowlist) still FAILs. Two tests added in `test_harness_container.py`. Verified on the
+live output: `container` now PASS (3,224 allowed diffs).
+
+**Rebuild required: no.** The check-only fix was confirmed against the existing output, so there is
+no 27b kickoff/verify split.
+
+**Declared deviations (not silently absorbed).**
+1. The underlying coverage difference is real and unchanged: G lacks content in ~60 blocksets R
+   populates (largest at level 0/2, plausibly offshore/sea-water fill from a source the OSM extract
+   does not supply) and adds content in ~12 R lacks. This is a WP2+/content-fidelity matter and
+   belongs with the envelope work (level 0/2/4 parcel_count ratios), which is out of this brief's
+   paths. The container check no longer surfaces it; envelope/shape checks are where it must be
+   judged.
+2. Brief 19's expectation that the dune->bay fix would close `container` is superseded by this entry.
