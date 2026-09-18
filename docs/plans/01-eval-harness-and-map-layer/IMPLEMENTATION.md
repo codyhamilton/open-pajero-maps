@@ -1328,3 +1328,14 @@ L0 type-2 name trim would hit the Melbourne CBD sub-cell (32,280 B > 24,568): it
 place names; road names (type 5, Queen/York/Swanston) are dropped last, so spotcheck should survive (confirm in 31b).
 Possible declared deviation: L0 background trim >1% at cities (bg cost 25,908 B budget vs ~2,200 small polygons/cell);
 report the 31b trim table before deciding.
+
+## Unit 28 -- locate_parcel divided-parcel descent (2026-09-19)
+- `kiwiw/mesh.py::locate_parcel`: depth-1 subparcel descent no longer re-narrows `bounds` (already the
+  (ix,iy) cell); depth>1 narrowing and the leaf branch unchanged. New `parser/tests/test_mesh_divided_locate.py`
+  (synthetic type-0 -> type-1 -> type-2 fixture; 3 of 4 tests fail without the fix). `pytest parser/tests`: 261 passed.
+- R regression: 52 L0 divided leaves resolve to their own leaf 52/52 after the fix, 17/52 before.
+- Spotcheck vs existing `output/ALLDATA.KWI` (no rebuild): Brisbane/Sydney/Melbourne L0 now pass (before: 3 FAIL);
+  result 13/14. Remaining FAIL: Adelaide L0 "Grenfell Street" -- Adelaide is divided (brief was wrong) and the
+  spot expectation is not satisfiable even on R with the fixed reader; needs a `spot_checks.json` follow-up
+  (not in this brief's owned paths). See brief 28 amendment.
+- Other `locate_parcel` callers (disc.py, roundtrip_parcel_content.py, tests): all tests green, none moved.

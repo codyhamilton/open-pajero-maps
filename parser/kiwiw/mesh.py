@@ -207,12 +207,19 @@ def locate_parcel(fh, zdat0: bytes, pdmdh: Pdmdh, level: int, lat: float, lon: f
 
         # Subparcel: descend. `dsa` here is actually a [D]-encoded offset
         # into the same pdat buffer (kiwiread.c: `showbmt(..., D(add), j)`).
-        new_bounds_lon_lo = bounds.lon_lo + lpx * (bounds.lon_hi - bounds.lon_lo) / gn_lng
-        new_bounds_lat_lo = bounds.lat_lo + lpy * (bounds.lat_hi - bounds.lat_lo) / gn_lat
-        new_bounds = BoundingBox(
-            lat_lo=new_bounds_lat_lo, lat_hi=new_bounds_lat_lo + (bounds.lat_hi - bounds.lat_lo) / gn_lat,
-            lon_lo=new_bounds_lon_lo, lon_hi=new_bounds_lon_lo + (bounds.lon_hi - bounds.lon_lo) / gn_lng,
-        )
+        # At depth 1 `bounds` is already this type-0 record's own (ix, iy)
+        # cell, so the (lpx, lpy) selection above adds no further narrowing
+        # (re-narrowing shrank divided parcels to a ~9 m wrong box, brief
+        # 28). At depth > 1 the sub-cell selection is a genuine subdivision.
+        if depth == 1:
+            new_bounds = bounds
+        else:
+            new_bounds_lon_lo = bounds.lon_lo + lpx * (bounds.lon_hi - bounds.lon_lo) / gn_lng
+            new_bounds_lat_lo = bounds.lat_lo + lpy * (bounds.lat_hi - bounds.lat_lo) / gn_lat
+            new_bounds = BoundingBox(
+                lat_lo=new_bounds_lat_lo, lat_hi=new_bounds_lat_lo + (bounds.lat_hi - bounds.lat_lo) / gn_lat,
+                lon_lo=new_bounds_lon_lo, lon_hi=new_bounds_lon_lo + (bounds.lon_hi - bounds.lon_lo) / gn_lng,
+            )
         local_lat_frac = (lat - new_bounds.lat_lo) / (new_bounds.lat_hi - new_bounds.lat_lo)
         local_lon_frac = (lon - new_bounds.lon_lo) / (new_bounds.lon_hi - new_bounds.lon_lo)
         bounds = new_bounds

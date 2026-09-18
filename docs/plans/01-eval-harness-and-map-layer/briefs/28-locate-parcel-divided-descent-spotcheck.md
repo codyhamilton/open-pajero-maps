@@ -55,3 +55,16 @@ pytest green; before/after `find_parcel` bounds for the three cities; spotcheck-
 ## Report back
 Whether R divided-leaf resolution changed; any other caller of `locate_parcel`
 (`roundtrip_parcel_content.py:185`, `kiwiw/disc.py`) whose tests moved.
+
+## Amendment (worker, 2026-09-19): contradiction on Adelaide and Done-evidence outcome
+- The brief states Adelaide's spot cell is undivided and passes. FALSE: Adelaide L0 is a type-1 (divided)
+  parcel (bounds lat [-34.9375,-34.92708] lon [138.59375,138.609375]). Before the fix it "passed" only by
+  landing on a wrong sub-frame that happened to contain Grenfell Street.
+- After the fix the spotcheck run is 13/14 PASS. The sole FAIL is Adelaide L0 missing "Grenfell Street"
+  (matched King William, Pulteney). R itself, read through the fixed reader at the same spot, also lacks
+  Grenfell Street (210 names; G 798) -- the correct sub-frame at (-34.9285, 138.6007) does not contain it
+  (Grenfell St lies north of the cell). So the expectation in `parser/refdata/spot_checks.json` is not
+  satisfiable by R and needs a follow-up outside this brief's owned paths (drop Grenfell Street, or move the
+  Adelaide spot point/coords to one R resolves); not changed here.
+- R regression (item 3): 52 L0 divided leaves; after the fix 52/52 resolve to the leaf's own sector_addr;
+  before the fix 17/52 (35 wrong). Not added as a pytest (full-L0 tree scan ~1 min); script kept at /tmp only.
