@@ -105,6 +105,89 @@ from osm_to_parcel_geometry import TileGrid, assign_to_parcel, parcel_bounds, sp
 _SUBGRID_DIMS: dict[int, tuple[int, int]] = {1: (2, 2), 2: (4, 4)}
 
 EncodeFn = Callable[[int, int, int, BoundingBox, dict], bytes]
+# `measure(level, ix, iy, bounds, content) -> (frame_bytes, {kind: size})`
+# where kind in KINDS and size is the (even-padded) sub-frame byte length
+# (0 when that sub-frame is absent). Brief 29.
+MeasureFn = Callable[[int, int, int, BoundingBox, dict], "tuple[bytes, dict[str, int]]"]
+
+KINDS = ("road", "background", "name")
+_CONTENT_KEY = {"road": "roads", "background": "backgrounds", "name": "names"}
+
+# road_type (4-bit code, refdata/vocab/road_type.json semantic via
+# display_class.json ordering) -> importance rank, 0 = most important.
+# Motorway=12, trunk=0, primary=4, secondary=3, tertiary=9, minor=7/2, 10 =
+# track at L0 but "secondary and below" at L>=2.
+def _road_rank(level: int, road_type: int) -> int:
+    if road_type == 12:
+        return 0
+    if road_type == 0:
+        return 1
+    if road_type == 4:
+        return 2
+    if road_type == 3:
+        return 3
+    if road_type == 9:
+        return 4
+    if road_type == 10:
+        return 7 if level == 0 else 5
+    if road_type == 7:
+        return 6
+    return 8
+
+
+def _road_keep_order(level: int, roads: list) -> tuple[list, int]:
+    """Roads sorted best-first (highest class, then longest, then lowest
+    `(osm_way_id, ordinal)`), so dropping the tail drops lowest class first,
+    shortest first, ties -> highest `(osm_way_id, ordinal)`. Returns
+    `(ordered, n_pinned)`: at level >= 2 motorway/trunk links are pinned
+    (never trimmed) and sort first."""
+    def key(r):
+        return (_road_rank(level, r.road_type), -len(r.points),
+                r.osm_way_id if r.osm_way_id is not None else 0, r.ordinal)
+    ordered = sorted(roads, key=key)
+    n_pinned = 0
+    if level >= 2:
+        n_pinned = sum(1 for r in ordered if r.road_type in (12, 0))
+    return ordered, n_pinned
+
+
+def _bg_keep_order(shapes: list) -> list:
+    """Largest bounding-box area first, then most coords, then input order."""
+    def key(item):
+        i, sh = item
+        cs = sh.coords
+        if not cs:
+            return (0.0, 0, i)
+        area = (max(c[0] for c in cs) - min(c[0] for c in cs)) * \
+               (max(c[1] for c in cs) - min(c[1] for c in cs))
+        return (-area, -len(cs), i)
+    return [sh for _i, sh in sorted(enumerate(shapes), key=key)]
+
+
+def _name_keep_order(names: list) -> list:
+    """Keep order: road names (string_type 5), place names, POI/background
+    names (string_type 6), then duplicate `(text, string_type)` (first kept)."""
+    seen: set = set()
+
+    def rank(rec) -> int:
+        k = (rec.text, rec.string_type)
+        if k in seen:
+            return 3
+        seen.add(k)
+        if rec.string_type == 5:
+            return 0
+        if rec.string_type == 6:
+            return 2
+        return 1
+    ranked = [(rank(r), i, r) for i, r in enumerate(names)]
+    ranked.sort(key=lambda t: (t[0], t[1]))
+    return [r for _k, _i, r in ranked]
+
+
+def _kind_breach(sizes: dict, kind_limits: dict | None) -> list[str]:
+    if not kind_limits:
+        return []
+    return [k for k in KINDS if k in kind_limits and sizes.get(k, 0) > kind_limits[k]]
 
 
 def _sub_tile_grid(level: int, bounds: BoundingBox, nx: int, ny: int) -> TileGrid:
@@ -257,11 +340,76 @@ def _shrink_to_fit(encode: EncodeFn, level: int, ix: int, iy: int,
     return best_bytes, dropped
 
 
+def _trim_kinds(measure: MeasureFn, level: int, ix: int, iy: int,
+                bounds: BoundingBox, content: dict, kind_limits: dict,
+                stats: dict | None) -> tuple[bytes, int]:
+    """Final-tier deterministic priority trim (brief 29): for each kind
+    over its limit, bisect the largest kept prefix of that kind's
+    priority-sorted items whose sub-frame size is <= the limit. Only the
+    offending kind is touched. Returns `(frame_bytes, n_dropped)`."""
+    dropped_total = 0
+    cur = dict(content)
+    fb, sizes = measure(level, ix, iy, bounds, cur)
+    for kind in KINDS:
+        limit = kind_limits.get(kind)
+        if limit is None or sizes.get(kind, 0) <= limit:
+            continue
+        key = _CONTENT_KEY[kind]
+        items = list(cur.get(key) or [])
+        n_pinned = 0
+        if kind == "road":
+            ordered, n_pinned = _road_keep_order(level, items)
+        elif kind == "background":
+            ordered = _bg_keep_order(items)
+        else:
+            ordered = _name_keep_order(items)
+
+        def _try(k: int):
+            trial = dict(cur, **{key: ordered[:k]})
+            try:
+                return measure(level, ix, iy, bounds, trial)
+            except ValueError:
+                return None
+
+        lo, hi = n_pinned, len(ordered)
+        best = n_pinned
+        best_res = None
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            res = _try(mid)
+            if res is not None and res[1].get(kind, 0) <= limit:
+                best, best_res = mid, res
+                lo = mid + 1
+            else:
+                hi = mid - 1
+        if best_res is None:
+            best_res = _try(best)
+            if best_res is None:
+                continue
+        dropped = len(ordered) - best
+        cur[key] = ordered[:best]
+        fb, sizes = best_res
+        dropped_total += dropped
+        if dropped:
+            print(f"WARNING [kiwiw.divide]: level {level} sub-cell ({ix},{iy}): "
+                  f"trimmed {kind} {dropped}/{len(ordered)} items to meet kind budget "
+                  f"{limit:,} B (brief 29)", file=sys.stderr)
+            if stats is not None:
+                d = stats.setdefault("dropped", {})
+                d[kind] = d.get(kind, 0) + dropped
+                c = stats.setdefault("cells", {})
+                c[kind] = c.get(kind, 0) + 1
+    return fb, dropped_total
+
+
 def plan_divisions(
     level: int,
     parcels: Iterable[tuple[int, int, dict]],
     threshold_bytes: int,
     encode: EncodeFn,
+    kind_limits: dict | None = None,
+    measure: MeasureFn | None = None,
+    trim_stats: dict | None = None,
 ) -> Iterator[tuple[int, int, int, int, int, bytes]]:
     """For every `(ix, iy, content)` in `parcels`, encode it whole via
     `encode(level, ix, iy, bounds, content)`; if the result fits in
@@ -290,6 +438,19 @@ def plan_divisions(
     parcels, then each divided parcel's sub-frames in ascending
     `(sub_iy, sub_ix)` order. Deterministic given deterministic input.
     """
+    if kind_limits and measure is None:
+        raise ValueError("kind_limits requires a measure callback")
+    use_kinds = bool(kind_limits)
+
+    def _probe(lv, cx, cy, b, c):
+        """-> (bytes | None, sizes | None); None = over the hard ceiling."""
+        if not use_kinds:
+            return _try_encode(encode, lv, cx, cy, b, c), None
+        try:
+            return measure(lv, cx, cy, b, c)
+        except ValueError:
+            return None, None
+
     # Bounds are not part of the `parcels` contract -- they're fully
     # derivable from (level, ix, iy) via the checked-in reference grid, so
     # this is computed once per call rather than requiring every caller to
@@ -298,8 +459,9 @@ def plan_divisions(
 
     for ix, iy, content in parcels:
         bounds = parcel_bounds(ix, iy, tile_grid)
-        whole_bytes = _try_encode(encode, level, ix, iy, bounds, content)
-        if whole_bytes is not None and len(whole_bytes) <= threshold_bytes:
+        whole_bytes, whole_sizes = _probe(level, ix, iy, bounds, content)
+        if (whole_bytes is not None and len(whole_bytes) <= threshold_bytes
+                and not _kind_breach(whole_sizes or {}, kind_limits)):
             yield (ix, iy, 0, 0, 0, whole_bytes)
             continue
         # `whole_bytes is None` means encode() couldn't even represent the
@@ -319,7 +481,7 @@ def plan_divisions(
             last_tier = parcel_type == 2
             for cell, c in sub_content.items():
                 sub_bounds = parcel_bounds(cell[0], cell[1], sub_grid)
-                fb = _try_encode(encode, level, cell[0], cell[1], sub_bounds, c)
+                fb, sizes = _probe(level, cell[0], cell[1], sub_bounds, c)
                 if fb is None:
                     oversize = True
                     if not last_tier:
@@ -329,8 +491,18 @@ def plan_divisions(
                     # module docstring's "Deviation found ..." note).
                     fb, _dropped = _shrink_to_fit(
                         encode, level, cell[0], cell[1], sub_bounds, c)
+                    sizes = None
                 elif len(fb) > threshold_bytes:
                     oversize = True
+                if fb is not None and use_kinds:
+                    if sizes is None:  # shrunk frame: re-measure kinds
+                        _fb2, sizes = _probe(level, cell[0], cell[1], sub_bounds, c)
+                    if _kind_breach(sizes or {}, kind_limits):
+                        if last_tier:
+                            fb, _n = _trim_kinds(measure, level, cell[0], cell[1],
+                                                 sub_bounds, c, kind_limits, trim_stats)
+                        else:
+                            oversize = True
                 frames[cell] = fb
 
             chosen_type = parcel_type

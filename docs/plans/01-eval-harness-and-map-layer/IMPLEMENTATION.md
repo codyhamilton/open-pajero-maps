@@ -1303,3 +1303,28 @@ Proposed declared deviations (for acceptance, not self-accepted):
   R = 1; unaffected by 29 (bg budget 3,212 B < whole-cell 4,458 B still divides) and 30.
 - L0 name_count 0.103x: unchanged from 26a/26b (OSM cannot supply R's 19M names; max OSM total ~1.98M).
 No item was found WP2-scoped or unreachable, except the two above.
+
+## Brief 29 -- per-kind sub-frame budgets in division -- 2026-09-19
+
+Implemented in `parser/kiwiw/divide.py` (`kind_limits`/`measure`/`trim_stats` args on `plan_divisions`, kind-breach
+escalation 0->1->2, final-tier `_trim_kinds` with priority orders) and `parser/build_alldata.py`
+(`_load_level_kind_budgets`, `_measure_one` returning padded per-kind sizes, `_encode_one` now a bytes-only wrapper,
+`trimmed_items` in `manifest.json`, per-level TRIM line with `** >1% BLOCKER **` flag). Kinds with R max 0 (L10/L12 road)
+are omitted from the budget (an absent kind is not budgeted). Road trim pins motorway/trunk (road_type 12/0) at L>=2.
+No `output/` change, no rebuild; spool untouched.
+
+Evidence: `pytest parser/tests` = 257 passed; the only failures are 1 test + 3 errors needing `osmium` (not installed in
+this env; unrelated, pre-existing). Fixture gate (`--fixture perth --levels 0 2 4 6 8`, spool `output/spool`, out
+`/tmp/perth29/`) decoded with `harness.profile.build_profile`: every kind max <= R's at L0/2/4/6/8
+(L0 road 66,980/106,114, bg 25,908/25,908, name 23,172/24,568; L2 102,642/110,132, 10,316/31,132, 932/1,152;
+L4 105,192/124,952, 14,098/73,148, 336/370; L6 50,604/124,220, 35,166/48,270, 314/610; L8 57,064/99,794, 21,696/120,946, 362/366).
+Trim counters (Perth): only L0 background, 4,839/357,077 items (1.355%) in 13 type-2 sub-cells -> named as a >1% blocker
+(dense `background_all` polygons, class ii). No road or name trim in Perth.
+Fixture cannot exercise: L8 road t1/t2 and L8 name/bg rows, L2 road t0 (114,370), L4/L6 name rows, L10 bg, and the
+Tullamarine/Mildura/Melbourne-CBD L0 cells (outside Perth); verified by 31b at full scale.
+Expected split at full scale: type-0/1 rows (L0 bg t0 1130, t1 968; most name rows; L2 bg t0/L2 road t0; L4/L6 bg t0) are
+fixed by escalation; class ii (already type 2: L0 bg/name t2, L2 bg t2, L4/L8 bg, L8 name/road t2) go to trim.
+L0 type-2 name trim would hit the Melbourne CBD sub-cell (32,280 B > 24,568): it drops duplicates, then POI (type 6), then
+place names; road names (type 5, Queen/York/Swanston) are dropped last, so spotcheck should survive (confirm in 31b).
+Possible declared deviation: L0 background trim >1% at cities (bg cost 25,908 B budget vs ~2,200 small polygons/cell);
+report the 31b trim table before deciding.

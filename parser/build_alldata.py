@@ -67,6 +67,20 @@ _PROFILE_MAP_PATH = (
 )
 
 
+def _load_level_kind_budgets() -> dict[int, dict[str, int]]:
+    """Per-level `{road, background, name}` sub-frame byte budgets = R's
+    `frame_kind_max_bytes` (brief 29). A kind whose R max is 0/absent
+    (L10/L12 road) is left out -- an absent kind is not budgeted."""
+    with open(_PROFILE_MAP_PATH) as fh:
+        profile = json.load(fh)
+    out: dict[int, dict[str, int]] = {}
+    for level_str, level_data in profile.get("levels", {}).items():
+        km = level_data.get("frame_kind_max_bytes", {})
+        out[int(level_str)] = {k: km[k] for k in ("road", "background", "name")
+                               if km.get(k)}
+    return out
+
+
 def _load_level_thresholds() -> dict[int, int]:
     """Per-level `plan_divisions()` threshold: `min(profile mapframe_size.
     max, U16_MAPFRAME_BYTE_CEILING)`. Falls back to the u16 ceiling alone
@@ -118,6 +132,13 @@ def _fixture_cell_range(level: int, fixture: str, tile_grid: TileGrid) -> tuple[
 
 
 def _encode_one(level: int, ix: int, iy: int, bounds, content: dict) -> bytes:
+    """`plan_divisions()`'s `encode` callback (bytes only)."""
+    return _measure_one(level, ix, iy, bounds, content)[0]
+
+
+def _measure_one(level: int, ix: int, iy: int, bounds, content: dict):
+    """Like `_encode_one` but also returns per-kind (even-padded) sub-frame
+    byte lengths `{road, background, name}` (0 when absent)."""
     """`divide.plan_divisions()`'s `encode` callback: build one Map Frame
     (whole-cell or divided sub-cell -- this function doesn't know or care
     which) from a content dict shaped like `SpoolReader.iter_level()`
@@ -150,8 +171,12 @@ def _encode_one(level: int, ix: int, iy: int, bounds, content: dict) -> bytes:
     llpid = (bounds.lat_lo, bounds.lon_lo)
     llcode = (ix % 256, iy % 256)
 
-    return synth.build_map_frame_bytes(
+    frame = synth.build_map_frame_bytes(
         level, llpid, llcode, road_bytes, bg_bytes, name_bytes)
+    sizes = {"road": len(synth._pad_even(road_bytes) or b""),
+             "background": len(synth._pad_even(bg_bytes) or b""),
+             "name": len(synth._pad_even(name_bytes) or b"")}
+    return frame, sizes
 
 
 _PARCEL_MASK_PATH = Path(__file__).resolve().parent / "refdata" / "parcel_mask.json"
@@ -195,7 +220,9 @@ def _fill_masked(cells, mask_rect, empty_factory):
 
 def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
                    fixture: str | None, threshold_bytes: int,
-                   mask: dict[int, tuple[int, int, int, int]] | None = None
+                   mask: dict[int, tuple[int, int, int, int]] | None = None,
+                   kind_limits: dict[str, int] | None = None,
+                   trim_stats: dict | None = None
                    ) -> tuple[list[tuple[int, int, bytes]],
                               list[tuple[int, int, int, int, int, bytes]], int, int]:
     """Encode every spooled parcel at `level`, splitting any parcel whose
@@ -216,6 +243,11 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
                 ix_lo, ix_hi, iy_lo, iy_hi = cell_range
                 if not (ix_lo <= ix <= ix_hi and iy_lo <= iy <= iy_hi):
                     continue
+            if trim_stats is not None:
+                t = trim_stats.setdefault("total", {})
+                for kind, key in (("road", "roads"), ("background", "backgrounds"),
+                                  ("name", "names")):
+                    t[kind] = t.get(kind, 0) + len(content.get(key) or [])
             yield ix, iy, content
 
     cells_iter = _cells
@@ -235,7 +267,9 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
     n_bytes = 0
     n_parcels = 0
     for ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes in divide.plan_divisions(
-            level, cells_iter(), threshold_bytes, _encode_one):
+            level, cells_iter(), threshold_bytes, _encode_one,
+            kind_limits=kind_limits, measure=_measure_one,
+            trim_stats=trim_stats):
         if parcel_type == 0:
             out.append((ix, iy, frame_bytes))
         else:
@@ -257,6 +291,8 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     available = set(reader.levels())
     grid = ReferenceGrid.load()
     thresholds = _load_level_thresholds()
+    kind_budgets = _load_level_kind_budgets()
+    trimmed_items: dict[str, dict] = {}
 
     spool_stats = {lvl: reader.stats(lvl) for lvl in levels}
 
@@ -271,8 +307,22 @@ def run(spool_dir: str, out_path: str, levels: list[int],
             manifest_levels[str(level)] = {"parcels": 0, "bytes": 0, "divided_parents": 0}
             continue
         threshold_bytes = thresholds.get(level, U16_MAPFRAME_BYTE_CEILING)
+        trim_stats: dict = {}
         parcels, divided_parcels, n_parcels, n_bytes = _encode_level(
-            level, grid, reader, fixture, threshold_bytes, mask=mask)
+            level, grid, reader, fixture, threshold_bytes, mask=mask,
+            kind_limits=kind_budgets.get(level) or None, trim_stats=trim_stats)
+        dropped = trim_stats.get("dropped", {})
+        if dropped:
+            total = trim_stats.get("total", {})
+            trimmed_items[str(level)] = {
+                k: {"dropped": n, "total": total.get(k, 0),
+                    "cells": trim_stats.get("cells", {}).get(k, 0)}
+                for k, n in dropped.items()}
+            for k, n in dropped.items():
+                pct = 100.0 * n / max(1, total.get(k, 0))
+                print(f"level {level}: TRIM {k}: dropped {n:,}/{total.get(k, 0):,} "
+                      f"({pct:.3f}%) in {trim_stats.get('cells', {}).get(k, 0)} sub-cells"
+                      + ("  ** >1% BLOCKER **" if pct > 1.0 else ""), flush=True)
         level_builds[level] = aw.LevelBuild(level=level, parcels=parcels)
         if divided_parcels:
             divided_builds[level] = divided_parcels
@@ -305,6 +355,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         "total_size": len(data),
         "sha256": sha256,
         "layers_present": LAYERS_PRESENT,
+        "trimmed_items": trimmed_items,
         "fixture": fixture,
     }
     manifest_path = os.path.join(os.path.dirname(out_path) or ".", "manifest.json")

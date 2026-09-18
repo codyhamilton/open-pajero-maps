@@ -97,3 +97,18 @@ def test_missing_spool_exits_nonzero(tmp_path):
     )
     assert rc != 0
     assert not out_path.exists()
+
+
+def test_kind_budgets_from_profile_omit_absent_kinds():
+    b = build_alldata._load_level_kind_budgets()
+    assert b[0] == {"road": 106114, "background": 25908, "name": 24568}
+    assert "road" not in b[10] and "road" not in b[12]
+    assert b[10]["background"] == 1802
+
+
+def test_measure_one_sizes_match_frame():
+    from osm_to_parcel_geometry import TileGrid, parcel_bounds
+    bounds = parcel_bounds(0, 0, TileGrid.from_reference(0))
+    frame, sizes = build_alldata._measure_one(0, 0, 0, bounds, {})
+    assert frame == build_alldata._encode_one(0, 0, 0, bounds, {})
+    assert sizes["road"] == 0 and sizes["name"] == 0 and sizes["background"] >= 2

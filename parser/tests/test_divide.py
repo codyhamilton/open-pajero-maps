@@ -262,3 +262,116 @@ def test_shrink_to_fit_preserves_names_and_backgrounds_over_roads():
     frame_bytes2, dropped2 = divide._shrink_to_fit(
         _assert_names_bgs_intact, LEVEL, _IX, _IY, _BOUNDS, content)
     assert dropped2 == 25  # only roads dropped (30 -> 5)
+
+
+# ---------------------------------------------------------------------------
+# Brief 29: per-kind sub-frame budgets (escalation + final-tier trim)
+# ---------------------------------------------------------------------------
+
+from types import SimpleNamespace
+
+
+def _measure_bg(level, ix, iy, bounds, content):
+    fb = _encode(level, ix, iy, bounds, content)
+    bgs = content.get("backgrounds") or []
+    bg = synth.build_background_frame_bytes(bgs, bounds) if bgs else b""
+    return fb, {"road": 0, "background": len(bg), "name": 0}
+
+
+def test_kind_limit_triggers_escalation_when_total_fits():
+    content = _quadrant_content(n_per_quadrant=20)
+    whole, sizes = _measure_bg(LEVEL, 0, 0, _BOUNDS, content)
+    threshold = len(whole) + 1000  # total fits comfortably
+    plain = list(divide.plan_divisions(LEVEL, [(0, 0, content)], threshold, _encode))
+    assert {r[2] for r in plain} == {0}
+    limits = {"background": sizes["background"] - 1}
+    out = list(divide.plan_divisions(LEVEL, [(0, 0, content)], threshold, _encode,
+                                     kind_limits=limits, measure=_measure_bg))
+    assert {r[2] for r in out} == {1}
+
+
+def test_kind_limits_none_regression_and_requires_measure():
+    content = _quadrant_content(n_per_quadrant=20)
+    whole = _encode(LEVEL, 0, 0, _BOUNDS, content)
+    a = list(divide.plan_divisions(LEVEL, [(0, 0, content)], len(whole) - 1, _encode))
+    b = list(divide.plan_divisions(LEVEL, [(0, 0, content)], len(whole) - 1, _encode,
+                                   kind_limits=None, measure=_measure_bg))
+    assert a == b
+    try:
+        list(divide.plan_divisions(LEVEL, [(0, 0, content)], 10**6, _encode,
+                                   kind_limits={"background": 1}))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("kind_limits without measure must raise")
+
+
+def test_zero_or_absent_kind_not_budgeted():
+    content = _quadrant_content(n_per_quadrant=5)
+    whole = _encode(LEVEL, 0, 0, _BOUNDS, content)
+    # road/name absent from limits -> only background checked; sizes for
+    # absent kinds are 0 anyway.
+    out = list(divide.plan_divisions(LEVEL, [(0, 0, content)], len(whole) + 10, _encode,
+                                     kind_limits={"background": 10**6}, measure=_measure_bg))
+    assert {r[2] for r in out} == {0}
+
+
+def _name(text, st, i=0):
+    return SimpleNamespace(text=text, string_type=st, lat=0.0, lon=0.0, idx=i)
+
+
+def _fake_measure(per_item=10):
+    def m(level, ix, iy, bounds, content):
+        sizes = {"road": per_item * len(content.get("roads") or []),
+                 "background": per_item * len(content.get("backgrounds") or []),
+                 "name": per_item * len(content.get("names") or [])}
+        return b"x" * sum(sizes.values()), sizes
+    return m
+
+
+def test_name_trim_priority_order_and_determinism():
+    names = [_name("Dup", 1), _name("Dup", 1), _name("Shop", 6), _name("Queen Street", 5),
+             _name("Town", 1), _name("Cafe", 6)]
+    stats: dict = {}
+    seen = []
+
+    def m(level, ix, iy, bounds, content):
+        seen.append(list(content.get("names") or []))
+        return _fake_measure()(level, ix, iy, bounds, content)
+
+    content = {"roads": [], "backgrounds": [], "names": names}
+    fb, dropped = divide._trim_kinds(m, 0, 0, 0, _BOUNDS, content, {"name": 30}, stats)
+    kept = [r for r in seen[-1]] if False else None
+    order = divide._name_keep_order(names)
+    assert [r.text for r in order] == ["Queen Street", "Dup", "Town", "Shop", "Cafe", "Dup"]
+    assert dropped == 3 and len(fb) == 30
+    assert stats["dropped"] == {"name": 3}
+    # deterministic
+    fb2, d2 = divide._trim_kinds(_fake_measure(), 0, 0, 0, _BOUNDS, content, {"name": 30}, {})
+    assert (fb2, d2) == (fb, dropped)
+
+
+def test_background_trim_keeps_large_features():
+    def shp(size):
+        return BackgroundShape(shape_class=2, type_code=0x100, type_label="", n_coords=3,
+                               mult_const=1, underground=False, pen_up=False,
+                               coords=[(0, 0), (size, 0), (0, size)])
+    shapes = [shp(0.001), shp(0.5), shp(0.01)]
+    order = divide._bg_keep_order(shapes)
+    assert [s.coords[1][0] for s in order] == [0.5, 0.01, 0.001]
+
+
+def test_road_trim_order_and_pinning():
+    def rd(rt, n, way, ordn=0):
+        return SimpleNamespace(road_type=rt, points=[(0, 0)] * n, osm_way_id=way, ordinal=ordn)
+    roads = [rd(7, 5, 1), rd(12, 2, 2), rd(7, 5, 9), rd(4, 3, 3), rd(0, 1, 4)]
+    ordered, pinned = divide._road_keep_order(2, roads)
+    assert pinned == 2
+    assert [r.osm_way_id for r in ordered] == [2, 4, 3, 1, 9]  # ties -> highest way id last
+    _o, p0 = divide._road_keep_order(0, roads)
+    assert p0 == 0
+    # trim to zero budget still keeps the pinned links
+    content = {"roads": roads, "backgrounds": [], "names": []}
+    fb, dropped = divide._trim_kinds(_fake_measure(), 2, 0, 0, _BOUNDS, content,
+                                     {"road": 0}, None)
+    assert dropped == 3
