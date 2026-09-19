@@ -212,13 +212,133 @@ def _fill_masked(cells, mask_rect, empty_factory):
         nxt = next(m, None)
 
 
+def _merge_stats(dst: dict, src: dict) -> None:
+    """Add `src`'s additive counters (`total`/`dropped`/`cells` maps and
+    `halo_names`) into `dst`, inserting keys in `src`'s order so the merged
+    key order equals a serial run's when chunks merge in stream order."""
+    for k, v in src.items():
+        if isinstance(v, dict):
+            d = dst.setdefault(k, {})
+            for kk, vv in v.items():
+                d[kk] = d.get(kk, 0) + vv
+        else:
+            dst[k] = dst.get(k, 0) + v
+
+
+def _level_frames(level: int, reader: SpoolReader, fixture: str | None,
+                  threshold_bytes: int, mask, kind_limits, trim_stats, name_halo: bool,
+                  row_range: tuple[int | None, int | None] = (None, None)):
+    """Yield `(ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes)` for the
+    cells of `level` whose row `iy` lies in `row_range` (`[lo, hi)`, `None` =
+    unbounded), in canonical order. Rows partition the `(iy, ix)` stream, so
+    the concatenation of consecutive row ranges equals the whole-level stream
+    and `trim_stats` counters add up (`_merge_stats`)."""
+    row_lo, row_hi = row_range
+    tile_grid = TileGrid.from_reference(level)
+    cell_range = _fixture_cell_range(level, fixture, tile_grid) if fixture else None
+    a, b = reader.row_bounds(level, row_lo, row_hi)
+
+    def _cells():
+        for ix, iy, content in reader.iter_cells(level, a, b):
+            if cell_range is not None:
+                ix_lo, ix_hi, iy_lo, iy_hi = cell_range
+                if not (ix_lo <= ix <= ix_hi and iy_lo <= iy <= iy_hi):
+                    continue
+            if trim_stats is not None:
+                t = trim_stats.setdefault("total", {})
+                for kind, key in (("road", "roads"), ("background", "backgrounds"),
+                                  ("name", "names")):
+                    t[kind] = t.get(kind, 0) + len(content.get(key) or [])
+            yield ix, iy, content
+
+    cells_iter = _cells
+    rect = _level_rect(mask, level, cell_range)
+    if rect is not None:
+        rect = (rect[0], rect[1],
+                rect[2] if row_lo is None else max(rect[2], row_lo),
+                rect[3] if row_hi is None else min(rect[3], row_hi - 1))
+        if rect[0] <= rect[1] and rect[2] <= rect[3]:
+            from kiwiw.spool import _empty_content
+
+            def cells_iter():
+                return _fill_masked(_cells(), rect, _empty_content)
+
+    return divide.plan_divisions(
+        level, cells_iter(), threshold_bytes, _encode_one,
+        kind_limits=kind_limits, measure=_measure_one,
+        trim_stats=trim_stats, name_halo=name_halo)
+
+
+def _level_rect(mask, level, cell_range):
+    rect = mask.get(level) if mask else None
+    if rect is not None and cell_range is not None:  # fixture: clip the mask to the window
+        rect = (max(rect[0], cell_range[0]), min(rect[1], cell_range[1]),
+                max(rect[2], cell_range[2]), min(rect[3], cell_range[3]))
+    return rect
+
+
+# Relative cost of an empty mask-filled cell vs one spool byte (only balances chunks).
+_EMPTY_CELL_WEIGHT = 512
+
+
+def _plan_chunks(reader: SpoolReader, level: int, fixture, mask, n_chunks: int
+                 ) -> list[tuple[int | None, int | None]]:
+    """Split the level's row space into <= `n_chunks` weight-balanced `[lo, hi)`
+    row ranges (first lo / last hi unbounded). Any partition yields identical
+    output; this only balances work."""
+    import numpy as np
+    iy, length = reader.cell_weights(level)
+    rect = _level_rect(mask, level, _fixture_cell_range(level, fixture, TileGrid.from_reference(level))
+                       if fixture else None)
+    r_lo = int(iy[0]) if len(iy) else 0
+    r_hi = int(iy[-1]) if len(iy) else -1
+    if rect is not None and rect[0] <= rect[1] and rect[2] <= rect[3]:
+        r_lo, r_hi = min(r_lo, rect[2]), max(r_hi, rect[3])
+    nrows = r_hi - r_lo + 1
+    if n_chunks <= 1 or nrows <= 1:
+        return [(None, None)]
+    w = np.zeros(nrows, dtype=np.float64)
+    if len(iy):
+        rows = iy.astype(np.int64) - r_lo
+        w += np.bincount(rows, weights=length.astype(np.float64), minlength=nrows)
+        if rect is not None and rect[0] <= rect[1]:
+            pop = np.bincount(rows, minlength=nrows)
+            in_rect = np.zeros(nrows, dtype=bool)
+            in_rect[max(rect[2], r_lo) - r_lo:min(rect[3], r_hi) - r_lo + 1] = True
+            w += np.where(in_rect, np.maximum(0, (rect[1] - rect[0] + 1) - pop), 0) \
+                * _EMPTY_CELL_WEIGHT
+    elif rect is not None:
+        w += (rect[1] - rect[0] + 1) * _EMPTY_CELL_WEIGHT
+    cum = np.cumsum(w)
+    n = min(n_chunks, nrows)
+    cuts = np.searchsorted(cum, cum[-1] * np.arange(1, n) / n, side="left") + 1
+    bounds = sorted({int(c) for c in cuts if 0 < c < nrows})
+    edges = [None] + [r_lo + c for c in bounds] + [None]
+    return list(zip(edges[:-1], edges[1:]))
+
+
+_WORKER: dict = {}
+
+
+def _chunk_worker(job):
+    """Process-pool entry: encode one row range; return its frames + counters."""
+    (spool_dir, level, fixture, threshold_bytes, mask, kind_limits, name_halo, rows) = job
+    reader = _WORKER.get(spool_dir)
+    if reader is None:
+        reader = _WORKER[spool_dir] = SpoolReader(spool_dir)
+    stats: dict = {}
+    frames = list(_level_frames(level, reader, fixture, threshold_bytes, mask,
+                                kind_limits, stats, name_halo, rows))
+    return frames, stats
+
+
 def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
                    fixture: str | None, threshold_bytes: int,
                    mask: dict[int, tuple[int, int, int, int]] | None = None,
                    kind_limits: dict[str, int] | None = None,
                    trim_stats: dict | None = None,
                    name_halo: bool = False,
-                   spill=None, digest_fh=None
+                   spill=None, digest_fh=None, pool=None, jobs: int = 1
                    ) -> tuple[list[tuple[int, int, bytes]],
                               list[tuple[int, int, int, int, int, bytes]], int, int]:
     """Encode every spooled parcel at `level`, splitting any parcel whose
@@ -235,62 +355,69 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
     spill file and the returned tuples carry a `FrameRef` instead of bytes
     (`len()` still works), so frame bytes are never accumulated in RAM.
     `digest_fh` receives one ``level ix iy type sub_ix sub_iy len sha256``
-    line per frame."""
-    tile_grid = TileGrid.from_reference(level)
-    cell_range = _fixture_cell_range(level, fixture, tile_grid) if fixture else None
+    line per frame.
 
-    def _cells():
-        for ix, iy, content in reader.iter_level(level):
-            if cell_range is not None:
-                ix_lo, ix_hi, iy_lo, iy_hi = cell_range
-                if not (ix_lo <= ix <= ix_hi and iy_lo <= iy <= iy_hi):
-                    continue
-            if trim_stats is not None:
-                t = trim_stats.setdefault("total", {})
-                for kind, key in (("road", "roads"), ("background", "backgrounds"),
-                                  ("name", "names")):
-                    t[kind] = t.get(kind, 0) + len(content.get(key) or [])
-            yield ix, iy, content
+    With `pool` (a `multiprocessing.Pool`) the level's row space is cut into
+    weight-balanced row ranges encoded in parallel; results are consumed in
+    row order, so output and counters equal the serial run for any `jobs`."""
+    if pool is not None and jobs > 1:
+        chunks = _plan_chunks(reader, level, fixture, mask, jobs * 8)
+    else:
+        chunks = [(None, None)]
 
-    cells_iter = _cells
-    rect = mask.get(level) if mask else None
-    if rect is not None:
-        if cell_range is not None:  # fixture: clip the mask to the fixture window
-            rect = (max(rect[0], cell_range[0]), min(rect[1], cell_range[1]),
-                    max(rect[2], cell_range[2]), min(rect[3], cell_range[3]))
-        if rect[0] <= rect[1] and rect[2] <= rect[3]:
-            from kiwiw.spool import _empty_content
+    def _serial():
+        st: dict = {}
+        yield (_level_frames(level, reader, fixture, threshold_bytes, mask, kind_limits,
+                             st if trim_stats is not None else None, name_halo,
+                             chunks[0]), st)
 
-            def cells_iter():
-                return _fill_masked(_cells(), rect, _empty_content)
+    def _parallel():
+        from collections import deque
+        pending: deque = deque()
+        it = iter(chunks)
+        depth = jobs * 2
+
+        def _fill():
+            while len(pending) < depth:
+                rows = next(it, None)
+                if rows is None:
+                    return
+                pending.append(pool.apply_async(_chunk_worker, ((
+                    str(reader.spool_dir), level, fixture, threshold_bytes, mask,
+                    kind_limits, name_halo, rows),)))
+        _fill()
+        while pending:
+            frames, st = pending.popleft().get()
+            _fill()
+            yield frames, st
 
     out: list[tuple[int, int, bytes]] = []
     divided_out: list[tuple[int, int, int, int, int, bytes]] = []
     n_bytes = 0
     n_parcels = 0
-    for ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes in divide.plan_divisions(
-            level, cells_iter(), threshold_bytes, _encode_one,
-            kind_limits=kind_limits, measure=_measure_one,
-            trim_stats=trim_stats, name_halo=name_halo):
-        n_frame = len(frame_bytes)
-        if digest_fh is not None:
-            digest_fh.write(f"{level} {ix} {iy} {parcel_type} {sub_ix} {sub_iy} "
-                            f"{n_frame} {hashlib.sha256(frame_bytes).hexdigest()}\n")
-        if spill is not None:
-            frame_bytes = spill.add(frame_bytes)
-        if parcel_type == 0:
-            out.append((ix, iy, frame_bytes))
-        else:
-            divided_out.append((ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes))
-        n_parcels += 1
-        n_bytes += n_frame
+    for frames, st in (_parallel() if len(chunks) > 1 else _serial()):
+        for ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes in frames:
+            n_frame = len(frame_bytes)
+            if digest_fh is not None:
+                digest_fh.write(f"{level} {ix} {iy} {parcel_type} {sub_ix} {sub_iy} "
+                                f"{n_frame} {hashlib.sha256(frame_bytes).hexdigest()}\n")
+            if spill is not None:
+                frame_bytes = spill.add(frame_bytes)
+            if parcel_type == 0:
+                out.append((ix, iy, frame_bytes))
+            else:
+                divided_out.append((ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes))
+            n_parcels += 1
+            n_bytes += n_frame
+        if trim_stats is not None:
+            _merge_stats(trim_stats, st)
 
     return out, divided_out, n_parcels, n_bytes
 
 
 def run(spool_dir: str, out_path: str, levels: list[int],
         fixture: str | None, disk_title: str, fill_mask: bool = False,
-        frame_digest: str | None = None) -> int:
+        frame_digest: str | None = None, workers: int = 1) -> int:
     if not os.path.isdir(spool_dir):
         print(f"ERROR: spool directory not found: {spool_dir}", file=sys.stderr)
         return 1
@@ -311,6 +438,13 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     spill = FrameSpill(os.path.dirname(out_path) or ".")
 
+    pool = None
+    if workers > 1:
+        import multiprocessing as mp
+        # Eager fork while the parent is still small: workers' shared copy-on-write
+        # pages then stay small (a lazily-forked executor would fork a big parent).
+        pool = mp.get_context("fork").Pool(workers)
+
     level_builds: dict[int, aw.LevelBuild] = {}
     divided_builds: dict[int, list[tuple[int, int, int, int, int, bytes]]] = {}
     manifest_levels: dict[str, dict] = {}
@@ -326,7 +460,8 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         parcels, divided_parcels, n_parcels, n_bytes = _encode_level(
             level, grid, reader, fixture, threshold_bytes, mask=mask,
             kind_limits=kind_budgets.get(level) or None, trim_stats=trim_stats,
-            name_halo=(level in NAME_HALO_LEVELS), spill=spill, digest_fh=digest_fh)
+            name_halo=(level in NAME_HALO_LEVELS), spill=spill, digest_fh=digest_fh,
+            pool=pool, jobs=workers)
         if trim_stats.get("halo_names"):
             print(f"level {level}: name halo added {trim_stats['halo_names']:,} "
                   f"neighbouring road-name records to divided sub-cells (brief 32)",
@@ -366,6 +501,9 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         digest_fh.close()
     print("assembling ALLDATA.KWI ...", flush=True)
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+    if pool is not None:
+        pool.close()
+        pool.join()
     assembled = aw.build_alldata_kwi(level_builds, grid, disk_title=disk_title,
                                       out_path=out_path, divided=divided_builds,
                                       return_bytes=False)
@@ -411,6 +549,9 @@ def main() -> int:
     ap.add_argument("--no-fill-mask", action="store_true",
                      help="Do not emit empty frames for R's coverage-rectangle cells "
                           "the spool lacks (brief 26c; default: fill)")
+    ap.add_argument("-j", "--workers", type=int, default=1,
+                     help="Worker processes for cell encoding (output is byte-identical "
+                          "for any value; default: %(default)s)")
     ap.add_argument("--frame-digest", default=None, metavar="PATH",
                      help="Write a per-frame sha256 listing (level ix iy parcel_type "
                           "sub_ix sub_iy len sha256) for byte-diff localization")
@@ -419,7 +560,7 @@ def main() -> int:
     return run(spool_dir=args.spool, out_path=args.out, levels=args.levels,
                fixture=args.fixture, disk_title=args.disk_title,
                fill_mask=not args.no_fill_mask,
-               frame_digest=args.frame_digest)
+               frame_digest=args.frame_digest, workers=args.workers)
 
 
 if __name__ == "__main__":

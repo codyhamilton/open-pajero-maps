@@ -116,3 +116,30 @@ def test_measure_one_sizes_match_frame():
     frame, sizes = build_alldata._measure_one(0, 0, 0, bounds, {})
     assert frame == build_alldata._encode_one(0, 0, 0, bounds, {})
     assert sizes["road"] == 0 and sizes["name"] == 0 and sizes["background"] >= 2
+
+
+def _make_multirow_spool(spool_dir: Path) -> None:
+    with SpoolWriter(str(spool_dir)) as w:
+        for i, (ix, iy) in enumerate([(9, 0), (20, 0), (12, 3), (30, 3), (10, 9),
+                                      (15, 20), (33, 20), (9, 33), (35, 33)]):
+            w.add(6, ix, iy, names=[_make_name(f"Cell {i}", -1.0, 1.0)])
+
+
+def test_worker_count_does_not_change_output(tmp_path):
+    """Plan 02 phase 4: `-j N` output (bytes, manifest counters, frame digest)
+    is identical to the serial build, with mask fill on."""
+    spool_dir = tmp_path / "spool"
+    _make_multirow_spool(spool_dir)
+    results = {}
+    for j in (1, 2, 5):
+        out = tmp_path / f"j{j}" / "ALLDATA.KWI"
+        rc = build_alldata.run(
+            spool_dir=str(spool_dir), out_path=str(out), levels=[6], fixture=None,
+            disk_title="TEST", fill_mask=True, frame_digest=str(tmp_path / f"d{j}"),
+            workers=j)
+        assert rc == 0
+        m = json.loads((out.parent / "manifest.json").read_text())
+        results[j] = (out.read_bytes(), (tmp_path / f"d{j}").read_text(),
+                      m["levels"], m.get("trimmed_items"))
+    assert results[1] == results[2] == results[5]
+    assert results[1][2]["6"]["parcels"] == 27 * 34

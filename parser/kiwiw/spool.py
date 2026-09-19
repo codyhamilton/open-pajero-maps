@@ -464,6 +464,25 @@ class SpoolReader:
             return []
         return list(zip(idx.ix.tolist(), idx.iy.tolist()))
 
+    def row_bounds(self, level: int, row_lo: Optional[int], row_hi: Optional[int]
+                   ) -> tuple[int, int]:
+        """Cell-index range `[a, b)` of cells with `row_lo <= iy < row_hi`
+        (`None` = unbounded)."""
+        idx = self._load_idx(level)
+        if idx is None:
+            return 0, 0
+        a = 0 if row_lo is None else int(np.searchsorted(idx.iy, row_lo, "left"))
+        b = idx.n if row_hi is None else int(np.searchsorted(idx.iy, row_hi, "left"))
+        return a, b
+
+    def cell_weights(self, level: int) -> tuple[np.ndarray, np.ndarray]:
+        """`(iy, record_length)` arrays for every cell, ascending `(iy, ix)`
+        -- what the parallel build partitions on."""
+        idx = self._load_idx(level)
+        if idx is None:
+            return np.zeros(0, "<i4"), np.zeros(0, "<u8")
+        return idx.iy, idx.length
+
     def iter_cell_columns(self, level: int, start: int = 0, stop: Optional[int] = None
                           ) -> Iterator[tuple[int, int, dict[str, np.ndarray]]]:
         idx = self._load_idx(level)

@@ -58,3 +58,35 @@ Execution shape: no briefs (refine not run); phases executed sequentially by the
 - Measured level 2: 81 s → 54 s (1.5x overall; background encode 47 → 19 s), output `cmp`-identical.
   Above the 1.3x keep threshold. Road/name encoders left scalar: gains are small next to
   process-level parallelism (phase 4).
+
+## Phase 4 — parallel cell encoding
+
+- `build_alldata.py`: `_level_frames` (per-row-range cell stream: fixture filter, mask fill
+  clipped to the range, `divide.plan_divisions`), `_plan_chunks` (weight-balanced row ranges,
+  weight = spool record bytes + a constant per mask-filled empty cell; a function of the
+  spool only, never of the worker count except for the chunk count), `_chunk_worker`
+  (own `SpoolReader`, returns frames + additive `trim_stats`), `_merge_stats`. The parent
+  consumes chunks in row order through a bounded window (`2×jobs` pending), so digest
+  lines, spill order, manifest counters and key order equal the serial run. New flag
+  `-j/--workers` (default 1 = serial path, same code, one chunk).
+- Chunking on whole rows keeps `(iy, ix)` order and makes cells independent (the name
+  halo uses only the parent cell's own names).
+- `spool.py`: `row_bounds`, `cell_weights`.
+- The pool is a `multiprocessing` fork `Pool` created before any level is encoded: a lazily
+  forking executor forked a large parent and inflated summed-RSS by ~50 MB per worker.
+- Test: `test_worker_count_does_not_change_output` (j=1,2,5 with mask fill: bytes, digest,
+  manifest levels equal).
+
+## Phase 5 — full verification (12 cores, converted binary spool)
+
+| run | wall | peak RSS (tree sum) | sha256 |
+|---|---|---|---|
+| baseline (plan) | 11–17 min | 6.85 GB | 51c254ac… |
+| `-j 12` | 262.9 s (4:23) | 2,995 MB | 51c254ac…672743 ✔ |
+
+- Targets: wall ≤ 6 min ✔, peak RSS ≤ 3 GB ✔ (tree-summed RSS double-counts shared
+  copy-on-write pages, so this is conservative; margin is thin — lower `-j` if needed).
+- Perth fixture, `-j 1` and `-j 4`: sha256 `e275879f…c480ca` ✔, frame digests identical.
+- Full suite: 288 passed.
+- Not re-run on the full build: `-j 1` (serial path was verified pre-Phase 4 at 771 s; Perth
+  covers it post-change).
