@@ -1,5 +1,7 @@
 # Design: Build Performance Contracts
 
+> Contracts introduced by plan 02 (build performance): binary spool format, spill/assembly, and partition/merge. Governs any future change to the assembly stage.
+
 Only the contracts that more than one worker must agree on. Implementation detail is left to `refine`/`execute`.
 
 ## 1. Output invariance

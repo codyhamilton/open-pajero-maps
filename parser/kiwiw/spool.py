@@ -6,7 +6,7 @@ during the single extraction pass, then `SpoolReader.iter_level` / `stats` /
 for the vectorized encoders.
 
 On-disk layout (all little-endian, fixed-width, no pickle; see
-docs/plans/02-build-performance/DESIGN.md section 3)::
+docs/design/build-performance.md section 3)::
 
     <spool_dir>/level_<L>.data  -- one cell record per (ix, iy), ascending (iy, ix)
     <spool_dir>/level_<L>.idx   -- b"KWSPIDX1", then u64 ncells, u64 totals
