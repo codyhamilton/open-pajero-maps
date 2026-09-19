@@ -146,6 +146,9 @@ same commit.
   flags — full-Australia default, all seven levels) against the dated
   Australia OSM PBF extract. WP1 units 15/15b's full run: 6.9 GB, 33:23.02
   wall clock, 8,188,004 KB peak RSS.
+- **Format (plan 02)**: binary columnar (`kiwiw/spool.py`, `.data` + `.idx` with magic
+  `KWSPIDX1`); ~4.5 GB. Spools written before plan 02 are pickle (6.9 GB) and are
+  converted once with `.venv-rp/bin/python parser/tools/convert_spool.py <old> <new>`.
 - **Why not committed**: large (multi-GB), fully regenerable from the PBF.
 - **Reproduce**: the command above. Non-deterministic input dependency: the
   OSM PBF extract's own date/content, not the code, determines its bytes.

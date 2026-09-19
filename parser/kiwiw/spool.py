@@ -403,12 +403,12 @@ class _LevelIndex:
 
 
 class SpoolReader:
-    """Reads a spool directory written by `SpoolWriter` (mmap-backed)."""
+    """Reads a spool directory written by `SpoolWriter` (per-cell `pread`)."""
 
     def __init__(self, spool_dir):
         self.spool_dir = Path(spool_dir)
         self._idx: dict[int, Optional[_LevelIndex]] = {}
-        self._mm: dict[int, mmap.mmap] = {}
+        self._fd: dict[int, int] = {}
 
     def _load_idx(self, level: int) -> Optional[_LevelIndex]:
         if level in self._idx:
@@ -433,13 +433,25 @@ class SpoolReader:
         self._idx[level] = ix
         return ix
 
-    def _data(self, level: int) -> mmap.mmap:
-        m = self._mm.get(level)
-        if m is None:
-            with open(_data_path(self.spool_dir, level), "rb") as fh:
-                m = mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ)
-            self._mm[level] = m
-        return m
+    def _read_cell(self, level: int, offset: int, length: int) -> bytes:
+        # pread, not mmap: mapped file pages count toward the process RSS the
+        # build is budgeted on, and a level-0 spool is multiple GB.
+        fd = self._fd.get(level)
+        if fd is None:
+            fd = os.open(_data_path(self.spool_dir, level), os.O_RDONLY)
+            self._fd[level] = fd
+        return os.pread(fd, length, offset)
+
+    def close(self) -> None:
+        for fd in self._fd.values():
+            os.close(fd)
+        self._fd.clear()
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def n_cells(self, level: int) -> int:
         idx = self._load_idx(level)
@@ -457,11 +469,11 @@ class SpoolReader:
         idx = self._load_idx(level)
         if idx is None:
             return
-        data = self._data(level)
         stop = idx.n if stop is None else min(stop, idx.n)
-        ixs, iys, offs = idx.ix.tolist(), idx.iy.tolist(), idx.offset.tolist()
+        ixs, iys = idx.ix.tolist(), idx.iy.tolist()
+        offs, lens = idx.offset.tolist(), idx.length.tolist()
         for i in range(start, stop):
-            yield ixs[i], iys[i], decode_columns(data, offs[i])
+            yield ixs[i], iys[i], decode_columns(self._read_cell(level, offs[i], lens[i]))
 
     def iter_cells(self, level: int, start: int = 0, stop: Optional[int] = None
                    ) -> Iterator[tuple[int, int, dict]]:

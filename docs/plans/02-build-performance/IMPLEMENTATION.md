@@ -24,3 +24,22 @@ Execution shape: no briefs (refine not run); phases executed sequentially by the
   (baseline 6.85 GB; target ≤ 3 GB met). Wall 805 s — measured while other jobs
   (test suite) shared the machine, so not a clean timing; Phase 5 re-measures.
 - Deviation: none.
+
+## Phase 2 — binary columnar spool (done)
+
+- Built: `parser/kiwiw/spool.py` rewritten (little-endian fixed-width columns, `.data` per
+  level sorted `(iy, ix)`, `.idx` = magic + totals + ix/iy/offset/length arrays; writer
+  appends `.seg` partial records and merges them at `close()`). Public API unchanged
+  (`SpoolWriter.add/close`, `SpoolReader.iter_level/stats/levels`); added `iter_cells`,
+  `iter_cell_columns`, `cell_keys`, `n_cells`. Old format kept as `spool_legacy.py`.
+  `parser/tools/convert_spool.py` converts pickle → binary and checks per-level stats.
+  `parcel_occupancy.py` migrated to `SpoolReader.cell_keys`. Tests: `test_spool_binary.py`
+  (dataclass equality vs legacy over all fields except `raw_*`, flush-threshold
+  independence, determinism, converter). Full suite 285 passed.
+- Real spool: converted in 280 s (one-off; converter peak 5.8 GB RSS), 6.9 GB → 4.5 GB, stats
+  equal for all seven levels.
+- Full Australia from converted spool: sha256 `51c254ac…2743` (matches), peak tree RSS
+  1,854 MB, wall 771 s (co-load noise; decode was not the bottleneck — encode is).
+- Finding: an mmap-backed reader put peak RSS at 6.67 GB (mapped file pages count as RSS);
+  switched to per-cell `os.pread`, which restored 1.85 GB.
+- Deviation: the "Record phase 1" commit also swept in the Phase 2 source files.
