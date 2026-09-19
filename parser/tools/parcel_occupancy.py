@@ -12,7 +12,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import pickle
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -21,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from harness import walk  # noqa: E402
 from kiwiw import volume  # noqa: E402
+from kiwiw.spool import SpoolReader  # noqa: E402
 
 EMPTY_FLOOR = 320
 
@@ -97,12 +97,7 @@ def ref_cells(path: str, levels=None) -> dict:
 
 
 def spool_cells(spool_dir: str, level: int) -> set:
-    p = Path(spool_dir) / f"level_{level}.idx"
-    if not p.exists():
-        return set()
-    with open(p, "rb") as fh:
-        idx = pickle.load(fh)
-    return {(ix, iy) for ix, iy, _o in idx["cells"]}
+    return set(SpoolReader(spool_dir).cell_keys(level))
 
 
 def analyse(R: dict, G: set) -> dict:

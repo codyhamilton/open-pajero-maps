@@ -12,3 +12,15 @@ Execution shape: no briefs (refine not run); phases executed sequentially by the
 - Added `parser/tools/bench_build.py` (wall + process-tree peak RSS sampled from /proc; JSON record separate from manifest).
 - Added `build_alldata.py --frame-digest PATH` (per-frame sha256 listing keyed level/ix/iy/type/sub_ix/sub_iy). Perth listing (167 KB, 1943 frames) is committed as `baseline-perth.digest` in this plan folder (small enough to commit; deleted at close-out).
 - numpy 2.5.3 installed in `.venv-rp`; recorded in `docs/provenance.md`.
+
+## Phase 1 — streaming assembly (done)
+
+- Built: `parser/kiwiw/spill.py` (`FrameSpill`/`FrameRef`), `AssembledFile` + streamed
+  seek-write path in `alldata_writer._build_alldata_kwi_multilevel(return_bytes=False)`,
+  `--frame-digest` flag and spill wiring in `build_alldata.py`. Test:
+  `test_streaming_matches_bytes_path`.
+- Perth: byte-identical (`e275879f…80ca`), sorted frame digest equals baseline.
+- Full Australia: sha256 `51c254ac…2743` (matches baseline), **peak tree RSS 1,820 MB**
+  (baseline 6.85 GB; target ≤ 3 GB met). Wall 805 s — measured while other jobs
+  (test suite) shared the machine, so not a clean timing; Phase 5 re-measures.
+- Deviation: none.
