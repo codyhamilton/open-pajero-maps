@@ -22,3 +22,6 @@ tag_crosstab.err
 
 # Pipeline output (regenerable from PBF + build_alldata.py)
 output/
+
+# C cell encoder, built on demand from parser/kiwiw/_cenc.c (see docs/provenance.md)
+parser/kiwiw/_cenc.so

@@ -192,3 +192,15 @@ same commit.
   the mounted reference disc's availability.
 - **Reproduce**: the command above, given a matching `output/ALLDATA.KWI`
   and the reference disc mounted at the given path.
+
+## `parser/kiwiw/_cenc.so`
+
+- **What**: shared library of the whole-cell Map Frame encoder (`parser/kiwiw/_cenc.c`)
+  used by `build_alldata.py` (plan 03) and by `synth._bg_fast`. Pure build artifact.
+- **Source**: compiled from the committed `_cenc.c`; `kiwiw/cenc.py` builds it
+  automatically on first import (atomically, rebuilt when the source is newer).
+  `KIWIW_NO_C=1` or a missing compiler falls back to the pure-Python path, which is the
+  byte-identity oracle.
+- **Why not committed**: platform-specific compiled binary.
+- **Reproduce**: `gcc -O2 -ffp-contract=off -fPIC -shared parser/kiwiw/_cenc.c -o
+  parser/kiwiw/_cenc.so -lm` (`-ffp-contract=off` is required for float parity).

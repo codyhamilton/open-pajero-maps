@@ -28,12 +28,15 @@ import argparse
 import hashlib
 import json
 import os
+import struct
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from kiwiw import alldata_writer as aw
+from kiwiw import cenc
 from kiwiw import divide
 from kiwiw.spill import FrameSpill
 from kiwiw import synth
@@ -238,35 +241,84 @@ def _level_frames(level: int, reader: SpoolReader, fixture: str | None,
     cell_range = _fixture_cell_range(level, fixture, tile_grid) if fixture else None
     a, b = reader.row_bounds(level, row_lo, row_hi)
 
-    def _cells():
-        for ix, iy, content in reader.iter_cells(level, a, b):
-            if cell_range is not None:
-                ix_lo, ix_hi, iy_lo, iy_hi = cell_range
-                if not (ix_lo <= ix <= ix_hi and iy_lo <= iy <= iy_hi):
-                    continue
-            if trim_stats is not None:
-                t = trim_stats.setdefault("total", {})
-                for kind, key in (("road", "roads"), ("background", "backgrounds"),
-                                  ("name", "names")):
-                    t[kind] = t.get(kind, 0) + len(content.get(key) or [])
-            yield ix, iy, content
+    def _in_fixture(ix, iy):
+        if cell_range is None:
+            return True
+        ix_lo, ix_hi, iy_lo, iy_hi = cell_range
+        return ix_lo <= ix <= ix_hi and iy_lo <= iy <= iy_hi
 
-    cells_iter = _cells
+    def _count(n_roads, n_bgs, n_names):
+        if trim_stats is not None:
+            t = trim_stats.setdefault("total", {})
+            t["road"] = t.get("road", 0) + n_roads
+            t["background"] = t.get("background", 0) + n_bgs
+            t["name"] = t.get("name", 0) + n_names
+
     rect = _level_rect(mask, level, cell_range)
     if rect is not None:
         rect = (rect[0], rect[1],
                 rect[2] if row_lo is None else max(rect[2], row_lo),
                 rect[3] if row_hi is None else min(rect[3], row_hi - 1))
-        if rect[0] <= rect[1] and rect[2] <= rect[3]:
-            from kiwiw.spool import _empty_content
+        if not (rect[0] <= rect[1] and rect[2] <= rect[3]):
+            rect = None
 
-            def cells_iter():
-                return _fill_masked(_cells(), rect, _empty_content)
+    enc = cenc.make_encoder(level, tile_grid, threshold_bytes, kind_limits)
+    if enc is not None:
+        return _level_frames_c(level, reader, a, b, _in_fixture, _count, rect, enc,
+                               threshold_bytes, kind_limits, trim_stats, name_halo)
+
+    def _cells():
+        for ix, iy, content in reader.iter_cells(level, a, b):
+            if not _in_fixture(ix, iy):
+                continue
+            _count(len(content.get("roads") or []), len(content.get("backgrounds") or []),
+                   len(content.get("names") or []))
+            yield ix, iy, content
+
+    cells_iter = _cells
+    if rect is not None:
+        from kiwiw.spool import _empty_content
+
+        def cells_iter():
+            return _fill_masked(_cells(), rect, _empty_content)
 
     return divide.plan_divisions(
         level, cells_iter(), threshold_bytes, _encode_one,
         kind_limits=kind_limits, measure=_measure_one,
         trim_stats=trim_stats, name_halo=name_halo)
+
+
+_HDR_COUNTS = struct.Struct("<9Q")
+
+
+def _level_frames_c(level, reader, a, b, in_fixture, count, rect, enc,
+                    threshold_bytes, kind_limits, trim_stats, name_halo):
+    """C fast path: the kernel yields the frame for every cell that fits and
+    breaches no kind budget; every other cell goes through the Python oracle
+    (`divide.plan_divisions` on that one cell), so output is identical."""
+    from kiwiw.spool import _empty_content, columns_to_content, decode_columns
+
+    def _raw_cells():
+        for ix, iy, raw in reader.iter_cell_raw(level, a, b):
+            if not in_fixture(ix, iy):
+                continue
+            h = _HDR_COUNTS.unpack_from(raw)
+            count(h[0], h[3], h[5])
+            yield ix, iy, raw
+
+    stream = _raw_cells()
+    if rect is not None:
+        stream = _fill_masked(stream, rect, lambda: None)
+    for ix, iy, raw in stream:
+        frame = enc.encode(raw, ix, iy)
+        if frame is not None:
+            yield ix, iy, 0, 0, 0, frame
+            continue
+        content = _empty_content() if raw is None else columns_to_content(decode_columns(raw))
+        yield from divide.plan_divisions(
+            level, iter(((ix, iy, content),)), threshold_bytes, _encode_one,
+            kind_limits=kind_limits, measure=_measure_one,
+            trim_stats=trim_stats, name_halo=name_halo)
 
 
 def _level_rect(mask, level, cell_range):
@@ -448,7 +500,9 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     level_builds: dict[int, aw.LevelBuild] = {}
     divided_builds: dict[int, list[tuple[int, int, int, int, int, bytes]]] = {}
     manifest_levels: dict[str, dict] = {}
+    t_run = time.monotonic()
     for level in levels:
+        t_level = time.monotonic()
         print(f"level {level}: encoding ...", flush=True)
         if level not in available:
             print(f"level {level}: no spooled content, skipping", flush=True)
@@ -495,11 +549,14 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         }
         print(f"level {level}: {n_parcels} parcels ({n_divided_parents} parents divided), "
               f"{n_bytes:,} frame bytes, max frame {max_frame:,} bytes "
-              f"(threshold {threshold_bytes:,})", flush=True)
+              f"(threshold {threshold_bytes:,}) [{time.monotonic() - t_level:.1f}s]",
+              flush=True)
 
     if digest_fh is not None:
         digest_fh.close()
-    print("assembling ALLDATA.KWI ...", flush=True)
+    print(f"assembling ALLDATA.KWI ... [encode total {time.monotonic() - t_run:.1f}s]",
+          flush=True)
+    t_asm = time.monotonic()
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     if pool is not None:
         pool.close()
@@ -508,7 +565,8 @@ def run(spool_dir: str, out_path: str, levels: list[int],
                                       out_path=out_path, divided=divided_builds,
                                       return_bytes=False)
     spill.close()
-    print(f"wrote {out_path} ({assembled.size:,} bytes)", flush=True)
+    print(f"wrote {out_path} ({assembled.size:,} bytes) "
+          f"[assemble {time.monotonic() - t_asm:.1f}s]", flush=True)
 
     sha256 = assembled.sha256
     manifest = {

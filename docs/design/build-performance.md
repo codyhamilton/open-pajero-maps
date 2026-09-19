@@ -32,3 +32,10 @@ For any input spool, `ALLDATA.KWI` bytes, `manifest.json` `sha256`/`total_size`/
 - Each range is self-contained: it needs the level's `TileGrid`, thresholds/kind budgets (already pure data) and its own cell content.
 - A range returns its frame index plus additive counters: `trim_stats` totals, `dropped`, per-kind `cells`, `halo_names`. The parent sums counters and orders the index by canonical key; no float or order-dependent reduction is allowed in the merge.
 - A worker failure aborts the build with the failing range's `(level, cell range)` in the error; partial output is deleted.
+
+## 5. C cell kernel (follow-on)
+
+- `parser/kiwiw/_cenc.c` encodes a whole cell's Map Frame straight from the raw spool record (`kw_encode_cell`). It answers only the "fits and no kind breach" case; anything else (oversize, kind breach, any bail) returns -1 and Python runs `divide.plan_divisions` on that one cell, so the Python path stays the byte-identity oracle.
+- `kw_bg_shape` also replaces the numpy background encoder on the divided-cell retile path, which dominated the L0 time.
+- Float parity: `-ffp-contract=off`, `rint` for half-even rounding, identical operation order. Built on demand by `kiwiw/cenc.py` into an ignored `_cenc.so`; `KIWIW_NO_C=1` or no compiler falls back to Python.
+- Full build, `-j 12`: 263 s -> ~90 s (encode ~58 s, serial assembly ~31 s), SHA-256 `51c254ac…` unchanged, peak RSS ~3.2 GB. Perth fixture SHA unchanged at `-j 1`/`-j 4`, with and without C.

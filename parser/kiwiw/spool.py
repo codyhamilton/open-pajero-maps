@@ -494,6 +494,18 @@ class SpoolReader:
         for i in range(start, stop):
             yield ixs[i], iys[i], decode_columns(self._read_cell(level, offs[i], lens[i]))
 
+    def iter_cell_raw(self, level: int, start: int = 0, stop: Optional[int] = None
+                      ) -> Iterator[tuple[int, int, bytes]]:
+        """Like `iter_cell_columns` but yields the undecoded record bytes."""
+        idx = self._load_idx(level)
+        if idx is None:
+            return
+        stop = idx.n if stop is None else min(stop, idx.n)
+        ixs, iys = idx.ix.tolist(), idx.iy.tolist()
+        offs, lens = idx.offset.tolist(), idx.length.tolist()
+        for i in range(start, stop):
+            yield ixs[i], iys[i], self._read_cell(level, offs[i], lens[i])
+
     def iter_cells(self, level: int, start: int = 0, stop: Optional[int] = None
                    ) -> Iterator[tuple[int, int, dict]]:
         """Yield `(ix, iy, content)` for cells `start..stop` of the level's

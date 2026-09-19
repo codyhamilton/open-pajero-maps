@@ -21,6 +21,7 @@ from collections import defaultdict
 
 import numpy as np
 
+from . import cenc as _cenc
 from .bitutils import geo_secs_bytes
 from .coordconv import encode_region_coord, latlon_to_xy, COORD_RANGE
 from .model import BackgroundShape, BoundingBox, NameRecord, RoadLink
@@ -230,6 +231,9 @@ def _bg_fast(shape: BackgroundShape, bounds: BoundingBox):
     quantizing accumulation runs as a tight integer loop over the same
     already-clamped pixels, exactly as the scalar encoder does.
     """
+    c_out = _cenc.bg_shape_bytes(shape, bounds)
+    if c_out is not None:
+        return c_out
     arr = np.asarray(shape.coords, dtype=np.float64)
     if arr.ndim != 2 or len(arr) < 2:
         return None
