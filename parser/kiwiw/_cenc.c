@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define COORD_RANGE 32768.0
 #define COORD_MAX 32767
@@ -589,4 +590,53 @@ int64_t kw_encode_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t i
         cur += name_n;
     }
     return cur;
+}
+
+
+/*
+ * Assembly helpers (plan 02 step 3): GIL-free bulk file copy.
+ *
+ * kw_copy_frames: for i in [0, n): pread len[i] bytes at src_off[i] from
+ * src_fds[fid[i]], zero-pad to pad[i], pwrite at dst_off[i] into out_fd.
+ * Returns 0, or -(i+1) for the first failing item.
+ */
+static int full_pread(int fd, uint8_t *b, size_t n, uint64_t off) {
+    while (n) {
+        ssize_t r = pread(fd, b, n, (off_t)off);
+        if (r <= 0) return -1;
+        b += r; n -= (size_t)r; off += (uint64_t)r;
+    }
+    return 0;
+}
+
+static int full_pwrite(int fd, const uint8_t *b, size_t n, uint64_t off) {
+    while (n) {
+        ssize_t r = pwrite(fd, b, n, (off_t)off);
+        if (r <= 0) return -1;
+        b += r; n -= (size_t)r; off += (uint64_t)r;
+    }
+    return 0;
+}
+
+int64_t kw_copy_frames(int out_fd, int64_t n, const int *src_fds, const uint16_t *fid,
+                       const uint64_t *src_off, const uint64_t *dst_off,
+                       const uint32_t *len, const uint32_t *pad, int64_t bufcap) {
+    uint8_t *buf = (uint8_t *)malloc((size_t)bufcap);
+    if (!buf) return -1;
+    for (int64_t i = 0; i < n; i++) {
+        if ((int64_t)pad[i] > bufcap || pad[i] < len[i]) { free(buf); return -(i + 1); }
+        if (full_pread(src_fds[fid[i]], buf, len[i], src_off[i]) ||
+            (memset(buf + len[i], 0, pad[i] - len[i]), 0) ||
+            full_pwrite(out_fd, buf, pad[i], dst_off[i])) { free(buf); return -(i + 1); }
+    }
+    free(buf);
+    return 0;
+}
+
+/* kw_write_rows: pwrite n fixed-size rows (src + i*stride, len bytes) at dst_off[i]. */
+int64_t kw_write_rows(int out_fd, int64_t n, const uint64_t *dst_off, const uint8_t *src,
+                      int64_t stride, int64_t len) {
+    for (int64_t i = 0; i < n; i++)
+        if (full_pwrite(out_fd, src + i * stride, (size_t)len, dst_off[i])) return -(i + 1);
+    return 0;
 }

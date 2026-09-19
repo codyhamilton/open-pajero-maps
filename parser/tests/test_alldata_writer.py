@@ -192,3 +192,59 @@ def test_streaming_matches_bytes_path(tmp_path):
     assert out.read_bytes() == ref
     assert res.size == len(ref)
     assert res.sha256 == hashlib.sha256(ref).hexdigest()
+
+
+# ---------------------------------------------------------------------------
+# Indexed (FrameTable) assembly path == object path, byte for byte
+# (plan 02 step 3), including divided parents in shared blocks.
+# ---------------------------------------------------------------------------
+
+def _table_from(frames, tmp_path, name):
+    """frames: [(ix, iy, ptype, sx, sy, bytes)] -> FrameTable over one spill file."""
+    import numpy as np
+
+    from kiwiw import frame_table as ft
+    sp = ft.ChunkSpill(str(tmp_path))
+    rec = np.zeros(len(frames), ft.FRAME_DTYPE)
+    for i, (ix, iy, pt, sx, sy, fb) in enumerate(frames):
+        rec[i] = (ix, iy, pt, sx, sy, 0, len(fb), sp.append(fb))
+    sp.close()
+    return ft.merge_tables([(sp.path, rec)])
+
+
+def test_indexed_matches_object_path(tmp_path):
+    import hashlib
+    import random
+
+    import pytest
+    from kiwiw import cenc
+    if cenc.lib() is None:
+        pytest.skip("C helpers unavailable")
+    rng = random.Random(7)
+    grid = _grid()
+    frame = lambda: bytes(rng.randrange(256) for _ in range(rng.choice([0, 1, 31, 32, 33, 700, 2100])))
+    plain = [(ix, iy, 0, 0, 0, frame()) for ix, iy in
+             [(512, 0), (513, 0), (520, 10), (600, 40), (514, 1)]]
+    divided = []
+    for (ix, iy, pt) in [(515, 0, 1), (516, 0, 2), (601, 40, 1)]:  # 515/516 share a block with 512..
+        n = 4 if pt == 1 else 16
+        side = 2 if pt == 1 else 4
+        for k in range(n):
+            if rng.random() < 0.8:
+                divided.append((ix, iy, pt, k % side, k // side, frame()))
+    rows = plain + divided
+    rng.shuffle(rows)  # stream order must not matter except within a parent
+    rows.sort(key=lambda r: (r[1], r[0]))  # canonical (iy, ix); stable keeps sub order
+    ref_levels = {12: _level_build(12, [(0, 0)]),
+                  0: aw.LevelBuild(level=0, parcels=[(a, b, f) for a, b, pt, _x, _y, f in rows if pt == 0])}
+    ref_out = tmp_path / "ref.kwi"
+    ref = aw.build_alldata_kwi(ref_levels, grid, disk_title="T", out_path=str(ref_out),
+                               divided={0: [r for r in rows if r[2] != 0]}, return_bytes=False)
+    lv12 = _table_from([(0, 0, 0, 0, 0, _make_frame(12, 0, 0))], tmp_path, "12")
+    lv0 = _table_from(rows, tmp_path, "0")
+    got_out = tmp_path / "idx.kwi"
+    got = aw.build_alldata_kwi({12: aw.LevelBuild(level=12, table=lv12),
+                                0: aw.LevelBuild(level=0, table=lv0)},
+                               grid, disk_title="T", out_path=str(got_out), return_bytes=False)
+    assert got_out.read_bytes() == ref_out.read_bytes()
+    assert (got.size, got.sha256) == (ref.size, ref.sha256)

@@ -31,13 +31,17 @@ import os
 import struct
 import sys
 import time
+from array import array
 from pathlib import Path
+
+import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from kiwiw import alldata_writer as aw
 from kiwiw import cenc
 from kiwiw import divide
+from kiwiw import frame_table as ft
 from kiwiw.spill import FrameSpill
 from kiwiw import synth
 from kiwiw.grid import ReferenceGrid
@@ -352,7 +356,9 @@ def _plan_chunks(reader: SpoolReader, level: int, fixture, mask, n_chunks: int
     w = np.zeros(nrows, dtype=np.float64)
     if len(iy):
         rows = iy.astype(np.int64) - r_lo
-        w += np.bincount(rows, weights=length.astype(np.float64), minlength=nrows)
+        ln = length.astype(np.float64)
+        # big records are the ones that divide/retile (superlinear cost)
+        w += np.bincount(rows, weights=ln + ln * ln / 65536.0, minlength=nrows)
         if rect is not None and rect[0] <= rect[1]:
             pop = np.bincount(rows, minlength=nrows)
             in_rect = np.zeros(nrows, dtype=bool)
@@ -382,6 +388,98 @@ def _chunk_worker(job):
     frames = list(_level_frames(level, reader, fixture, threshold_bytes, mask,
                                 kind_limits, stats, name_halo, rows))
     return frames, stats
+
+
+_SPILL: dict = {}
+
+
+def _encode_chunk(job):
+    """Encode one row range straight into this process's spill file.
+
+    Returns `(spill_path, rec, stats, digest_lines)`: `rec` is a
+    `frame_table.FRAME_DTYPE` array (one row per frame, stream order), so no
+    frame bytes or per-frame objects are pickled back to the parent."""
+    (spool_dir, level, fixture, threshold_bytes, mask, kind_limits, name_halo, rows,
+     spill_dir, want_digest) = job
+    reader = _WORKER.get(spool_dir)
+    if reader is None:
+        reader = _WORKER[spool_dir] = SpoolReader(spool_dir)
+    sp = _SPILL.get(spill_dir)
+    if sp is None or sp[0] != os.getpid():
+        sp = _SPILL[spill_dir] = (os.getpid(), ft.ChunkSpill(spill_dir))
+    spill = sp[1]
+    stats: dict = {}
+    ix_a, iy_a, pt_a, sx_a, sy_a, ln_a = (array("i"), array("i"), array("B"),
+                                          array("B"), array("B"), array("I"))
+    parts: list[bytes] = []
+    lines: list[str] | None = [] if want_digest else None
+    for ix, iy, pt, sx, sy, fb in _level_frames(level, reader, fixture, threshold_bytes, mask,
+                                                kind_limits, stats, name_halo, rows):
+        ix_a.append(ix); iy_a.append(iy); pt_a.append(pt)
+        sx_a.append(sx); sy_a.append(sy); ln_a.append(len(fb))
+        parts.append(fb)
+        if lines is not None:
+            lines.append(f"{level} {ix} {iy} {pt} {sx} {sy} {len(fb)} "
+                         f"{hashlib.sha256(fb).hexdigest()}\n")
+    rec = np.zeros(len(ln_a), ft.FRAME_DTYPE)
+    rec["ix"], rec["iy"], rec["pt"] = ix_a, iy_a, pt_a
+    rec["sx"], rec["sy"], rec["len"] = sx_a, sy_a, ln_a
+    base = spill.append(b"".join(parts))
+    rec["off"] = base + np.cumsum(rec["len"], dtype=np.uint64) - rec["len"]
+    return spill.path, rec, stats, lines
+
+
+def _encode_level_indexed(level: int, reader: SpoolReader, fixture, threshold_bytes: int,
+                          mask, kind_limits, trim_stats: dict, name_halo: bool,
+                          spill_dir: str, digest_fh=None, pool=None, jobs: int = 1):
+    """`_encode_level` for the indexed assembly path: returns
+    `(FrameTable, n_parcels, total_frame_bytes, n_divided_parents, max_frame)`.
+    Chunks are submitted heaviest-first (LPT scheduling) and consumed in row
+    order, so output and counters equal the serial run for any `jobs`."""
+    if pool is not None and jobs > 1:
+        chunks = _plan_chunks(reader, level, fixture, mask, jobs * 64)
+    else:
+        chunks = [(None, None)]
+
+    def _job(rows):
+        return (str(reader.spool_dir), level, fixture, threshold_bytes, mask, kind_limits,
+                name_halo, rows, spill_dir, digest_fh is not None)
+
+    if len(chunks) > 1:
+        weights = _chunk_weights(reader, level, chunks)
+        futs = {i: None for i in range(len(chunks))}
+        for i in sorted(range(len(chunks)), key=lambda i: -weights[i]):
+            futs[i] = pool.apply_async(_encode_chunk, (_job(chunks[i]),))
+        results = (futs[i].get() for i in range(len(chunks)))
+    else:
+        results = iter([_encode_chunk(_job(chunks[0]))])
+
+    tables = []
+    for path, rec, st, lines in results:
+        tables.append((path, rec))
+        if digest_fh is not None:
+            digest_fh.writelines(lines)
+        _merge_stats(trim_stats, st)
+    table = ft.merge_tables(tables)
+    rec = table.rec
+    n_parcels = len(rec)
+    n_bytes = int(rec["len"].sum(dtype=np.int64))
+    div = rec[rec["pt"] != 0]
+    n_div_parents = len(np.unique((div["ix"].astype(np.int64) << 32) | div["iy"].astype(np.int64))) if len(div) else 0
+    max_frame = int(rec["len"].max()) if n_parcels else 0
+    return table, n_parcels, n_bytes, n_div_parents, max_frame
+
+
+def _chunk_weights(reader: SpoolReader, level: int, chunks) -> list[float]:
+    """Spool-record weight of each row chunk (ordering hint only)."""
+    iy, length = reader.cell_weights(level)
+    out = []
+    for lo, hi in chunks:
+        a = 0 if lo is None else int(np.searchsorted(iy, lo, "left"))
+        b = len(iy) if hi is None else int(np.searchsorted(iy, hi, "left"))
+        ln = length[a:b].astype(np.float64)
+        out.append(float((ln + ln * ln / 65536.0).sum()) + 1.0)
+    return out
 
 
 def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
@@ -488,7 +586,12 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     # (level, ix, iy, parcel_type, sub_ix, sub_iy) frame. Regenerable, never committed.
     digest_fh = open(frame_digest, "w") if frame_digest else None
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    spill = FrameSpill(os.path.dirname(out_path) or ".")
+    # Indexed path (workers spill frames to their own files, vectorised assembly) needs
+    # the C helpers; without them fall back to the object path (the byte-identity oracle).
+    indexed = cenc.lib() is not None
+    spill_dir = os.path.dirname(out_path) or "."
+    spill = None if indexed else FrameSpill(spill_dir)
+    table_files: list[str] = []
 
     pool = None
     if workers > 1:
@@ -511,11 +614,18 @@ def run(spool_dir: str, out_path: str, levels: list[int],
             continue
         threshold_bytes = thresholds.get(level, U16_MAPFRAME_BYTE_CEILING)
         trim_stats: dict = {}
-        parcels, divided_parcels, n_parcels, n_bytes = _encode_level(
-            level, grid, reader, fixture, threshold_bytes, mask=mask,
-            kind_limits=kind_budgets.get(level) or None, trim_stats=trim_stats,
-            name_halo=(level in NAME_HALO_LEVELS), spill=spill, digest_fh=digest_fh,
-            pool=pool, jobs=workers)
+        if indexed:
+            table, n_parcels, n_bytes, n_div_parents, max_frame = _encode_level_indexed(
+                level, reader, fixture, threshold_bytes, mask, kind_budgets.get(level) or None,
+                trim_stats, (level in NAME_HALO_LEVELS), spill_dir, digest_fh=digest_fh,
+                pool=pool, jobs=workers)
+            table_files += table.files
+        else:
+            parcels, divided_parcels, n_parcels, n_bytes = _encode_level(
+                level, grid, reader, fixture, threshold_bytes, mask=mask,
+                kind_limits=kind_budgets.get(level) or None, trim_stats=trim_stats,
+                name_halo=(level in NAME_HALO_LEVELS), spill=spill, digest_fh=digest_fh,
+                pool=pool, jobs=workers)
         if trim_stats.get("halo_names"):
             print(f"level {level}: name halo added {trim_stats['halo_names']:,} "
                   f"neighbouring road-name records to divided sub-cells (brief 32)",
@@ -533,14 +643,18 @@ def run(spool_dir: str, out_path: str, levels: list[int],
                 print(f"level {level}: TRIM {k}: dropped {n:,}/{total.get(k, 0):,} "
                       f"({pct:.3f}%) in {trim_stats.get('cells', {}).get(k, 0)} sub-cells"
                       + ("  ** >1% BLOCKER **" if pct > 1.0 else ""), flush=True)
-        level_builds[level] = aw.LevelBuild(level=level, parcels=parcels)
-        if divided_parcels:
-            divided_builds[level] = divided_parcels
-        n_divided_parents = len({(ix, iy) for ix, iy, *_ in divided_parcels})
-        max_frame = max(
-            [len(fb) for _ix, _iy, fb in parcels]
-            + [len(fb) for *_rest, fb in divided_parcels],
-            default=0)
+        if indexed:
+            level_builds[level] = aw.LevelBuild(level=level, table=table)
+            n_divided_parents = n_div_parents
+        else:
+            level_builds[level] = aw.LevelBuild(level=level, parcels=parcels)
+            if divided_parcels:
+                divided_builds[level] = divided_parcels
+            n_divided_parents = len({(ix, iy) for ix, iy, *_ in divided_parcels})
+            max_frame = max(
+                [len(fb) for _ix, _iy, fb in parcels]
+                + [len(fb) for *_rest, fb in divided_parcels],
+                default=0)
         manifest_levels[str(level)] = {
             "parcels": n_parcels, "bytes": n_bytes,
             "divided_parents": n_divided_parents,
@@ -564,7 +678,13 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     assembled = aw.build_alldata_kwi(level_builds, grid, disk_title=disk_title,
                                       out_path=out_path, divided=divided_builds,
                                       return_bytes=False)
-    spill.close()
+    if spill is not None:
+        spill.close()
+    for f in set(table_files):
+        try:
+            os.unlink(f)
+        except OSError:
+            pass
     print(f"wrote {out_path} ({assembled.size:,} bytes) "
           f"[assemble {time.monotonic() - t_asm:.1f}s]", flush=True)
 

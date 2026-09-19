@@ -65,6 +65,14 @@ def _load_lib():
         lib.kw_bg_shape.argtypes = [
             ctypes.c_void_p, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
             ctypes.c_void_p, ctypes.c_void_p]
+        lib.kw_copy_frames.restype = ctypes.c_int64
+        lib.kw_copy_frames.argtypes = [
+            ctypes.c_int, ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int64]
+        lib.kw_write_rows.restype = ctypes.c_int64
+        lib.kw_write_rows.argtypes = [
+            ctypes.c_int, ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_int64, ctypes.c_int64]
         _lib = lib
     except OSError:
         _lib = None
@@ -122,3 +130,8 @@ def bg_shape_bytes(shape, bounds) -> bytes | None:
     n = _bg_fn(flat.buffer_info()[0], len(coords), shape.mult_const, shape.type_code,
                flags, b4.buffer_info()[0], _bg_out_addr)
     return None if n < 0 else ctypes.string_at(_bg_out_addr, n)
+
+
+def lib():
+    """The loaded C library (or None) -- for the assembly copy helpers."""
+    return _load_lib()
