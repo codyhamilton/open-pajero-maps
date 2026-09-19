@@ -1446,3 +1446,13 @@ changed. Tables and the consolidated proposed-deviation list: PLAN.md "Build rec
 verdict: no WP1-scope fix remains; complete pending user acceptance of the 9 proposed deviations (L0 name_count, L12
 parcel_count, L0 bg / L8 name / L8 bg / L8 road trims, blockset coverage, brief 27 container tolerance, Adelaide
 oracle amendment).
+
+## Unit 34 kickoff -- u16 ceiling as only size limit (2026-09-19)
+
+Code commit 7917b86 (branch worktree-brief-34-ceiling-only): `_load_level_thresholds` / `_load_level_kind_budgets`
+yield 131,070 for every level/kind; envelope sub-frame rows pass iff <= 131,070 (R max context only). divide.py needed
+no change (driven by the passed limits). pytest 281 passed. Prior report copied to `/tmp/wp1-unit34-prior-report.json`;
+old ALLDATA.KWI sha256 `76fca44c972081b1c4bf018165b4a73e219b097f93580e0e9d3c5d766e1e318a`. Assembly started 10:14
+AEST via `/tmp/wp1-unit34-run.sh` (= `setsid nohup /usr/bin/time -v .venv-rp/bin/python parser/build_alldata.py` in the
+worktree; `output` symlinks to the main checkout's), PID 3595454 (time wrapper 3595453). Logs
+`/tmp/wp1-unit34-logs/build.out.log`, `build.time.log`. Expected ~11-17 min. Verification: 34b.
