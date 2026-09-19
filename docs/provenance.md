@@ -60,11 +60,13 @@ same commit.
 
 ## `.venv-rp/`
 
-- **What**: a local Python virtualenv with `osmium` installed, used to run
+- **What**: a local Python virtualenv with `osmium` and `numpy` installed, used to run
   OSM-correlation scripts (e.g. checking route-planning byte size against
   OSM junction counts/road-km) since the system Python is externally-managed
   and doesn't have `osmium` available.
-- **Source**: `python3 -m venv .venv-rp && .venv-rp/bin/pip install osmium`.
+- **Source**: `python3 -m venv .venv-rp && .venv-rp/bin/pip install osmium numpy`
+  (numpy 2.5.3 at plan 02; a hard dependency of the assembly stage's vectorized
+  encoders / binary spool reader).
 - **Why not committed**: a local virtualenv, not project content.
 - **Reproduce**: the command above. Not referenced by any committed script's
   default path — activate it manually when running OSM-correlation analysis.

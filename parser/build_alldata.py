@@ -275,7 +275,8 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
 
 
 def run(spool_dir: str, out_path: str, levels: list[int],
-        fixture: str | None, disk_title: str, fill_mask: bool = False) -> int:
+        fixture: str | None, disk_title: str, fill_mask: bool = False,
+        frame_digest: str | None = None) -> int:
     if not os.path.isdir(spool_dir):
         print(f"ERROR: spool directory not found: {spool_dir}", file=sys.stderr)
         return 1
@@ -290,6 +291,9 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     halo_names: dict[str, int] = {}
 
     spool_stats = {lvl: reader.stats(lvl) for lvl in levels}
+    # Optional per-frame digest listing (plan 02): localizes a byte mismatch to a
+    # (level, ix, iy, parcel_type, sub_ix, sub_iy) frame. Regenerable, never committed.
+    digest_fh = open(frame_digest, "w") if frame_digest else None
 
     level_builds: dict[int, aw.LevelBuild] = {}
     divided_builds: dict[int, list[tuple[int, int, int, int, int, bytes]]] = {}
@@ -325,6 +329,13 @@ def run(spool_dir: str, out_path: str, levels: list[int],
                       f"({pct:.3f}%) in {trim_stats.get('cells', {}).get(k, 0)} sub-cells"
                       + ("  ** >1% BLOCKER **" if pct > 1.0 else ""), flush=True)
         level_builds[level] = aw.LevelBuild(level=level, parcels=parcels)
+        if digest_fh is not None:
+            for ix, iy, fb in parcels:
+                digest_fh.write(f"{level} {ix} {iy} 0 0 0 {len(fb)} "
+                                f"{hashlib.sha256(fb).hexdigest()}\n")
+            for ix, iy, pt, sx, sy, fb in divided_parcels:
+                digest_fh.write(f"{level} {ix} {iy} {pt} {sx} {sy} {len(fb)} "
+                                f"{hashlib.sha256(fb).hexdigest()}\n")
         if divided_parcels:
             divided_builds[level] = divided_parcels
         n_divided_parents = len({(ix, iy) for ix, iy, *_ in divided_parcels})
@@ -342,6 +353,8 @@ def run(spool_dir: str, out_path: str, levels: list[int],
               f"{n_bytes:,} frame bytes, max frame {max_frame:,} bytes "
               f"(threshold {threshold_bytes:,})", flush=True)
 
+    if digest_fh is not None:
+        digest_fh.close()
     print("assembling ALLDATA.KWI ...", flush=True)
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     data = aw.build_alldata_kwi(level_builds, grid, disk_title=disk_title,
@@ -387,11 +400,15 @@ def main() -> int:
     ap.add_argument("--no-fill-mask", action="store_true",
                      help="Do not emit empty frames for R's coverage-rectangle cells "
                           "the spool lacks (brief 26c; default: fill)")
+    ap.add_argument("--frame-digest", default=None, metavar="PATH",
+                     help="Write a per-frame sha256 listing (level ix iy parcel_type "
+                          "sub_ix sub_iy len sha256) for byte-diff localization")
     args = ap.parse_args()
 
     return run(spool_dir=args.spool, out_path=args.out, levels=args.levels,
                fixture=args.fixture, disk_title=args.disk_title,
-               fill_mask=not args.no_fill_mask)
+               fill_mask=not args.no_fill_mask,
+               frame_digest=args.frame_digest)
 
 
 if __name__ == "__main__":
