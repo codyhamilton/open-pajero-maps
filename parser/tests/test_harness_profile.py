@@ -227,6 +227,51 @@ def test_envelope_exempts_level0_link_count(tmp_path):
     assert "ratio" in link_detail
 
 
+def _subframe_ctx(tmp_path, g_road_max, ref_road_max):
+    path = _write_fixture(tmp_path)
+    g_profile = profile_mod.build_profile(path)
+    ref_profile = copy.deepcopy(g_profile)
+    ref_profile["levels"]["0"]["frame_kind_max_bytes"]["road"] = ref_road_max
+    ctx = _ctx(path, config={"layers_present": ["map"],
+                             "envelopes": {"count_ratio": [0.5, 2.0]}})
+    ctx._profile_cache["map"] = ref_profile
+    real = profile_mod.build_profile
+    return ctx, real, g_road_max
+
+
+def test_envelope_subframe_max_passes_above_r_max_below_ceiling(tmp_path, monkeypatch):
+    """Brief 34: a kind max above R's max but under 131,070 passes; R's max is context."""
+    ctx, real, g_max = _subframe_ctx(tmp_path, 100000, 10)
+    orig = envelope_checks.generated_profile
+
+    def _gp(g):
+        p = orig(g)
+        p["levels"]["0"]["frame_kind_max_bytes"]["road"] = g_max
+        p["levels"]["0"]["mapframe_size"]["max"] = min(
+            p["levels"]["0"]["mapframe_size"]["max"],
+            ctx._profile_cache["map"]["levels"]["0"]["mapframe_size"]["max"])
+        return p
+    monkeypatch.setattr(envelope_checks, "generated_profile", _gp)
+    result = envelope_checks._run_envelope(ctx)
+    assert not any("sub-frame" in f for f in result.details.get("failures", [])), result.message
+    row = result.details["counts"]["0"]["road_subframe_max"]
+    assert row["generated"] == 100000 and row["reference"] == 10
+
+
+def test_envelope_subframe_max_fails_above_ceiling(tmp_path, monkeypatch):
+    ctx, _, _ = _subframe_ctx(tmp_path, 131071, 200000)
+    orig = envelope_checks.generated_profile
+
+    def _gp(g):
+        p = orig(g)
+        p["levels"]["0"]["frame_kind_max_bytes"]["road"] = 131071
+        return p
+    monkeypatch.setattr(envelope_checks, "generated_profile", _gp)
+    result = envelope_checks._run_envelope(ctx)
+    assert result.status == "FAIL"
+    assert any("road sub-frame" in f for f in result.message.split("\n") + result.details.get("failures", []) + [result.message])
+
+
 # ---------------------------------------------------------------------
 # mfde: FAIL when the profile's entry count doesn't match G's
 # ---------------------------------------------------------------------

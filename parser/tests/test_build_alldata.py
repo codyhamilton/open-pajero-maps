@@ -99,11 +99,15 @@ def test_missing_spool_exits_nonzero(tmp_path):
     assert not out_path.exists()
 
 
-def test_kind_budgets_from_profile_omit_absent_kinds():
+def test_budgets_and_thresholds_are_u16_ceiling_everywhere():
+    c = build_alldata.U16_MAPFRAME_BYTE_CEILING
+    assert c == 131070
     b = build_alldata._load_level_kind_budgets()
-    assert b[0] == {"road": 106114, "background": 25908, "name": 24568}
-    assert "road" not in b[10] and "road" not in b[12]
-    assert b[10]["background"] == 1802
+    t = build_alldata._load_level_thresholds()
+    assert set(b) == set(t) and {0, 8, 12} <= set(b)
+    for lv in b:
+        assert b[lv] == {"road": c, "background": c, "name": c}
+        assert t[lv] == c
 
 
 def test_measure_one_sizes_match_frame():

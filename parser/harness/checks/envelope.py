@@ -25,6 +25,7 @@ _COUNT_FIELDS = [
     ("name_count", ("name", "record_count")),
 ]
 
+U16_FRAME_CEILING = 131070  # Map Frame header u16 word-count limit (brief 34)
 _SUBFRAME_MAX_FIELDS = ["road", "background", "name"]
 
 
@@ -102,11 +103,13 @@ def _run_envelope(ctx) -> CheckResult:
         for kind in _SUBFRAME_MAX_FIELDS:
             g_v = g_kind_max.get(kind, 0)
             ref_v = ref_kind_max.get(kind, 0)
-            level_report[f"{kind}_subframe_max"] = {"generated": g_v, "reference": ref_v}
-            if g_v > ref_v:
+            # Brief 34: pass iff <= the u16 frame ceiling; R's max is context only.
+            level_report[f"{kind}_subframe_max"] = {
+                "generated": g_v, "reference": ref_v, "limit": U16_FRAME_CEILING}
+            if g_v > U16_FRAME_CEILING:
                 fails.append(
                     f"level {level_str}: {kind} sub-frame max size generated={g_v} exceeds "
-                    f"reference max={ref_v}")
+                    f"the u16 frame ceiling {U16_FRAME_CEILING} (reference max={ref_v}, context only)")
 
         count_report[level_str] = level_report
 

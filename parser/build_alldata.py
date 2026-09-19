@@ -74,35 +74,22 @@ _PROFILE_MAP_PATH = (
 
 
 def _load_level_kind_budgets() -> dict[int, dict[str, int]]:
-    """Per-level `{road, background, name}` sub-frame byte budgets = R's
-    `frame_kind_max_bytes` (brief 29). A kind whose R max is 0/absent
-    (L10/L12 road) is left out -- an absent kind is not budgeted."""
+    """Per-level `{road, background, name}` sub-frame byte budgets. Brief 34:
+    the u16 frame ceiling is the only known hard limit, so every kind at every
+    level is budgeted at `U16_MAPFRAME_BYTE_CEILING`; R's per-kind maxima are
+    observations of R, not limits."""
     with open(_PROFILE_MAP_PATH) as fh:
         profile = json.load(fh)
-    out: dict[int, dict[str, int]] = {}
-    for level_str, level_data in profile.get("levels", {}).items():
-        km = level_data.get("frame_kind_max_bytes", {})
-        out[int(level_str)] = {k: km[k] for k in ("road", "background", "name")
-                               if km.get(k)}
-    return out
+    return {int(lv): {k: U16_MAPFRAME_BYTE_CEILING for k in ("road", "background", "name")}
+            for lv in profile.get("levels", {})}
 
 
 def _load_level_thresholds() -> dict[int, int]:
-    """Per-level `plan_divisions()` threshold: `min(profile mapframe_size.
-    max, U16_MAPFRAME_BYTE_CEILING)`. Falls back to the u16 ceiling alone
-    for any level missing from the checked-in profile (defensive; every
-    level `DEFAULT_LEVELS` names is present in the checked-in profile as
-    of this unit)."""
+    """Per-level `plan_divisions()` threshold. Brief 34: the u16 ceiling for
+    every level (R's `mapframe_size.max` is an observation, not a limit)."""
     with open(_PROFILE_MAP_PATH) as fh:
         profile = json.load(fh)
-    levels = profile.get("levels", {})
-    out: dict[int, int] = {}
-    for level_str, level_data in levels.items():
-        ref_max = level_data.get("mapframe_size", {}).get("max")
-        out[int(level_str)] = (
-            min(ref_max, U16_MAPFRAME_BYTE_CEILING) if ref_max else U16_MAPFRAME_BYTE_CEILING
-        )
-    return out
+    return {int(lv): U16_MAPFRAME_BYTE_CEILING for lv in profile.get("levels", {})}
 
 # This unit populates only the main map layer; route-planning/index-data
 # flags in the copy-through Volume Header (see alldata_writer.py) describe
