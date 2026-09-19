@@ -132,3 +132,19 @@ def test_bg_shape_matches_scalar():
             got = cenc.bg_shape_bytes(s, b)
             if got is not None:
                 assert got == synth.encode_background_shape_bytes_scalar(s, b), (k, mult)
+
+
+def test_measure_content_matches_python(no_c_bg, monkeypatch):
+    """The C probe (used on the divide path) equals the Python encoders, incl. sizes."""
+    g = TileGrid.from_reference(0)
+    for n, (nr, nb, nn) in enumerate([(0, 0, 0), (3, 2, 4), (40, 8, 9)]):
+        ix, iy = 5 + n, 9 + n
+        b = parcel_bounds(ix, iy, g)
+        c = _content(random.Random(n), b, nr, nb, nn)
+        got = cenc.measure_content(0, ix, iy, b, c)
+        monkeypatch.setattr(cenc, "measure_content", lambda *a: None)
+        want = B._measure_one(0, ix, iy, b, c)
+        monkeypatch.undo()
+        monkeypatch.setattr(cenc, "bg_shape_bytes", lambda *a: None)
+        if got is not None:  # non-ASCII names etc. legitimately decline
+            assert got == want

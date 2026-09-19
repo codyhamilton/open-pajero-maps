@@ -39,3 +39,11 @@ For any input spool, `ALLDATA.KWI` bytes, `manifest.json` `sha256`/`total_size`/
 - `kw_bg_shape` also replaces the numpy background encoder on the divided-cell retile path, which dominated the L0 time.
 - Float parity: `-ffp-contract=off`, `rint` for half-even rounding, identical operation order. Built on demand by `kiwiw/cenc.py` into an ignored `_cenc.so`; `KIWIW_NO_C=1` or no compiler falls back to Python.
 - Full build, `-j 12`: 263 s -> ~90 s (encode ~58 s, serial assembly ~31 s), SHA-256 `51c254ac…` unchanged, peak RSS ~3.2 GB. Perth fixture SHA unchanged at `-j 1`/`-j 4`, with and without C.
+
+## 6. Spill files, indexed assembly, C probe (plan 02 close-out)
+
+- **Spill**: encode workers pwrite frames to a per-process spill file (`ChunkSpill`) and return only a numpy `FrameTable` (ix, iy, type, sub, fid, len, off). Chunks are weighted `len + len²/65536`, submitted heaviest-first, consumed in row order (deterministic).
+- **Indexed assembly** (`frame_table.IndexedLayout`): one `lexsort` places every frame and block; fixed-size simple blocks are written vectorised (`kw_write_rows`), frames are copied by threads in C (`kw_copy_frames`); divided blocks are built in Python. The object path (`FrameSpill`/`FrameRef`) stays as the byte-identity oracle and the `KIWIW_NO_C=1` fallback.
+- **Divided cells**: `divide.plan_divisions` is unchanged (still the oracle for retile, trim, shrink, halo). Its probe (`build_alldata._measure_one`) now tries `cenc.measure_content` -> `kw_measure_cell` (sub-cell content serialised to a spool record, encoded in C with explicit bounds, sizes returned) and falls back to the Python encoders when the kernel declines (ceiling, unmodelled input). A full C port of retile/halo was rejected: the probes were ~80% of the cost, and keeping the object logic in Python keeps identity risk low.
+- **Result** (`-j 12`): 263 s -> ~90 s -> 46 s -> **32.5 s**, SHA-256 `51c254ac…` unchanged, peak RSS ~0.75 GB. Perth SHA `e275879f…` unchanged at `-j 1`/`-j 4` and `KIWIW_NO_C=1`. Remaining time is split between the Python retile and probe serialisation on ~533 divided parents.
+- No new untracked files (spill files are temporary and deleted), so `docs/provenance.md` is unchanged.

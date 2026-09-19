@@ -65,6 +65,10 @@ def _load_lib():
         lib.kw_bg_shape.argtypes = [
             ctypes.c_void_p, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
             ctypes.c_void_p, ctypes.c_void_p]
+        lib.kw_measure_cell.restype = ctypes.c_int64
+        lib.kw_measure_cell.argtypes = [
+            ctypes.c_char_p, ctypes.c_int64, ctypes.c_int, ctypes.c_int64, ctypes.c_int64,
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
         lib.kw_copy_frames.restype = ctypes.c_int64
         lib.kw_copy_frames.argtypes = [
             ctypes.c_int, ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
@@ -135,3 +139,36 @@ def bg_shape_bytes(shape, bounds) -> bytes | None:
 def lib():
     """The loaded C library (or None) -- for the assembly copy helpers."""
     return _load_lib()
+
+
+_m_out = ctypes.create_string_buffer(_OUT_CAP)
+_m_addr = ctypes.addressof(_m_out)
+_m_sizes = (ctypes.c_int64 * 3)()
+_m_fn = None
+
+
+def measure_content(level: int, ix: int, iy: int, bounds, content: dict):
+    """C probe of one (sub-)cell content dict: `(frame, {road,background,name})`
+    exactly as `build_alldata._measure_one`, or None when the kernel declines
+    (over the ceiling, unmodelled input) -- the caller then runs the Python path."""
+    global _m_fn
+    if _m_fn is None:
+        lib = _load_lib()
+        _m_fn = lib.kw_measure_cell if lib is not None else False
+    if _m_fn is False:
+        return None
+    from .spool import content_to_columns, encode_columns
+    try:
+        raw = encode_columns(content_to_columns(content))
+    except (AttributeError, TypeError, ValueError, UnicodeError):
+        return None
+    b4 = (ctypes.c_double * 4)(bounds.lat_lo, bounds.lat_hi, bounds.lon_lo, bounds.lon_hi)
+    n = _m_fn(raw, len(raw), level, ix, iy, ctypes.addressof(b4), _m_addr_sizes(), _m_addr)
+    if n < 0:
+        return None
+    return (ctypes.string_at(_m_addr, n),
+            {"road": _m_sizes[0], "background": _m_sizes[1], "name": _m_sizes[2]})
+
+
+def _m_addr_sizes() -> int:
+    return ctypes.addressof(_m_sizes)

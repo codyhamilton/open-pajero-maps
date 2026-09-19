@@ -519,9 +519,10 @@ static int geo3(double deg, uint8_t *o) {
  * lim  = {road, background, name} per-kind byte budgets (INT64_MAX = none)
  * Returns frame length written to out (capacity >= SUB_CAP), or -1.
  */
-int64_t kw_encode_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
+static int64_t encode_common(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
                        int64_t iy, const double *grid, int64_t threshold,
-                       const int64_t *lim, uint8_t *out) {
+                       const int64_t *lim, uint8_t *out, int64_t *sizes_out,
+                       const double *xb) {
     Rec r;
     static const uint8_t empty_hdr[72] = {0};
     if (rec == NULL || rec_len == 0) {
@@ -535,7 +536,8 @@ int64_t kw_encode_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t i
     }
     Bounds bd;
     double b4[4];
-    kw_bounds(ix, iy, grid[0], grid[1], grid[2], grid[3], b4);
+    if (grid) kw_bounds(ix, iy, grid[0], grid[1], grid[2], grid[3], b4);
+    else memcpy(b4, xb, sizeof b4);
     bd.lat_lo = b4[0]; bd.lat_hi = b4[1]; bd.lon_lo = b4[2]; bd.lon_hi = b4[3];
 
     uint8_t *road = g_sub, *bg = g_sub + SUB_CAP, *nm = g_sub + 2 * SUB_CAP;
@@ -551,13 +553,14 @@ int64_t kw_encode_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t i
     if (name_n < 0) return -1;
 
     if (road_n > MAX_FRAME || bg_n > MAX_FRAME || name_n > MAX_FRAME) return -1;
-    if (road_n > lim[0] || bg_n > lim[1] || name_n > lim[2]) return -1;
+    if (lim && (road_n > lim[0] || bg_n > lim[1] || name_n > lim[2])) return -1;
 
     int mfde_len = level == 12 ? 12 : 20;
     int dup = level >= 6 && name_n > 0;
     int64_t first = 36 + (int64_t)mfde_len * 6;
     int64_t total = first + road_n + bg_n + name_n + (dup ? name_n : 0);
-    if (total > threshold || total > MAX_FRAME) return -1;
+    if ((lim && total > threshold) || total > MAX_FRAME) return -1;
+    if (sizes_out) { sizes_out[0] = road_n; sizes_out[1] = bg_n; sizes_out[2] = name_n; }
 
     memset(out, 0, (size_t)total);
     put16(out, 0, total / 2);
@@ -592,6 +595,17 @@ int64_t kw_encode_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t i
     return cur;
 }
 
+int64_t kw_encode_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
+                       int64_t iy, const double *grid, int64_t threshold,
+                       const int64_t *lim, uint8_t *out) {
+    return encode_common(rec, rec_len, level, ix, iy, grid, threshold, lim, out, NULL, NULL);
+}
+
+/* Probe: frame + per-kind (even-padded) sizes, no fit/budget checks. -1 = ask Python. */
+int64_t kw_measure_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
+                        int64_t iy, const double *bounds4, int64_t *sizes, uint8_t *out) {
+    return encode_common(rec, rec_len, level, ix, iy, NULL, 0, NULL, out, sizes, bounds4);
+}
 
 /*
  * Assembly helpers (plan 02 step 3): GIL-free bulk file copy.

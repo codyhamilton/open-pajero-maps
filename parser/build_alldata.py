@@ -149,6 +149,11 @@ def _measure_one(level: int, ix: int, iy: int, bounds, content: dict):
     parser/kiwiw/parcel.py's decode docstring) -- used here as a generic
     position marker, valid for both a parent cell's own (ix, iy) and a
     divided sub-cell's (sub_ix, sub_iy)."""
+    # C probe first (byte-identical; declines on anything it does not model,
+    # incl. the hard ceiling); the Python encoders below are the oracle.
+    fast = cenc.measure_content(level, ix, iy, bounds, content)
+    if fast is not None:
+        return fast
     roads = content.get("roads") or []
     bgs = content.get("backgrounds") or []
     names = content.get("names") or []
