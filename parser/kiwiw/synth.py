@@ -19,6 +19,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 
+import numpy as np
+
 from .bitutils import geo_secs_bytes
 from .coordconv import encode_region_coord, latlon_to_xy, COORD_RANGE
 from .model import BackgroundShape, BoundingBox, NameRecord, RoadLink
@@ -218,8 +220,96 @@ def build_road_frame_bytes(links: list[RoadLink], bounds: BoundingBox) -> bytes:
 # Background
 # ---------------------------------------------------------------------------
 
+def _bg_fast(shape: BackgroundShape, bounds: BoundingBox):
+    """numpy-assisted encoder for line/polygon shapes; None -> scalar oracle.
+
+    Pixel conversion is vectorized with `latlon_to_xy`'s exact float operation
+    order and half-to-even rounding (`numpy.rint`). Deltas are plain first
+    differences when the scalar accumulator provably tracks the target
+    (`mult_const <= 1` and every delta inside i8); otherwise the sequential
+    quantizing accumulation runs as a tight integer loop over the same
+    already-clamped pixels, exactly as the scalar encoder does.
+    """
+    arr = np.asarray(shape.coords, dtype=np.float64)
+    if arr.ndim != 2 or len(arr) < 2:
+        return None
+    x = np.rint((arr[:, 1] - bounds.lon_lo) / (bounds.lon_hi - bounds.lon_lo)
+                * COORD_RANGE).astype(np.int64)
+    y = np.rint((bounds.lat_hi - arr[:, 0]) / (bounds.lat_hi - bounds.lat_lo)
+                * COORD_RANGE).astype(np.int64)
+    np.clip(x, 0, _COORD_MAX, out=x)
+    np.clip(y, 0, _COORD_MAX, out=y)
+    mc = shape.mult_const if shape.mult_const >= 1 else 1
+    mult_exp = 0
+    mc_check = 1
+    while mc_check < mc:
+        mc_check <<= 1
+        mult_exp += 1
+    n = len(x) - 1
+    dx = np.diff(x)
+    dy = np.diff(y)
+    if mc == 1 and dx.min() >= -128 and dx.max() <= 127 \
+            and dy.min() >= -128 and dy.max() <= 127:
+        body = np.empty(2 * n, dtype=np.uint8)
+        body[0::2] = dx & 0xFF
+        body[1::2] = dy & 0xFF
+        body = body.tobytes()
+    else:
+        xs, ys = x.tolist(), y.tolist()
+        xc, yc = xs[0], ys[0]
+        cmax = _COORD_MAX
+        buf = bytearray(2 * n)
+        j = 0
+        for i in range(1, n + 1):
+            ddx = (xs[i] - xc) // mc
+            ddy = (ys[i] - yc) // mc
+            if ddx < -128:
+                ddx = -128
+            elif ddx > 127:
+                ddx = 127
+            if ddy < -128:
+                ddy = -128
+            elif ddy > 127:
+                ddy = 127
+            xc += ddx * mc
+            yc += ddy * mc
+            xc = 0 if xc < 0 else cmax if xc > cmax else xc
+            yc = 0 if yc < 0 else cmax if yc > cmax else yc
+            buf[j] = ddx & 0xFF
+            buf[j + 1] = ddy & 0xFF
+            j += 2
+        body = bytes(buf)
+    rec_len = 12 + n * 2
+    out = bytearray(rec_len)
+    hdr = (rec_len // 2) & 0xFFF
+    out[0], out[1] = hdr >> 8, hdr & 0xFF
+    fw = n & 0x7FF
+    out[2], out[3] = fw >> 8, fw & 0xFF
+    out[4], out[5] = (shape.type_code >> 8) & 0xFF, shape.type_code & 0xFF
+    addl = (mult_exp & 0x7) | (int(shape.underground) << 9) | (int(shape.pen_up) << 10)
+    out[6], out[7] = addl >> 8, addl & 0xFF
+    x0, y0 = int(x[0]), int(y[0])
+    sx = (x0 % 4096) | ((x0 // 4096) << 13)
+    sy = (y0 % 4096) | ((y0 // 4096) << 13)
+    out[8], out[9], out[10], out[11] = sx >> 8, sx & 0xFF, sy >> 8, sy & 0xFF
+    out[12:] = body
+    return bytes(out)
+
+
 def encode_background_shape_bytes(shape: BackgroundShape, bounds: BoundingBox) -> bytes:
-    """Encode a BackgroundShape to bytes from semantic fields.
+    """Encode a BackgroundShape (numpy fast path, scalar oracle fallback)."""
+    if shape.shape_class != 0:
+        fast = _bg_fast(shape, bounds)
+        if fast is not None:
+            return fast
+    return encode_background_shape_bytes_scalar(shape, bounds)
+
+
+def encode_background_shape_bytes_scalar(shape: BackgroundShape, bounds: BoundingBox) -> bytes:
+    """Scalar reference encoder (the byte-identity oracle for
+    `encode_background_shape_bytes`).
+
+    Encode a BackgroundShape to bytes from semantic fields.
 
     Parseable by ``background.decode_background_frame()``.  Shapes with
     ``shape_class == 0`` (point) produce a 12-byte record with no coords.

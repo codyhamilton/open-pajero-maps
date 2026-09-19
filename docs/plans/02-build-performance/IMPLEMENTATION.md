@@ -43,3 +43,18 @@ Execution shape: no briefs (refine not run); phases executed sequentially by the
 - Finding: an mmap-backed reader put peak RSS at 6.67 GB (mapped file pages count as RSS);
   switched to per-cell `os.pread`, which restored 1.85 GB.
 - Deviation: the "Record phase 1" commit also swept in the Phase 2 source files.
+
+## Phase 3 — vectorized encoders (done, background shapes only)
+
+- Profile (level 2, 231k cells): background-shape encoding was 58% of build time
+  (`encode_background_shape_bytes` 47 s of 81 s), dominated by per-point `latlon_to_xy` +
+  `_clamp_coord` calls. Roads (~8%), frame assembly (~12%) and spool decode (~6%) are small.
+- Built: `synth._bg_fast` — vectorized pixel conversion (same float op order as
+  `latlon_to_xy`; `numpy.rint` == half-to-even `round`), first-difference deltas when the
+  accumulator provably tracks, otherwise an inlined integer accumulation loop over the
+  clamped pixels. Scalar encoder retained as `encode_background_shape_bytes_scalar` (oracle).
+  Fuzz test `test_synth_vectorized.py` (4000 shapes incl. saturating deltas, mult_const > 1,
+  out-of-bounds clamping, half-pixel ties).
+- Measured level 2: 81 s → 54 s (1.5x overall; background encode 47 → 19 s), output `cmp`-identical.
+  Above the 1.3x keep threshold. Road/name encoders left scalar: gains are small next to
+  process-level parallelism (phase 4).
