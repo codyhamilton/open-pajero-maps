@@ -51,9 +51,10 @@ this module answers.
 """
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 
-from . import volume, volume_writer, parcel_writer
+from . import spill as _spill, volume, volume_writer, parcel_writer
 from .model import BoundingBox, MeshLocation, Parcel, ParcelMapInfoEntry, ParcelMgmtRecord
 from .parcel import decode_parcel
 from .parcel_mgmt import parse_parcel_mgmt_record
@@ -545,6 +546,18 @@ def _locate(ix: int, iy: int, d: dict) -> tuple[int, int, int, int]:
     return blockset_index, block_index, local_ix, local_iy
 
 
+@dataclass
+class AssembledFile:
+    """Result of a streamed (`return_bytes=False`) assembly."""
+    size: int
+    sha256: str
+
+
+def _padded_len(n: int, granularity: int) -> int:
+    rem = n % granularity
+    return n + granularity - rem if rem else n
+
+
 def _pad_zero(data: bytes, granularity: int) -> bytes:
     rem = len(data) % granularity
     return data + bytes(granularity - rem) if rem else data
@@ -837,7 +850,8 @@ def _build_alldata_kwi_multilevel(
     sector_sz: int = 2048,
     logical_sz: int = 32,
     divided: dict[int, Iterable[tuple[int, int, int, int, int, bytes]]] | None = None,
-) -> bytes:
+    return_bytes: bool = True,
+) -> "bytes | AssembledFile":
     """Assemble a whole-of-coverage ALLDATA.KWI: the reference's own
     per-level LMR/BSMR/BMT shape (`grid`), the record-29 copy-through
     frame at its reference location, and `levels`' encoded parcel content
@@ -867,6 +881,12 @@ def _build_alldata_kwi_multilevel(
     every parcel type-0, unchanged from before this parameter existed --
     `entries` for divided/integrated parcel types 1..3 are only ever
     generated for parents this parameter actually names.
+
+    Frames (in `levels[*].parcels` and `divided`) may be raw ``bytes`` or
+    `kiwiw.spill.FrameRef`s; only lengths are needed to lay the file out and
+    frame bytes are resolved one at a time while writing. With
+    ``return_bytes=False`` (requires `out_path`) the file is streamed to disk
+    and an `AssembledFile` (size, sha256) is returned instead of the bytes.
     """
     from . import volume as _vol
     from . import volume_writer as _vw
@@ -940,7 +960,7 @@ def _build_alldata_kwi_multilevel(
     # ---- bucket every (ix, iy, frame_bytes) into its block -------------
     # block_slots[(level, blockset_index, block_index)] -> list[bytes|None],
     # one slot per top-level parcel position in that block (row-major).
-    block_slots: dict[tuple[int, int, int], list[bytes | None]] = {}
+    block_slots: dict[tuple[int, int, int], list] = {}
     n_parcels_placed = 0
     for level, lb in levels.items():
         d = dims[level]
@@ -956,7 +976,7 @@ def _build_alldata_kwi_multilevel(
             if slots[local_idx] is not None:
                 raise ValueError(
                     f"level {level}: duplicate parcel at ix={ix} iy={iy}")
-            slots[local_idx] = _pad_zero(frame_bytes, logical_sz)
+            slots[local_idx] = frame_bytes
             n_parcels_placed += 1
 
     # Seed a block_slots entry (all-None) for any block that has divided
@@ -1052,10 +1072,11 @@ def _build_alldata_kwi_multilevel(
                 entries.append(_PMI(dsa=NO_DATA_DSA, size=0))
                 continue
             foff = cursor
+            padded_len = _padded_len(len(slot), logical_sz)
             frame_regions.append((foff, slot))
-            cursor += len(slot)
+            cursor += padded_len
             entries.append(_PMI(dsa=encode_sector_addr(foff, sector_sz, logical_sz),
-                                 size=len(slot) // logical_sz))
+                                 size=padded_len // logical_sz))
 
         record_footprint = 4 + len(entries) * bmt_entry_size
 
@@ -1073,14 +1094,14 @@ def _build_alldata_kwi_multilevel(
             gn = gn_lat * gn_lng
             sub_entries: list[_PMI] = [_PMI(dsa=NO_DATA_DSA, size=0) for _ in range(gn)]
             for _pt, sub_ix, sub_iy, frame_bytes in items:
-                padded = _pad_zero(frame_bytes, logical_sz)
+                padded_len = _padded_len(len(frame_bytes), logical_sz)
                 foff = cursor
-                frame_regions.append((foff, padded))
-                cursor += len(padded)
+                frame_regions.append((foff, frame_bytes))
+                cursor += padded_len
                 pos_idx = sub_iy * gn_lng + sub_ix
                 sub_entries[pos_idx] = _PMI(
                     dsa=encode_sector_addr(foff, sector_sz, logical_sz),
-                    size=len(padded) // logical_sz)
+                    size=padded_len // logical_sz)
 
             sub_off = sub_cursor
             assert sub_off % 2 == 0, "in-buffer subrecord offset must be even ([D]-encodable)"
@@ -1190,23 +1211,45 @@ def _build_alldata_kwi_multilevel(
         tail_hex="00" * (_vol.MHT_SIZE - _vol.MHT_RECORD_COUNT * _vol.MHR_SIZE),
     )
 
-    # ---- write everything into one buffer ---------------------------------
-    buf = bytearray(total_file_size)
+    # ---- write everything ---------------------------------------------
+    # Small fixed regions and block records are in memory; frames are
+    # resolved (and zero-padded to logical_sz) one at a time.
+    fixed_regions: list[tuple[int, bytes]] = [
+        (datavol_offset, _vw.write_volume_header(hdr, extras)),
+        (mht_offset, _vw.write_management_header_table(mht)),
+        (record29_offset, record29_frame),
+        (pdmdh_offset, _vw.write_pdmdh(pdmdh)),
+    ] + block_regions
 
-    def _put_at(off: int, data: bytes) -> None:
-        buf[off:off + len(data)] = data
+    def _frame(frame) -> bytes:
+        return _pad_zero(_spill.frame_bytes(frame), logical_sz)
 
-    _put_at(datavol_offset, _vw.write_volume_header(hdr, extras))
-    _put_at(mht_offset, _vw.write_management_header_table(mht))
-    _put_at(record29_offset, record29_frame)
-    _put_at(pdmdh_offset, _vw.write_pdmdh(pdmdh))
-    for off, data in block_regions:
-        _put_at(off, data)
-    for off, data in frame_regions:
-        _put_at(off, data)
+    if return_bytes:
+        buf = bytearray(total_file_size)
+        for off, data in fixed_regions:
+            buf[off:off + len(data)] = data
+        for off, frame in frame_regions:
+            data = _frame(frame)
+            buf[off:off + len(data)] = data
+        result = bytes(buf)
+        if out_path is not None:
+            with open(out_path, "wb") as fh:
+                fh.write(result)
+        return result
 
-    result = bytes(buf)
-    if out_path is not None:
-        with open(out_path, "wb") as fh:
-            fh.write(result)
-    return result
+    if out_path is None:
+        raise ValueError("return_bytes=False requires out_path")
+    # Streaming path: regions are disjoint; write in ascending offset order
+    # (frames + blocks are already in layout order) and leave gaps zero.
+    every = sorted([(o, d, False) for o, d in fixed_regions]
+                   + [(o, f, True) for o, f in frame_regions], key=lambda r: r[0])
+    with open(out_path, "wb") as fh:
+        for off, data, is_frame in every:
+            fh.seek(off)
+            fh.write(_frame(data) if is_frame else data)
+        fh.truncate(total_file_size)
+    digest = hashlib.sha256()
+    with open(out_path, "rb") as fh:
+        while chunk := fh.read(1 << 24):
+            digest.update(chunk)
+    return AssembledFile(size=total_file_size, sha256=digest.hexdigest())

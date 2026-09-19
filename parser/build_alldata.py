@@ -35,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from kiwiw import alldata_writer as aw
 from kiwiw import divide
+from kiwiw.spill import FrameSpill
 from kiwiw import synth
 from kiwiw.grid import ReferenceGrid
 from kiwiw.spool import SpoolReader
@@ -216,7 +217,8 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
                    mask: dict[int, tuple[int, int, int, int]] | None = None,
                    kind_limits: dict[str, int] | None = None,
                    trim_stats: dict | None = None,
-                   name_halo: bool = False
+                   name_halo: bool = False,
+                   spill=None, digest_fh=None
                    ) -> tuple[list[tuple[int, int, bytes]],
                               list[tuple[int, int, int, int, int, bytes]], int, int]:
     """Encode every spooled parcel at `level`, splitting any parcel whose
@@ -227,7 +229,13 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
     ``(ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes)`` for
     ``build_alldata_kwi(..., divided=...)``; `n_parcels`/total bytes count
     every frame actually placed (divided sub-frames included, the parent
-    cell itself does not)."""
+    cell itself does not).
+
+    With `spill` (a `kiwiw.spill.FrameSpill`) each frame is appended to the
+    spill file and the returned tuples carry a `FrameRef` instead of bytes
+    (`len()` still works), so frame bytes are never accumulated in RAM.
+    `digest_fh` receives one ``level ix iy type sub_ix sub_iy len sha256``
+    line per frame."""
     tile_grid = TileGrid.from_reference(level)
     cell_range = _fixture_cell_range(level, fixture, tile_grid) if fixture else None
 
@@ -264,12 +272,18 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
             level, cells_iter(), threshold_bytes, _encode_one,
             kind_limits=kind_limits, measure=_measure_one,
             trim_stats=trim_stats, name_halo=name_halo):
+        n_frame = len(frame_bytes)
+        if digest_fh is not None:
+            digest_fh.write(f"{level} {ix} {iy} {parcel_type} {sub_ix} {sub_iy} "
+                            f"{n_frame} {hashlib.sha256(frame_bytes).hexdigest()}\n")
+        if spill is not None:
+            frame_bytes = spill.add(frame_bytes)
         if parcel_type == 0:
             out.append((ix, iy, frame_bytes))
         else:
             divided_out.append((ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes))
         n_parcels += 1
-        n_bytes += len(frame_bytes)
+        n_bytes += n_frame
 
     return out, divided_out, n_parcels, n_bytes
 
@@ -294,6 +308,8 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     # Optional per-frame digest listing (plan 02): localizes a byte mismatch to a
     # (level, ix, iy, parcel_type, sub_ix, sub_iy) frame. Regenerable, never committed.
     digest_fh = open(frame_digest, "w") if frame_digest else None
+    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+    spill = FrameSpill(os.path.dirname(out_path) or ".")
 
     level_builds: dict[int, aw.LevelBuild] = {}
     divided_builds: dict[int, list[tuple[int, int, int, int, int, bytes]]] = {}
@@ -310,7 +326,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         parcels, divided_parcels, n_parcels, n_bytes = _encode_level(
             level, grid, reader, fixture, threshold_bytes, mask=mask,
             kind_limits=kind_budgets.get(level) or None, trim_stats=trim_stats,
-            name_halo=(level in NAME_HALO_LEVELS))
+            name_halo=(level in NAME_HALO_LEVELS), spill=spill, digest_fh=digest_fh)
         if trim_stats.get("halo_names"):
             print(f"level {level}: name halo added {trim_stats['halo_names']:,} "
                   f"neighbouring road-name records to divided sub-cells (brief 32)",
@@ -329,13 +345,6 @@ def run(spool_dir: str, out_path: str, levels: list[int],
                       f"({pct:.3f}%) in {trim_stats.get('cells', {}).get(k, 0)} sub-cells"
                       + ("  ** >1% BLOCKER **" if pct > 1.0 else ""), flush=True)
         level_builds[level] = aw.LevelBuild(level=level, parcels=parcels)
-        if digest_fh is not None:
-            for ix, iy, fb in parcels:
-                digest_fh.write(f"{level} {ix} {iy} 0 0 0 {len(fb)} "
-                                f"{hashlib.sha256(fb).hexdigest()}\n")
-            for ix, iy, pt, sx, sy, fb in divided_parcels:
-                digest_fh.write(f"{level} {ix} {iy} {pt} {sx} {sy} {len(fb)} "
-                                f"{hashlib.sha256(fb).hexdigest()}\n")
         if divided_parcels:
             divided_builds[level] = divided_parcels
         n_divided_parents = len({(ix, iy) for ix, iy, *_ in divided_parcels})
@@ -357,16 +366,18 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         digest_fh.close()
     print("assembling ALLDATA.KWI ...", flush=True)
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    data = aw.build_alldata_kwi(level_builds, grid, disk_title=disk_title,
-                                 out_path=out_path, divided=divided_builds)
-    print(f"wrote {out_path} ({len(data):,} bytes)", flush=True)
+    assembled = aw.build_alldata_kwi(level_builds, grid, disk_title=disk_title,
+                                      out_path=out_path, divided=divided_builds,
+                                      return_bytes=False)
+    spill.close()
+    print(f"wrote {out_path} ({assembled.size:,} bytes)", flush=True)
 
-    sha256 = hashlib.sha256(data).hexdigest()
+    sha256 = assembled.sha256
     manifest = {
         "spool_dir": spool_dir,
         "spool_stats": {str(k): v for k, v in spool_stats.items()},
         "levels": manifest_levels,
-        "total_size": len(data),
+        "total_size": assembled.size,
         "sha256": sha256,
         "layers_present": LAYERS_PRESENT,
         "trimmed_items": trimmed_items,

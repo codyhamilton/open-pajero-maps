@@ -164,3 +164,31 @@ def test_deterministic():
     data1 = aw.build_alldata_kwi(levels, grid, disk_title="TEST")
     data2 = aw.build_alldata_kwi(levels, grid, disk_title="TEST")
     assert data1 == data2
+
+
+# ---------------------------------------------------------------------------
+# Streaming assembly (plan 02 phase 1): spill-backed frames + streamed output
+# equal the bytes-returning path.
+# ---------------------------------------------------------------------------
+
+def test_streaming_matches_bytes_path(tmp_path):
+    import hashlib
+
+    from kiwiw.spill import FrameSpill
+
+    grid = _grid()
+    coords = [(512, 0), (513, 0), (520, 10), (600, 40)]
+    ref = aw.build_alldata_kwi({12: _level_build(12, [(0, 0)]),
+                                0: _level_build(0, coords)},
+                               grid, disk_title="TEST")
+    with FrameSpill(str(tmp_path)) as spill:
+        def spilled(level, cs):
+            return aw.LevelBuild(level=level, parcels=[
+                (ix, iy, spill.add(_make_frame(level, ix, iy))) for ix, iy in cs])
+        out = tmp_path / "streamed.kwi"
+        res = aw.build_alldata_kwi({12: spilled(12, [(0, 0)]), 0: spilled(0, coords)},
+                                   grid, disk_title="TEST", out_path=str(out),
+                                   return_bytes=False)
+    assert out.read_bytes() == ref
+    assert res.size == len(ref)
+    assert res.sha256 == hashlib.sha256(ref).hexdigest()
