@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Allocation-rule survey across `ALLDATA.KWI` levels 0/2/4, extending the
-level-6/8 evidence in `docs/archive/02-roundtrip.md`'s "Whole-file
-ALLDATA.KWI assembly" section from "one region's worth of evidence" to a
+level-6/8 evidence from "one region's worth of evidence" to a
 much larger real-disc sample.
 
 Two questions, both asked of the SAME loaded regions used by

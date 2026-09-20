@@ -20,9 +20,7 @@ Scope (2026-08-25 prototype, OSM -> Ch9/Ch10 writer):
   sibling decoder module already work directly off in-memory buffers, so
   round-tripping through them doesn't require that either.
 
-Known simplifications relative to the real disc (see
-``docs/archive/01-format-analysis.md`` / the Phase-3 prototype report for
-the full list): no multi-region hierarchy (a single, standalone region is
+Known simplifications relative to the real disc: no multi-region hierarchy (a single, standalone region is
 encoded, not embedded in a country-wide level-2/4/6/8 tree of regions);
 no boundary-node/cross-region link bookkeeping (the graph is a single
 self-contained bbox, so no node is marked a boundary node and no link

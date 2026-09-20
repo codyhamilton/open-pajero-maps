@@ -21,7 +21,7 @@ the tests in `parser/tests/test_route_planning.py`, `test_boundary_links.py` and
 | Level management record (16 B) | Per level: n_basic 9, n_ext 6, node rec 6, link rec 6, link cost rec 14, regulation rec 2, between-links cost rec 4, region rec 24 | observed | R: every non-root LMR has these values | `parser/kiwiw/route_planning_writer.py` |
 | Level numbering | Root -32 (dummy, 1 region), 8 (1357), 6 (51), 4 (105), 2 (369) | observed | R census: 1883 region records, all type code 0 | `parser/kiwiw/route_planning.py` |
 | Level 2 dummies | 18 of the 369 level-2 records are dummies (first 12 B 0xFF); 351 real | observed | R census; notebook 01 counts 351 real regions, R total incl. dummies is 369 | `parser/kiwiw/route_planning_writer.py` |
-| Tree shape | Root parents all 1357 level-8 regions; 1326 level-8 regions are childless, 31 have children (level 6 -> 4 -> 2 by child links); 187 regions have children | observed | R census. `docs/archive/03-osm-pipeline.md` says "every level-8 region has children"; the census wins | `parser/kiwiw/route_planning.py` |
+| Tree shape | Root parents all 1357 level-8 regions; 1326 level-8 regions are childless, 31 have children (level 6 -> 4 -> 2 by child links); 187 regions have children | observed | R census. An earlier claim that every level-8 region has children is contradicted by the census | `parser/kiwiw/route_planning.py` |
 
 ## Ch.9 region management record (24 B)
 
@@ -112,7 +112,7 @@ the tests in `parser/tests/test_route_planning.py`, `test_boundary_links.py` and
 
 | Field | Meaning | Status | Evidence | Code |
 |---|---|---|---|---|
-| MID | DISC_STAMP_12B `0f6788003c47220003000722` | observed | `docs/archive/01-format-analysis.md` ext-frame census (1864 regions) | `parser/kiwiw/route_planning_writer.py` |
+| MID | DISC_STAMP_12B `0f6788003c47220003000722` | observed | R ext-frame census (1864 regions) | `parser/kiwiw/route_planning_writer.py` |
 | Populated slots | Every region has 2 or 3 populated slots (487 with 2, 1377 with 3) | observed | notebook 01 census; corrects its earlier "1 to 2" | - |
 | 0xAF100100 (slot 0) | All regions, variable length, 62.1% of ext bytes, word-structured with 0x7FFF sentinel | unknown | `parser/analyze_ext_frames.py` census. Writer emits data id 0 and empty payload, which does not match R | `parser/kiwiw/route_planning_writer.py` |
 | 0xAF100200 (slot 1) | Level 6 only (51 of 51), fixed 106 B | unknown | census | - |
@@ -127,7 +127,7 @@ the tests in `parser/tests/test_route_planning.py`, `test_boundary_links.py` and
 | RG distribution header | SWS size, PID 8 B, position code, divided/integrated id, practical mgmt code 4 B, base map flag, 6 x n basic + 6 x m ext records | spec-only | spec ch.8.1 | - |
 | Sub-frames 8.4 to 8.7 | Guidance data, intersection / road / toward names, spot guidance, direction indicator, road structure, building and facility, caution point, character string, shape and pattern | spec-only | spec ch.8 | - |
 | Extended data (8.3) | [MID 12][N 4][data], "not yet fixed" in spec | spec-only | spec ch.8.3 | - |
-| Map frame rg_addr / rg_size | Emitted absent (0xFFFFFFFF, 0) | assumed | `docs/archive/02-roundtrip.md`; `map-frame.md` | `parser/kiwiw/synth.py` |
+| Map frame rg_addr / rg_size | Emitted absent (0xFFFFFFFF, 0) | assumed | `map-frame.md` | `parser/kiwiw/synth.py` |
 | Parcel `routeoff` | D offset into a route-guidance list | unknown | `parcel-management.md`; R contents not decoded | - |
 
 ## Contraction hierarchy levels and boundary links

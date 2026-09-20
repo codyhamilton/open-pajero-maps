@@ -4,10 +4,7 @@ vendor ext-frame Data Identification Codes: ``0xAF100100`` (62.1% of all
 ext bytes, present in every region) and ``0xAF100300`` (37.7% of ext bytes,
 level-8-only).
 
-This does NOT attempt to resolve their semantic meaning (see
-``docs/archive/01-format-analysis.md``'s "Ch.10.5/10.5.1 ext frame content
-census" section for why that's judged out of reach from static evidence
-alone). Its job is narrower and more mechanical: for each code, across
+This does NOT attempt to resolve their semantic meaning. Its job is narrower and more mechanical: for each code, across
 100% of the disc's 1,864 real regions (not a sample),
 
   1. find the fixed record/unit size (if any) that most cleanly divides

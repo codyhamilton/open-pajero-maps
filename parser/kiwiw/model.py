@@ -84,8 +84,7 @@ class LevelMgmtRecord:
     grid_ny: int = 0
     # The bytes after the 2-byte extended-info word are three u16 index
     # tables, one entry per road / background / name sub-frame declared by
-    # the n_*_frames counts above (see docs/archive/02-roundtrip.md --
-    # 42 + 2*(n_road+n_background+n_name) accounts for the LMR size
+    # the n_*_frames counts above (42 + 2*(n_road+n_background+n_name) accounts for the LMR size
     # exactly on this disc). Empty when the LMR is too short to hold them.
     road_frame_table: list[int] = field(default_factory=list)
     background_frame_table: list[int] = field(default_factory=list)
@@ -153,10 +152,7 @@ class RoadLink:
     # in the same order as encoded on disc.
     points: list[tuple[float, float]] = field(default_factory=list)
     # Round-trip support: the record's absolute byte offset within the road
-    # sub-frame buffer, and its exact bytes verbatim (multilink management
-    # header + node/shape data + the additional/altitude/passage-regulation
-    # info that `road.py` computes the size of but never decodes -- see
-    # docs/archive/02-roundtrip.md). The writer emits `raw_bytes` at
+    # sub-frame buffer, and its exact bytes verbatim. The writer emits `raw_bytes` at
     # `raw_offset` unchanged; the decoded fields above are for
     # readability/cross-validation only, not used to reconstruct bytes.
     raw_offset: int = 0

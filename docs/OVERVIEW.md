@@ -57,7 +57,6 @@ Build time for the map layer is about 32 s at `-j 12` (plan 02).
 | What is being changed now? | `docs/plans/03-map-layer-parity-remediation/` |
 | What was built before? | `docs/plans/01-…md`, `docs/plans/02-…md` |
 | Where did each non-committed file come from? | `docs/provenance.md` |
-| Original research notebooks (historical, superseded) | `docs/archive/` |
 
 ## References
 

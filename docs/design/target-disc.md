@@ -1,9 +1,7 @@
 # Target disc — design intent (program of record)
 
 This is the stable definition of *what we are building* and *how we judge it*.
-Per-work-package plans under `docs/plans/` reference this doc; the phase docs
-under `docs/archive/` are the historical research record and are superseded by
-this doc wherever they disagree.
+Per-work-package plans under `docs/plans/` reference this doc.
 
 ## Goal
 
@@ -190,14 +188,3 @@ disc's bytes each de-risks.
   OSM-derived content (only structural parity is required).
 - Preserving the reference disc's WA-centric development fixtures.
 - Firmware modification.
-
-## Corrections to earlier docs (recorded here so they are not re-derived)
-
-- `docs/archive/00-inventory.md` guessed the `2##` suffix on index files is a
-  zoom level. Decoded bounding boxes show it is a state partition
-  (201=WA, 202=NT, 203=SA, 204=QLD, 205=NSW/ACT, 206=VIC, 207=TAS, all
-  seven confirmed by decoding each file's address-range bounding boxes).
-- the 2026-08-24 test-access decision ("favour frequent
-  in-vehicle validation") is superseded by decision 1 above.
-- `docs/archive/03-osm-pipeline.md`'s "roads → names → POIs → address search
-  with an in-vehicle test after each" phasing is superseded by decisions 1–2.

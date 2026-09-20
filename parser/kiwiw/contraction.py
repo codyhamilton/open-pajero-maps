@@ -38,9 +38,7 @@ Hierarchies: Faster and Simpler Hierarchical Routing in Road Networks",
      level assignment: the top quartile of ranks (by count) are the nodes
      that still exist at every level (2/4/6/8), the next quartile exist at
      2/4/6, then 2/4, then the bottom quartile exist only at level 2 --
-     this reproduces the disc's own measured pattern (see
-     ``docs/archive/03-osm-pipeline.md``: node counts shrink and the
-     surviving road-class set narrows going up from level 2 to level 8).
+     this reproduces the disc's own measured pattern.
 
 Deliberately NOT implemented (see docs for what's open):
   - Real edge-difference simulation is O(degree^2) per candidate and the
@@ -269,7 +267,7 @@ DEFAULT_LEVEL_FRACTIONS = (0.55, 0.25, 0.13, 0.07)
 """Fraction of nodes (by ascending contraction rank, i.e. bottom-up)
 assigned to each of levels [2, 4, 6, 8]. NOT spec-derived -- the spec
 doesn't say how many nodes should survive to each level, and this
-project's own empirical study (docs/archive/03-osm-pipeline.md) only
+project's own empirical study only
 established the level ORDER (2 finest -> 8 coarsest) and per-level road
 CLASS narrowing, not per-level population fractions. These values encode
 the standard CH/highway-hierarchy expectation that each level up is
@@ -304,9 +302,7 @@ def level_thresholds(n: int, n_levels: int = 4,
 def assign_levels(rank: list[int], n_levels: int = 4,
                    fractions: tuple[float, ...] = DEFAULT_LEVEL_FRACTIONS) -> list[int]:
     """Map contraction rank -> "uppermost identical level" using the
-    real disc's own confirmed level numbering (2=finest/leaf ... 8=
-    coarsest/root, see docs/archive/03-osm-pipeline.md's region-hierarchy
-    study). Nodes contracted LAST (highest rank = most important) get the
+    real disc's own confirmed level numbering. Nodes contracted LAST (highest rank = most important) get the
     highest uppermost level (8 = present at every level); nodes contracted
     FIRST get the lowest (2 = present only at the finest level).
 

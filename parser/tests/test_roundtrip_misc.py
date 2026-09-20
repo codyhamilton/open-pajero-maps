@@ -1,5 +1,5 @@
 """Phase 2 round-trip regression tests for the small metadata/coverage
-files (see docs/archive/02-roundtrip.md).
+files.
 
 Requires the real disc mounted at /run/media/codyh/464210-8480/ -- skips if
 not present, same convention as test_mesh.py.
@@ -74,8 +74,7 @@ def test_spec_kwi_byte_identical():
     """`parse_bnf_metadata` now preserves each statement's raw text
     (`BnfMetadata.raw_statements`) rather than collapsing straight to a
     lossy plain dict, so SPEC.KWI's irregular whitespace round-trips
-    exactly. See docs/archive/02-roundtrip.md for the fix writeup (this used
-    to be a documented negative result / known-lossy test).
+    exactly.
     """
     result = _roundtrip("SPEC.KWI", misc.parse_bnf_metadata, misc_writer.write_bnf_metadata)
     if result is None:

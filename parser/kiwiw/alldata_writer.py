@@ -42,8 +42,7 @@ frame types (0xAF100100/0xAF100300) are not synthesized -- when a Map
 Frame's mfde table has an in-buffer "Extended Data Frame" entry, its raw
 bytes are carried through unchanged (already true of `MapFrame.ext_frame_raw`,
 untouched by this module); anything living in the separate management
-frame at file offset 4096..6144 (a different, out-of-scope chapter's
-layer -- likely route planning, see docs/archive/02-roundtrip.md) is never
+frame at file offset 4096..6144 is never
 referenced here at all -- the de novo layout places the PDMDH blob
 directly after the Management Header Table instead, since reproducing
 that gap's content is out of scope and not needed for the layout question

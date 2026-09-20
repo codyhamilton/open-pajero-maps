@@ -240,7 +240,7 @@ def write_name_frame(frame: NameFrame, encode: bool = False) -> bytes:
                     f"NameRecord with string_type={rec.string_type} has no raw_bytes "
                     "-- name.py cannot determine the length of an unhandled string "
                     "type, so this name frame cannot be round-tripped byte-identically "
-                    "(see docs/archive/02-roundtrip.md)")
+                    "")
             _put(buf, rec.raw_offset, rec.raw_bytes)
 
     return bytes(buf)

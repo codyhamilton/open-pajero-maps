@@ -2,8 +2,7 @@
 and the ``IDX/*.IDX`` search/POI families (Street Address Search, POI
 Search/Information, and friends).
 
-Confidence levels (see docs/archive/01-format-analysis.md "Index/search
-data frame decoding" for the full writeup) -- everything below is graded
+Confidence levels -- everything below is graded
 one of:
 
 - CONFIRMED: real bytes from this disc decoded and cross-checked against

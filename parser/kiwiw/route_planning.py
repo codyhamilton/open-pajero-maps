@@ -596,8 +596,7 @@ def _parse_link_cost_record(buf: bytes, off: int, has_time: bool) -> LinkCostRec
 class AggregatedNodeInfo:
     """Ch.10.13.1 Aggregated Node Information.
 
-    Confidence, per field (see docs/archive/01-format-analysis.md for the
-    empirical validation this is based on):
+    Confidence, per field:
     - ``size``, ``node_number``, ``n_composition_links``,
       ``n_route_info``, ``n_subordinate_nodes``: HIGH -- fixed offsets,
       and ``size`` is checked against the real disc by confirming
@@ -627,8 +626,7 @@ class AggregatedNodeInfo:
       from the start of the sub-frame. This word-alignment rule is what
       drives the 95.6% exact byte-accounting figure above; the naive
       "round the nibble array itself up to an even byte count"
-      alternative was tried first and fits substantially worse (see
-      docs/archive/01-format-analysis.md). Still best-effort: the
+      alternative was tried first and fits substantially worse. Still best-effort: the
       underlying spec text for this item and its padding was garbled in
       the archived PDF extraction, so this is inferred from the byte
       arithmetic, not read off unambiguous spec prose.

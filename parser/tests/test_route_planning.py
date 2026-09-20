@@ -1,10 +1,7 @@
 """Round-trip tests for the Ch.9/Ch.10 route-planning writer/decoder pair
 (``kiwiw.route_planning_writer`` / ``kiwiw.route_planning``), and for the
 aggregated-intersection clustering added in ``build_route_graph.py``
-(Ch.10.13 Road Reference Table -- see docs/archive/01-format-analysis.md,
-"Road reference table (Ch.10.13, aggregated-intersection clustering)" and
-docs/archive/03-osm-pipeline.md for the empirical findings this
-implementation is based on).
+(Ch.10.13 Road Reference Table).
 
 These tests are self-contained (synthetic in-memory graphs / records) --
 they do not require the real disc or an OSM PBF (this repo's environment
@@ -232,10 +229,7 @@ def test_cluster_nodes_roundtrips_through_writer_and_decoder():
 
 def test_cluster_nodes_no_clusters_is_a_no_op():
     """When no node pair is close enough and no roundabout groups are
-    given, cluster_nodes() must leave the graph untouched (this is the
-    common case: most nodes on the real disc are NOT aggregated -- see
-    docs/archive/01-format-analysis.md, 89.6% of *regions* have some
-    aggregation, but the large majority of individual nodes do not)."""
+    given, cluster_nodes() must leave the graph untouched."""
     g = _make_synthetic_graph()
     for cost in g.link_costs:
         cost.length_m = 500.0  # nothing short enough to cluster

@@ -3,7 +3,7 @@ layer: the Ch. 5 All Data Management Frame and the Ch. 6 Parcel-related
 Data Management Record (PDMDH + LMR + BSMR + BMT tables).
 
 Scope note: parcel *content* (road/background/name frames) is deliberately
-not covered here -- see docs/archive/02-roundtrip.md.
+not covered here.
 
 Requires the real disc mounted at /run/media/codyh/464210-8480/ -- skips if
 not present, same convention as test_mesh.py.

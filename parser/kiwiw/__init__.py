@@ -1,8 +1,7 @@
 """kiwiw - a Python parser for the KIWI-W automotive navigation map format.
 
 Ported and extended from the validated C reference tool at
-``tools/kiwiread/kiwiread.c`` (see docs/archive/00-inventory.md for how that
-tool was built/validated against the real disc). This package targets the
+``tools/kiwiread/kiwiread.c``. This package targets the
 "Main Map Data Frame" (spec chapters 5, 6, 7) of ``ALLDATA.KWI``:
 
 - ``bitutils``: byte/bitfield helpers shared by every decoder (big-endian

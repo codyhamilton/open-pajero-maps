@@ -4,7 +4,7 @@ across whole real block sets (every block, every leaf parcel they reach)
 rather than the 4 hand-picked coordinates `test_roundtrip_parcel_content.py`
 checks.
 
-Two claims, kept explicitly distinct (see docs/archive/02-roundtrip.md):
+Two claims, kept explicitly distinct:
 
 - "In-place" (`assemble_inplace`): reproducing the original disc's own
   file offsets is byte-identical against the real file.
@@ -33,16 +33,13 @@ ALLDATA_PATH = os.path.join(ROOT, "ALLDATA.KWI")
 
 # Level 8, every real block set on the reference disc: 6 block sets, 6
 # blocks, 78 leaf parcels -- a whole level's real content, not a single
-# hand-picked coordinate. (See docs/archive/02-roundtrip.md for the survey
-# of candidate regions across all 7 levels and why this one was chosen:
-# small enough to be a fast regression test, large enough to be a
-# meaningful "whole region" rather than one point.)
+# hand-picked coordinate.
 LEVEL = 8
 BLOCKSETS = [0, 1, 2, 4, 5, 6]
 
 # Small, fast, real regression subsets at levels 4 and 2, added 2026-08-28
 # when whole-file assembly coverage was extended from levels 6/8 only to
-# 0/2/4 (see docs/archive/02-roundtrip.md for the full-population and
+# 0/2/4 (the full-population and
 # level-0-sample runs -- those are far too large/slow for a pytest
 # regression suite and were instead run ad hoc via
 # `roundtrip_alldata_full.py --level 4/2/0 --blocksets ...`, with every

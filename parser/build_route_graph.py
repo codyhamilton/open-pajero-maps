@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Build an in-memory routing graph (kiwiw.route_planning_writer.RpGraph)
 from OSM data for a single bounded test region, as the first stage of the
-Ch.9/Ch.10 write-path prototype (see docs/archive/01-format-analysis.md,
-"Route planning / region data" section, for the read-path this inverts).
+Ch.9/Ch.10 write-path prototype.
 
 This is a PROTOTYPE for ONE bounded test region -- not a full-country
 pipeline. It is deliberately a first-pass heuristic in the areas the task
@@ -63,8 +62,7 @@ assumed away):
 AGGREGATED-INTERSECTION CLUSTERING (Road Reference Table, 10.13):
 implemented as of 2026-08-27, following a real-disc survey
 (``survey_road_reference_table.py``) that found the table populated on
-89.6% of real regions (see docs/archive/01-format-analysis.md and
-docs/archive/03-osm-pipeline.md for the full measurement). Two candidate
+89.6% of real regions. Two candidate
 groups of OSM nodes are merged into one routing node each:
   1. **Roundabouts**: every graph node lying on an OSM
      ``junction=roundabout``/``circular`` way is merged into one node.

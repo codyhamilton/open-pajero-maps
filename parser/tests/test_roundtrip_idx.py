@@ -1,5 +1,5 @@
 """Phase 2 round-trip regression tests for the `IDX/*.IDX` search-index
-writer (`kiwiw/index_writer.py`, see docs/archive/02-roundtrip.md).
+writer.
 
 Requires the real disc mounted at /run/media/codyh/464210-8480/ -- skips if
 not present, same convention as test_mesh.py / test_roundtrip_misc.py. Runs

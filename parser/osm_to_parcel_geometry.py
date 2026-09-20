@@ -26,8 +26,7 @@ RoadLink / BackgroundShape / NameRecord construction
 ----------------------------------------------------
 Objects built here have ``raw_bytes=b""`` (no disc data to copy verbatim).
 The parcel writer's existing "replicate" mode requires ``raw_bytes``; a
-future "encode-from-semantic" mode will feed these objects instead.  That
-round-trip gap is tracked in docs/archive/03-osm-pipeline.md.
+future "encode-from-semantic" mode will feed these objects instead.
 
 Coordinate representation
 -------------------------

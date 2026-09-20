@@ -1,7 +1,7 @@
 """Phase 2 round-trip regression tests for parcel content: the Ch. 6
 Parcel Management Record a Block Management Table entry addresses, and the
 Ch. 7 Map Frame (header + mfde table + road/background/name sub-frames) a
-leaf entry of that record points at (see docs/archive/02-roundtrip.md).
+leaf entry of that record points at.
 
 Requires the real disc mounted at /run/media/codyh/464210-8480/ -- skips if
 not present, same convention as test_mesh.py / test_roundtrip_misc.py.

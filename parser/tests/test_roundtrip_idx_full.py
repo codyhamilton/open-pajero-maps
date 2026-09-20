@@ -1,6 +1,4 @@
-"""Whole-file `IDX/SADSR201.IDX` assembly tests (Phase 2, see
-`roundtrip_idx_full.py` and docs/archive/02-roundtrip.md "Whole-file
-IDX/*.IDX assembly"). This is materially different from
+"""Whole-file `IDX/SADSR201.IDX` assembly tests. This is materially different from
 `test_roundtrip_idx.py`: that file validates individual structural pieces
 against real bytes *at their own original byte range*; this file validates
 a **from-scratch reassembly** -- every DFSR header, DSIR record slot, DCTF

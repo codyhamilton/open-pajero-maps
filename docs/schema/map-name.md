@@ -43,7 +43,7 @@ Every record starts with a 6-byte Name Attribute Header. `na` is the length word
 
 | Field | Meaning | Status | Evidence | Code |
 |---|---|---|---|---|
-| @0 bits 11:0 `na` length (SWS) | Record byte length = value x 2 (includes the 6-byte header) | verified | Record walking by `na` reproduces every record boundary; byte-identical round-trip `parser/tests/test_roundtrip_parcel_content.py`; historical fix recorded in `docs/archive/02-roundtrip.md` correction 3 | `parser/kiwiw/name.py` |
+| @0 bits 11:0 `na` length (SWS) | Record byte length = value x 2 (includes the 6-byte header) | verified | Record walking by `na` reproduces every record boundary; byte-identical round-trip `parser/tests/test_roundtrip_parcel_content.py` | `parser/kiwiw/name.py` |
 | @0 bit 15 deletion flag | In-memory flag, normally 0 | observed | R: bits 15:12 of `na` are 0 on 1237/1237 sampled records | - |
 | @0 bit 14 temporal-info flag | Record carries 8-byte temporal info | observed | 0 on 1237/1237 sampled records; spec 7.4.2.1 No.5 | - |
 | @0 bit 13 extended-data flag | Record has extended data | observed | 0 on 1237/1237 sampled records | - |

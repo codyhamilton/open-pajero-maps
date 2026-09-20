@@ -9,8 +9,7 @@ tables) -- re-serializes it with `kiwiw.volume_writer`, and byte-diffs each
 region against the original bytes at that exact file offset.
 
 Deliberately *not* covered: parcel content (roads, background geometry,
-names). That is a separate, much less well-understood layer; see
-docs/archive/02-roundtrip.md.
+names). That is a separate, much less well-understood layer.
 
 Reporting follows parser/roundtrip_misc.py: PASS only on an exact match,
 otherwise FAIL with the first differing file offset and a hex window. A
