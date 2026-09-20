@@ -82,7 +82,7 @@ The work is one linear-then-fan-out sequence: establish the truth and harden the
 - **Stable docs.** `docs/OVERVIEW.md` and `docs/ARCHITECTURE.md` do not exist; `docs/00-overview.md` predates the 2026-09-04 decisions. `docs/design/target-disc.md` is the working program of record. This design adds `docs/ARCHITECTURE.md`, recording the system shape and, per the user, the **unknowns** (WP2/WP3 spikes: ext frames `0xAF100100`/`0300`, turn-restriction yield, POI vendor category codes, suburb hierarchy, undecoded WP4 families) so they are not re-derived. `docs/design/target-disc.md` is updated in Phase 10 (deviation ledger, header word 0, mfde 12–19 ownership, size-limit semantics).
 - **Corrections to recorded assumptions.** `docs/plans/01-…/DESIGN.md` line 33 says Map Frame word 0 "matches buffer size"; R shows it is the header size. Its §7/§8 treat mfde 12–19 as contested/WP2; the spec assigns them to WP1. Brief 34's premise ("the only limit is the u16 whole-frame size") is superseded by the per-sub-frame cap.
 - **Plan 01.** Its nine "proposed declared deviations" are withdrawn; the ledger is regenerated in Phase 10 and plan 01 is closed out afterwards, not before.
-- **Rebuild cost.** The coordinate range is baked into the spool at extraction (`spool.py` stores pixel ints; the extractor calls `latlon_to_xy` at extraction time; `_cenc.c` has its own copy of the range), so Phase 3 requires re-extraction. Extraction time is undocumented; assembly is ~32 s. Worktree copies under `.claude/worktrees/` are stale and must not be edited.
+- **Rebuild cost.** The coordinate range is baked into the spool at extraction (`spool.py` stores pixel ints; the extractor calls `latlon_to_xy` at extraction time; `_cenc.c` has its own copy of the range), so both encoders must derive pixels from lat/lon (the spool stores lat/lon, and encoders already recompute pixels when x/y is unset), which lets Phase 3 reuse the existing spool without re-extraction or re-quantise. Extraction is still needed for Phase 8 (names live in the spool); its time is measured in Phase 1. Assembly is ~32 s. Worktree copies under `.claude/worktrees/` are stale and must not be edited.
 - **Determinism.** Every phase preserves byte-for-byte reproducibility for the same PBF and config (Determinism contract, `target-disc.md`).
 - **Sequencing.** WP2 route-planning work assumes the native coordinate model and header words; it should not start before Phase 4 closes.
 
@@ -103,7 +103,7 @@ Each assumption names the phase that tests it and what happens if it is false.
 - **Name-matched R↔OSM cells are a valid basis for road vocabulary.** Tested in Phase 7 on held-out named arterials. If false: research a different basis before mapping.
 - **R's word 0 rule holds beyond the 95.5% (897/939) of sampled leaves where it equals the first data-slot offset.** Phase 2 explains the 42 exceptions before the gate closes; the criterion is "matches R's rule or the exception is explained".
 - **Copying R's value for a flag whose meaning is unknown is harmless to the head unit.** Not accepted blindly (user decision): each such flag is a flag-table entry and a ledger deviation with a later test; none is undocumented.
-- **Country-scale re-extraction is affordable.** Phase 1 measures extraction wall time. If prohibitive: re-quantise the spool instead of re-extracting.
+- **Country-scale re-extraction is affordable** (needed for Phase 8). Phase 1 measures extraction wall time.
 
 ## Open Questions
 
@@ -113,13 +113,13 @@ Each assumption names the phase that tests it and what happens if it is false.
 
 ## Phases
 
-The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.json` and are sequenced, not parallel. Phases 8 and 9 have no dependency on each other and may be built in parallel after Phase 6. Phase 3 (coordinates, requires re-extraction) and Phase 4 (header words, cap) are separate so a header-word failure does not force re-extraction.
+The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.json` and are sequenced, not parallel. Phases 8 and 9 touch the same encoder and check files and are sequential (8 then 9). Phase 3 (coordinates) and Phase 4 (header words, cap) are separate so failures stay isolated.
 
 ### Phase 1 — Baseline truth and non-invasive harness hardening
 
 - Outcome: running `parser/compare_disc.py` against the current `output/ALLDATA.KWI` produces a report whose recorded sha256 equals `output/manifest.json`'s ALLDATA sha256; running it against a different file refuses to compare and says why. The strengthened `mfde`, `vocab`, `shape`, `container`, `pointers` and `spotcheck` checks (F12 items that need no new census) run on the current G and report the differences already known (G-only BMT tables, non-monotonic BMT DSAs, poorer-than-R vocabulary coverage, Grenfell row) as FAIL or advisory as designed, with the expectation list recorded.
 - Surfaces: `parser/compare_disc.py`, `parser/harness/{report,context,registry}.py`, `parser/harness/checks/{mfde,vocab,shape,container,decode,spotcheck}.py`, `parser/refdata/harness.json`, `parser/refdata/spot_checks.json`, `parser/tests/test_harness_*.py`.
-- Also delivers: the numeric bands section in `harness.json` (a stated fractional tolerance around R's per-level statistic, reviewed, never adjusted after seeing G) used by every later "within band" outcome; a measured extraction wall time; and `docs/ARCHITECTURE.md` holding every WP2–WP5 unknown from the source analysis with a first test for each. Phase 1 succeeds when every FAIL the strengthened checks report on the current G is on the recorded expectation list.
+- Also delivers: the numeric bands section in `harness.json` (a stated fractional tolerance around R's per-level statistic, reviewed, never adjusted after seeing G) used by every later "within band" outcome; a measured extraction wall time (for Phase 8); a vertices-per-km and road-length census of R (needed by Phase 5's density band); a recorded review of the bands before any run on G; and `docs/ARCHITECTURE.md` holding every WP2–WP5 unknown from the source analysis with a first test for each. Phase 1 succeeds when every FAIL the strengthened checks report on the current G is on the recorded expectation list.
 - Approach: known
 - Depends on: nothing
 
@@ -130,9 +130,9 @@ The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.j
 - Approach: known
 - Depends on: Phase 1
 
-### Phase 3 — Native coordinates and re-extraction
+### Phase 3 — Native coordinates
 
-- Outcome: after re-extraction (or spool re-quantise, per the Phase 1 timing) and assembly, decoding G shows per-level, per-class, per-division-state coordinate maxima equal to `coord_scale.json`; `range_for` feeds both the Python and C encoders (no `COORD_RANGE` constant remains); the `coord_scale` check PASSES; two builds are byte-identical at worker counts 1/4/12; `pytest parser/tests` passes.
+- Outcome: after assembly from the existing spool (encoders derive pixels from lat/lon; no re-extraction), decoding G shows per-level, per-class, per-division-state coordinate maxima equal to `coord_scale.json`; `range_for` feeds both the Python and C encoders (no `COORD_RANGE` constant remains); the `coord_scale` check PASSES; two builds are byte-identical at worker counts 1/4/12; `pytest parser/tests` passes.
 - Surfaces: `parser/kiwiw/{coordconv,synth,cenc,spool}.py`, `parser/kiwiw/_cenc.c`, `parser/osm_to_parcel_geometry.py`, `parser/build_alldata.py`, new `coord_scale` check, `parser/tests/{test_cenc,test_synth_*,test_spool_binary,test_build_alldata}.py`.
 - Approach: known
 - Depends on: Phase 2
@@ -168,23 +168,23 @@ The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.j
 ### Phase 8 — Name structure
 
 - Outcome (sea/ocean names are owned here, not by Phase 6): in G, every populated cell carries a region or ocean name; string types 4 (`A=`, `1=`, plain), 5 (per segment), 6 and 1 are emitted in proportions within the band of R's per-level mix; all text is uppercase ASCII; `priority` and `display_scale_flag` values on every name record are drawn from R's observed set; the `name_coverage` check PASSES and a dry-run tally shows the L0 name_count against R's 19.08M, with any remaining shortfall attributed record-by-record to source text OSM lacks.
-- Surfaces: `parser/osm_to_parcel_geometry.py` (`_make_name_record` ~530 and name gates), `parser/refdata/selection.json`, `parser/kiwiw/synth.py` (name encoders ~528–719, latin-1 sites), `parser/kiwiw/name_writer.py` unchanged for round-trip, `parser/harness/checks/vocab.py`, new `name_coverage`, `parser/tests/{test_name_encode,test_name_encoder,test_name_record_vocab}.py`.
+- Surfaces: `parser/osm_to_parcel_geometry.py` (`_make_name_record` ~530 and name gates), `parser/refdata/selection.json`, `parser/build_alldata.py`, `parser/kiwiw/{cenc,model,spool}.py`, `parser/kiwiw/_cenc.c`, `parser/kiwiw/vocab.py` (remove the `string_type=1`-at-L0 rejection; R has 1,042,019 such records), `parser/kiwiw/synth.py` (name encoders ~528–719, latin-1 sites), `parser/kiwiw/name_writer.py` unchanged for round-trip, `parser/harness/checks/vocab.py`, new `name_coverage`, `parser/tests/{test_name_encode,test_name_encoder,test_name_record_vocab}.py`.
 - Approach: known
-- Depends on: Phase 6 (parallel with Phase 9)
+- Depends on: Phase 6
 
 ### Phase 9 — Link flags, node bits and neighbour pointers
 
 - Outcome: flag and node-bit prevalence per level within the band of R's (`link_id_flag`, `selected_link_flag`, `route_planning_tag`, toll, bridge, tunnel, planned); mfde entries 12–19 carry computed adjacent-parcel pointers that decode to the correct neighbouring Map Frame in the harness, with entry counts matching R's distribution including divided-neighbour records; `docs/design/flag-table.md` exists and every link flag and node bit R uses has a row (R census, OSM source, known/unknown, G value, pending test); no flag is undocumented.
 - Surfaces: `parser/osm_to_parcel_geometry.py` (flag defaults ~470–475), `parser/kiwiw/{synth,road_writer,divide,parcel_mgmt}.py`, `parser/harness/checks/{mfde,decode}.py`, `parser/tests/{test_road_encoder,test_boundary_links,test_harness_mfde,test_synth_map_frame}.py`.
 - Approach: known
-- Depends on: Phases 4, 5 and 6
+- Depends on: Phases 4, 5, 6 and 8 (both edit `synth.py`, `osm_to_parcel_geometry.py` and the mfde/decode checks, so they are sequential)
 
 ### Phase 10 — Full rebuild, verification and ledger closure
 
 - Outcome: a single full-Australia extraction and build from the final code produces a `compare_disc.py` report (bound to its ALLDATA sha256) in which every check PASSES or its remaining difference is a ledger entry with a source-data cause, contributing no processing-caused differences; entries are only *natural* or *documented-unknown* (a flag-table entry with a pending test); `docs/design/target-disc.md`, plan 01's records and `docs/ARCHITECTURE.md` are updated (deviation ledger, word 0, mfde 12–19 ownership, size semantics); the user has accepted or rejected the final ledger; capacity is within 4.7 GB; determinism verified by two builds.
 - Surfaces: `output/`, `docs/design/target-disc.md`, `docs/ARCHITECTURE.md`, `docs/plans/01-eval-harness-and-map-layer/` (close-out follows separately), `docs/provenance.md`, `docs/design/flag-table.md`.
 - Approach: known
-- Depends on: Phases 6, 7, 8, 9
+- Depends on: Phases 7 and 9
 
 ## Provenance Notes
 
