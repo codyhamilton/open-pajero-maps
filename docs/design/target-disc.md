@@ -197,7 +197,7 @@ disc's bytes each de-risks.
   zoom level. Decoded bounding boxes show it is a state partition
   (201=WA, 202=NT, 203=SA, 204=QLD, 205=NSW/ACT, 206=VIC, 207=TAS, all
   seven confirmed by decoding each file's address-range bounding boxes).
-- the old overview's 2026-08-24 test-access decision ("favour frequent
+- the 2026-08-24 test-access decision ("favour frequent
   in-vehicle validation") is superseded by decision 1 above.
 - `docs/archive/03-osm-pipeline.md`'s "roads → names → POIs → address search
   with an in-vehicle test after each" phasing is superseded by decisions 1–2.

@@ -17,7 +17,7 @@ Every WP1 fix ended in a 11–17 min rebuild-and-verify cycle. Profiling showed 
 ## What Was Built
 
 - **Streaming assembly:** frames are appended to a spill file (`kiwiw/spill.py`, `FrameRef` index) and the container is streamed to disk by `alldata_writer.build_alldata_kwi(..., return_bytes=False)`; the bytes-returning path remains for small fixtures.
-- **Binary columnar spool:** `kiwiw/spool.py` writes little-endian fixed-width per-cell records (`.data` + `.idx`, magic `KWSPIDX1`); the reader uses `os.pread` per cell. The old pickle format lives in `kiwiw/spool_legacy.py`, and `parser/tools/convert_spool.py` converts existing spools (per-level stats verified equal). The contract is promoted to `docs/ARCHITECTURE.md` (stage contracts).
+- **Binary columnar spool:** `kiwiw/spool.py` writes little-endian fixed-width per-cell records (`.data` + `.idx`, magic `KWSPIDX1`); the reader uses `os.pread` per cell. The old pickle format lives in `kiwiw/spool_legacy.py`, and `parser/tools/convert_spool.py` converts existing spools (per-level stats verified equal).
 - **Vectorized encoder:** `synth._bg_fast` (numpy pixel conversion plus an inlined integer loop for multiplier > 1 / saturating deltas), guarded by the retained scalar oracle and a 4000-shape fuzz test. About 1.5x on level 2.
 - **Parallel encoding:** `-j/--workers` in `build_alldata.py`. Whole-row chunks (weight-balanced, independent of the worker count) are encoded by forked workers with their own readers and merged in canonical order through a bounded window; `trim_stats` merge additively.
 - Tooling: `parser/tools/bench_build.py` (wall + tree RSS), `--frame-digest` per-frame sha256 listing, numpy as a hard dependency, `docs/provenance.md` updated.

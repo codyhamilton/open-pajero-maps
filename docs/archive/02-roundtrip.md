@@ -1,7 +1,5 @@
 # Phase 2 — Writer prototype: round-trip the existing disc
 
-> **Historical research notebook.** Superseded by `docs/schema/` and `docs/design/target-disc.md` wherever they disagree. Kept as the evidence record; not maintained.
-
 ## Goal
 Prove format understanding by re-serializing the parsed intermediate representation
 back into byte-identical (or documented-diff-only) files, then burning and testing
@@ -365,7 +363,7 @@ Third Phase 2 pass, resolving "what remains" item 3 below (partially --
 see "explicitly not attempted" at the end of this section for the honest
 scope boundary). Target: the `IDX/*.IDX` search-index chain
 (`kiwiw/search_frame.py`), whose read side was already solved end-to-end as
-of 2026-08-25 (see `the pre-2026-09-21 overview (git history)`'s decision log,
+of 2026-08-25 (see `the project overview`'s decision log,
 "Address/POI search chain SOLVED end-to-end").
 
 New code: `parser/kiwiw/index_writer.py` (inverse of `kiwiw/search_frame.py`),
@@ -1272,7 +1270,7 @@ never previously exercised, including at least one `ValueError: odd number
 of nibble fields written before a byte-aligned field` (a POI-specific
 nibble-field-pairing case not present in any SADSR201.IDX population).
 None of this was investigated further -- it is recorded here as an honest
-"not done", not a hidden gap. `the pre-2026-09-21 overview (git history)`'s "what remains" list
+"not done", not a hidden gap. `the project overview`'s "what remains" list
 should treat `POISR201.IDX` whole-file assembly as still fully outstanding.
 
 ### Regression check

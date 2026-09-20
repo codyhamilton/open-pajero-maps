@@ -1,7 +1,5 @@
 # Phase 3 — OSM ingestion and content pipeline
 
-> **Historical research notebook.** Superseded by `docs/schema/` and `docs/design/target-disc.md` wherever they disagree. Kept as the evidence record; not maintained.
-
 ## Goal
 Generate real map content from OpenStreetMap data for the target region, matching
 the KIWI-W structures identified in Phase 1, built up incrementally:
@@ -306,7 +304,7 @@ round-trip succeeding on real hardware, and hasn't started.
 
 Route-planning (Ch.9/Ch.10) was investigated ahead of the main Phase 3 sequence
 because it was the last major unknown in the disc size-budget analysis (see
-`the pre-2026-09-21 overview (git history)` decision log and `docs/archive/01-format-analysis.md`,
+`the project overview` decision log and `docs/archive/01-format-analysis.md`,
 "Route planning / region data"). Once the byte format was decoded, a follow-up
 agent built and tested a first prototype writer — this is scoping/risk-reduction
 work, not the start of the real roads-first pipeline above.

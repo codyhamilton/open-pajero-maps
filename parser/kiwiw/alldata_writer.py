@@ -36,7 +36,7 @@ Both modes reuse the exact same `write_pdmdh()` / `write_parcel_mgmt_record()`
 byte-identical "in place" -- only the *pointer values fed into them*
 differ between modes, never the encoding logic itself.
 
-Out of scope (see the decision log in git history (docs/00-overview.md) and this module's
+Out of scope (see this module's
 callers for the full reasoning, not repeated here): the two vendor ext-
 frame types (0xAF100100/0xAF100300) are not synthesized -- when a Map
 Frame's mfde table has an in-buffer "Extended Data Frame" entry, its raw

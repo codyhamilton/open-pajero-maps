@@ -1,7 +1,5 @@
 # Phase 1 — Format analysis
 
-> **Historical research notebook.** Superseded by `docs/schema/` and `docs/design/target-disc.md` wherever they disagree. Kept as the evidence record; not maintained.
-
 ## Goal
 
 A full, lossless parser for every file type on the disc, backed by a written
@@ -1230,7 +1228,7 @@ static evidence (spec text + disc bytes) can establish — the spec's own text
 disclaims further definition, and no second disc or vendor-tool source is
 available to compare against. The only test that can convert "plausible
 routing artifact" into "confirmed required/not required" is the one already
-named in `the pre-2026-09-21 overview (git history)`'s open-risks list: build a modified disc that
+named in `the project overview`'s open-risks list: build a modified disc that
 zeroes or strips `0xAF100100`/`0xAF100300` for one region (or a small
 cluster) and test in-vehicle whether cross-boundary/multi-level route
 planning through that region degrades or fails, while leaving the MID stamp

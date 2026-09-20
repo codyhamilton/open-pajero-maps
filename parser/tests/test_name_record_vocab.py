@@ -1,5 +1,5 @@
 """Coverage for `_make_name_record`'s per-level name `type_code` vocabulary
-(docs/plans/01-eval-harness-and-map-layer.md).
+(plan 01).
 
 The `vocab` harness check (`parser/harness/checks/vocab.py`) requires every
 generated `name.type_code` at a given level to be a subset of R's real
@@ -80,7 +80,7 @@ def test_levels_2_to_12_nonsuburb_place_names_are_omitted():
     selection.json currently admits a place node at (2/4/6: only 3
     occurrences at level 8, where selection.json admits no place nodes at
     all). As of brief 22
-    (docs/plans/01-eval-harness-and-map-layer.md, brief 22-spotcheck-missing-names in git history), `_handle_node` itself no longer ever
+    (plan 01), `_handle_node` itself no longer ever
     passes 0x132 -- it was found to be the root cause of the Perth
     level-2 `spotcheck` FAIL (place=city nodes silently dropped here) and
     was changed to always pass 0x134 (308) instead, see
@@ -117,7 +117,7 @@ def test_levels_2_to_12_road_names_unaffected():
 
 def test_handle_node_assigns_308_to_nonsuburb_place(tmp_path):
     """End-to-end regression for brief 22
-    (docs/plans/01-eval-harness-and-map-layer.md, brief 22-spotcheck-missing-names in git history): a real `place=city` OSM node (like
+    (plan 01): a real `place=city` OSM node (like
     Perth's) run through the actual extractor (`_handle_node`, via
     `extract_parcel_geometry` with the real `selection.json`-backed
     level_filter, not the test-only `_default_level_filter`) must produce
