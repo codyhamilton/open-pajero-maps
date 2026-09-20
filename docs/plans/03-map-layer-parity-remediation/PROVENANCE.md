@@ -46,3 +46,12 @@ Interactive posture only. Headless runs carry intent, the assumption ledger, and
 - Foreign-land absence is natural.
 - The 102 cells are unexplained until Phase 6 lists and classifies them.
 - Flags go in `docs/design/flag-table.md` (known/unknown, R census, OSM source, G value, pending test); ledger class is *documented-unknown*.
+
+### Turn 3 (docs consolidation, 2026-09-20)
+
+**User responded:** A docs area of authoritative, validated schema definitions, broken into files, that establishes what is verified vs assumed or unknown and always holds the best-known understanding from any source.
+
+**Agent decisions:**
+
+- Unknowns and the flag table move from `docs/ARCHITECTURE.md` / `docs/design/flag-table.md` to `docs/schema/` (`UNKNOWNS.md`, `flags.md`). Surface amendment only; no outcome, contract or phase change.
+- Each phase that learns a format fact updates the schema rows it touches in the same change.
