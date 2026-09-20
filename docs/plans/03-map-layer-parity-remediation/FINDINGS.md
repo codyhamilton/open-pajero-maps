@@ -1,9 +1,6 @@
-# Map-layer parity remediation — design (2026-09-20)
+# Findings: map-layer parity remediation (2026-09-20)
 
-Status: proposed. Extends `docs/design/target-disc.md` (program of record); where this doc
-and that one disagree on the items below, this doc wins once accepted. Supersedes the
-"proposed declared deviations" list in `docs/plans/01-eval-harness-and-map-layer.md`
-("Build record, rebuild #6"), which was measured on a pre-brief-34 build.
+Root-cause evidence behind plan 03. Findings F1–F12 carry the measurements this plan's phases cite.
 
 ## 1. Why this exists
 
@@ -24,11 +21,11 @@ Evidence quality is stated per item. Nothing below was validated on the head uni
 | Tag | Meaning |
 |---|---|
 | **M** | Measured directly on R and current G (`output/ALLDATA.KWI`, 2026-09-19 10:27). |
-| **H** | Hypothesis with strong support; must be confirmed by an offline test (Section 5) before dependent work is built. |
+| **H** | Hypothesis with strong support; must be confirmed by an offline test (plan 03 Phase 2 gate) before dependent work is built. |
 | **U** | Unknown; the head unit's behaviour cannot be determined offline. Treated as a risk, not a fact. |
 
-`output/report.json` predates the brief-34 build and is stale. No fresh `compare_disc.py`
-verdict exists; first action of the work is to regenerate it (Section 6, R0).
+`output/report.json` is stale. No fresh `compare_disc.py`
+verdict exists; first action of the work is to regenerate it (Phase 1).
 
 ## 3. Findings and design changes
 
@@ -230,8 +227,7 @@ and require `dipid` (F2) to be correct on every divided leaf.
 ### F11. Neighbour pointers, mfde 12–19 (M)
 
 Spec Ch.7.1.1 item 17 defines these as Adjacent Parcel Address Information (8 direction
-pointers), not route guidance. They are **WP1's**, not WP2's; `DESIGN.md` §7/§8 "contested"
-is resolved by this. In R, index 12 is out-of-buffer on 3,697,959 of 3,704,871 L0 parcels;
+pointers), not route guidance. They are **WP1's**, not WP2's; the design's "contested" question is resolved by this. In R, index 12 is out-of-buffer on 3,697,959 of 3,704,871 L0 parcels;
 G's absent value is spec-legal but declares "no neighbours". R's 21–35-entry tables (adjacent
 divided-parcel records) are never emitted.
 
@@ -252,64 +248,7 @@ including divided-neighbour records. Update `DESIGN.md` ownership accordingly.
 | Envelope sub-frame rows now pass at <=131,070 | Report the 2×-R advisory (F3); per-sub-frame cap only. |
 | Stale `report.json` | Report carries the ALLDATA sha256 and mtime it was computed from; refuse to compare if it differs from `manifest.json`. |
 
-## 4. Deviation ledger after this design
-
-| Item | Status |
-|---|---|
-| L12 parcel_count 3 vs 1 | Closed (one undivided cell). L12 frame 4,992 B vs R 3,808 B remains to be re-assessed after F5–F7. |
-| L0 background trim, L8 name trim | Closed / expected closed by F5, F6. |
-| L8 background/road trims | Expected closed by F3 + F5; re-measure. |
-| Blockset coverage | Closed. G-only edge cells (13 tables, 102 L0 cells) are declared natural: OSM contains land R's rectangle excludes. |
-| PDMDH length tolerance | Legitimate (tail = BMT entries, byte-verified); check strengthened (F12). |
-| Adelaide oracle amendment | Legitimate; fixture strengthened. |
-| L0 name_count 0.149× | Not accepted. Re-measure after F8; residual only if OSM lacks the source. |
-| Foreign land (PNG, Indonesia, NZ) | **Declared natural deviation** (not in the extract). |
-| Other OSM-vs-2007 currency and sparsity differences | Natural; listed with per-cell evidence when observed. |
-
-## 5. Verification order (offline oracle only)
-
-Per the design doc, no vehicle test until full parity; every step below is an offline byte
-or structural comparison.
-
-1. **Coordinate range (F1).** Decode R with a 4096 range and overlay against OSM at matched
-   cells (Brisbane, Sydney, rural QLD, outback). Confirm road positions coincide (no 1/8
-   clustering) and that clipped links terminate at the cell edge. If it fails, stop and
-   re-derive before anything depends on it.
-2. **Header words (F2).** Regress word 6/7/9–11 on parcel class and level; confirm rules
-   predict R's values for held-out cells at >99%.
-3. Regenerate G with F1–F3; confirm the census predicts R's words on G.
-4. Measure per-level vertices per link/km and per-kind sub-frame maxima against R (F5, F6).
-5. Road-type distribution and named-arterial spot checks (F4).
-6. Name coverage and name_count tally (F8) before running a full build.
-7. Full build + regenerated `compare_disc.py`; deviations ledger updated from that run only.
-
-## 6. Work breakdown
-
-Sequenced by dependency; each item is one brief. Full-Australia rebuilds are ~32 s
-assembly now (plan 02), so the rebuild loop is cheap; extraction is the slow step.
-
-| # | Brief | Depends on | Gate |
-|---|---|---|---|
-| R0 | Regenerate `compare_disc.py` on current G; add sha/mtime stamp to report (F12) | — | Fresh report committed |
-| R1 | Coordinate-range census and confirmation (F1) | R0 | Verification step 1 passes, or design revised |
-| R2 | Header-word census and generator; correct `DESIGN.md` line 33 and stale `synth.py` comment (F2) | R1 | Step 2 |
-| R3 | Per-sub-frame size cap, 2×-R advisory (F3) | R2 | pytest; unchanged bytes where nothing exceeds |
-| R4 | Generalisation stage (F5) | R1 | Step 4 |
-| R5 | Road vocabulary and level selection (F4) | R4 | Step 5 |
-| R6 | Background selection and vocab catch-all audit (F6) | R4 | Step 4 |
-| R7 | Ocean polygons and sea/outback classes (F7) | R6 | Cell-content census vs R |
-| R8 | Name structure rebuild (F8) | R2 | Step 6 |
-| R9 | Link flags and node bits (F9) | R2 | Census agreement |
-| R10 | Division policy and neighbour pointers (F10, F11) | R2, R4, R6 | mfde entry-count coverage |
-| R11 | Harness hardening (F12) | R0 (can run in parallel with R1–R10) | Checks fail on current G where expected |
-| R12 | Full rebuild, verify, update deviation ledger | all | Step 7 |
-
-R1 is the critical gate: R2, R4, R8 and everything downstream assume its outcome. R11 and
-the WP2/WP3 format spikes (ext frames `0xAF100100`/`0300` correlation, turn-restriction
-resolution failure in region 178, POI vendor category census) can run in parallel with
-R1–R10 because they do not consume the map layer's encoding.
-
-## 7. Structural source differences for later work packages (from the same review)
+## 4. Structural source differences for later work packages (from the same review)
 
 These do not change WP1 but constrain WP2–WP5 and are recorded so they are not re-derived.
 
@@ -328,13 +267,3 @@ These do not change WP1 but constrain WP2–WP5 and are recorded so they are not
 - **WP4.** Bodies of POIDT, ITSSR, FWYSR, AGMSR/ARGSR/EMGSR, HWMAP are undecoded; NT and TAS
   have no FWYSR in R; emergency and zone data have no practical OSM source.
 - **WP5.** Low risk.
-
-## 8. Decisions for the user
-
-1. Accept the design principle (natural-only deviations) and the ledger in Section 4.
-2. Accept ASCII folding of accented names (F8), or supply the head unit's font/encoding
-   coverage.
-3. Accept the foreign-land tail as a declared natural deviation.
-4. Accept the R1 gate: if the 4096 range fails to confirm, the design pauses for re-analysis
-   rather than proceeding on the current constant.
-5. Approve running R11 and the WP2/WP3 spikes in parallel with R1–R10.

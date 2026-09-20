@@ -10,7 +10,7 @@ User request, verbatim:
 
 > produce using the /workflow:design
 
-(Source analysis: `docs/design/map-layer-parity-remediation.md`, committed 33bd252. It carries the evidence, numbers and findings F1–F12 this design cites.)
+(Source analysis: `FINDINGS.md`. It carries the evidence, numbers and findings F1–F12 this design cites.)
 
 ## Problem
 

@@ -1,6 +1,6 @@
 # Offline evaluation harness and full-Australia map layer (WP1)
 
-WP1 built the offline reference-vs-generated comparison harness (`parser/compare_disc.py`, `parser/harness/`) and brought the map layer (`ALLDATA.KWI`) from a one-level, Perth-only prototype to a from-scratch, all-seven-level, full-Australia build generated from the OSM PBF. The harness works and the build passes most of it: container, decode, pointers, mfde, mht29, shape, vocab and spotcheck PASS on the final build. It did not fully meet its goal. The envelope check still FAILs on two counts, several content trims exceed 1%, and the work was never formally accepted. Those gaps were handed to the map-layer parity remediation plan (`docs/design/map-layer-parity-remediation.md`), which regenerates the deviation ledger from one final build.
+WP1 built the offline reference-vs-generated comparison harness (`parser/compare_disc.py`, `parser/harness/`) and brought the map layer (`ALLDATA.KWI`) from a one-level, Perth-only prototype to a from-scratch, all-seven-level, full-Australia build generated from the OSM PBF. The harness works and the build passes most of it: container, decode, pointers, mfde, mht29, shape, vocab and spotcheck PASS on the final build. It did not fully meet its goal. The envelope check still FAILs on two counts, several content trims exceed 1%, and the work was never formally accepted. Those gaps were handed to the map-layer parity remediation plan (`docs/plans/03-map-layer-parity-remediation/`), which regenerates the deviation ledger from one final build.
 
 ## Intent
 
@@ -64,7 +64,7 @@ Verification was the harness itself. The final rebuild's report shows container 
 
 ## Follow-ups
 
-- Regenerate the deviation ledger from one final build and get user acceptance: parity remediation plan, `docs/design/map-layer-parity-remediation.md`, and the ledger in `docs/design/target-disc.md`.
+- Regenerate the deviation ledger from one final build and get user acceptance: parity remediation plan, `docs/plans/03-map-layer-parity-remediation/`, and the ledger in `docs/design/target-disc.md`.
 - Low, from the review: collapse the duplicated layer-presence check in `checks/decode.py` and `checks/shape.py` into the CLI gate; add a cheap way-level bbox pre-check so `--fixture` runs on the full PBF are fast; fold the spool's content-type totals into its first index pass. No tracker exists; these are recorded here only.
 - Open format questions carried to `docs/schema/UNKNOWNS.md`: the mfde 12-19 mechanism and its stride, the header census beyond a 49-read sample, and the level-0 residual idx10 variant.
 - Route planning, search indexes, metadata regeneration and image authoring remain WP2-WP5 in `docs/design/target-disc.md`.

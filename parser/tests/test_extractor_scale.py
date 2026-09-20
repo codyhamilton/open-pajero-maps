@@ -131,7 +131,7 @@ class TestExtractorScale:
         for level in LEVELS:
             grid = grids[level]
             # Levels 10/12 have zero road_type/display_class values in R's
-            # census (parser/refdata/vocab/README.md, "Levels 10/12"), so
+            # census (docs/design/osm-vocabulary-mapping.md, "Backgrounds"), so
             # kiwiw.vocab's road_type/display_class tables both return None
             # for every highway= tag there and `_make_road_link` omits the
             # feature -- no road links (and, since a road name is only
@@ -185,7 +185,7 @@ class TestExtractorScale:
         against split_polyline_by_parcel) but stays within a single parcel
         at level 12 (its span is far smaller than a level-12 cell). At
         level 12 itself, R's census has zero road links (parser/refdata/
-        vocab/README.md, "Levels 10/12") and kiwiw.vocab's road_type/
+        docs/design/osm-vocabulary-mapping.md, "Backgrounds") and kiwiw.vocab's road_type/
         display_class tables return None there for every highway= tag, so
         WAY_SPLIT (highway=residential) yields zero links at level 12 even
         though it geometrically fits in one parcel."""

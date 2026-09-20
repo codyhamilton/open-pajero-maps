@@ -260,7 +260,7 @@ def test_level_10_and_12_have_no_road_links_in_reference_profile():
 # parser/refdata/vocab/bg_type.json value at that level, or the way is
 # selected, extracted and then silently dropped before spool.add -- the
 # exact "natural=dune at levels 10/12" bug this brief fixes. See
-# selection.json's level-10 _calibration_note and vocab/README.md's
+# selection.json's level-10 _calibration_note and osm-vocabulary-mapping.md's
 # "Levels 10/12 addendum" for the full writeup. ----------------------------
 
 

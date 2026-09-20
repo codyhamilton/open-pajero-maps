@@ -140,7 +140,7 @@ within a latitude row west to east (`blockset_index = bsy * n_lng + bsx`).
 | BMR 6..17 file name | 12-byte file name, present only with the PDMDH file-designation flag | spec-only | Spec ch.6.2.1.1 (3). R has no file names (`bmr_size` = 6 B) | - |
 | Empty BMR census | R: 2307 BMRs, 2113 with DSA and size, 194 empty (level 0: 180, level 2: 14; others none) | observed | Read-only census of R (`parse_pdmdh_full`) | `parser/kiwiw/volume.py` |
 | Block buffer size on R | Each buffer is larger than its record footprint (root record + subrecords) by slack of ~8-12 KB at level 0/2 (stale mastering space, not read by kiwiread); carried as `tail_raw`. 2107 of 2113 buffers have a non-empty tail | observed | R census; `parser/kiwiw/model.py` `ParcelMgmtRecord` docstring; `parser/kiwiw/parcel_mgmt.py` | `parser/kiwiw/parcel_mgmt.py` |
-| BMR DSA monotonic in BMT order | Whether the head unit requires or R shows block DSAs increasing with block index | unknown | `docs/design/map-layer-parity-remediation.md` lists it as an open ordering check | - |
+| BMR DSA monotonic in BMT order | Whether the head unit requires or R shows block DSAs increasing with block index | unknown | Open ordering check, not measured | - |
 
 ## Parcel Management Record (spec ch.6.3)
 

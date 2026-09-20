@@ -27,7 +27,7 @@ plus the census `parser/refdata/profile/map.json`.
 
 | Field | Meaning | Status | Evidence | Code |
 |---|---|---|---|---|
-| 0, u16 word 0, Header Size (SWS) | Header size in words, through the end of the mfde table: word0*2 = 36 + 4*nregion + 6*n_entries = first in-buffer slot offset. 100% of the sample (939/939 at L6). Conflict: plan-01 DESIGN s2 and `test_header_fields_per_design` say it equals buffer size; the remediation doc says it equals the first slot in 897 of 939 L6 leaves. Winner: the census, no exceptions. `synth.py` writes total_size//2, which is wrong | observed | Ad hoc census on R (not checked in); `docs/design/map-layer-parity-remediation.md`; spec ch.7.1.1 | `parser/kiwiw/synth.py` |
+| 0, u16 word 0, Header Size (SWS) | Header size in words, through the end of the mfde table: word0*2 = 36 + 4*nregion + 6*n_entries = first in-buffer slot offset. 100% of the sample (939/939 at L6). Conflict: plan-01 DESIGN s2 and `test_header_fields_per_design` say it equals buffer size; the remediation doc says it equals the first slot in 897 of 939 L6 leaves. Winner: the census, no exceptions. `synth.py` writes total_size//2, which is wrong | observed | Ad hoc census on R (not checked in); spec ch.7.1.1 | `parser/kiwiw/synth.py` |
 | 2, 8 bytes, PID | Parcel id: 3-byte geonum lat (1/8 arc-second, bit 23 = negative), exp byte, 3-byte geonum lon, exp byte | observed | Lat/lon decode consistent with placement; exp bytes not decoded and written as 0 | `parser/kiwiw/parcel.py` |
 | 10, u8 cy | llcode row: grid cell y of the parcel | observed | Non-zero for most L2-L8 parcels (e.g. L2 217,473 of 231,564 have both cy and cx non-zero) | `parser/kiwiw/parcel.py` |
 | 11, u8 cx | llcode column: grid cell x of the parcel | observed | As above | `parser/kiwiw/parcel.py` |
@@ -85,7 +85,7 @@ Region semantics and the RP frames they point at: `route-planning.md`.
 | Route-planning slots | None in the mfde table. Route guidance is reached via header rg_addr/rg_size, RP via the region list | observed | Per-index class histogram shows no RP slots; see `route-planning.md` | `parser/kiwiw/parcel.py` |
 | Slots 12-19 | Adjacent Parcel Address Information, order upper, UR, right, LR, lower, LL, left, UL | observed | Spec ch.7.1.1 note 13; R absent counts at L0: idx12/16 = 6912, idx13/15/17/19 = 15472, idx14/18 = 8576 (pair up as expected) | `parser/kiwiw/synth.py` |
 | Slots 12-19 at L12 | No adjacency slots; table has 12 entries | verified | `parser/tests/test_synth_map_frame.py` | `parser/kiwiw/synth.py` |
-| Divided-neighbour entry (slots 12-19, size 0, offset not 0xFFFFFFFF) | Layout [u16 D halved][u16 info][u16 size=0]; info bits 15:12 = Y divisions - 1, 11:8 = X divisions - 1, 3:0 = adjacent parcel count - 1. D points sequentially into table positions 20+; n_entries = 20 + sum(count). 100% of 15,537 R leaves at L4-L10 (ad hoc scripts, not checked in). Supersedes plan-01 and brief 21 "pointers at 4-cell stride" reading; F11 in the remediation doc agrees | observed | `docs/design/map-layer-parity-remediation.md`; `docs/plans/01-eval-harness-and-map-layer.md` | `parser/kiwiw/parcel.py` |
+| Divided-neighbour entry (slots 12-19, size 0, offset not 0xFFFFFFFF) | Layout [u16 D halved][u16 info][u16 size=0]; info bits 15:12 = Y divisions - 1, 11:8 = X divisions - 1, 3:0 = adjacent parcel count - 1. D points sequentially into table positions 20+; n_entries = 20 + sum(count). 100% of 15,537 R leaves at L4-L10 (ad hoc scripts, not checked in). Supersedes plan-01 and brief 21 "pointers at 4-cell stride" reading | observed | `docs/plans/01-eval-harness-and-map-layer.md` | `parser/kiwiw/parcel.py` |
 | Entries 20+ | Adjacent-parcel addresses for divided neighbours; at rural L0 neighbours are 4x4 integrated, so their frames are 4 cells away (inference) | assumed | Inference from the census above | `parser/kiwiw/parcel.py` |
 
 ## Ext frames
@@ -103,7 +103,7 @@ Region semantics and the RP frames they point at: `route-planning.md`.
 | Type 2 | 4x4 division; no type-2 leaves on R at L0 | spec-only | `parser/refdata/grid.json`; spec ch.7.1.1 | `parser/kiwiw/divide.py` |
 | Type 3 | 1x1 | spec-only | `parser/refdata/grid.json` | `parser/kiwiw/divide.py` |
 | Planner | Divides 2x2 first, then 4x4 | assumed | Build convention; G writes type 1/2 only | `parser/kiwiw/divide.py` |
-| Integrated | Parcels merged 1x1 up to 8x8 basic parcels (spec); R shows 4x4 at rural L0 | observed | `docs/design/map-layer-parity-remediation.md` F1; spec ch.7.2 | `parser/kiwiw/synth.py` |
+| Integrated | Parcels merged 1x1 up to 8x8 basic parcels (spec); R shows 4x4 at rural L0 | observed | R census; spec ch.7.2 | `parser/kiwiw/synth.py` |
 
 ## Size limits
 
@@ -121,11 +121,11 @@ Spec ch.7.2: a 13-bit coordinate plus 3-bit relative position; a basic parcel sp
 
 | Field | Meaning | Status | Evidence | Code |
 |---|---|---|---|---|
-| L2-L10 range | Maximum decoded coordinate 0..4096 (L12: 3072) | observed | Design F1 (`docs/design/map-layer-parity-remediation.md`) and the independent 8-point sample in `docs/schema/map-background.md` (coordinate-range row). Sample-level only; the full census is plan 03 Phase 2 | `parser/kiwiw/coordconv.py` |
+| L2-L10 range | Maximum decoded coordinate 0..4096 (L12: 3072) | observed | R census and the independent 8-point sample in `docs/schema/map-background.md` (coordinate-range row). Sample-level only; the full census is plan 03 Phase 2 | `parser/kiwiw/coordconv.py` |
 | L0 urban | 0..4096 | observed | As above | `parser/kiwiw/coordconv.py` |
 | L0 rural | 0..16384, explained by 4x4 integrated parcels (4 x 4096) | observed | As above; dipid 0xA033 census | `parser/kiwiw/coordconv.py` |
 | Divided sub-parcels | 2048 or 4096 | observed | As above | `parser/kiwiw/divide.py` |
-| True full-cell range equals the observed maximum | Whether 4096 (16384 at L0 rural) is the cell's full range, i.e. whether the head unit scales by it. Hypothesis in design F1; the spec allows 4096 per basic parcel | unknown | `docs/design/map-layer-parity-remediation.md` F1; `docs/schema/map-background.md` (same question, same status). Decided by plan 03 Phase 2 | `parser/kiwiw/coordconv.py` |
+| True full-cell range equals the observed maximum | Whether 4096 (16384 at L0 rural) is the cell's full range, i.e. whether the head unit scales by it. Hypothesis; the spec allows 4096 per basic parcel | unknown | `docs/schema/map-background.md` (same question, same status). Decided by plan 03 Phase 2 | `parser/kiwiw/coordconv.py` |
 | G COORD_RANGE = 1<<15 | G scale constant; docstring says not spec-confirmed. Spec supports up to 32768 only for 8x8 integrated | assumed | `parser/kiwiw/coordconv.py` | `parser/kiwiw/coordconv.py` |
 
 ## Open questions

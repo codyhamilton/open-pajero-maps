@@ -115,7 +115,7 @@ ROADS = {
 # OSM highway=* → display_class, both per-level and data-driven
 # (docs/design/target-disc.md, "Vocabulary is data, not code"; tables +
 # rationale in parser/refdata/vocab/{road_type,display_class}.json and
-# parser/refdata/vocab/README.md; loader in kiwiw/vocab.py). Coverage
+# docs/design/osm-vocabulary-mapping.md; loader in kiwiw/vocab.py). Coverage
 # against the reference census is enforced by parser/tests/test_vocab.py.
 _ROAD_TYPE_VOCAB = vocab.load("road_type")
 _DISPLAY_CLASS_VOCAB = vocab.load("display_class")

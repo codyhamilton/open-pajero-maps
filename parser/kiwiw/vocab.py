@@ -7,7 +7,7 @@ background types and name string types are checked-in data with a
 coverage test against `R`'s censused vocabulary, not literals in a
 converter." This module is the loader for that data; the tables
 themselves (and the rationale for each non-obvious value) live in
-`parser/refdata/vocab/README.md`.
+`docs/design/osm-vocabulary-mapping.md`.
 
 Table format (one JSON file per vocabulary, e.g. `road_type.json`)::
 
