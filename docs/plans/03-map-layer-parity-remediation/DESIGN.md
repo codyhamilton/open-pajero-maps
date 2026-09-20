@@ -152,7 +152,7 @@ The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.j
 
 ### Phase 6 — Background classes and ocean polygons
 
-- Outcome: G's background type and count distribution per level matches R's per-class census within the band; L0 CBD cells hold shape counts in R's order of magnitude reserves (321) and rivers/lakes (291) match R's class census; (Melbourne/Sydney/Adelaide/Perth CBD cells recorded against R's 17/31/23/122); every R-populated cell in the sampled 0.25° grid that R fills with sea now carries an ocean polygon (type 289) and an ocean polygon (sea names belong to Phase 8); the catch-all `288` cells are audited (land mislabelled as sea = 0); foreign land is the only listed cell content missing from R.
+- Outcome: G's background type and count distribution per level, including reserves (321) and rivers/lakes (291), match R's per-class census within the Phase 1 band; L0 CBD cells hold shape counts in R's order of magnitude (Melbourne/Sydney/Adelaide/Perth CBD cells recorded against R's 17/31/23/122); every cell in the sampled 0.25° grid that R fills with sea carries an ocean polygon (type 289; sea names belong to Phase 8); the catch-all `288` cells are audited (land mislabelled as sea = 0); foreign land is the only listed cell content missing from R.
 - Surfaces: `parser/refdata/{selection,vocab/bg_type}.json`, `parser/osm_to_parcel_geometry.py` (background loop, bg predicate ~694, coastline/land-polygon handling), background encode path in `parser/kiwiw/synth.py`/`_cenc.c`, `parser/tests/{test_vocab,test_selection,test_background_encoder,test_parcel_geometry}.py`.
 - Approach: known
 - Depends on: Phase 5
