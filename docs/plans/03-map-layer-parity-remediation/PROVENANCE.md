@@ -34,3 +34,15 @@ Interactive posture only. Headless runs carry intent, the assumption ledger, and
 - **Phase 10 owns the ledger**: deviations are regenerated from a single final build rather than accepted piecemeal now. Rationale: the current evidence is a mix of stale-report and direct-decode measurements, and many listed deviations may disappear once the processing artifacts are fixed.
 - **Foreign land and G-only edge cells** left as an open question for the user to accept at Phase 10, not decided now. Rationale: acceptance should be against the final measured ledger.
 - **Rebuild dependency recorded**: coordinate range is baked into the spool at extraction, so Phase 3 re-extracts. Rationale: found in recon (`spool.py`, extractor `latlon_to_xy`, `_cenc.c` constant).
+
+### Turn 2
+
+**Agent asked:** Accept the foreign-land tail, the 102 G-only edge cells, and R-copied unverified flags?
+
+**User responded:** Lack of foreign lands is a natural deviation; explain the 102 edge cells. "No we don't just blindly accept flags, we can create a table of the flags and document known and unknown. We'll record the deviation and test later, never leave undocumented".
+
+**Agent decisions:**
+
+- Foreign-land absence is natural.
+- The 102 cells are unexplained until Phase 6 lists and classifies them.
+- Flags go in `docs/design/flag-table.md` (known/unknown, R census, OSM source, G value, pending test); ledger class is *documented-unknown*.

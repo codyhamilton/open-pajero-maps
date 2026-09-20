@@ -63,7 +63,8 @@ The work is one linear-then-fan-out sequence: establish the truth and harden the
   - Link flags (`link_id_flag`, `selected_link_flag`, `route_planning_tag`, toll/bridge/tunnel/planned bits) populated from OSM tags or from R's per-class census rule; a flag whose meaning cannot be established takes R's value for the matching class and is recorded as unverified.
   - mfde 12–19 carry adjacent-parcel pointers computed from the WP1 grid, with R-style entry counts including divided-neighbour records (spec Ch.7.1.1 item 17 assigns these to WP1; `DESIGN.md` of plan 01 §7/§8 "contested" is resolved accordingly).
 - Before name work, the `name_writer` encoding and search chain in `docs/phases/02-roundtrip.md` are audited (F8); the L0 name_count envelope rule stays as-is. Name attribution method: on a stride sample of R strings, the fraction with no OSM counterpart is the natural-shortfall figure; the remainder is a defect.
-- Ledger classes: *natural* (source lacks it), and *R-copied, unverified* (explicitly accepted by the user). Nothing else is admissible.
+- Flag table: `docs/design/flag-table.md` lists every link flag and node bit with its R census, the OSM source (if any), its status (*known* / *unknown*), and the value G writes. An unknown flag is never accepted silently: it takes R's per-class value, is recorded in the table and the ledger as a documented deviation with a stated test to run later, and is never left undocumented.
+- Ledger classes: *natural* (source lacks it) and *documented-unknown* (flag-table entry with a pending test). Nothing else is admissible, and every entry states its cause.
 - Non-goals: one-way and turn restrictions (WP2; R's map-layer node oneway is 0 on all 29.9M nodes); the head unit's use of `A=`/`1=` tags for search (unknown; emitted regardless).
 
 ### Domain: Verification and deviation ledger
@@ -101,12 +102,12 @@ Each assumption names the phase that tests it and what happens if it is false.
 - **Coastline lines in the extract close into land polygons** (extract-edge breaks, islands). Tested in Phase 6 by the no-land-labelled-as-sea audit. If false: ocean construction is re-analysed before Phase 6 closes.
 - **Name-matched R↔OSM cells are a valid basis for road vocabulary.** Tested in Phase 7 on held-out named arterials. If false: research a different basis before mapping.
 - **R's word 0 rule holds beyond the 95.5% (897/939) of sampled leaves where it equals the first data-slot offset.** Phase 2 explains the 42 exceptions before the gate closes; the criterion is "matches R's rule or the exception is explained".
-- **Copying R's value for a flag whose meaning is unknown is acceptable to the head unit.** Untestable offline. Such flags go in the ledger as *R-copied, unverified* and need explicit user acceptance in Phase 10.
+- **Copying R's value for a flag whose meaning is unknown is harmless to the head unit.** Not accepted blindly (user decision): each such flag is a flag-table entry and a ledger deviation with a later test; none is undocumented.
 - **Country-scale re-extraction is affordable.** Phase 1 measures extraction wall time. If prohibitive: re-quantise the spool instead of re-extracting.
 
 ## Open Questions
 
-- Acceptance of the foreign-land tail (PNG, Indonesia, NZ land) and G-only edge cells (102 at L0) as declared natural deviations. Blocks nothing until Phase 10, where the user accepts the final ledger.
+- Foreign-land absence is accepted as natural (user). The 102 G-only L0 cells outside R's populated rectangle (13 BMT tables) are unexplained until Phase 6 lists them with lat/lon and content; each is then natural (source land outside R's rectangle) or a defect.
 - Whether the head unit requires `A=`/`1=` name tags or reads header word 0 / `dipid` — unknowable offline; treated as risk, mitigated by R-equivalence.
 - Extraction wall time at country scale (undocumented); affects how many full re-extractions Phases 3–5 can afford.
 
@@ -152,7 +153,7 @@ The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.j
 
 ### Phase 6 — Background classes and ocean polygons
 
-- Outcome: G's background type and count distribution per level, including reserves (321) and rivers/lakes (291), match R's per-class census within the Phase 1 band; L0 CBD cells hold shape counts in R's order of magnitude (Melbourne/Sydney/Adelaide/Perth CBD cells recorded against R's 17/31/23/122); every cell in the sampled 0.25° grid that R fills with sea carries an ocean polygon (type 289; sea names belong to Phase 8); the catch-all `288` cells are audited (land mislabelled as sea = 0); foreign land is the only listed cell content missing from R.
+- Outcome: G's background type and count distribution per level, including reserves (321) and rivers/lakes (291), match R's per-class census within the Phase 1 band; L0 CBD cells hold shape counts in R's order of magnitude (Melbourne/Sydney/Adelaide/Perth CBD cells recorded against R's 17/31/23/122); every cell in the sampled 0.25° grid that R fills with sea carries an ocean polygon (type 289; sea names belong to Phase 8); the 102 G-only L0 cells are listed with lat/lon and content and each is classified natural or defect; the catch-all `288` cells are audited (land mislabelled as sea = 0); foreign land is the only listed cell content missing from R.
 - Surfaces: `parser/refdata/{selection,vocab/bg_type}.json`, `parser/osm_to_parcel_geometry.py` (background loop, bg predicate ~694, coastline/land-polygon handling), background encode path in `parser/kiwiw/synth.py`/`_cenc.c`, `parser/tests/{test_vocab,test_selection,test_background_encoder,test_parcel_geometry}.py`.
 - Approach: known
 - Depends on: Phase 5
@@ -173,15 +174,15 @@ The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.j
 
 ### Phase 9 — Link flags, node bits and neighbour pointers
 
-- Outcome: flag and node-bit prevalence per level within the band of R's (`link_id_flag`, `selected_link_flag`, `route_planning_tag`, toll, bridge, tunnel, planned); mfde entries 12–19 carry computed adjacent-parcel pointers that decode to the correct neighbouring Map Frame in the harness, with entry counts matching R's distribution including divided-neighbour records; every flag not established by census is listed as unverified.
+- Outcome: flag and node-bit prevalence per level within the band of R's (`link_id_flag`, `selected_link_flag`, `route_planning_tag`, toll, bridge, tunnel, planned); mfde entries 12–19 carry computed adjacent-parcel pointers that decode to the correct neighbouring Map Frame in the harness, with entry counts matching R's distribution including divided-neighbour records; `docs/design/flag-table.md` exists and every link flag and node bit R uses has a row (R census, OSM source, known/unknown, G value, pending test); no flag is undocumented.
 - Surfaces: `parser/osm_to_parcel_geometry.py` (flag defaults ~470–475), `parser/kiwiw/{synth,road_writer,divide,parcel_mgmt}.py`, `parser/harness/checks/{mfde,decode}.py`, `parser/tests/{test_road_encoder,test_boundary_links,test_harness_mfde,test_synth_map_frame}.py`.
 - Approach: known
 - Depends on: Phases 4, 5 and 6
 
 ### Phase 10 — Full rebuild, verification and ledger closure
 
-- Outcome: a single full-Australia extraction and build from the final code produces a `compare_disc.py` report (bound to its ALLDATA sha256) in which every check PASSES or its remaining difference is a ledger entry with a source-data cause, contributing no processing-caused differences; entries are only *natural* or *R-copied, unverified* (the latter accepted explicitly by the user); `docs/design/target-disc.md`, plan 01's records and `docs/ARCHITECTURE.md` are updated (deviation ledger, word 0, mfde 12–19 ownership, size semantics); the user has accepted or rejected the final ledger; capacity is within 4.7 GB; determinism verified by two builds.
-- Surfaces: `output/`, `docs/design/target-disc.md`, `docs/ARCHITECTURE.md`, `docs/plans/01-eval-harness-and-map-layer/` (close-out follows separately), `docs/provenance.md`.
+- Outcome: a single full-Australia extraction and build from the final code produces a `compare_disc.py` report (bound to its ALLDATA sha256) in which every check PASSES or its remaining difference is a ledger entry with a source-data cause, contributing no processing-caused differences; entries are only *natural* or *documented-unknown* (a flag-table entry with a pending test); `docs/design/target-disc.md`, plan 01's records and `docs/ARCHITECTURE.md` are updated (deviation ledger, word 0, mfde 12–19 ownership, size semantics); the user has accepted or rejected the final ledger; capacity is within 4.7 GB; determinism verified by two builds.
+- Surfaces: `output/`, `docs/design/target-disc.md`, `docs/ARCHITECTURE.md`, `docs/plans/01-eval-harness-and-map-layer/` (close-out follows separately), `docs/provenance.md`, `docs/design/flag-table.md`.
 - Approach: known
 - Depends on: Phases 6, 7, 8, 9
 
