@@ -14,7 +14,7 @@ User request, verbatim:
 
 ## Problem
 
-WP1 (`docs/plans/01-eval-harness-and-map-layer/`) was declared functionally complete pending acceptance of nine "declared deviations". A root-cause review (2026-09-20) decoded R and the current G directly and found that most of those deviations are **processing artifacts, not natural source differences**, and that the harness passed several structural mismatches because its checks are subset-based, length-only or loosened. The generated map layer differs from R in ways that could make the disc wrong or unusable in the vehicle, and the project's rule is that the vehicle test is last-mile, so these must be found and fixed offline. The differences:
+WP1 (`docs/plans/01-eval-harness-and-map-layer.md`) was declared functionally complete pending acceptance of nine "declared deviations". A root-cause review (2026-09-20) decoded R and the current G directly and found that most of those deviations are **processing artifacts, not natural source differences**, and that the harness passed several structural mismatches because its checks are subset-based, length-only or loosened. The generated map layer differs from R in ways that could make the disc wrong or unusable in the vehicle, and the project's rule is that the vehicle test is last-mile, so these must be found and fixed offline. The differences:
 
 - G's parcel-local coordinates span 0..32767; R's span 0..4096 (L2–L8) and 0..16384 (sparse L0) (hypothesis, strong; G may be 8× too spread).
 - G writes zeros in Map Frame header words where R writes real values (`dipid`, words 7, 9–11, and others), and writes word 0 as `total_size//2` where R writes the header size.
@@ -182,7 +182,7 @@ The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.j
 ### Phase 10 — Full rebuild, verification and ledger closure
 
 - Outcome: a single full-Australia extraction and build from the final code produces a `compare_disc.py` report (bound to its ALLDATA sha256) in which every check PASSES or its remaining difference is a ledger entry with a source-data cause, contributing no processing-caused differences; entries are only *natural* or *documented-unknown* (a flag-table entry with a pending test); `docs/design/target-disc.md`, plan 01's records and `docs/schema/` rows are updated (status changes carry evidence) (deviation ledger, word 0, mfde 12–19 ownership, size semantics); the user has accepted or rejected the final ledger; capacity is within 4.7 GB; determinism verified by two builds.
-- Surfaces: `output/`, `docs/design/target-disc.md`, `docs/schema/`, `docs/plans/01-eval-harness-and-map-layer/` (close-out follows separately), `docs/provenance.md`, `docs/schema/flags.md`.
+- Surfaces: `output/`, `docs/design/target-disc.md`, `docs/schema/`, `docs/plans/01-eval-harness-and-map-layer.md`, `docs/provenance.md`, `docs/schema/flags.md`.
 - Approach: known
 - Depends on: Phases 7 and 9
 

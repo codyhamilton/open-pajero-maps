@@ -535,13 +535,11 @@ def _make_name_record(text: str, lat: float, lon: float,
                       ) -> Optional[NameRecord]:
     """Build a synthetic NameRecord for one named feature, or ``None`` if
     no record can be emitted without violating the per-level name
-    type_code vocabulary (docs/plans/01-eval-harness-and-map-layer/briefs/
-    23-vocab-name-type-leak.md; callers must handle ``None``).
+    type_code vocabulary (docs/plans/01-eval-harness-and-map-layer.md, brief 23-vocab-name-type-leak in git history; callers must handle ``None``).
 
     ``kind`` is one of "road", "background", "place" and selects the
     level-0 on-disc encoding, per Ch.7.4 and a census of R's real level-0
-    name records (docs/plans/01-eval-harness-and-map-layer/briefs/
-    11-name-types.md; see also kiwiw/synth.py's "Names" section docstring
+    name records (docs/plans/01-eval-harness-and-map-layer.md, brief 11-name-types in git history; see also kiwiw/synth.py's "Names" section docstring
     for the level-0 vocabulary rule and its contradiction with the
     full-country profile):
 
@@ -609,8 +607,7 @@ def _make_name_record(text: str, lat: float, lon: float,
     At levels other than 0, "place" nodes (`_handle_node`) hit the same
     branch that road and background names fall through to: `type_code` is
     whatever the caller passed, unmodified. As of brief 22
-    (docs/plans/01-eval-harness-and-map-layer/briefs/
-    22-spotcheck-missing-names.md), `_handle_node` always passes 0x134
+    (docs/plans/01-eval-harness-and-map-layer.md, brief 22-spotcheck-missing-names in git history), `_handle_node` always passes 0x134
     (308, "address level 4 (municipality)") for every admitted `place=`
     value, not just "suburb" -- 308 is in R's per-level name census at
     every level `selection.json` currently admits a place node (2, 4, 6:
@@ -824,8 +821,7 @@ class _GeomHandler:
         # (state)") nowhere in that set (only 3 occurrences at level 8,
         # which currently admits no place value at all, vs. 206 of 308 at
         # that same level). Brief 22
-        # (docs/plans/01-eval-harness-and-map-layer/briefs/
-        # 22-spotcheck-missing-names.md) traced Perth's level-2 spotcheck
+        # (docs/plans/01-eval-harness-and-map-layer.md, brief 22-spotcheck-missing-names in git history) traced Perth's level-2 spotcheck
         # FAIL to this: place=city was assigned 0x132, which brief 23's
         # fix (parser/osm_to_parcel_geometry.py's _make_name_record,
         # kind=="place" and type_code==0x132 branch) then correctly

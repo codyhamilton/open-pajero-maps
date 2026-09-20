@@ -182,7 +182,7 @@ same commit.
 - **What**: `compare_disc.py`'s per-check JSON report (container, decode,
   pointers, envelope, mfde, mht29, shape, spotcheck, vocab) for the
   2026-09-09 full-Australia build against the mounted reference disc. See
-  `docs/plans/01-eval-harness-and-map-layer/PLAN.md`'s "Build record
+  `docs/plans/01-eval-harness-and-map-layer.md`'s "Build record
   (2026-09-09)" and `docs/design/target-disc.md`'s file table for the
   findings this report drove.
 - **Source**: `.venv-rp/bin/python parser/compare_disc.py --reference

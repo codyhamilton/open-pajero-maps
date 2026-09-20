@@ -1,5 +1,5 @@
 """Tests for `kiwiw.synth.build_map_frame_bytes` -- the synthetic Map
-Frame shape per `docs/plans/01-eval-harness-and-map-layer/DESIGN.md`
+Frame shape per `docs/plans/01-eval-harness-and-map-layer.md`
 sections 2-4 (header fields, region list, mfde table).
 
 Covers, for each level in ``12 10 8 6 4 2 0``:

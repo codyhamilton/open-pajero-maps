@@ -40,7 +40,7 @@ sources, in order of trust:
    is closest to that OSM class's share"), used here as the *primary*
    method because (1) barely covers half the observed codes and (2) no
    OSM-side highway-tag frequency table exists yet — unit 07's own report
-   (`docs/plans/01-eval-harness-and-map-layer/IMPLEMENTATION.md`, "Unit
+   (`docs/plans/01-eval-harness-and-map-layer.md`, "Unit
    07") records way/node counts and per-level parcel counts, not a
    highway-tag histogram of the Australia PBF. **This is a second,
    separate contradiction with the brief**, reported alongside the
@@ -222,8 +222,7 @@ above), and this table's `[10, 12]` range has no catch-all (unlike
 `[0, 0]`/`[2, 8]`), so every `natural=dune` way resolved to `bg_type=None`
 and was dropped before `spool.add` — levels 10/12 spooled **zero**
 background content despite selection admitting 38 candidate ways per
-build. This was traced (see `docs/plans/01-eval-harness-and-map-layer/
-briefs/19-container-pdmdh-blob-tail.md`) as the root cause of a
+build. This was traced (see `docs/plans/01-eval-harness-and-map-layer.md`, brief 19-container-pdmdh-blob-tail in git history) as the root cause of a
 downstream container-check FAIL: zero content at these levels means
 `alldata_writer.py` never places a block for their blocksets, so no
 Block Management Table is built for them, so the generated PDMDH blob

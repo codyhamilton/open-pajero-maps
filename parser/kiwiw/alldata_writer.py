@@ -456,7 +456,7 @@ def assemble_denovo(region: LoadedRegion) -> DenovoResult:
 # only where `grid.json` says `R` has them, and a Block Management Table
 # for every one of those. See docs/design/target-disc.md ("Grid contract",
 # "Copy-through management data", "Unknown bytes policy") and
-# docs/plans/01-eval-harness-and-map-layer/DESIGN.md sections 2-4/6/7.
+# docs/schema/map-frame.md.
 
 from typing import Iterable
 
@@ -584,7 +584,7 @@ def build_alldata_kwi(*args, **kwargs):
     `build_name_frame_bytes()` (kept its legacy `(records, bounds,
     level=None)` signature working rather than break unowned callers) --
     see this unit's report in
-    `docs/plans/01-eval-harness-and-map-layer/IMPLEMENTATION.md`.
+    `docs/plans/01-eval-harness-and-map-layer.md`.
 
     Dispatch rule: the legacy signature is recognised by its distinctive
     ``parcels``/``coverage``/``level`` keywords, or a first positional

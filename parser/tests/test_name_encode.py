@@ -1,5 +1,5 @@
 """Tests for the level-0 name-record encoders added by brief 11
-(docs/plans/01-eval-harness-and-map-layer/briefs/11-name-types.md):
+(docs/plans/01-eval-harness-and-map-layer.md):
 ``kiwiw.synth.encode_name_record_type5_bytes``,
 ``encode_name_record_type6_bytes``, and ``build_name_frame_bytes``'s
 per-level string-type selection.

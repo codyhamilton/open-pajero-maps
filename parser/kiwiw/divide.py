@@ -4,7 +4,7 @@ for oversize Map Frames.
 `synth.build_map_frame_bytes()` cannot represent a frame whose total size
 exceeds the format's 131,070-byte u16 word-count ceiling (`total_size // 2`
 must fit in 16 bits) -- see `synth.py:851`, and unit 12's done evidence
-(`docs/plans/01-eval-harness-and-map-layer/IMPLEMENTATION.md`, "Unit 12")
+(`docs/plans/01-eval-harness-and-map-layer.md`)
 hit this directly. This module splits any parcel whose whole-cell Map Frame
 would exceed the per-level threshold into the divided sub-grid the LMR
 already declares for that level (`n_parcels_lat[1]`/`n_parcels_lng[1]` for
@@ -283,7 +283,7 @@ def _shrink_to_fit(encode: EncodeFn, level: int, ix: int, iy: int,
     `spotcheck`'s fixture contract outright, whereas the corresponding road
     geometry going missing from an already-lossy, five-cells-out-of-hundreds
     of thousands fallback is a softer degradation). See brief 22
-    (`docs/plans/01-eval-harness-and-map-layer/briefs/22-spotcheck-missing-names.md`)
+    (`docs/plans/01-eval-harness-and-map-layer.md`)
     -- this ordering was previously roads-preserved-first/names-dropped-first,
     which is what caused Sydney/Melbourne level-0 `spotcheck` FAILs; the
     ordering below is the fix.

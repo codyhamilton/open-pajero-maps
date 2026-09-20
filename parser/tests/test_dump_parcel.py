@@ -2,7 +2,7 @@
 on a `RoadLink`, `ext_frame_raw` on a `MapFrame`) must produce
 `json.dumps`-able output with those fields as lowercase hex strings -- the
 2026-09-02 IR additions regression fixed by unit 05 (see
-`docs/plans/01-eval-harness-and-map-layer/PLAN.md` "Why This Plan Exists"
+`docs/plans/01-eval-harness-and-map-layer.md` "Why This Plan Exists"
 gap (7))."""
 from __future__ import annotations
 

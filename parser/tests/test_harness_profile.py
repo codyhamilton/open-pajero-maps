@@ -1,6 +1,6 @@
 """Tests for the reference profile (`parser/harness/profile.py`) and the
 profile-based checks (`vocab`/`envelope`/`mfde`) it feeds -- unit 03 of
-`docs/plans/01-eval-harness-and-map-layer/`.
+`docs/plans/01-eval-harness-and-map-layer.md`.
 
 All fixtures are synthetic, built in-test with
 `kiwiw.alldata_writer.build_alldata_kwi` (per this unit's brief, "Tests"

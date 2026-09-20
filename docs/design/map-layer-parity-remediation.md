@@ -2,7 +2,7 @@
 
 Status: proposed. Extends `docs/design/target-disc.md` (program of record); where this doc
 and that one disagree on the items below, this doc wins once accepted. Supersedes the
-"proposed declared deviations" list in `docs/plans/01-eval-harness-and-map-layer/PLAN.md`
+"proposed declared deviations" list in `docs/plans/01-eval-harness-and-map-layer.md`
 ("Build record, rebuild #6"), which was measured on a pre-brief-34 build.
 
 ## 1. Why this exists
