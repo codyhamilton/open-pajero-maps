@@ -3,7 +3,7 @@ header parsing for ALLDATA.KWI.
 
 Ported from `showalldata()` in kiwiread.c, which this file's struct offsets
 were validated against (builds, decodes this exact disc's header/LMR/BSMR
-tables without assertion failures -- see docs/phases/00-inventory.md).
+tables without assertion failures -- see docs/archive/00-inventory.md).
 """
 from __future__ import annotations
 
@@ -124,7 +124,7 @@ class VolumeHeaderExtras:
     spec's RESERVED / Level Management Information areas, which are all
     zero on this disc). Nothing here is a reinterpretation of bytes we do
     not understand -- unknown regions are kept as raw hex on purpose (the
-    `COUNTRY.KWI` lesson in docs/phases/02-roundtrip.md).
+    `COUNTRY.KWI` lesson in docs/archive/02-roundtrip.md).
     """
     mids: list[Mid]                 # system-specific, data-author, system
     maker_defined_hex: list[str]    # the C part of each MID:C (52/52/20 B)
@@ -197,7 +197,7 @@ def parse_mhr_table(buf: bytes) -> list[MhrEntry]:
 # "record 34 (maker original: RESERVED)" tail. On this disc that maker area
 # is simply *more* 18-byte management header records (record index 34 is a
 # real `COUNTRY.KWI` entry), so the whole table is modelled here as
-# 113 x 18 bytes + a 14-byte remainder -- see docs/phases/02-roundtrip.md.
+# 113 x 18 bytes + a 14-byte remainder -- see docs/archive/02-roundtrip.md.
 MHT_SIZE = 2048
 MHT_RECORD_COUNT = MHT_SIZE // MHR_SIZE          # 113
 MHT_TAIL_SIZE = MHT_SIZE - MHT_RECORD_COUNT * MHR_SIZE  # 14

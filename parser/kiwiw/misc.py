@@ -1,12 +1,12 @@
 """Decoders for the small metadata/coverage/loading/image-manifest files.
 
-Covers sub-task 3 of Phase 1 (see docs/phases/01-format-analysis.md):
+Covers sub-task 3 of Phase 1 (see docs/archive/01-format-analysis.md):
 COUNTRY.KWI, SPEC.KWI, METADATA.KWI, COVERAGE.BIN, DN/CLUSTER.DAT,
 VERSION.TXT, COVERAGE/AUC.BMP, PCT2MNG.KWI, and the LOADING.KWI top-level
 header (Ch. 30).
 
 Confidence levels are called out per-function in docstrings and in
-docs/phases/01-format-analysis.md — this module mixes spec-confirmed parsing
+docs/archive/01-format-analysis.md — this module mixes spec-confirmed parsing
 (PCT2MNG.KWI, the LOADING.KWI system/module header, DN/CLUSTER.DAT's header
 word) with byte-pattern-matched-but-not-spec-confirmed parsing (COUNTRY.KWI's
 per-country binary records). Nothing here is a guess dressed up as fact
@@ -91,7 +91,7 @@ def parse_country_kwi(raw: bytes) -> CountryFile:
     """Parse COUNTRY.KWI.
 
     CONFIRMED (by direct byte inspection, cross-checked against
-    METADATA.KWI's language list -- see docs/phases/01-format-analysis.md):
+    METADATA.KWI's language list -- see docs/archive/01-format-analysis.md):
       - byte[1] is a count of language codes that follow, delimited by a
         literal ``#`` character. On this disc: 0x0d (13), matching the 13
         languages enumerated in METADATA.KWI's LANG field exactly, with each

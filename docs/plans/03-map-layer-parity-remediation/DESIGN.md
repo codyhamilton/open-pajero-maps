@@ -62,7 +62,7 @@ The work is one linear-then-fan-out sequence: establish the truth and harden the
   - Text is ASCII-folded and uppercase (user decision); `priority` and `display_scale_flag` assigned by name class from R's census, always drawn from R's observed values.
   - Link flags (`link_id_flag`, `selected_link_flag`, `route_planning_tag`, toll/bridge/tunnel/planned bits) populated from OSM tags or from R's per-class census rule; a flag whose meaning cannot be established takes R's value for the matching class and is recorded as unverified.
   - mfde 12–19 carry adjacent-parcel pointers computed from the WP1 grid, with R-style entry counts including divided-neighbour records (spec Ch.7.1.1 item 17 assigns these to WP1; `DESIGN.md` of plan 01 §7/§8 "contested" is resolved accordingly).
-- Before name work, the `name_writer` encoding and search chain in `docs/phases/02-roundtrip.md` are audited (F8); the L0 name_count envelope rule stays as-is. Name attribution method: on a stride sample of R strings, the fraction with no OSM counterpart is the natural-shortfall figure; the remainder is a defect.
+- Before name work, the `name_writer` encoding and search chain in `docs/archive/02-roundtrip.md` are audited (F8); the L0 name_count envelope rule stays as-is. Name attribution method: on a stride sample of R strings, the fraction with no OSM counterpart is the natural-shortfall figure; the remainder is a defect.
 - Flag table: `docs/schema/flags.md` lists every link flag and node bit with its R census, the OSM source (if any), its status (*known* / *unknown*), and the value G writes. An unknown flag is never accepted silently: it takes R's per-class value, is recorded in the table and the ledger as a documented deviation with a stated test to run later, and is never left undocumented.
 - Ledger classes: *natural* (source lacks it) and *documented-unknown* (flag-table entry with a pending test). Nothing else is admissible, and every entry states its cause.
 - Non-goals: one-way and turn restrictions (WP2; R's map-layer node oneway is 0 on all 29.9M nodes); the head unit's use of `A=`/`1=` tags for search (unknown; emitted regardless).
@@ -126,7 +126,7 @@ The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.j
 ### Phase 2 — Coordinate model and header-word census (gate)
 
 - Outcome: `parser/refdata/profile/coord_scale.json` exists, and decoding R at its per-class range and overlaying it against OSM at four named cells (Brisbane CBD, Sydney, rural QLD, outback) puts matched roads within a recorded distance tolerance with no clustering into a sub-region of the cell, clipped links terminating at the cell edge; the header-word rules predict R's words 0, 6, 7, 9, 10, 11 on held-out cells at ≥99%, with every exception (R's word 0 differs from the first data-slot offset in 42 of 939 sampled leaves) explained; the tolerance is the Phase 1 band and "no clustering" is measured as the occupied fraction of the cell extent and coordinate maximum relative to the cell. If either fails, the phase does not close: the design is bounced for re-analysis (user decision).
-- Surfaces: new `coord_scale.json`; a census tool under `parser/tools/`; `parser/kiwiw/coordconv.py` (read-only here); `parser/kiwiw/parcel.py` decode paths; `docs/phases/`/`docs/design/` records of the model.
+- Surfaces: new `coord_scale.json`; a census tool under `parser/tools/`; `parser/kiwiw/coordconv.py` (read-only here); `parser/kiwiw/parcel.py` decode paths; `docs/schema/` rows for the model.
 - Approach: known
 - Depends on: Phase 1
 

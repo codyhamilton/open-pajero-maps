@@ -1,10 +1,10 @@
 """Cross-check against the ground truth kiwiread.c already established
-(see docs/phases/00-inventory.md): for the Melbourne coordinate
+(see docs/archive/00-inventory.md): for the Melbourne coordinate
 (-37.813629, 144.963058) at level 0, kiwiread.c (patched for the
 antimeridian bug) found the *undivided top-level* parcel cell bbox
 [-37.833333,144.937500] to [-37.812500,144.968750].
 
-Post parcel-index-bug-fix (see docs/phases/01-format-analysis.md, "Parcel
+Post parcel-index-bug-fix (see docs/archive/01-format-analysis.md, "Parcel
 iteration-order bug: ROOT CAUSE FOUND AND FIXED"), this coordinate
 actually resolves one level deeper, into a divided/integrated sub-parcel
 (a real, correctly-decoded Docklands-area parcel: "TELSTRA DOME",

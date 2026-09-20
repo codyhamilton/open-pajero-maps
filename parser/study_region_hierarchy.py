@@ -2,7 +2,7 @@
 """Empirical study of the real disc's region hierarchy tree and boundary-node
 convention, across MULTIPLE real regions (not just region 178) -- input to
 Task item 2 (cross-region boundary node handling) of the multi-level
-contraction work. See docs/phases/03-osm-pipeline.md for the write-up this
+contraction work. See docs/archive/03-osm-pipeline.md for the write-up this
 feeds.
 
 Questions this answers, with numbers over the full population where cheap

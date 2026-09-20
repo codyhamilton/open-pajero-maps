@@ -12,7 +12,7 @@ on the reference disc, per the confirmed Ch.10.5.1 layout:
 extended data defined with META", i.e. genuinely vendor/meta-defined and
 not specified further in the archived spec set.)
 
-This is throwaway analysis code (per docs/phases/01-format-analysis.md
+This is throwaway analysis code (per docs/archive/01-format-analysis.md
 conventions, kept under parser/ since it's a useful, rerunnable script,
 not a one-off scratch file). It does not modify the parser package.
 

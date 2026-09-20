@@ -6,7 +6,7 @@ tables).
 This is the exact inverse of the read side in `kiwiw/volume.py`. Scope is
 deliberately limited to that container/mesh layer -- nothing here touches
 parcel content (roads, background, names), which is a separate and much
-harder problem (see docs/phases/02-roundtrip.md).
+harder problem (see docs/archive/02-roundtrip.md).
 
 Two conventions, both learned from the `COUNTRY.KWI` round-trip:
 

@@ -32,7 +32,7 @@ Spec Ch.13 defines metadata as BNF with keywords `DMHT`, `RBPM`, `MBDF`, `ROOT`,
 | `LANG` | Comma-separated language names, 13 on R: US English, UK English, German, French, Spanish, Italian, Dutch, Swedish, Danish, Portuguese, Norwegian, Finish (sic), Australian English | observed | R read 2026-09; spec ch.13.2.6 defines `LANG` with English general names, examples list is different (Japanese, English...), so R's names are not from the spec list | `parser/kiwiw/misc.py` |
 | `CHCD` | Character code: `ISO 8859-1` | observed | R; spec ch.13.2.7 allows `ISO`/`SJIS`/`ANSI`... as bare tokens, R's `ISO 8859-1` extends that form | `parser/kiwiw/misc.py` |
 | `COOR` | Coordinate datum: `WGS84` | observed | R; keyword absent from spec ch.13 | `parser/kiwiw/misc.py` |
-| Language order vs `COUNTRY.KWI` | The 13 `LANG` entries correspond 1:1, in order, to the 13 language codes in `COUNTRY.KWI` | observed | R comparison in `docs/phases/01-format-analysis.md`, no test | `parser/kiwiw/misc.py` |
+| Language order vs `COUNTRY.KWI` | The 13 `LANG` entries correspond 1:1, in order, to the 13 language codes in `COUNTRY.KWI` | observed | R comparison in `docs/archive/01-format-analysis.md`, no test | `parser/kiwiw/misc.py` |
 | `ROOT`, `SPDL`, `DMHT`, `RBPM`, `MBDF`, `MDIA`, `SUBD` | Other Ch.13 statements (road class codes, speed limit bins, frame lists, media options, subdirectories) | spec-only | spec ch.13.2.1-13.2.10; not present in R's METADATA.KWI | - |
 | Trailing bytes | File ends after the last `;` with no newline | observed | R, 164 bytes | `parser/kiwiw/misc_writer.py` |
 

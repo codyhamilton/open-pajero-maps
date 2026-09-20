@@ -5,7 +5,7 @@
 
     python3 parser/roundtrip_idx.py [DISC_ROOT]
 
-Per docs/phases/02-roundtrip.md, this validates each *structural piece* of
+Per docs/archive/02-roundtrip.md, this validates each *structural piece* of
 the index format against real bytes at that piece's own byte range --
 `DCTF` definition frames, individual Matching Data Records (street name,
 address range, and POI), `DFSR` headers, Detailed Search Info Records, and

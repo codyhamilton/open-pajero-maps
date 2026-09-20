@@ -10,7 +10,7 @@ their data type and repeat count.  Combined with each record's own
 "Stored Data Flag" (``STFG``) presence bitmap, that is enough to parse
 any record in any of the disc's search files *without* guessing offsets.
 
-Confidence summary (see docs/phases/01-format-analysis.md for the log):
+Confidence summary (see docs/archive/01-format-analysis.md for the log):
 
 - CONFIRMED: the ``DCTF`` definition-frame entry layout, the STFG presence
   bitmap convention, the ``P6`` coordinate type, the address-range record
@@ -139,7 +139,7 @@ def parse_definition_frame(buf: bytes, off: int) -> List[FieldDef]:
     """Parse a ``DCTF`` definition frame at ``off``.
 
     CORRECTED 2026-08-28 (whole-file `IDX` assembly pass, see
-    docs/phases/02-roundtrip.md "Whole-file IDX/*.IDX assembly"): the
+    docs/archive/02-roundtrip.md "Whole-file IDX/*.IDX assembly"): the
     declaration entry's last 2 bytes (``n_items``) give the number of
     field entries *following* the header, **not** "including itself" as
     previously documented/implemented (``range(1, n_items)``, one short).
@@ -328,7 +328,7 @@ def parse_matching_record(buf: bytes, off: int, fields: Sequence[FieldDef]) -> d
       the spec's trailing Padding Field.
 
     FIXED 2026-08-28 (SRHA "city name" decode-overrun bug, see
-    docs/phases/02-roundtrip.md's dated entry for the full writeup): the
+    docs/archive/02-roundtrip.md's dated entry for the full writeup): the
     root cause of SRHA's own City Selection Matching Data Records (1,285 in
     SADSR201.IDX, an analogous population in POISR201.IDX) overrunning
     their own record length was a single mis-typed field width, not a new
@@ -398,7 +398,7 @@ def iter_matching_records(
     NFRL reproduces the real physical sequence exactly, and ``NFRL == 0``
     does land on the frame's true last record.
 
-    ADDED 2026-08-28 (see docs/phases/02-roundtrip.md's dated entry, and
+    ADDED 2026-08-28 (see docs/archive/02-roundtrip.md's dated entry, and
     `roundtrip_idx_full._matching_frame_bytes`): when ``end_offset`` is
     given, walk PHYSICALLY instead -- advance by each record's own actual
     decoded length (``_consumed``) and stop once ``off >= end_offset``,

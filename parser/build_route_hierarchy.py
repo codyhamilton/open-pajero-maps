@@ -3,7 +3,7 @@
 builder -- the successor to the single-region prototype in
 ``osm_to_route_planning.py`` / ``build_route_graph.py``, which explicitly
 left multi-level contraction and cross-region boundary handling as future
-work (see docs/phases/03-osm-pipeline.md).
+work (see docs/archive/03-osm-pipeline.md).
 
 Pipeline
 --------
@@ -17,7 +17,7 @@ Pipeline
 3. Assign each node its "uppermost identical level" (2/4/6/8) from its
    contraction rank quantile (``assign_levels``) -- this is what makes
    higher levels sparser, exactly like the real disc (see the region-tree
-   study in docs/phases/03-osm-pipeline.md: node counts shrink and the
+   study in docs/archive/03-osm-pipeline.md: node counts shrink and the
    surviving OSM road-class set narrows going up the levels).
 4. Build a genuine PARENT/CHILD REGION TREE (Ch.9.2.1's parent_region /
    first_child_region / n_child_regions fields, confirmed 100% consistent
@@ -47,7 +47,7 @@ Pipeline
 
 This is still a bounded PROTOTYPE, not a full-country pipeline -- see the
 "KNOWN LIMITATIONS" list near the bottom of this file and
-docs/phases/03-osm-pipeline.md for what's proven vs. assumed.
+docs/archive/03-osm-pipeline.md for what's proven vs. assumed.
 """
 from __future__ import annotations
 
@@ -121,7 +121,7 @@ class FlatGraph:
 #: Ch.32.2 road classes to extract from OSM for the hierarchy build. The
 #: original single-region prototype (osm_to_route_planning.py's main())
 #: restricted to just {2, 3} to match region 178's own road_class_mask;
-#: this module's region-hierarchy study (docs/phases/03-osm-pipeline.md)
+#: this module's region-hierarchy study (docs/archive/03-osm-pipeline.md)
 #: found the real disc's road-class set WIDENS as level increases (level 2
 #: -> {2,3}, level 4 -> {2}, level 6/8 -> {0,2} -- i.e. motorway class 0
 #: appears only at the coarser levels). {0,1,2,3} (motorway/trunk/primary/
@@ -282,7 +282,7 @@ def mark_boundary_and_build_rpgraph(fg: FlatGraph, region: RegionNode,
     level up, since is_boundary here means "this node's uppermost level is
     above the current region's level" -- so its natural cross-region
     neighbour is its own instance in the parent region. This is the
-    best-supported reading found (see docs/phases/03-osm-pipeline.md), not
+    best-supported reading found (see docs/archive/03-osm-pipeline.md), not
     spec-confirmed as the ONLY form of boundary link (the spec's own
     definition is broader: any node with a link to another region,
     including sibling regions at the SAME level -- not modeled here, since
@@ -606,7 +606,7 @@ if __name__ == "__main__":
 #   counts per region), not just fixed 2x2 grid geometry.
 # - Boundary-node semantics (is_boundary = "this node's uppermost level is
 #   above the current region's level") is the best-supported reading found
-#   during the region-hierarchy study (see docs/phases/03-osm-pipeline.md),
+#   during the region-hierarchy study (see docs/archive/03-osm-pipeline.md),
 #   but a direct empirical test (matching a real region's flagged boundary
 #   node coordinates against its real parent region's own node coordinates)
 #   only matched 0.8%-12/1579 in a scoped sample -- inconclusive, likely due

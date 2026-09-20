@@ -27,7 +27,7 @@ they reach -- and checks two distinct things:
 Default target: every real (non-empty) block set at level 8 (6 block
 sets, 6 blocks, 78 leaf parcels on the reference disc) -- deliberately a
 whole level's real content, not a hand-picked coordinate. Pass `--level`/
-`--blocksets` to point at a different region (see docs/phases/02-roundtrip.md
+`--blocksets` to point at a different region (see docs/archive/02-roundtrip.md
 for the survey of candidate regions across all 7 levels).
 """
 from __future__ import annotations

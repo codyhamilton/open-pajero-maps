@@ -10,7 +10,7 @@ offset, expected/actual bytes, and a byte-length comparison) per file.
 Usage:
     python3 parser/roundtrip_misc.py [--root /run/media/codyh/464210-8480]
 
-See docs/phases/02-roundtrip.md for the methodology and results this
+See docs/archive/02-roundtrip.md for the methodology and results this
 produced.
 """
 from __future__ import annotations

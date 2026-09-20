@@ -1,6 +1,6 @@
 """Whole-file `IDX/*.IDX` assembly -- the gap Phase 2's per-piece round-trip
 passes (`roundtrip_idx.py`) explicitly left open (see its module docstring
-and `docs/phases/02-roundtrip.md`): computing brand-new offsets for every
+and `docs/archive/02-roundtrip.md`): computing brand-new offsets for every
 structural piece of a `DFSR`/`DCTF`/Detailed-Search-Info-Record tree and
 serializing a whole file from scratch, rather than validating each piece
 in place at its own original byte range.
@@ -13,7 +13,7 @@ single flat frame is included too (its shape is a strict subset of
 SADSR201's -- one frame, one record, no `next_level` -- so the same
 machinery covers it directly).
 
-Allocation rule discovered (see docs/phases/02-roundtrip.md for full
+Allocation rule discovered (see docs/archive/02-roundtrip.md for full
 writeup and confidence levels): every reachable byte in SADSR201.IDX from
 offset 0 to 15,375,908 is a **zero-gap, zero-padding sequential packing**
 in this order, applied recursively to every `DFSR` frame (top-level and
@@ -38,7 +38,7 @@ This was verified by recomputing, by hand, every one of these boundaries
 against the real file for all 4 reachable Detailed Search Info Records
 (top SRMX, top SRHA, nested SRMX under SRHA, and SRT1) and finding *zero*
 unexplained gaps anywhere in the reachable tree -- see the "Whole-file
-IDX/*.IDX assembly" section of docs/phases/02-roundtrip.md.
+IDX/*.IDX assembly" section of docs/archive/02-roundtrip.md.
 
 Step-4's REVERSE ordering is witnessed only once (a single 2-record
 sibling group: SRHA's next_level subtree is placed before SRMX's) -- this
@@ -168,7 +168,7 @@ class VerbatimFrameCopy(Exception):
 
 
 # Populations confirmed (this pass) to decode-and-rebuild byte-identical for
-# EVERY record, not just a sample -- see docs/phases/02-roundtrip.md. Any
+# EVERY record, not just a sample -- see docs/archive/02-roundtrip.md. Any
 # matching_data_frame NOT in this set is copied verbatim (opaque, unverified
 # record-by-record) rather than risking a silent lossy reconstruction.
 VERIFIED_RECORD_POPULATIONS = "verified"

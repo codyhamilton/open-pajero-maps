@@ -1,12 +1,12 @@
 """Serializers (inverse of `kiwiw.misc`'s parsers) for the small metadata/
 coverage/loading/image-manifest files.
 
-Phase 2 (round-trip writer prototype, see docs/phases/02-roundtrip.md): each
+Phase 2 (round-trip writer prototype, see docs/archive/02-roundtrip.md): each
 `write_*` function here is the exact inverse of the matching `parse_*`
 function in `kiwiw.misc` -- given the dataclass/dict that function produces
 when reading a real file, re-emit the original bytes.
 
-Confidence / round-trip status per file (see docs/phases/02-roundtrip.md for
+Confidence / round-trip status per file (see docs/archive/02-roundtrip.md for
 the full writeup and actual byte-diff results):
 
 - `write_pct2mng`, `write_coverage_bin`, `write_cluster_dat`,
@@ -21,7 +21,7 @@ the full writeup and actual byte-diff results):
   plain `dict[str, str]` -- so a writer driven only by that dict cannot in
   general reconstruct the original bytes exactly, though it happens to for
   the one single-statement `VERSION.TXT` on this disc. See
-  docs/phases/02-roundtrip.md.
+  docs/archive/02-roundtrip.md.
 """
 
 from __future__ import annotations
@@ -137,7 +137,7 @@ def write_bnf_metadata(meta: BnfMetadata) -> bytes:
     parser, so re-joining it with `;` reproduces the original text (and
     therefore bytes, since these files are plain ASCII) byte-for-byte,
     whitespace quirks and all -- no canonicalization/reformatting is done
-    here. See docs/phases/02-roundtrip.md for the resolved-whitespace-loss
+    here. See docs/archive/02-roundtrip.md for the resolved-whitespace-loss
     writeup (this used to emit a canonical reformatted near-miss; now it
     round-trips exactly on both SPEC.KWI and METADATA.KWI).
     """

@@ -21,7 +21,7 @@ Same discipline as `kiwiw.misc_writer` / `kiwiw.volume_writer`:
   `COUNTRY.KWI` lesson from the metadata-file round-trip pass -- never
   forced through a lossy reinterpretation.
 
-Scope note (see docs/phases/02-roundtrip.md for the full writeup): this
+Scope note (see docs/archive/02-roundtrip.md for the full writeup): this
 module reproduces each *structural piece* of the index-file format
 byte-for-byte from its own parsed IR -- definition frames, individual
 matching records, DFSR headers, Detailed Search Info Records, and
@@ -263,7 +263,7 @@ def write_matching_record(rec: dict, fields: Sequence[FieldDef]) -> bytes:
     every real record sampled on this disc, from both the street name frame
     and the address range frame, the gap between the last decoded field and
     the record's real length is either 0 or exactly one zero byte -- see
-    docs/phases/02-roundtrip.md for the sampled evidence).
+    docs/archive/02-roundtrip.md for the sampled evidence).
 
     Works identically for street, address-range, and POI records: nothing
     here is specific to any one frame kind, only the `fields` list passed

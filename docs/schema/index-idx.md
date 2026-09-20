@@ -34,7 +34,7 @@ disc placement by `disc-layout.md`.
 | Family record sizes | AGMSR/ARGSR/EMGSR DFSR 0x86-0x92; ARSNC/ARSSR/EM* DFSM 0xca-0xce; FMCDT DFM2 0xf8; FWYSR DFSR 0xb4; ITSSR DFSR 0xce; POIAS DSRC 0xea; ZONE DFSA 0xae; ZSEL DFSR 0xae (halved) | observed | header dumps of R | - |
 | Whole-file layout (SADSR201) | header, record slots, then per record catdef, mdef, catdata, mdf, then next_level recursion in reverse record order (dedup by offset); zero gaps | verified | `parser/tests/test_roundtrip_idx_full.py` byte-identical replicate and fromscratch. Reverse order witnessed once only | `parser/kiwiw/index_writer.py` |
 | SADSR201 tail (11,776 B at 15,375,908) | Unreachable DFSR with an SRAL record; copied verbatim | unknown | not reachable from any DSIR | `parser/kiwiw/index_writer.py` |
-| Whole-file layout (other files) | Same rule assumed; POISR201 assembly not finished | assumed | `docs/ARCHITECTURE.md` WP3/WP4 | - |
+| Whole-file layout (other files) | Same rule assumed; POISR201 assembly not finished | assumed | WP3/WP4 open item (this table) | - |
 
 ## Detailed Search Info Record (DSIR)
 

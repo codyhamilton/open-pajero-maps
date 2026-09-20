@@ -31,7 +31,7 @@ level-2 route-planning regions are a heavily contracted, sparse
 long-distance layer (consistent with the CH/highway-hierarchy design the
 spec describes), not "the local road network filtered to major classes."
 Building a real multi-level contraction that reproduces this density
-gap is out of scope for this prototype (see docs/phases/01-format-analysis.md's
+gap is out of scope for this prototype (see docs/archive/01-format-analysis.md's
 scope-of-work note, which this finding reinforces rather than
 contradicts) -- this script instead demonstrates the write/round-trip
 machinery end-to-end on the OSM graph AS EXTRACTED, self-reporting the

@@ -1,5 +1,7 @@
 # Phase 3 — OSM ingestion and content pipeline
 
+> **Historical research notebook.** Superseded by `docs/schema/` and `docs/design/target-disc.md` wherever they disagree. Kept as the evidence record; not maintained.
+
 ## Goal
 Generate real map content from OpenStreetMap data for the target region, matching
 the KIWI-W structures identified in Phase 1, built up incrementally:
@@ -304,7 +306,7 @@ round-trip succeeding on real hardware, and hasn't started.
 
 Route-planning (Ch.9/Ch.10) was investigated ahead of the main Phase 3 sequence
 because it was the last major unknown in the disc size-budget analysis (see
-`docs/00-overview.md` decision log and `docs/phases/01-format-analysis.md`,
+`the pre-2026-09-21 overview (git history)` decision log and `docs/archive/01-format-analysis.md`,
 "Route planning / region data"). Once the byte format was decoded, a follow-up
 agent built and tested a first prototype writer — this is scoping/risk-reduction
 work, not the start of the real roads-first pipeline above.
@@ -376,7 +378,7 @@ statistical_cost frames left absent (matches the real disc's near-zero use).
 Follow-up to the "aggregated-intersection clustering unimplemented" line
 above. Per project direction, this was promoted from a deferred design
 decision to in-scope-now work once measured against the real disc — see
-`docs/phases/01-format-analysis.md`, "Ch.10.13 Road Reference Table
+`docs/archive/01-format-analysis.md`, "Ch.10.13 Road Reference Table
 (aggregated-intersection clustering, 2026-08-27)" for the full survey.
 
 **Is it actually used on the real disc?** Yes, heavily: 89.6% of the

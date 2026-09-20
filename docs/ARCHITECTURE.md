@@ -1,46 +1,85 @@
 # Architecture
 
-System shape and stage contracts live in `docs/design/target-disc.md` (program of record). This
-doc records the shape at a glance and, importantly, **what is not yet known**, so unknowns are
-not re-derived. Evidence for each item is in the cited doc.
+How the code is organised and the contracts between stages. What the format *is* lives in
+`docs/schema/`; what we are building and how it is judged lives in
+`docs/design/target-disc.md`. Open questions are not listed here: see
+`docs/schema/UNKNOWNS.md`, which is generated from the schema rows.
 
-## Shape
+## Pipeline
 
-OSM PBF (Australia) → geometry extraction to a per-cell spool → assembly to `ALLDATA.KWI` →
-(future) index and route-planning layers → UDF-bridge image → burn. Evaluation is offline:
-`parser/compare_disc.py` compares the generated disc to the reference disc.
+```
+OSM PBF (Australia)
+  → extract     osm_to_parcel_geometry.py   per-cell spool (per level, columnar binary)
+  → assemble    build_alldata.py            ALLDATA.KWI + manifest.json
+  → (WP2–WP4)   route-planning and IDX writers
+  → (WP5)       UDF-bridge image → burn
 
-## Unknowns
+Evaluation, offline: compare_disc.py + harness/  →  G vs R report
+```
 
-Not resolved by WP1; each needs a spike (format analysis or census) before its work package can
-be designed. None of these should be decided by guess.
+Stages communicate through files, not in-process state, so each can be rerun alone.
 
-### Map layer (addressed by `docs/plans/03-map-layer-parity-remediation/`)
+## Module map (`parser/`)
 
-- Whether R's parcel-local coordinate range (4096/16384) is the true full-cell range (strong hypothesis).
-- What Map Frame header words 6, 7, 9–11 and the link flags `link_id_flag` / `selected_link_flag` mean to the head unit.
-- Whether the head unit reads header word 0 or `dipid`, requires `A=` / `1=` name tags for search, or has per-buffer size limits below the u16 ceiling.
+| Area | Modules | Role |
+|---|---|---|
+| Format model | `kiwiw/model.py`, `bitutils.py`, `coordconv.py`, `grid.py`, `mesh.py`, `roadtypes.py`, `vocab.py` | Shared types, bit packing, coordinate and mesh maths, type vocabularies |
+| Readers and writers, per layer | `kiwiw/{volume,parcel,parcel_mgmt,road,background,name,misc,route_planning,index_data}.py` and the matching `*_writer.py` | Decode R; encode G. Replicate-mode writers round-trip R byte-identical |
+| Map synthesis | `kiwiw/{synth,selection,divide,frame_table,spill,spool,alldata_writer}.py`, `kiwiw/_cenc.c` + `cenc.py` | Turn cell content into Map Frames, fit and divide parcels, place blocks, write `ALLDATA.KWI` |
+| Extraction | `osm_to_parcel_geometry.py`, `osm_to_route_planning.py`, `osm_to_address_index.py`, `build_route_graph.py` | OSM to spool and route graph |
+| Evaluation | `compare_disc.py`, `harness/` (`checks/`, `profile.py`, `bytediff.py`, `report.py`) | Parity checks against R |
+| Analysis | `roundtrip_*.py`, `analyze_*.py`, `study_*.py`, `estimate_*.py`, `survey_*.py`, `dump_parcel.py` | Research and round-trip proofs; not on the build path |
+| Tools | `tools/lint_schema.py`, `bench_build.py`, `convert_spool.py`, `parcel_occupancy.py` | Schema lint, benchmarking, spool conversion |
+| Tests | `tests/` | Round-trip, synthesis, encoding and harness tests |
 
-### WP2 — route planning
+## Stage contracts
 
-- Ext frames `0xAF100100` (≈62% of ext bytes) and `0xAF100300`: undecoded, currently omitted without evidence.
-- Turn restrictions: only 1 of 57,372 OSM restriction relations resolved in region 178; cause not diagnosed; via-way restrictions skipped.
-- Road class and flag mapping for RP links is a first-pass guess; `is_suburb`, `is_semi_urban_highway`, `is_rotary` always false.
-- OSM has 14–27× R's routing nodes; region byte budgets untested.
-- Whether RP-layer and map-layer link ids must agree in R's encoding.
+**Spool.** Per level, a `.data` file of per-cell records and a `.idx` file, little-endian,
+fixed-width, mmap-able, no pickle. Cells ascend `(iy, ix)`. Coordinates are baked into the
+spool at extraction, so a coordinate-range change means re-extraction.
 
-### WP3 — address and POI
+**Assembly.** `ALLDATA.KWI` layout is a pure function of the spool and the parcel mask.
+Frames are keyed `(level, ix, iy, parcel_type, sub_ix, sub_iy)`. Blocks are written in
+`sorted((level, bsidx, blidx))` order; within a block, frames ascend by local slot, then
+divided sub-frames per parent by `(sub_iy, sub_ix)`; each block's management record follows
+its frames. Every frame is zero-padded to `logical_sz` (32). The PDMDH region is written
+last, once block offsets are final.
 
-- Address ranges: R is per road link with side/parity flags; OSM has points. Snap/interpolate method unvalidated.
-- Suburb/parent-place hierarchy (SRHA, three ARCD tiers) has no direct OSM equivalent.
-- POI category codes include vendor codes absent from the spec (e.g. 0xCF80, ≈38% of the QLD sample); category-name table undecoded.
-- POISR decoder has known bugs; whole-file assembly unfinished.
+**Output invariance.** For any spool, `ALLDATA.KWI` bytes, the manifest `sha256`,
+`total_size`, per-level counts, `trimmed_items` and `halo_names` are identical before and
+after any performance change and for any worker count. The manifest carries no run-varying
+fields; timings go to a separate bench record.
 
-### WP4 — remaining index families
+**Partition and merge.** A level's cells are split into contiguous ranges by cell count, not
+content size. Each range returns its frame table plus additive counters; the merge sums
+counters and orders by canonical key, with no order-dependent float reduction. A worker
+failure aborts the build, names the failing `(level, cell range)` and deletes partial output.
 
-- Record bodies undecoded: POIDT (incl. the 39 MB POIDT013), ITSSR, FWYSR, AGMSR/ARGSR/EMGSR (and the unexplained `DB0/JG0/LR0/MB0/MZ0/ND0/NF0/NS0/VL0` suffix set), ARSNC/ARSSR/EM2SR/EM3SR, ZONE\*/ZSEL\*, FMCDT001, HWMAP (blob).
-- NT and TAS have no FWYSR in R; emergency and zone data have no practical OSM source.
+**C kernel.** `_cenc.c` encodes a whole cell from the raw spool record. It answers only the
+"fits, no kind breach" case; anything else returns -1 and `divide.plan_divisions` handles the
+cell in Python. The Python path is the byte-identity oracle. Floating point parity is held by
+`-ffp-contract=off`, `rint` and identical operation order. `KIWIW_NO_C=1` or no compiler falls
+back to Python.
 
-### WP5
+**Spill and indexed assembly.** Encode workers `pwrite` frames to per-process spill files and
+return a numpy `FrameTable`. `IndexedLayout` places every frame and block with one `lexsort`;
+simple blocks are written vectorised and frames copied by threads in C; divided blocks are
+built in Python. The object path (`FrameSpill`/`FrameRef`) remains as the identity oracle.
 
-- Low risk; disc stamp and coverage bounds must be recomputed for G.
+Measured: full build 263 s → 32.5 s at `-j 12`, peak RSS ~0.75 GB, with output SHA unchanged.
+
+**Evaluation.** The harness reports PASS, FAIL or N/A per check (decodes clean, pointers
+resolve, same vocabulary, profile envelope, container byte-diff, cross-file consistency,
+round-trip regression, capacity). Definitions are in `docs/design/target-disc.md`.
+
+## Schema as a build contract
+
+`docs/schema/` rows carry a status, evidence and the module that reads or writes them.
+`python parser/tools/lint_schema.py` (via `.venv-rp/bin/python`) validates the row format and
+regenerates `docs/schema/UNKNOWNS.md`. A stage that learns a format fact updates the row it
+touches in the same change.
+
+## Open questions
+
+`docs/schema/UNKNOWNS.md` indexes every row that is not `verified`. Open items are grouped by
+work package there and in `docs/design/target-disc.md`; none may be decided by guess.

@@ -2,7 +2,7 @@
 
 This is a from-scratch rewrite of kiwiread.c's `isin()`/global-state tile
 locate approach (Phase 0 found that approach buggy on antimeridian-crossing
-discs, see docs/phases/00-inventory.md). It:
+discs, see docs/archive/00-inventory.md). It:
 
 - handles longitude wraparound explicitly (this disc's box spans E90 to
   W142, i.e. crosses +/-180 -- kiwiread.c's fix, `(_rx + 360 - _lx)`, is
@@ -147,7 +147,7 @@ def locate_parcel(fh, zdat0: bytes, pdmdh: Pdmdh, level: int, lat: float, lon: f
     # but the array entry actually fetched was effectively arbitrary --
     # e.g. a Perth CBD query (-31.95312, 115.86719) landed on a real
     # parcel record but one containing Rockingham/Baldivis street and
-    # place names, ~40 km south. See docs/phases/01-format-analysis.md,
+    # place names, ~40 km south. See docs/archive/01-format-analysis.md,
     # "Parcel-index iteration-order bug: ROOT CAUSE FOUND AND FIXED", for
     # the cross-checked derivation and validation.
     lpx, lpy = px, py

@@ -201,7 +201,7 @@ lie outside R's (0/32 and 16/24/28); the vocab check passed anyway.
   head unit are U -> fold is the safe choice; `name_writer` encoding is audited first).
 - `priority` and `display_scale_flag` assigned by name class from R's census.
 - Whether the head unit requires `A=` / `1=` for search is U: audited against the address
-  search chain in `docs/phases/02-roundtrip.md` before deciding those records are optional.
+  search chain in `docs/archive/02-roundtrip.md` before deciding those records are optional.
 - Acceptance: the L0 name_count envelope stays as-is; the deviation is only accepted if a
   dry-run tally with all of the above still falls outside it, and then only for the
   remainder attributable to OSM lacking the source text.

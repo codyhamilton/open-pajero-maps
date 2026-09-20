@@ -1,5 +1,7 @@
 # Phase 0 — Project docs, archive, and inventory
 
+> **Historical research notebook.** Superseded by `docs/schema/` and `docs/design/target-disc.md` wherever they disagree. Kept as the evidence record; not maintained.
+
 ## Goal
 
 Get the ground truth pinned down before any parsing/writing work starts: an exact
