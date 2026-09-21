@@ -142,7 +142,7 @@ the generator writes none of them.
 | Additional node information | Per-node link id, lanes, guidance, street names, region numbers, etc. selected by the change-flags word. Never decoded. | spec-only | Spec 7.2.2.1.1.4 area; sizes observed only (see header table). | `parser/kiwiw/road.py` |
 | Altitude information | Never present on R sampled (altitude_flag 0 everywhere). | observed | Census `altitude_flag` all False. | `-` |
 | Passage regulation information | Sizes non-zero on some R links; content never decoded. | unknown | Sampled sizes; spec 7.2 sub-sections. | `parser/kiwiw/road.py` |
-| Street address information | Address-range data per link, sized by header word at offset 22. Content not decoded here (see route-planning and index layers for address use). | unknown | Sampled size words only. `docs/design/target-disc.md` WP3 covers address work. | `parser/kiwiw/road.py` |
+| Street address information | Address-range data per link, sized by header word at offset 22. Content not decoded here (see route-planning and index layers for address use). | unknown | Sampled size words only. `docs/design/target-disc.md` WP3 covers address work. First test: extract street-address section from a parcel's sampled link (offset 22 + 8 B header), parse range side/parity flags (FINDINGS section 3), and verify round-trip byte match with R | `parser/kiwiw/road.py` |
 
 ## Link identity and the link-id registry
 
@@ -206,6 +206,12 @@ they are listed for provenance. Format: `parser/kiwiw/vocab.py` docstring.
 |---|---|---|---|---|
 | `road_type.json` ranges [0,0], [2,8], [10,12] | L0: motorway 0, trunk 10, primary 7, secondary 8, tertiary 3, unclassified/road 5, residential/living_street 6, service/busway 9, track 2. L2-L8: motorway 0, trunk 10, primary 7, everything else 2. L10/L12: none. | assumed | Derived by rarity ranking (`docs/design/osm-vocabulary-mapping.md`); the spec labels above contradict trunk -> 10 and suggest primary/secondary -> 2 and 3. Parity design F4 targets: trunk/primary -> 2 (class 10), secondary/tertiary -> 2 or 3 by level, residential -> 6, track -> 9, motorway 0. Only the value-set membership is tested (`parser/tests/test_vocab.py`). | `parser/kiwiw/vocab.py` |
 | `selection.json` road admission | Highways admitted per level: L0 all 17 classes; L2 motorway, trunk, primary; L4 motorway, trunk; L6, L8 motorway; L10, L12 none. Minimum length metres 0/0/50/100/200/500/1000 for L0-L12. | assumed | Calibrated for count envelopes (`parser/kiwiw/selection.py` docstring). `parser/tests/test_selection.py` checks table consistency, not R parity. Parity design F4 says L2-L8 selection is to be rebuilt with type 2 as the backbone. | `parser/kiwiw/selection.py` |
+
+## Link topology
+
+| Field | Meaning | Status | Evidence | Code |
+|---|---|---|---|---|
+| Link end-points and T-junctions | Link end-points are not always intersections. T-junctions (link with 2 end-nodes attached to an interior vertex of another link) occur on both R and G. Graph builder must split links at shared interior vertices to ensure graph connectivity. | unknown | FINDINGS section 4 (WP2): "link end-points are not always intersections (T-junctions on interior vertices occur in R and G alike), so the graph builder must split at shared vertices." First test: find one T-junction in R (link A whose interior vertex is shared with link B endpoint) and verify graph builder produces two split links with matching coordinates | `parser/build_route_graph.py` |
 
 ## Open questions
 

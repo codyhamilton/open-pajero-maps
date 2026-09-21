@@ -51,7 +51,7 @@ R is a UDF-bridge disc. Observed by reading the R image (`original-disc/pajero-w
 |---|---|---|---|---|
 | `GRA256D.KWI`, `PCT256D.KWI`, `PCT2DAT.KWI` + `K*` partners, `VAR256D.KWI`, `KGRPDAT.KWI` | Image data frames (spec ch.33) and their key tables, tied together by `PCT2MNG.KWI` group ids | observed | Filename/size fit on R; pixel/palette content not decoded. | `parser/kiwiw/misc.py` |
 | `DICVCE56.KWI` | Voice data frame (spec ch.34) | observed | Size and disc-stamp header only, R. | `parser/kiwiw/misc.py` |
-| `HWMAP.KWI`, `INDEXDAT.KWI` | Named by MHT records 18 and 2 (see MHT); internals undecoded | unknown | Size/header sniff only, R; owner WP4 in `docs/design/target-disc.md`. | - |
+| `HWMAP.KWI`, `INDEXDAT.KWI` | Named by MHT records 18 and 2 (see MHT); internals undecoded | unknown | Size/header sniff only, R; owner WP4 in `docs/design/target-disc.md`. First test: read HWMAP.KWI header (MHT record 18, size 2 sectors); hex-dump first 256 bytes; verify byte structure against MID/data-id/payload pattern; compare R header against G to identify any regenerate changes required | - |
 
 ## `LOADING.KWI` (spec ch.30)
 

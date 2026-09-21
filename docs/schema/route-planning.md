@@ -67,6 +67,7 @@ the tests in `parser/tests/test_route_planning.py`, `test_boundary_links.py` and
 | is_boundary | Region boundary node (links are 8 B) | observed | R: 781 of 171293 | `parser/kiwiw/route_planning_writer.py` |
 | parcel_boundary, traffic_light, rotary | Flags | observed | R: 0 of 171293 each; writer always writes false | `parser/kiwiw/route_planning_writer.py` |
 | is_suburb, is_semi_urban | Flags | unknown | Writer always false; R value not separately recorded | `parser/kiwiw/route_planning_writer.py` |
+| Suburb/parent hierarchy and boundary polygons | R records suburb parent/child relationships; OSM derivation requires boundary polygons and nested administrative boundary tagging. Hierarchy structure and boundary source unknown. | unknown | FINDINGS section 3 (WP3): "Suburb/parent hierarchy needs boundary polygons". First test: extract R suburb tree from ARCD three-tier hierarchy (index-idx.md line 100) and one administrative boundary polygon; verify nesting against OSM admin_level tags for one region | - |
 
 ## Link record (6 B, or 8 B on boundary nodes), regulation and between-links cost records
 
@@ -82,7 +83,7 @@ the tests in `parser/tests/test_route_planning.py`, `test_boundary_links.py` and
 | Regulation record (2 B) | exit_link_no + passage_code, between-links bit | observed | R: 236327 records, 232083 with between-links bit set. Writer emits `is_between_links` False and no between-links cost | `parser/kiwiw/route_planning_writer.py` |
 | Passage code values | 127 (231996), 1 (4186), 2 (88) on R; spec table (ch.10.11) not decoded | unknown | R census | - |
 | Between-links cost record (4 B) | Turn cost between two links | observed | R: 32726, all with aggregated-intersection flag set | `parser/kiwiw/route_planning_writer.py` |
-| Turn restrictions from OSM | Mapping to regulation records | unknown | Only 1 of 57372 relations resolved in region 178; via-way skipped; cause undiagnosed (WP2 open item) | `parser/build_route_graph.py` |
+| Turn restrictions from OSM | Mapping to regulation records | unknown | Only 1 of 57372 relations resolved in region 178; via-way skipped; cause undiagnosed (WP2 open item). First test: parse FINDINGS.md region 178 (state 204 QLD region_id=178) from R and count OSM restriction relations vs. regulation records emitted | `parser/build_route_graph.py` |
 
 ## Link cost table
 
@@ -114,11 +115,11 @@ the tests in `parser/tests/test_route_planning.py`, `test_boundary_links.py` and
 |---|---|---|---|---|
 | MID | DISC_STAMP_12B `0f6788003c47220003000722` | observed | R ext-frame census (1864 regions) | `parser/kiwiw/route_planning_writer.py` |
 | Populated slots | Every region has 2 or 3 populated slots (487 with 2, 1377 with 3) | observed | notebook 01 census; corrects its earlier "1 to 2" | - |
-| 0xAF100100 (slot 0) | All regions, variable length, 62.1% of ext bytes, word-structured with 0x7FFF sentinel | unknown | `parser/analyze_ext_frames.py` census. Writer emits data id 0 and empty payload, which does not match R | `parser/kiwiw/route_planning_writer.py` |
-| 0xAF100200 (slot 1) | Level 6 only (51 of 51), fixed 106 B | unknown | census | - |
-| 0xAF100300 (slot 2) | Level 8 only, in 1326 of 1357, exactly where region has no boundary nodes. 4 B header (0x0002, count) + count x 12 B: u32 id (increasing), u16 small, u16 value twice, u16 zero | observed | length 4 + 12 x count in 1326 of 1326; 3165 distinct ids (`parser/analyze_ext_frame_shape.py`). Semantics unknown | - |
+| 0xAF100100 (slot 0) | All regions, variable length, 62.1% of ext bytes, word-structured with 0x7FFF sentinel | unknown | `parser/analyze_ext_frames.py` census. Writer emits data id 0 and empty payload, which does not match R. First test: hex-dump R ext frame 0xAF100100 from one region and compare data id / payload structure against spec ch.10.5 table | `parser/kiwiw/route_planning_writer.py` |
+| 0xAF100200 (slot 1) | Level 6 only (51 of 51), fixed 106 B | unknown | census. First test: verify all 51 L6 regions have exactly 106 B ext frame payload; hex-dump one region's 0xAF100200 and document structure | - |
+| 0xAF100300 (slot 2) | Level 8 only, in 1326 of 1357, exactly where region has no boundary nodes. 4 B header (0x0002, count) + count x 12 B: u32 id (increasing), u16 small, u16 value twice, u16 zero | observed | length 4 + 12 x count in 1326 of 1326; 3165 distinct ids (`parser/analyze_ext_frame_shape.py`). Semantics unknown. First test: verify all 1326 L8 regions without boundary nodes have 0xAF100300 frame; check id progression and field meaning by analyzing field ranges | - |
 | 0xAF100600 (slot 5) | All regions, fixed 4 B `00 02 00 00` | observed | census | - |
-| Firmware requirement | Whether firmware needs AF100100 / AF100300 | unknown | Untested; in-vehicle testing is last-mile | - |
+| Firmware requirement | Whether firmware needs AF100100 / AF100300 | unknown | Untested; in-vehicle testing is last-mile. First test: boot a head unit with G disc omitting 0xAF100100/0300 (data id 0, empty payload) and verify routing/navigation functions remain operational | - |
 
 ## Ch.8 Route guidance
 
@@ -136,7 +137,7 @@ the tests in `parser/tests/test_route_planning.py`, `test_boundary_links.py` and
 |---|---|---|---|---|
 | Level assignment | Edge-difference priority, lazy update, bounded witness search; DEFAULT_LEVEL_FRACTIONS (0.55, 0.25, 0.13, 0.07) | assumed | Heuristic, not a measured disc statistic. Shortest-path preservation tested synthetically only in `parser/tests/test_contraction.py` | `parser/kiwiw/contraction.py` |
 | Boundary links | 8 B link records with neighbour region | observed | R: 2316 boundary links; synthetic round trip `parser/tests/test_boundary_links.py` | `parser/kiwiw/route_planning_writer.py` |
-| >14 links per node ("undecided" case) | Writer raises NotImplementedError | unknown | Not exercised | `parser/kiwiw/route_planning_writer.py` |
+| >14 links per node ("undecided" case) | Writer raises NotImplementedError | unknown | Not exercised. First test: search R for any node with degree > 14; if found, reproduce OSM clustering that produces >14 edges and verify writer escalates to NotImplementedError or handles gracefully | `parser/kiwiw/route_planning_writer.py` |
 
 ## Open questions
 
