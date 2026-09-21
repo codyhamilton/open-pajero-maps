@@ -18,11 +18,14 @@ leaf-parcel bounding box that `mesh.locate_parcel()` resolves (not a larger
 wrong (e.g. road points landing wildly outside the parcel bbox), this
 constant is the first thing to revisit.
 
-Also unconfirmed: which raw axis direction maps to increasing latitude.
-We assume "y increases toward the northern edge of the bbox" (screen-down
-convention flipped to geographic-up); this only affects north/south
-mirroring within a single small parcel (order-of-magnitude sanity checks
-are unaffected either way).
+Orientation (settled): y increases northward, so y=0 is the parcel's
+south edge (lat_lo) and y=COORD_RANGE its north edge (lat_hi); x increases
+eastward. Basis: Plan 03's 2-03 overlay test, pooled over 12 cells x 7
+classes, matched road fraction / p50 error with y up vs y down -- L0_urban
+0.836/4.73 m vs 0.094/50.33 m; L2 0.843/8.07 vs 0.190/210.78; L4
+0.894/10.68 vs 0.138/1340.50; L6 0.875/25.43 vs 0.234/4412.48; L8
+0.863/119.92 vs 0.145/58783.46; divided 0.773/3.62 vs 0.291/22.87;
+L0_sparse 0.717/26.51 vs 0.042/487.49.
 """
 from __future__ import annotations
 
@@ -33,7 +36,7 @@ COORD_RANGE = float(1 << 15)
 
 def xy_to_latlon(xc: int, yc: int, bounds: BoundingBox) -> tuple[float, float]:
     lon = bounds.lon_lo + (xc / COORD_RANGE) * (bounds.lon_hi - bounds.lon_lo)
-    lat = bounds.lat_hi - (yc / COORD_RANGE) * (bounds.lat_hi - bounds.lat_lo)
+    lat = bounds.lat_lo + (yc / COORD_RANGE) * (bounds.lat_hi - bounds.lat_lo)
     return lat, lon
 
 
@@ -82,6 +85,6 @@ def latlon_to_xy(lat: float, lon: float, bounds: BoundingBox) -> tuple[int, int]
         (lon - bounds.lon_lo) / (bounds.lon_hi - bounds.lon_lo) * COORD_RANGE
     ))
     yc = int(round(
-        (bounds.lat_hi - lat) / (bounds.lat_hi - bounds.lat_lo) * COORD_RANGE
+        (lat - bounds.lat_lo) / (bounds.lat_hi - bounds.lat_lo) * COORD_RANGE
     ))
     return xc, yc

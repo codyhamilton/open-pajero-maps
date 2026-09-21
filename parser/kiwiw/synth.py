@@ -239,7 +239,7 @@ def _bg_fast(shape: BackgroundShape, bounds: BoundingBox):
         return None
     x = np.rint((arr[:, 1] - bounds.lon_lo) / (bounds.lon_hi - bounds.lon_lo)
                 * COORD_RANGE).astype(np.int64)
-    y = np.rint((bounds.lat_hi - arr[:, 0]) / (bounds.lat_hi - bounds.lat_lo)
+    y = np.rint((arr[:, 0] - bounds.lat_lo) / (bounds.lat_hi - bounds.lat_lo)
                 * COORD_RANGE).astype(np.int64)
     np.clip(x, 0, _COORD_MAX, out=x)
     np.clip(y, 0, _COORD_MAX, out=y)

@@ -85,7 +85,7 @@ def parcel_metrics(wp) -> dict | None:
     for link in parcel.road.links:
         pts = link.points or [(n.lat, n.lon) for n in link.nodes]
         raw = [((lon - b.lon_lo) / lon_span * DECODER_RANGE,
-                (b.lat_hi - lat) / lat_span * DECODER_RANGE) for lat, lon in pts]
+                (lat - b.lat_lo) / lat_span * DECODER_RANGE) for lat, lon in pts]
         chains.append(raw)
     peak = max((c for ch in chains for p in ch for c in p), default=0.0)
     cm = getattr(wp, "frame_range", None) or _class_range(wp)

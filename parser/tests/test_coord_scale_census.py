@@ -12,7 +12,7 @@ B = NS(lat_lo=-28.0, lat_hi=-27.0, lon_lo=153.0, lon_hi=154.0)
 
 
 def _pt(x, y):
-    return (B.lat_hi - y / 32768.0, B.lon_lo + x / 32768.0)
+    return (B.lat_lo + y / 32768.0, B.lon_lo + x / 32768.0)
 
 
 def _wp(level, nodes, points=(), bg=()):

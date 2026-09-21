@@ -39,7 +39,7 @@ NAMES = {0: "normal", 1: "pardiv1", 2: "pardiv2", 3: "pardiv3"}
 
 def _raw(lat: float, lon: float, b) -> tuple[int, int]:
     x = (lon - b.lon_lo) / (b.lon_hi - b.lon_lo) * DECODER_RANGE
-    y = (b.lat_hi - lat) / (b.lat_hi - b.lat_lo) * DECODER_RANGE
+    y = (lat - b.lat_lo) / (b.lat_hi - b.lat_lo) * DECODER_RANGE
     return int(round(x)), int(round(y))
 
 

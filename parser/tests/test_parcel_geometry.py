@@ -248,7 +248,7 @@ class TestCoordinateRoundtrip:
         assert abs(lon2 - lon) <= lon_tol, f"lon roundtrip error {abs(lon2 - lon)} > {lon_tol}"
 
     def test_corner_roundtrip(self):
-        """SW corner round-trips to (0, COORD_RANGE)."""
+        """SW corner round-trips to (0, 0)."""
         bounds = BoundingBox(lat_lo=-32.0, lat_hi=-31.0, lon_lo=115.0, lon_hi=116.0)
         lat, lon = bounds.lat_lo, bounds.lon_lo
         lat2, lon2, xc, yc = self._roundtrip(lat, lon, bounds)
@@ -256,7 +256,7 @@ class TestCoordinateRoundtrip:
         assert abs(lat2 - lat) <= lat_tol
         assert abs(lon2 - lon) <= lon_tol
         assert xc == 0
-        assert yc == int(COORD_RANGE)  # y=0 is north, so SW corner → full y
+        assert yc == 0  # y increases northward, so the SW corner is y=0
 
     def test_five_scattered_points(self):
         """Five scattered points all round-trip within quantization tolerance."""
@@ -410,3 +410,14 @@ class TestParcelBounds:
         b = parcel_bounds(23, 11, grid)
         assert (b.lat_hi - b.lat_lo) == pytest.approx(grid.cell_lat, rel=1e-9)
         assert (b.lon_hi - b.lon_lo) == pytest.approx(grid.cell_lon, rel=1e-9)
+
+
+def test_y_axis_increases_northward():
+    """y=0 is the south edge (lat_lo), y=COORD_RANGE the north edge (lat_hi);
+    latlon_to_xy inverts exactly (2-03 pooled evidence: y is up)."""
+    bounds = BoundingBox(lat_lo=-33.0, lat_hi=-32.0, lon_lo=115.0, lon_hi=116.0)
+    for xc in (0, 1000, 32767):
+        assert xy_to_latlon(xc, 0, bounds)[0] == bounds.lat_lo
+        assert xy_to_latlon(xc, int(COORD_RANGE), bounds)[0] == bounds.lat_hi
+    for xc, yc in [(0, 0), (0, 32767), (32767, 0), (12345, 6789), (1000, 5000)]:
+        assert latlon_to_xy(*xy_to_latlon(xc, yc, bounds), bounds) == (xc, yc)

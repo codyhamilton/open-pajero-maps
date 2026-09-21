@@ -112,7 +112,7 @@ typedef struct { double lat_lo, lat_hi, lon_lo, lon_hi; } Bounds;
 /* latlon_to_xy + _clamp_coord: 0 ok, -1 not representable (NaN). */
 static inline int to_xy(double lat, double lon, const Bounds *b, int64_t *x, int64_t *y) {
     double fx = rint((lon - b->lon_lo) / (b->lon_hi - b->lon_lo) * COORD_RANGE);
-    double fy = rint((b->lat_hi - lat) / (b->lat_hi - b->lat_lo) * COORD_RANGE);
+    double fy = rint((lat - b->lat_lo) / (b->lat_hi - b->lat_lo) * COORD_RANGE);
     if (isnan(fx) || isnan(fy)) return -1;
     *x = fx < 0 ? 0 : fx > COORD_MAX ? COORD_MAX : (int64_t)fx;
     *y = fy < 0 ? 0 : fy > COORD_MAX ? COORD_MAX : (int64_t)fy;
