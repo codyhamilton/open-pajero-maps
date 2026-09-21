@@ -1,0 +1,2459 @@
+{
+ "all_pass": false,
+ "criteria_rules": {
+  "clip_exact_share_min": 0.9,
+  "clip_near_fraction_of_range": 0.005,
+  "clip_near_tight": 0.001,
+  "coord_max_rel_min": 0.9,
+  "grid": 16,
+  "match_fraction_min": 0.8,
+  "min_links": 20,
+  "occupied_ratio_min": 0.5,
+  "pool_n": 12
+ },
+ "divided_rule": {
+  "best_fit": "parent_4096",
+  "canonical": "sub-parcel coordinates are absolute in the PARENT leaf's frame at range 4096; each sub covers a 2x2 quadrant, so sub 0 (SW under y-up) never exceeds 2048 -- which is exactly the census maximum",
+  "census_maxima": {
+   "pardiv1_sub0": 2048,
+   "pardiv1_sub1..3": 4096
+  },
+  "hypotheses": {
+   "own_bounds": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.7889,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 1.757,
+    "dist_over_limit_p90": 5.189,
+    "distance_m_p50": 12.06,
+    "distance_m_p90": 35.65,
+    "inside_cell_fraction_median": 1.0,
+    "links": 5044,
+    "matched_fraction": 0.2817,
+    "occupied_ratio_median": 0.32
+   },
+   "parent_4096": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.75,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.263,
+    "dist_over_limit_p90": 2.133,
+    "distance_m_p50": 3.62,
+    "distance_m_p90": 29.29,
+    "inside_cell_fraction_median": 1.0,
+    "links": 5044,
+    "matched_fraction": 0.7732,
+    "occupied_ratio_median": 1.0442
+   },
+   "quadrant_4096": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.75,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 1.984,
+    "dist_over_limit_p90": 6.642,
+    "distance_m_p50": 13.63,
+    "distance_m_p90": 45.62,
+    "inside_cell_fraction_median": 1.0,
+    "links": 5044,
+    "matched_fraction": 0.2234,
+    "occupied_ratio_median": 0.32
+   }
+  },
+  "sub_index_layout": "idx = 2*row + col, row 0 = south (walk._narrow_bounds)"
+ },
+ "gate": {
+  "classes_control_clustered": 7,
+  "classes_control_matched_ok": 0,
+  "classes_model_matched_ok": 5,
+  "classes_total": 7,
+  "named_cells_passing": 1
+ },
+ "l0_sparse_rule": {
+  "best_fit": "tile4x4_16384",
+  "canonical": "L0 sparse coordinates are absolute in the 4x4 'integrated parcel' (the same 4x4 tile the coord_scale class rule keys urban/sparse on, and the size of one L2 leaf) at range 16384 = 4 x 4096 -- which is exactly the census maximum",
+  "census_maximum": 16384,
+  "hypotheses": {
+   "own_leaf_16384": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 95.885,
+    "dist_over_limit_p90": 551.786,
+    "distance_m_p50": 1249.02,
+    "distance_m_p90": 7353.32,
+    "inside_cell_fraction_median": 1.0,
+    "links": 692,
+    "matched_fraction": 0.0043,
+    "occupied_ratio_median": 2.3088
+   },
+   "own_leaf_4096": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.0022,
+    "coord_max_over_range_max": 4.0,
+    "coord_max_over_range_median": 4.0,
+    "dist_over_limit_p50": 2.506,
+    "dist_over_limit_p90": 52.825,
+    "distance_m_p50": 34.48,
+    "distance_m_p90": 685.61,
+    "inside_cell_fraction_median": 0.037,
+    "links": 692,
+    "matched_fraction": 0.3064,
+    "occupied_ratio_median": 0.7807
+   },
+   "tile4x4_16384": {
+    "cells": 12,
+    "cells_passing": 3,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.502,
+    "dist_over_limit_p90": 4.205,
+    "distance_m_p50": 26.43,
+    "distance_m_p90": 218.84,
+    "inside_cell_fraction_median": 0.038,
+    "links": 692,
+    "matched_fraction": 0.7182,
+    "occupied_ratio_median": 0.7807
+   },
+   "tile4x4_4096": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.0022,
+    "coord_max_over_range_max": 4.0,
+    "coord_max_over_range_median": 4.0,
+    "dist_over_limit_p50": 275.454,
+    "dist_over_limit_p90": 562.797,
+    "distance_m_p50": 14414.22,
+    "distance_m_p90": 30260.01,
+    "inside_cell_fraction_median": 0.0,
+    "links": 692,
+    "matched_fraction": 0.0014,
+    "occupied_ratio_median": 0.0608
+   }
+  }
+ },
+ "named_cells": [
+  {
+   "bounds": {
+    "lat_hi": -27.416666666666664,
+    "lat_lo": -27.499999999999996,
+    "lon_hi": 153.125,
+    "lon_lo": 153.0
+   },
+   "cell_extent_m": 12347.4,
+   "class": "L2",
+   "control_32768": {
+    "cell_extent_m": 12347.4,
+    "clip_exact_share": 0.2174,
+    "clip_exact_share_tight": 0.6522,
+    "clip_touching_ends": 207,
+    "coord_max_over_range": 0.125,
+    "criteria": {
+     "clipped_at_edge": false,
+     "coord_max": false,
+     "no_clustering": false,
+     "within_tolerance": true
+    },
+    "distance_limit_m": 61.74,
+    "distance_m_p50": 25.98,
+    "distance_m_p90": 76.18,
+    "frame_extent_m": 12347.4,
+    "inside_cell_fraction": 1.0,
+    "links": 1229,
+    "matched_fraction": 0.8674,
+    "matched_fraction_leaf_basis": 0.8674,
+    "occupied_fraction_osm": 1.0,
+    "occupied_fraction_r": 0.0312,
+    "occupied_ratio": 0.0312,
+    "pass": false
+   },
+   "ids": {
+    "block_index": 1,
+    "blockset_index": 71,
+    "leaf_path": [
+     472
+    ],
+    "level": 2
+   },
+   "locality": {
+    "lat": -27.4698,
+    "lon": 153.0251,
+    "source": "spot_checks.json Brisbane"
+   },
+   "model": {
+    "cell_extent_m": 12347.4,
+    "clip_exact_share": 0.8452,
+    "clip_exact_share_tight": 0.9342,
+    "clip_touching_ends": 84,
+    "coord_max_over_range": 1.0,
+    "criteria": {
+     "clipped_at_edge": false,
+     "coord_max": true,
+     "no_clustering": true,
+     "within_tolerance": false
+    },
+    "distance_limit_m": 61.74,
+    "distance_m_p50": 9.52,
+    "distance_m_p90": 135.6,
+    "frame_extent_m": 12347.4,
+    "inside_cell_fraction": 1.0,
+    "links": 1229,
+    "matched_fraction": 0.7982,
+    "matched_fraction_leaf_basis": 0.7982,
+    "occupied_fraction_osm": 1.0,
+    "occupied_fraction_r": 0.8008,
+    "occupied_ratio": 0.8008,
+    "pass": false
+   },
+   "model_range": 4096.0,
+   "model_y_down": {
+    "cell_extent_m": 12347.4,
+    "clip_exact_share": 0.8452,
+    "clip_exact_share_tight": 0.9342,
+    "clip_touching_ends": 84,
+    "coord_max_over_range": 1.0,
+    "criteria": {
+     "clipped_at_edge": false,
+     "coord_max": true,
+     "no_clustering": true,
+     "within_tolerance": false
+    },
+    "distance_limit_m": 61.74,
+    "distance_m_p50": 39.11,
+    "distance_m_p90": 190.57,
+    "frame_extent_m": 12347.4,
+    "inside_cell_fraction": 1.0,
+    "links": 1229,
+    "matched_fraction": 0.6273,
+    "matched_fraction_leaf_basis": 0.6273,
+    "occupied_fraction_osm": 1.0,
+    "occupied_fraction_r": 0.8008,
+    "occupied_ratio": 0.8008,
+    "pass": false
+   },
+   "name": "Brisbane CBD",
+   "osm_ways": 18511,
+   "verdict": "fail"
+  },
+  {
+   "bounds": {
+    "lat_hi": -33.83333333333333,
+    "lat_lo": -33.916666666666664,
+    "lon_hi": 151.375,
+    "lon_lo": 151.25
+   },
+   "cell_extent_m": 11553.0,
+   "class": "L2",
+   "control_32768": {
+    "cell_extent_m": 11553.0,
+    "clip_exact_share": 0.1717,
+    "clip_exact_share_tight": 0.9444,
+    "clip_touching_ends": 99,
+    "coord_max_over_range": 0.125,
+    "criteria": {
+     "clipped_at_edge": false,
+     "coord_max": false,
+     "no_clustering": false,
+     "within_tolerance": true
+    },
+    "distance_limit_m": 57.77,
+    "distance_m_p50": 22.31,
+    "distance_m_p90": 36.86,
+    "frame_extent_m": 11553.0,
+    "inside_cell_fraction": 1.0,
+    "links": 220,
+    "matched_fraction": 1.0,
+    "matched_fraction_leaf_basis": 1.0,
+    "occupied_fraction_osm": 0.2422,
+    "occupied_fraction_r": 0.0078,
+    "occupied_ratio": 0.0323,
+    "pass": false
+   },
+   "ids": {
+    "block_index": 1,
+    "blockset_index": 55,
+    "leaf_path": [
+     42
+    ],
+    "level": 2
+   },
+   "locality": {
+    "lat": -33.8688,
+    "lon": 151.2093,
+    "source": "spot_checks.json Sydney"
+   },
+   "model": {
+    "cell_extent_m": 11553.0,
+    "clip_exact_share": 1.0,
+    "clip_exact_share_tight": 1.0,
+    "clip_touching_ends": 19,
+    "coord_max_over_range": 1.0,
+    "criteria": {
+     "clipped_at_edge": true,
+     "coord_max": true,
+     "no_clustering": true,
+     "within_tolerance": true
+    },
+    "distance_limit_m": 57.77,
+    "distance_m_p50": 6.72,
+    "distance_m_p90": 136.26,
+    "frame_extent_m": 11553.0,
+    "inside_cell_fraction": 1.0,
+    "links": 220,
+    "matched_fraction": 0.8364,
+    "matched_fraction_leaf_basis": 0.8364,
+    "occupied_fraction_osm": 0.2422,
+    "occupied_fraction_r": 0.1875,
+    "occupied_ratio": 0.7742,
+    "pass": true
+   },
+   "model_range": 4096.0,
+   "model_y_down": {
+    "cell_extent_m": 11553.0,
+    "clip_exact_share": 1.0,
+    "clip_exact_share_tight": 1.0,
+    "clip_touching_ends": 19,
+    "coord_max_over_range": 1.0,
+    "criteria": {
+     "clipped_at_edge": true,
+     "coord_max": true,
+     "no_clustering": true,
+     "within_tolerance": false
+    },
+    "distance_limit_m": 57.77,
+    "distance_m_p50": 218.78,
+    "distance_m_p90": 795.82,
+    "frame_extent_m": 11553.0,
+    "inside_cell_fraction": 1.0,
+    "links": 220,
+    "matched_fraction": 0.2864,
+    "matched_fraction_leaf_basis": 0.2864,
+    "occupied_fraction_osm": 0.2422,
+    "occupied_fraction_r": 0.1875,
+    "occupied_ratio": 0.7742,
+    "pass": false
+   },
+   "name": "Sydney",
+   "osm_ways": 2981,
+   "verdict": "pass"
+  },
+  {
+   "bounds": {
+    "lat_hi": -19.333333333333332,
+    "lat_lo": -20.666666666666664,
+    "lon_hi": 148.0,
+    "lon_lo": 146.0
+   },
+   "cell_extent_m": 209213.2,
+   "class": "L6",
+   "control_32768": {
+    "cell_extent_m": 209213.2,
+    "clip_exact_share": 1.0,
+    "clip_exact_share_tight": 1.0,
+    "clip_touching_ends": 3,
+    "coord_max_over_range": 0.125,
+    "criteria": {
+     "clipped_at_edge": true,
+     "coord_max": false,
+     "no_clustering": false,
+     "within_tolerance": false
+    },
+    "distance_limit_m": 1046.07,
+    "distance_m_p50": 18870.59,
+    "distance_m_p90": 24492.98,
+    "frame_extent_m": 209213.2,
+    "inside_cell_fraction": 1.0,
+    "links": 22,
+    "matched_fraction": 0.0,
+    "matched_fraction_leaf_basis": 0.0,
+    "occupied_fraction_osm": 0.2109,
+    "occupied_fraction_r": 0.0195,
+    "occupied_ratio": 0.0926,
+    "pass": false
+   },
+   "ids": {
+    "block_index": 0,
+    "blockset_index": 1,
+    "leaf_path": [
+     364
+    ],
+    "level": 6
+   },
+   "locality": {
+    "lat": -23.442,
+    "lon": 144.25,
+    "source": "named locality Longreach QLD"
+   },
+   "model": {
+    "cell_extent_m": 209213.2,
+    "clip_exact_share": 0.6667,
+    "clip_exact_share_tight": 1.0,
+    "clip_touching_ends": 9,
+    "coord_max_over_range": 1.0,
+    "criteria": {
+     "clipped_at_edge": false,
+     "coord_max": true,
+     "no_clustering": true,
+     "within_tolerance": false
+    },
+    "distance_limit_m": 1046.07,
+    "distance_m_p50": 38.85,
+    "distance_m_p90": 11963.43,
+    "frame_extent_m": 209213.2,
+    "inside_cell_fraction": 1.0,
+    "links": 22,
+    "matched_fraction": 0.6818,
+    "matched_fraction_leaf_basis": 0.6818,
+    "occupied_fraction_osm": 0.2109,
+    "occupied_fraction_r": 0.1758,
+    "occupied_ratio": 0.8333,
+    "pass": false
+   },
+   "model_range": 4096.0,
+   "model_y_down": {
+    "cell_extent_m": 209213.2,
+    "clip_exact_share": 0.6667,
+    "clip_exact_share_tight": 1.0,
+    "clip_touching_ends": 9,
+    "coord_max_over_range": 1.0,
+    "criteria": {
+     "clipped_at_edge": false,
+     "coord_max": true,
+     "no_clustering": true,
+     "within_tolerance": false
+    },
+    "distance_limit_m": 1046.07,
+    "distance_m_p50": 33058.26,
+    "distance_m_p90": 55255.6,
+    "frame_extent_m": 209213.2,
+    "inside_cell_fraction": 1.0,
+    "links": 22,
+    "matched_fraction": 0.0455,
+    "matched_fraction_leaf_basis": 0.0455,
+    "occupied_fraction_osm": 0.2109,
+    "occupied_fraction_r": 0.1758,
+    "occupied_ratio": 0.8333,
+    "pass": false
+   },
+   "name": "rural QLD (Longreach)",
+   "osm_ways": 860,
+   "verdict": "fail"
+  },
+  {
+   "bounds": {
+    "lat_hi": -23.33333333333333,
+    "lat_lo": -28.666666666666664,
+    "lon_hi": 138.0,
+    "lon_lo": 130.0
+   },
+   "cell_extent_m": 800430.0,
+   "class": "L8",
+   "control_32768": {
+    "cell_extent_m": 800430.0,
+    "clip_exact_share": 1.0,
+    "clip_exact_share_tight": 1.0,
+    "clip_touching_ends": 1,
+    "coord_max_over_range": 0.125,
+    "criteria": {
+     "clipped_at_edge": true,
+     "coord_max": false,
+     "no_clustering": false,
+     "within_tolerance": false
+    },
+    "distance_limit_m": 4002.15,
+    "distance_m_p50": 298344.81,
+    "distance_m_p90": 326393.63,
+    "frame_extent_m": 800430.0,
+    "inside_cell_fraction": 1.0,
+    "links": 43,
+    "matched_fraction": 0.0,
+    "matched_fraction_leaf_basis": 0.0,
+    "occupied_fraction_osm": 0.1289,
+    "occupied_fraction_r": 0.0156,
+    "occupied_ratio": 0.1212,
+    "pass": false
+   },
+   "ids": {
+    "block_index": 0,
+    "blockset_index": 1,
+    "leaf_path": [
+     17
+    ],
+    "level": 8
+   },
+   "locality": {
+    "lat": -25.9,
+    "lon": 139.35,
+    "source": "named locality Birdsville QLD"
+   },
+   "model": {
+    "cell_extent_m": 800430.0,
+    "clip_exact_share": 1.0,
+    "clip_exact_share_tight": 1.0,
+    "clip_touching_ends": 2,
+    "coord_max_over_range": 1.0,
+    "criteria": {
+     "clipped_at_edge": true,
+     "coord_max": true,
+     "no_clustering": true,
+     "within_tolerance": false
+    },
+    "distance_limit_m": 4002.15,
+    "distance_m_p50": 156.39,
+    "distance_m_p90": 7750.47,
+    "frame_extent_m": 800430.0,
+    "inside_cell_fraction": 1.0,
+    "links": 43,
+    "matched_fraction": 0.7907,
+    "matched_fraction_leaf_basis": 0.7907,
+    "occupied_fraction_osm": 0.1289,
+    "occupied_fraction_r": 0.1016,
+    "occupied_ratio": 0.7879,
+    "pass": false
+   },
+   "model_range": 4096.0,
+   "model_y_down": {
+    "cell_extent_m": 800430.0,
+    "clip_exact_share": 1.0,
+    "clip_exact_share_tight": 1.0,
+    "clip_touching_ends": 2,
+    "coord_max_over_range": 1.0,
+    "criteria": {
+     "clipped_at_edge": true,
+     "coord_max": true,
+     "no_clustering": true,
+     "within_tolerance": false
+    },
+    "distance_limit_m": 4002.15,
+    "distance_m_p50": 28720.64,
+    "distance_m_p90": 123440.44,
+    "frame_extent_m": 800430.0,
+    "inside_cell_fraction": 1.0,
+    "links": 43,
+    "matched_fraction": 0.0,
+    "matched_fraction_leaf_basis": 0.0,
+    "occupied_fraction_osm": 0.1289,
+    "occupied_fraction_r": 0.1016,
+    "occupied_ratio": 0.7879,
+    "pass": false
+   },
+   "name": "outback (Birdsville)",
+   "osm_ways": 395,
+   "verdict": "fail"
+  }
+ ],
+ "orientation": {
+  "classes": {
+   "L0_sparse": {
+    "y_down_matched": 0.0419,
+    "y_down_p50_m": 487.49,
+    "y_up_matched": 0.7168,
+    "y_up_p50_m": 26.51
+   },
+   "L0_urban": {
+    "y_down_matched": 0.0941,
+    "y_down_p50_m": 50.33,
+    "y_up_matched": 0.8359,
+    "y_up_p50_m": 4.73
+   },
+   "L2": {
+    "y_down_matched": 0.19,
+    "y_down_p50_m": 210.78,
+    "y_up_matched": 0.8425,
+    "y_up_p50_m": 8.07
+   },
+   "L4": {
+    "y_down_matched": 0.1381,
+    "y_down_p50_m": 1340.5,
+    "y_up_matched": 0.8945,
+    "y_up_p50_m": 10.68
+   },
+   "L6": {
+    "y_down_matched": 0.2341,
+    "y_down_p50_m": 4412.48,
+    "y_up_matched": 0.8751,
+    "y_up_p50_m": 25.43
+   },
+   "L8": {
+    "y_down_matched": 0.1448,
+    "y_down_p50_m": 58783.46,
+    "y_up_matched": 0.8625,
+    "y_up_p50_m": 119.92
+   },
+   "divided_pardiv1": {
+    "y_down_matched": 0.291,
+    "y_down_p50_m": 22.87,
+    "y_up_matched": 0.7732,
+    "y_up_p50_m": 3.62
+   }
+  },
+  "classes_favouring_y_up": 7,
+  "classes_total": 7,
+  "coordconv_current": "y_down (lat = lat_hi - y/range * height)",
+  "finding": "y_up fits: pooled matched fraction and median distance per class",
+  "note": "coordconv.py is NOT edited here; Phase 3 owns it."
+ },
+ "pooled_classes": {
+  "L0_sparse": {
+   "cell_details": [
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 54.52,
+     "ids": {
+      "block_index": 17,
+      "blockset_index": 70,
+      "leaf_path": [
+       136
+      ],
+      "level": 0
+     },
+     "links": 50,
+     "matched_fraction": 0.56,
+     "occupied_ratio": 0.619,
+     "pass": false,
+     "range": 16384.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 9.54,
+     "ids": {
+      "block_index": 15,
+      "blockset_index": 22,
+      "leaf_path": [
+       1800
+      ],
+      "level": 0
+     },
+     "links": 96,
+     "matched_fraction": 0.8958,
+     "occupied_ratio": 0.95,
+     "pass": true,
+     "range": 16384.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 100.1,
+     "ids": {
+      "block_index": 22,
+      "blockset_index": 22,
+      "leaf_path": [
+       1430
+      ],
+      "level": 0
+     },
+     "links": 22,
+     "matched_fraction": 0.0909,
+     "occupied_ratio": 0.89,
+     "pass": false,
+     "range": 16384.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 13.17,
+     "ids": {
+      "block_index": 23,
+      "blockset_index": 22,
+      "leaf_path": [
+       1300
+      ],
+      "level": 0
+     },
+     "links": 35,
+     "matched_fraction": 0.8857,
+     "occupied_ratio": 0.6871,
+     "pass": true,
+     "range": 16384.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 29.91,
+     "ids": {
+      "block_index": 29,
+      "blockset_index": 22,
+      "leaf_path": [
+       1048
+      ],
+      "level": 0
+     },
+     "links": 88,
+     "matched_fraction": 0.8409,
+     "occupied_ratio": 0.6765,
+     "pass": true,
+     "range": 16384.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 42.95,
+     "ids": {
+      "block_index": 30,
+      "blockset_index": 22,
+      "leaf_path": [
+       896
+      ],
+      "level": 0
+     },
+     "links": 118,
+     "matched_fraction": 0.5932,
+     "occupied_ratio": 0.92,
+     "pass": false,
+     "range": 16384.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 39.43,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 23,
+      "leaf_path": [
+       1950
+      ],
+      "level": 0
+     },
+     "links": 41,
+     "matched_fraction": 0.7073,
+     "occupied_ratio": 0.6729,
+     "pass": false,
+     "range": 16384.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 35.01,
+     "ids": {
+      "block_index": 8,
+      "blockset_index": 23,
+      "leaf_path": [
+       1300
+      ],
+      "level": 0
+     },
+     "links": 41,
+     "matched_fraction": 0.7073,
+     "occupied_ratio": 1.1161,
+     "pass": false,
+     "range": 16384.0
+    },
+    {
+     "clip_exact_share": 0.8182,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 3.22,
+     "ids": {
+      "block_index": 9,
+      "blockset_index": 23,
+      "leaf_path": [
+       0
+      ],
+      "level": 0
+     },
+     "links": 35,
+     "matched_fraction": 0.9429,
+     "occupied_ratio": 0.7732,
+     "pass": false,
+     "range": 16384.0
+    },
+    {
+     "clip_exact_share": 0.9091,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 6.82,
+     "ids": {
+      "block_index": 10,
+      "blockset_index": 23,
+      "leaf_path": [
+       1792
+      ],
+      "level": 0
+     },
+     "links": 79,
+     "matched_fraction": 0.7975,
+     "occupied_ratio": 0.8807,
+     "pass": false,
+     "range": 16384.0
+    },
+    {
+     "clip_exact_share": 0.8235,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 286.31,
+     "ids": {
+      "block_index": 16,
+      "blockset_index": 23,
+      "leaf_path": [
+       260
+      ],
+      "level": 0
+     },
+     "links": 29,
+     "matched_fraction": 0.3793,
+     "occupied_ratio": 1.6806,
+     "pass": false,
+     "range": 16384.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 16.99,
+     "ids": {
+      "block_index": 17,
+      "blockset_index": 23,
+      "leaf_path": [
+       387
+      ],
+      "level": 0
+     },
+     "links": 58,
+     "matched_fraction": 0.6897,
+     "occupied_ratio": 1.0278,
+     "pass": false,
+     "range": 16384.0
+    }
+   ],
+   "control_32768": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 0.5,
+    "coord_max_over_range_median": 0.5,
+    "dist_over_limit_p50": 11.069,
+    "dist_over_limit_p90": 80.249,
+    "distance_m_p50": 580.41,
+    "distance_m_p90": 4279.67,
+    "links": 692,
+    "matched_fraction": 0.0231,
+    "occupied_ratio_median": 0.34
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 3,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.503,
+    "dist_over_limit_p90": 4.116,
+    "distance_m_p50": 26.51,
+    "distance_m_p90": 217.48,
+    "links": 692,
+    "matched_fraction": 0.7168,
+    "occupied_ratio_median": 0.8854
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 9.282,
+    "dist_over_limit_p90": 52.912,
+    "distance_m_p50": 487.49,
+    "distance_m_p90": 2813.64,
+    "links": 692,
+    "matched_fraction": 0.0419,
+    "occupied_ratio_median": 0.8854
+   }
+  },
+  "L0_urban": {
+   "cell_details": [
+    {
+     "clip_exact_share": 0.9167,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 2.81,
+     "ids": {
+      "block_index": 9,
+      "blockset_index": 23,
+      "leaf_path": [
+       648
+      ],
+      "level": 0
+     },
+     "links": 35,
+     "matched_fraction": 0.8571,
+     "occupied_ratio": 0.7273,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.9565,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 2.31,
+     "ids": {
+      "block_index": 17,
+      "blockset_index": 23,
+      "leaf_path": [
+       772
+      ],
+      "level": 0
+     },
+     "links": 62,
+     "matched_fraction": 0.8871,
+     "occupied_ratio": 0.5517,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.6667,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 4.8,
+     "ids": {
+      "block_index": 6,
+      "blockset_index": 38,
+      "leaf_path": [
+       1433
+      ],
+      "level": 0
+     },
+     "links": 32,
+     "matched_fraction": 0.8438,
+     "occupied_ratio": 1.84,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.9524,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 3.71,
+     "ids": {
+      "block_index": 7,
+      "blockset_index": 38,
+      "leaf_path": [
+       1664
+      ],
+      "level": 0
+     },
+     "links": 42,
+     "matched_fraction": 0.8095,
+     "occupied_ratio": 1.0645,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.8696,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 5.92,
+     "ids": {
+      "block_index": 13,
+      "blockset_index": 38,
+      "leaf_path": [
+       665
+      ],
+      "level": 0
+     },
+     "links": 56,
+     "matched_fraction": 0.7321,
+     "occupied_ratio": 0.3463,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.8243,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 2.5,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       148
+      ],
+      "level": 0
+     },
+     "links": 388,
+     "matched_fraction": 0.8299,
+     "occupied_ratio": 0.916,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.8846,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 1.96,
+     "ids": {
+      "block_index": 15,
+      "blockset_index": 38,
+      "leaf_path": [
+       0
+      ],
+      "level": 0
+     },
+     "links": 66,
+     "matched_fraction": 0.803,
+     "occupied_ratio": 1.0682,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.9167,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 5.18,
+     "ids": {
+      "block_index": 23,
+      "blockset_index": 38,
+      "leaf_path": [
+       396
+      ],
+      "level": 0
+     },
+     "links": 246,
+     "matched_fraction": 0.8821,
+     "occupied_ratio": 0.7956,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.8393,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 6.15,
+     "ids": {
+      "block_index": 24,
+      "blockset_index": 38,
+      "leaf_path": [
+       272
+      ],
+      "level": 0
+     },
+     "links": 318,
+     "matched_fraction": 0.8994,
+     "occupied_ratio": 0.9193,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 5.03,
+     "ids": {
+      "block_index": 28,
+      "blockset_index": 38,
+      "leaf_path": [
+       1669
+      ],
+      "level": 0
+     },
+     "links": 102,
+     "matched_fraction": 0.8824,
+     "occupied_ratio": 0.9317,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.9333,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 5.61,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 39,
+      "leaf_path": [
+       1712
+      ],
+      "level": 0
+     },
+     "links": 28,
+     "matched_fraction": 0.75,
+     "occupied_ratio": 0.7971,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.7368,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 8.93,
+     "ids": {
+      "block_index": 16,
+      "blockset_index": 39,
+      "leaf_path": [
+       924
+      ],
+      "level": 0
+     },
+     "links": 197,
+     "matched_fraction": 0.7005,
+     "occupied_ratio": 0.9943,
+     "pass": false,
+     "range": 4096.0
+    }
+   ],
+   "control_32768": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.5416,
+    "coord_max_over_range_max": 0.125,
+    "coord_max_over_range_median": 0.125,
+    "dist_over_limit_p50": 6.998,
+    "dist_over_limit_p90": 59.013,
+    "distance_m_p50": 97.23,
+    "distance_m_p90": 811.46,
+    "links": 1572,
+    "matched_fraction": 0.0814,
+    "occupied_ratio_median": 0.0359
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 5,
+    "clip_exact_share_median": 0.9006,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.337,
+    "dist_over_limit_p90": 2.012,
+    "distance_m_p50": 4.73,
+    "distance_m_p90": 27.59,
+    "links": 1572,
+    "matched_fraction": 0.8359,
+    "occupied_ratio_median": 0.9177
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.9006,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 3.589,
+    "dist_over_limit_p90": 18.773,
+    "distance_m_p50": 50.33,
+    "distance_m_p90": 264.14,
+    "links": 1572,
+    "matched_fraction": 0.0941,
+    "occupied_ratio_median": 0.9177
+   }
+  },
+  "L2": {
+   "cell_details": [
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 8.07,
+     "ids": {
+      "block_index": 3,
+      "blockset_index": 22,
+      "leaf_path": [
+       383
+      ],
+      "level": 2
+     },
+     "links": 35,
+     "matched_fraction": 0.8,
+     "occupied_ratio": 0.6329,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 5.04,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 23,
+      "leaf_path": [
+       650
+      ],
+      "level": 2
+     },
+     "links": 64,
+     "matched_fraction": 0.875,
+     "occupied_ratio": 0.4792,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 6.05,
+     "ids": {
+      "block_index": 2,
+      "blockset_index": 23,
+      "leaf_path": [
+       165
+      ],
+      "level": 2
+     },
+     "links": 48,
+     "matched_fraction": 0.9375,
+     "occupied_ratio": 0.3542,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 9.08,
+     "ids": {
+      "block_index": 2,
+      "blockset_index": 35,
+      "leaf_path": [
+       638
+      ],
+      "level": 2
+     },
+     "links": 40,
+     "matched_fraction": 0.825,
+     "occupied_ratio": 0.236,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 6.69,
+     "ids": {
+      "block_index": 3,
+      "blockset_index": 37,
+      "leaf_path": [
+       750
+      ],
+      "level": 2
+     },
+     "links": 43,
+     "matched_fraction": 0.8605,
+     "occupied_ratio": 0.3514,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 10.64,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 38,
+      "leaf_path": [
+       412
+      ],
+      "level": 2
+     },
+     "links": 20,
+     "matched_fraction": 0.8,
+     "occupied_ratio": 0.2899,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 12.54,
+     "ids": {
+      "block_index": 1,
+      "blockset_index": 38,
+      "leaf_path": [
+       373
+      ],
+      "level": 2
+     },
+     "links": 24,
+     "matched_fraction": 0.7917,
+     "occupied_ratio": 0.6471,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 12.11,
+     "ids": {
+      "block_index": 2,
+      "blockset_index": 38,
+      "leaf_path": [
+       519
+      ],
+      "level": 2
+     },
+     "links": 23,
+     "matched_fraction": 0.7826,
+     "occupied_ratio": 0.2718,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 5.73,
+     "ids": {
+      "block_index": 3,
+      "blockset_index": 38,
+      "leaf_path": [
+       26
+      ],
+      "level": 2
+     },
+     "links": 38,
+     "matched_fraction": 0.8947,
+     "occupied_ratio": 0.4422,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.8333,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 9.09,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 39,
+      "leaf_path": [
+       387
+      ],
+      "level": 2
+     },
+     "links": 22,
+     "matched_fraction": 0.8182,
+     "occupied_ratio": 0.266,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 29.37,
+     "ids": {
+      "block_index": 2,
+      "blockset_index": 39,
+      "leaf_path": [
+       32
+      ],
+      "level": 2
+     },
+     "links": 20,
+     "matched_fraction": 0.65,
+     "occupied_ratio": 0.2697,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 7.04,
+     "ids": {
+      "block_index": 3,
+      "blockset_index": 39,
+      "leaf_path": [
+       288
+      ],
+      "level": 2
+     },
+     "links": 23,
+     "matched_fraction": 0.8696,
+     "occupied_ratio": 0.1698,
+     "pass": false,
+     "range": 4096.0
+    }
+   ],
+   "control_32768": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 0.125,
+    "coord_max_over_range_median": 0.125,
+    "dist_over_limit_p50": 4.262,
+    "dist_over_limit_p90": 39.624,
+    "distance_m_p50": 235.9,
+    "distance_m_p90": 2257.13,
+    "links": 400,
+    "matched_fraction": 0.245,
+    "occupied_ratio_median": 0.0274
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 1,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.146,
+    "dist_over_limit_p90": 2.878,
+    "distance_m_p50": 8.07,
+    "distance_m_p90": 159.48,
+    "links": 400,
+    "matched_fraction": 0.8425,
+    "occupied_ratio_median": 0.3206
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 3.824,
+    "dist_over_limit_p90": 64.01,
+    "distance_m_p50": 210.78,
+    "distance_m_p90": 3358.98,
+    "links": 400,
+    "matched_fraction": 0.19,
+    "occupied_ratio_median": 0.3206
+   }
+  },
+  "L4": {
+   "cell_details": [
+    {
+     "clip_exact_share": 0.7778,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 12.37,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 3,
+      "leaf_path": [
+       690
+      ],
+      "level": 4
+     },
+     "links": 301,
+     "matched_fraction": 0.8837,
+     "occupied_ratio": 0.5926,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 22.21,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 10,
+      "leaf_path": [
+       607
+      ],
+      "level": 4
+     },
+     "links": 44,
+     "matched_fraction": 0.9318,
+     "occupied_ratio": 0.4545,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.3,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 12.87,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 18,
+      "leaf_path": [
+       471
+      ],
+      "level": 4
+     },
+     "links": 30,
+     "matched_fraction": 0.9,
+     "occupied_ratio": 0.3288,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 7.26,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 19,
+      "leaf_path": [
+       24
+      ],
+      "level": 4
+     },
+     "links": 35,
+     "matched_fraction": 0.9143,
+     "occupied_ratio": 0.8714,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.9091,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 7.47,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 27,
+      "leaf_path": [
+       47
+      ],
+      "level": 4
+     },
+     "links": 33,
+     "matched_fraction": 0.8182,
+     "occupied_ratio": 0.5106,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 13.2,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 9,
+      "leaf_path": [
+       1009
+      ],
+      "level": 4
+     },
+     "links": 34,
+     "matched_fraction": 0.8529,
+     "occupied_ratio": 0.4938,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 8.99,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 11,
+      "leaf_path": [
+       114
+      ],
+      "level": 4
+     },
+     "links": 35,
+     "matched_fraction": 0.9429,
+     "occupied_ratio": 0.3486,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 10.43,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 26,
+      "leaf_path": [
+       529
+      ],
+      "level": 4
+     },
+     "links": 291,
+     "matched_fraction": 0.9278,
+     "occupied_ratio": 0.5714,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 8.4,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 3,
+      "leaf_path": [
+       722
+      ],
+      "level": 4
+     },
+     "links": 21,
+     "matched_fraction": 0.8571,
+     "occupied_ratio": 0.4065,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 8.95,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 3,
+      "leaf_path": [
+       817
+      ],
+      "level": 4
+     },
+     "links": 80,
+     "matched_fraction": 0.8875,
+     "occupied_ratio": 0.3988,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 9.89,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 3,
+      "leaf_path": [
+       818
+      ],
+      "level": 4
+     },
+     "links": 103,
+     "matched_fraction": 0.8447,
+     "occupied_ratio": 0.3832,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.9091,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 8.51,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 3,
+      "leaf_path": [
+       847
+      ],
+      "level": 4
+     },
+     "links": 36,
+     "matched_fraction": 0.8889,
+     "occupied_ratio": 0.4437,
+     "pass": false,
+     "range": 4096.0
+    }
+   ],
+   "control_32768": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 0.125,
+    "coord_max_over_range_median": 0.125,
+    "dist_over_limit_p50": 10.644,
+    "dist_over_limit_p90": 61.434,
+    "distance_m_p50": 2224.36,
+    "distance_m_p90": 16687.24,
+    "links": 1043,
+    "matched_fraction": 0.0058,
+    "occupied_ratio_median": 0.0446
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 3,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.047,
+    "dist_over_limit_p90": 1.085,
+    "distance_m_p50": 10.68,
+    "distance_m_p90": 245.74,
+    "links": 1043,
+    "matched_fraction": 0.8945,
+    "occupied_ratio_median": 0.4491
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 6.077,
+    "dist_over_limit_p90": 22.214,
+    "distance_m_p50": 1340.5,
+    "distance_m_p90": 5412.98,
+    "links": 1043,
+    "matched_fraction": 0.1381,
+    "occupied_ratio_median": 0.4491
+   }
+  },
+  "L6": {
+   "cell_details": [
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 54.15,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       189
+      ],
+      "level": 6
+     },
+     "links": 30,
+     "matched_fraction": 0.7,
+     "occupied_ratio": 0.9,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 35.25,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       205
+      ],
+      "level": 6
+     },
+     "links": 34,
+     "matched_fraction": 0.7059,
+     "occupied_ratio": 0.5124,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.6154,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 24.42,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       153
+      ],
+      "level": 6
+     },
+     "links": 39,
+     "matched_fraction": 0.8205,
+     "occupied_ratio": 0.8471,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.7647,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 37.11,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       170
+      ],
+      "level": 6
+     },
+     "links": 55,
+     "matched_fraction": 0.7636,
+     "occupied_ratio": 0.9388,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.875,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 22.29,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       204
+      ],
+      "level": 6
+     },
+     "links": 176,
+     "matched_fraction": 0.9318,
+     "occupied_ratio": 0.8,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.5714,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 27.01,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       206
+      ],
+      "level": 6
+     },
+     "links": 20,
+     "matched_fraction": 0.85,
+     "occupied_ratio": 0.5802,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.2384,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 24.76,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       221
+      ],
+      "level": 6
+     },
+     "links": 318,
+     "matched_fraction": 0.9214,
+     "occupied_ratio": 0.7745,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 15.82,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       239
+      ],
+      "level": 6
+     },
+     "links": 40,
+     "matched_fraction": 0.9,
+     "occupied_ratio": 0.9535,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 57.37,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       252
+      ],
+      "level": 6
+     },
+     "links": 43,
+     "matched_fraction": 0.7907,
+     "occupied_ratio": 0.8627,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.7391,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 23.38,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       188
+      ],
+      "level": 6
+     },
+     "links": 177,
+     "matched_fraction": 0.8814,
+     "occupied_ratio": 1.0306,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 60.03,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       213
+      ],
+      "level": 6
+     },
+     "links": 30,
+     "matched_fraction": 1.0,
+     "occupied_ratio": 1.0,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 32.17,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       221
+      ],
+      "level": 6
+     },
+     "links": 63,
+     "matched_fraction": 0.7619,
+     "occupied_ratio": 1.1169,
+     "pass": false,
+     "range": 4096.0
+    }
+   ],
+   "control_32768": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.7084,
+    "coord_max_over_range_max": 0.125,
+    "coord_max_over_range_median": 0.125,
+    "dist_over_limit_p50": 12.848,
+    "dist_over_limit_p90": 84.265,
+    "distance_m_p50": 12128.71,
+    "distance_m_p90": 78434.92,
+    "links": 1025,
+    "matched_fraction": 0.0302,
+    "occupied_ratio_median": 0.0637
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 2,
+    "clip_exact_share_median": 0.9375,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.028,
+    "dist_over_limit_p90": 1.892,
+    "distance_m_p50": 25.43,
+    "distance_m_p90": 1764.05,
+    "links": 1025,
+    "matched_fraction": 0.8751,
+    "occupied_ratio_median": 0.8814
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.9375,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 4.742,
+    "dist_over_limit_p90": 34.83,
+    "distance_m_p50": 4412.48,
+    "distance_m_p90": 33272.68,
+    "links": 1025,
+    "matched_fraction": 0.2341,
+    "occupied_ratio_median": 0.8814
+   }
+  },
+  "L8": {
+   "cell_details": [
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 119.3,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       11
+      ],
+      "level": 8
+     },
+     "links": 25,
+     "matched_fraction": 0.8,
+     "occupied_ratio": 0.8,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.75,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 142.93,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       19
+      ],
+      "level": 8
+     },
+     "links": 33,
+     "matched_fraction": 0.6364,
+     "occupied_ratio": 0.5738,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 0.7417,
+     "distance_m_p50": 115.3,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       7
+      ],
+      "level": 8
+     },
+     "links": 129,
+     "matched_fraction": 0.9767,
+     "occupied_ratio": 0.2703,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 106.05,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       13
+      ],
+      "level": 8
+     },
+     "links": 164,
+     "matched_fraction": 0.939,
+     "occupied_ratio": 0.9365,
+     "pass": true,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 149.28,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       23
+      ],
+      "level": 8
+     },
+     "links": 38,
+     "matched_fraction": 0.6842,
+     "occupied_ratio": 0.629,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.2708,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 121.63,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       14
+      ],
+      "level": 8
+     },
+     "links": 122,
+     "matched_fraction": 0.877,
+     "occupied_ratio": 0.5854,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 156.39,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       17
+      ],
+      "level": 8
+     },
+     "links": 43,
+     "matched_fraction": 0.7907,
+     "occupied_ratio": 0.7879,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 181.19,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       22
+      ],
+      "level": 8
+     },
+     "links": 31,
+     "matched_fraction": 0.6129,
+     "occupied_ratio": 0.3592,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.25,
+     "coord_max_over_range": 0.9534,
+     "distance_m_p50": 118.81,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       23
+      ],
+      "level": 8
+     },
+     "links": 162,
+     "matched_fraction": 0.8827,
+     "occupied_ratio": 0.8545,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.875,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 2885.52,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       25
+      ],
+      "level": 8
+     },
+     "links": 30,
+     "matched_fraction": 0.5333,
+     "occupied_ratio": 0.4684,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.2308,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 102.46,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       26
+      ],
+      "level": 8
+     },
+     "links": 22,
+     "matched_fraction": 0.9091,
+     "occupied_ratio": 0.1081,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.0339,
+     "coord_max_over_range": 0.0906,
+     "distance_m_p50": 98.75,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       27
+      ],
+      "level": 8
+     },
+     "links": 30,
+     "matched_fraction": 0.9667,
+     "occupied_ratio": 1.0,
+     "pass": false,
+     "range": 4096.0
+    }
+   ],
+   "control_32768": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.5,
+    "coord_max_over_range_max": 0.125,
+    "coord_max_over_range_median": 0.125,
+    "dist_over_limit_p50": 32.908,
+    "dist_over_limit_p90": 70.224,
+    "distance_m_p50": 127633.36,
+    "distance_m_p90": 267088.33,
+    "links": 829,
+    "matched_fraction": 0.0458,
+    "occupied_ratio_median": 0.0688
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 2,
+    "clip_exact_share_median": 0.9375,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.032,
+    "dist_over_limit_p90": 1.95,
+    "distance_m_p50": 119.92,
+    "distance_m_p90": 7779.05,
+    "links": 829,
+    "matched_fraction": 0.8625,
+    "occupied_ratio_median": 0.6072
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.9375,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 14.388,
+    "dist_over_limit_p90": 57.812,
+    "distance_m_p50": 58783.46,
+    "distance_m_p90": 248260.65,
+    "links": 829,
+    "matched_fraction": 0.1448,
+    "occupied_ratio_median": 0.6072
+   }
+  },
+  "divided_pardiv1": {
+   "cell_details": [
+    {
+     "clip_exact_share": null,
+     "coord_max_over_range": 0.5,
+     "distance_m_p50": 3.39,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       254,
+       0
+      ],
+      "level": 0
+     },
+     "links": 179,
+     "matched_fraction": 0.8212,
+     "occupied_ratio": 1.0253,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.88,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 4.21,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       254,
+       1
+      ],
+      "level": 0
+     },
+     "links": 388,
+     "matched_fraction": 0.7036,
+     "occupied_ratio": 1.0686,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.807,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 3.3,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       254,
+       2
+      ],
+      "level": 0
+     },
+     "links": 631,
+     "matched_fraction": 0.8177,
+     "occupied_ratio": 1.008,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.6883,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 2.93,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       254,
+       3
+      ],
+      "level": 0
+     },
+     "links": 569,
+     "matched_fraction": 0.8172,
+     "occupied_ratio": 1.0311,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.75,
+     "coord_max_over_range": 0.5,
+     "distance_m_p50": 4.44,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       286,
+       0
+      ],
+      "level": 0
+     },
+     "links": 279,
+     "matched_fraction": 0.724,
+     "occupied_ratio": 1.0574,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.7222,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 3.56,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       286,
+       1
+      ],
+      "level": 0
+     },
+     "links": 503,
+     "matched_fraction": 0.7893,
+     "occupied_ratio": 0.9877,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.8,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 6.59,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       286,
+       2
+      ],
+      "level": 0
+     },
+     "links": 238,
+     "matched_fraction": 0.6513,
+     "occupied_ratio": 1.1138,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.7297,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 3.44,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       286,
+       3
+      ],
+      "level": 0
+     },
+     "links": 748,
+     "matched_fraction": 0.8369,
+     "occupied_ratio": 1.0167,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.6136,
+     "coord_max_over_range": 0.5,
+     "distance_m_p50": 6.94,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       287,
+       0
+      ],
+      "level": 0
+     },
+     "links": 212,
+     "matched_fraction": 0.6368,
+     "occupied_ratio": 1.3598,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.9259,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 2.74,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       287,
+       1
+      ],
+      "level": 0
+     },
+     "links": 400,
+     "matched_fraction": 0.7725,
+     "occupied_ratio": 1.0,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.7778,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 4.65,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       287,
+       2
+      ],
+      "level": 0
+     },
+     "links": 399,
+     "matched_fraction": 0.7018,
+     "occupied_ratio": 1.235,
+     "pass": false,
+     "range": 4096.0
+    },
+    {
+     "clip_exact_share": 0.7179,
+     "coord_max_over_range": 1.0,
+     "distance_m_p50": 3.07,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       287,
+       3
+      ],
+      "level": 0
+     },
+     "links": 498,
+     "matched_fraction": 0.7932,
+     "occupied_ratio": 1.1111,
+     "pass": false,
+     "range": 4096.0
+    }
+   ],
+   "control_32768": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.2422,
+    "coord_max_over_range_max": 0.125,
+    "coord_max_over_range_median": 0.125,
+    "dist_over_limit_p50": 0.963,
+    "dist_over_limit_p90": 20.004,
+    "distance_m_p50": 13.23,
+    "distance_m_p90": 274.77,
+    "links": 5044,
+    "matched_fraction": 0.5119,
+    "occupied_ratio_median": 0.0163
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.75,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.263,
+    "dist_over_limit_p90": 2.133,
+    "distance_m_p50": 3.62,
+    "distance_m_p90": 29.29,
+    "links": 5044,
+    "matched_fraction": 0.7732,
+    "occupied_ratio_median": 1.0442
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.75,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 1.665,
+    "dist_over_limit_p90": 10.096,
+    "distance_m_p50": 22.87,
+    "distance_m_p90": 138.69,
+    "links": 5044,
+    "matched_fraction": 0.291,
+    "occupied_ratio_median": 0.0149
+   }
+  }
+ },
+ "rules": "* named cells: Brisbane CBD and Sydney from `spot_checks.json`; rural QLD\n    (Longreach) and outback (Birdsville) as the nearest undivided leaf to the\n    locality, searched from the finest listed level outwards, that has\n    >= MIN_LINKS road links.  Ranked by (level order, distance from locality\n    to leaf bbox, distance to bbox centre, ids).  Match quality is never an\n    input to the choice.\n  * pooled cells: for each coordinate class (L0 urban, L0 sparse, L2, L4, L6,\n    L8, divided) take POOL_N blocks spread evenly through that level's\n    on-disc list of non-empty blocks (index round(i*(N-1)/(POOL_N-1))), and in\n    each chosen block the first leaf of that class, in leaf index order, with\n    >= MIN_LINKS road links; if a block has none, advance to the next block in\n    the list.  Deterministic and independent of match quality.\n  * cell_extent_m = max(width_m, height_m) of the cell bbox.\n  * OSM class set per level (like-for-like: R stores fewer roads at coarser\n    levels) -- L0/L2 all roads, L4 motorway..tertiary, L6/L8 motorway/trunk/\n    primary.  Non-road highway values are always excluded.\n  * match: each R link -> the OSM way minimising the median point-to-polyline\n    distance over the link's vertices.  Matched iff that median\n    <= tol * cell_extent_m, tol = harness.json\n    bands.name_record_distance_tolerance.tol.\n  * a cell passes iff matched fraction >= MATCH_MIN; R's occupied fraction of a\n    GRID_N x GRID_N grid over the cell >= OCC_RATIO_MIN * the occupied fraction\n    of the like-for-like OSM roads; coordinate max / range in [MAX_REL_LO, 1.0];\n    and clipped-link exact share >= CLIP_MIN (ends within CLIP_NEAR of the range\n    from an edge; exact = that coordinate is 0 or the range).\n  * orientation: y-up means raw y increases northward (lat = lat_lo + y/range *\n    height); y-down is `coordconv.xy_to_latlon`'s current convention.  Decided\n    by pooled matched fraction and median distance over all pooled cells, not\n    by any single cell.\n  * divided (pardiv1) frame hypotheses, tested against OSM over the pooled\n    divided cells:\n      own_bounds   - sub-parcel's own quadrant bbox, range = the per-sub max\n                     from coord_scale.json (2048 for sub 0, else 4096);\n      parent_4096  - the parent leaf's bbox, range 4096, coordinates absolute\n                     in the parent frame (so sub 0, the y-up SW quadrant,\n                     never exceeds 2048 -- which is what the census observed);\n      quadrant_4096- sub-parcel's own quadrant bbox, range 4096 for every sub.\n  * L0 sparse frame hypotheses, tested the same way: own_leaf_16384 (the leaf's\n    own bbox at the census range), own_leaf_4096, tile4x4_16384 (the 4x4\n    \"integrated parcel\" of leaves -- the tile the class rule keys urban/sparse\n    on, and the size of one L2 leaf -- at 16384 = 4 x 4096) and tile4x4_4096.\n    `inside_cell_fraction` is the OSM-free discriminator: under a wrong wider\n    frame the leaf's links scatter outside the leaf.",
+ "tolerance": {
+  "rule": "distance_m <= tol * cell_extent_m",
+  "source": "parser/refdata/harness.json bands.name_record_distance_tolerance.tol",
+  "value": 0.005
+ }
+}
