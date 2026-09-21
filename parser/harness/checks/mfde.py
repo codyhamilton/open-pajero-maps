@@ -19,6 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from harness.context import Check, CheckResult
+from harness.checks.vocab import coverage, coverage_band, MIN_R_OBSERVATIONS
 from harness.profile import generated_profile
 
 
@@ -36,6 +37,8 @@ def _run_mfde(ctx) -> CheckResult:
     g_levels = g_profile.get("levels", {})
     ref_absent = ref_profile.get("mfde", {}).get("absent")
 
+    tol, min_share = coverage_band()
+    cov_fails: list = []
     fails: list = []
     details_by_level: dict = {}
 
@@ -107,11 +110,31 @@ def _run_mfde(ctx) -> CheckResult:
                 f"level {level_str}: nregion value(s) {sorted(nregion_offenders)} "
                 f"not in profile's observed set {sorted(ref_nregion_values)}")
 
+        # --- coverage direction: R-frequency-weighted share of R's values G uses ---
+        cov: dict = {}
+        cov["entry_count"] = coverage(ref_entry_hist, g_entry_counts, tol, min_share)
+        cov["nregion"] = coverage(ref_nregion_hist, g_nregion_values, tol, min_share)
+        for idx, r_classes in ref_idx_hist.items():
+            g_classes = g_idx_hist.get(idx, {})
+            cov[f"entry_index_{idx}_class"] = coverage(
+                r_classes, {c for c, n in g_classes.items() if n}, tol, min_share)
+        level_detail["coverage"] = cov
+        for name, c in cov.items():
+            if c["status"] == "fail":
+                cov_fails.append(
+                    f"level {level_str}: {name} coverage {c['share']} < {1 - tol:.2f} "
+                    f"(top missing R values {c['missing_top']})")
+
         details_by_level[level_str] = level_detail
 
-    if fails:
-        return CheckResult("FAIL", f"{len(fails)} mfde/nregion failure(s) (showing up to 20)",
-                            {"levels": details_by_level, "failures": fails[:20]})
+    if fails or cov_fails:
+        msg = f"{len(fails)} mfde/nregion subset failure(s)"
+        if cov_fails:
+            msg += f"; {len(cov_fails)} coverage failure(s)"
+        return CheckResult("FAIL", msg + " (showing up to 20)",
+                           {"levels": details_by_level, "failures": fails[:20],
+                            "coverage_failures": cov_fails[:20],
+                            "min_r_observations": MIN_R_OBSERVATIONS})
     return CheckResult(
         "PASS",
         "every parcel's mfde entry count/absent-slot encoding and nregion are within the profile's observed sets",

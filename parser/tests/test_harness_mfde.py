@@ -43,6 +43,8 @@ def _ctx_with_ref_profile() -> Context:
 def _run_with_generated(monkeypatch, g_profile: dict):
     ctx = _ctx_with_ref_profile()
     monkeypatch.setattr(mfde_module, "generated_profile", lambda path: g_profile)
+    # These tests isolate the subset direction; coverage is tested in test_vocab_coverage.py.
+    monkeypatch.setattr(mfde_module, "coverage_band", lambda: (1.0, 1.0))
     return _run_mfde(ctx)
 
 
