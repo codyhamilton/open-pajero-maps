@@ -25,9 +25,12 @@ from harness import walk  # noqa: E402
 
 DECODER_RANGE = float(1 << 15)
 KM_PER_DEG = 111.32
-LENGTH_BASIS = ("leaf bounds extent / coord_max; coord_max=4096 (L2-L8, urban and "
-                "divided L0), 16384 for an L0 parcel with any raw coordinate >4096; "
-                "raw recovered from decoder lat/lon at range 32768; equirectangular km")
+LENGTH_BASIS = ("leaf bounds extent / coord_max; coord_max from refdata/profile/coord_scale.json "
+                "by the content-independent class rule (level, grid position, division): "
+                "4096 (L2-L12 full, urban L0, divided sub 1-3), 2048 (divided sub 0), "
+                "16384 (sparse L0); raw recovered from decoder lat/lon at range 32768; "
+                "equirectangular km")
+COORD_SCALE = Path(__file__).resolve().parent.parent / "refdata" / "profile" / "coord_scale.json"
 
 
 def _pct(vals: list, p: float) -> float:
@@ -46,6 +49,27 @@ def _stats(vals: list) -> dict:
             "p50": round(_pct(vals, 0.5), 4), "p90": round(_pct(vals, 0.9), 4)}
 
 
+_CS: dict = {}
+
+
+def _class_range(wp) -> int | None:
+    """R-census range for a walked parcel by the class rule, or None if `wp`
+    carries no grid position (synthetic callers) so the caller falls back."""
+    if not hasattr(wp, "blockset_index"):
+        return None
+    if not _CS:
+        import coord_scale_census as csc
+        d = json.loads(COORD_SCALE.read_text())
+        _CS["r"] = d["ranges"]
+        _CS["u"] = {tuple(t) for t in d["class_rule"]["urban_tiles"]}
+        _CS["csc"] = csc
+    csc = _CS["csc"]
+    div = wp.parcel_type
+    cls = csc.parcel_class(wp.level, div, (wp.blockset_index, wp.block_index, wp.leaf_path[0]),
+                           _CS["u"])
+    return _CS["r"][str(wp.level)][cls][csc.division_state(div, wp.leaf_path[-1])]["max"]
+
+
 def parcel_metrics(wp) -> dict | None:
     """(per-link vertex counts, length_km) for one walked parcel, or None."""
     parcel = wp.parcel
@@ -60,7 +84,8 @@ def parcel_metrics(wp) -> dict | None:
                 (b.lat_hi - lat) / lat_span * DECODER_RANGE) for lat, lon in pts]
         chains.append(raw)
     peak = max((c for ch in chains for p in ch for c in p), default=0.0)
-    coord_max = 16384.0 if (wp.level == 0 and peak > 4096.5) else 4096.0
+    cm = _class_range(wp)
+    coord_max = float(cm) if cm else (16384.0 if (wp.level == 0 and peak > 4096.5) else 4096.0)
     mid_lat = math.radians((b.lat_lo + b.lat_hi) / 2)
     kx = lon_span / coord_max * KM_PER_DEG * math.cos(mid_lat)
     ky = lat_span / coord_max * KM_PER_DEG
