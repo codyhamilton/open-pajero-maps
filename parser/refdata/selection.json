@@ -1,261 +1,247 @@
 {
-  "_comment": [
-    "Per-level feature selection, calibrated against parser/refdata/profile/map.json",
-    "(R's census) so a from-scratch build's per-level content counts land inside",
-    "harness.json's envelopes.count_ratio at levels 2..12 (level 0 exempt from the",
-    "road-link count ratio only -- background_count/name_count ARE checked at level 0",
-    "too, see parser/harness/checks/envelope.py's _COUNT_FIELDS). Format loaded by",
-    "parser/kiwiw/selection.py; see that module's docstring for the exact contract",
-    "and parser/tests/test_selection.py for the coverage/shape tests.",
-    "",
-    "Calibration method: a lightweight tags-only osmium pass over",
-    "australia-260824.osm.pbf (no location index, no geometry, no parcel tiling --",
-    "~20-50s per full-file pass instead of unit 07's 1:27:24 full extraction) that",
-    "tallies national way/node counts per OSM class, cross-checked against",
-    "parser/refdata/profile/map.json's per-level counts. Background shapes are not",
-    "clipped per parcel (osm_to_parcel_geometry._make_background_shape: one shape",
-    "per way, centroid-assigned), so a national way count for an admitted class is",
-    "directly comparable to R's shape_count with no per-parcel-split correction.",
-    "Road links ARE split per parcel (split_polyline_by_parcel), so a national",
-    "admitted-highway-class way count under-approximates the real post-split link",
-    "count by an amount this table's own comment records per level -- see the",
-    "'calibration note' fields below and this unit's report for the full caveat."
+ "_comment": [
+  "Per-level feature selection, calibrated against profile/map.json (R's census) so",
+  "build counts land inside harness.json's count_ratio envelope. Level 0 is exempt from the",
+  "road-link ratio only. Contract: parser/kiwiw/selection.py. Tests: parser/tests/test_selection.py.",
+  "Calibration: tags-only osmium tallies of the Australia extract compared with R's per-level",
+  "counts. Road links split per parcel, so national way counts under-approximate link counts.",
+  "Selection is a stopgap for count parity; the source-derived selection replaces it (plan 03)."
+ ],
+ "levels": [
+  [
+   0,
+   0
   ],
-  "levels": [
-    [
-      0,
-      0
-    ],
-    [
-      2,
-      2
-    ],
-    [
-      4,
-      4
-    ],
-    [
-      6,
-      6
-    ],
-    [
-      8,
-      8
-    ],
-    [
-      10,
-      10
-    ],
-    [
-      12,
-      12
-    ]
+  [
+   2,
+   2
   ],
-  "rules": [
+  [
+   4,
+   4
+  ],
+  [
+   6,
+   6
+  ],
+  [
+   8,
+   8
+  ],
+  [
+   10,
+   10
+  ],
+  [
+   12,
+   12
+  ]
+ ],
+ "rules": [
+  {
+   "levels": 0,
+   "_calibration_note": "L0: R links 9.9M (exempt, capacity-bound). Background admits every non-road way (catch-all 288, ratio 0.97x). Names: all OSM-nameable classes total ~0.11x of R's 19.1M; the shortfall is a natural deviation, since R carries address strings OSM Australia lacks.",
+   "highway": [
+    "motorway",
+    "motorway_link",
+    "trunk",
+    "trunk_link",
+    "primary",
+    "primary_link",
+    "secondary",
+    "secondary_link",
+    "tertiary",
+    "tertiary_link",
+    "unclassified",
+    "residential",
+    "living_street",
+    "service",
+    "track",
+    "road",
+    "busway"
+   ],
+   "background_all": true,
+   "place": [
+    "suburb",
+    "city",
+    "town",
+    "village",
+    "locality"
+   ],
+   "background_names": true,
+   "name_nodes": [
     {
-      "levels": 0,
-      "_calibration_note": "R link_count=9,897,898 (exempt from ratio at level 0, capacity-bound instead). Admitting the extractor's full ROADS set nationally: ~2,320,289 ways pre-split (matches output/spool/level_12.idx's pre-vocab roads=2,320,273 almost exactly, since level 12 has one global parcel with no splitting -- a useful cross-check). Real level-0 link count after parcel splitting was 3,015,057 in unit 07's original unfiltered spool, still well under R's count, so no further road restriction is needed for count purposes at level 0; unit 13's division and this table's implicit byte-size effect are what keep level-0 parcels under the capacity/u16 ceiling. Background: R background_count=9,445,322, envelope [4,722,661, 18,890,644] -- background_count/name_count ARE checked at level 0 (only link_count is level0-exempt, see parser/harness/checks/envelope.py). parser/refdata/vocab/bg_type.json declares a catch-all `{levels:0, match:{}, value:288}` rule, so at level 0 the real extractor already treats *every* non-road way with a ring as some background type regardless of tags; explicit key/value predicates cannot express that, so this rule sets background_all=true (dry-run cross-check: total_ways=11,464,956 minus ROADS-admitted=2,320,289 = 9,144,667 candidate non-road ways, ratio 0.968x -- centred in the envelope). Place: set to the full name-eligible set (_handle_node's own gate, osm_to_parcel_geometry.py:683) since that gate is stricter than this one anyway; place-node names are a small fraction of R's level-0 name_count=19,081,105 next to the ~2.3M dominant road-name driver already admitted via the highway list above. || Brief 26a name recalibration: R name record_count=19,081,105, envelope [9,540,553, 38,162,210]. National named-feature tags-only tally (australia-260824): named ROADS ways 1,294,220 (already emitted), named non-road ways with >=3 nodes 519,428 (background_names=true, catch-all bg), named place nodes ~30.3k (all place=*), named POI nodes ~201k (amenity 78,671; shop 57,599; tourism 27,927; natural 24,529; leisure 6,906; historic 5,396). Everything admissible totals ~2.05M = ~0.11x of R; the envelope's lower bound is UNREACHABLE from OSM names alone (R's 19M names include address/house-number and other strings OSM Australia does not carry). All classes are admitted (type_code stays inside the existing level-0 census: road 528, background own code, place/POI 288); shortfall is a candidate deviation, not padded.",
-      "highway": [
-        "motorway",
-        "motorway_link",
-        "trunk",
-        "trunk_link",
-        "primary",
-        "primary_link",
-        "secondary",
-        "secondary_link",
-        "tertiary",
-        "tertiary_link",
-        "unclassified",
-        "residential",
-        "living_street",
-        "service",
-        "track",
-        "road",
-        "busway"
-      ],
-      "background_all": true,
-      "place": [
-        "suburb",
-        "city",
-        "town",
-        "village",
-        "locality"
-      ],
-      "background_names": true,
-      "name_nodes": [
-        {
-          "key": "place"
-        },
-        {
-          "key": "amenity"
-        },
-        {
-          "key": "shop"
-        },
-        {
-          "key": "tourism"
-        },
-        {
-          "key": "historic"
-        },
-        {
-          "key": "natural"
-        },
-        {
-          "key": "leisure"
-        }
-      ]
+     "key": "place"
     },
     {
-      "levels": 2,
-      "_calibration_note": "R link_count=95,877, envelope [47,938.5, 191,754]. motorway+trunk+primary (no _link variants) = 14,004+67,557+85,859 = 167,420 ways nationally, ratio 1.75x -- inside the envelope on the raw way count. Real post-split link count will be somewhat higher (unit 07's level-0 split inflation was ~30% over its raw ROADS way count); if that inflation carries through here the ratio could approach or exceed the 2.0x ceiling -- flagged as an approximation risk in this unit's report, to be confirmed by 15b's real build. || Brief 26a name recalibration: road_names=false, background_names=false (names at L2-L8 in R are place-type 308 only; roads/backgrounds overshot 3.99x/19.6x/13.7x/66.7x). R name record_count=40,169, envelope [20,084, 80,338]. Named place-node tallies nationally: locality 9,408; farm 6,917; hamlet 5,025; suburb 4,233; village 1,879; town 1,151; neighbourhood 706; isolated_dwelling 664; island 215; city 72; islet 37. Chosen set = all of those = 30,307 = 0.75x (subset locality+suburb+village+town+city = 16,743 = 0.42x, out; +hamlet 21,768 = 0.54x, no margin; peaks 16,737 would be needed to centre but are not 306/308 address-type, omitted). Lever: place class set.",
-      "highway": [
-        "motorway",
-        "trunk",
-        "primary"
-      ],
-      "background": [
-        {
-          "key": "natural",
-          "value": "water"
-        },
-        {
-          "key": "natural",
-          "value": "coastline"
-        }
-      ],
-      "place": [
-        "locality",
-        "farm",
-        "hamlet",
-        "suburb",
-        "village",
-        "town",
-        "neighbourhood",
-        "isolated_dwelling",
-        "island",
-        "city",
-        "islet"
-      ],
-      "road_names": false,
-      "background_names": false
+     "key": "amenity"
     },
     {
-      "levels": 4,
-      "_calibration_note": "R link_count=41,786, envelope [20,893, 83,572]. motorway+trunk = 14,004+67,557 = 81,561 ways, ratio 1.95x -- inside the envelope but close to the ceiling; same post-split inflation caveat as level 2, more likely to overshoot here. || Brief 26a name recalibration: road_names=false, background_names=false. R name record_count=4,042, envelope [2,021, 8,084]. Tallies: city 72 + town 1,151 + village 1,879 + island 215 + islet 37 = 3,354 = 0.83x (adding suburb 4,233 would give 7,587 = 1.88x, too close to ceiling). Lever: place class set.",
-      "highway": [
-        "motorway",
-        "trunk"
-      ],
-      "background": [
-        {
-          "key": "natural",
-          "value": "wetland"
-        }
-      ],
-      "place": [
-        "city",
-        "town",
-        "village",
-        "island",
-        "islet"
-      ],
-      "road_names": false,
-      "background_names": false
+     "key": "shop"
     },
     {
-      "levels": 6,
-      "_calibration_note": "R link_count=20,738, envelope [10,369, 41,476]. motorway alone = 14,004 ways, ratio 0.676x -- inside the envelope, with margin against post-split inflation. || Brief 26a name recalibration: road_names=false, background_names=false. R name record_count=1,022, envelope [511, 2,044]. Tallies: city 72 + town 1,151 = 1,223 = 1.20x. Lever: place class set.",
-      "highway": [
-        "motorway"
-      ],
-      "background": [
-        {
-          "key": "natural",
-          "value": "heath"
-        },
-        {
-          "key": "natural",
-          "value": "beach"
-        },
-        {
-          "key": "natural",
-          "value": "ridge"
-        }
-      ],
-      "place": [
-        "city",
-        "town"
-      ],
-      "road_names": false,
-      "background_names": false
+     "key": "tourism"
     },
     {
-      "levels": 8,
-      "_calibration_note": "R link_count=7,663, envelope [3,831.5, 15,326]. motorway alone = 14,004 ways, ratio 1.83x -- inside the envelope but close to the ceiling; no finer OSM class exists below 'motorway' to split this further, so this is the best achievable class-level selection (see report). || Brief 26a name recalibration: road_names=false, background_names=false. R name record_count=209, envelope [104.5, 418]. Tallies: city 72 + island 215 = 287 = 1.37x (city+islet 109 = 0.52x no margin; town 1,151 overshoots). Lever: place class set (no cap needed).",
-      "highway": [
-        "motorway"
-      ],
-      "background": [
-        {
-          "key": "natural",
-          "value": "reef"
-        },
-        {
-          "key": "natural",
-          "value": "mud"
-        }
-      ],
-      "place": [
-        "city",
-        "island"
-      ],
-      "road_names": false,
-      "background_names": false
+     "key": "historic"
     },
     {
-      "levels": 10,
-      "_calibration_note": "R link_count=0 (empty road_type_hist/display_class_hist in the profile) -- no highway class is admitted, matching R exactly. R background shape_count=25 with type_code composition {289: 6, 306: 11, 528: 8} (profile/map.json, levels.10.background.type_code_hist) -- see brief 24: unit 14's original choice, natural=dune (38 ways nationally, ratio 1.52x -- 'inside the envelope' on magnitude alone), was never reference-backed: R's real level-10/12 background vocabulary contains no natural/vegetation code at all, and bg_type.json has no rule (and deliberately no catch-all) for natural=dune at these levels, so every dune way silently mapped to bg_type=None and was dropped before spool.add -- levels 10/12 spooled zero background content despite selection admitting 38 candidate ways. Brief 24's fix: re-selected to natural=bay, the only bg_type.json-mapped tag (of the full 289 source set -- natural=coastline/bay/sea/ocean/water/wetland/river/stream, waterway=river/stream/canal) whose national way count lands near R's target. Per-tag national counts (this unit's tags-only osmium pass over australia-260824.osm.pbf): natural=coastline 16,516; natural=water 291,701; natural=wetland 43,704; waterway=stream 642,632; waterway=river 45,400; waterway=canal 13,884 -- every one of these overshoots the [12.5, 50] envelope (0.5x-2.0x of 25) by 2-3 orders of magnitude if admitted alongside natural=bay, so only natural=bay is admitted. natural=bay = 26 ways nationally, ratio 1.04x -- centred in the envelope, and (unlike dune) a real member of bg_type.json's existing 289 rule, so this content now actually reaches spool.add. This does not attempt boundary=administrative (306) or the road-as-background share (528, still explicitly out of scope, see docs/design/osm-vocabulary-mapping.md): a full national tags-only scan found boundary=administrative ways carry admin_level=2 (73, the national-boundary segments) or no admin_level tag at all (6) -- zero ways nationally carry admin_level=4, the exact predicate bg_type.json's 306 rule requires. This is a structural finding, not a selection-tuning one: Australian state/territory boundaries are modelled as OSM relations (boundary=administrative, admin_level=4 on the *relation*), and osm_to_parcel_geometry.py's own docstring records that 'multi-polygon OSM relations are handled as individual outer-ring ways only' -- the member ways carry no admin_level tag of their own. Admitting boundary=administrative here would repeat exactly the dune bug (selected but bg_type.json-unmappable, since no way ever carries admin_level=4) rather than fix it, so it is deliberately left out; see vocab/README.md's Levels 10/12 section for the full writeup. R name record_count=8, all type_code 308 = 0x134, which osm_to_parcel_geometry._handle_node only ever assigns when place=='suburb' -- so R's 8 level-10/12 name records are place=suburb nodes. But _handle_node itself (osm_to_parcel_geometry.py:683) only calls level_filter for place in {suburb,city,town,village,locality} in the first place, so any other 'place' value here (an earlier draft used place=territory, matching a raw node tag census by coincidence -- 9 hits nationally, ratio 1.125x) is dead code: it can never admit a name record, because that upstream gate discards everything else before level_filter is even consulted. The only real lever is place=suburb itself, but its national count is 4,233 (this unit's node tag-count scan) -- ratio 529x over the [4,16] envelope around R's target of 8. No tags-only rule (this format has no population= threshold or explicit place-name allowlist) can hit 8 without either drastically overshooting (admit suburb) or landing at 0 (admit nothing); left at 0 here as the smaller of two bad options and reported as an unresolved shortfall per this unit's brief (report, don't pad with a guess). || Brief 26a name recalibration: R name record_count=8, envelope [4,16]. Tallies (supersedes the 'suburb only / unreachable' finding above, which assumed a place gate of 5 values): state 6, country 1, continent 1 = 8 = 1.00x; alternatives sea 3, archipelago 8, territory 9, region 9. Requires level-10/12 single-parcel cells to be a target cell (brief 19). background_names=false (L10/12 bg names were already dropped by _make_name_record).",
-      "highway": [],
-      "background": [
-        {
-          "key": "natural",
-          "value": "bay"
-        }
-      ],
-      "place": [
-        "state",
-        "country",
-        "continent"
-      ],
-      "background_names": false
+     "key": "natural"
     },
     {
-      "levels": 12,
-      "_calibration_note": "Same as level 10 (brief 24's fix): R link_count=0 (this is the level the amendment flags as load-bearing for unit 13's u16/capacity ceiling -- level 12 is one global parcel with no per-cell tiling, so zero admitted roads here is required, not just census-matched). Background selection mirrors level 10's -- natural=bay, ratio 1.04x, replacing the previous natural=dune (which was admitted by selection but never mapped by bg_type.json, so it silently dropped and spooled zero content; see level 10's note for the full national tag-count table and the boundary=administrative/306 finding, which applies identically here). Place: same unreachable-target finding as level 10 -- R's 8 name records are place=suburb (type_code 0x134); the national place=suburb count is 4,233, ~529x over the [4,16] envelope; any place value other than the 5 osm_to_parcel_geometry._handle_node itself recognises is dead code (never reaches level_filter). Left empty, reported as an unresolved shortfall. || Brief 26a name recalibration: Same as level 10: state 6 + country 1 + continent 1 = 8 = 1.00x.",
-      "highway": [],
-      "background": [
-        {
-          "key": "natural",
-          "value": "bay"
-        }
-      ],
-      "place": [
-        "state",
-        "country",
-        "continent"
-      ],
-      "background_names": false
+     "key": "leisure"
     }
-  ],
-  "min_length_m": {
-    "0": 0,
-    "2": 0,
-    "4": 50,
-    "6": 100,
-    "8": 200,
-    "10": 500,
-    "12": 1000
+   ]
+  },
+  {
+   "levels": 2,
+   "_calibration_note": "L2: R links 95,877. motorway+trunk+primary = 167,420 ways (1.75x raw; parcel splitting may push it toward the 2.0x ceiling). R names are place-type 308 only, so road and background names are off; place set chosen for 0.75x of R's 40,169.",
+   "highway": [
+    "motorway",
+    "trunk",
+    "primary"
+   ],
+   "background": [
+    {
+     "key": "natural",
+     "value": "water"
+    },
+    {
+     "key": "natural",
+     "value": "coastline"
+    }
+   ],
+   "place": [
+    "locality",
+    "farm",
+    "hamlet",
+    "suburb",
+    "village",
+    "town",
+    "neighbourhood",
+    "isolated_dwelling",
+    "island",
+    "city",
+    "islet"
+   ],
+   "road_names": false,
+   "background_names": false
+  },
+  {
+   "levels": 4,
+   "_calibration_note": "L4: R links 41,786. motorway+trunk = 81,561 ways (1.95x, near ceiling). Names: city+town+village+island+islet = 0.83x of R's 4,042.",
+   "highway": [
+    "motorway",
+    "trunk"
+   ],
+   "background": [
+    {
+     "key": "natural",
+     "value": "wetland"
+    }
+   ],
+   "place": [
+    "city",
+    "town",
+    "village",
+    "island",
+    "islet"
+   ],
+   "road_names": false,
+   "background_names": false
+  },
+  {
+   "levels": 6,
+   "_calibration_note": "L6: R links 20,738. motorway = 14,004 ways (0.68x). Names: city+town = 1.20x of R's 1,022.",
+   "highway": [
+    "motorway"
+   ],
+   "background": [
+    {
+     "key": "natural",
+     "value": "heath"
+    },
+    {
+     "key": "natural",
+     "value": "beach"
+    },
+    {
+     "key": "natural",
+     "value": "ridge"
+    }
+   ],
+   "place": [
+    "city",
+    "town"
+   ],
+   "road_names": false,
+   "background_names": false
+  },
+  {
+   "levels": 8,
+   "_calibration_note": "L8: R links 7,663. motorway = 14,004 ways (1.83x, near ceiling); no finer class exists. Names: city+island = 1.37x of R's 209.",
+   "highway": [
+    "motorway"
+   ],
+   "background": [
+    {
+     "key": "natural",
+     "value": "reef"
+    },
+    {
+     "key": "natural",
+     "value": "mud"
+    }
+   ],
+   "place": [
+    "city",
+    "island"
+   ],
+   "road_names": false,
+   "background_names": false
+  },
+  {
+   "levels": 10,
+   "_calibration_note": "L10/12: R has no links, 25 backgrounds (289:6, 306:11, 528:8) and 8 names (state 6, country 1, continent 1). natural=bay is the only mapped 289 tag near the target (1.04x). 306 is unreachable (state boundaries are relations) and 528 is unimplemented; see docs/design/osm-vocabulary-mapping.md.",
+   "highway": [],
+   "background": [
+    {
+     "key": "natural",
+     "value": "bay"
+    }
+   ],
+   "place": [
+    "state",
+    "country",
+    "continent"
+   ],
+   "background_names": false
+  },
+  {
+   "levels": 12,
+   "_calibration_note": "L12: as L10; one global parcel, so zero roads is required for the capacity ceiling.",
+   "highway": [],
+   "background": [
+    {
+     "key": "natural",
+     "value": "bay"
+    }
+   ],
+   "place": [
+    "state",
+    "country",
+    "continent"
+   ],
+   "background_names": false
   }
+ ],
+ "min_length_m": {
+  "0": 0,
+  "2": 0,
+  "4": 50,
+  "6": 100,
+  "8": 200,
+  "10": 500,
+  "12": 1000
+ }
 }
