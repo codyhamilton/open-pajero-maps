@@ -94,6 +94,19 @@ The work is one linear-then-fan-out sequence: establish the truth and harden the
 - **Approach flags (user):** all phases are `known`. There is one canonical approach in each case, whether or not it is known today; where information is missing, the phase begins with research that resolves it. No divergent-candidate builds.
 - **Principle (user, Intent):** only natural deviations (derived from source data) are accepted; processing artifacts are defects.
 
+### Amendment 2026-09-22 (user) — Phase 2 restart
+
+The first Phase 2 attempt did not close (see `IMPLEMENTATION.md` "Phase 2 gate verdict", `EVIDENCE-2-03.json`, `WORD7-ANALYSIS.md`). The user amends the phase as follows; Phase 2's Outcome above is read subject to this amendment.
+
+1. **Coordinate gate redefined (relative, plus R-only measures).** The absolute overlay match-rate thresholds (`MATCH_MIN 0.8` and siblings) are low-signal: OSM and the 14-year-old proprietary R source genuinely disagree, so an absolute match rate measures source drift as much as the coordinate model. The gate is now:
+   - (a) **Relative discrimination.** For each parcel class, the assumed range beats every alternative range considered — including the 32768 negative control — by a clear, *pre-stated* relative margin.
+   - (b) **R-only measures pass.** Coordinate maximum vs the class range; clipped links terminating at the cell edge; occupied fraction of the cell extent (no clustering into a sub-region).
+   - Match rate against OSM is reported as a **diagnostic** with a recorded source-disagreement baseline. It is not pass/fail.
+   - The margin and every threshold are stated in the tool docstring **before** the run and are not tuned after seeing results. All four named cells are evaluated.
+2. **Two known bugs are fixed before the overlay is re-run.** `parser/harness/walk.py` L0 sparse frame bounds (all 16 slots are given the tile's bounds; the L0 sparse *frame* is the 4x4 tile at 16384) and the y orientation in `parser/kiwiw/coordconv.py` `xy_to_latlon` (y increases northward; the code is y-down and contradicts its own docstring). This authorises editing `coordconv.py`, which Phase 2's Surfaces listed read-only. Encoders keep byte-identical behaviour unless the fix requires otherwise; where it does, the impact is recorded for Phase 3.
+3. **Word 7 (pmcode) is resolved, not blocked.** `WORD7-ANALYSIS.md` is adopted as the model rule: Area Number 18 (`0x1200`) iff road data exists at L0 (for L2, iff any L0 descendant has a road sub-frame), else 255 (`0xFF00`); L4 and above always `0xFF00`; word 8 = 0 and word 7's low byte = 0. The 28 single-link L0 misses are a recorded residual **tolerance**, not an exemption. `docs/schema/map-frame.md`'s pmcode row is updated, and the generator's need for an L2 post-pass (L2 headers read their L0 children) is recorded as Phase 4 scope. The meaning of area 18 in the metafile stays documented-unknown.
+4. **Unit 2-04 runs** (schema rows and gate verdict). If the redefined gate genuinely fails, the phase does not close and the run reports `unsuccessful` with the evidence.
+
 ## Assumption Ledger
 
 Each assumption names the phase that tests it and what happens if it is false.

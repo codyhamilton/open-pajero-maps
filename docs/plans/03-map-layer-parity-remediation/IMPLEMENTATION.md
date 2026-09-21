@@ -104,3 +104,14 @@ User decisions needed: accept word 7 as a documented exemption or land-mask-deri
 
 ## Carried (phase not closed)
 1. Word 7 rule (above). 2. y-orientation fix in coordconv (Phase 3). 3. walk.py L0-sparse leaf bounds bug. 4. rg_size (word 16) nonzero on L0 rg parcels, absent from the exemption list. 5. Pointer non-frame targets are 0.063% overall (L8 5.4%); strict pointers still fails R. 6. Prior Phase 1 Carried items 1, 3, 5, 6, 7 remain.
+
+---
+
+# Phase 2 run (restart, 2026-09-22)
+
+- Tool: Claude Code (Agent SDK), orchestrator model Opus 5
+- Session: https://claude.ai/code/session_01RexnjYaodJxiRvFV9nsAaE
+- Started: 2026-09-22
+- Scope: Phase 2 only (gate), under `DESIGN.md` Decisions "Amendment 2026-09-22 (user) — Phase 2 restart".
+- Carry-in: units 2-01 and 2-02 are recorded done above and are **not** re-run. The restart covers the two authorised bug fixes, the word-7 adoption, a re-run of 2-03 against the redefined gate, and 2-04.
+- Status: refine dispatched (phase re-briefed against the amendment and the code as it now stands).
