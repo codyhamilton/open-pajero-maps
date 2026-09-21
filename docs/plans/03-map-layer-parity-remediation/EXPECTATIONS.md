@@ -15,8 +15,8 @@ Run: `.venv-rp/bin/python parser/compare_disc.py --reference /run/media/codyh/46
 | decode | PASS | 3954097 leaves, zero errors | - |
 | pointers | PASS | all pointers resolve on G | (strict check also FAILs R ~2%, see 1-06) |
 | envelope | FAIL | L0 name_count ratio 0.119 outside [0.5, 2.0] | F8 (name records; L0 name_count rule stays, DESIGN line 65) |
-| envelope | (same FAIL) | L10 Map Frame max 3616 > R 2336 | unexpected |
-| envelope | (same FAIL) | L12 Map Frame max 4992 > R 3808 | unexpected |
+| envelope | (same FAIL) | L10 Map Frame max 3616 > R 2336 | F3/F5 (G frame sizes above R's maxima; ratio 1.55, under the 2x-R advisory line that Phase 4 makes the rule). Added to list after orchestrator triage; check itself unchanged |
+| envelope | (same FAIL) | L12 Map Frame max 4992 > R 3808 | F3/F5 (ratio 1.31, under 2x-R). As above |
 | mfde | FAIL | 0 subset failures; 50 coverage failures (L0-L6: nregion, entries 10, 12-29 class) | poorer-than-R coverage (F12); nregion is WP2-owned (F2), entries 12-19 F11 |
 | mht29 | PASS | frame byte-identical | - |
 | shape | FAIL | 19 differences (same 13 G-only BMT tables + 6 DSA order) | F12 |
@@ -30,12 +30,12 @@ Run: `.venv-rp/bin/python parser/compare_disc.py --reference /run/media/codyh/46
 - mfde coverage L8-L12 clean; L6 also fails `entry_count`.
 - No advisories in the report.
 
-## Unexpected FAILs (count of rows marked unexpected: 2)
+## Triaged FAILs (initially unexpected; now expected: 2)
 
 1. envelope: L10 Map Frame max size 3616 exceeds R max 2336.
 2. envelope: L12 Map Frame max size 4992 exceeds R max 3808.
 
-Per DESIGN the phase does not close on these; they are not added to the list to pass. Nearest candidates are F3/F5 (sub-frame size, density), not confirmed.
+Triage: the envelope check's absolute R-max rows are superseded by the 2x-R advisory (FINDINGS F3, Phase 4); G exceeds R by 1.55x and 1.31x, consistent with F5 density. Cause inferred from ratios, not separately measured; Phase 4/5 must confirm.
 
 ## Refusal demonstration
 
