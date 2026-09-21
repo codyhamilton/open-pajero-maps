@@ -202,3 +202,56 @@ def test_no_forbidden_imports():
             if pattern.search(text):
                 offenders.append(f"{py_file}: matched {pattern.pattern!r}")
     assert not offenders, "\n".join(offenders)
+
+
+# ---------------------------------------------------------------------
+# report binding to output/manifest.json
+# ---------------------------------------------------------------------
+
+def _run_compare(monkeypatch, fixture_path, report_path, *extra):
+    import compare_disc
+    monkeypatch.setattr(sys, "argv", [
+        "compare_disc.py", "--generated", fixture_path, "--checks", "decode",
+        "--report", str(report_path), *extra])
+    return compare_disc.main()
+
+
+def _write_manifest(fixture_path, sha=None):
+    import hashlib, json
+    sha = sha or hashlib.sha256(Path(fixture_path).read_bytes()).hexdigest()
+    (Path(fixture_path).parent / "manifest.json").write_text(json.dumps({"sha256": sha}))
+    return sha
+
+
+def test_report_binding_match(monkeypatch, fixture_path, tmp_path):
+    import json
+    sha = _write_manifest(fixture_path)
+    rp = tmp_path / "r.json"
+    assert _run_compare(monkeypatch, fixture_path, rp) == 0
+    rep = json.loads(rp.read_text())
+    assert rep["generated_sha256"] == sha
+    assert rep["generated_mtime"].endswith("+00:00")
+    assert rep["manifest_bound"] is True
+
+
+def test_report_binding_mismatch_refuses(monkeypatch, fixture_path, tmp_path, capsys):
+    _write_manifest(fixture_path, sha="0" * 64)
+    rp = tmp_path / "r.json"
+    assert _run_compare(monkeypatch, fixture_path, rp) == 2
+    assert not rp.exists()
+    assert "0" * 64 in capsys.readouterr().err
+
+
+def test_report_binding_missing_manifest_refuses(monkeypatch, fixture_path, tmp_path):
+    rp = tmp_path / "r.json"
+    assert _run_compare(monkeypatch, fixture_path, rp) == 2
+    assert not rp.exists()
+
+
+def test_report_no_manifest_records_unbound(monkeypatch, fixture_path, tmp_path):
+    import json
+    rp = tmp_path / "r.json"
+    assert _run_compare(monkeypatch, fixture_path, rp, "--no-manifest") == 0
+    rep = json.loads(rp.read_text())
+    assert rep["manifest_bound"] is False
+    assert "generated_sha256" in rep

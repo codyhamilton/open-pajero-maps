@@ -62,6 +62,11 @@ def main() -> int:
                           "running checks")
     ap.add_argument("--profile-out", help="Path to write the profile JSON "
                                             "(default: parser/refdata/profile/map.json)")
+    ap.add_argument("--manifest", help="Build manifest to bind the generated "
+                                         "ALLDATA.KWI to (default: manifest.json "
+                                         "beside it)")
+    ap.add_argument("--no-manifest", action="store_true",
+                     help="Skip manifest binding (report records manifest_bound=false)")
     args = ap.parse_args()
 
     if args.profile:
@@ -83,6 +88,12 @@ def main() -> int:
     config = _load_config(args.config)
     generated_path = _resolve_alldata_path(args.generated)
     reference_path = _resolve_alldata_path(args.reference) if args.reference else None
+
+    binding, err = report.bind_generated(generated_path, args.manifest,
+                                         args.no_manifest)
+    if err:
+        print(err, file=sys.stderr)
+        return 2
 
     ctx = Context(reference=reference_path, generated=generated_path, config=config)
 
@@ -113,7 +124,7 @@ def main() -> int:
         })
 
     report.print_table(results)
-    report.write_report(args.report, reference_path, generated_path, results)
+    report.write_report(args.report, reference_path, generated_path, results, binding)
 
     exit_code = 0 if all(r["status"] != "FAIL" for r in results) else 1
     return exit_code
