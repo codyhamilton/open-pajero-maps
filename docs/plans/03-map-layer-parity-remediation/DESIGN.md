@@ -122,6 +122,19 @@ The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.j
 - Also delivers: the numeric bands section in `harness.json` (a stated fractional tolerance around R's per-level statistic, reviewed, never adjusted after seeing G) used by every later "within band" outcome; a measured extraction wall time (for Phase 8); a vertices-per-km and road-length census of R (needed by Phase 5's density band); a recorded review of the bands before any run on G; and `docs/schema/` rows (status `unknown`) holding every WP2–WP5 unknown from the source analysis with a first test for each. Phase 1 succeeds when every FAIL the strengthened checks report on the current G is on the recorded expectation list.
 - Approach: known
 - Depends on: nothing
+- Units:
+
+| Unit | Brief | Depends on | May run alongside |
+|---|---|---|---|
+| 1-01 report binding | `briefs/1-01-report-binding.md` | nothing | 1-02, 1-05, 1-06, 1-07, 1-08 |
+| 1-02 R density census | `briefs/1-02-density-census.md` | nothing | 1-01, 1-05, 1-06, 1-07, 1-08 |
+| 1-03 bands + review | `briefs/1-03-bands.md` | 1-02 | 1-01, 1-05, 1-06, 1-07, 1-08 |
+| 1-04 coverage direction (mfde, vocab) | `briefs/1-04-coverage-direction.md` | 1-03 | 1-01, 1-05, 1-06, 1-07, 1-08 |
+| 1-05 shape/container BMT | `briefs/1-05-shape-container-bmt.md` | nothing | all others except 1-09 |
+| 1-06 pointers + spotcheck | `briefs/1-06-pointers-spotcheck.md` | nothing | all others except 1-09 |
+| 1-07 extraction timing kickoff | `briefs/1-07-extraction-timing-kickoff.md` | nothing | all others except 1-09 |
+| 1-08 schema unknown rows | `briefs/1-08-schema-unknowns.md` | nothing | all others except 1-09 |
+| 1-09 expectation run and record | `briefs/1-09-expectations-and-close.md` | 1-01, 1-03..1-08 (1-07 finished) | nothing |
 
 ### Phase 2 — Coordinate model and header-word census (gate)
 
