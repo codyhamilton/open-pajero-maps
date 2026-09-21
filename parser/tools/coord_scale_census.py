@@ -48,7 +48,7 @@ def parcel_measure(wp) -> dict | None:
     p = wp.parcel
     if p is None:
         return None
-    b = wp.bounds
+    b = wp.frame_bounds  # decode anchors lat/lon on the frame, not the leaf
     mx = my = -1
     end_max = -1
     road_max = -1

@@ -15,11 +15,11 @@ def _pt(x, y):
     return (B.lat_lo + y / 32768.0, B.lon_lo + x / 32768.0)
 
 
-def _wp(level, nodes, points=(), bg=()):
+def _wp(level, nodes, points=(), bg=(), leaf=None):
     link = NS(nodes=[NS(x=x, y=y) for x, y in nodes], points=[_pt(x, y) for x, y in points])
     parcel = NS(road=NS(links=[link]),
                 background=NS(shapes=[NS(coords=[_pt(x, y) for x, y in bg])]))
-    return NS(level=level, bounds=B, parcel=parcel)
+    return NS(level=level, bounds=leaf or B, frame_bounds=B, parcel=parcel)
 
 
 def test_measure_covers_nodes_points_background():
@@ -29,7 +29,7 @@ def test_measure_covers_nodes_points_background():
 
 
 def test_measure_empty_parcel_is_none():
-    assert csc.parcel_measure(NS(level=2, bounds=B, parcel=None)) is None
+    assert csc.parcel_measure(NS(level=2, bounds=B, frame_bounds=B, parcel=None)) is None
 
 
 def test_class_rule_takes_no_content():
@@ -67,3 +67,10 @@ def test_bucket_and_exceptions():
     e = csc.aggregate(recs, set())["4"]["full"]["normal"]
     assert e["max"] == 4096 and e["share_at_max"] == 0.75
     assert e["exceptions"]["count"] == 1 and e["exceptions"]["examples"][0]["max"] == 900
+
+
+def test_raw_inverts_against_frame_not_leaf():
+    # L0 sparse tile: leaf is a quarter-width slice of the 4x4 frame.
+    leaf = NS(lat_lo=-28.0, lat_hi=-27.75, lon_lo=153.0, lon_hi=153.25)
+    m = csc.parcel_measure(_wp(0, [(0, 10)], points=[(9000, 7000)], bg=[(5000, 6000)], leaf=leaf))
+    assert m["max_x"] == 9000 and m["max_y"] == 7000
