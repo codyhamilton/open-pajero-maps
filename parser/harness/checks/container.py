@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from harness import bytediff, walk
 from harness.context import Check, CheckResult
+from harness.checks.shape import bmt_key_diffs, bmt_keys
 from kiwiw.volume import BMT_SIZE, DATAVOL_SIZE, MHT_SIZE
 
 NO_DATA_DSA = 0xFFFFFFFF
@@ -129,6 +130,11 @@ def _run_container(ctx) -> CheckResult:
         _bmt_explains_length(r_container.pdmdh, g_container.pdmdh, allow["pdmdh"]))
     if length_violation:
         violations.append(length_violation)
+    # Length equality (or an allowlisted length difference) does not prove
+    # the tables line up: compare BMT tables by (level, blockset) key.
+    for d in bmt_key_diffs(bmt_keys(r_container.pdmdh), g_container.pdmdh, r_container.pdmdh):
+        violations.append({"region": "pdmdh", "field": "bmt_table", "offset": 0,
+                           "length": 0, "r_bytes": "", "g_bytes": "", "detail": d})
     fields = bytediff.field_map("pdmdh", r_container.pdmdh)
     diffs = bytediff.diff_regions(r_trim, g_trim, fields, allow["pdmdh"])
     _summarize("pdmdh", diffs, allowed_counts, violations)

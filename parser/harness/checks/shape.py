@@ -22,6 +22,69 @@ COORD_TOL = 1e-9
 NO_DATA_DSA = 0xFFFFFFFF
 
 
+def bmt_keys(pdmdh) -> list[tuple[int, int]]:
+    """(level, blockset_index) of every BMT table, in table (BSMR) order."""
+    return [(pdmdh.blocksets[t.blockset_ordinal].level,
+             pdmdh.blocksets[t.blockset_ordinal].blockset_index)
+            for t in pdmdh.bmt_tables]
+
+
+def bmt_dsa_order_violations(pdmdh) -> list[str]:
+    """R's ordering rule (measured on R: 165 tables, 0 violations): the
+    non-empty BMR DSAs are strictly increasing across the whole PDMDH,
+    walking tables in BSMR order and entries in array order (block buffers
+    are laid out contiguously in that order). Empty entries (DSA
+    FFFFFFFF) are skipped. Whether the head unit *requires* this is
+    unknown (docs/schema/parcel-management.md), so it is reported as FAIL
+    on the precaution that R always satisfies it."""
+    out: list[str] = []
+    prev = -1
+    prev_at = None
+    for key, t in zip(bmt_keys(pdmdh), pdmdh.bmt_tables):
+        for i, e in enumerate(t.entries):
+            if e.dsa == NO_DATA_DSA:
+                continue
+            if e.dsa <= prev:
+                out.append(f"BMT (level {key[0]}, blockset {key[1]}) entry {i}: DSA {e.dsa} "
+                           f"<= previous {prev} at {prev_at}")
+            prev, prev_at = e.dsa, (key, i)
+    return out
+
+
+def bmt_key_diffs(r_keys: list, g_pdmdh, r_pdmdh=None) -> list[str]:
+    """Compare G's BMT tables to R's by (level, blockset) key: G-only and
+    R-only tables, relative order of shared keys, and (when R's PDMDH is
+    given) entry count and empty/non-empty pattern per shared table. G-only
+    tables are FAIL: no declared edge set exists yet."""
+    g_keys = bmt_keys(g_pdmdh)
+    diffs: list[str] = []
+    r_set, g_set = set(r_keys), set(g_keys)
+    for k in sorted(g_set - r_set):
+        diffs.append(f"BMT table (level {k[0]}, blockset {k[1]}) present in generated only")
+    for k in sorted(r_set - g_set):
+        diffs.append(f"BMT table (level {k[0]}, blockset {k[1]}) missing from generated")
+    if [k for k in g_keys if k in r_set] != [k for k in r_keys if k in g_set]:
+        diffs.append("BMT tables shared with reference appear in a different order")
+    if r_pdmdh is not None:
+        rt = dict(zip(bmt_keys(r_pdmdh), r_pdmdh.bmt_tables))
+        gt = dict(zip(g_keys, g_pdmdh.bmt_tables))
+        for k in sorted(r_set & g_set):
+            re_, ge = rt[k].entries, gt[k].entries
+            if len(re_) != len(ge):
+                diffs.append(f"BMT (level {k[0]}, blockset {k[1]}): entries "
+                             f"generated={len(ge)} reference={len(re_)}")
+                continue
+            for i, (a, b) in enumerate(zip(re_, ge)):
+                if (a.dsa == NO_DATA_DSA) != (b.dsa == NO_DATA_DSA):
+                    diffs.append(f"BMT (level {k[0]}, blockset {k[1]}) entry {i}: "
+                                 f"empty pattern differs (reference dsa={a.dsa:#x} "
+                                 f"generated dsa={b.dsa:#x})")
+                    break
+    diffs += [f"BMT DSA order (head-unit requirement unknown, R is monotonic): {v}"
+              for v in bmt_dsa_order_violations(g_pdmdh)]
+    return diffs
+
+
 def _coverage_close(a: dict, b: dict) -> list[str]:
     diffs = []
     for k in ("lat_lo", "lat_hi", "lon_lo", "lon_hi"):
@@ -97,10 +160,13 @@ def _run_shape(ctx) -> CheckResult:
                 diffs.append(f"level {g_lmr.level}: blockset count generated={g_bs_count} "
                              f"reference={ref_bs_count}")
 
+    r_keys = [(b["level"], b["blockset_index"]) for b in ref["blocksets"] if b["has_bmt"]]
+    diffs += bmt_key_diffs(r_keys, pdmdh)
+
     details = {"diffs": diffs}
     if diffs:
-        return CheckResult("FAIL", f"{len(diffs)} shape difference(s) (showing up to 20)",
-                            {"diffs": diffs[:20]})
+        return CheckResult("FAIL", f"{len(diffs)} shape difference(s) (showing up to 40)",
+                            {"diffs": diffs[:40]})
     return CheckResult("PASS", "LMR/BSMR/BMT shape matches the reference grid", details)
 
 
