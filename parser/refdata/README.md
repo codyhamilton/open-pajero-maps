@@ -22,6 +22,8 @@ the mounted disc (see `docs/design/target-disc.md`, "Grid contract").
 - `profile/map.json` — full per-level census of the reference disc's map layer, judged
   against by `harness/checks/{vocab,envelope,mfde}.py`. Produced by
   `compare_disc.py --profile`.
+- `profile/density.json` — per-level link, length and vertex density census of the reference
+  disc's map layer (links per parcel, km per parcel, parcels by coordinate maximum).
 - `parcel_mask.json` — per-level cell index bounds of the reference coverage.
 - `harness.json` — count-ratio envelopes, the level-0 exemption, the container byte-diff
   allowlist and the path of the spot-check table. Loaded by `harness/`.

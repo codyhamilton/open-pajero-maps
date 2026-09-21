@@ -188,6 +188,20 @@ same commit.
 - **Why not committed**: regenerable output tied 1:1 to `output/ALLDATA.KWI`.
 - **Reproduce**: the command above.
 
+## `output/compare_report.json`
+
+- **What**: `compare_disc.py` report from unit 1-09 of plan 03 (strengthened harness on the
+  current G), bound to `output/manifest.json` (`generated_sha256` 51c254ac...2743).
+- **Source**: same command as `output/report.json` with `--report output/compare_report.json`.
+- **Why not committed**: regenerable, tied to the build and the mounted disc. Reproduce: the command above.
+
+## `output/extract_timing/`
+
+- **What**: scratch dir of the 1-07 timed run of `osm_to_parcel_geometry.py` (spool, `START.txt`,
+  `run.log` with `/usr/bin/time -v`); wall 26:03.27, 12 cores, upper bound (other units ran concurrently).
+- **Why not committed**: large regenerable spool and log.
+- **Reproduce**: `/usr/bin/time -v .venv-rp/bin/python parser/osm_to_parcel_geometry.py --pbf australia-260824.osm.pbf --spool output/extract_timing/spool`.
+
 ## `output/report.json`
 
 - **What**: `compare_disc.py`'s per-check JSON report (container, decode,
