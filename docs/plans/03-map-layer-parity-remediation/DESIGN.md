@@ -142,6 +142,14 @@ The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.j
 - Surfaces: new `coord_scale.json`; a census tool under `parser/tools/`; `parser/kiwiw/coordconv.py` (read-only here); `parser/kiwiw/parcel.py` decode paths; `docs/schema/` rows for the model.
 - Approach: known
 - Depends on: Phase 1
+- Units:
+
+| Unit | Brief | Depends on | May run alongside |
+|---|---|---|---|
+| 2-01 coordinate-range census (R per level/class/division; class rule; L0 density basis) | `briefs/2-01-coord-range-census.md` | nothing | nothing |
+| 2-02 header-word census and rule (words 0, 6, 7, 9, 10, 11; 42 exceptions; held-out) | `briefs/2-02-header-word-census.md` | 2-01 | 2-03 |
+| 2-03 overlay vs OSM at four cells (tolerance, clustering, edge) | `briefs/2-03-overlay-test.md` | 2-01 | 2-02 |
+| 2-04 schema rows and gate verdict | `briefs/2-04-schema-rows-and-gate.md` | 2-01, 2-02, 2-03 | nothing |
 
 ### Phase 3 — Native coordinates
 
