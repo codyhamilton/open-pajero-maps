@@ -6,7 +6,7 @@ street/place names, driven by the data table at
 `spot_checks` key) rather than ad-hoc.
 
 Each fixture row is checked at each of its `levels`: at level 0 every name
-in `expect_road_names` must appear (case-insensitive substring match) in
+in `expect_road_names` must appear (whole-name equality after normalisation) in
 some decoded `NameRecord.text` of the located parcel; at level 2 every name
 in `expect_place_names` must appear the same way (level 2 rows expect place
 names only, per the brief's contract -- `expect_road_names` is not checked
@@ -15,6 +15,7 @@ at level 2).
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -43,16 +44,30 @@ def _record_texts(parcel) -> list[str]:
     return texts
 
 
+_PREFIX_RE = re.compile(r"^\d+=")
+
+
+def _normalise(text: str) -> str:
+    """Casefold, drop a leading `N=` string-type prefix (R stores names as
+    e.g. `1=GRENFELL STREET`), and collapse whitespace."""
+    return " ".join(_PREFIX_RE.sub("", text.strip()).casefold().split())
+
+
+def _segments(text: str) -> set[str]:
+    """R packs several fields into one record, `;`-separated
+    (`1=WILLIAM STREET;1=53`); each segment is a candidate name."""
+    return {_normalise(seg) for seg in text.split(";")}
+
+
 def _missing(expected: list[str], texts: list[str]) -> tuple[list[str], list[str]]:
-    """Returns (matched, missing) for `expected` names against `texts`,
-    case-insensitive substring match."""
-    lowered = [t.lower() for t in texts]
+    """Returns (matched, missing) for `expected` names against `texts`:
+    whole-name equality on a normalised `;`-segment (no substring hits)."""
+    normed: set[str] = set()
+    for t in texts:
+        normed |= _segments(t)
     matched, missing = [], []
     for name in expected:
-        if any(name.lower() in t for t in lowered):
-            matched.append(name)
-        else:
-            missing.append(name)
+        (matched if _normalise(name) in normed else missing).append(name)
     return matched, missing
 
 

@@ -86,3 +86,37 @@ def test_spotcheck_na_when_table_absent(tmp_path):
     ctx = _ctx(str(alldata_path), str(tmp_path / "does_not_exist.json"))
     result = _run_spotcheck(ctx)
     assert result.status == "NA"
+
+
+def _run_expecting(tmp_path, text, expected):
+    name_record = NameRecord(
+        string_type=1, type_code=0, type_label="", priority=0, vertical=False,
+        display_scale_flag=0, text=text, lat=_CENTRE_LAT, lon=_CENTRE_LON,
+    )
+    name_bytes = build_name_frame_bytes([name_record], _BOUNDS)
+    frame_bytes = build_map_frame_bytes(
+        LEVEL, (_BOUNDS.lat_lo, _BOUNDS.lon_lo), (0, 0), None, None, name_bytes)
+    parcel = SynthParcel(ix=0, iy=0, bounds=_BOUNDS, map_frame_bytes=frame_bytes)
+    p = tmp_path / "ALLDATA.KWI"
+    p.write_bytes(build_alldata_kwi(parcels=[parcel], coverage=_BOUNDS, level=LEVEL,
+                                    grid_nx=1, grid_ny=1))
+    table = _write_table(tmp_path, [{
+        "city": "T", "lat": _CENTRE_LAT, "lon": _CENTRE_LON, "levels": [0],
+        "expect_road_names": [expected], "expect_place_names": [],
+    }])
+    return _run_spotcheck(_ctx(str(p), table))
+
+
+def test_spotcheck_rejects_substring_false_positive(tmp_path):
+    result = _run_expecting(tmp_path, "Pulteney Pokies", "Pulteney")
+    assert result.status == "FAIL", result.message
+
+
+def test_spotcheck_normalises_prefix_case_and_whitespace(tmp_path):
+    result = _run_expecting(tmp_path, "1=GRENFELL  STREET", "Grenfell Street")
+    assert result.status == "PASS", result.message
+
+
+def test_spotcheck_matches_semicolon_segment(tmp_path):
+    result = _run_expecting(tmp_path, "1=WILLIAM STREET;1=53", "William Street")
+    assert result.status == "PASS", result.message

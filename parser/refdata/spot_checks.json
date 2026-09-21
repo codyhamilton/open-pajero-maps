@@ -115,5 +115,17 @@
     "expect_place_names": [
       "Darwin"
     ]
+  },
+  {
+    "city": "Adelaide (Grenfell Street, northern cell)",
+    "lat": -34.9235,
+    "lon": 138.6007,
+    "levels": [
+      0
+    ],
+    "expect_road_names": [
+      "Grenfell Street"
+    ],
+    "expect_place_names": []
   }
 ]

@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from harness import walk
 from harness.context import Check, CheckResult
 from kiwiw.bitutils import sws, u16, u32
-from kiwiw.parcel import decode_map_frame_header
+from kiwiw.parcel import MAPFRAME_HEADER_SIZE, decode_map_frame_header
 
 NO_DATA_DSA = 0xFFFFFFFF
 DEFAULT_MFDE_ABSENT = [0xFFFFFFFF, 0]
@@ -159,9 +159,32 @@ def _poison_run_found(buf: bytes, covered: list[tuple[int, int]]) -> int | None:
     return None
 
 
+MAX_TARGET_NREGION = 255
+
+
+def _decodes_as_map_frame(fh, sector_off: int, file_size: int) -> str | None:
+    """None if the bytes at `sector_off` decode as a Map Frame header through
+    the existing decoder with sane fields (llpid a valid lat/lon box,
+    plausible region count); else a reason string."""
+    if sector_off + MAPFRAME_HEADER_SIZE > file_size:
+        return "target too close to EOF for a Map Frame header"
+    fh.seek(sector_off)
+    raw = fh.read(MAPFRAME_HEADER_SIZE)
+    try:
+        hdr = decode_map_frame_header(raw)
+    except Exception as exc:  # noqa: BLE001 -- any decode failure is the finding
+        return f"Map Frame header decode raised {type(exc).__name__}"
+    lat, lon = hdr.llpid_lat, hdr.llpid_lon
+    if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
+        return f"header llpid out of range lat={lat} lon={lon}"
+    if hdr.nregion > MAX_TARGET_NREGION:
+        return f"header nregion {hdr.nregion} implausible"
+    return None
+
+
 def _check_mfde_entry(idx: int, raw_off: int, raw_size: int, frame_size: int,
                        file_size: int, sector_sz: int, logical_sz: int,
-                       absent: list) -> str | None:
+                       absent: list, fh=None) -> str | None:
     """Return an error string, or None if the entry is fine."""
     from kiwiw.volume import getsector
 
@@ -191,6 +214,10 @@ def _check_mfde_entry(idx: int, raw_off: int, raw_size: int, frame_size: int,
     if not (0 <= sector_off < file_size):
         return (f"mfde[{idx}] out-of-buffer sector {sector_off} outside file "
                 f"(size {file_size})")
+    if fh is not None:
+        why = _decodes_as_map_frame(fh, sector_off, file_size)
+        if why:
+            return f"mfde[{idx}] out-of-buffer target at {sector_off} is not a Map Frame: {why}"
     return None
 
 
@@ -268,7 +295,7 @@ def _run_pointers(ctx) -> CheckResult:
             frame_size = len(buf)
             for idx, (raw_off, raw_size) in enumerate(mfde_raw):
                 err = _check_mfde_entry(idx, raw_off, raw_size, frame_size,
-                                         file_size, sector_sz, logical_sz, absent)
+                                         file_size, sector_sz, logical_sz, absent, fh)
                 if err:
                     fails.append({
                         "kind": "mfde", "level": wp.level,
