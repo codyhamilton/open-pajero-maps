@@ -157,12 +157,18 @@ The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.j
 - Depends on: Phase 1
 - Units:
 
+Units, as re-briefed for the restart (Decisions, "Amendment 2026-09-22 (user) — Phase 2 restart"). 2-01 and 2-02 are already done and committed and are neither re-run nor re-briefed; 2-03 is superseded by 2-08. The two bug fixes gate the overlay re-run, and 2-04 depends on everything.
+
 | Unit | Brief | Depends on | May run alongside |
 |---|---|---|---|
-| 2-01 coordinate-range census (R per level/class/division; class rule; L0 density basis) | `briefs/2-01-coord-range-census.md` | nothing | nothing |
-| 2-02 header-word census and rule (words 0, 6, 7, 9, 10, 11; 42 exceptions; held-out) | `briefs/2-02-header-word-census.md` | 2-01 | 2-03 |
-| 2-03 overlay vs OSM at four cells (tolerance, clustering, edge) | `briefs/2-03-overlay-test.md` | 2-01 | 2-02 |
-| 2-04 schema rows and gate verdict | `briefs/2-04-schema-rows-and-gate.md` | 2-01, 2-02, 2-03 | nothing |
+| 2-01 coordinate-range census (R per level/class/division; class rule; L0 density basis) — **done (2cbe296)** | `briefs/2-01-coord-range-census.md` | nothing | nothing |
+| 2-02 header-word census and rule (words 0, 6, 7, 9, 10, 11; 42 exceptions; held-out) — **done** | `briefs/2-02-header-word-census.md` | 2-01 | — |
+| 2-03 overlay vs OSM at four cells — **superseded by 2-08** (first run's record: `EVIDENCE-2-03.json`) | `briefs/2-03-overlay-test.md` | 2-01 | — |
+| 2-05 L0 sparse coordinate frame in `harness/walk.py` (leaf vs frame; re-derive `density.json`) | `briefs/2-05-l0-sparse-frame.md` | nothing | 2-07 |
+| 2-06 y orientation in `coordconv` and every copy of its formula | `briefs/2-06-y-orientation.md` | 2-05 | 2-07 |
+| 2-07 word-7 (pmcode) adoption in the census tool and `coord_scale.json` | `briefs/2-07-word7-adoption.md` | nothing | 2-05, 2-06, 2-08 |
+| 2-08 overlay re-run against the redefined gate (relative discrimination + R-only measures) | `briefs/2-08-overlay-rerun.md` | 2-05, 2-06 | 2-07 |
+| 2-04 schema rows and gate verdict (redefined criteria) | `briefs/2-04-schema-rows-and-gate.md` | 2-05, 2-06, 2-07, 2-08 | nothing |
 
 ### Phase 3 — Native coordinates
 
