@@ -1,0 +1,196 @@
+{
+  "length_basis": "leaf bounds extent / coord_max; coord_max=4096 (L2-L8, urban and divided L0), 16384 for an L0 parcel with any raw coordinate >4096; raw recovered from decoder lat/lon at range 32768; equirectangular km",
+  "levels": {
+    "0": {
+      "length_km": 355356.729,
+      "length_km_per_parcel": {
+        "mean": 9.8396,
+        "p50": 4.8309,
+        "p90": 22.5582
+      },
+      "links": 1167853,
+      "links_per_parcel": {
+        "mean": 32.3371,
+        "p50": 3.0,
+        "p90": 66.0
+      },
+      "parcels_by_coord_max": {
+        "16384": 32718,
+        "4096": 3397
+      },
+      "parcels_with_roads": 36115,
+      "vertices": 14573199,
+      "vertices_per_km": {
+        "per_parcel": {
+          "mean": 44.8799,
+          "p50": 45.908,
+          "p90": 63.417
+        },
+        "total": 41.0101
+      },
+      "vertices_per_link": {
+        "mean": 12.4786,
+        "p50": 4.0,
+        "p90": 29.0,
+        "total": 12.4786
+      },
+      "vertices_per_parcel": {
+        "mean": 403.5221,
+        "p50": 208.0,
+        "p90": 973.0
+      }
+    },
+    "2": {
+      "length_km": 176082.962,
+      "length_km_per_parcel": {
+        "mean": 13.3934,
+        "p50": 10.6267,
+        "p90": 21.6667
+      },
+      "links": 95877,
+      "links_per_parcel": {
+        "mean": 7.2927,
+        "p50": 1.0,
+        "p90": 4.0
+      },
+      "parcels_by_coord_max": {
+        "4096": 13147
+      },
+      "parcels_with_roads": 13147,
+      "vertices": 1021739,
+      "vertices_per_km": {
+        "per_parcel": {
+          "mean": 5.375,
+          "p50": 5.1969,
+          "p90": 6.87
+        },
+        "total": 5.8026
+      },
+      "vertices_per_link": {
+        "mean": 10.6568,
+        "p50": 3.0,
+        "p90": 39.0,
+        "total": 10.6568
+      },
+      "vertices_per_parcel": {
+        "mean": 77.7165,
+        "p50": 52.0,
+        "p90": 121.0
+      }
+    },
+    "4": {
+      "length_km": 122257.65,
+      "length_km_per_parcel": {
+        "mean": 70.3439,
+        "p50": 51.5916,
+        "p90": 137.8047
+      },
+      "links": 41786,
+      "links_per_parcel": {
+        "mean": 24.0426,
+        "p50": 2.0,
+        "p90": 26.0
+      },
+      "parcels_by_coord_max": {
+        "4096": 1738
+      },
+      "parcels_with_roads": 1738,
+      "vertices": 301123,
+      "vertices_per_km": {
+        "per_parcel": {
+          "mean": 2.0146,
+          "p50": 1.6441,
+          "p90": 2.498
+        },
+        "total": 2.463
+      },
+      "vertices_per_link": {
+        "mean": 7.2063,
+        "p50": 2.0,
+        "p90": 13.0,
+        "total": 7.2063
+      },
+      "vertices_per_parcel": {
+        "mean": 173.2583,
+        "p50": 85.0,
+        "p90": 297.0
+      }
+    },
+    "6": {
+      "length_km": 65190.822,
+      "length_km_per_parcel": {
+        "mean": 325.9541,
+        "p50": 236.4033,
+        "p90": 724.269
+      },
+      "links": 20738,
+      "links_per_parcel": {
+        "mean": 103.69,
+        "p50": 8.5,
+        "p90": 237.5
+      },
+      "parcels_by_coord_max": {
+        "4096": 200
+      },
+      "parcels_with_roads": 200,
+      "vertices": 89642,
+      "vertices_per_km": {
+        "per_parcel": {
+          "mean": 1.1023,
+          "p50": 0.5452,
+          "p90": 1.9157
+        },
+        "total": 1.3751
+      },
+      "vertices_per_link": {
+        "mean": 4.3226,
+        "p50": 2.0,
+        "p90": 7.0,
+        "total": 4.3226
+      },
+      "vertices_per_parcel": {
+        "mean": 448.21,
+        "p50": 132.0,
+        "p90": 992.5
+      }
+    },
+    "8": {
+      "length_km": 32045.969,
+      "length_km_per_parcel": {
+        "mean": 801.1492,
+        "p50": 662.8912,
+        "p90": 1512.8406
+      },
+      "links": 7663,
+      "links_per_parcel": {
+        "mean": 191.575,
+        "p50": 35.5,
+        "p90": 746.4
+      },
+      "parcels_by_coord_max": {
+        "4096": 40
+      },
+      "parcels_with_roads": 40,
+      "vertices": 28873,
+      "vertices_per_km": {
+        "per_parcel": {
+          "mean": 0.9108,
+          "p50": 0.3636,
+          "p90": 2.3234
+        },
+        "total": 0.901
+      },
+      "vertices_per_link": {
+        "mean": 3.7678,
+        "p50": 2.0,
+        "p90": 7.0,
+        "total": 3.7678
+      },
+      "vertices_per_parcel": {
+        "mean": 721.825,
+        "p50": 233.0,
+        "p90": 2412.4
+      }
+    }
+  }
+}
