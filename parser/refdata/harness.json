@@ -28,5 +28,129 @@
     {"region": "pdmdh", "field": "bmt_size",
      "reason": "block size in logical sectors differs per build"}
   ],
-  "spot_checks": "parser/refdata/spot_checks.json"
+  "spot_checks": "parser/refdata/spot_checks.json",
+
+    "bands": {
+    "derivation_rule": "Tolerance is a fraction of R's per-level statistic, chosen a priori from R's own dispersion (per-parcel p50/p90 spread in density.json; parcel count per level) before any run on G. 0.25 where R has >=1000 parcels with roads (L0, L2, L4); 0.35 at L6/L8 (200 and 40 parcels, so R's own statistic is noisier). Shares use a fractional tolerance with an absolute floor so rare classes are not over-constrained. Never adjusted after seeing G. R numbers: profile/bands_derivation.json.",
+    "vertices_per_link": {
+      "statistic": "vertices_per_link.total, profile/density.json levels[L]",
+      "rule": "abs(G-R)/R <= tol",
+      "tol": {
+        "0": 0.25,
+        "2": 0.25,
+        "4": 0.25,
+        "6": 0.35,
+        "8": 0.35
+      },
+      "basis": "R per-parcel p90/p50 spread is 2-7x; the level aggregate is much tighter, so a quarter of R (looser at sparse L6/L8) bounds the aggregate.",
+      "tol_by": "level"
+    },
+    "vertices_per_km": {
+      "statistic": "vertices_per_km.total, profile/density.json levels[L]",
+      "rule": "abs(G-R)/R <= tol",
+      "tol": {
+        "0": 0.25,
+        "2": 0.25,
+        "4": 0.25,
+        "6": 0.35,
+        "8": 0.35
+      },
+      "basis": "Aggregate over hundreds to tens of thousands of parcels; same dispersion basis as vertices_per_link.",
+      "tol_by": "level"
+    },
+    "road_type_share": {
+      "statistic": "share of road_type_hist, profile/map.json levels[L].road",
+      "rule": "abs(G-R) <= max(tol*R, floor)",
+      "tol": 0.25,
+      "basis": "Class shares are census fractions over 1e4-1e7 links; a quarter of R's share allows generalisation differences, floor covers rare classes.",
+      "floor": 0.01
+    },
+    "display_class_share": {
+      "statistic": "share of display_class_hist, profile/map.json levels[L].road",
+      "rule": "abs(G-R) <= max(tol*R, floor)",
+      "tol": 0.25,
+      "basis": "As road_type_share.",
+      "floor": 0.01
+    },
+    "background_type_share": {
+      "statistic": "share of background.type_code_hist, profile/map.json levels[L]",
+      "rule": "abs(G-R) <= max(tol*R, floor)",
+      "tol": 0.25,
+      "basis": "Census fractions over 25 to 9.4M shapes; floor covers rare types.",
+      "floor": 0.01
+    },
+    "background_count": {
+      "statistic": "background.shape_count, profile/map.json levels[L]",
+      "rule": "abs(G-R)/R <= tol",
+      "tol": 0.5,
+      "basis": "Tightened from the 0.5x-2x envelope to +-50% for Phase 7's per-class census; OSM coverage of reserves/water legitimately differs from survey data."
+    },
+    "link_flag_prevalence": {
+      "statistic": "True share of each road.link_flag_hists flag over link_count, profile/map.json",
+      "rule": "abs(G-R) <= max(tol*R, floor)",
+      "tol": 0.25,
+      "basis": "Flag prevalences are census fractions; floor 0.01 absolute for near-zero flags (toll ~1e-4).",
+      "floor": 0.01
+    },
+    "node_bit_prevalence": {
+      "statistic": "share of oneway / pseudo3d_updown values in link_flag_hists (per node), profile/map.json",
+      "rule": "abs(G-R) <= max(tol*R, floor)",
+      "tol": 0.25,
+      "basis": "Same basis as link flags, over node_count.",
+      "floor": 0.01
+    },
+    "name_type_mix": {
+      "statistic": "share of name.string_type_hist and name.type_code_hist, profile/map.json levels[L]",
+      "rule": "abs(G-R) <= max(tol*R, floor)",
+      "tol": 0.25,
+      "basis": "Census fractions over 8 to 19M records; mix is the Phase 8 outcome.",
+      "floor": 0.02
+    },
+    "name_record_distance_tolerance": {
+      "statistic": "Phase 2 overlay: distance between decoded R records and OSM match, as fraction of cell extent",
+      "rule": "distance_m <= tol * cell_extent_m",
+      "tol": 0.005,
+      "basis": "R quantises to a 4096 (or 16384) grid per cell; half a percent of the cell is ~20 grid units, above quantisation and OSM-vs-survey offset yet far below cluster scale.",
+      "unit": "fraction of cell extent"
+    },
+    "vocab_coverage": {
+      "statistic": "fraction of R's vocabulary values (road_type, display_class, background type, name string/type), weighted by R frequency, that G must use",
+      "rule": "coverage_weighted >= 1 - tol",
+      "tol": 0.05,
+      "basis": "The last 5% of R's frequency mass may be absent from an OSM-sourced G; anything more common must appear (consumed by 1-04).",
+      "weighting": "R frequency"
+    },
+    "review": {
+      "reviewer": "read-only Explore research helper (independent, given only bands and R numbers)",
+      "objections": [
+        "1 tolerances (0.25/0.35) not derived from measured noise",
+        "2 L6/L8 per-parcel skew: 0.35 likely too tight at 40 parcels",
+        "3 floor 0.01 exceeds R share for rare classes (unconstrained); no presence/absence check",
+        "4 relative 0.25 vacuous on dominant shares (L4-L8 class 2 at 0.90-0.98)",
+        "5 no aggregate histogram distance",
+        "6 name-mix floor 0.02 swamps small codes; L8 has 209 name records; L10/L12 have 8 records/25 shapes",
+        "7 constant flags (0.0 or 1.0 in R) get 0.01 slack",
+        "8 background_count +-50% loose at L0 and same for L10/L12",
+        "9 missing quantities (p90 vertices per link, length distribution, degree, etc.)",
+        "10 vertices per link and per km correlated",
+        "11 frequency-weighted coverage cannot catch rare structural classes"
+      ],
+      "resolution": "Amendments recorded a priori (no G run): (3,5) add histogram_l1 <= 0.25 (0.35 at L6/L8) over each share histogram and require any class with R share >= 0.5% to be present in G; (4) dominant shares (R >= 0.9) are bounded via the complement, |G-R| <= 0.25*(1-R) when applicable; (7) flags constant in R (0.0/1.0) must match exactly; (6,8) L10 and L12 (<=25 shapes, 8 name records) are exempt from share and count bands and require exact vocabulary match; (11) coverage additionally requires every R class with share >= 1% at that level to appear. Not adopted: (1,2) tolerances are judgment values, not bootstrapped; L6/L8 left at 0.35 with the L1 rule as backstop, because bootstrapping was out of budget and bands may not be tuned on G; (9,10) added quantities deferred, would need a design change. Orchestrator confirmation pending; not marked accepted."
+    },
+    "amendments": {
+      "histogram_l1": {
+        "tol": 0.25,
+        "tol_L6_L8": 0.35,
+        "rule": "sum|Gshare-Rshare|/2 <= tol per histogram"
+      },
+      "presence_min_share": 0.005,
+      "dominant_share_rule": "if R>=0.9: |G-R| <= 0.25*(1-R)",
+      "constant_flags": "exact match when R prevalence is 0.0 or 1.0",
+      "exempt_levels": [
+        "10",
+        "12"
+      ],
+      "coverage_min_class_share": 0.01
+    }
+  }
 }

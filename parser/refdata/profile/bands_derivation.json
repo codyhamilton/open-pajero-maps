@@ -1,0 +1,365 @@
+{
+ "note": "R-only numbers (profile/map.json, profile/density.json). No G-derived value used.",
+ "per_level": {
+  "0": {
+   "vertices_per_link": 12.4786,
+   "vertices_per_km": 41.0101,
+   "vertices_per_km_per_parcel": {
+    "mean": 44.8799,
+    "p50": 45.908,
+    "p90": 63.417
+   },
+   "parcels_with_roads": 36115,
+   "road_type_share": {
+    "0": 0.00184,
+    "10": 0.00018,
+    "12": 0.0,
+    "2": 0.08576,
+    "3": 0.03742,
+    "5": 0.03783,
+    "6": 0.30783,
+    "7": 0.00389,
+    "8": 0.00718,
+    "9": 0.51807
+   },
+   "display_class_share": {
+    "0": 0.00018,
+    "10": 0.08576,
+    "12": 0.00184,
+    "2": 0.51807,
+    "3": 0.00718,
+    "4": 0.00389,
+    "7": 0.34566,
+    "9": 0.03742
+   },
+   "link_flag_prevalence": {
+    "altitude_flag": 0.0,
+    "infra_link_flag": 0.0,
+    "link_id_flag": 0.45301,
+    "link_id_number_flag": 1.0,
+    "route_number_flag": 0.0,
+    "route_planning_tag": 0.12517,
+    "route_type_guidance_flag": 0.0,
+    "selected_link_flag": 0.47446,
+    "toll_flag": 0.00012
+   },
+   "node_bit_share": {
+    "oneway": {
+     "0": 1.0
+    },
+    "pseudo3d_updown": {
+     "0": 1.0
+    }
+   },
+   "background_shape_count": 9445322,
+   "background_type_share": {
+    "1024": 0.00073,
+    "288": 0.23331,
+    "289": 0.2992,
+    "290": 0.00355,
+    "291": 0.39485,
+    "321": 0.05904,
+    "322": 0.0001,
+    "578": 0.00899,
+    "640": 0.00023
+   },
+   "name_record_count": 19081105,
+   "name_string_type_share": {
+    "1": 0.05461,
+    "4": 0.46526,
+    "5": 0.39848,
+    "6": 0.08165
+   },
+   "name_type_code_share": {
+    "0": 0.00062,
+    "10": 4e-05,
+    "1024": 0.0001,
+    "12": 0.0,
+    "2": 0.03306,
+    "288": 0.11549,
+    "289": 0.02865,
+    "290": 0.00119,
+    "291": 0.00324,
+    "3": 0.01396,
+    "321": 0.09908,
+    "322": 6e-05,
+    "455": 6e-05,
+    "5": 0.01345,
+    "509": 0.05461,
+    "528": 0.39848,
+    "6": 0.10276,
+    "640": 1e-05,
+    "642": 6e-05,
+    "7": 0.00142,
+    "8": 0.00145,
+    "9": 0.13221
+   }
+  },
+  "10": {
+   "background_shape_count": 25,
+   "background_type_share": {
+    "289": 0.24,
+    "306": 0.44,
+    "528": 0.32
+   },
+   "name_record_count": 8,
+   "name_string_type_share": {
+    "1": 1.0
+   },
+   "name_type_code_share": {
+    "308": 1.0
+   }
+  },
+  "12": {
+   "background_shape_count": 25,
+   "background_type_share": {
+    "289": 0.24,
+    "306": 0.44,
+    "528": 0.32
+   },
+   "name_record_count": 8,
+   "name_string_type_share": {
+    "1": 1.0
+   },
+   "name_type_code_share": {
+    "308": 1.0
+   }
+  },
+  "2": {
+   "vertices_per_link": 10.6568,
+   "vertices_per_km": 5.8026,
+   "vertices_per_km_per_parcel": {
+    "mean": 5.375,
+    "p50": 5.1969,
+    "p90": 6.87
+   },
+   "parcels_with_roads": 13147,
+   "road_type_share": {
+    "0": 0.0129,
+    "10": 0.0009,
+    "2": 0.61442,
+    "3": 0.37172,
+    "7": 6e-05
+   },
+   "display_class_share": {
+    "0": 0.0009,
+    "10": 0.61442,
+    "12": 0.0129,
+    "4": 6e-05,
+    "9": 0.37172
+   },
+   "link_flag_prevalence": {
+    "altitude_flag": 0.0,
+    "infra_link_flag": 0.0,
+    "link_id_flag": 0.08045,
+    "link_id_number_flag": 1.0,
+    "route_number_flag": 0.0,
+    "route_planning_tag": 1.0,
+    "route_type_guidance_flag": 0.0,
+    "selected_link_flag": 1.0,
+    "toll_flag": 0.00494
+   },
+   "node_bit_share": {
+    "oneway": {
+     "0": 1.0
+    },
+    "pseudo3d_updown": {
+     "0": 1.0
+    }
+   },
+   "background_shape_count": 584318,
+   "background_type_share": {
+    "1024": 0.00044,
+    "288": 0.23571,
+    "289": 0.27381,
+    "290": 0.00375,
+    "291": 0.40519,
+    "321": 0.07017,
+    "322": 0.00023,
+    "578": 0.01035,
+    "640": 0.00035
+   },
+   "name_record_count": 40169,
+   "name_string_type_share": {
+    "1": 0.63395,
+    "5": 0.36605
+   },
+   "name_type_code_share": {
+    "308": 0.25393,
+    "509": 0.38002,
+    "528": 0.36605
+   }
+  },
+  "4": {
+   "vertices_per_link": 7.2063,
+   "vertices_per_km": 2.463,
+   "vertices_per_km_per_parcel": {
+    "mean": 2.0146,
+    "p50": 1.6441,
+    "p90": 2.498
+   },
+   "parcels_with_roads": 1738,
+   "road_type_share": {
+    "0": 0.02044,
+    "10": 0.00065,
+    "2": 0.9788,
+    "7": 0.00012
+   },
+   "display_class_share": {
+    "0": 0.00065,
+    "10": 0.9788,
+    "12": 0.02044,
+    "4": 0.00012
+   },
+   "link_flag_prevalence": {
+    "altitude_flag": 0.0,
+    "infra_link_flag": 0.0,
+    "link_id_flag": 0.07622,
+    "link_id_number_flag": 1.0,
+    "route_number_flag": 0.0,
+    "route_planning_tag": 1.0,
+    "route_type_guidance_flag": 0.0,
+    "selected_link_flag": 0.0,
+    "toll_flag": 0.00828
+   },
+   "node_bit_share": {
+    "oneway": {
+     "0": 1.0
+    },
+    "pseudo3d_updown": {
+     "0": 1.0
+    }
+   },
+   "background_shape_count": 59760,
+   "background_type_share": {
+    "288": 0.13963,
+    "289": 0.6131,
+    "290": 0.01697,
+    "291": 0.04967,
+    "321": 0.18064
+   },
+   "name_record_count": 4042,
+   "name_string_type_share": {
+    "1": 1.0
+   },
+   "name_type_code_share": {
+    "308": 0.13162,
+    "509": 0.86838
+   }
+  },
+  "6": {
+   "vertices_per_link": 4.3226,
+   "vertices_per_km": 1.3751,
+   "vertices_per_km_per_parcel": {
+    "mean": 1.1023,
+    "p50": 0.5452,
+    "p90": 1.9157
+   },
+   "parcels_with_roads": 200,
+   "road_type_share": {
+    "0": 0.0366,
+    "10": 0.00048,
+    "2": 0.96277,
+    "7": 0.00014
+   },
+   "display_class_share": {
+    "0": 0.00048,
+    "10": 0.96277,
+    "12": 0.0366,
+    "4": 0.00014
+   },
+   "link_flag_prevalence": {
+    "altitude_flag": 0.0,
+    "infra_link_flag": 0.0,
+    "link_id_flag": 0.07764,
+    "link_id_number_flag": 1.0,
+    "route_number_flag": 0.0,
+    "route_planning_tag": 1.0,
+    "route_type_guidance_flag": 0.0,
+    "selected_link_flag": 0.0,
+    "toll_flag": 0.01177
+   },
+   "node_bit_share": {
+    "oneway": {
+     "0": 1.0
+    },
+    "pseudo3d_updown": {
+     "0": 1.0
+    }
+   },
+   "background_shape_count": 19700,
+   "background_type_share": {
+    "288": 0.10589,
+    "289": 0.58909,
+    "290": 0.03497,
+    "291": 0.07548,
+    "321": 0.19457
+   },
+   "name_record_count": 1022,
+   "name_string_type_share": {
+    "1": 1.0
+   },
+   "name_type_code_share": {
+    "308": 0.44423,
+    "509": 0.55577
+   }
+  },
+  "8": {
+   "vertices_per_link": 3.7678,
+   "vertices_per_km": 0.901,
+   "vertices_per_km_per_parcel": {
+    "mean": 0.9108,
+    "p50": 0.3636,
+    "p90": 2.3234
+   },
+   "parcels_with_roads": 40,
+   "road_type_share": {
+    "0": 0.09487,
+    "10": 0.00104,
+    "2": 0.90382,
+    "7": 0.00026
+   },
+   "display_class_share": {
+    "0": 0.00104,
+    "10": 0.90382,
+    "12": 0.09487,
+    "4": 0.00026
+   },
+   "link_flag_prevalence": {
+    "altitude_flag": 0.0,
+    "infra_link_flag": 0.0,
+    "link_id_flag": 0.07477,
+    "link_id_number_flag": 1.0,
+    "route_number_flag": 0.0,
+    "route_planning_tag": 1.0,
+    "route_type_guidance_flag": 0.0,
+    "selected_link_flag": 0.0,
+    "toll_flag": 0.01449
+   },
+   "node_bit_share": {
+    "oneway": {
+     "0": 1.0
+    },
+    "pseudo3d_updown": {
+     "0": 1.0
+    }
+   },
+   "background_shape_count": 12520,
+   "background_type_share": {
+    "288": 0.16661,
+    "289": 0.63978,
+    "290": 0.03203,
+    "291": 0.06629,
+    "321": 0.09529
+   },
+   "name_record_count": 209,
+   "name_string_type_share": {
+    "1": 1.0
+   },
+   "name_type_code_share": {
+    "306": 0.01435,
+    "308": 0.98565
+   }
+  }
+ }
+}
