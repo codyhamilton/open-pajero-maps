@@ -282,7 +282,7 @@ def _shrink_to_fit(encode: EncodeFn, level: int, ix: int, iy: int,
     smallest, highest-value-per-byte class (a dropped `NameRecord` fails
     `spotcheck`'s fixture contract outright, whereas the corresponding road
     geometry going missing from an already-lossy, five-cells-out-of-hundreds
-    of thousands fallback is a softer degradation). See brief 22
+    of thousands fallback is a softer degradation).
     (`docs/plans/01-eval-harness-and-map-layer.md`)
     -- this ordering was previously roads-preserved-first/names-dropped-first,
     which is what caused Sydney/Melbourne level-0 `spotcheck` FAILs; the
@@ -351,7 +351,7 @@ def _try_pinned(measure, level, ix, iy, bounds, cur, key, items):
 def _trim_kinds(measure: MeasureFn, level: int, ix: int, iy: int,
                 bounds: BoundingBox, content: dict, kind_limits: dict,
                 stats: dict | None) -> tuple[bytes, int]:
-    """Final-tier deterministic priority trim (brief 29): for each kind
+    """Final-tier deterministic priority trim: for each kind
     over its limit, bisect the largest kept prefix of that kind's
     priority-sorted items whose sub-frame size is <= the limit. Only the
     offending kind is touched. Returns `(frame_bytes, n_dropped)`."""
@@ -411,7 +411,7 @@ def _trim_kinds(measure: MeasureFn, level: int, ix: int, iy: int,
         if dropped:
             print(f"WARNING [kiwiw.divide]: level {level} sub-cell ({ix},{iy}): "
                   f"trimmed {kind} {dropped}/{len(ordered)} items to meet kind budget "
-                  f"{limit:,} B (brief 29)", file=sys.stderr)
+                  f"{limit:,} B", file=sys.stderr)
             if stats is not None:
                 d = stats.setdefault("dropped", {})
                 d[kind] = d.get(kind, 0) + dropped
@@ -512,7 +512,7 @@ def _shrink_priority(measure: MeasureFn, level: int, ix: int, iy: int,
         total_dropped += d
         print(f"WARNING [kiwiw.divide]: level {level} sub-cell ({ix},{iy}): "
               f"hard-ceiling fallback trimmed {kind} {d}/{len(orig[kind])} items by "
-              f"priority to meet kind budget / 131,070-byte ceiling (brief 32)",
+              f"priority to meet kind budget / 131,070-byte ceiling",
               file=sys.stderr)
         if stats is not None:
             dd = stats.setdefault("dropped", {})

@@ -25,7 +25,7 @@ _COUNT_FIELDS = [
     ("name_count", ("name", "record_count")),
 ]
 
-U16_FRAME_CEILING = 131070  # Map Frame header u16 word-count limit (brief 34)
+U16_FRAME_CEILING = 131070  # Map Frame header u16 word-count limit
 _SUBFRAME_MAX_FIELDS = ["road", "background", "name"]
 
 

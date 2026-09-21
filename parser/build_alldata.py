@@ -633,7 +633,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
                 pool=pool, jobs=workers)
         if trim_stats.get("halo_names"):
             print(f"level {level}: name halo added {trim_stats['halo_names']:,} "
-                  f"neighbouring road-name records to divided sub-cells (brief 32)",
+                  f"neighbouring road-name records to divided sub-cells",
                   flush=True)
             halo_names[str(level)] = trim_stats["halo_names"]
         dropped = trim_stats.get("dropped", {})

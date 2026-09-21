@@ -617,7 +617,7 @@ def _make_name_record(text: str, lat: float, lon: float,
     `_handle_node` passed 0x132 for every non-suburb place value (Perth's
     `place=city` among them), which the branch below correctly drops as
     uncensused -- that was traced as the root cause of the Sydney/
-    Melbourne-adjacent Perth level-2 `spotcheck` FAIL (brief 22): Perth's
+    Melbourne-adjacent Perth level-2 `spotcheck` FAIL: Perth's
     "city" label was never emitted at all. The `type_code == 0x132` branch
     below is kept as a defensive no-op (this call site no longer produces
     0x132, but nothing else guarantees that) rather than removed.
@@ -756,7 +756,7 @@ class _GeomHandler:
         self.grids = grids
         self.spool = spool
         self.level_filter = level_filter
-        # Name-emission gate, decoupled from geometry admission (brief 26a).
+        # Name-emission gate, decoupled from geometry admission.
         # `name_gate` provides way(level, tags, kind) / node(level, tags) /
         # cap(level). Default (an explicit level_filter override with no
         # gate) is the legacy behaviour: every admitted named way emits,

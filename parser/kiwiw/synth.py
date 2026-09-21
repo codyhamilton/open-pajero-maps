@@ -896,7 +896,7 @@ def build_map_frame_bytes(
 
     ext_frames = dict(ext_frames or {})
     mfde_len = mfde_table_len(level)
-    # R census (brief 30): at level >= 6 mfde[10] is a byte-identical
+    # R census: at level >= 6 mfde[10] is a byte-identical
     # duplicate of the name sub-frame whenever a name frame is present.
     # L0-L4 keep absent (residual variant rule undecoded). Caller wins.
     if (level >= 6 and 10 <= mfde_len - 1 and 10 not in ext_frames

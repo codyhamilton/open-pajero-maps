@@ -88,7 +88,7 @@ same commit.
   the reference disc has a Map Frame for every cell (its populated set is a full
   rectangle at all 7 levels; L0 1728x2144 = 3,704,832 cells). Read by
   `build_alldata.load_parcel_mask()`; `_encode_level` emits empty frames for masked
-  cells the spool lacks (brief 26c).
+  cells the spool lacks.
 - **Source**: the reference disc's `ALLDATA.KWI` PDMDH/block index tree.
 - **Reproduce**: `.venv-rp/bin/python parser/tools/parcel_occupancy.py --write-mask
   parser/refdata/parcel_mask.json` (needs the mounted disc and `output/spool`; refuses

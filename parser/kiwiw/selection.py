@@ -59,7 +59,7 @@ Selection table format (`parser/refdata/selection.json`)
     - ``place``: list of OSM ``place=`` values admitted at this level for
       place-node name records (empty/omitted = none admitted).
     - ``road_names`` (true|false|[highway classes], absent = true): whether an
-      admitted road way emits a NameRecord (brief 26a); classes must be a
+      admitted road way emits a NameRecord; classes must be a
       subset of the rule's ``highway`` list.
     - ``background_names`` (true|false|[{key,value}], absent = true): same for
       admitted background ways.
@@ -128,7 +128,7 @@ class _LevelRule:
     highway: frozenset
     background: tuple  # tuple of (key, value) pairs
     place: frozenset
-    # Name-emission gates (brief 26a); None = key absent = legacy behaviour.
+    # Name-emission gates; None = key absent = legacy behaviour.
     road_names: object = None  # None/True/False or frozenset of highway classes
     background_names: object = None  # None/True/False or tuple of (key, value)
     name_nodes: tuple = ()  # (key, value) predicates; value "*" = any value
@@ -518,7 +518,7 @@ class DryRunCounts:
     highway: dict  # level -> count of ROADS-matching ways admitted
     background: dict  # level -> count of background-candidate ways admitted
     place: dict  # level -> count of place nodes admitted
-    # Name-emission tallies (brief 26a); level -> candidate NameRecord count
+    # Name-emission tallies; level -> candidate NameRecord count
     # by source. Compare sum of the three against R's name record_count.
     name_road: dict = field(default_factory=dict)
     name_background: dict = field(default_factory=dict)
