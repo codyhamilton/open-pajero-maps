@@ -190,3 +190,46 @@ Worker's own reading, offered as a hypothesis and **not** acted on: criterion (b
 Deviations: the 4 new tests were written after the code, so there is no failing-before output for them; two new-test assertions were adjusted before passing because the synthetic fixture is too sparse for the strict `axis_coverage` and clipped-link thresholds — a fixture adjustment, not a threshold change.
 
 Concern (carried): the committed `header.pointer_nonframe_targets.examples` list does **not** regenerate — it differs between HEAD's committed JSON and a fresh run, reproduced with the pristine HEAD tool, so it predates this unit. Counts match; only the examples list drifts. The worker restored HEAD's list to honour keep-untouched, so the committed JSON is not exactly a fresh run. This contradicts 2-02's claim that these keys regenerate byte-identically. Root cause not chased (likely example ordering).
+
+## Phase 2 gate verdict (restart): NOT CLOSED (unsuccessful) - design bounced for re-analysis
+
+No `Workflow-Phase` trailer. Unit 2-04 (schema rows and gate verdict). Gate criteria are the redefined ones of the DESIGN.md amendment 2026-09-22; thresholds are those stated in `tools/overlay_test.py` before the run (margin_match 1.5, margin_dist 2.0, axis_coverage_min 0.75, clip_exact_min 0.9, min_clipped_links 50, min_links_strict 50), unchanged and not re-tuned here. Source of every number below: `EVIDENCE-2-08.json` (`gate`, `pooled_classes`, `named_cells`, `criteria_rules`) unless another file is named.
+
+**Criterion (a) relative discrimination: FAIL (4 of 7 classes pass).**
+- L0_sparse FAIL: match ratio vs best alternative (`own_leaf_4096`) 1.164 (needs 1.5); distance ratio 1.015 (needs <= 0.5). Versus the 32768 control: match 31.03, distance 0.481 (pass).
+- L0_urban FAIL: match ratio 5.34 (pass); distance ratio vs `range_half` 0.584 (needs <= 0.5). Control: match 10.269, distance 0.472.
+- divided_pardiv1 FAIL: match ratio vs `own_bounds` 1.376 (needs 1.5); distance ratio 0.404 (pass). Control: match 2.733, distance 0.404.
+- L2 pass (match ratio 3.44, control distance 0.312); L4 pass (20.75; control 154.224/0.067); L6 pass (7.60); L8 pass (10.22).
+
+**Criterion (b) R-only measures: FAIL.**
+| Class | Coord max / range (median, max) | Axis coverage median (>= 0.75) | Clip-exact share (>= 0.9, clipped links) |
+|---|---|---|---|
+| L0_sparse | 1.0 / 1.0 pass | 1.0 pass | 0.9825 (114) pass |
+| L0_urban | 1.0 / 1.0 pass | 1.0 pass | 0.9271 (329) pass |
+| L2 | 1.0 / 1.0 pass | 1.0 pass | 1.0 (80) pass |
+| L4 | 1.0 / 1.0 pass | 1.0 pass | 0.9079 (76) pass |
+| L6 | 1.0 / 1.0 pass | 1.0 pass | 0.6167 (180) FAIL |
+| L8 | 1.0 / 1.0 pass | 1.0 pass | 0.4821 (112) FAIL |
+| divided_pardiv1 | 1.0 / 1.0 pass | 0.5625 FAIL | 0.8696 (506) FAIL |
+Coordinate maximum passes in all seven classes. Axis coverage fails for divided_pardiv1; clip-exact fails for L6, L8, divided_pardiv1. No class reported `insufficient_data` in the pooled table; per-cell clip-exact is `insufficient_data` at Sydney, Longreach and Birdsville.
+2-08's worker offered, as an untested hypothesis, that the divided axis-coverage threshold is measured on the parent frame where a decoded sub-quadrant can reach only about half of each axis. That is a re-analysis question for the user; the threshold was not changed and the class is recorded as failing.
+
+**Named cells (a fail counts only at >= 50 links):** Brisbane CBD (L2, 1229 links) FAIL, match ratio 0.92, distance ratio 0.326; Sydney (L2, 220 links) FAIL, match ratio 0.836, distance ratio 0.306 (the 32768 control beats the range on matched fraction in both cells although pooled L2 passes); Longreach (L6, 22 links) low_n, (a) pass, match ratio 4.999; Birdsville (L8, 43 links) low_n, no best alternative. Two named cells fail, two are low_n.
+
+**Diagnostics only (not pass/fail; the amendment makes match rate a diagnostic).** Pooled matched fraction vs recorded source-disagreement baseline: L0_sparse 0.717/0.523, L0_urban 0.836/0.485, L2 0.843/0.757, L4 0.895/0.393, L6 0.875/0.323, L8 0.863/0.466, divided 0.767/0.795. The rate clears its baseline in six of seven classes (divided does not). Neither number decides the verdict above.
+
+**Header words (2-02, `coord_scale.json` `header.words`, held-out 988,865):** word 0 1.0 (988,865/988,865); word 6 1.0; word 9 1.0; word 10 0.999977; word 11 0.999988. The 42 word-0 "exceptions" are L6 nregion=1 leaves with n_entries 21/22/23 (19+15+8); the formula `36 + 4*nregion + 6*n_entries` has 0 disagreements; the cause (extra adjacency entries at parcels bordering a divided parcel) is proven by `divided_adjacency_census`. Word 7 (2-07, `WORD7-ANALYSIS.md` Adoption): status ok, held-out 988,860/988,865 (0.999995); L0 3,704,843/3,704,871, L2 231,564/231,564, L4-L12 15,538/15,538; the 28 single-link L0 parcels stored 0xFF00 are a recorded residual tolerance (count 28), not an exemption. Area 18's meaning stays documented-unknown (schema row, status unknown).
+
+**Verdict.** Criterion (a) fails for 3 classes, criterion (b) fails for axis coverage (1 class) and clip-exact share (3 classes), and 2 named cells fail. The gate is not closed. The Phase 2 outcome is not met and the design is bounced for re-analysis (DESIGN Decisions, coordinate-range gate: nothing downstream proceeds on the current constant). The schema rows in `docs/schema/map-frame.md` record what R shows at `observed` status; they are not a gate pass. Run status: `unsuccessful`.
+
+**Carried list, updated (the earlier Carried items 1-6):**
+1. Word 7 rule: CLOSED (adopted, 2-07).
+2. y orientation in coordconv: CLOSED for the decoder and every copy of the formula (39c9c2f); the encoder impact is Phase 3's (below).
+3. walk.py L0-sparse frame: CLOSED (2f874e3; `EVIDENCE-2-08.json` `l0_sparse_frame_check` 12 of 12).
+4. `rg_size` (word 16) nonzero on real L0 rg parcels, absent from the DESIGN header-word exemption list: OPEN. The orchestrator must resolve it before Phase 4: either word 16 joins the exemption list or Phase 4 must model it. DESIGN.md not edited here.
+5. Pointer non-frame targets (`header.pointer_nonframe_targets`: 19,771 of 31,564,067; L8 5.4%, L6 0.72%): OPEN, Phase 9 owns the `pointers` allowance; no schema row obligation here.
+6. Phase 1 Carried items 1, 3, 5, 6, 7: remain with their original owners.
+New: the coordinate gate itself (above) is open and is the reason the phase does not close; `road_density_census.py` `LENGTH_BASIS` wording is stale; the committed `pointer_nonframe_targets.examples` list does not regenerate (counts do).
+
+**Phase 4 scope recorded:** the L2 post-pass for word 7 (L2 headers read their L0 children); the `rg_size` exemption-list gap (item 4).
+**Phase 3 scope recorded (2-06's measured impact):** the y flip changes generated bytes: on 24 synthetic parcels, 24 of 24 changed; pixel x unchanged, pixel y becomes `32768 - y_old` for every point; roads, background and name records all inherit the mirror; no full rebuild measured. Phase 3 also cannot proceed until the gate is resolved.
