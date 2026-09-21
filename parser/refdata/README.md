@@ -19,8 +19,17 @@ the mounted disc (see `docs/design/target-disc.md`, "Grid contract").
   language/country code list. Produced by the same script, from the same
   disc. Carried byte-identical into every generated disc (copy-through,
   per `docs/design/target-disc.md`), never regenerated.
-- `profile/` — written by a later work unit (WP1 unit 03); not produced or
-  consumed by this unit.
+- `profile/map.json` — full per-level census of the reference disc's map layer, judged
+  against by `harness/checks/{vocab,envelope,mfde}.py`. Produced by
+  `compare_disc.py --profile`.
+- `parcel_mask.json` — per-level cell index bounds of the reference coverage.
+- `harness.json` — count-ratio envelopes, the level-0 exemption, the container byte-diff
+  allowlist and the path of the spot-check table. Loaded by `harness/`.
+- `selection.json` — per-level OSM feature selection, calibrated to `profile/map.json` so
+  build counts land inside the `harness.json` envelopes. Loaded by `kiwiw/selection.py`.
+- `spot_checks.json` — city coordinates with expected street and place names, checked by
+  `harness/checks/spotcheck.py`.
+- `vocab/*.json` — OSM tag to code tables; see `docs/design/osm-vocabulary-mapping.md`.
 
 Regenerate `grid.json` / `mht29_frame.bin` with:
 

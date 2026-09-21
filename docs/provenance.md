@@ -136,6 +136,17 @@ same commit.
   output path). Re-running against the same disc is byte-identical
   (confirmed twice during WP1 unit 03/03b, ~15 minutes wall time each).
 
+## `parser/refdata/{selection,harness,spot_checks}.json` and `vocab/` (committed, authored)
+
+- **What**: decisions, not measurements. `selection.json` (per-level feature selection,
+  calibrated to `profile/map.json` by tag-only osmium passes over the Australia extract),
+  `harness.json` (envelopes and container-diff allowlist), `spot_checks.json` (city
+  coordinates and expected names), `vocab/*.json` (tag to code tables).
+- **Source**: authored in this repo against the census in `profile/map.json`; the
+  inline `_comment` fields record the calibration.
+- **Reproduce**: not regenerated. Edit by hand and rerun `compare_disc.py` to check the
+  envelopes.
+
 ## `output/spool/`
 
 - **What**: on-disk spool of per-(level, ix, iy) parcel content (roads,
