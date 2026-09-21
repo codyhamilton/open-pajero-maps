@@ -51,3 +51,10 @@ A non-trivial bug outside your done evidence: report symptom, location, and root
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
 
+
+## Amendment after first attempt (blocked, uncommitted work in tree)
+
+First attempt left uncommitted `parser/tools/overlay_test.py`, `parser/tests/test_overlay_test.py`, `EVIDENCE-2-03.json` (start from these). Findings: Sydney passed; Brisbane CBD near-pass (79.8% matched, 84.5% clipped-at-edge); rural/outback cells had only 5-6 links so the occupancy and matched criteria were noise; the 32768 control fails clustering everywhere. Two real issues must be resolved, not waived:
+1. `coordconv` y orientation: y-up (flipped) fits far better than the documented y-down. Establish the orientation canonically (evidence across several cells) and report it; do not edit coordconv (Phase 3 owns it).
+2. Divided sub-parcels: a divided sub-leaf at range 4096 (and 2048 for sub 0) matched 13% at 304 m. Determine how sub-parcel bounds relate to the coordinate range (e.g. sub-parcel covers a quadrant of the leaf and its range is 4096 over the quadrant, sub 0 being 2048 over a different span) by testing hypotheses against OSM; report the canonical rule or that none fits.
+Method fixes: pick cells (rural, outback) with >=20 links even if at a coarser level or a larger set of cells, up to 3 per class; measure occupancy by comparing R's occupied fraction with OSM roads that R links also match (like-for-like: use OSM roads within tolerance of R-decoded links plus unmatched OSM roads of the same class set), or use pooled statistics over >=10 cells per class instead of single cells. State thresholds before running. The gate passes only if the coordinate model (range 4096/16384 per class, with orientation and divided-cell rule established) is supported; report `blocked` with numbers if it truly is not. Do not weaken criteria to pass.
