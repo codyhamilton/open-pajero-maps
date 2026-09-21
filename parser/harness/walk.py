@@ -17,6 +17,7 @@ yielded.
 """
 from __future__ import annotations
 
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,6 +35,12 @@ from kiwiw.parcel_mgmt import parse_parcel_mgmt_record
 from kiwiw.model import MeshLocation
 
 NO_DATA_DSA = 0xFFFFFFFF
+
+# L0 leaves sit on a 4x4-leaf "integrated parcel" tile grid (same constant
+# as tools/coord_scale_census.L0_TILE; tools are not importable from here).
+L0_TILE = 4
+_COORD_SCALE = Path(__file__).resolve().parent.parent / "refdata" / "profile" / "coord_scale.json"
+_RANGES: dict = {}
 
 
 # ---------------------------------------------------------------------
@@ -116,6 +123,76 @@ def _narrow_bounds(bounds: BoundingBox, gn_lat: int, gn_lng: int, idx: int) -> B
                         lon_lo=lon_lo, lon_hi=lon_lo + lon_step)
 
 
+def _tile_bounds(bounds: BoundingBox, gn_lat: int, gn_lng: int, idx: int) -> BoundingBox:
+    """Bbox of the L0_TILE x L0_TILE aligned leaf tile containing slot `idx`
+    of a `gn_lat` x `gn_lng` leaf grid spanning `bounds`."""
+    ly, lx = divmod(idx, gn_lng)
+    ty, tx = ly // L0_TILE * L0_TILE, lx // L0_TILE * L0_TILE
+    lon_step = (bounds.lon_hi - bounds.lon_lo) / gn_lng
+    lat_step = (bounds.lat_hi - bounds.lat_lo) / gn_lat
+    lat_lo = bounds.lat_lo + ty * lat_step
+    lon_lo = bounds.lon_lo + tx * lon_step
+    return BoundingBox(lat_lo=lat_lo, lat_hi=lat_lo + L0_TILE * lat_step,
+                        lon_lo=lon_lo, lon_hi=lon_lo + L0_TILE * lon_step)
+
+
+def _is_sparse_tile(rec: ParcelMgmtRecord, gn_lng: int, idx: int) -> bool:
+    """True iff the aligned 4x4 tile holding top-level slot `idx` of an L0
+    normal record is an L0 *sparse* tile: all 16 slots are populated leaves
+    aliasing ONE Map Frame byte range. On R this partitions L0 exactly:
+    231,300 tiles resolve to 1 distinct (dsa, size), the other 252 to 16
+    (the urban tiles of the 2-01 class rule)."""
+    ly, lx = divmod(idx, gn_lng)
+    ty, tx = ly // L0_TILE * L0_TILE, lx // L0_TILE * L0_TILE
+    seen = set()
+    for dy in range(L0_TILE):
+        for dx in range(L0_TILE):
+            j = (ty + dy) * gn_lng + tx + dx
+            if j >= len(rec.entries):
+                return False
+            e = rec.entries[j]
+            if e.dsa == NO_DATA_DSA or e.subrecord is not None or not e.size:
+                return False
+            seen.add((e.dsa, e.size))
+    return len(seen) == 1
+
+
+def _leaf_frame(root, level, ptype, leaf_path, leaf_bounds, block_bounds, lmr, cache):
+    """(frame_bounds, frame_class) of one leaf. Recon (R, all 231,552 L0
+    tiles; block leaf grid 32x64 from mapinfo n_parcels_lng/lat 31/63): leaf
+    bboxes from `_narrow_bounds` are already distinct per slot; the 16 slots
+    of a sparse tile alias ONE Map Frame (16 slots -> 1 (dsa,size) on
+    231,300 tiles, 252 urban tiles -> 16). So the defect was not the leaf
+    bbox but that the FRAME (the 4x4 tile, range 16384) was never modelled:
+    decode used the leaf bbox for coordinates spanning the tile.
+    `cache` (per block) memoises the per-tile sparse test."""
+    if level != 0 or ptype != 0 or len(leaf_path) != 1:
+        return leaf_bounds, "leaf"
+    gn_lat = 1 + lmr.n_parcels_lat[0]
+    gn_lng = 1 + lmr.n_parcels_lng[0]
+    ly, lx = divmod(leaf_path[0], gn_lng)
+    tkey = (ly // L0_TILE, lx // L0_TILE)
+    if tkey not in cache:
+        cache[tkey] = _is_sparse_tile(root, gn_lng, leaf_path[0])
+    if cache[tkey]:
+        return _tile_bounds(block_bounds, gn_lat, gn_lng, leaf_path[0]), "l0_sparse_tile"
+    return leaf_bounds, "leaf"
+
+
+def _frame_range(level: int, cls: str, div_state: str) -> Optional[int]:
+    """Coordinate range of a frame class from `coord_scale.json` `ranges`
+    (None when the profile or the class is absent)."""
+    if not _RANGES:
+        try:
+            _RANGES["r"] = json.loads(_COORD_SCALE.read_text())["ranges"]
+        except (OSError, KeyError, ValueError):
+            _RANGES["r"] = {}
+    try:
+        return int(_RANGES["r"][str(level)][cls][div_state]["max"])
+    except KeyError:
+        return None
+
+
 # ---------------------------------------------------------------------
 # WalkedParcel / iter_parcels
 # ---------------------------------------------------------------------
@@ -126,7 +203,19 @@ class WalkedParcel:
     Frame, or (when `leaf_path == ()`) a marker for a whole block that
     failed to parse as a Parcel Management Record at all -- there is no
     leaf to report in that case, so the block's own file offset/length
-    stand in and `parcel` is `None`."""
+    stand in and `parcel` is `None`.
+
+    Two bboxes, deliberately distinct:
+    * `bounds` -- the geographic extent of the leaf *slot* itself (1/32 of
+      the L0 block per axis). Use it to say which cell this leaf owns
+      (dedupe, cell membership, per-leaf bookkeeping).
+    * `frame_bounds` (+ `frame_range`, `frame_class`) -- the bbox and
+      coordinate range the Map Frame's stored coordinates are expressed in.
+      Use it to convert stored coordinates to lat/lon or back. It equals
+      `bounds` except for an L0 *sparse* leaf, whose frame is the 4x4
+      integrated-parcel tile (16 slots alias one Map Frame; range 16384).
+    `frame_range` comes from `coord_scale.json` `ranges` for the leaf's
+    class (frame_class: "l0_sparse_tile" or "leaf")."""
     level: int
     blockset_index: int
     block_index: int
@@ -137,6 +226,14 @@ class WalkedParcel:
     length: int
     parcel: Optional[Parcel]
     error: Optional[str]
+    # Coordinate frame (defaults: frame == leaf, range unknown = None).
+    frame_bounds: Optional[BoundingBox] = None
+    frame_range: Optional[int] = None
+    frame_class: str = "leaf"
+
+    def __post_init__(self) -> None:
+        if self.frame_bounds is None:
+            self.frame_bounds = self.bounds
 
 
 def _iter_tree_leaves(rec: ParcelMgmtRecord, bounds: BoundingBox, lmr, path: tuple):
@@ -207,8 +304,20 @@ def iter_parcels(path: str) -> Iterator[WalkedParcel]:
                         blocks_done += 1
                         continue
 
+                    sparse_cache: dict = {}
                     for leaf_path, entry, leaf_bounds, ptype in _iter_tree_leaves(
                             root, block_bounds, lmr, ()):
+                        frame_bounds, frame_class = _leaf_frame(
+                            root, level, ptype, leaf_path, leaf_bounds, block_bounds, lmr,
+                            sparse_cache)
+                        if frame_class == "l0_sparse_tile":
+                            cls = "sparse"
+                        elif level == 0:
+                            cls = "divided" if ptype else "urban"
+                        else:
+                            cls = "divided" if ptype else "full"
+                        div_state = "normal" if ptype == 0 else f"pardiv{ptype}_sub{leaf_path[-1]}"
+                        frame_range = _frame_range(level, cls, div_state)
                         moff = volume.getsector(entry.dsa, sector_sz, logical_sz)
                         mlen = entry.size * logical_sz
                         try:
@@ -218,7 +327,11 @@ def iter_parcels(path: str) -> Iterator[WalkedParcel]:
                                 level=level, parcel_type=ptype,
                                 blockset_index=bs.blockset_index,
                                 block_index=entry_index, parcel_index=leaf_path[-1],
-                                bounds=leaf_bounds, sector_addr=entry.dsa,
+                                # Decode against the FRAME bbox: stored
+                                # coordinates are expressed in the frame, not
+                                # the leaf (extent only -- the decoder's own
+                                # 2**15 range vs frame_range is Phase 3's).
+                                bounds=frame_bounds, sector_addr=entry.dsa,
                                 size_logical_sectors=entry.size)
                             parcel = decode_parcel(loc, mapdata, n_basic_map=lmr.n_basic_map,
                                                     n_ext_map=lmr.n_ext_map)
@@ -230,7 +343,9 @@ def iter_parcels(path: str) -> Iterator[WalkedParcel]:
                             level=level, blockset_index=bs.blockset_index,
                             block_index=entry_index, parcel_type=ptype,
                             leaf_path=leaf_path, bounds=leaf_bounds,
-                            file_offset=moff, length=mlen, parcel=parcel, error=err)
+                            file_offset=moff, length=mlen, parcel=parcel, error=err,
+                            frame_bounds=frame_bounds, frame_range=frame_range,
+                            frame_class=frame_class)
                         leaves_done += 1
 
                     blocks_done += 1
