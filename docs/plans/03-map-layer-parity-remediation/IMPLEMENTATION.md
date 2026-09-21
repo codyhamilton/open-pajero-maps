@@ -3,7 +3,14 @@
 - Tool: Claude Code (Agent SDK), model Sonnet 5
 - Session: https://claude.ai/code/session_01RexnjYaodJxiRvFV9nsAaE
 - Started: 2026-09-21T19:17:25+10:00
-- Scope: Phase 1 only
+- Scope: Phase 1 only (closed)
+
+## Phase 2 run
+
+- Tool: Claude Code (Agent SDK), model Sonnet 5, same session
+- Started: 2026-09-21 (phase 2 orchestrator)
+- Scope: Phase 2 only (gate). Status: refine dispatched (no Units list in DESIGN.md).
+
 
 ## Phase 1
 
