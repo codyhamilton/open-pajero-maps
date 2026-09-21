@@ -56,3 +56,6 @@ Outcome check: compare_disc.py on current G binds sha256 to manifest (equal); al
 5. Extraction timing 26:03 is an upper bound (concurrent load); re-time cleanly before Phase 8 planning if it matters.
 6. Grenfell spot row passes on G (design predicted FAIL); coordinates were derived from R.
 7. Git stash@{0} holds stale sibling WIP from concurrent workers; drop after confirming nothing is lost.
+
+### 2-01 coord-range-census — done (2cbe296, Sonnet)
+Built: tools/coord_scale_census.py, tests, profile/coord_scale.json (ranges, class_rule; no header section). Range hypothesis confirmed: L0 sparse 16384 (99.46%), L0 urban 4096, L2-L12 4096, divided sub0 2048 / sub1-3 4096; no parcel exceeds class max. Class rule content-independent, 100% vs R word 6 (urban via 252-tile table). Deviation: edited tools/road_density_census.py and regenerated density.json (carried 4: heuristic wrong for 482 sparse L0 parcels and 13 divided sub-0; L0 vertices/km 41.01 -> 41.05).
