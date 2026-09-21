@@ -6135,51 +6135,192 @@
         }
       },
       "7": {
-        "finding": "word 7 (pmcode high half) takes only 0xFF00 (area 255) and 0x1200 (area 18). 0x1200 occurs at L0 and L2 only; L4-L12 are 100% 0xFF00. It is NOT a function of (level, class, division state, position): the per-key constant rule and a per-1-degree-cell majority rule both fall well short of 99%, and 0x1200 parcels are interleaved with 0xFF00 parcels inside the same block and the same 1-degree cell across the whole continent. It tracks frame composition instead: at L0, 0x1200 <=> all three basic sub-frames present; at L2 that rule is exact for every mask other than background-only, and background-only parcels remain mixed with no structural distinguisher (no slot-size threshold, no nregion or WP2-word correlation). See subframe_presence_rule.",
-        "fit_modal_share": {
-          "0|divided|pardiv1_sub0": 1.0,
-          "0|divided|pardiv1_sub1": 1.0,
-          "0|divided|pardiv1_sub2": 1.0,
-          "0|divided|pardiv1_sub3": 1.0,
-          "0|sparse|normal": 0.856389,
-          "0|urban|normal": 0.714992,
-          "10|full|normal": 1.0,
-          "12|full|normal": 1.0,
-          "2|divided|pardiv1_sub0": 1.0,
-          "2|divided|pardiv1_sub1": 1.0,
-          "2|divided|pardiv1_sub2": 0.666667,
-          "2|divided|pardiv1_sub3": 0.666667,
-          "2|full|normal": 0.855872,
-          "4|divided|pardiv1_sub0": 1.0,
-          "4|divided|pardiv1_sub1": 1.0,
-          "4|divided|pardiv1_sub2": 1.0,
-          "4|divided|pardiv1_sub3": 1.0,
-          "4|full|normal": 1.0,
-          "6|divided|pardiv1_sub0": 1.0,
-          "6|divided|pardiv1_sub1": 1.0,
-          "6|divided|pardiv1_sub2": 1.0,
-          "6|divided|pardiv1_sub3": 1.0,
-          "6|full|normal": 1.0,
-          "8|divided|pardiv1_sub0": 1.0,
-          "8|divided|pardiv1_sub1": 1.0,
-          "8|divided|pardiv1_sub2": 1.0,
-          "8|divided|pardiv1_sub3": 1.0,
-          "8|full|normal": 1.0
+        "area_18_meaning": {
+          "note": "Area Number 18 refers to a metafile area entry; the metafile is neither on the disc nor in the archived spec.",
+          "status": "documented-unknown"
         },
-        "heldout_accuracy": 0.856991,
-        "heldout_correct": 847448,
-        "heldout_mismatches": {
-          "0|sparse|normal: 4608 (predicted 65280)": 132686,
-          "0|urban|normal: 65280 (predicted 4608)": 319,
-          "2|divided|pardiv1_sub0: 65280 (predicted 4608)": 1,
-          "2|divided|pardiv1_sub1: 65280 (predicted 4608)": 1,
-          "2|full|normal: 4608 (predicted 65280)": 8410
+        "caveats": {
+          "divided_l2_parcels": {
+            "count": 16,
+            "exceptions": 0,
+            "note": "scored here by leaf-bounds containment of L0 road centres (half-open); the analysis skipped them",
+            "scored": true
+          },
+          "zero_height_l0_parcels": {
+            "count": 0,
+            "note": "included in the L0 population; their L0 centres lie on a lat edge and count toward L2 containment via half-open [lo,hi)",
+            "scored": true
+          }
         },
+        "constant_per_key_rule": {
+          "fit_modal_share": {
+            "0|divided|pardiv1_sub0": 1.0,
+            "0|divided|pardiv1_sub1": 1.0,
+            "0|divided|pardiv1_sub2": 1.0,
+            "0|divided|pardiv1_sub3": 1.0,
+            "0|sparse|normal": 0.856389,
+            "0|urban|normal": 0.714992,
+            "10|full|normal": 1.0,
+            "12|full|normal": 1.0,
+            "2|divided|pardiv1_sub0": 1.0,
+            "2|divided|pardiv1_sub1": 1.0,
+            "2|divided|pardiv1_sub2": 0.666667,
+            "2|divided|pardiv1_sub3": 0.666667,
+            "2|full|normal": 0.855872,
+            "4|divided|pardiv1_sub0": 1.0,
+            "4|divided|pardiv1_sub1": 1.0,
+            "4|divided|pardiv1_sub2": 1.0,
+            "4|divided|pardiv1_sub3": 1.0,
+            "4|full|normal": 1.0,
+            "6|divided|pardiv1_sub0": 1.0,
+            "6|divided|pardiv1_sub1": 1.0,
+            "6|divided|pardiv1_sub2": 1.0,
+            "6|divided|pardiv1_sub3": 1.0,
+            "6|full|normal": 1.0,
+            "8|divided|pardiv1_sub0": 1.0,
+            "8|divided|pardiv1_sub1": 1.0,
+            "8|divided|pardiv1_sub2": 1.0,
+            "8|divided|pardiv1_sub3": 1.0,
+            "8|full|normal": 1.0
+          },
+          "heldout_accuracy": 0.856991,
+          "heldout_correct": 847448,
+          "heldout_mismatches": {
+            "0|sparse|normal: 4608 (predicted 65280)": 132686,
+            "0|urban|normal: 65280 (predicted 4608)": 319,
+            "2|divided|pardiv1_sub0: 65280 (predicted 4608)": 1,
+            "2|divided|pardiv1_sub1: 65280 (predicted 4608)": 1,
+            "2|full|normal: 4608 (predicted 65280)": 8410
+          },
+          "heldout_n": 988865,
+          "heldout_unseen_key": 0,
+          "rule": "constant per (level, class, division state)",
+          "table": {
+            "0|divided|pardiv1_sub0": 4608,
+            "0|divided|pardiv1_sub1": 4608,
+            "0|divided|pardiv1_sub2": 4608,
+            "0|divided|pardiv1_sub3": 4608,
+            "0|sparse|normal": 65280,
+            "0|urban|normal": 4608,
+            "10|full|normal": 65280,
+            "12|full|normal": 65280,
+            "2|divided|pardiv1_sub0": 4608,
+            "2|divided|pardiv1_sub1": 4608,
+            "2|divided|pardiv1_sub2": 4608,
+            "2|divided|pardiv1_sub3": 4608,
+            "2|full|normal": 65280,
+            "4|divided|pardiv1_sub0": 65280,
+            "4|divided|pardiv1_sub1": 65280,
+            "4|divided|pardiv1_sub2": 65280,
+            "4|divided|pardiv1_sub3": 65280,
+            "4|full|normal": 65280,
+            "6|divided|pardiv1_sub0": 65280,
+            "6|divided|pardiv1_sub1": 65280,
+            "6|divided|pardiv1_sub2": 65280,
+            "6|divided|pardiv1_sub3": 65280,
+            "6|full|normal": 65280,
+            "8|divided|pardiv1_sub0": 65280,
+            "8|divided|pardiv1_sub1": 65280,
+            "8|divided|pardiv1_sub2": 65280,
+            "8|divided|pardiv1_sub3": 65280,
+            "8|full|normal": 65280
+          }
+        },
+        "exceptions": {
+          "0|links1|predicted 4608 actual 65280": 28
+        },
+        "finding": "MODEL RULE (adopted, WORD7-ANALYSIS.md): road presence, see `rule`; scored by this tool over R (whole disc and held-out). The subframe_presence_rule and constant_per_key_rule are retained as recorded evidence of what was tested and rejected. Phase 2 finding: word 7 (pmcode high half) takes only 0xFF00 (area 255) and 0x1200 (area 18). 0x1200 occurs at L0 and L2 only; L4-L12 are 100% 0xFF00. It is NOT a function of (level, class, division state, position): the per-key constant rule and a per-1-degree-cell majority rule both fall well short of 99%, and 0x1200 parcels are interleaved with 0xFF00 parcels inside the same block and the same 1-degree cell across the whole continent. It tracks frame composition instead: at L0, 0x1200 <=> all three basic sub-frames present; at L2 that rule is exact for every mask other than background-only, and background-only parcels remain mixed with no structural distinguisher (no slot-size threshold, no nregion or WP2-word correlation). See subframe_presence_rule.",
+        "fit": {
+          "accuracy": 0.999992,
+          "by_level": {
+            "0": {
+              "correct": 2778006,
+              "exceptions": 23,
+              "n": 2778029
+            },
+            "10": {
+              "correct": 6,
+              "exceptions": 0,
+              "n": 6
+            },
+            "12": {
+              "correct": 1,
+              "exceptions": 0,
+              "n": 1
+            },
+            "2": {
+              "correct": 173371,
+              "exceptions": 0,
+              "n": 173371
+            },
+            "4": {
+              "correct": 10932,
+              "exceptions": 0,
+              "n": 10932
+            },
+            "6": {
+              "correct": 715,
+              "exceptions": 0,
+              "n": 715
+            },
+            "8": {
+              "correct": 54,
+              "exceptions": 0,
+              "n": 54
+            }
+          },
+          "correct": 2963085,
+          "n": 2963108
+        },
+        "heldout_accuracy": 0.999995,
+        "heldout_by_level": {
+          "0": {
+            "correct": 926837,
+            "exceptions": 5,
+            "n": 926842
+          },
+          "10": {
+            "correct": 3,
+            "exceptions": 0,
+            "n": 3
+          },
+          "2": {
+            "correct": 58193,
+            "exceptions": 0,
+            "n": 58193
+          },
+          "4": {
+            "correct": 3579,
+            "exceptions": 0,
+            "n": 3579
+          },
+          "6": {
+            "correct": 224,
+            "exceptions": 0,
+            "n": 224
+          },
+          "8": {
+            "correct": 24,
+            "exceptions": 0,
+            "n": 24
+          }
+        },
+        "heldout_correct": 988860,
         "heldout_n": 988865,
-        "heldout_unseen_key": 0,
         "name": "pmcode",
-        "rule": "constant per (level, class, division state)",
-        "status": "blocked",
+        "phase4_scope": {
+          "l2_post_pass": true,
+          "note": "the generator must write L2 word 7 after L0 generation: an L2 header reads its L0 children (any L0 descendant with a road sub-frame). Phase 4 scope; not implemented in Phase 2."
+        },
+        "residual_tolerance": {
+          "all_single_link_road_parcels_stored_0xFF00": true,
+          "count": 28,
+          "name": "L0 single-link road parcels stored 0xFF00",
+          "scope": "L0, whole disc (no fitted parameter, so fit == held-out population)",
+          "status": "recorded tolerance, not an exemption; a Phase 4 check may allow up to `count` L0 disagreements on R-equivalent input"
+        },
+        "rule": "pmcode_word7(L0 parcel) = 0x1200 if parcel has road sub-frame with >=1 link else 0xFF00; pmcode_word7(L2 parcel) = 0x1200 if any L0 parcel inside it has road sub-frame else 0xFF00; pmcode_word7(L>=4) = 0xFF00; word 8 = 0, word 7 low byte = 0",
+        "status": "ok",
         "subframe_presence_rule": {
           "heldout_accuracy": 0.99716,
           "heldout_accuracy_by_level": {
@@ -6257,35 +6398,47 @@
             "8|full|normal|111": 65280
           }
         },
-        "table": {
-          "0|divided|pardiv1_sub0": 4608,
-          "0|divided|pardiv1_sub1": 4608,
-          "0|divided|pardiv1_sub2": 4608,
-          "0|divided|pardiv1_sub3": 4608,
-          "0|sparse|normal": 65280,
-          "0|urban|normal": 4608,
-          "10|full|normal": 65280,
-          "12|full|normal": 65280,
-          "2|divided|pardiv1_sub0": 4608,
-          "2|divided|pardiv1_sub1": 4608,
-          "2|divided|pardiv1_sub2": 4608,
-          "2|divided|pardiv1_sub3": 4608,
-          "2|full|normal": 65280,
-          "4|divided|pardiv1_sub0": 65280,
-          "4|divided|pardiv1_sub1": 65280,
-          "4|divided|pardiv1_sub2": 65280,
-          "4|divided|pardiv1_sub3": 65280,
-          "4|full|normal": 65280,
-          "6|divided|pardiv1_sub0": 65280,
-          "6|divided|pardiv1_sub1": 65280,
-          "6|divided|pardiv1_sub2": 65280,
-          "6|divided|pardiv1_sub3": 65280,
-          "6|full|normal": 65280,
-          "8|divided|pardiv1_sub0": 65280,
-          "8|divided|pardiv1_sub1": 65280,
-          "8|divided|pardiv1_sub2": 65280,
-          "8|divided|pardiv1_sub3": 65280,
-          "8|full|normal": 65280
+        "whole_disc": {
+          "accuracy": 0.999993,
+          "by_level": {
+            "0": {
+              "correct": 3704843,
+              "exceptions": 28,
+              "n": 3704871
+            },
+            "10": {
+              "correct": 9,
+              "exceptions": 0,
+              "n": 9
+            },
+            "12": {
+              "correct": 1,
+              "exceptions": 0,
+              "n": 1
+            },
+            "2": {
+              "correct": 231564,
+              "exceptions": 0,
+              "n": 231564
+            },
+            "4": {
+              "correct": 14511,
+              "exceptions": 0,
+              "n": 14511
+            },
+            "6": {
+              "correct": 939,
+              "exceptions": 0,
+              "n": 939
+            },
+            "8": {
+              "correct": 78,
+              "exceptions": 0,
+              "n": 78
+            }
+          },
+          "correct": 3951945,
+          "n": 3951973
         }
       },
       "9": {

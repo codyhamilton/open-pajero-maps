@@ -255,3 +255,57 @@ def test_merge_is_order_independent():
     hwc._merge(y, a)
     assert x["words"]["fit|2|full|normal|6"] == y["words"]["fit|2|full|normal|6"]
     assert x["n"] == y["n"]
+
+
+# ------------------------------------------------- word 7 road-presence rule
+
+def _pr(l0=None, l2=None, centres=None, hi=None):
+    return {"l0": Counter(l0 or {}), "l2": list(l2 or []),
+            "centres": list(centres or []), "hi": Counter(hi or {})}
+
+
+def test_w7_l0_parcel_with_a_link_scores_0x1200_and_without_scores_0xFF00():
+    r = hwc.w7_road_presence_rule(_pr(l0={
+        "fit|4608|links1|normal": 3, "fit|4608|links2+|normal": 2,
+        "fit|65280|no_subframe|normal": 4, "held|65280|links0|normal": 1}))
+    assert r["whole_disc"]["by_level"]["0"] == {"n": 10, "correct": 10, "exceptions": 0}
+    assert r["residual_tolerance"]["count"] == 0
+
+
+def test_w7_l0_single_link_road_parcel_stored_0xFF00_is_the_residual_tolerance():
+    r = hwc.w7_road_presence_rule(_pr(l0={
+        "fit|4608|links1|normal": 9, "fit|65280|links1|normal": 2}))
+    rt = r["residual_tolerance"]
+    assert rt["count"] == 2 and rt["all_single_link_road_parcels_stored_0xFF00"]
+    assert "not an exemption" in rt["status"]
+
+
+def test_w7_l2_without_own_road_but_l0_descendant_with_road_scores_0x1200():
+    # L2 parcel [0, 1e6) x [0, 1e6) microdeg, background only (own_road False)
+    inside = ("fit", 4608, False, False, 0, 1_000_000, 0, 1_000_000)
+    outside = ("fit", 65280, False, False, 2_000_000, 3_000_000, 0, 1_000_000)
+    r = hwc.w7_road_presence_rule(_pr(l2=[inside, outside],
+                                      centres=[500_000, 500_000]))
+    assert r["whole_disc"]["by_level"]["2"] == {"n": 2, "correct": 2, "exceptions": 0}
+    # wrong stored value is an exception
+    bad = ("fit", 65280, False, False, 0, 1_000_000, 0, 1_000_000)
+    r = hwc.w7_road_presence_rule(_pr(l2=[bad], centres=[500_000, 500_000]))
+    assert r["whole_disc"]["by_level"]["2"]["exceptions"] == 1
+
+
+def test_w7_l4_and_above_scores_0xFF00_regardless_of_content():
+    r = hwc.w7_road_presence_rule(_pr(hi={"4|fit|65280": 5, "6|held|65280": 3,
+                                           "4|held|4608": 1}))
+    assert r["whole_disc"]["by_level"]["4"] == {"n": 6, "correct": 5, "exceptions": 1}
+    assert r["whole_disc"]["by_level"]["6"]["exceptions"] == 0
+
+
+def test_w7_status_is_decided_by_the_threshold_and_history_is_kept():
+    agg = _demo_agg()
+    ok = hwc.build_header_section(agg, 1, _pr(l0={"held|65280|no_subframe|normal": 100}))["words"]["7"]
+    assert ok["status"] == "ok" and ok["heldout_accuracy"] == 1.0
+    assert "subframe_presence_rule" in ok and "constant_per_key_rule" in ok
+    assert ok["phase4_scope"]["l2_post_pass"] is True
+    assert ok["area_18_meaning"]["status"] == "documented-unknown"
+    bad = hwc.build_header_section(agg, 1, _pr(l0={"held|65280|links1|normal": 100}))["words"]["7"]
+    assert bad["status"] == "blocked"

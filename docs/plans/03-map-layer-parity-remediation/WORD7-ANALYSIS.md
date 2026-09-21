@@ -84,3 +84,26 @@ metafile stays undocumented (spec-defined field, metafile absent).
 Caveats: divided L2 parcels (16) and L0 integrated parcels (22 with cell height 0 in my grid key) were not separately
 scored; the L0 population is included in the 3.70M above. The L2 test used road sub-frames at L0 as observed in R; a
 generator with different L0 road coverage than R will shift word 7 accordingly, which is by design.
+
+## Adoption (2-07)
+
+Implemented in `parser/tools/header_word_census.py` as `w7_census` (a separate geometry-keyed pass over R, same shape as
+`divided_adjacency_census`) and `w7_road_presence_rule` (scoring), wired into `build_header_section`; `coord_scale.json`
+`header.words.7` is regenerated from it. `status` is decided by the existing `>= 0.99` threshold on the rule's held-out
+accuracy and is now `ok`. The Phase 2 `subframe_presence_rule` and per-key constant rule are retained in the JSON as rejected evidence.
+The L2 test uses containment of L0 road-bearing parcel centres in the L2 leaf bounds (half-open), not the 4x4 grid key.
+
+Numbers reproduced by the checked-in tool (whole disc; held-out split in the JSON):
+
+| Level | Correct / N | Exceptions |
+|---|---|---|
+| L0 | 3,704,843 / 3,704,871 | 28, all `0xFF00` stored with a 1-link road (residual tolerance, recorded in the JSON) |
+| L2 | 231,564 / 231,564 | 0 (includes the 16 divided parcels) |
+| L4-L12 | 15,538 / 15,538 | 0 |
+
+Held-out (~25% by the sha1 split): 988,860 / 988,865 (99.9995%; 5 L0 exceptions).
+
+Discrepancies against the analysis: (1) L2 N is 231,564, not 231,548 -- the 16 divided L2 parcels are now scored (by bounds
+containment) and all agree, so that caveat is closed rather than carried. (2) The 22 "zero-height L0 integrated parcels"
+do not appear as zero-height in the leaf bounds (`lat_hi == lat_lo` count is 0); that was an artefact of the analysis's grid key.
+The caveat is carried in the JSON as `caveats.zero_height_l0_parcels` with count 0. L0 and the 28 exceptions match exactly.

@@ -382,6 +382,192 @@ def w7_subframe_rule(agg: dict) -> dict:
                                           if v[1]}}
 
 
+# --------------------------------------------------------------------------
+# word 7 model rule: road presence (WORD7-ANALYSIS.md, adopted 2026-09-22)
+# --------------------------------------------------------------------------
+
+W7_ROAD = 0x1200
+W7_NONE = 0xFF00
+W7_RULE = ("pmcode_word7(L0 parcel) = 0x1200 if parcel has road sub-frame with >=1 link else 0xFF00; "
+           "pmcode_word7(L2 parcel) = 0x1200 if any L0 parcel inside it has road sub-frame else 0xFF00; "
+           "pmcode_word7(L>=4) = 0xFF00; word 8 = 0, word 7 low byte = 0")
+W7_CELL = 50_000  # microdegrees; spatial hash cell for the L2 <- L0 containment test
+
+
+def _road_link_count(data: bytes, h: dict, bounds) -> tuple[bool, int]:
+    """(road sub-frame present, link count) of one Map Frame buffer; the road
+    sub-frame is mfde slot 0, located exactly as `kiwiw.parcel.decode_parcel`."""
+    from kiwiw.bitutils import sws
+    from kiwiw.road import decode_road_frame
+    off, size = h["slots"][0] if h["slots"] else (NO_DATA, 0)
+    if off == NO_DATA:
+        return False, 0
+    o, n = sws(off), sws(size)
+    if not n:
+        return False, 0
+    return True, len(decode_road_frame(data[o:o + n], bounds).links)
+
+
+def _w7_work(args) -> dict:
+    path, keys = args
+    from kiwiw import volume
+    from kiwiw.parcel_mgmt import parse_parcel_mgmt_record
+    from array import array
+    container = walk.read_container(path)
+    pdmdh, hdr = container.pdmdh, container.hdr
+    ssz, lsz = hdr.sector_size, hdr.logical_sector_size
+    lmrs = {l.level: l for l in pdmdh.levels}
+    l0: Counter = Counter()
+    hi: Counter = Counter()
+    centres = array("q")
+    l2: list = []
+    with open(path, "rb") as fh:
+        for level, bsi, bidx, bsx, bsy, blx, bly, boff, blen in keys:
+            lmr = lmrs[level]
+            bb = walk._block_base_bounds(pdmdh, lmr, bsx, bsy, blx, bly)
+            fh.seek(boff)
+            try:
+                root = parse_parcel_mgmt_record(fh.read(blen), lmr)
+            except Exception:  # noqa: BLE001
+                continue
+            for lp, entry, lb, pt in walk._iter_tree_leaves(root, bb, lmr, ()):
+                fh.seek(volume.getsector(entry.dsa, ssz, lsz))
+                data = fh.read(entry.size * lsz)
+                h = parse_header(data, lmr.n_basic_map, lmr.n_ext_map)
+                if h is None:
+                    continue
+                split = "held" if heldout(bsi, bidx, lp) else "fit"
+                w7 = h["w"][7]
+                if level == 0:
+                    try:
+                        has, links = _road_link_count(data, h, lb)
+                    except Exception:  # noqa: BLE001
+                        has, links = None, 0
+                    cat = ("decode_error" if has is None else "no_subframe" if not has
+                           else "links0" if links == 0 else "links1" if links == 1 else "links2+")
+                    zh = "zero_height" if lb.lat_hi == lb.lat_lo else "normal"
+                    l0[f"{split}|{w7}|{cat}|{zh}"] += 1
+                    if has:
+                        centres.append(_q((lb.lat_lo + lb.lat_hi) / 2))
+                        centres.append(_q((lb.lon_lo + lb.lon_hi) / 2))
+                elif level == 2:
+                    own = bool(h["slots"] and h["slots"][0][0] != NO_DATA and h["slots"][0][1])
+                    l2.append((split, w7, own, bool(pt), _q(lb.lat_lo), _q(lb.lat_hi),
+                               _q(lb.lon_lo), _q(lb.lon_hi)))
+                else:
+                    hi[f"{level}|{split}|{w7}"] += 1
+    return {"l0": dict(l0), "hi": dict(hi), "centres": centres.tolist(), "l2": l2}
+
+
+def w7_census(path: str, workers: int = 10) -> dict:
+    """Second, geometry-keyed pass over R for the word-7 road-presence rule
+    (same shape as `divided_adjacency_census`, separate from `_accumulate`)."""
+    keys = [(b.level, b.blockset_index, b.block_index, b.bsx, b.bsy, b.blx, b.bly,
+             b.file_offset, b.length) for b in walk.iter_blocks(path) if b.error is None]
+    chunks = [keys[i::workers * 8] for i in range(workers * 8)]
+    out = {"l0": Counter(), "hi": Counter(), "centres": [], "l2": []}
+    with ProcessPoolExecutor(workers) as ex:
+        for r in ex.map(_w7_work, [(path, c) for c in chunks if c]):
+            out["l0"].update(r["l0"])
+            out["hi"].update(r["hi"])
+            out["centres"].extend(r["centres"])
+            out["l2"].extend(r["l2"])
+    out["l2"].sort()
+    return out
+
+
+def _l2_has_l0_road(rec, cells: dict) -> bool:
+    """Any L0 road-bearing centre inside this L2 parcel's bounds (half-open)."""
+    _s, _w, _own, _div, la0, la1, lo0, lo1 = rec
+    for cy in range(la0 // W7_CELL, la1 // W7_CELL + 1):
+        for cx in range(lo0 // W7_CELL, lo1 // W7_CELL + 1):
+            for la, lo in cells.get((cy, cx), ()):
+                if la0 <= la < la1 and lo0 <= lo < lo1:
+                    return True
+    return False
+
+
+def w7_road_presence_rule(pr: dict) -> dict:
+    """Score the adopted word-7 rule. `pr` is `w7_census`'s output:
+    l0 (Counter 'split|w7|cat|height'), l2 (list of (split, w7, own_road,
+    divided, lat_lo, lat_hi, lon_lo, lon_hi) in microdegrees), centres (flat
+    [lat, lon, ...] of L0 parcels with a road sub-frame), hi (Counter
+    'level|split|w7'). The rule has no fitted parameter; fit and held-out are
+    both reported."""
+    cells: dict = defaultdict(list)
+    c = pr["centres"]
+    for i in range(0, len(c), 2):
+        cells[(c[i] // W7_CELL, c[i + 1] // W7_CELL)].append((c[i], c[i + 1]))
+    tot = defaultdict(lambda: {"n": 0, "correct": 0})   # (level, split)
+    exc: Counter = Counter()
+
+    def score(level, split, actual, pred, tag):
+        for sp in (split, "all"):
+            t = tot[(level, sp)]
+            t["n"] += 1
+            t["correct"] += int(actual == pred)
+        if actual != pred:
+            exc[f"{level}|{tag}|predicted {pred} actual {actual}"] += 1
+
+    def score_n(level, split, actual, pred, tag, n):
+        for sp in (split, "all"):
+            t = tot[(level, sp)]
+            t["n"] += n
+            t["correct"] += n * int(actual == pred)
+        if actual != pred:
+            exc[f"{level}|{tag}|predicted {pred} actual {actual}"] += n
+
+    zero_height = 0
+    for k, n in pr["l0"].items():
+        split, w7, cat, hgt = k.split("|")
+        pred = W7_ROAD if cat in ("links1", "links2+") else W7_NONE
+        score_n(0, split, int(w7), pred, f"{cat}", n)
+        if hgt == "zero_height":
+            zero_height += n
+    divided = divided_bad = 0
+    for rec in pr["l2"]:
+        split, w7, own, div = rec[:4]
+        pred = W7_ROAD if _l2_has_l0_road(rec, cells) else W7_NONE
+        score(2, split, w7, pred, "divided" if div else "undivided")
+        if div:
+            divided += 1
+            divided_bad += int(w7 != pred)
+    for k, n in pr["hi"].items():
+        lvl, split, w7 = k.split("|")
+        score_n(int(lvl), split, int(w7), W7_NONE, "l4_and_above", n)
+
+    def pack(sp):
+        by_level = {}
+        for (lvl, s), t in sorted(tot.items()):
+            if s == sp:
+                by_level[str(lvl)] = {"n": t["n"], "correct": t["correct"],
+                                      "exceptions": t["n"] - t["correct"]}
+        n = sum(v["n"] for v in by_level.values())
+        ok = sum(v["correct"] for v in by_level.values())
+        return {"n": n, "correct": ok, "accuracy": round(ok / n, 6) if n else 0.0,
+                "by_level": by_level}
+
+    l0_exc = {k: v for k, v in exc.items() if k.startswith("0|")}
+    single = sum(v for k, v in l0_exc.items() if "|links1|" in k and "predicted 4608 actual 65280" in k)
+    return {
+        "whole_disc": pack("all"), "fit": pack("fit"), "heldout": pack("held"),
+        "exceptions": dict(sorted(exc.items())),
+        "residual_tolerance": {
+            "name": "L0 single-link road parcels stored 0xFF00",
+            "scope": "L0, whole disc (no fitted parameter, so fit == held-out population)",
+            "count": sum(l0_exc.values()),
+            "all_single_link_road_parcels_stored_0xFF00": bool(l0_exc) and single == sum(l0_exc.values()),
+            "status": "recorded tolerance, not an exemption; a Phase 4 check may allow up to `count` L0 disagreements on R-equivalent input",
+        },
+        "caveats": {
+            "divided_l2_parcels": {"count": divided, "scored": True, "exceptions": divided_bad,
+                                   "note": "scored here by leaf-bounds containment of L0 road centres (half-open); the analysis skipped them"},
+            "zero_height_l0_parcels": {"count": zero_height, "scored": True,
+                                       "note": "included in the L0 population; their L0 centres lie on a lat edge and count toward L2 containment via half-open [lo,hi)"},
+        },
+    }
+
+
 def rl_rule(agg: dict) -> dict:
     """rlx/rly: exact table keyed by (level, lat_lo, lat_span, lon_span), all in
     microdegrees; derived on the fit set, scored on the held-out set."""
@@ -472,15 +658,13 @@ def w0_section(agg: dict) -> dict:
     return {"per_key": {k: per[k] for k in sorted(per)}, "totals": dict(tot)}
 
 
-def build_header_section(agg: dict, l0_stride: int) -> dict:
+def build_header_section(agg: dict, l0_stride: int, w7: dict | None = None) -> dict:
     words: dict = {}
     for w in (6, 7, 9):
         words[str(w)] = {"name": NAMES[w], "rule": "constant per (level, class, division state)"}
         words[str(w)].update(constant_rule(agg, w))
     words["7"]["subframe_presence_rule"] = w7_subframe_rule(agg)
-    words["7"]["status"] = (
-        "blocked" if words["7"]["heldout_accuracy"] < 0.99 else "ok")
-    words["7"]["finding"] = (
+    phase2_finding = (
         "word 7 (pmcode high half) takes only 0xFF00 (area 255) and 0x1200 "
         "(area 18). 0x1200 occurs at L0 and L2 only; L4-L12 are 100% 0xFF00. "
         "It is NOT a function of (level, class, division state, position): the "
@@ -492,6 +676,44 @@ def build_header_section(agg: dict, l0_stride: int) -> dict:
         "for every mask other than background-only, and background-only parcels "
         "remain mixed with no structural distinguisher (no slot-size threshold, "
         "no nregion or WP2-word correlation). See subframe_presence_rule.")
+    if w7 is None:
+        words["7"]["status"] = (
+            "blocked" if words["7"]["heldout_accuracy"] < 0.99 else "ok")
+        words["7"]["finding"] = phase2_finding
+    else:
+        # The adopted model rule replaces the constant rule as the word's
+        # headline; the Phase 2 rules stay as recorded, rejected evidence.
+        rr = w7_road_presence_rule(w7)
+        words["7"]["constant_per_key_rule"] = {
+            k: words["7"].pop(k) for k in list(words["7"])
+            if k not in ("name", "subframe_presence_rule")}
+        words["7"]["rule"] = W7_RULE
+        words["7"]["heldout_n"] = rr["heldout"]["n"]
+        words["7"]["heldout_correct"] = rr["heldout"]["correct"]
+        words["7"]["heldout_accuracy"] = rr["heldout"]["accuracy"]
+        words["7"]["heldout_by_level"] = rr["heldout"]["by_level"]
+        words["7"]["whole_disc"] = rr["whole_disc"]
+        words["7"]["fit"] = rr["fit"]
+        words["7"]["exceptions"] = rr["exceptions"]
+        words["7"]["residual_tolerance"] = rr["residual_tolerance"]
+        words["7"]["caveats"] = rr["caveats"]
+        words["7"]["status"] = "blocked" if words["7"]["heldout_accuracy"] < 0.99 else "ok"
+        words["7"]["phase4_scope"] = {
+            "l2_post_pass": True,
+            "note": ("the generator must write L2 word 7 after L0 generation: an L2 header "
+                     "reads its L0 children (any L0 descendant with a road sub-frame). "
+                     "Phase 4 scope; not implemented in Phase 2."),
+        }
+        words["7"]["area_18_meaning"] = {
+            "status": "documented-unknown",
+            "note": ("Area Number 18 refers to a metafile area entry; the metafile is "
+                     "neither on the disc nor in the archived spec."),
+        }
+        words["7"]["finding"] = (
+            "MODEL RULE (adopted, WORD7-ANALYSIS.md): road presence, see `rule`; scored by "
+            "this tool over R (whole disc and held-out). The subframe_presence_rule and "
+            "constant_per_key_rule are retained as recorded evidence of what was tested and "
+            "rejected. Phase 2 finding: " + phase2_finding)
     w0 = constant_rule(agg, 0)
     w0s = w0_section(agg)
     t = w0s["totals"]
@@ -757,7 +979,10 @@ def main() -> int:
     if not args.load_agg:
         adjacency = divided_adjacency_census(
             str(Path(args.reference) / "ALLDATA.KWI"), 6)
-    sec = build_header_section(agg, args.l0_stride)
+    w7 = None
+    if not args.load_agg:
+        w7 = w7_census(str(Path(args.reference) / "ALLDATA.KWI"), args.workers)
+    sec = build_header_section(agg, args.l0_stride, w7)
     header = {
         "source": "reference disc R, all levels, every Map Frame leaf",
         "l0_stride": args.l0_stride,
