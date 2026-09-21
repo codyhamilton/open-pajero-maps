@@ -1,55 +1,82 @@
-"""Overlay test (Plan 03 unit 2-03): decode reference disc R road links at the
-per-class coordinate range from `refdata/profile/coord_scale.json` and overlay
-them on OSM; run the same overlay at the current decoder constant (32768) as
-the negative control.
+"""Overlay test (Plan 03 unit 2-08, re-run of 2-03): decode reference disc R
+road links at the per-class coordinate range from
+`refdata/profile/coord_scale.json` and decide the REDEFINED coordinate gate
+(DESIGN Decisions, Amendment 2026-09-22, item 1): relative discrimination
+against alternative ranges, plus R-only measures.  OSM match rate is a
+diagnostic only.
 
-Reads R only through `harness.walk` helpers; imports no writer module.
+Reads R only through `harness.walk` helpers (leaf frames from
+`walk._leaf_frame`); imports no writer module.  y is up (coordconv, 2-06).
 
-Stated rules and thresholds (fixed before any run):
+Stated rules and thresholds (fixed before any run; none is tuned afterwards):
 
+  * thresholds: MARGIN_MATCH = 1.5, MARGIN_DIST = 2.0, MAX_REL_LO = 0.9,
+    MAX_REL_HI = 1.0, AXIS_COVERAGE_MIN = 0.75, CLIP_EXACT_MIN = 0.9,
+    CLIP_NEAR = 0.005, MIN_CLIPPED_LINKS = 50, MIN_LINKS = 20,
+    MIN_LINKS_STRICT = 50, POOL_N = 12, GRID_N = 16, tol = harness.json
+    bands.name_record_distance_tolerance.tol (0.005).
   * named cells: Brisbane CBD and Sydney from `spot_checks.json`; rural QLD
     (Longreach) and outback (Birdsville) as the nearest undivided leaf to the
     locality, searched from the finest listed level outwards, that has
     >= MIN_LINKS road links.  Ranked by (level order, distance from locality
     to leaf bbox, distance to bbox centre, ids).  Match quality is never an
-    input to the choice.
+    input to the choice.  All four are evaluated.
   * pooled cells: for each coordinate class (L0 urban, L0 sparse, L2, L4, L6,
     L8, divided) take POOL_N blocks spread evenly through that level's
     on-disc list of non-empty blocks (index round(i*(N-1)/(POOL_N-1))), and in
     each chosen block the first leaf of that class, in leaf index order, with
     >= MIN_LINKS road links; if a block has none, advance to the next block in
     the list.  Deterministic and independent of match quality.
-  * cell_extent_m = max(width_m, height_m) of the cell bbox.
+  * cell_extent_m = max(width_m, height_m) of the cell bbox.  The cell used
+    for the OSM comparison is the geographic region the links occupy: the 4x4
+    integrated parcel for L0 sparse, else the leaf; it is the same for the
+    model and every alternative.
   * OSM class set per level (like-for-like: R stores fewer roads at coarser
     levels) -- L0/L2 all roads, L4 motorway..tertiary, L6/L8 motorway/trunk/
     primary.  Non-road highway values are always excluded.
   * match: each R link -> the OSM way minimising the median point-to-polyline
     distance over the link's vertices.  Matched iff that median
-    <= tol * cell_extent_m, tol = harness.json
-    bands.name_record_distance_tolerance.tol.
-  * a cell passes iff matched fraction >= MATCH_MIN; R's occupied fraction of a
-    GRID_N x GRID_N grid over the cell >= OCC_RATIO_MIN * the occupied fraction
-    of the like-for-like OSM roads; coordinate max / range in [MAX_REL_LO, 1.0];
-    and clipped-link exact share >= CLIP_MIN (ends within CLIP_NEAR of the range
-    from an edge; exact = that coordinate is 0 or the range).
-  * orientation: y-up means raw y increases northward (lat = lat_lo + y/range *
-    height); y-down is `coordconv.xy_to_latlon`'s current convention.  Decided
-    by pooled matched fraction and median distance over all pooled cells, not
-    by any single cell.
-  * divided (pardiv1) frame hypotheses, tested against OSM over the pooled
-    divided cells:
-      own_bounds   - sub-parcel's own quadrant bbox, range = the per-sub max
-                     from coord_scale.json (2048 for sub 0, else 4096);
-      parent_4096  - the parent leaf's bbox, range 4096, coordinates absolute
-                     in the parent frame (so sub 0, the y-up SW quadrant,
-                     never exceeds 2048 -- which is what the census observed);
-      quadrant_4096- sub-parcel's own quadrant bbox, range 4096 for every sub.
-  * L0 sparse frame hypotheses, tested the same way: own_leaf_16384 (the leaf's
-    own bbox at the census range), own_leaf_4096, tile4x4_16384 (the 4x4
-    "integrated parcel" of leaves -- the tile the class rule keys urban/sparse
-    on, and the size of one L2 leaf -- at 16384 = 4 x 4096) and tile4x4_4096.
-    `inside_cell_fraction` is the OSM-free discriminator: under a wrong wider
-    frame the leaf's links scatter outside the leaf.
+    <= tol * tol_extent_m.
+  * tol_extent (decided before the run): tol scales the FRAME extent
+    (max(width_m, height_m) of the frame the coordinates are decoded in), not
+    the leaf extent, because the band's own basis is R's quantisation grid and
+    that grid spans the frame.  Leaf-basis matched fractions are reported as a
+    diagnostic.
+  * frames: the model frame of a leaf comes from `walk._leaf_frame` (L0 sparse:
+    the 4x4 tile, range 16384); divided sub-parcels use the parent leaf's bbox
+    at range 4096 (sub 0 = SW quadrant); every other class uses the leaf bbox.
+    The range per class comes from coord_scale.json.
+  * CRITERION (a), relative discrimination, pooled per parcel class.  The
+    alternative set is {range/2, range*2, 32768}; divided adds own_bounds and
+    quadrant_4096; L0 sparse adds own_leaf_16384, own_leaf_4096 and
+    tile4x4_4096.  A class passes (a) iff the assumed range's pooled matched
+    fraction >= MARGIN_MATCH x every alternative's AND its pooled median
+    matched-link distance <= 1/MARGIN_DIST of every alternative's.  An
+    alternative with a zero matched fraction (or no matched links) passes
+    trivially (no division by zero).
+  * CRITERION (b), R-only (no OSM input), pooled per parcel class:
+      coord_max_over_range: pooled (over cells) median of each cell's
+        max coordinate / class range >= MAX_REL_LO and pooled maximum
+        <= MAX_REL_HI.
+      axis_coverage: over a GRID_N x GRID_N grid on the frame,
+        max(rows holding an R vertex, columns holding an R vertex) / GRID_N;
+        pooled median >= AXIS_COVERAGE_MIN.  (OSM-relative occupied fraction is
+        a diagnostic.)
+      clip_exact_share: among links with an end node within CLIP_NEAR * range
+        of a frame edge, the share where that coordinate is exactly 0 or
+        exactly the range; pooled >= CLIP_EXACT_MIN over >= MIN_CLIPPED_LINKS
+        such links, else `insufficient_data` (not a pass).
+  * named cells: each is judged on (a) and (b) on its own links; a named cell
+    is a gate failure only if it fails a criterion with >= MIN_LINKS_STRICT
+    links, otherwise its verdict is `low_n`.  The gate itself is decided on the
+    pooled per-class results.
+  * DIAGNOSTICS (no threshold, cannot fail the gate): matched fraction, p50/p90
+    residual distance of matched links, leaf-basis matched fraction, occupied
+    ratio, y-down orientation, and `source_disagreement_baseline` = fraction of
+    like-for-like OSM ways in the cell whose median distance to the nearest R
+    link exceeds the tolerance (roads OSM has and R does not).  The first run's
+    absolute criteria (MATCH_MIN 0.8, OCC_RATIO_MIN 0.5, CLIP_MIN 0.9 on the
+    per-cell `analyze` result) are retained only as legacy per-cell diagnostics.
 """
 from __future__ import annotations
 
@@ -68,6 +95,13 @@ DECODER_RANGE = 32768.0
 GRID_N = 16
 MIN_LINKS = 20
 POOL_N = 12
+MARGIN_MATCH = 1.5
+MARGIN_DIST = 2.0
+MAX_REL_HI = 1.0
+AXIS_COVERAGE_MIN = 0.75
+CLIP_EXACT_MIN = 0.9
+MIN_CLIPPED_LINKS = 50
+MIN_LINKS_STRICT = 50
 MATCH_MIN = 0.8
 OCC_RATIO_MIN = 0.5
 MAX_REL_LO = 0.9
@@ -219,8 +253,115 @@ def clip_stats(links, scale: float, near: float):
     return exact, n
 
 
+def axis_coverage(raw_pts, scale: float, n: int = GRID_N) -> float:
+    """R-only: max(rows, columns of an n x n grid on the frame holding a
+    vertex) / n.  Vertices outside [0, scale] are ignored."""
+    p = np.asarray(raw_pts, float).reshape(-1, 2)
+    p = p[(p >= 0).all(1) & (p <= scale).all(1)]
+    if not len(p):
+        return 0.0
+    ij = np.minimum((p / scale * n).astype(int), n - 1)
+    return max(len(set(ij[:, 0])), len(set(ij[:, 1]))) / float(n)
+
+
+def clip_links(links, scale: float, near: float = CLIP_NEAR):
+    """(exact, clipped): links with an end node within near*scale of a frame
+    edge, and those whose such end lies exactly on the edge (coordinate 0 or
+    scale).  Each link counts once."""
+    clipped = exact = 0
+    for l in links:
+        gaps = [min(x, y, scale - x, scale - y) for x, y in l["ends"]]
+        gaps = [g for g in gaps if g <= near * scale]
+        if gaps:
+            clipped += 1
+            exact += min(gaps) == 0
+    return exact, clipped
+
+
+def source_disagreement(ways_m, r_links_m, limit: float, spacing: float) -> dict:
+    """Fraction of OSM ways (metre coords, cell at origin) whose median distance
+    from their in-cell samples to the nearest R link exceeds `limit`."""
+    cloud = [densify(np.asarray(p, float), spacing) for p in r_links_m if len(p)]
+    cloud = np.vstack(cloud) if cloud else np.zeros((0, 2))
+    n = miss = 0
+    for w in ways_m:
+        s = densify(w, max(spacing, 1.0))
+        s = s[np.linspace(0, len(s) - 1, min(len(s), 24)).astype(int)]
+        n += 1
+        if not len(cloud):
+            miss += 1
+            continue
+        d = np.empty(len(s))
+        for i in range(len(s)):
+            d[i] = np.sqrt(((cloud - s[i]) ** 2).sum(1).min())
+        miss += float(np.median(d)) > limit
+    return {"osm_ways": n, "ways_without_r_link": int(miss),
+            "source_disagreement_baseline": round(miss / n, 4) if n else None}
+
+
+def criterion_a(model: dict, alts: dict) -> dict:
+    """Relative discrimination of `model` (a pooled dict) vs each pooled
+    alternative: matched fraction >= MARGIN_MATCH x, median matched distance
+    <= 1/MARGIN_DIST x.  A zero-matched alternative passes trivially."""
+    mf, md = model["matched_fraction"], model["matched_distance_m_p50"]
+    per, ok = {}, True
+    for name, a in sorted(alts.items()):
+        af, ad = a["matched_fraction"], a["matched_distance_m_p50"]
+        if af == 0:
+            r, rp = None, True
+        else:
+            r = mf / af
+            rp = mf >= MARGIN_MATCH * af
+        if ad is None or af == 0:
+            dr, dp = None, True
+        else:
+            dr = None if md is None else md / ad
+            dp = md is not None and md <= ad / MARGIN_DIST
+        per[name] = {"matched_fraction": af, "matched_distance_m_p50": ad,
+                     "match_ratio_model_over_alt": None if r is None else round(r, 3),
+                     "match_ratio_trivial_zero_alt": af == 0,
+                     "dist_ratio_model_over_alt": None if dr is None else round(dr, 3),
+                     "match_pass": bool(rp), "dist_pass": bool(dp), "pass": bool(rp and dp)}
+        ok = ok and rp and dp
+    ratios = [(v["match_ratio_model_over_alt"], k) for k, v in per.items()
+              if v["match_ratio_model_over_alt"] is not None]
+    dists = [(v["dist_ratio_model_over_alt"], k) for k, v in per.items()
+             if v["dist_ratio_model_over_alt"] is not None]
+    return {"alternatives": per, "pass": bool(ok),
+            "model_matched_fraction": mf, "model_matched_distance_m_p50": md,
+            "match_ratio_vs_best_alt": min(ratios)[0] if ratios else None,
+            "best_alt_by_match": min(ratios)[1] if ratios else None,
+            "dist_ratio_vs_best_alt": max(dists)[0] if dists else None,
+            "best_alt_by_dist": max(dists)[1] if dists else None,
+            "margins": {"match": MARGIN_MATCH, "dist": MARGIN_DIST}}
+
+
+def criterion_b(results: list) -> dict:
+    """R-only measures pooled over cells (analyze results of the model)."""
+    cm = [r["coord_max_over_range"] for r in results]
+    ax = [r["axis_coverage"] for r in results]
+    ex = sum(r["_clip_exact"] for r in results)
+    cl = sum(r["_clip_n"] for r in results)
+    cmed = float(np.median(cm)) if cm else None
+    cmax = max(cm) if cm else None
+    amed = float(np.median(ax)) if ax else None
+    share = ex / cl if cl else None
+    v_cm = bool(cm) and cmed >= MAX_REL_LO and cmax <= MAX_REL_HI + 1e-9
+    v_ax = bool(ax) and amed >= AXIS_COVERAGE_MIN
+    v_cl = ("insufficient_data" if cl < MIN_CLIPPED_LINKS else
+            ("pass" if share >= CLIP_EXACT_MIN else "fail"))
+    return {
+        "coord_max_over_range": {"median": None if cmed is None else round(cmed, 4),
+                                 "max": cmax, "verdict": "pass" if v_cm else "fail"},
+        "axis_coverage": {"median": None if amed is None else round(amed, 4),
+                          "verdict": "pass" if v_ax else "fail"},
+        "clip_exact_share": {"share": None if share is None else round(share, 4),
+                             "clipped_links": cl, "exact": ex, "verdict": v_cl},
+        "pass": bool(v_cm and v_ax and v_cl == "pass")}
+
+
 def analyze(links, osm_ways_uv, cell, tol, scale, frame=None, y_up=True,
-            tol_extent=None):
+            tol_extent=None, _idx=None):
     """Overlay metrics for one cell decoded in `frame` (default: the cell) at
     `scale`.  `links`: dicts {"pts": [(x, y) raw], "ends": [(x, y) raw]}.
     `osm_ways_uv`: ways as (k,2) arrays in the cell's unit (u, v) coords."""
@@ -229,7 +370,7 @@ def analyze(links, osm_ways_uv, cell, tol, scale, frame=None, y_up=True,
     extent = max(w, h)
     m = np.array([w, h])
     ways_m = [np.asarray(x, float) * m for x in osm_ways_uv]
-    idx = WayIndex(ways_m, spacing=max(tol * extent / 2.0, 1.0))
+    idx = _idx if _idx is not None else WayIndex(ways_m, spacing=max(tol * extent / 2.0, 1.0))
     r_uv = [decode_uv(np.asarray(l["pts"], float), frame, cell, scale, y_up)
             for l in links if len(l["pts"])]
     pairs = [idx.match(p * m) for p in r_uv]
@@ -253,7 +394,12 @@ def analyze(links, osm_ways_uv, cell, tol, scale, frame=None, y_up=True,
     exact, near = clip_stats(links, scale, CLIP_NEAR)
     exact_t, near_t = clip_stats(links, scale, CLIP_NEAR_TIGHT)
     share = exact / near if near else None
+    ax_cov = axis_coverage(raw, scale) if len(raw) else 0.0
+    ex_l, cl_l = clip_links(links, scale)
+    md = finite[finite <= limit]
     res = {
+        "axis_coverage": round(ax_cov, 4),
+        "matched_distance_m_p50": None if not len(md) else round(float(np.median(md)), 4),
         "clip_exact_share": None if share is None else round(share, 4),
         "clip_exact_share_tight": None if not near_t else round(exact_t / near_t, 4),
         "clip_touching_ends": near,
@@ -280,6 +426,9 @@ def analyze(links, osm_ways_uv, cell, tol, scale, frame=None, y_up=True,
     }
     res["pass"] = all(res["criteria"].values())
     res["_dists"] = dists
+    res["_lims"] = np.full(len(dists), limit)
+    res["_clip_exact"], res["_clip_n"] = ex_l, cl_l
+    res["_r_m"] = [p * m for p in r_uv]
     return res
 
 
@@ -289,6 +438,7 @@ def pool(results: list[dict], tol: float, extents: list[float]) -> dict:
     lim = np.concatenate([np.full(len(r["_dists"]), tol * e)
                           for r, e in zip(results, extents)]) if results else np.zeros(0)
     fin = d[np.isfinite(d)]
+    matched_d = d[d <= lim]
     rel = (d / lim)[np.isfinite(d)] if len(d) else np.zeros(0)
     occ = [r["occupied_ratio"] for r in results if r["occupied_ratio"] is not None]
     clip = [r["clip_exact_share"] for r in results if r["clip_exact_share"] is not None]
@@ -305,6 +455,10 @@ def pool(results: list[dict], tol: float, extents: list[float]) -> dict:
         "distance_m_p50": round(float(np.percentile(fin, 50)), 2) if len(fin) else None,
         "distance_m_p90": round(float(np.percentile(fin, 90)), 2) if len(fin) else None,
         "links": int(len(d)),
+        "matched_distance_m_p50": (round(float(np.median(matched_d)), 4)
+                                   if len(matched_d) else None),
+        "matched_distance_m_p90": (round(float(np.percentile(matched_d, 90)), 4)
+                                   if len(matched_d) else None),
         "matched_fraction": round(float((d <= lim).mean()), 4) if len(d) else 0.0,
         "occupied_ratio_median": round(float(np.median(occ)), 4) if occ else None,
     }
@@ -313,9 +467,9 @@ def pool(results: list[dict], tol: float, extents: list[float]) -> dict:
 # --------------------------------------------------------------- R reading
 
 def _raw(lat, lon, b):
-    """Invert coordconv's decode to recover the raw (x, y) stored on disc."""
-    return ((lon - b.lon_lo) / (b.lon_hi - b.lon_lo) * DECODER_RANGE,
-            (b.lat_hi - lat) / (b.lat_hi - b.lat_lo) * DECODER_RANGE)
+    """Invert coordconv's (y-up) decode to recover the raw (x, y) stored on disc."""
+    return (round((lon - b.lon_lo) / (b.lon_hi - b.lon_lo) * DECODER_RANGE, 6),
+            round((lat - b.lat_lo) / (b.lat_hi - b.lat_lo) * DECODER_RANGE, 6))
 
 
 def _links(parcel, b):
@@ -388,26 +542,28 @@ class RReader:
         gn_lat = 1 + lmr.n_parcels_lat[0]
         gn_lng = 1 + lmr.n_parcels_lng[0]
         out = []
+        cache: dict = {}
         for lpath, le, lb, ptype in self.walk._iter_tree_leaves(root, bb, lmr, ()):
             parent = self.walk._narrow_bounds(bb, gn_lat, gn_lng, lpath[0])
-            out.append((lpath, le, lb, ptype, parent))
+            fr = self.walk._leaf_frame(root, lmr.level, ptype, lpath, lb, bb, lmr, cache)
+            out.append((lpath, le, lb, ptype, parent, fr))
         return out
 
     def decode(self, lmr, blk, leaf):
         from kiwiw.model import MeshLocation
         from kiwiw.parcel import decode_parcel
         _, bs_index, ei, _, _ = blk
-        lpath, le, lb, ptype, _ = leaf
+        lpath, le, lb, ptype, _, (fb, _fc) = leaf
         self.fh.seek(self.volume.getsector(le.dsa, self.ss, self.ls))
         buf = self.fh.read(le.size * self.ls)
         loc = MeshLocation(level=lmr.level, parcel_type=ptype, blockset_index=bs_index,
-                           block_index=ei, parcel_index=lpath[-1], bounds=lb,
+                           block_index=ei, parcel_index=lpath[-1], bounds=fb,
                            sector_addr=le.dsa, size_logical_sectors=le.size)
         try:
             p = decode_parcel(loc, buf, n_basic_map=lmr.n_basic_map, n_ext_map=lmr.n_ext_map)
         except Exception:  # noqa: BLE001
             return None
-        return _links(p, lb)
+        return _links(p, fb)
 
 
 def pick_named(rdr, specs, class_rule):
@@ -422,7 +578,7 @@ def pick_named(rdr, specs, class_rule):
             if not near:
                 continue
             for leaf in rdr.leaves(lmr, blk):
-                lpath, _, lb, ptype, _ = leaf
+                lpath, _, lb, ptype, _, _ = leaf
                 if ptype != 0:
                     continue
                 for s in near:
@@ -442,8 +598,10 @@ def pick_named(rdr, specs, class_rule):
                         "key": key, "spec": s, "bounds": lb, "parent": leaf[4],
                         "links": links, "ptype": ptype, "level": level,
                         "sub": lpath[-1] if ptype else None,
-                        "tile": tile_frame(blk[4], lpath[0], 1 + lmr.n_parcels_lat[0],
-                                           1 + lmr.n_parcels_lng[0]),
+                        "tile": leaf[5][0] if leaf[5][1] == "l0_sparse_tile" else tile_frame(
+                            blk[4], lpath[0], 1 + lmr.n_parcels_lat[0],
+                            1 + lmr.n_parcels_lng[0]),
+                        "walk_frame_class": leaf[5][1],
                         "class": _class_key(level, ptype, class_rule, blk, lpath),
                         "ids": {"level": level, "blockset_index": blk[1],
                                 "block_index": blk[2], "leaf_path": list(lpath)}}
@@ -509,7 +667,7 @@ def pick_pooled(rdr, class_rule):
                     break
                 cand = []
                 for leaf in rdr.leaves(lmr, blk):
-                    lpath, _, _, lptype, _ = leaf
+                    lpath, _, _, lptype, _, _ = leaf
                     if lptype != ptype:
                         continue
                     if urban is not None and _urban(class_rule, blk[1], blk[2], lpath[0]) != urban:
@@ -519,7 +677,7 @@ def pick_pooled(rdr, class_rule):
                 for leaf in spread(cand, max(per_block * 8, 64)):
                     if took >= cap or len(out[key]) >= POOL_N:
                         break
-                    lpath, _, lb, lptype, parent = leaf
+                    lpath, _, lb, lptype, parent, _ = leaf
                     ident = (level, blk[1], blk[2], tuple(lpath))
                     if ident in taken:
                         took += 1
@@ -532,8 +690,10 @@ def pick_pooled(rdr, class_rule):
                     out[key].append({
                         "bounds": lb, "parent": parent, "links": links, "ptype": lptype,
                         "level": level, "class": key, "sub": lpath[-1] if lptype else None,
-                        "tile": tile_frame(blk[4], lpath[0], 1 + lmr.n_parcels_lat[0],
-                                           1 + lmr.n_parcels_lng[0]),
+                        "tile": leaf[5][0] if leaf[5][1] == "l0_sparse_tile" else tile_frame(
+                            blk[4], lpath[0], 1 + lmr.n_parcels_lat[0],
+                            1 + lmr.n_parcels_lng[0]),
+                        "walk_frame_class": leaf[5][1],
                         "ids": {"level": level, "blockset_index": blk[1],
                                 "block_index": blk[2], "leaf_path": list(lpath)}})
     return out
@@ -680,175 +840,178 @@ def main() -> int:
         if cache:
             cache.write_text(json.dumps({"key": key, "osm": osm}))
 
+    thresholds = {
+        "axis_coverage_min": AXIS_COVERAGE_MIN, "clip_exact_min": CLIP_EXACT_MIN,
+        "clip_near": CLIP_NEAR, "grid_n": GRID_N, "margin_dist": MARGIN_DIST,
+        "margin_match": MARGIN_MATCH, "max_rel_hi": MAX_REL_HI, "max_rel_lo": MAX_REL_LO,
+        "min_clipped_links": MIN_CLIPPED_LINKS, "min_links": MIN_LINKS,
+        "min_links_strict": MIN_LINKS_STRICT, "pool_n": POOL_N,
+        "tol": tol, "tol_extent": "frame"}
     result = {
-        "criteria_rules": {
-            "clip_exact_share_min": CLIP_MIN, "clip_near_fraction_of_range": CLIP_NEAR,
-            "clip_near_tight": CLIP_NEAR_TIGHT, "coord_max_rel_min": MAX_REL_LO,
-            "grid": GRID_N, "match_fraction_min": MATCH_MIN, "min_links": MIN_LINKS,
-            "occupied_ratio_min": OCC_RATIO_MIN, "pool_n": POOL_N},
-        "rules": __doc__.split("Stated rules and thresholds (fixed before any run):")[1].strip(),
+        "criteria_rules": thresholds,
+        "rules": __doc__.split("Stated rules and thresholds (fixed before any run; none is tuned afterwards):")[1].strip(),
         "tolerance": {"rule": band["rule"], "value": tol,
                       "source": "parser/refdata/harness.json bands.name_record_distance_tolerance.tol"},
     }
 
-    # ---- named cells (headline): model vs 32768 control, chosen orientation
-    named_out = []
-    for spec in CELL_SPECS:
-        c = named[spec["name"]]
-        b = model_cell(c)
-        frame, rng = model_frame(c, ranges)
-        fe = max(extent_m(frame))
-        ways = [to_uv(p, b) for p in osm["named:" + spec["name"]]]
-        model = analyze(c["links"], ways, b, tol, rng, frame=frame, y_up=True, tol_extent=fe)
-        ctrl = analyze(c["links"], ways, b, tol, DECODER_RANGE, y_up=True, tol_extent=fe)
-        ydown = analyze(c["links"], ways, b, tol, rng, frame=frame, y_up=False, tol_extent=fe)
-        w, h = extent_m(b)
-        named_out.append({
-            "bounds": {"lat_hi": b.lat_hi, "lat_lo": b.lat_lo,
-                       "lon_hi": b.lon_hi, "lon_lo": b.lon_lo},
-            "cell_extent_m": round(max(w, h), 1), "class": c["class"],
-            "control_32768": strip(ctrl), "ids": c["ids"],
-            "locality": {"lat": spec["lat"], "lon": spec["lon"], "source": spec["source"]},
-            "model": strip(model), "model_range": rng,
-            "model_y_down": strip(ydown), "name": spec["name"],
-            "osm_ways": len(ways),
-            "verdict": "pass" if model["pass"] and not ctrl["pass"] else "fail"})
-    result["named_cells"] = named_out
+    def variants(c, rng, frame):
+        """(name -> (frame, range)) alternatives for a cell's class."""
+        v = {"range_half": (frame, rng / 2.0), "range_double": (frame, rng * 2.0),
+             "control_32768": (frame, DECODER_RANGE)}
+        if c["ptype"] == 1:
+            v["own_bounds"] = (c["bounds"], float(class_range(
+                ranges, c["level"], c["class"], c["sub"])))
+            v["quadrant_4096"] = (c["bounds"], 4096.0)
+        if c["class"] == "L0_sparse":
+            v["own_leaf_16384"] = (c["bounds"], 16384.0)
+            v["own_leaf_4096"] = (c["bounds"], 4096.0)
+            v["tile4x4_4096"] = (c["tile"], 4096.0)
+        return v
 
-    # ---- pooled per class: model, control, and both orientations
-    pooled_out = {}
-    orient = {}
-    for key, cells in pooled.items():
-        if not cells:
-            pooled_out[key] = {"cells": 0, "note": "no qualifying cell"}
-            continue
-        m, ctl, dn, ext, det = [], [], [], [], []
+    def evaluate(cells, osm_key):
+        """Model + alternatives + y-down over `cells`; returns per-cell result
+        lists keyed by variant, plus extents and baselines."""
+        res = {}
+        ext, base, leafb = [], [], []
         for i, c in enumerate(cells):
             b = model_cell(c)
             frame, rng = model_frame(c, ranges)
             fe = max(extent_m(frame))
-            ways = [to_uv(p, b) for p in osm[f"{key}:{i}"]]
-            r_up = analyze(c["links"], ways, b, tol, rng, frame=frame, y_up=True, tol_extent=fe)
-            r_dn = analyze(c["links"], ways, b, tol, rng, frame=frame, y_up=False, tol_extent=fe)
-            r_ct = analyze(c["links"], ways, b, tol, DECODER_RANGE, y_up=True, tol_extent=fe)
-            m.append(r_up)
-            dn.append(r_dn)
-            ctl.append(r_ct)
+            ways = [to_uv(p, b) for p in osm[osm_key(i)]]
+            w, h = extent_m(b)
+            m = np.array([w, h])
+            idx = WayIndex([np.asarray(x, float) * m for x in ways],
+                           spacing=max(tol * fe / 2.0, 1.0))
+            def run(fr, rg, y_up=True):
+                return analyze(c["links"], ways, b, tol, rg, frame=fr, y_up=y_up,
+                               tol_extent=fe, _idx=idx)
+            r = {"model": run(frame, rng), "model_y_down": run(frame, rng, False)}
+            for name, (fr, rg) in variants(c, rng, frame).items():
+                r[name] = run(fr, rg)
+            for k, v in r.items():
+                res.setdefault(k, []).append(v)
+            mres = r["model"]
+            base.append(source_disagreement(
+                [np.asarray(x, float) * m for x in ways], mres["_r_m"],
+                tol * fe, max(tol * fe / 2.0, 1.0)))
             ext.append(fe)
-            det.append({"ids": c["ids"], "links": len(c["links"]), "range": rng,
-                        "matched_fraction": r_up["matched_fraction"],
-                        "distance_m_p50": r_up["distance_m_p50"],
-                        "occupied_ratio": r_up["occupied_ratio"],
-                        "clip_exact_share": r_up["clip_exact_share"],
-                        "coord_max_over_range": r_up["coord_max_over_range"],
-                        "pass": r_up["pass"]})
-        pooled_out[key] = {
-            "cell_details": det,
-            "control_32768": pool(ctl, tol, ext),
-            "model": pool(m, tol, ext),
-            "model_y_down": pool(dn, tol, ext),
-        }
-        orient[key] = {"y_up_matched": pooled_out[key]["model"]["matched_fraction"],
-                       "y_down_matched": pooled_out[key]["model_y_down"]["matched_fraction"],
-                       "y_up_p50_m": pooled_out[key]["model"]["distance_m_p50"],
-                       "y_down_p50_m": pooled_out[key]["model_y_down"]["distance_m_p50"]}
+        return res, ext, base
+
+    def summarise(res, ext, base):
+        pools = {k: pool(v, tol, ext) for k, v in res.items()}
+        model = pools["model"]
+        alts = {k: v for k, v in pools.items() if k not in ("model", "model_y_down")}
+        a = criterion_a(model, alts)
+        b = criterion_b(res["model"])
+        nway = sum(x["osm_ways"] for x in base)
+        miss = sum(x["ways_without_r_link"] for x in base)
+        leaf_basis = float(np.mean(np.concatenate([
+            [r["matched_fraction_leaf_basis"]] * r["links"] for r in res["model"]]))) \
+            if res["model"] else None
+        return {
+            "alternatives": {k: v for k, v in sorted(alts.items())},
+            "criterion_a": a, "criterion_b": b,
+            "diagnostics": {
+                "matched_fraction": model["matched_fraction"],
+                "distance_m_p50_matched": model["matched_distance_m_p50"],
+                "distance_m_p90_matched": model["matched_distance_m_p90"],
+                "matched_fraction_leaf_basis_link_weighted":
+                    None if leaf_basis is None else round(leaf_basis, 4),
+                "occupied_ratio_median": model["occupied_ratio_median"],
+                "source_disagreement_baseline": round(miss / nway, 4) if nway else None,
+                "source_disagreement_ways": nway,
+                "source_disagreement_ways_without_r_link": miss,
+                "y_down_matched_fraction": pools["model_y_down"]["matched_fraction"],
+                "y_down_distance_m_p50_matched": pools["model_y_down"]["matched_distance_m_p50"]},
+            "model": model, "model_y_down": pools["model_y_down"]}
+
+    # ---- named cells
+    named_out = []
+    for spec in CELL_SPECS:
+        c = named[spec["name"]]
+        res, ext, base = evaluate([c], lambda i, n="named:" + spec["name"]: n)
+        sm = summarise(res, ext, base)
+        n_links = len(c["links"])
+        b_, a_ = sm["criterion_b"], sm["criterion_a"]
+        crit = {"a": "pass" if a_["pass"] else "fail",
+                "b_coord_max": b_["coord_max_over_range"]["verdict"],
+                "b_axis_coverage": b_["axis_coverage"]["verdict"],
+                "b_clip_exact_share": b_["clip_exact_share"]["verdict"]}
+        if n_links < MIN_LINKS_STRICT:
+            verdict = "low_n"
+        elif "fail" in crit.values():
+            verdict = "fail"
+        elif "insufficient_data" in crit.values():
+            verdict = "insufficient_data"
+        else:
+            verdict = "pass"
+        b = model_cell(c)
+        w, h = extent_m(b)
+        sm["baseline_single_cell"] = base[0]
+        named_out.append({
+            "bounds": {"lat_hi": b.lat_hi, "lat_lo": b.lat_lo,
+                       "lon_hi": b.lon_hi, "lon_lo": b.lon_lo},
+            "cell_extent_m": round(max(w, h), 1), "class": c["class"],
+            "criteria": crit, "ids": c["ids"], "links": n_links,
+            "locality": {"lat": spec["lat"], "lon": spec["lon"], "source": spec["source"]},
+            "model_range": model_frame(c, ranges)[1], "name": spec["name"],
+            "osm_ways": len(osm["named:" + spec["name"]]),
+            "single_cell_analysis": strip(res["model"][0]),
+            "summary": sm, "verdict": verdict})
+    result["named_cells"] = named_out
+
+    # ---- pooled per class
+    pooled_out = {}
+    for key, cells in pooled.items():
+        if not cells:
+            pooled_out[key] = {"cells": 0, "note": "no qualifying cell"}
+            continue
+        res, ext, base = evaluate(cells, lambda i, k=key: f"{k}:{i}")
+        sm = summarise(res, ext, base)
+        sm["cells"] = len(cells)
+        sm["cell_details"] = [{
+            "ids": c["ids"], "links": len(c["links"]), "range": model_frame(c, ranges)[1],
+            "walk_frame_class": c.get("walk_frame_class"),
+            "matched_fraction": r["matched_fraction"],
+            "axis_coverage": r["axis_coverage"],
+            "coord_max_over_range": r["coord_max_over_range"],
+            "clip_exact_share": r["clip_exact_share"],
+            "occupied_ratio": r["occupied_ratio"]}
+            for c, r in zip(cells, res["model"])]
+        pooled_out[key] = sm
     result["pooled_classes"] = pooled_out
+    result["l0_sparse_frame_check"] = {
+        "sparse_cells_where_walk_frame_class_is_tile": sum(
+            c["walk_frame_class"] == "l0_sparse_tile" for c in pooled.get("L0_sparse", [])),
+        "sparse_cells": len(pooled.get("L0_sparse", []))}
 
-    wins = sum(1 for v in orient.values() if v["y_up_matched"] > v["y_down_matched"])
-    result["orientation"] = {
-        "classes": orient,
-        "classes_favouring_y_up": wins,
-        "classes_total": len(orient),
-        "coordconv_current": "y_down (lat = lat_hi - y/range * height)",
-        "finding": ("y_up" if wins * 2 > len(orient) else "y_down") +
-                   " fits: pooled matched fraction and median distance per class",
-        "note": "coordconv.py is NOT edited here; Phase 3 owns it.",
-    }
-
-    # ---- frame hypotheses: divided sub-parcels, and the L0 sparse class
-    def test_frames(cells, prefix, variants):
-        out = {}
-        for name, fn in variants.items():
-            res, ext = [], []
-            for i, c in enumerate(cells):
-                b = c["bounds"]
-                frame, rng = fn(c)
-                fe = max(extent_m(frame))
-                ways = [to_uv(p, b) for p in osm[f"{prefix}:{i}"]]
-                res.append(analyze(c["links"], ways, b, tol, rng, frame=frame,
-                                   y_up=True, tol_extent=fe))
-                ext.append(fe)
-            out[name] = pool(res, tol, ext) if res else {"cells": 0}
-            if res:
-                out[name]["inside_cell_fraction_median"] = round(float(np.median(
-                    [r["inside_cell_fraction"] for r in res])), 4)
-        return out
-
-    div = pooled.get("divided_pardiv1", [])
-    hyp = test_frames(div, "divided_pardiv1", {
-        "own_bounds": lambda c: (c["bounds"],
-                                 float(class_range(ranges, c["level"], c["class"], c["sub"]))),
-        "parent_4096": lambda c: (c["parent"], 4096.0),
-        "quadrant_4096": lambda c: (c["bounds"], 4096.0)})
-    best = max(hyp, key=lambda k: (hyp[k].get("matched_fraction", 0.0))) if hyp else None
-
-    sparse = pooled.get("L0_sparse", [])
-    shyp = test_frames(sparse, "L0_sparse", {
-        "own_leaf_16384": lambda c: (c["bounds"], 16384.0),
-        "own_leaf_4096": lambda c: (c["bounds"], 4096.0),
-        "tile4x4_16384": lambda c: (c["tile"], 16384.0),
-        "tile4x4_4096": lambda c: (c["tile"], 4096.0)})
-    sbest = max(shyp, key=lambda k: (shyp[k].get("matched_fraction", 0.0))) if shyp else None
-    result["l0_sparse_rule"] = {
-        "hypotheses": shyp,
-        "best_fit": sbest,
-        "census_maximum": 16384,
-        "canonical": (
-            "L0 sparse coordinates are absolute in the 4x4 'integrated parcel' "
-            "(the same 4x4 tile the coord_scale class rule keys urban/sparse on, "
-            "and the size of one L2 leaf) at range 16384 = 4 x 4096 -- which is "
-            "exactly the census maximum"
-            if sbest == "tile4x4_16384" else
-            "no hypothesis fits: see hypotheses for the numbers"),
-    }
-    result["divided_rule"] = {
-        "hypotheses": hyp,
-        "sub_index_layout": "idx = 2*row + col, row 0 = south (walk._narrow_bounds)",
-        "best_fit": best,
-        "census_maxima": {"pardiv1_sub0": 2048, "pardiv1_sub1..3": 4096},
-        "canonical": (
-            "sub-parcel coordinates are absolute in the PARENT leaf's frame at range "
-            "4096; each sub covers a 2x2 quadrant, so sub 0 (SW under y-up) never "
-            "exceeds 2048 -- which is exactly the census maximum"
-            if best == "parent_4096" else
-            "no hypothesis fits: see hypotheses for the numbers"),
-    }
-
-    # ---- verdicts
-    model_classes = {k: v for k, v in pooled_out.items() if v.get("cells", 1)}
+    # ---- gate, per criterion
+    classes = {k: v for k, v in pooled_out.items() if v.get("cells", 1)}
+    def crit_map(f):
+        return {k: f(v) for k, v in sorted(classes.items())}
+    def allof(m):
+        vals = set(m.values())
+        return "pass" if vals == {"pass"} else ("fail" if "fail" in vals else "insufficient_data")
+    ga = crit_map(lambda v: "pass" if v["criterion_a"]["pass"] else "fail")
+    gcm = crit_map(lambda v: v["criterion_b"]["coord_max_over_range"]["verdict"])
+    gax = crit_map(lambda v: v["criterion_b"]["axis_coverage"]["verdict"])
+    gcl = crit_map(lambda v: v["criterion_b"]["clip_exact_share"]["verdict"])
     result["gate"] = {
-        "classes_model_matched_ok": sum(
-            1 for v in model_classes.values()
-            if v["model"]["matched_fraction"] >= MATCH_MIN),
-        "classes_control_matched_ok": sum(
-            1 for v in model_classes.values()
-            if v["control_32768"]["matched_fraction"] >= MATCH_MIN),
-        "classes_control_clustered": sum(
-            1 for v in model_classes.values()
-            if (v["control_32768"]["occupied_ratio_median"] or 0) < OCC_RATIO_MIN),
-        "classes_total": len(model_classes),
-        "named_cells_passing": sum(c["verdict"] == "pass" for c in named_out),
-    }
+        "a_relative_discrimination": {"per_class": ga, "verdict": allof(ga)},
+        "b_coord_max_over_range": {"per_class": gcm, "verdict": allof(gcm)},
+        "b_axis_coverage": {"per_class": gax, "verdict": allof(gax)},
+        "b_clip_exact_share": {"per_class": gcl, "verdict": allof(gcl)},
+        "named_cells": {c["name"]: c["verdict"] for c in named_out},
+        "named_cells_failing": [c["name"] for c in named_out if c["verdict"] == "fail"],
+        "classes_total": len(classes)}
+    g = result["gate"]
     result["all_pass"] = bool(
-        result["gate"]["named_cells_passing"] == len(named_out)
-        and result["gate"]["classes_model_matched_ok"] == len(model_classes)
-        and result["gate"]["classes_control_clustered"] == len(model_classes))
-    Path(a.out).write_text(json.dumps(result, indent=1, sort_keys=True) + "\n")
-    print(json.dumps({"all_pass": result["all_pass"],
-                      "named": {c["name"]: c["verdict"] for c in named_out},
-                      "orientation": result["orientation"]["finding"],
-                      "divided_best": best, "l0_sparse_best": sbest,
-                      "gate": result["gate"]}, indent=1))
+        all(g[k]["verdict"] == "pass" for k in (
+            "a_relative_discrimination", "b_coord_max_over_range",
+            "b_axis_coverage", "b_clip_exact_share"))
+        and not g["named_cells_failing"])
+    Path(a.out).write_text(json.dumps(result, indent=1, sort_keys=True, default=float) + "\n")
+    print(json.dumps({"all_pass": result["all_pass"], "gate": g}, indent=1))
     return 0
 
 

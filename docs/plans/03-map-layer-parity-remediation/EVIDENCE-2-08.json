@@ -1,0 +1,3782 @@
+{
+ "all_pass": false,
+ "criteria_rules": {
+  "axis_coverage_min": 0.75,
+  "clip_exact_min": 0.9,
+  "clip_near": 0.005,
+  "grid_n": 16,
+  "margin_dist": 2.0,
+  "margin_match": 1.5,
+  "max_rel_hi": 1.0,
+  "max_rel_lo": 0.9,
+  "min_clipped_links": 50,
+  "min_links": 20,
+  "min_links_strict": 50,
+  "pool_n": 12,
+  "tol": 0.005,
+  "tol_extent": "frame"
+ },
+ "gate": {
+  "a_relative_discrimination": {
+   "per_class": {
+    "L0_sparse": "fail",
+    "L0_urban": "fail",
+    "L2": "pass",
+    "L4": "pass",
+    "L6": "pass",
+    "L8": "pass",
+    "divided_pardiv1": "fail"
+   },
+   "verdict": "fail"
+  },
+  "b_axis_coverage": {
+   "per_class": {
+    "L0_sparse": "pass",
+    "L0_urban": "pass",
+    "L2": "pass",
+    "L4": "pass",
+    "L6": "pass",
+    "L8": "pass",
+    "divided_pardiv1": "fail"
+   },
+   "verdict": "fail"
+  },
+  "b_clip_exact_share": {
+   "per_class": {
+    "L0_sparse": "pass",
+    "L0_urban": "pass",
+    "L2": "pass",
+    "L4": "pass",
+    "L6": "fail",
+    "L8": "fail",
+    "divided_pardiv1": "fail"
+   },
+   "verdict": "fail"
+  },
+  "b_coord_max_over_range": {
+   "per_class": {
+    "L0_sparse": "pass",
+    "L0_urban": "pass",
+    "L2": "pass",
+    "L4": "pass",
+    "L6": "pass",
+    "L8": "pass",
+    "divided_pardiv1": "pass"
+   },
+   "verdict": "pass"
+  },
+  "classes_total": 7,
+  "named_cells": {
+   "Brisbane CBD": "fail",
+   "Sydney": "fail",
+   "outback (Birdsville)": "low_n",
+   "rural QLD (Longreach)": "low_n"
+  },
+  "named_cells_failing": [
+   "Brisbane CBD",
+   "Sydney"
+  ]
+ },
+ "l0_sparse_frame_check": {
+  "sparse_cells": 12,
+  "sparse_cells_where_walk_frame_class_is_tile": 12
+ },
+ "named_cells": [
+  {
+   "bounds": {
+    "lat_hi": -27.416666666666664,
+    "lat_lo": -27.499999999999996,
+    "lon_hi": 153.125,
+    "lon_lo": 153.0
+   },
+   "cell_extent_m": 12347.4,
+   "class": "L2",
+   "criteria": {
+    "a": "fail",
+    "b_axis_coverage": "pass",
+    "b_clip_exact_share": "pass",
+    "b_coord_max": "pass"
+   },
+   "ids": {
+    "block_index": 1,
+    "blockset_index": 71,
+    "leaf_path": [
+     472
+    ],
+    "level": 2
+   },
+   "links": 1229,
+   "locality": {
+    "lat": -27.4698,
+    "lon": 153.0251,
+    "source": "spot_checks.json Brisbane"
+   },
+   "model_range": 4096.0,
+   "name": "Brisbane CBD",
+   "osm_ways": 18511,
+   "single_cell_analysis": {
+    "axis_coverage": 1.0,
+    "cell_extent_m": 12347.4,
+    "clip_exact_share": 0.8452,
+    "clip_exact_share_tight": 0.9342,
+    "clip_touching_ends": 84,
+    "coord_max_over_range": 1.0,
+    "criteria": {
+     "clipped_at_edge": false,
+     "coord_max": true,
+     "no_clustering": true,
+     "within_tolerance": false
+    },
+    "distance_limit_m": 61.74,
+    "distance_m_p50": 9.52,
+    "distance_m_p90": 135.6,
+    "frame_extent_m": 12347.4,
+    "inside_cell_fraction": 1.0,
+    "links": 1229,
+    "matched_distance_m_p50": 6.7998,
+    "matched_fraction": 0.7982,
+    "matched_fraction_leaf_basis": 0.7982,
+    "occupied_fraction_osm": 1.0,
+    "occupied_fraction_r": 0.8047,
+    "occupied_ratio": 0.8047,
+    "pass": false
+   },
+   "summary": {
+    "alternatives": {
+     "control_32768": {
+      "cells": 1,
+      "cells_passing": 0,
+      "clip_exact_share_median": 0.2174,
+      "coord_max_over_range_max": 0.125,
+      "coord_max_over_range_median": 0.125,
+      "dist_over_limit_p50": 0.421,
+      "dist_over_limit_p90": 1.234,
+      "distance_m_p50": 25.98,
+      "distance_m_p90": 76.18,
+      "links": 1229,
+      "matched_distance_m_p50": 20.876,
+      "matched_distance_m_p90": 44.7262,
+      "matched_fraction": 0.8674,
+      "occupied_ratio_median": 0.0312
+     },
+     "range_double": {
+      "cells": 1,
+      "cells_passing": 0,
+      "clip_exact_share_median": 0.5844,
+      "coord_max_over_range_max": 0.5,
+      "coord_max_over_range_median": 0.5,
+      "dist_over_limit_p50": 0.494,
+      "dist_over_limit_p90": 1.912,
+      "distance_m_p50": 30.49,
+      "distance_m_p90": 118.04,
+      "links": 1229,
+      "matched_distance_m_p50": 23.1653,
+      "matched_distance_m_p90": 49.0659,
+      "matched_fraction": 0.7681,
+      "occupied_ratio_median": 0.2773
+     },
+     "range_half": {
+      "cells": 1,
+      "cells_passing": 0,
+      "clip_exact_share_median": 0.0195,
+      "coord_max_over_range_max": 2.0,
+      "coord_max_over_range_median": 2.0,
+      "dist_over_limit_p50": 5.291,
+      "dist_over_limit_p90": 116.74,
+      "distance_m_p50": 326.68,
+      "distance_m_p90": 7207.2,
+      "links": 1229,
+      "matched_distance_m_p50": 26.7833,
+      "matched_distance_m_p90": 50.4721,
+      "matched_fraction": 0.271,
+      "occupied_ratio_median": 0.7344
+     }
+    },
+    "baseline_single_cell": {
+     "osm_ways": 18511,
+     "source_disagreement_baseline": 0.5227,
+     "ways_without_r_link": 9675
+    },
+    "criterion_a": {
+     "alternatives": {
+      "control_32768": {
+       "dist_pass": true,
+       "dist_ratio_model_over_alt": 0.326,
+       "match_pass": false,
+       "match_ratio_model_over_alt": 0.92,
+       "match_ratio_trivial_zero_alt": false,
+       "matched_distance_m_p50": 20.876,
+       "matched_fraction": 0.8674,
+       "pass": false
+      },
+      "range_double": {
+       "dist_pass": true,
+       "dist_ratio_model_over_alt": 0.294,
+       "match_pass": false,
+       "match_ratio_model_over_alt": 1.039,
+       "match_ratio_trivial_zero_alt": false,
+       "matched_distance_m_p50": 23.1653,
+       "matched_fraction": 0.7681,
+       "pass": false
+      },
+      "range_half": {
+       "dist_pass": true,
+       "dist_ratio_model_over_alt": 0.254,
+       "match_pass": true,
+       "match_ratio_model_over_alt": 2.945,
+       "match_ratio_trivial_zero_alt": false,
+       "matched_distance_m_p50": 26.7833,
+       "matched_fraction": 0.271,
+       "pass": true
+      }
+     },
+     "best_alt_by_dist": "control_32768",
+     "best_alt_by_match": "control_32768",
+     "dist_ratio_vs_best_alt": 0.326,
+     "margins": {
+      "dist": 2.0,
+      "match": 1.5
+     },
+     "match_ratio_vs_best_alt": 0.92,
+     "model_matched_distance_m_p50": 6.7998,
+     "model_matched_fraction": 0.7982,
+     "pass": false
+    },
+    "criterion_b": {
+     "axis_coverage": {
+      "median": 1.0,
+      "verdict": "pass"
+     },
+     "clip_exact_share": {
+      "clipped_links": 72,
+      "exact": 67,
+      "share": 0.9306,
+      "verdict": "pass"
+     },
+     "coord_max_over_range": {
+      "max": 1.0,
+      "median": 1.0,
+      "verdict": "pass"
+     },
+     "pass": true
+    },
+    "diagnostics": {
+     "distance_m_p50_matched": 6.7998,
+     "distance_m_p90_matched": 34.6604,
+     "matched_fraction": 0.7982,
+     "matched_fraction_leaf_basis_link_weighted": 0.7982,
+     "occupied_ratio_median": 0.8047,
+     "source_disagreement_baseline": 0.5227,
+     "source_disagreement_ways": 18511,
+     "source_disagreement_ways_without_r_link": 9675,
+     "y_down_distance_m_p50_matched": 22.9085,
+     "y_down_matched_fraction": 0.6273
+    },
+    "model": {
+     "cells": 1,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.8452,
+     "coord_max_over_range_max": 1.0,
+     "coord_max_over_range_median": 1.0,
+     "dist_over_limit_p50": 0.154,
+     "dist_over_limit_p90": 2.196,
+     "distance_m_p50": 9.52,
+     "distance_m_p90": 135.6,
+     "links": 1229,
+     "matched_distance_m_p50": 6.7998,
+     "matched_distance_m_p90": 34.6604,
+     "matched_fraction": 0.7982,
+     "occupied_ratio_median": 0.8047
+    },
+    "model_y_down": {
+     "cells": 1,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.8452,
+     "coord_max_over_range_max": 1.0,
+     "coord_max_over_range_median": 1.0,
+     "dist_over_limit_p50": 0.633,
+     "dist_over_limit_p90": 3.087,
+     "distance_m_p50": 39.11,
+     "distance_m_p90": 190.57,
+     "links": 1229,
+     "matched_distance_m_p50": 22.9085,
+     "matched_distance_m_p90": 48.3195,
+     "matched_fraction": 0.6273,
+     "occupied_ratio_median": 0.8047
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "bounds": {
+    "lat_hi": -33.83333333333333,
+    "lat_lo": -33.916666666666664,
+    "lon_hi": 151.375,
+    "lon_lo": 151.25
+   },
+   "cell_extent_m": 11553.0,
+   "class": "L2",
+   "criteria": {
+    "a": "fail",
+    "b_axis_coverage": "pass",
+    "b_clip_exact_share": "insufficient_data",
+    "b_coord_max": "pass"
+   },
+   "ids": {
+    "block_index": 1,
+    "blockset_index": 55,
+    "leaf_path": [
+     42
+    ],
+    "level": 2
+   },
+   "links": 220,
+   "locality": {
+    "lat": -33.8688,
+    "lon": 151.2093,
+    "source": "spot_checks.json Sydney"
+   },
+   "model_range": 4096.0,
+   "name": "Sydney",
+   "osm_ways": 2981,
+   "single_cell_analysis": {
+    "axis_coverage": 0.9375,
+    "cell_extent_m": 11553.0,
+    "clip_exact_share": 1.0,
+    "clip_exact_share_tight": 1.0,
+    "clip_touching_ends": 19,
+    "coord_max_over_range": 1.0,
+    "criteria": {
+     "clipped_at_edge": true,
+     "coord_max": true,
+     "no_clustering": true,
+     "within_tolerance": true
+    },
+    "distance_limit_m": 57.77,
+    "distance_m_p50": 6.72,
+    "distance_m_p90": 136.26,
+    "frame_extent_m": 11553.0,
+    "inside_cell_fraction": 1.0,
+    "links": 220,
+    "matched_distance_m_p50": 5.4532,
+    "matched_fraction": 0.8364,
+    "matched_fraction_leaf_basis": 0.8364,
+    "occupied_fraction_osm": 0.2422,
+    "occupied_fraction_r": 0.1875,
+    "occupied_ratio": 0.7742,
+    "pass": true
+   },
+   "summary": {
+    "alternatives": {
+     "control_32768": {
+      "cells": 1,
+      "cells_passing": 0,
+      "clip_exact_share_median": 0.1717,
+      "coord_max_over_range_max": 0.125,
+      "coord_max_over_range_median": 0.125,
+      "dist_over_limit_p50": 0.386,
+      "dist_over_limit_p90": 0.638,
+      "distance_m_p50": 22.31,
+      "distance_m_p90": 36.86,
+      "links": 220,
+      "matched_distance_m_p50": 22.3141,
+      "matched_distance_m_p90": 36.8576,
+      "matched_fraction": 1.0,
+      "occupied_ratio_median": 0.0323
+     },
+     "range_double": {
+      "cells": 1,
+      "cells_passing": 0,
+      "clip_exact_share_median": 0.6538,
+      "coord_max_over_range_max": 0.5,
+      "coord_max_over_range_median": 0.5,
+      "dist_over_limit_p50": 0.361,
+      "dist_over_limit_p90": 1.224,
+      "distance_m_p50": 20.88,
+      "distance_m_p90": 70.73,
+      "links": 220,
+      "matched_distance_m_p50": 17.8307,
+      "matched_distance_m_p90": 42.7013,
+      "matched_fraction": 0.85,
+      "occupied_ratio_median": 0.2903
+     },
+     "range_half": {
+      "cells": 1,
+      "cells_passing": 0,
+      "clip_exact_share_median": 0.2,
+      "coord_max_over_range_max": 2.0,
+      "coord_max_over_range_median": 2.0,
+      "dist_over_limit_p50": 6.266,
+      "dist_over_limit_p90": 46.426,
+      "distance_m_p50": 361.95,
+      "distance_m_p90": 2681.79,
+      "links": 220,
+      "matched_distance_m_p50": 36.5198,
+      "matched_distance_m_p90": 51.0072,
+      "matched_fraction": 0.2273,
+      "occupied_ratio_median": 1.4839
+     }
+    },
+    "baseline_single_cell": {
+     "osm_ways": 2981,
+     "source_disagreement_baseline": 0.4978,
+     "ways_without_r_link": 1484
+    },
+    "criterion_a": {
+     "alternatives": {
+      "control_32768": {
+       "dist_pass": true,
+       "dist_ratio_model_over_alt": 0.244,
+       "match_pass": false,
+       "match_ratio_model_over_alt": 0.836,
+       "match_ratio_trivial_zero_alt": false,
+       "matched_distance_m_p50": 22.3141,
+       "matched_fraction": 1.0,
+       "pass": false
+      },
+      "range_double": {
+       "dist_pass": true,
+       "dist_ratio_model_over_alt": 0.306,
+       "match_pass": false,
+       "match_ratio_model_over_alt": 0.984,
+       "match_ratio_trivial_zero_alt": false,
+       "matched_distance_m_p50": 17.8307,
+       "matched_fraction": 0.85,
+       "pass": false
+      },
+      "range_half": {
+       "dist_pass": true,
+       "dist_ratio_model_over_alt": 0.149,
+       "match_pass": true,
+       "match_ratio_model_over_alt": 3.68,
+       "match_ratio_trivial_zero_alt": false,
+       "matched_distance_m_p50": 36.5198,
+       "matched_fraction": 0.2273,
+       "pass": true
+      }
+     },
+     "best_alt_by_dist": "range_double",
+     "best_alt_by_match": "control_32768",
+     "dist_ratio_vs_best_alt": 0.306,
+     "margins": {
+      "dist": 2.0,
+      "match": 1.5
+     },
+     "match_ratio_vs_best_alt": 0.836,
+     "model_matched_distance_m_p50": 5.4532,
+     "model_matched_fraction": 0.8364,
+     "pass": false
+    },
+    "criterion_b": {
+     "axis_coverage": {
+      "median": 0.9375,
+      "verdict": "pass"
+     },
+     "clip_exact_share": {
+      "clipped_links": 18,
+      "exact": 18,
+      "share": 1.0,
+      "verdict": "insufficient_data"
+     },
+     "coord_max_over_range": {
+      "max": 1.0,
+      "median": 1.0,
+      "verdict": "pass"
+     },
+     "pass": false
+    },
+    "diagnostics": {
+     "distance_m_p50_matched": 5.4532,
+     "distance_m_p90_matched": 24.4395,
+     "matched_fraction": 0.8364,
+     "matched_fraction_leaf_basis_link_weighted": 0.8364,
+     "occupied_ratio_median": 0.7742,
+     "source_disagreement_baseline": 0.4978,
+     "source_disagreement_ways": 2981,
+     "source_disagreement_ways_without_r_link": 1484,
+     "y_down_distance_m_p50_matched": 15.4124,
+     "y_down_matched_fraction": 0.2864
+    },
+    "model": {
+     "cells": 1,
+     "cells_passing": 1,
+     "clip_exact_share_median": 1.0,
+     "coord_max_over_range_max": 1.0,
+     "coord_max_over_range_median": 1.0,
+     "dist_over_limit_p50": 0.116,
+     "dist_over_limit_p90": 2.359,
+     "distance_m_p50": 6.72,
+     "distance_m_p90": 136.26,
+     "links": 220,
+     "matched_distance_m_p50": 5.4532,
+     "matched_distance_m_p90": 24.4395,
+     "matched_fraction": 0.8364,
+     "occupied_ratio_median": 0.7742
+    },
+    "model_y_down": {
+     "cells": 1,
+     "cells_passing": 0,
+     "clip_exact_share_median": 1.0,
+     "coord_max_over_range_max": 1.0,
+     "coord_max_over_range_median": 1.0,
+     "dist_over_limit_p50": 3.787,
+     "dist_over_limit_p90": 13.777,
+     "distance_m_p50": 218.78,
+     "distance_m_p90": 795.82,
+     "links": 220,
+     "matched_distance_m_p50": 15.4124,
+     "matched_distance_m_p90": 48.1575,
+     "matched_fraction": 0.2864,
+     "occupied_ratio_median": 0.7742
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "bounds": {
+    "lat_hi": -19.333333333333332,
+    "lat_lo": -20.666666666666664,
+    "lon_hi": 148.0,
+    "lon_lo": 146.0
+   },
+   "cell_extent_m": 209213.2,
+   "class": "L6",
+   "criteria": {
+    "a": "pass",
+    "b_axis_coverage": "pass",
+    "b_clip_exact_share": "insufficient_data",
+    "b_coord_max": "pass"
+   },
+   "ids": {
+    "block_index": 0,
+    "blockset_index": 1,
+    "leaf_path": [
+     364
+    ],
+    "level": 6
+   },
+   "links": 22,
+   "locality": {
+    "lat": -23.442,
+    "lon": 144.25,
+    "source": "named locality Longreach QLD"
+   },
+   "model_range": 4096.0,
+   "name": "rural QLD (Longreach)",
+   "osm_ways": 860,
+   "single_cell_analysis": {
+    "axis_coverage": 1.0,
+    "cell_extent_m": 209213.2,
+    "clip_exact_share": 0.6667,
+    "clip_exact_share_tight": 1.0,
+    "clip_touching_ends": 9,
+    "coord_max_over_range": 1.0,
+    "criteria": {
+     "clipped_at_edge": false,
+     "coord_max": true,
+     "no_clustering": true,
+     "within_tolerance": false
+    },
+    "distance_limit_m": 1046.07,
+    "distance_m_p50": 38.85,
+    "distance_m_p90": 11963.43,
+    "frame_extent_m": 209213.2,
+    "inside_cell_fraction": 1.0,
+    "links": 22,
+    "matched_distance_m_p50": 25.7224,
+    "matched_fraction": 0.6818,
+    "matched_fraction_leaf_basis": 0.6818,
+    "occupied_fraction_osm": 0.2109,
+    "occupied_fraction_r": 0.1758,
+    "occupied_ratio": 0.8333,
+    "pass": false
+   },
+   "summary": {
+    "alternatives": {
+     "control_32768": {
+      "cells": 1,
+      "cells_passing": 0,
+      "clip_exact_share_median": 1.0,
+      "coord_max_over_range_max": 0.125,
+      "coord_max_over_range_median": 0.125,
+      "dist_over_limit_p50": 18.04,
+      "dist_over_limit_p90": 23.414,
+      "distance_m_p50": 18870.59,
+      "distance_m_p90": 24492.98,
+      "links": 22,
+      "matched_distance_m_p50": null,
+      "matched_distance_m_p90": null,
+      "matched_fraction": 0.0,
+      "occupied_ratio_median": 0.0926
+     },
+     "range_double": {
+      "cells": 1,
+      "cells_passing": 0,
+      "clip_exact_share_median": 1.0,
+      "coord_max_over_range_max": 0.5,
+      "coord_max_over_range_median": 0.5,
+      "dist_over_limit_p50": 9.484,
+      "dist_over_limit_p90": 25.643,
+      "distance_m_p50": 9920.47,
+      "distance_m_p90": 26824.14,
+      "links": 22,
+      "matched_distance_m_p50": 674.0493,
+      "matched_distance_m_p90": 821.1558,
+      "matched_fraction": 0.1364,
+      "occupied_ratio_median": 0.4074
+     },
+     "range_half": {
+      "cells": 1,
+      "cells_passing": 0,
+      "clip_exact_share_median": 0.2143,
+      "coord_max_over_range_max": 2.0,
+      "coord_max_over_range_median": 2.0,
+      "dist_over_limit_p50": 61.461,
+      "dist_over_limit_p90": 173.973,
+      "distance_m_p50": 64292.73,
+      "distance_m_p90": 181987.49,
+      "links": 22,
+      "matched_distance_m_p50": null,
+      "matched_distance_m_p90": null,
+      "matched_fraction": 0.0,
+      "occupied_ratio_median": 0.5185
+     }
+    },
+    "baseline_single_cell": {
+     "osm_ways": 860,
+     "source_disagreement_baseline": 0.4895,
+     "ways_without_r_link": 421
+    },
+    "criterion_a": {
+     "alternatives": {
+      "control_32768": {
+       "dist_pass": true,
+       "dist_ratio_model_over_alt": null,
+       "match_pass": true,
+       "match_ratio_model_over_alt": null,
+       "match_ratio_trivial_zero_alt": true,
+       "matched_distance_m_p50": null,
+       "matched_fraction": 0.0,
+       "pass": true
+      },
+      "range_double": {
+       "dist_pass": true,
+       "dist_ratio_model_over_alt": 0.038,
+       "match_pass": true,
+       "match_ratio_model_over_alt": 4.999,
+       "match_ratio_trivial_zero_alt": false,
+       "matched_distance_m_p50": 674.0493,
+       "matched_fraction": 0.1364,
+       "pass": true
+      },
+      "range_half": {
+       "dist_pass": true,
+       "dist_ratio_model_over_alt": null,
+       "match_pass": true,
+       "match_ratio_model_over_alt": null,
+       "match_ratio_trivial_zero_alt": true,
+       "matched_distance_m_p50": null,
+       "matched_fraction": 0.0,
+       "pass": true
+      }
+     },
+     "best_alt_by_dist": "range_double",
+     "best_alt_by_match": "range_double",
+     "dist_ratio_vs_best_alt": 0.038,
+     "margins": {
+      "dist": 2.0,
+      "match": 1.5
+     },
+     "match_ratio_vs_best_alt": 4.999,
+     "model_matched_distance_m_p50": 25.7224,
+     "model_matched_fraction": 0.6818,
+     "pass": true
+    },
+    "criterion_b": {
+     "axis_coverage": {
+      "median": 1.0,
+      "verdict": "pass"
+     },
+     "clip_exact_share": {
+      "clipped_links": 8,
+      "exact": 6,
+      "share": 0.75,
+      "verdict": "insufficient_data"
+     },
+     "coord_max_over_range": {
+      "max": 1.0,
+      "median": 1.0,
+      "verdict": "pass"
+     },
+     "pass": false
+    },
+    "diagnostics": {
+     "distance_m_p50_matched": 25.7224,
+     "distance_m_p90_matched": 577.8663,
+     "matched_fraction": 0.6818,
+     "matched_fraction_leaf_basis_link_weighted": 0.6818,
+     "occupied_ratio_median": 0.8333,
+     "source_disagreement_baseline": 0.4895,
+     "source_disagreement_ways": 860,
+     "source_disagreement_ways_without_r_link": 421,
+     "y_down_distance_m_p50_matched": 942.3389,
+     "y_down_matched_fraction": 0.0455
+    },
+    "model": {
+     "cells": 1,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.6667,
+     "coord_max_over_range_max": 1.0,
+     "coord_max_over_range_median": 1.0,
+     "dist_over_limit_p50": 0.037,
+     "dist_over_limit_p90": 11.437,
+     "distance_m_p50": 38.85,
+     "distance_m_p90": 11963.43,
+     "links": 22,
+     "matched_distance_m_p50": 25.7224,
+     "matched_distance_m_p90": 577.8663,
+     "matched_fraction": 0.6818,
+     "occupied_ratio_median": 0.8333
+    },
+    "model_y_down": {
+     "cells": 1,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.6667,
+     "coord_max_over_range_max": 1.0,
+     "coord_max_over_range_median": 1.0,
+     "dist_over_limit_p50": 31.602,
+     "dist_over_limit_p90": 52.822,
+     "distance_m_p50": 33058.26,
+     "distance_m_p90": 55255.6,
+     "links": 22,
+     "matched_distance_m_p50": 942.3389,
+     "matched_distance_m_p90": 942.3389,
+     "matched_fraction": 0.0455,
+     "occupied_ratio_median": 0.8333
+    }
+   },
+   "verdict": "low_n"
+  },
+  {
+   "bounds": {
+    "lat_hi": -23.33333333333333,
+    "lat_lo": -28.666666666666664,
+    "lon_hi": 138.0,
+    "lon_lo": 130.0
+   },
+   "cell_extent_m": 800430.0,
+   "class": "L8",
+   "criteria": {
+    "a": "pass",
+    "b_axis_coverage": "pass",
+    "b_clip_exact_share": "insufficient_data",
+    "b_coord_max": "pass"
+   },
+   "ids": {
+    "block_index": 0,
+    "blockset_index": 1,
+    "leaf_path": [
+     17
+    ],
+    "level": 8
+   },
+   "links": 43,
+   "locality": {
+    "lat": -25.9,
+    "lon": 139.35,
+    "source": "named locality Birdsville QLD"
+   },
+   "model_range": 4096.0,
+   "name": "outback (Birdsville)",
+   "osm_ways": 395,
+   "single_cell_analysis": {
+    "axis_coverage": 1.0,
+    "cell_extent_m": 800430.0,
+    "clip_exact_share": 1.0,
+    "clip_exact_share_tight": 1.0,
+    "clip_touching_ends": 2,
+    "coord_max_over_range": 1.0,
+    "criteria": {
+     "clipped_at_edge": true,
+     "coord_max": true,
+     "no_clustering": true,
+     "within_tolerance": false
+    },
+    "distance_limit_m": 4002.15,
+    "distance_m_p50": 156.39,
+    "distance_m_p90": 7750.47,
+    "frame_extent_m": 800430.0,
+    "inside_cell_fraction": 1.0,
+    "links": 43,
+    "matched_distance_m_p50": 135.5962,
+    "matched_fraction": 0.7907,
+    "matched_fraction_leaf_basis": 0.7907,
+    "occupied_fraction_osm": 0.1289,
+    "occupied_fraction_r": 0.1016,
+    "occupied_ratio": 0.7879,
+    "pass": false
+   },
+   "summary": {
+    "alternatives": {
+     "control_32768": {
+      "cells": 1,
+      "cells_passing": 0,
+      "clip_exact_share_median": 1.0,
+      "coord_max_over_range_max": 0.125,
+      "coord_max_over_range_median": 0.125,
+      "dist_over_limit_p50": 74.546,
+      "dist_over_limit_p90": 81.555,
+      "distance_m_p50": 298344.81,
+      "distance_m_p90": 326393.63,
+      "links": 43,
+      "matched_distance_m_p50": null,
+      "matched_distance_m_p90": null,
+      "matched_fraction": 0.0,
+      "occupied_ratio_median": 0.1212
+     },
+     "range_double": {
+      "cells": 1,
+      "cells_passing": 0,
+      "clip_exact_share_median": 1.0,
+      "coord_max_over_range_max": 0.5,
+      "coord_max_over_range_median": 0.5,
+      "dist_over_limit_p50": 23.049,
+      "dist_over_limit_p90": 46.298,
+      "distance_m_p50": 92246.75,
+      "distance_m_p90": 185290.3,
+      "links": 43,
+      "matched_distance_m_p50": null,
+      "matched_distance_m_p90": null,
+      "matched_fraction": 0.0,
+      "occupied_ratio_median": 0.4242
+     },
+     "range_half": {
+      "cells": 1,
+      "cells_passing": 0,
+      "clip_exact_share_median": 0.0244,
+      "coord_max_over_range_max": 2.0,
+      "coord_max_over_range_median": 2.0,
+      "dist_over_limit_p50": 157.66,
+      "dist_over_limit_p90": 159.213,
+      "distance_m_p50": 630977.45,
+      "distance_m_p90": 637192.47,
+      "links": 43,
+      "matched_distance_m_p50": null,
+      "matched_distance_m_p90": null,
+      "matched_fraction": 0.0,
+      "occupied_ratio_median": 0.4242
+     }
+    },
+    "baseline_single_cell": {
+     "osm_ways": 395,
+     "source_disagreement_baseline": 0.1823,
+     "ways_without_r_link": 72
+    },
+    "criterion_a": {
+     "alternatives": {
+      "control_32768": {
+       "dist_pass": true,
+       "dist_ratio_model_over_alt": null,
+       "match_pass": true,
+       "match_ratio_model_over_alt": null,
+       "match_ratio_trivial_zero_alt": true,
+       "matched_distance_m_p50": null,
+       "matched_fraction": 0.0,
+       "pass": true
+      },
+      "range_double": {
+       "dist_pass": true,
+       "dist_ratio_model_over_alt": null,
+       "match_pass": true,
+       "match_ratio_model_over_alt": null,
+       "match_ratio_trivial_zero_alt": true,
+       "matched_distance_m_p50": null,
+       "matched_fraction": 0.0,
+       "pass": true
+      },
+      "range_half": {
+       "dist_pass": true,
+       "dist_ratio_model_over_alt": null,
+       "match_pass": true,
+       "match_ratio_model_over_alt": null,
+       "match_ratio_trivial_zero_alt": true,
+       "matched_distance_m_p50": null,
+       "matched_fraction": 0.0,
+       "pass": true
+      }
+     },
+     "best_alt_by_dist": null,
+     "best_alt_by_match": null,
+     "dist_ratio_vs_best_alt": null,
+     "margins": {
+      "dist": 2.0,
+      "match": 1.5
+     },
+     "match_ratio_vs_best_alt": null,
+     "model_matched_distance_m_p50": 135.5962,
+     "model_matched_fraction": 0.7907,
+     "pass": true
+    },
+    "criterion_b": {
+     "axis_coverage": {
+      "median": 1.0,
+      "verdict": "pass"
+     },
+     "clip_exact_share": {
+      "clipped_links": 2,
+      "exact": 2,
+      "share": 1.0,
+      "verdict": "insufficient_data"
+     },
+     "coord_max_over_range": {
+      "max": 1.0,
+      "median": 1.0,
+      "verdict": "pass"
+     },
+     "pass": false
+    },
+    "diagnostics": {
+     "distance_m_p50_matched": 135.5962,
+     "distance_m_p90_matched": 594.6559,
+     "matched_fraction": 0.7907,
+     "matched_fraction_leaf_basis_link_weighted": 0.7907,
+     "occupied_ratio_median": 0.7879,
+     "source_disagreement_baseline": 0.1823,
+     "source_disagreement_ways": 395,
+     "source_disagreement_ways_without_r_link": 72,
+     "y_down_distance_m_p50_matched": null,
+     "y_down_matched_fraction": 0.0
+    },
+    "model": {
+     "cells": 1,
+     "cells_passing": 0,
+     "clip_exact_share_median": 1.0,
+     "coord_max_over_range_max": 1.0,
+     "coord_max_over_range_median": 1.0,
+     "dist_over_limit_p50": 0.039,
+     "dist_over_limit_p90": 1.937,
+     "distance_m_p50": 156.39,
+     "distance_m_p90": 7750.47,
+     "links": 43,
+     "matched_distance_m_p50": 135.5962,
+     "matched_distance_m_p90": 594.6559,
+     "matched_fraction": 0.7907,
+     "occupied_ratio_median": 0.7879
+    },
+    "model_y_down": {
+     "cells": 1,
+     "cells_passing": 0,
+     "clip_exact_share_median": 1.0,
+     "coord_max_over_range_max": 1.0,
+     "coord_max_over_range_median": 1.0,
+     "dist_over_limit_p50": 7.176,
+     "dist_over_limit_p90": 30.844,
+     "distance_m_p50": 28720.64,
+     "distance_m_p90": 123440.44,
+     "links": 43,
+     "matched_distance_m_p50": null,
+     "matched_distance_m_p90": null,
+     "matched_fraction": 0.0,
+     "occupied_ratio_median": 0.7879
+    }
+   },
+   "verdict": "low_n"
+  }
+ ],
+ "pooled_classes": {
+  "L0_sparse": {
+   "alternatives": {
+    "control_32768": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 1.0,
+     "coord_max_over_range_max": 0.5,
+     "coord_max_over_range_median": 0.5,
+     "dist_over_limit_p50": 11.069,
+     "dist_over_limit_p90": 80.249,
+     "distance_m_p50": 580.41,
+     "distance_m_p90": 4279.67,
+     "links": 692,
+     "matched_distance_m_p50": 28.1788,
+     "matched_distance_m_p90": 46.4809,
+     "matched_fraction": 0.0231,
+     "occupied_ratio_median": 0.3768
+    },
+    "own_leaf_16384": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 1.0,
+     "coord_max_over_range_max": 1.0,
+     "coord_max_over_range_median": 1.0,
+     "dist_over_limit_p50": 23.964,
+     "dist_over_limit_p90": 137.918,
+     "distance_m_p50": 1249.34,
+     "distance_m_p90": 7355.17,
+     "links": 692,
+     "matched_distance_m_p50": 39.7554,
+     "matched_distance_m_p90": 47.131,
+     "matched_fraction": 0.013,
+     "occupied_ratio_median": 0.1537
+    },
+    "own_leaf_4096": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.0022,
+     "coord_max_over_range_max": 4.0,
+     "coord_max_over_range_median": 4.0,
+     "dist_over_limit_p50": 0.632,
+     "dist_over_limit_p90": 13.206,
+     "distance_m_p50": 34.75,
+     "distance_m_p90": 685.91,
+     "links": 692,
+     "matched_distance_m_p50": 13.3606,
+     "matched_distance_m_p90": 41.6966,
+     "matched_fraction": 0.6156,
+     "occupied_ratio_median": 0.7302
+    },
+    "range_double": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 1.0,
+     "coord_max_over_range_max": 0.5,
+     "coord_max_over_range_median": 0.5,
+     "dist_over_limit_p50": 11.069,
+     "dist_over_limit_p90": 80.249,
+     "distance_m_p50": 580.41,
+     "distance_m_p90": 4279.67,
+     "links": 692,
+     "matched_distance_m_p50": 28.1788,
+     "matched_distance_m_p90": 46.4809,
+     "matched_fraction": 0.0231,
+     "occupied_ratio_median": 0.3768
+    },
+    "range_half": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.0195,
+     "coord_max_over_range_max": 2.0,
+     "coord_max_over_range_median": 2.0,
+     "dist_over_limit_p50": 44.39,
+     "dist_over_limit_p90": 161.367,
+     "distance_m_p50": 2307.89,
+     "distance_m_p90": 8780.38,
+     "links": 692,
+     "matched_distance_m_p50": 38.3965,
+     "matched_distance_m_p90": 50.6082,
+     "matched_fraction": 0.0072,
+     "occupied_ratio_median": 0.4326
+    },
+    "tile4x4_4096": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.0022,
+     "coord_max_over_range_max": 4.0,
+     "coord_max_over_range_median": 4.0,
+     "dist_over_limit_p50": 275.465,
+     "dist_over_limit_p90": 562.861,
+     "distance_m_p50": 14417.36,
+     "distance_m_p90": 30267.01,
+     "links": 692,
+     "matched_distance_m_p50": 23.5271,
+     "matched_distance_m_p90": 23.5271,
+     "matched_fraction": 0.0014,
+     "occupied_ratio_median": 0.1584
+    }
+   },
+   "cell_details": [
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 17,
+      "blockset_index": 70,
+      "leaf_path": [
+       136
+      ],
+      "level": 0
+     },
+     "links": 50,
+     "matched_fraction": 0.56,
+     "occupied_ratio": 0.619,
+     "range": 16384.0,
+     "walk_frame_class": "l0_sparse_tile"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 15,
+      "blockset_index": 22,
+      "leaf_path": [
+       1800
+      ],
+      "level": 0
+     },
+     "links": 96,
+     "matched_fraction": 0.8958,
+     "occupied_ratio": 0.95,
+     "range": 16384.0,
+     "walk_frame_class": "l0_sparse_tile"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 22,
+      "blockset_index": 22,
+      "leaf_path": [
+       1430
+      ],
+      "level": 0
+     },
+     "links": 22,
+     "matched_fraction": 0.0909,
+     "occupied_ratio": 0.89,
+     "range": 16384.0,
+     "walk_frame_class": "l0_sparse_tile"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 23,
+      "blockset_index": 22,
+      "leaf_path": [
+       1300
+      ],
+      "level": 0
+     },
+     "links": 35,
+     "matched_fraction": 0.8857,
+     "occupied_ratio": 0.6871,
+     "range": 16384.0,
+     "walk_frame_class": "l0_sparse_tile"
+    },
+    {
+     "axis_coverage": 0.375,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 29,
+      "blockset_index": 22,
+      "leaf_path": [
+       1048
+      ],
+      "level": 0
+     },
+     "links": 88,
+     "matched_fraction": 0.8409,
+     "occupied_ratio": 0.6765,
+     "range": 16384.0,
+     "walk_frame_class": "l0_sparse_tile"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 30,
+      "blockset_index": 22,
+      "leaf_path": [
+       896
+      ],
+      "level": 0
+     },
+     "links": 118,
+     "matched_fraction": 0.5932,
+     "occupied_ratio": 0.92,
+     "range": 16384.0,
+     "walk_frame_class": "l0_sparse_tile"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 23,
+      "leaf_path": [
+       1950
+      ],
+      "level": 0
+     },
+     "links": 41,
+     "matched_fraction": 0.7073,
+     "occupied_ratio": 0.6776,
+     "range": 16384.0,
+     "walk_frame_class": "l0_sparse_tile"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 8,
+      "blockset_index": 23,
+      "leaf_path": [
+       1300
+      ],
+      "level": 0
+     },
+     "links": 41,
+     "matched_fraction": 0.7073,
+     "occupied_ratio": 1.1161,
+     "range": 16384.0,
+     "walk_frame_class": "l0_sparse_tile"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.8182,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 9,
+      "blockset_index": 23,
+      "leaf_path": [
+       0
+      ],
+      "level": 0
+     },
+     "links": 35,
+     "matched_fraction": 0.9429,
+     "occupied_ratio": 0.7732,
+     "range": 16384.0,
+     "walk_frame_class": "l0_sparse_tile"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.9091,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 10,
+      "blockset_index": 23,
+      "leaf_path": [
+       1792
+      ],
+      "level": 0
+     },
+     "links": 79,
+     "matched_fraction": 0.7975,
+     "occupied_ratio": 0.8807,
+     "range": 16384.0,
+     "walk_frame_class": "l0_sparse_tile"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.8235,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 16,
+      "blockset_index": 23,
+      "leaf_path": [
+       260
+      ],
+      "level": 0
+     },
+     "links": 29,
+     "matched_fraction": 0.3793,
+     "occupied_ratio": 1.6806,
+     "range": 16384.0,
+     "walk_frame_class": "l0_sparse_tile"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 17,
+      "blockset_index": 23,
+      "leaf_path": [
+       387
+      ],
+      "level": 0
+     },
+     "links": 58,
+     "matched_fraction": 0.6897,
+     "occupied_ratio": 1.0278,
+     "range": 16384.0,
+     "walk_frame_class": "l0_sparse_tile"
+    }
+   ],
+   "cells": 12,
+   "criterion_a": {
+    "alternatives": {
+     "control_32768": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.481,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 31.03,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 28.1788,
+      "matched_fraction": 0.0231,
+      "pass": true
+     },
+     "own_leaf_16384": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.341,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 55.138,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 39.7554,
+      "matched_fraction": 0.013,
+      "pass": true
+     },
+     "own_leaf_4096": {
+      "dist_pass": false,
+      "dist_ratio_model_over_alt": 1.015,
+      "match_pass": false,
+      "match_ratio_model_over_alt": 1.164,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 13.3606,
+      "matched_fraction": 0.6156,
+      "pass": false
+     },
+     "range_double": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.481,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 31.03,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 28.1788,
+      "matched_fraction": 0.0231,
+      "pass": true
+     },
+     "range_half": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.353,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 99.556,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 38.3965,
+      "matched_fraction": 0.0072,
+      "pass": true
+     },
+     "tile4x4_4096": {
+      "dist_pass": false,
+      "dist_ratio_model_over_alt": 0.576,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 512.0,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 23.5271,
+      "matched_fraction": 0.0014,
+      "pass": false
+     }
+    },
+    "best_alt_by_dist": "own_leaf_4096",
+    "best_alt_by_match": "own_leaf_4096",
+    "dist_ratio_vs_best_alt": 1.015,
+    "margins": {
+     "dist": 2.0,
+     "match": 1.5
+    },
+    "match_ratio_vs_best_alt": 1.164,
+    "model_matched_distance_m_p50": 13.5568,
+    "model_matched_fraction": 0.7168,
+    "pass": false
+   },
+   "criterion_b": {
+    "axis_coverage": {
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "clip_exact_share": {
+     "clipped_links": 114,
+     "exact": 112,
+     "share": 0.9825,
+     "verdict": "pass"
+    },
+    "coord_max_over_range": {
+     "max": 1.0,
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "pass": true
+   },
+   "diagnostics": {
+    "distance_m_p50_matched": 13.5568,
+    "distance_m_p90_matched": 41.6966,
+    "matched_fraction": 0.7168,
+    "matched_fraction_leaf_basis_link_weighted": 0.7168,
+    "occupied_ratio_median": 0.8854,
+    "source_disagreement_baseline": 0.5227,
+    "source_disagreement_ways": 2003,
+    "source_disagreement_ways_without_r_link": 1047,
+    "y_down_distance_m_p50_matched": 28.2279,
+    "y_down_matched_fraction": 0.0419
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 3,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.503,
+    "dist_over_limit_p90": 4.116,
+    "distance_m_p50": 26.51,
+    "distance_m_p90": 217.48,
+    "links": 692,
+    "matched_distance_m_p50": 13.5568,
+    "matched_distance_m_p90": 41.6966,
+    "matched_fraction": 0.7168,
+    "occupied_ratio_median": 0.8854
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 9.282,
+    "dist_over_limit_p90": 52.912,
+    "distance_m_p50": 487.49,
+    "distance_m_p90": 2813.64,
+    "links": 692,
+    "matched_distance_m_p50": 28.2279,
+    "matched_distance_m_p90": 47.4147,
+    "matched_fraction": 0.0419,
+    "occupied_ratio_median": 0.8854
+   }
+  },
+  "L0_urban": {
+   "alternatives": {
+    "control_32768": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.5416,
+     "coord_max_over_range_max": 0.125,
+     "coord_max_over_range_median": 0.125,
+     "dist_over_limit_p50": 6.998,
+     "dist_over_limit_p90": 59.013,
+     "distance_m_p50": 97.23,
+     "distance_m_p90": 811.46,
+     "links": 1572,
+     "matched_distance_m_p50": 7.5777,
+     "matched_distance_m_p90": 12.9926,
+     "matched_fraction": 0.0814,
+     "occupied_ratio_median": 0.0359
+    },
+    "range_double": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.8546,
+     "coord_max_over_range_max": 0.5,
+     "coord_max_over_range_median": 0.5,
+     "dist_over_limit_p50": 2.703,
+     "dist_over_limit_p90": 30.183,
+     "distance_m_p50": 37.83,
+     "distance_m_p90": 422.91,
+     "links": 1572,
+     "matched_distance_m_p50": 8.9372,
+     "matched_distance_m_p90": 13.2042,
+     "matched_fraction": 0.1565,
+     "occupied_ratio_median": 0.3467
+    },
+    "range_half": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.0092,
+     "coord_max_over_range_max": 2.0,
+     "coord_max_over_range_median": 2.0,
+     "dist_over_limit_p50": 90.212,
+     "dist_over_limit_p90": 175.42,
+     "distance_m_p50": 1254.26,
+     "distance_m_p90": 2419.58,
+     "links": 1572,
+     "matched_distance_m_p50": 6.1223,
+     "matched_distance_m_p90": 11.7976,
+     "matched_fraction": 0.0115,
+     "occupied_ratio_median": 0.2154
+    }
+   },
+   "cell_details": [
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.9167,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 9,
+      "blockset_index": 23,
+      "leaf_path": [
+       648
+      ],
+      "level": 0
+     },
+     "links": 35,
+     "matched_fraction": 0.8571,
+     "occupied_ratio": 0.7273,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.75,
+     "clip_exact_share": 0.9565,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 17,
+      "blockset_index": 23,
+      "leaf_path": [
+       772
+      ],
+      "level": 0
+     },
+     "links": 62,
+     "matched_fraction": 0.8871,
+     "occupied_ratio": 0.5517,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.6875,
+     "clip_exact_share": 0.6667,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 6,
+      "blockset_index": 38,
+      "leaf_path": [
+       1433
+      ],
+      "level": 0
+     },
+     "links": 32,
+     "matched_fraction": 0.8438,
+     "occupied_ratio": 1.84,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.9524,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 7,
+      "blockset_index": 38,
+      "leaf_path": [
+       1664
+      ],
+      "level": 0
+     },
+     "links": 42,
+     "matched_fraction": 0.8095,
+     "occupied_ratio": 1.0645,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.8125,
+     "clip_exact_share": 0.8696,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 13,
+      "blockset_index": 38,
+      "leaf_path": [
+       665
+      ],
+      "level": 0
+     },
+     "links": 56,
+     "matched_fraction": 0.7321,
+     "occupied_ratio": 0.3463,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.8243,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       148
+      ],
+      "level": 0
+     },
+     "links": 388,
+     "matched_fraction": 0.8299,
+     "occupied_ratio": 0.916,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.75,
+     "clip_exact_share": 0.8846,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 15,
+      "blockset_index": 38,
+      "leaf_path": [
+       0
+      ],
+      "level": 0
+     },
+     "links": 66,
+     "matched_fraction": 0.803,
+     "occupied_ratio": 1.0682,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.9167,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 23,
+      "blockset_index": 38,
+      "leaf_path": [
+       396
+      ],
+      "level": 0
+     },
+     "links": 246,
+     "matched_fraction": 0.8821,
+     "occupied_ratio": 0.8011,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.8393,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 24,
+      "blockset_index": 38,
+      "leaf_path": [
+       272
+      ],
+      "level": 0
+     },
+     "links": 318,
+     "matched_fraction": 0.8994,
+     "occupied_ratio": 0.9193,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 28,
+      "blockset_index": 38,
+      "leaf_path": [
+       1669
+      ],
+      "level": 0
+     },
+     "links": 102,
+     "matched_fraction": 0.8824,
+     "occupied_ratio": 0.9317,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.8125,
+     "clip_exact_share": 0.9333,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 39,
+      "leaf_path": [
+       1712
+      ],
+      "level": 0
+     },
+     "links": 28,
+     "matched_fraction": 0.75,
+     "occupied_ratio": 0.7971,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.7368,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 16,
+      "blockset_index": 39,
+      "leaf_path": [
+       924
+      ],
+      "level": 0
+     },
+     "links": 197,
+     "matched_fraction": 0.7005,
+     "occupied_ratio": 1.0,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    }
+   ],
+   "cells": 12,
+   "criterion_a": {
+    "alternatives": {
+     "control_32768": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.472,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 10.269,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 7.5777,
+      "matched_fraction": 0.0814,
+      "pass": true
+     },
+     "range_double": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.4,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 5.341,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 8.9372,
+      "matched_fraction": 0.1565,
+      "pass": true
+     },
+     "range_half": {
+      "dist_pass": false,
+      "dist_ratio_model_over_alt": 0.584,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 72.687,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 6.1223,
+      "matched_fraction": 0.0115,
+      "pass": false
+     }
+    },
+    "best_alt_by_dist": "range_half",
+    "best_alt_by_match": "range_double",
+    "dist_ratio_vs_best_alt": 0.584,
+    "margins": {
+     "dist": 2.0,
+     "match": 1.5
+    },
+    "match_ratio_vs_best_alt": 5.341,
+    "model_matched_distance_m_p50": 3.5749,
+    "model_matched_fraction": 0.8359,
+    "pass": false
+   },
+   "criterion_b": {
+    "axis_coverage": {
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "clip_exact_share": {
+     "clipped_links": 329,
+     "exact": 305,
+     "share": 0.9271,
+     "verdict": "pass"
+    },
+    "coord_max_over_range": {
+     "max": 1.0,
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "pass": true
+   },
+   "diagnostics": {
+    "distance_m_p50_matched": 3.5749,
+    "distance_m_p90_matched": 8.9755,
+    "matched_fraction": 0.8359,
+    "matched_fraction_leaf_basis_link_weighted": 0.8359,
+    "occupied_ratio_median": 0.9177,
+    "source_disagreement_baseline": 0.4845,
+    "source_disagreement_ways": 3321,
+    "source_disagreement_ways_without_r_link": 1609,
+    "y_down_distance_m_p50_matched": 7.8409,
+    "y_down_matched_fraction": 0.0941
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 5,
+    "clip_exact_share_median": 0.9006,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.337,
+    "dist_over_limit_p90": 2.012,
+    "distance_m_p50": 4.73,
+    "distance_m_p90": 27.59,
+    "links": 1572,
+    "matched_distance_m_p50": 3.5749,
+    "matched_distance_m_p90": 8.9755,
+    "matched_fraction": 0.8359,
+    "occupied_ratio_median": 0.9177
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.9006,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 3.589,
+    "dist_over_limit_p90": 18.773,
+    "distance_m_p50": 50.33,
+    "distance_m_p90": 264.14,
+    "links": 1572,
+    "matched_distance_m_p50": 7.8409,
+    "matched_distance_m_p90": 12.5874,
+    "matched_fraction": 0.0941,
+    "occupied_ratio_median": 0.9177
+   }
+  },
+  "L2": {
+   "alternatives": {
+    "control_32768": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 1.0,
+     "coord_max_over_range_max": 0.125,
+     "coord_max_over_range_median": 0.125,
+     "dist_over_limit_p50": 4.262,
+     "dist_over_limit_p90": 39.624,
+     "distance_m_p50": 235.9,
+     "distance_m_p90": 2257.13,
+     "links": 400,
+     "matched_distance_m_p50": 20.2755,
+     "matched_distance_m_p90": 45.9569,
+     "matched_fraction": 0.245,
+     "occupied_ratio_median": 0.0274
+    },
+    "range_double": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 1.0,
+     "coord_max_over_range_max": 0.5,
+     "coord_max_over_range_median": 0.5,
+     "dist_over_limit_p50": 3.301,
+     "dist_over_limit_p90": 13.751,
+     "distance_m_p50": 181.29,
+     "distance_m_p90": 774.77,
+     "links": 400,
+     "matched_distance_m_p50": 30.8404,
+     "matched_distance_m_p90": 51.3802,
+     "matched_fraction": 0.1675,
+     "occupied_ratio_median": 0.1533
+    },
+    "range_half": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.0052,
+     "coord_max_over_range_max": 2.0,
+     "coord_max_over_range_median": 2.0,
+     "dist_over_limit_p50": 55.299,
+     "dist_over_limit_p90": 204.228,
+     "distance_m_p50": 2910.04,
+     "distance_m_p90": 11562.17,
+     "links": 400,
+     "matched_distance_m_p50": 26.9378,
+     "matched_distance_m_p90": 26.9378,
+     "matched_fraction": 0.0025,
+     "occupied_ratio_median": 0.1218
+    }
+   },
+   "cell_details": [
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 3,
+      "blockset_index": 22,
+      "leaf_path": [
+       383
+      ],
+      "level": 2
+     },
+     "links": 35,
+     "matched_fraction": 0.8,
+     "occupied_ratio": 0.6329,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 23,
+      "leaf_path": [
+       650
+      ],
+      "level": 2
+     },
+     "links": 64,
+     "matched_fraction": 0.875,
+     "occupied_ratio": 0.4792,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 2,
+      "blockset_index": 23,
+      "leaf_path": [
+       165
+      ],
+      "level": 2
+     },
+     "links": 48,
+     "matched_fraction": 0.9375,
+     "occupied_ratio": 0.3611,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 2,
+      "blockset_index": 35,
+      "leaf_path": [
+       638
+      ],
+      "level": 2
+     },
+     "links": 40,
+     "matched_fraction": 0.825,
+     "occupied_ratio": 0.236,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 3,
+      "blockset_index": 37,
+      "leaf_path": [
+       750
+      ],
+      "level": 2
+     },
+     "links": 43,
+     "matched_fraction": 0.8605,
+     "occupied_ratio": 0.3514,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 38,
+      "leaf_path": [
+       412
+      ],
+      "level": 2
+     },
+     "links": 20,
+     "matched_fraction": 0.8,
+     "occupied_ratio": 0.2899,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.25,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 1,
+      "blockset_index": 38,
+      "leaf_path": [
+       373
+      ],
+      "level": 2
+     },
+     "links": 24,
+     "matched_fraction": 0.7917,
+     "occupied_ratio": 0.6471,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 2,
+      "blockset_index": 38,
+      "leaf_path": [
+       519
+      ],
+      "level": 2
+     },
+     "links": 23,
+     "matched_fraction": 0.7826,
+     "occupied_ratio": 0.2718,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 3,
+      "blockset_index": 38,
+      "leaf_path": [
+       26
+      ],
+      "level": 2
+     },
+     "links": 38,
+     "matched_fraction": 0.8947,
+     "occupied_ratio": 0.4422,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.8333,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 39,
+      "leaf_path": [
+       387
+      ],
+      "level": 2
+     },
+     "links": 22,
+     "matched_fraction": 0.8182,
+     "occupied_ratio": 0.266,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.9375,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 2,
+      "blockset_index": 39,
+      "leaf_path": [
+       32
+      ],
+      "level": 2
+     },
+     "links": 20,
+     "matched_fraction": 0.65,
+     "occupied_ratio": 0.2697,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.6875,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 3,
+      "blockset_index": 39,
+      "leaf_path": [
+       288
+      ],
+      "level": 2
+     },
+     "links": 23,
+     "matched_fraction": 0.8696,
+     "occupied_ratio": 0.1698,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    }
+   ],
+   "cells": 12,
+   "criterion_a": {
+    "alternatives": {
+     "control_32768": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.312,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 3.439,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 20.2755,
+      "matched_fraction": 0.245,
+      "pass": true
+     },
+     "range_double": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.205,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 5.03,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 30.8404,
+      "matched_fraction": 0.1675,
+      "pass": true
+     },
+     "range_half": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.235,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 337.0,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 26.9378,
+      "matched_fraction": 0.0025,
+      "pass": true
+     }
+    },
+    "best_alt_by_dist": "control_32768",
+    "best_alt_by_match": "control_32768",
+    "dist_ratio_vs_best_alt": 0.312,
+    "margins": {
+     "dist": 2.0,
+     "match": 1.5
+    },
+    "match_ratio_vs_best_alt": 3.439,
+    "model_matched_distance_m_p50": 6.3197,
+    "model_matched_fraction": 0.8425,
+    "pass": true
+   },
+   "criterion_b": {
+    "axis_coverage": {
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "clip_exact_share": {
+     "clipped_links": 80,
+     "exact": 80,
+     "share": 1.0,
+     "verdict": "pass"
+    },
+    "coord_max_over_range": {
+     "max": 1.0,
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "pass": true
+   },
+   "diagnostics": {
+    "distance_m_p50_matched": 6.3197,
+    "distance_m_p90_matched": 28.8486,
+    "matched_fraction": 0.8425,
+    "matched_fraction_leaf_basis_link_weighted": 0.8425,
+    "occupied_ratio_median": 0.3206,
+    "source_disagreement_baseline": 0.7571,
+    "source_disagreement_ways": 11293,
+    "source_disagreement_ways_without_r_link": 8550,
+    "y_down_distance_m_p50_matched": 29.9777,
+    "y_down_matched_fraction": 0.19
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 1,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.146,
+    "dist_over_limit_p90": 2.878,
+    "distance_m_p50": 8.07,
+    "distance_m_p90": 159.48,
+    "links": 400,
+    "matched_distance_m_p50": 6.3197,
+    "matched_distance_m_p90": 28.8486,
+    "matched_fraction": 0.8425,
+    "occupied_ratio_median": 0.3206
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 3.824,
+    "dist_over_limit_p90": 64.01,
+    "distance_m_p50": 210.78,
+    "distance_m_p90": 3358.98,
+    "links": 400,
+    "matched_distance_m_p50": 29.9777,
+    "matched_distance_m_p90": 45.3702,
+    "matched_fraction": 0.19,
+    "occupied_ratio_median": 0.3206
+   }
+  },
+  "L4": {
+   "alternatives": {
+    "control_32768": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 1.0,
+     "coord_max_over_range_max": 0.125,
+     "coord_max_over_range_median": 0.125,
+     "dist_over_limit_p50": 10.644,
+     "dist_over_limit_p90": 61.434,
+     "distance_m_p50": 2224.36,
+     "distance_m_p90": 16687.24,
+     "links": 1043,
+     "matched_distance_m_p50": 143.7639,
+     "matched_distance_m_p90": 170.0198,
+     "matched_fraction": 0.0058,
+     "occupied_ratio_median": 0.0446
+    },
+    "range_double": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 1.0,
+     "coord_max_over_range_max": 0.5,
+     "coord_max_over_range_median": 0.5,
+     "dist_over_limit_p50": 10.162,
+     "dist_over_limit_p90": 25.894,
+     "distance_m_p50": 2225.71,
+     "distance_m_p90": 6534.42,
+     "links": 1043,
+     "matched_distance_m_p50": 92.6185,
+     "matched_distance_m_p90": 201.7594,
+     "matched_fraction": 0.0431,
+     "occupied_ratio_median": 0.2471
+    },
+    "range_half": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.0107,
+     "coord_max_over_range_max": 2.0,
+     "coord_max_over_range_median": 2.0,
+     "dist_over_limit_p50": 66.378,
+     "dist_over_limit_p90": 197.035,
+     "distance_m_p50": 14093.53,
+     "distance_m_p90": 51544.78,
+     "links": 1043,
+     "matched_distance_m_p50": 125.2213,
+     "matched_distance_m_p90": 183.1905,
+     "matched_fraction": 0.0259,
+     "occupied_ratio_median": 0.2332
+    }
+   },
+   "cell_details": [
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.7778,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 3,
+      "leaf_path": [
+       690
+      ],
+      "level": 4
+     },
+     "links": 301,
+     "matched_fraction": 0.8837,
+     "occupied_ratio": 0.5926,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.1875,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 10,
+      "leaf_path": [
+       607
+      ],
+      "level": 4
+     },
+     "links": 44,
+     "matched_fraction": 0.9318,
+     "occupied_ratio": 0.4545,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.3,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 18,
+      "leaf_path": [
+       471
+      ],
+      "level": 4
+     },
+     "links": 30,
+     "matched_fraction": 0.9,
+     "occupied_ratio": 0.3288,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 19,
+      "leaf_path": [
+       24
+      ],
+      "level": 4
+     },
+     "links": 35,
+     "matched_fraction": 0.9143,
+     "occupied_ratio": 0.8714,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.9091,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 27,
+      "leaf_path": [
+       47
+      ],
+      "level": 4
+     },
+     "links": 33,
+     "matched_fraction": 0.8182,
+     "occupied_ratio": 0.5106,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 9,
+      "leaf_path": [
+       1009
+      ],
+      "level": 4
+     },
+     "links": 34,
+     "matched_fraction": 0.8529,
+     "occupied_ratio": 0.5062,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 11,
+      "leaf_path": [
+       114
+      ],
+      "level": 4
+     },
+     "links": 35,
+     "matched_fraction": 0.9429,
+     "occupied_ratio": 0.3486,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.875,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 26,
+      "leaf_path": [
+       529
+      ],
+      "level": 4
+     },
+     "links": 291,
+     "matched_fraction": 0.9278,
+     "occupied_ratio": 0.5714,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 3,
+      "leaf_path": [
+       722
+      ],
+      "level": 4
+     },
+     "links": 21,
+     "matched_fraction": 0.8571,
+     "occupied_ratio": 0.4065,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 3,
+      "leaf_path": [
+       817
+      ],
+      "level": 4
+     },
+     "links": 80,
+     "matched_fraction": 0.8875,
+     "occupied_ratio": 0.3988,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 3,
+      "leaf_path": [
+       818
+      ],
+      "level": 4
+     },
+     "links": 103,
+     "matched_fraction": 0.8447,
+     "occupied_ratio": 0.3832,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.9091,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 3,
+      "leaf_path": [
+       847
+      ],
+      "level": 4
+     },
+     "links": 36,
+     "matched_fraction": 0.8889,
+     "occupied_ratio": 0.4437,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    }
+   ],
+   "cells": 12,
+   "criterion_a": {
+    "alternatives": {
+     "control_32768": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.067,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 154.224,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 143.7639,
+      "matched_fraction": 0.0058,
+      "pass": true
+     },
+     "range_double": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.104,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 20.754,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 92.6185,
+      "matched_fraction": 0.0431,
+      "pass": true
+     },
+     "range_half": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.077,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 34.537,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 125.2213,
+      "matched_fraction": 0.0259,
+      "pass": true
+     }
+    },
+    "best_alt_by_dist": "range_double",
+    "best_alt_by_match": "range_double",
+    "dist_ratio_vs_best_alt": 0.104,
+    "margins": {
+     "dist": 2.0,
+     "match": 1.5
+    },
+    "match_ratio_vs_best_alt": 20.754,
+    "model_matched_distance_m_p50": 9.6514,
+    "model_matched_fraction": 0.8945,
+    "pass": true
+   },
+   "criterion_b": {
+    "axis_coverage": {
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "clip_exact_share": {
+     "clipped_links": 76,
+     "exact": 69,
+     "share": 0.9079,
+     "verdict": "pass"
+    },
+    "coord_max_over_range": {
+     "max": 1.0,
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "pass": true
+   },
+   "diagnostics": {
+    "distance_m_p50_matched": 9.6514,
+    "distance_m_p90_matched": 69.8666,
+    "matched_fraction": 0.8945,
+    "matched_fraction_leaf_basis_link_weighted": 0.8945,
+    "occupied_ratio_median": 0.4491,
+    "source_disagreement_baseline": 0.3925,
+    "source_disagreement_ways": 10347,
+    "source_disagreement_ways_without_r_link": 4061,
+    "y_down_distance_m_p50_matched": 112.5309,
+    "y_down_matched_fraction": 0.1381
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 4,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.047,
+    "dist_over_limit_p90": 1.085,
+    "distance_m_p50": 10.68,
+    "distance_m_p90": 245.74,
+    "links": 1043,
+    "matched_distance_m_p50": 9.6514,
+    "matched_distance_m_p90": 69.8666,
+    "matched_fraction": 0.8945,
+    "occupied_ratio_median": 0.4491
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 1.0,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 6.077,
+    "dist_over_limit_p90": 22.214,
+    "distance_m_p50": 1340.5,
+    "distance_m_p90": 5412.98,
+    "links": 1043,
+    "matched_distance_m_p50": 112.5309,
+    "matched_distance_m_p90": 206.6025,
+    "matched_fraction": 0.1381,
+    "occupied_ratio_median": 0.4491
+   }
+  },
+  "L6": {
+   "alternatives": {
+    "control_32768": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.7084,
+     "coord_max_over_range_max": 0.125,
+     "coord_max_over_range_median": 0.125,
+     "dist_over_limit_p50": 12.848,
+     "dist_over_limit_p90": 84.265,
+     "distance_m_p50": 12128.71,
+     "distance_m_p90": 78434.92,
+     "links": 1025,
+     "matched_distance_m_p50": 605.9875,
+     "matched_distance_m_p90": 914.4059,
+     "matched_fraction": 0.0302,
+     "occupied_ratio_median": 0.0637
+    },
+    "range_double": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 1.0,
+     "coord_max_over_range_max": 0.5,
+     "coord_max_over_range_median": 0.5,
+     "dist_over_limit_p50": 9.111,
+     "dist_over_limit_p90": 33.648,
+     "distance_m_p50": 8341.58,
+     "distance_m_p90": 31295.28,
+     "links": 1025,
+     "matched_distance_m_p50": 438.7851,
+     "matched_distance_m_p90": 858.054,
+     "matched_fraction": 0.1151,
+     "occupied_ratio_median": 0.4546
+    },
+    "range_half": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.0326,
+     "coord_max_over_range_max": 2.0,
+     "coord_max_over_range_median": 2.0,
+     "dist_over_limit_p50": 71.406,
+     "dist_over_limit_p90": 158.993,
+     "distance_m_p50": 65461.08,
+     "distance_m_p90": 150721.15,
+     "links": 1025,
+     "matched_distance_m_p50": 476.316,
+     "matched_distance_m_p90": 813.2639,
+     "matched_fraction": 0.041,
+     "occupied_ratio_median": 0.3412
+    }
+   },
+   "cell_details": [
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       189
+      ],
+      "level": 6
+     },
+     "links": 30,
+     "matched_fraction": 0.7,
+     "occupied_ratio": 0.8875,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       205
+      ],
+      "level": 6
+     },
+     "links": 34,
+     "matched_fraction": 0.7059,
+     "occupied_ratio": 0.5124,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.6154,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       153
+      ],
+      "level": 6
+     },
+     "links": 39,
+     "matched_fraction": 0.8205,
+     "occupied_ratio": 0.8471,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.7647,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       170
+      ],
+      "level": 6
+     },
+     "links": 55,
+     "matched_fraction": 0.7636,
+     "occupied_ratio": 0.9388,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.875,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       204
+      ],
+      "level": 6
+     },
+     "links": 176,
+     "matched_fraction": 0.9318,
+     "occupied_ratio": 0.8,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.5714,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       206
+      ],
+      "level": 6
+     },
+     "links": 20,
+     "matched_fraction": 0.85,
+     "occupied_ratio": 0.5802,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.2384,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       221
+      ],
+      "level": 6
+     },
+     "links": 318,
+     "matched_fraction": 0.9214,
+     "occupied_ratio": 0.7745,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       239
+      ],
+      "level": 6
+     },
+     "links": 40,
+     "matched_fraction": 0.9,
+     "occupied_ratio": 0.9535,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       252
+      ],
+      "level": 6
+     },
+     "links": 43,
+     "matched_fraction": 0.7907,
+     "occupied_ratio": 0.8627,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.7391,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       188
+      ],
+      "level": 6
+     },
+     "links": 177,
+     "matched_fraction": 0.8814,
+     "occupied_ratio": 1.0306,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       213
+      ],
+      "level": 6
+     },
+     "links": 30,
+     "matched_fraction": 1.0,
+     "occupied_ratio": 1.0,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       221
+      ],
+      "level": 6
+     },
+     "links": 63,
+     "matched_fraction": 0.7619,
+     "occupied_ratio": 1.1169,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    }
+   ],
+   "cells": 12,
+   "criterion_a": {
+    "alternatives": {
+     "control_32768": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.037,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 28.977,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 605.9875,
+      "matched_fraction": 0.0302,
+      "pass": true
+     },
+     "range_double": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.051,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 7.603,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 438.7851,
+      "matched_fraction": 0.1151,
+      "pass": true
+     },
+     "range_half": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.047,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 21.344,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 476.316,
+      "matched_fraction": 0.041,
+      "pass": true
+     }
+    },
+    "best_alt_by_dist": "range_double",
+    "best_alt_by_match": "range_double",
+    "dist_ratio_vs_best_alt": 0.051,
+    "margins": {
+     "dist": 2.0,
+     "match": 1.5
+    },
+    "match_ratio_vs_best_alt": 7.603,
+    "model_matched_distance_m_p50": 22.5086,
+    "model_matched_fraction": 0.8751,
+    "pass": true
+   },
+   "criterion_b": {
+    "axis_coverage": {
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "clip_exact_share": {
+     "clipped_links": 180,
+     "exact": 111,
+     "share": 0.6167,
+     "verdict": "fail"
+    },
+    "coord_max_over_range": {
+     "max": 1.0,
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "pass": false
+   },
+   "diagnostics": {
+    "distance_m_p50_matched": 22.5086,
+    "distance_m_p90_matched": 232.8141,
+    "matched_fraction": 0.8751,
+    "matched_fraction_leaf_basis_link_weighted": 0.8751,
+    "occupied_ratio_median": 0.8751,
+    "source_disagreement_baseline": 0.3226,
+    "source_disagreement_ways": 11786,
+    "source_disagreement_ways_without_r_link": 3802,
+    "y_down_distance_m_p50_matched": 375.8324,
+    "y_down_matched_fraction": 0.2341
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 2,
+    "clip_exact_share_median": 0.9375,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.028,
+    "dist_over_limit_p90": 1.892,
+    "distance_m_p50": 25.43,
+    "distance_m_p90": 1764.05,
+    "links": 1025,
+    "matched_distance_m_p50": 22.5086,
+    "matched_distance_m_p90": 232.8141,
+    "matched_fraction": 0.8751,
+    "occupied_ratio_median": 0.8751
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.9375,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 4.742,
+    "dist_over_limit_p90": 34.83,
+    "distance_m_p50": 4412.48,
+    "distance_m_p90": 33272.68,
+    "links": 1025,
+    "matched_distance_m_p50": 375.8324,
+    "matched_distance_m_p90": 780.5315,
+    "matched_fraction": 0.2341,
+    "occupied_ratio_median": 0.8689
+   }
+  },
+  "L8": {
+   "alternatives": {
+    "control_32768": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.5,
+     "coord_max_over_range_max": 0.125,
+     "coord_max_over_range_median": 0.125,
+     "dist_over_limit_p50": 32.908,
+     "dist_over_limit_p90": 70.224,
+     "distance_m_p50": 127633.36,
+     "distance_m_p90": 267088.33,
+     "links": 829,
+     "matched_distance_m_p50": 3203.7889,
+     "matched_distance_m_p90": 3984.5057,
+     "matched_fraction": 0.0458,
+     "occupied_ratio_median": 0.0622
+    },
+    "range_double": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.6667,
+     "coord_max_over_range_max": 0.5,
+     "coord_max_over_range_median": 0.5,
+     "dist_over_limit_p50": 9.131,
+     "dist_over_limit_p90": 37.439,
+     "distance_m_p50": 34220.0,
+     "distance_m_p90": 142395.99,
+     "links": 829,
+     "matched_distance_m_p50": 1542.7203,
+     "matched_distance_m_p90": 2574.8073,
+     "matched_fraction": 0.0844,
+     "occupied_ratio_median": 0.3057
+    },
+    "range_half": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.0462,
+     "coord_max_over_range_max": 2.0,
+     "coord_max_over_range_median": 2.0,
+     "dist_over_limit_p50": 58.243,
+     "dist_over_limit_p90": 173.869,
+     "distance_m_p50": 233804.78,
+     "distance_m_p90": 661289.91,
+     "links": 829,
+     "matched_distance_m_p50": 2381.8428,
+     "matched_distance_m_p90": 3703.7707,
+     "matched_fraction": 0.029,
+     "occupied_ratio_median": 0.3957
+    }
+   },
+   "cell_details": [
+    {
+     "axis_coverage": 0.375,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       11
+      ],
+      "level": 8
+     },
+     "links": 25,
+     "matched_fraction": 0.8,
+     "occupied_ratio": 0.75,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.75,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       19
+      ],
+      "level": 8
+     },
+     "links": 33,
+     "matched_fraction": 0.6364,
+     "occupied_ratio": 0.5738,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.4375,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 0.7417,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       7
+      ],
+      "level": 8
+     },
+     "links": 129,
+     "matched_fraction": 0.9767,
+     "occupied_ratio": 0.2703,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       13
+      ],
+      "level": 8
+     },
+     "links": 164,
+     "matched_fraction": 0.939,
+     "occupied_ratio": 0.9365,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 0,
+      "leaf_path": [
+       23
+      ],
+      "level": 8
+     },
+     "links": 38,
+     "matched_fraction": 0.6842,
+     "occupied_ratio": 0.629,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.2708,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       14
+      ],
+      "level": 8
+     },
+     "links": 122,
+     "matched_fraction": 0.877,
+     "occupied_ratio": 0.5854,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       17
+      ],
+      "level": 8
+     },
+     "links": 43,
+     "matched_fraction": 0.7907,
+     "occupied_ratio": 0.7879,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 1.0,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       22
+      ],
+      "level": 8
+     },
+     "links": 31,
+     "matched_fraction": 0.6129,
+     "occupied_ratio": 0.3689,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.25,
+     "coord_max_over_range": 0.9534,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       23
+      ],
+      "level": 8
+     },
+     "links": 162,
+     "matched_fraction": 0.8827,
+     "occupied_ratio": 0.8545,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 1.0,
+     "clip_exact_share": 0.875,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       25
+      ],
+      "level": 8
+     },
+     "links": 30,
+     "matched_fraction": 0.5333,
+     "occupied_ratio": 0.4684,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.25,
+     "clip_exact_share": 0.2308,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       26
+      ],
+      "level": 8
+     },
+     "links": 22,
+     "matched_fraction": 0.9091,
+     "occupied_ratio": 0.1081,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.125,
+     "clip_exact_share": 0.0339,
+     "coord_max_over_range": 0.0906,
+     "ids": {
+      "block_index": 0,
+      "blockset_index": 1,
+      "leaf_path": [
+       27
+      ],
+      "level": 8
+     },
+     "links": 30,
+     "matched_fraction": 0.9667,
+     "occupied_ratio": 1.0,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    }
+   ],
+   "cells": 12,
+   "criterion_a": {
+    "alternatives": {
+     "control_32768": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.034,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 18.832,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 3203.7889,
+      "matched_fraction": 0.0458,
+      "pass": true
+     },
+     "range_double": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.07,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 10.219,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 1542.7203,
+      "matched_fraction": 0.0844,
+      "pass": true
+     },
+     "range_half": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.045,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 29.741,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 2381.8428,
+      "matched_fraction": 0.029,
+      "pass": true
+     }
+    },
+    "best_alt_by_dist": "range_double",
+    "best_alt_by_match": "range_double",
+    "dist_ratio_vs_best_alt": 0.07,
+    "margins": {
+     "dist": 2.0,
+     "match": 1.5
+    },
+    "match_ratio_vs_best_alt": 10.219,
+    "model_matched_distance_m_p50": 107.5563,
+    "model_matched_fraction": 0.8625,
+    "pass": true
+   },
+   "criterion_b": {
+    "axis_coverage": {
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "clip_exact_share": {
+     "clipped_links": 112,
+     "exact": 54,
+     "share": 0.4821,
+     "verdict": "fail"
+    },
+    "coord_max_over_range": {
+     "max": 1.0,
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "pass": false
+   },
+   "diagnostics": {
+    "distance_m_p50_matched": 107.5563,
+    "distance_m_p90_matched": 484.5597,
+    "matched_fraction": 0.8625,
+    "matched_fraction_leaf_basis_link_weighted": 0.8625,
+    "occupied_ratio_median": 0.6072,
+    "source_disagreement_baseline": 0.4662,
+    "source_disagreement_ways": 18832,
+    "source_disagreement_ways_without_r_link": 8780,
+    "y_down_distance_m_p50_matched": 948.6574,
+    "y_down_matched_fraction": 0.1448
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 2,
+    "clip_exact_share_median": 0.9375,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.032,
+    "dist_over_limit_p90": 1.95,
+    "distance_m_p50": 119.92,
+    "distance_m_p90": 7779.05,
+    "links": 829,
+    "matched_distance_m_p50": 107.5563,
+    "matched_distance_m_p90": 484.5597,
+    "matched_fraction": 0.8625,
+    "occupied_ratio_median": 0.6072
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.9375,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 14.388,
+    "dist_over_limit_p90": 57.812,
+    "distance_m_p50": 58783.46,
+    "distance_m_p90": 248260.65,
+    "links": 829,
+    "matched_distance_m_p50": 948.6574,
+    "matched_distance_m_p90": 3072.2655,
+    "matched_fraction": 0.1448,
+    "occupied_ratio_median": 0.6072
+   }
+  },
+  "divided_pardiv1": {
+   "alternatives": {
+    "control_32768": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.2422,
+     "coord_max_over_range_max": 0.125,
+     "coord_max_over_range_median": 0.125,
+     "dist_over_limit_p50": 2.522,
+     "dist_over_limit_p90": 65.547,
+     "distance_m_p50": 34.65,
+     "distance_m_p90": 900.33,
+     "links": 5044,
+     "matched_distance_m_p50": 5.9746,
+     "matched_distance_m_p90": 12.1616,
+     "matched_fraction": 0.2805,
+     "occupied_ratio_median": 0.0
+    },
+    "own_bounds": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.7889,
+     "coord_max_over_range_max": 1.0,
+     "coord_max_over_range_median": 1.0,
+     "dist_over_limit_p50": 0.883,
+     "dist_over_limit_p90": 2.605,
+     "distance_m_p50": 12.14,
+     "distance_m_p90": 35.8,
+     "links": 5044,
+     "matched_distance_m_p50": 6.8471,
+     "matched_distance_m_p90": 12.1794,
+     "matched_fraction": 0.5573,
+     "occupied_ratio_median": 0.3217
+    },
+    "quadrant_4096": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.75,
+     "coord_max_over_range_max": 1.0,
+     "coord_max_over_range_median": 1.0,
+     "dist_over_limit_p50": 0.993,
+     "dist_over_limit_p90": 3.321,
+     "distance_m_p50": 13.64,
+     "distance_m_p90": 45.62,
+     "links": 5044,
+     "matched_distance_m_p50": 7.5998,
+     "matched_distance_m_p90": 12.3823,
+     "matched_fraction": 0.5024,
+     "occupied_ratio_median": 0.3217
+    },
+    "range_double": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.5635,
+     "coord_max_over_range_max": 0.5,
+     "coord_max_over_range_median": 0.5,
+     "dist_over_limit_p50": 2.139,
+     "dist_over_limit_p90": 21.969,
+     "distance_m_p50": 29.39,
+     "distance_m_p90": 301.76,
+     "links": 5044,
+     "matched_distance_m_p50": 6.8154,
+     "matched_distance_m_p90": 12.3052,
+     "matched_fraction": 0.2829,
+     "occupied_ratio_median": 0.033
+    },
+    "range_half": {
+     "cells": 12,
+     "cells_passing": 0,
+     "clip_exact_share_median": 0.0207,
+     "coord_max_over_range_max": 2.0,
+     "coord_max_over_range_median": 2.0,
+     "dist_over_limit_p50": 79.879,
+     "dist_over_limit_p90": 161.346,
+     "distance_m_p50": 1097.29,
+     "distance_m_p90": 2216.61,
+     "links": 5044,
+     "matched_distance_m_p50": 8.8435,
+     "matched_distance_m_p90": 12.7481,
+     "matched_fraction": 0.0303,
+     "occupied_ratio_median": 0.0238
+    }
+   },
+   "cell_details": [
+    {
+     "axis_coverage": 0.5625,
+     "clip_exact_share": null,
+     "coord_max_over_range": 0.5,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       254,
+       0
+      ],
+      "level": 0
+     },
+     "links": 179,
+     "matched_fraction": 0.7933,
+     "occupied_ratio": 1.0253,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.5625,
+     "clip_exact_share": 0.88,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       254,
+       1
+      ],
+      "level": 0
+     },
+     "links": 388,
+     "matched_fraction": 0.6985,
+     "occupied_ratio": 1.0686,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.5625,
+     "clip_exact_share": 0.807,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       254,
+       2
+      ],
+      "level": 0
+     },
+     "links": 631,
+     "matched_fraction": 0.8019,
+     "occupied_ratio": 1.008,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.5,
+     "clip_exact_share": 0.6883,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       254,
+       3
+      ],
+      "level": 0
+     },
+     "links": 569,
+     "matched_fraction": 0.8137,
+     "occupied_ratio": 1.0311,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.5625,
+     "clip_exact_share": 0.75,
+     "coord_max_over_range": 0.5,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       286,
+       0
+      ],
+      "level": 0
+     },
+     "links": 279,
+     "matched_fraction": 0.7133,
+     "occupied_ratio": 1.0574,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.5625,
+     "clip_exact_share": 0.7222,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       286,
+       1
+      ],
+      "level": 0
+     },
+     "links": 503,
+     "matched_fraction": 0.7853,
+     "occupied_ratio": 0.9877,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.5625,
+     "clip_exact_share": 0.8,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       286,
+       2
+      ],
+      "level": 0
+     },
+     "links": 238,
+     "matched_fraction": 0.6513,
+     "occupied_ratio": 1.1257,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.5,
+     "clip_exact_share": 0.7297,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       286,
+       3
+      ],
+      "level": 0
+     },
+     "links": 748,
+     "matched_fraction": 0.8289,
+     "occupied_ratio": 1.0167,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.5625,
+     "clip_exact_share": 0.6136,
+     "coord_max_over_range": 0.5,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       287,
+       0
+      ],
+      "level": 0
+     },
+     "links": 212,
+     "matched_fraction": 0.6321,
+     "occupied_ratio": 1.3598,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.5625,
+     "clip_exact_share": 0.9259,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       287,
+       1
+      ],
+      "level": 0
+     },
+     "links": 400,
+     "matched_fraction": 0.76,
+     "occupied_ratio": 1.0,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.5625,
+     "clip_exact_share": 0.7778,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       287,
+       2
+      ],
+      "level": 0
+     },
+     "links": 399,
+     "matched_fraction": 0.7118,
+     "occupied_ratio": 1.2404,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    },
+    {
+     "axis_coverage": 0.5,
+     "clip_exact_share": 0.7179,
+     "coord_max_over_range": 1.0,
+     "ids": {
+      "block_index": 14,
+      "blockset_index": 38,
+      "leaf_path": [
+       287,
+       3
+      ],
+      "level": 0
+     },
+     "links": 498,
+     "matched_fraction": 0.7912,
+     "occupied_ratio": 1.1111,
+     "range": 4096.0,
+     "walk_frame_class": "leaf"
+    }
+   ],
+   "cells": 12,
+   "criterion_a": {
+    "alternatives": {
+     "control_32768": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.404,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 2.733,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 5.9746,
+      "matched_fraction": 0.2805,
+      "pass": true
+     },
+     "own_bounds": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.352,
+      "match_pass": false,
+      "match_ratio_model_over_alt": 1.376,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 6.8471,
+      "matched_fraction": 0.5573,
+      "pass": false
+     },
+     "quadrant_4096": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.317,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 1.526,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 7.5998,
+      "matched_fraction": 0.5024,
+      "pass": true
+     },
+     "range_double": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.354,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 2.71,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 6.8154,
+      "matched_fraction": 0.2829,
+      "pass": true
+     },
+     "range_half": {
+      "dist_pass": true,
+      "dist_ratio_model_over_alt": 0.273,
+      "match_pass": true,
+      "match_ratio_model_over_alt": 25.304,
+      "match_ratio_trivial_zero_alt": false,
+      "matched_distance_m_p50": 8.8435,
+      "matched_fraction": 0.0303,
+      "pass": true
+     }
+    },
+    "best_alt_by_dist": "control_32768",
+    "best_alt_by_match": "own_bounds",
+    "dist_ratio_vs_best_alt": 0.404,
+    "margins": {
+     "dist": 2.0,
+     "match": 1.5
+    },
+    "match_ratio_vs_best_alt": 1.376,
+    "model_matched_distance_m_p50": 2.4126,
+    "model_matched_fraction": 0.7667,
+    "pass": false
+   },
+   "criterion_b": {
+    "axis_coverage": {
+     "median": 0.5625,
+     "verdict": "fail"
+    },
+    "clip_exact_share": {
+     "clipped_links": 506,
+     "exact": 440,
+     "share": 0.8696,
+     "verdict": "fail"
+    },
+    "coord_max_over_range": {
+     "max": 1.0,
+     "median": 1.0,
+     "verdict": "pass"
+    },
+    "pass": false
+   },
+   "diagnostics": {
+    "distance_m_p50_matched": 2.4126,
+    "distance_m_p90_matched": 8.8799,
+    "matched_fraction": 0.7667,
+    "matched_fraction_leaf_basis_link_weighted": 0.6443,
+    "occupied_ratio_median": 1.0442,
+    "source_disagreement_baseline": 0.7949,
+    "source_disagreement_ways": 26876,
+    "source_disagreement_ways_without_r_link": 21365,
+    "y_down_distance_m_p50_matched": 8.0335,
+    "y_down_matched_fraction": 0.2906
+   },
+   "model": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.75,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 0.272,
+    "dist_over_limit_p90": 2.175,
+    "distance_m_p50": 3.74,
+    "distance_m_p90": 29.89,
+    "links": 5044,
+    "matched_distance_m_p50": 2.4126,
+    "matched_distance_m_p90": 8.8799,
+    "matched_fraction": 0.7667,
+    "occupied_ratio_median": 1.0442
+   },
+   "model_y_down": {
+    "cells": 12,
+    "cells_passing": 0,
+    "clip_exact_share_median": 0.75,
+    "coord_max_over_range_max": 1.0,
+    "coord_max_over_range_median": 1.0,
+    "dist_over_limit_p50": 1.667,
+    "dist_over_limit_p90": 10.137,
+    "distance_m_p50": 22.91,
+    "distance_m_p90": 139.27,
+    "links": 5044,
+    "matched_distance_m_p50": 8.0335,
+    "matched_distance_m_p90": 12.6932,
+    "matched_fraction": 0.2906,
+    "occupied_ratio_median": 0.0485
+   }
+  }
+ },
+ "rules": "* thresholds: MARGIN_MATCH = 1.5, MARGIN_DIST = 2.0, MAX_REL_LO = 0.9,\n    MAX_REL_HI = 1.0, AXIS_COVERAGE_MIN = 0.75, CLIP_EXACT_MIN = 0.9,\n    CLIP_NEAR = 0.005, MIN_CLIPPED_LINKS = 50, MIN_LINKS = 20,\n    MIN_LINKS_STRICT = 50, POOL_N = 12, GRID_N = 16, tol = harness.json\n    bands.name_record_distance_tolerance.tol (0.005).\n  * named cells: Brisbane CBD and Sydney from `spot_checks.json`; rural QLD\n    (Longreach) and outback (Birdsville) as the nearest undivided leaf to the\n    locality, searched from the finest listed level outwards, that has\n    >= MIN_LINKS road links.  Ranked by (level order, distance from locality\n    to leaf bbox, distance to bbox centre, ids).  Match quality is never an\n    input to the choice.  All four are evaluated.\n  * pooled cells: for each coordinate class (L0 urban, L0 sparse, L2, L4, L6,\n    L8, divided) take POOL_N blocks spread evenly through that level's\n    on-disc list of non-empty blocks (index round(i*(N-1)/(POOL_N-1))), and in\n    each chosen block the first leaf of that class, in leaf index order, with\n    >= MIN_LINKS road links; if a block has none, advance to the next block in\n    the list.  Deterministic and independent of match quality.\n  * cell_extent_m = max(width_m, height_m) of the cell bbox.  The cell used\n    for the OSM comparison is the geographic region the links occupy: the 4x4\n    integrated parcel for L0 sparse, else the leaf; it is the same for the\n    model and every alternative.\n  * OSM class set per level (like-for-like: R stores fewer roads at coarser\n    levels) -- L0/L2 all roads, L4 motorway..tertiary, L6/L8 motorway/trunk/\n    primary.  Non-road highway values are always excluded.\n  * match: each R link -> the OSM way minimising the median point-to-polyline\n    distance over the link's vertices.  Matched iff that median\n    <= tol * tol_extent_m.\n  * tol_extent (decided before the run): tol scales the FRAME extent\n    (max(width_m, height_m) of the frame the coordinates are decoded in), not\n    the leaf extent, because the band's own basis is R's quantisation grid and\n    that grid spans the frame.  Leaf-basis matched fractions are reported as a\n    diagnostic.\n  * frames: the model frame of a leaf comes from `walk._leaf_frame` (L0 sparse:\n    the 4x4 tile, range 16384); divided sub-parcels use the parent leaf's bbox\n    at range 4096 (sub 0 = SW quadrant); every other class uses the leaf bbox.\n    The range per class comes from coord_scale.json.\n  * CRITERION (a), relative discrimination, pooled per parcel class.  The\n    alternative set is {range/2, range*2, 32768}; divided adds own_bounds and\n    quadrant_4096; L0 sparse adds own_leaf_16384, own_leaf_4096 and\n    tile4x4_4096.  A class passes (a) iff the assumed range's pooled matched\n    fraction >= MARGIN_MATCH x every alternative's AND its pooled median\n    matched-link distance <= 1/MARGIN_DIST of every alternative's.  An\n    alternative with a zero matched fraction (or no matched links) passes\n    trivially (no division by zero).\n  * CRITERION (b), R-only (no OSM input), pooled per parcel class:\n      coord_max_over_range: pooled (over cells) median of each cell's\n        max coordinate / class range >= MAX_REL_LO and pooled maximum\n        <= MAX_REL_HI.\n      axis_coverage: over a GRID_N x GRID_N grid on the frame,\n        max(rows holding an R vertex, columns holding an R vertex) / GRID_N;\n        pooled median >= AXIS_COVERAGE_MIN.  (OSM-relative occupied fraction is\n        a diagnostic.)\n      clip_exact_share: among links with an end node within CLIP_NEAR * range\n        of a frame edge, the share where that coordinate is exactly 0 or\n        exactly the range; pooled >= CLIP_EXACT_MIN over >= MIN_CLIPPED_LINKS\n        such links, else `insufficient_data` (not a pass).\n  * named cells: each is judged on (a) and (b) on its own links; a named cell\n    is a gate failure only if it fails a criterion with >= MIN_LINKS_STRICT\n    links, otherwise its verdict is `low_n`.  The gate itself is decided on the\n    pooled per-class results.\n  * DIAGNOSTICS (no threshold, cannot fail the gate): matched fraction, p50/p90\n    residual distance of matched links, leaf-basis matched fraction, occupied\n    ratio, y-down orientation, and `source_disagreement_baseline` = fraction of\n    like-for-like OSM ways in the cell whose median distance to the nearest R\n    link exceeds the tolerance (roads OSM has and R does not).  The first run's\n    absolute criteria (MATCH_MIN 0.8, OCC_RATIO_MIN 0.5, CLIP_MIN 0.9 on the\n    per-cell `analyze` result) are retained only as legacy per-cell diagnostics.",
+ "tolerance": {
+  "rule": "distance_m <= tol * cell_extent_m",
+  "source": "parser/refdata/harness.json bands.name_record_distance_tolerance.tol",
+  "value": 0.005
+ }
+}

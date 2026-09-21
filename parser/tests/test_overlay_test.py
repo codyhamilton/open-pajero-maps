@@ -88,3 +88,45 @@ def test_pool_weights_every_link_once():
     assert p["cells"] == 2
     assert p["links"] == 2 * len(links)
     assert p["matched_fraction"] == 1.0
+
+
+def test_axis_coverage_spread_vs_confined():
+    g = np.linspace(0, 4095, 40)
+    spread = [(x, y) for x, y in zip(g, g[::-1])]
+    assert ot.axis_coverage(spread, 4096.0) >= ot.AXIS_COVERAGE_MIN
+    corner = [(x / 4.0, y / 4.0) for x, y in spread]  # confined to one quadrant
+    assert ot.axis_coverage(corner, 4096.0) < 0.3
+    # a single highway crossing the frame still fills one axis
+    line = [(x, 2000.0) for x in g]
+    assert ot.axis_coverage(line, 4096.0) >= ot.AXIS_COVERAGE_MIN
+
+
+def test_clip_exact_share_counts_exact_not_near_edge():
+    exact = {"ends": [(0.0, 100.0), (2000.0, 4096.0)]}
+    near = {"ends": [(3.0, 100.0), (2000.0, 4090.0)]}   # within 0.5% but not exact
+    interior = {"ends": [(1000.0, 1000.0), (2000.0, 2000.0)]}
+    e, n = ot.clip_links([exact, near, interior], 4096.0)
+    assert (e, n) == (1, 2)
+
+
+def _pool_dict(frac, dist):
+    return {"matched_fraction": frac, "matched_distance_m_p50": dist}
+
+
+def test_criterion_a_rejects_small_advantage():
+    model = _pool_dict(0.80, 5.0)
+    weak = {"alt": _pool_dict(0.60, 20.0)}       # ratio 1.33 < MARGIN_MATCH
+    assert not ot.criterion_a(model, weak)["pass"]
+    slow = {"alt": _pool_dict(0.10, 6.0)}        # distance advantage < MARGIN_DIST
+    assert not ot.criterion_a(model, slow)["pass"]
+    ok = {"alt": _pool_dict(0.10, 20.0), "zero": _pool_dict(0.0, None)}
+    r = ot.criterion_a(model, ok)
+    assert r["pass"] and r["alternatives"]["zero"]["match_ratio_trivial_zero_alt"]
+
+
+def test_criterion_b_pools_r_only_measures():
+    links, ways = _fixture()
+    r = ot.analyze(links, ways, CELL, TOL, 4096.0)
+    b = ot.criterion_b([r])
+    assert b["axis_coverage"]["median"] == r["axis_coverage"] >= 0.5  # sparse fixture
+    assert b["clip_exact_share"]["verdict"] == "insufficient_data"  # < 50 clipped
