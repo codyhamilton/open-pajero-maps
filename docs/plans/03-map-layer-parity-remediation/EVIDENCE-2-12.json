@@ -1,0 +1,105 @@
+{
+  "unit": "2-12",
+  "purpose": "Re-run every Phase 2 grounded criterion (DESIGN Amendment 2026-09-23) for real in this repo state and record currency/determinism findings.",
+  "reference": "/run/media/codyh/464210-8480",
+  "python": ".venv-rp/bin/python",
+  "committed_coord_scale_json_sha256": "f6bf9b951c7c8d2e19f47fbd9c95db22b19ecb7aa4d8ff8497e56e301b7abdde",
+  "criterion_1": {
+    "command": ".venv-rp/bin/python parser/tools/coord_scale_census.py --reference /run/media/codyh/464210-8480 --out <scratch>/coord_scale.json --workers 10",
+    "note": "walks and reports ranges/class_rule only; produces no header block",
+    "result": "walked 452199 parcels in 23s; l0 class-rule rule_accuracy 1.0 (222192/222192)",
+    "rerun_out_sha256": "b2d21b66e18f9d2f39ecf6f7334ef23f541c7adc394875a15b3b5c84b0a72485",
+    "comparison": {
+      "ranges_equal_to_committed": true,
+      "class_rule_equal_to_committed": true
+    },
+    "aggregate": {
+      "n_classes": 28,
+      "total_content_bearing_parcels": 452199,
+      "total_exceeds_max": 0
+    },
+    "cite": "quantity is exceeds_max, not exceptions (exceptions is a non-max observed peak, not a violation)",
+    "verdict": "PASS"
+  },
+  "criterion_5": {
+    "command": ".venv-rp/bin/python parser/tools/header_word_census.py --reference /run/media/codyh/464210-8480 --coord-scale <scratch>/coord_scale.json --out <scratch>/coord_scale_with_header.json --workers 10",
+    "result": "walked R in 52s; heldout accuracies dipid 1.0, dsflag 1.0, pmcode 0.999995, rlx 0.999977, rly 0.999988, size(word0) 1.0",
+    "rerun_out_sha256": "eef25d9012197535ab6cec7d2da88f81fe7cca84e147cc8dc27f64c3dedb0a33",
+    "comparison": {
+      "header_words_equal_to_committed": true,
+      "header_minus_pointer_examples_equal_to_committed": true,
+      "pointer_nonframe_targets_examples_equal_to_committed": false,
+      "note": "the examples-list drift is 2-08's carried, pre-existing, known non-regenerating concern (docstring/brief-known); ranges, class_rule and header.words are structurally identical to the committed profile, confirming currency"
+    },
+    "word_results": {
+      "0": {"heldout_accuracy": 1.0, "disagreements_with_checked_rule": 0, "note": "42-leaf figure is against a fixed 20-entry table, not the checked formula; formula itself has 0 disagreements"},
+      "6": {"heldout_accuracy": 1.0},
+      "7": {"heldout_accuracy": 0.999995, "residual_count": 28, "residual_name": "L0 single-link road parcels stored 0xFF00", "residual_status": "recorded tolerance, not exemption"},
+      "9": {"heldout_accuracy": 1.0},
+      "10": {"heldout_accuracy": 0.999977, "misses_are": "unseen table keys only (12 of 988865)"},
+      "11": {"heldout_accuracy": 0.999988, "misses_are": "unseen table keys only (12 of 988865)"}
+    },
+    "verdict": "PASS WITH RESIDUAL (word 7's 28-record named residual; words 10/11 miss only on unseen keys, never a wrong value)"
+  },
+  "criterion_2": {
+    "command": ".venv-rp/bin/python parser/tools/continuity_census.py --reference /run/media/codyh/464210-8480 --out <scratch>/continuity.json",
+    "rerun_out_sha256": "8041db0f6647144db0c0eef61fa1875cedd1f5250881a335fe6c2f9c49c1a15a",
+    "committed_evidence_2_10_sha256": "8041db0f6647144db0c0eef61fa1875cedd1f5250881a335fe6c2f9c49c1a15a",
+    "comparison": "byte-identical to committed EVIDENCE-2-10.json (whole-file sha match) -- fully deterministic re-run, no drift",
+    "headline": {
+      "over_threshold_total": 407,
+      "over_threshold_by_class": {"L0_urban": 26, "L0_sparse": 328, "L2": 5, "L4": 0, "L6": 9, "L8": 1, "divided_pardiv1": 38},
+      "l0_sparse_fully_enumerated": false,
+      "note": "L0_sparse's 328 over-threshold pairs exceed the 200-example residual cap -- not a record-by-record explained residual"
+    },
+    "verdict": "FAIL (tool's own verdict field: fail; over_threshold_total=407, not zero and not fully enumerated)"
+  },
+  "criterion_3": {
+    "command": "same run as criterion_2 (continuity_census.py writes both criterion_2_continuity and criterion_3_quadrant to one --out file)",
+    "comparison": "same byte-identical match as criterion_2 (single output file)",
+    "headline": {
+      "n_parents": 42,
+      "n_subparcels": 168,
+      "n_content_subparcels": 52,
+      "n_points": 1037716,
+      "violations_parent_local": 0,
+      "violations_sub_local": 798575
+    },
+    "verdict": "PASS (0 violations under parent_local, the settled contract reading)"
+  },
+  "criterion_4": {
+    "command": ".venv-rp/bin/python parser/tools/boundary_mirror_census.py --reference /run/media/codyh/464210-8480 --out <scratch>/boundary_mirror.json",
+    "rerun_out_sha256": "c859bdd6caa5c32f1ded0412e982fd58f64fd547704f361d353261b739a89290",
+    "committed_evidence_2_11_sha256": "c859bdd6caa5c32f1ded0412e982fd58f64fd547704f361d353261b739a89290",
+    "comparison": "byte-identical to committed EVIDENCE-2-11.json (whole-file sha match) -- fully deterministic re-run, no drift",
+    "per_class": {
+      "L0_urban": {"denominator": 408, "matched": 408, "violations": 0, "scale_mismatch": 114, "verdict": "pass"},
+      "L0_sparse": {"denominator": 11536, "matched": 2884, "violations": 8652, "scale_mismatch": 0, "tool_verdict_field": "pass_with_residual", "assessed_verdict": "FAIL -- 8652/11536 (75%) violations is a majority, not an explainable residual"},
+      "L2": {"denominator": 4067, "matched": 4061, "violations": 6, "scale_mismatch": 111, "verdict": "pass_with_residual"},
+      "L4": {"denominator": 825, "matched": 825, "violations": 0, "scale_mismatch": 45, "verdict": "pass"},
+      "L6": {"denominator": 746, "matched": 746, "violations": 0, "scale_mismatch": 104, "verdict": "pass"},
+      "L8": {"denominator": 66, "matched": 66, "violations": 0, "scale_mismatch": 23, "verdict": "pass"}
+    },
+    "note": "the tool's own verdict logic labels a class pass_with_residual whenever it can print at least min(violations,20) examples, regardless of what share of the denominator those examples cover; for L0_sparse that produces a misleading pass_with_residual label for a 75% violation rate. The gate verdict in GATE-2.md overrides the tool's per-class label for L0_sparse with the criterion's actual wording (zero violations, or an enumerated residual explained record by record) -- 8652 of 11536 cannot be explained record by record from 20 examples.",
+    "verdict": "FAIL (L0_sparse); PASS or PASS WITH RESIDUAL elsewhere"
+  },
+  "carried_finding_confirmed": {
+    "item": "coord_scale_census._work constructs WalkedParcel without frame_bounds",
+    "location": "parser/tools/coord_scale_census.py lines ~176-178",
+    "verified": true,
+    "detail": "walk.WalkedParcel(...) is built with level/blockset_index/block_index/parcel_type/leaf_path/bounds/file_offset/length/parcel/error but no frame_bounds, frame_range or frame_class kwargs. WalkedParcel.__post_init__ (parser/harness/walk.py) defaults frame_bounds to self.bounds (the leaf bbox) when frame_bounds is None. The 075fc99 fixer ('invert against the frame bbox, not the leaf') therefore never takes effect inside this tool's own worker path.",
+    "impact": "harmless for criterion 1's ranges/exceeds_max numbers, because decode and inversion in this tool both use the same (leaf) bbox and raw coordinate values round-trip exactly regardless of which bbox is used for the (unused-here) lat/lon conversion; the tool's test passes only on a synthetic parcel, not confirming frame-awareness",
+    "fix_status": "not fixed here, per brief"
+  },
+  "suite": {
+    "command": ".venv-rp/bin/python -m pytest parser/tests -q",
+    "result_before": "392 passed",
+    "result_after": "392 passed",
+    "note": "no code changed by this unit; regression guard only"
+  },
+  "lint": {
+    "command": ".venv-rp/bin/python parser/tools/lint_schema.py",
+    "before": "509 unverified rows, 0 errors",
+    "after": "513 unverified rows, 0 errors"
+  }
+}
