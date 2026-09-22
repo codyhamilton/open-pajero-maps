@@ -1,0 +1,129 @@
+{
+  "edge_tol_rel": 1e-06,
+  "leaf_cache_size": 64,
+  "levels": [
+    {
+      "blocks_visited": 40,
+      "crossing_counts": {
+        "cross_block": 6112,
+        "cross_blockset": 1472,
+        "same_block": 316000
+      },
+      "divided_resolved_count": 0,
+      "edge_assertions": {
+        "failed": 0,
+        "failures": [],
+        "passed": 323232
+      },
+      "leaves_visited": 80896,
+      "level": 0,
+      "neighbours_checked": 323584,
+      "sample_rule": "spread(40 of 1836 blocks, on-disc order, overlay_test.spread), every leaf of each",
+      "status_counts": {
+        "empty_slot": 32,
+        "outside_coverage": 320,
+        "resolved": 323232
+      }
+    },
+    {
+      "blocks_visited": 40,
+      "crossing_counts": {
+        "cross_block": 2376,
+        "cross_blockset": 2344,
+        "same_block": 147856
+      },
+      "divided_resolved_count": 4,
+      "edge_assertions": {
+        "failed": 0,
+        "failures": [],
+        "passed": 152184
+      },
+      "leaves_visited": 38144,
+      "level": 2,
+      "neighbours_checked": 152576,
+      "sample_rule": "spread(40 of 238 blocks, on-disc order, overlay_test.spread), every leaf of each",
+      "status_counts": {
+        "empty_slot": 224,
+        "outside_coverage": 168,
+        "resolved": 152184
+      }
+    },
+    {
+      "blocks_visited": 20,
+      "crossing_counts": {
+        "cross_blockset": 1776,
+        "same_block": 56112
+      },
+      "divided_resolved_count": 52,
+      "edge_assertions": {
+        "failed": 0,
+        "failures": [],
+        "passed": 57404
+      },
+      "leaves_visited": 14472,
+      "level": 4,
+      "neighbours_checked": 57888,
+      "sample_rule": "spread(40 of 20 blocks, on-disc order, overlay_test.spread), every leaf of each",
+      "status_counts": {
+        "empty_slot": 376,
+        "outside_coverage": 108,
+        "resolved": 57404
+      }
+    },
+    {
+      "blocks_visited": 6,
+      "crossing_counts": {
+        "cross_blockset": 217,
+        "same_block": 3455
+      },
+      "divided_resolved_count": 28,
+      "edge_assertions": {
+        "failed": 0,
+        "failures": [],
+        "passed": 3550
+      },
+      "leaves_visited": 918,
+      "level": 6,
+      "neighbours_checked": 3672,
+      "sample_rule": "full population (6 blocks)",
+      "status_counts": {
+        "empty_slot": 95,
+        "outside_coverage": 27,
+        "resolved": 3550
+      }
+    },
+    {
+      "blocks_visited": 6,
+      "crossing_counts": {
+        "cross_blockset": 57,
+        "same_block": 195
+      },
+      "divided_resolved_count": 20,
+      "edge_assertions": {
+        "failed": 0,
+        "failures": [],
+        "passed": 220
+      },
+      "leaves_visited": 63,
+      "level": 8,
+      "neighbours_checked": 252,
+      "sample_rule": "full population (6 blocks)",
+      "status_counts": {
+        "empty_slot": 25,
+        "outside_coverage": 7,
+        "resolved": 220
+      }
+    }
+  ],
+  "notes": {
+    "l0_is_per_leaf_slot": "L0 figures below are per top-level leaf slot on the global leaf grid, not per L0-sparse-tile frame (a sparse tile aliases 16 leaf slots to one Map Frame; each slot is still counted and looked up independently here)."
+  },
+  "reference": "/run/media/codyh/464210-8480",
+  "sample_blocks": 40,
+  "sample_levels": [
+    0,
+    2,
+    4
+  ],
+  "tool": "r_neighbours"
+}
