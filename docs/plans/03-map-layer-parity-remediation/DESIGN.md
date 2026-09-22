@@ -328,6 +328,15 @@ Units, as re-briefed for the restart (Decisions, "Amendment 2026-09-22 (user) �
 | 2-08 overlay re-run against the redefined gate (relative discrimination + R-only measures) | `briefs/2-08-overlay-rerun.md` | 2-05, 2-06 | 2-07 |
 | 2-04 schema rows and gate verdict (redefined criteria) | `briefs/2-04-schema-rows-and-gate.md` | 2-05, 2-06, 2-07, 2-08 | nothing |
 
+Units, as re-briefed for the grounded gate (Decisions, "Amendment 2026-09-23 (user) — grounded phase gates"). 2-01 through 2-08 are history and are neither re-run nor re-briefed; 2-04's gate verdict is superseded by 2-12. Criteria 1 and 5 already have committed tested tools (`coord_scale_census.py`, `header_word_census.py`) and get no new unit — 2-12 re-runs them. Criteria 2, 3 and 4 have no implementation under `parser/` and get 2-10 and 2-11, both of which need the neighbour lookup 2-09 builds.
+
+| Unit | Brief | Depends on | May run alongside |
+|---|---|---|---|
+| 2-09 R leaf-neighbour lookup (block- and blockset-crossing) | `briefs/2-09-neighbour-lookup.md` | nothing | nothing |
+| 2-10 cross-parcel continuity + divided quadrant containment (criteria 2, 3) | `briefs/2-10-continuity-and-quadrant.md` | 2-09 | 2-11 |
+| 2-11 boundary-node mirror across resolved neighbours (criterion 4) | `briefs/2-11-boundary-mirror.md` | 2-09 | 2-10 |
+| 2-12 grounded gate verdict (criteria 1–5) and schema rows | `briefs/2-12-grounded-gate-verdict.md` | 2-09, 2-10, 2-11 | nothing |
+
 ### Phase 3 — Native coordinates
 
 - Outcome: after assembly from the existing spool (encoders derive pixels from lat/lon; no re-extraction), decoding G shows per-level, per-class, per-division-state coordinate maxima equal to `coord_scale.json`; `range_for` feeds both the Python and C encoders (no `COORD_RANGE` constant remains); the `coord_scale` check PASSES; two builds are byte-identical at worker counts 1/4/12; `pytest parser/tests` passes.
