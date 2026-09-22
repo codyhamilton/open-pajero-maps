@@ -107,6 +107,140 @@ The first Phase 2 attempt did not close (see `IMPLEMENTATION.md` "Phase 2 gate v
 3. **Word 7 (pmcode) is resolved, not blocked.** `WORD7-ANALYSIS.md` is adopted as the model rule: Area Number 18 (`0x1200`) iff road data exists at L0 (for L2, iff any L0 descendant has a road sub-frame), else 255 (`0xFF00`); L4 and above always `0xFF00`; word 8 = 0 and word 7's low byte = 0. The 28 single-link L0 misses are a recorded residual **tolerance**, not an exemption. `docs/schema/map-frame.md`'s pmcode row is updated, and the generator's need for an L2 post-pass (L2 headers read their L0 children) is recorded as Phase 4 scope. The meaning of area 18 in the metafile stays documented-unknown.
 4. **Unit 2-04 runs** (schema rows and gate verdict). If the redefined gate genuinely fails, the phase does not close and the run reports `unsuccessful` with the evidence.
 
+### Amendment 2026-09-23 (user) — grounded phase gates
+
+The Phase 2 restart still did not close, and the post-mortem showed why: one criterion was grounded and passed cleanly, three were pooled statistical proxies against worker-picked thresholds and failed for reasons unrelated to the coordinate model. The user directs that every phase gate be re-examined on that axis. This amendment restates the Outcome of Phases 2 through 10. Phase 1 is closed and is not touched. Where an Outcome clause below conflicts with the clause of the same name in the Phases section, this amendment governs.
+
+**Classification rule.** Every gate criterion is now labelled **grounded** or **necessarily-statistical**.
+
+- **Grounded** means one of: a spec citation, by chapter and section; a per-record invariant whose violations are counted against a stated denominator, passing at zero violations or at an enumerated residual explained record by record; or a byte-exact, round-trip or closed-form identity.
+- **Necessarily-statistical** means no better ground truth exists. Such a criterion must state its denominator, must derive its band from a measured baseline rather than a chosen number, and must appear in the tool docstring before the run. A worker may never pick a threshold mid-phase.
+
+**Retirement rule.** Where the research below found a grounded measure underneath a fuzzy one, the fuzzy one is retired rather than retuned. A pooled similarity score whose failure mode is a property of the data's density, not of the hypothesis under test, cannot be rescued by moving its threshold.
+
+**Provenance.** Six read-only research units ran on 2026-09-23 against R and the archived spec. Their censuses live in the session scratchpad and are not checked in; each criterion below names its sample size, and no criterion is load-bearing until the check that asserts it is committed under `parser/`.
+
+#### Phase 2 — Outcome, as amended
+
+Grounded, all pass/fail with no thresholds:
+
+1. **Coordinate maximum vs class range.** No parcel holds a coordinate exceeding its class range. Spec 7.2.2.1.1.2 (road) and 7.3.2.2.1.1 (background): the u16 is bits 12:0 coordinate value and bits 15:13 relative position; a basic parcel is 4096 x 4096 and an integrated parcel up to 4096 x 8 = 32768. Per-parcel violation count; denominator all parcels in the class. Measured 7 of 7 classes, zero violations (`EVIDENCE-2-08.json` `gate.b_coord_max_over_range`).
+2. **Cross-parcel continuity — replaces `a_relative_discrimination`.** A road link crossing a parcel boundary is stored independently on both sides. Decoded under the assumed range and frame, the two copies of the shared endpoint must land on the same place. Per matched pair; denominator all boundary-adjacent endpoint pairs at a shared edge. Measured on R with no OSM: median separation 0.0 m at L2 (n=300), L4 (304), L6 (300), L8 (33), L0 urban (313) and L0 sparse (303, tile frame at 16384). Every alternative — half range, double range, and the 32768 negative control — gives a median separation between 1,370 m and 593,000 m with essentially every pair over 1 km. For `divided_pardiv1` the parent-4096 model yields 3,425 matched pairs across 13 groups (median 122 m, max 349 m, none over 1 km) while both renormalised alternatives find **no edge nodes at all** at their own predicted edge.
+3. **Divided sub-parcel containment — replaces `b_axis_coverage` for that class.** Spec 7.2.2.1.1.2 (2) and (3): "For a divided parcel: The normalized coordinate in the original basic parcel is used (Each relative position in the integrated parcel is set to 0). However, the range of the X-axis coordinate may be restricted depending on the parcel divided." Every shape point of sub-parcel k (0 = SW, 1 = SE, 2 = NW, 3 = NE) therefore lies inside quadrant k of the parent leaf's 4096 frame. Per-point violation count, zero permitted. Measured 52 sub-parcels, 77,207 shape points, zero outside their quadrant. This also disposes of the 0.5625 axis-coverage "failure": 9/16 is the geometric ceiling for a correctly decoded sub-quadrant, 8/16 for sub 3. The 0.75 threshold is retired for divided parcels; `axis_coverage` stands unchanged for the full-leaf classes, which already reach 1.0.
+4. **Boundary-node mirror — replaces `b_clip_exact_share`.** A link end-node whose raw coordinate is exactly 0 or exactly the class range is a genuine boundary crossing: the adjacent parcel holds an end-node at the mirrored coordinate, crossed axis = range - value, other axis unchanged. Per-node violation count; denominator all exact-coordinate nodes with a resolvable neighbour, with nodes at the extract's outer edge excluded from the denominator rather than failed. Measured L6 316/316 and L8 64/64 matched to 0 raw units. The pooled share is retired, not retuned: its premise — near an edge implies should be exact — is false. Non-exact near-edge nodes matched a neighbour only 64 times in 240, because at L6 and L8 R carries only motorway, trunk and primary, so most near-edge endpoints are ordinary dead ends. The crossing-to-dead-end ratio is a property of road density per level, so no threshold on this measure can separate a right model from a wrong one. Related spec mechanism: 7.2.2.1.1.3, the on-boundary node flag, which states that identical node information is held in neighbouring parcels.
+5. **Header-word rules agree exactly.** Words 0, 6, 7, 9, 10 and 11 are predicted on every R parcel. The criterion is exact agreement with every disagreement enumerated and individually explained — not "at least 99%", which was an arbitrary bar over rules that are closed-form or table-exact. Measured: word 0 exact with its 42 exceptions explained (L6 `nregion`=1 leaves with 21/22/23 mfde entries bordering divided parcels); word 6 exact; word 7 3,704,843 of 3,704,871 at L0 with the 28 single-link residual named in `WORD7-ANALYSIS.md` and exact at L2 and above; word 9 exact; words 10 and 11 miss only on table keys never seen, never on a wrong value.
+
+Diagnostic, not pass/fail: the OSM overlay match rate, reported with its recorded source-disagreement baseline. Amendment 2026-09-22 demoted the absolute match rate; this amendment demotes relative discrimination against OSM as well, on the evidence that it measures source drift — at Brisbane CBD and Sydney the 32768 negative control outscored the correct range — and that criterion 2 settles the same question inside R.
+
+Carried into the re-run: the `divided_pardiv1` continuity median of 122 m is most likely the edge-selection tolerance, 6 % of range, admitting nodes that are near but not on the boundary; a tighter tolerance is to be tried when the check is implemented. The mirror invariant was tested only on same-block neighbours, so block- and blockset-crossing neighbour lookup must exist before it is load-bearing.
+
+#### Phase 3 — Outcome, as amended
+
+Grounded: `range_for` feeds both encoders and no `COORD_RANGE` constant remains (a source check, not a judgement); the `coord_scale` check PASSES; two builds are byte-identical at worker counts 1, 4 and 12; `pytest parser/tests` passes. The first clause is tightened: "coordinate maxima equal `coord_scale.json`" is content-dependent — a sparse cell legitimately never reaches its maximum — and is replaced by **zero parcels exceeding their class range**, the same invariant Phase 2 uses, plus a **per-vertex quantisation round-trip**: lat/lon to pixel to lat/lon agrees within half a pixel for every vertex written.
+
+#### Phase 4 — Outcome, as amended
+
+Grounded: header words 0, 6, 7, 9 to 11 match the model on every parcel except the WP2 exemption list and the Phase 2 explained exceptions; `dipid` is valid on divided and undivided parcels; the `header_words` check PASSES; output bytes are unchanged where no sub-frame exceeds R's maxima; the stale comment at `synth.py` ~942 is corrected; builds are reproducible.
+
+The size cap stops being a guess. Spec 7.1.2, remark 2 on the Basic and Extended Data Frame Management Record: "This field describes the size of a data frame. When the data frame contains no actual data, 0000(16) is assigned to this field." The absent-entry sentinel for the mfde SWS word is 0x0000, not 0xFFFF — sentinel choice is per field in this format, and 7.2 shows both conventions in adjacent tables. So the u16 encodes its full range and **the per-sub-frame ceiling is 131,070 bytes**, not 131,068. Corroborated by a disc-wide census of 3,951,973 leaves: no present entry carries SWS 0xFFFF, no present entry carries SWS 0, no D-absent entry carries a non-zero SWS. R's largest observed SWS is 62,476, so R does not probe the boundary itself; the citation carries the decision and the census shows no contradiction.
+
+New grounded criterion, from a defect this research exposed: **the multilink shape-information-size word (road record offset 6, bits 11:0) equals the byte length of the node records plus their intermediate points**, on 10,063,962 of 10,063,962 links disc-wide with zero mismatches. Spec 7.2.2.1.1 item 2 classifies the parent field mandatory and 7.2.2.1.1.1 item 3-1 gives the size range 1 to 4095 with no zero-means-absent exception. **G writes 0 there.** That is a conformance defect against a now full-disc-verified invariant, and Phase 4 closes only when G writes the true value.
+
+Design gap resolved here rather than carried: `rg_size` (word 16) is non-zero on real L0 route-guidance parcels but is absent from the header-word exemption list this phase checks against. Phase 4 adds it to the exemption list explicitly, with its R census recorded, before the `header_words` check is allowed to pass.
+
+#### Phase 5 — Outcome, as amended
+
+Grounded:
+
+- **Every intermediate-point delta is representable.** Spec 7.2.2.1.1.2, remarks 4-1 and 4-2: "This field describes the offset from the X-axis [Y-axis] coordinate of the previous shape point to the X-axis [Y-axis] of the target shape point. The allowable range is between -128 and 127. Shape points are nodes or intermediate points." A generator must insert a node wherever a post-quantisation delta would exceed that range; zero violations.
+- **No type-2 divisions.** R uses 2x2 division exclusively: 0 of 3,951,973 parcels use type 2, at any level. Zero-violation criterion.
+- Intermediate points are written as `nip` deltas by both encoders, with C and Python byte-identical.
+
+Necessarily-statistical, with their bands now derived rather than picked:
+
+- **Per-level vertices per link and per km.** No spec answer exists for how many vertices a road should have. The band stays, but is stated against R's full-disc per-level node-per-link and nip-per-node distributions, with the denominator named, rather than against a single ratio. The snap-grid hypothesis was tested and rejected: coordinate divisibility by 2^k decays at roughly the 50-%-per-doubling rate of uniform low-order bits at every level (L8 divisible-by-4 is 0.270, not near 1.0), so there is no coarse fixed grid at higher levels to convert this into a quantisation invariant.
+- **Degenerate deltas.** "G emits zero zero-length segments" was a candidate hard invariant and is falsified: R emits (0,0) intermediate-point deltas at every level — L8 0.785 % of 3,567, L6 2.361 % of 25,797, L4 1.747 % of 174,793, L2 2.415 % of 755,448, L0 0.000154 % of 159,511,522. The criterion becomes a per-level pass fraction of non-degenerate intermediate points against those measured rates, not a zero-tolerance check. The four-order-of-magnitude L0 asymmetry is observed and unexplained; it is recorded, not rationalised.
+
+Removed as unprovable: **"divided-parent counts fall toward R's."** Neither ch.6 nor ch.7.1 states a numeric division trigger — ch.6.1.1 defines only the counting and addressing of parcels already divided — and the obvious hypothesis is falsified by counterexample: an L4 divided parent's four children sum to about 5,988 bytes of content while an undivided L4 parcel of about 118,456 bytes exists on the same disc. R's 42 divided parents (13 at L0, 4 at L2, 13 at L4, 7 at L6, 5 at L8) cannot be reproduced from any size rule now known. Phase 5 therefore gates only on the type-1-only invariant and on the per-sub-frame ceiling from Phase 4; **why** R divides a given parcel is recorded as a documented unknown with a first test, not as a target count. A per-sub-frame-specific size hypothesis — would any individual road, background or name sub-frame have exceeded 131,070 bytes undivided — was not tested and is the named next step.
+
+#### Phase 6 — Outcome, as amended
+
+Grounded, and two of them are shipping defects this research exposed:
+
+- **Display-scale flags.** Spec 7.3.2.2.1 defines background record +2 bits 15:11 as display-scale flags 1 to 5, with all-zero meaning never displayed. The value is an exact function of (level, type code) with zero exceptions over 7,080,921 shapes: L0 0x1C for all nine type codes; L2 0x18 for 288/289/290/291/321/578 and 0x10 for 322/640/1024 (599 of 599 instances, exactly the element-5 codes); L4, L6, L8 and L10 0x18; L12 0x10. **G writes 0** (`synth.py` sets the flag word to the delta count masked to 11 bits), so every background shape G emits is, by the spec's own definition, never drawn. Zero-violation criterion against a censused table.
+- **Element placement.** Element index is an exact function of (type code, shape class) across all seven levels with no counterexample in 7,080,921 shapes: (289,area)→7, (289,line)→8, (291,area)→7, (291,line)→8, (290,area)→7, (290,line)→8, (288,area)→7, (321,area)→2, (578,line)→9, (1024,area)→5, (640,area)→5, (322,area)→5, and at L10/L12 (306,line)→4 and (528,line)→19. **G groups everything by shape class into a single element.** Zero-violation criterion; this replaces the eight-point sample that was all the schema had.
+- **Polygon closure.** Spec 7.3.2.2.1.1.1 requires the delta sums to vanish. Measured 0 failures in 4,391,246 area records. Zero-violation criterion.
+- **Multiplication constant.** n is confined to 0 through 6 in 7,080,921 shapes; n = 7 never occurs. Membership criterion.
+- **Land mislabelled as sea = 0**, and the 102 G-only L0 cells enumerated with lat/lon and content and each classified. These are counts and enumerations, not thresholds, and stand as written.
+
+Necessarily-statistical: the per-level background type and count distribution, and the L0 CBD shape counts against R's 17/31/23/122. These are genuine distribution judgements; their band comes from the Phase 1 bands section and their denominator is stated.
+
+Dropped: **polygon winding.** Spec 7.3.2.2.1.1.1 calls for counterclockwise, but R itself does not comply — signed area is genuinely mixed at every level, for example L8 with 7,390 CCW, 4,502 CW and 628 degenerate of 12,520. A rule R breaks cannot gate G. Recorded as a spec/R conflict in the schema, with R's observation winning, and not used as a criterion at all.
+
+#### Phase 7 — Outcome, as amended
+
+Grounded:
+
+- **`display_class = f(road_type)`**, per record. The schema carried this on histogram-sum agreement, which two different mappings can satisfy. It is now a per-record full-disc census: 10,063,962 of 10,063,962 links, zero violations, every road type mapping to exactly one display class at every level. This converts the largest part of Phase 7 from a judgement into an invariant G satisfies by construction.
+- **Per-level value-set membership and level confinement.** Display class sets: L0 {0,2,3,4,7,9,10,12}, L2 {0,4,9,10,12}, L4–L8 {0,4,10,12}, L10/L12 empty. Road types {0,2,7,10} appear at every road-bearing level; {3} only at L0 and L2; {5,6,8,9,12} only at L0; {1,4,11,13,14,15} never appear anywhere. Emitting a value outside its level's set, or a level-confined code above its level, is a violation. This generalises "tracks are not in R's arterial class" and "no type 9 above L0" into one membership rule. Reserved road-type codes 14 and 15 are never emitted, 0 of 10,063,962 — spec ch.32.2.
+- The named-arterial fixtures (Ipswich Rd, Logan Rd, Bradfield Hwy, Pacific Motorway, Cahill Expressway) are exact per-row pass/fail, retained as a deterministic spot check rather than the primary gate.
+- Spec ch.32.1's stated drawing-order property — "class codes 15 to 3 are set in the order in which they are to be drawn" — is a spec-grounded ordering constraint on display class, independent of the labelling dispute, and is asserted as such.
+
+Necessarily-statistical, with its band now derived: **G and R assign the same road type to the same named road.** The threshold is set against R's own internal name-matched self-consistency ceiling, measured this session: L2 9.64 % inconsistent (126 of 1,307 multi-matched names, from 4,000 parcels and 9,795 matches), L0 6.21 % (46 of 741, from 3,000 parcels and 67,716 matches). R disagrees with itself 6 to 10 % of the time, so no R-to-G agreement check may demand better than roughly 90 to 94 %. This is the "record the source-disagreement baseline" discipline of Amendment 2026-09-22 applied to Phase 7.
+
+Recorded as a spec/R conflict, not a criterion: ch.32.1 marks display classes 9 and 10 reserved, yet R uses both heavily (370,408 and 848,884 links at L0). "Reserved codes are never emitted" therefore holds for road type and is false for display class; both facts go in the schema.
+
+Left open and named as such: **why R promotes a given road above L0.** The route-planning tag is 100 % at L2–L8 and 12.5 % at L0 — a hard descriptive fact about R — but no generative rule recoverable from the disc explains the selection. Phase 7 continues to rely on the calibrated `selection.json` for this and does not claim a deterministic gate over it.
+
+#### Phase 8 — Outcome, as amended
+
+Grounded:
+
+- **Name-offset pointers resolve.** Spec 7.3.2.2.1 item 5. Every background record with the name flag set (+6 bit 12) carries a 2-byte offset resolving to a real name record in the same parcel's name sub-frame: 2,258,249 of 2,258,249 at L0, zero dangling; never set at L2 and above. Zero-violation pointer invariant, far stronger than a proportions band.
+- **`priority` and `display_scale_flag` membership.** Exact per-level sets with zero exceptions in 16,378,969 name records: priority {0,32} at L0 and {32} everywhere else; display scale flag L12 {16}, L10 {24}, L2–L8 {16,24}, L0 {0,24,28}.
+- **Uppercase ASCII.** Zero lowercase or non-ASCII characters in 16,378,969 records, superseding the earlier 1,237-record sample that suggested about 1 % were not. Zero-violation criterion for the decoded string types.
+- The L0 `name_count` dry-run tally against R's 19.08M with the shortfall attributed record by record — an attribution exercise with a stated denominator, not a threshold.
+
+Corrected, because the old clause was false: **"every populated cell carries a region or ocean name" is an L0 phenomenon, not a cross-level invariant.** Measured per-level coverage of background-bearing cells that also hold at least one name record: L0 87.8 % (2,005,892 of 2,283,527), L2 5.45 % (12,619 of 231,564), L4 8.67 % (1,258 of 14,511), L6 22.2 % (208 of 939), L8 48.7 % (38 of 78), L10 33.3 % (3 of 9), L12 1 of 1. The criterion becomes per-level coverage against R's own per-level figure, which is a measured baseline rather than a blanket target.
+
+Necessarily-statistical: the string-type 4/5/6/1 proportions against R's per-level mix, band from the Phase 1 bands section, denominator stated.
+
+#### Phase 9 — Outcome, as amended
+
+The old "prevalence per level within the band of R's" is replaced. Most of these flags are not distributions at all once split by level.
+
+Grounded:
+
+- **Disc-wide constants**, zero exceptions across 10,063,962 link visits: `link_id_number_flag` always set, `infra_link_flag` clear, `route_number_flag` clear, `pseudo3d_updown` 0, `route_type_guidance_flag` clear, `altitude_flag` clear.
+- **`link_id_flag` at L0** equals `n_nodes > 2` exactly, 9,897,898 of 9,897,898. Spec 8-1-4 names it the Link ID Differential Information Delete Flag, which is consistent. The rule does not hold above L0 (25,365 counterexamples of 95,877 at L2) and is not claimed there.
+- **`selected_link_flag`** (spec 8-1-3, Navigable MultiLink Flag): exact 100 % set at L2 and exact 100 % clear at L4–L8 (70,187 of 70,187). At L0 it is determined by road type at 99.9697 % (9,894,899 of 9,897,898) with the residual confined to road types 7 and 12 and enumerated.
+- **`route_planning_tag`** (spec 8-1-8): exact at L2–L8. At L0 determined by road type at 99.9961 % with a 388-link residual, mostly road type 10, enumerated.
+- **Node bits follow the spec reading, not the code's names.** Bit 15 is one-way validity, 100 % zero across 30,348,229 nodes. Bits 14:13 are the one-way code, elevated to 29–37 % non-zero in the Melbourne, Sydney and Brisbane CBD boxes against a 4.14 % L0 baseline. Bit 12 is building-planned road, 100 % zero disc-wide — which rules out the code's "tunnel" label, since Australia has road tunnels. Bit 11 is tunnel, rare but non-zero (957 of 29,866,457 at L0). Bit 10 is bridge, 0.35 % at L0 and elevated two- to fivefold in the boxes around the Sydney Harbour, West Gate, Story and Gateway bridges; **the code does not decode it at all.** Phase 9 renames the fields to the spec's meanings and adds bit 10 before it populates anything from OSM, or it will write the wrong bits.
+- **mfde 12–19** resolve to the correct grid-neighbour Map Frame, and `n_entries = 20 + sum(count)` holds on 100 % of 15,537 R leaves at L4–L10. Exact resolution, not a distribution match.
+- **`flags.md` completeness** is lint-checkable: every flag and node bit R uses has a row. Enumeration, not a threshold.
+
+Necessarily-statistical, and only this one: **`toll_flag`.** No R-internal correlate exists — toll links spread across road types 0, 2, 3, 5, 6 and 7 at every level with no exclusive subset — so OSM `toll=yes` is the only source. Its band is R's exact measured per-level prevalence: L0 0.0116 %, L2 0.494 %, L4 0.828 %, L6 1.177 %, L8 1.448 %.
+
+Named as unresolved: `link_id_flag`'s rule above L0; and bit 11's identification as tunnel rests on prevalence plausibility, with no named-tunnel spot check yet run. Both are recorded, not assumed.
+
+#### Phase 10 — Outcome, as amended
+
+Already enumeration-based and grounded: byte-exact determinism over two builds, a capacity byte count against 4.7 GB, and every check either PASSING or carrying a ledger entry. One tightening: "contributing no processing-caused differences" is a judgement as written. Each ledger entry must name its cause from the closed vocabulary — *natural* or *documented-unknown* — and cite its evidence, and an entry that can cite neither is a defect, not a deviation.
+
+#### What this changes about the work, not only the measurement
+
+Three criteria above are not new ways of measuring the same thing; they are defects the old fuzzy gates could not see. G writes 0 into the background display-scale flag word, which the spec defines as never displayed. G writes 0 into the mandatory multilink shape-information-size word. G places every background record in a single element instead of R's censused (type code, shape class) element. Phases 4 and 6 own the fixes; none is authorised here, since this amendment is design work.
+
+#### Recommendation on closing Phase 2 — for the user to decide
+
+`b_coord_max_over_range` alone is not enough to close Phase 2, but not because it is weak. It is a one-sided bound: it proves no coordinate exceeds its range, which a range that is too *large* also satisfies. That is exactly why the 32768 control was not eliminated by it.
+
+The recommendation is to close Phase 2 on criteria 1 through 5 above, with criterion 2 — cross-parcel continuity — as the decisive companion. It is R-internal, immune to the source drift that broke the OSM measure, two-sided (it fails a range that is too large as hard as one that is too small), and it separates the assumed model from every alternative by three to five orders of magnitude. Criterion 3 carries a direct spec citation that names the divided-parcel model the continuity test independently selected. That is a stronger position than the plan has held at any point.
+
+Two conditions attach. The continuity and mirror checks currently exist only as scratchpad censuses; they must be committed under `parser/tools/` and re-run before the gate verdict counts, and the mirror check needs block-crossing neighbour lookup. And the `divided_pardiv1` continuity median of 122 m should be re-measured at a tighter edge tolerance to confirm it is matching noise rather than a small residual mis-model.
+
+**Phase 2 is not closed by this amendment.** The design is left ready for a re-run against the criteria above; the verdict is the user's.
+
 ## Assumption Ledger
 
 Each assumption names the phase that tests it and what happens if it is false.
