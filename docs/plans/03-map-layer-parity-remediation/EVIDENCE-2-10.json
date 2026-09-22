@@ -1,0 +1,5957 @@
+{
+  "constants": {
+    "EDGE_TOL_RAW": 4,
+    "MIN_PAIRS_PER_CLASS": 300,
+    "PAIR_TOL_RAW": 16,
+    "PASS_RAW_UNITS": 1.0,
+    "note": "pre-stated, not tuned"
+  },
+  "criterion_2_continuity": {
+    "classes": [
+      {
+        "alt_medians_m": {
+          "decoder_range": 2016.3936,
+          "double": 1181.8869,
+          "half": 2316.1316
+        },
+        "class": "L0_urban",
+        "empty_slot": 0,
+        "level": 0,
+        "max_m": 6899.1043,
+        "median_m": 0.0,
+        "n_leaves": 30,
+        "n_pairs": 405,
+        "neighbour_decode_failed": 0,
+        "neighbour_divided": 0,
+        "outside_coverage": 0,
+        "over_threshold": 26,
+        "over_threshold_fully_enumerated": true,
+        "p90_m": 0.0,
+        "population": 30,
+        "residual_examples": [
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  683
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  684
+                ]
+              ]
+            },
+            "sep_m": 4544.2603,
+            "threshold_m": 0.6223
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  715
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  716
+                ]
+              ]
+            },
+            "sep_m": 1047.7669,
+            "threshold_m": 0.6225
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  715
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  716
+                ]
+              ]
+            },
+            "sep_m": 1163.6231,
+            "threshold_m": 0.6225
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  744
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  745
+                ]
+              ]
+            },
+            "sep_m": 1.8682,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  744
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  776
+                ]
+              ]
+            },
+            "sep_m": 746.6401,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  744
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  776
+                ]
+              ]
+            },
+            "sep_m": 535.5384,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  744
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  776
+                ]
+              ]
+            },
+            "sep_m": 519.9753,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  744
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  776
+                ]
+              ]
+            },
+            "sep_m": 6304.4076,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  744
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  776
+                ]
+              ]
+            },
+            "sep_m": 5989.3118,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  744
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  776
+                ]
+              ]
+            },
+            "sep_m": 2209.4072,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  744
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  776
+                ]
+              ]
+            },
+            "sep_m": 1335.7324,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  744
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  776
+                ]
+              ]
+            },
+            "sep_m": 2082.3725,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  744
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  776
+                ]
+              ]
+            },
+            "sep_m": 3020.8101,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  744
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  776
+                ]
+              ]
+            },
+            "sep_m": 1574.2338,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  745
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  777
+                ]
+              ]
+            },
+            "sep_m": 1395.5134,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  745
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  777
+                ]
+              ]
+            },
+            "sep_m": 873.0521,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  745
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  777
+                ]
+              ]
+            },
+            "sep_m": 1061.736,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  745
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  777
+                ]
+              ]
+            },
+            "sep_m": 3550.744,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  745
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  777
+                ]
+              ]
+            },
+            "sep_m": 1444.7082,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  746
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  778
+                ]
+              ]
+            },
+            "sep_m": 4428.1551,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  746
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  778
+                ]
+              ]
+            },
+            "sep_m": 3014.5829,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  747
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  779
+                ]
+              ]
+            },
+            "sep_m": 5360.3656,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  747
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  779
+                ]
+              ]
+            },
+            "sep_m": 6160.5595,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                9,
+                [
+                  747
+                ]
+              ],
+              "tgt": [
+                23,
+                9,
+                [
+                  779
+                ]
+              ]
+            },
+            "sep_m": 6899.1043,
+            "threshold_m": 0.6227
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                17,
+                [
+                  868
+                ]
+              ],
+              "tgt": [
+                23,
+                17,
+                [
+                  900
+                ]
+              ]
+            },
+            "sep_m": 3737.4198,
+            "threshold_m": 0.6368
+          },
+          {
+            "pair_ids": {
+              "class": "L0_urban",
+              "level": 0,
+              "src": [
+                23,
+                17,
+                [
+                  868
+                ]
+              ],
+              "tgt": [
+                23,
+                17,
+                [
+                  900
+                ]
+              ]
+            },
+            "sep_m": 3087.8768,
+            "threshold_m": 0.6368
+          }
+        ],
+        "sample_rule": "spread(60 of 1836 blocks, on-disc order, overlay_test.spread), leaves in index order, until 300 pairs or population exhausted (quota reached)",
+        "scale_mismatch": 0,
+        "unpaired": 78
+      },
+      {
+        "alt_medians_m": {
+          "decoder_range": 4607.2501,
+          "double": 4607.2501,
+          "half": 11720.8165
+        },
+        "class": "L0_sparse",
+        "empty_slot": 0,
+        "level": 0,
+        "max_m": 11884.2716,
+        "median_m": 0.0,
+        "n_leaves": 2048,
+        "n_pairs": 3068,
+        "neighbour_decode_failed": 0,
+        "neighbour_divided": 0,
+        "outside_coverage": 0,
+        "over_threshold": 328,
+        "over_threshold_fully_enumerated": false,
+        "p90_m": 9214.5001,
+        "population": 2048,
+        "residual_examples": [
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  4
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  36
+                ]
+              ]
+            },
+            "sep_m": 9214.5062,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  5
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  37
+                ]
+              ]
+            },
+            "sep_m": 9214.5062,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  6
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  38
+                ]
+              ]
+            },
+            "sep_m": 9214.5062,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  7
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  39
+                ]
+              ]
+            },
+            "sep_m": 9214.5062,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  12
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  13
+                ]
+              ]
+            },
+            "sep_m": 11715.3628,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  13
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  14
+                ]
+              ]
+            },
+            "sep_m": 11715.3628,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  14
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  15
+                ]
+              ]
+            },
+            "sep_m": 11715.3628,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  28
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  60
+                ]
+              ]
+            },
+            "sep_m": 9214.5022,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  29
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  61
+                ]
+              ]
+            },
+            "sep_m": 9214.5022,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  30
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  62
+                ]
+              ]
+            },
+            "sep_m": 9214.5022,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  31
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  63
+                ]
+              ]
+            },
+            "sep_m": 9214.5022,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  36
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  68
+                ]
+              ]
+            },
+            "sep_m": 9214.5062,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  37
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  69
+                ]
+              ]
+            },
+            "sep_m": 9214.5062,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  38
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  70
+                ]
+              ]
+            },
+            "sep_m": 9214.5062,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  39
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  71
+                ]
+              ]
+            },
+            "sep_m": 9214.5062,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  44
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  45
+                ]
+              ]
+            },
+            "sep_m": 11718.0921,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  45
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  46
+                ]
+              ]
+            },
+            "sep_m": 11718.0921,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  46
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  47
+                ]
+              ]
+            },
+            "sep_m": 11718.0921,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  60
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  92
+                ]
+              ]
+            },
+            "sep_m": 9214.5022,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  61
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  93
+                ]
+              ]
+            },
+            "sep_m": 9214.5022,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  62
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  94
+                ]
+              ]
+            },
+            "sep_m": 9214.5022,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  63
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  95
+                ]
+              ]
+            },
+            "sep_m": 9214.5022,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  68
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  100
+                ]
+              ]
+            },
+            "sep_m": 9214.5062,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  69
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  101
+                ]
+              ]
+            },
+            "sep_m": 9214.5062,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  70
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  102
+                ]
+              ]
+            },
+            "sep_m": 9214.5062,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  71
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  103
+                ]
+              ]
+            },
+            "sep_m": 9214.5062,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  76
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  77
+                ]
+              ]
+            },
+            "sep_m": 11720.82,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  77
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  78
+                ]
+              ]
+            },
+            "sep_m": 11720.82,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  78
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  79
+                ]
+              ]
+            },
+            "sep_m": 11720.82,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  92
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  124
+                ]
+              ]
+            },
+            "sep_m": 9214.5022,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  93
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  125
+                ]
+              ]
+            },
+            "sep_m": 9214.5022,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  94
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  126
+                ]
+              ]
+            },
+            "sep_m": 9214.5022,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  95
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  127
+                ]
+              ]
+            },
+            "sep_m": 9214.5022,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  108
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  109
+                ]
+              ]
+            },
+            "sep_m": 11723.5463,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  109
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  110
+                ]
+              ]
+            },
+            "sep_m": 11723.5463,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  110
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  111
+                ]
+              ]
+            },
+            "sep_m": 11723.5463,
+            "threshold_m": 0.7153
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  276
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  277
+                ]
+              ]
+            },
+            "sep_m": 11737.1521,
+            "threshold_m": 0.7166
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  277
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  278
+                ]
+              ]
+            },
+            "sep_m": 11737.1521,
+            "threshold_m": 0.7166
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  278
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  279
+                ]
+              ]
+            },
+            "sep_m": 11737.1521,
+            "threshold_m": 0.7166
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  308
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  309
+                ]
+              ]
+            },
+            "sep_m": 11739.8691,
+            "threshold_m": 0.7166
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  309
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  310
+                ]
+              ]
+            },
+            "sep_m": 11739.8691,
+            "threshold_m": 0.7166
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  310
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  311
+                ]
+              ]
+            },
+            "sep_m": 11739.8691,
+            "threshold_m": 0.7166
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  340
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  341
+                ]
+              ]
+            },
+            "sep_m": 11742.5846,
+            "threshold_m": 0.7166
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  341
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  342
+                ]
+              ]
+            },
+            "sep_m": 11742.5846,
+            "threshold_m": 0.7166
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  342
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  343
+                ]
+              ]
+            },
+            "sep_m": 11742.5846,
+            "threshold_m": 0.7166
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  372
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  373
+                ]
+              ]
+            },
+            "sep_m": 11745.2984,
+            "threshold_m": 0.7166
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  373
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  374
+                ]
+              ]
+            },
+            "sep_m": 11745.2984,
+            "threshold_m": 0.7166
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  374
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  375
+                ]
+              ]
+            },
+            "sep_m": 11745.2984,
+            "threshold_m": 0.7166
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  648
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  649
+                ]
+              ]
+            },
+            "sep_m": 11769.654,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  648
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  680
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  649
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  650
+                ]
+              ]
+            },
+            "sep_m": 11769.654,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  649
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  681
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  650
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  651
+                ]
+              ]
+            },
+            "sep_m": 11769.654,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  650
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  682
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  651
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  683
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  680
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  681
+                ]
+              ]
+            },
+            "sep_m": 11772.3524,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  680
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  712
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  681
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  682
+                ]
+              ]
+            },
+            "sep_m": 11772.3524,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  681
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  713
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  682
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  683
+                ]
+              ]
+            },
+            "sep_m": 11772.3524,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  682
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  714
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  683
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  715
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  712
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  713
+                ]
+              ]
+            },
+            "sep_m": 11775.0491,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  712
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  744
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  713
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  714
+                ]
+              ]
+            },
+            "sep_m": 11775.0491,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  713
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  745
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  714
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  715
+                ]
+              ]
+            },
+            "sep_m": 11775.0491,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  714
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  746
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  715
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  747
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  744
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  745
+                ]
+              ]
+            },
+            "sep_m": 11777.7444,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  745
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  746
+                ]
+              ]
+            },
+            "sep_m": 11777.7444,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  746
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  747
+                ]
+              ]
+            },
+            "sep_m": 11777.7444,
+            "threshold_m": 0.7186
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  779
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  780
+                ]
+              ]
+            },
+            "sep_m": 2.1571,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  780
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  812
+                ]
+              ]
+            },
+            "sep_m": 9214.5007,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  781
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  813
+                ]
+              ]
+            },
+            "sep_m": 9214.5007,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  782
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  814
+                ]
+              ]
+            },
+            "sep_m": 9214.5007,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  783
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  815
+                ]
+              ]
+            },
+            "sep_m": 9214.5007,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  811
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  812
+                ]
+              ]
+            },
+            "sep_m": 2.1576,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  812
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  844
+                ]
+              ]
+            },
+            "sep_m": 9214.5007,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  813
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  845
+                ]
+              ]
+            },
+            "sep_m": 9214.5007,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  814
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  846
+                ]
+              ]
+            },
+            "sep_m": 9214.5007,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  815
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  847
+                ]
+              ]
+            },
+            "sep_m": 9214.5007,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  843
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  844
+                ]
+              ]
+            },
+            "sep_m": 2.158,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  844
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  876
+                ]
+              ]
+            },
+            "sep_m": 9214.5007,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  845
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  877
+                ]
+              ]
+            },
+            "sep_m": 9214.5007,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  846
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  878
+                ]
+              ]
+            },
+            "sep_m": 9214.5007,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  847
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  879
+                ]
+              ]
+            },
+            "sep_m": 9214.5007,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  875
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  876
+                ]
+              ]
+            },
+            "sep_m": 2.1585,
+            "threshold_m": 0.7193
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  896
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  928
+                ]
+              ]
+            },
+            "sep_m": 9214.501,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  897
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  929
+                ]
+              ]
+            },
+            "sep_m": 9214.501,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  898
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  930
+                ]
+              ]
+            },
+            "sep_m": 9214.501,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  899
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  931
+                ]
+              ]
+            },
+            "sep_m": 9214.501,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  908
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  940
+                ]
+              ]
+            },
+            "sep_m": 9214.5001,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  908
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  940
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  909
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  941
+                ]
+              ]
+            },
+            "sep_m": 9214.5001,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  909
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  941
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  910
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  942
+                ]
+              ]
+            },
+            "sep_m": 9214.5001,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  910
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  942
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  911
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  943
+                ]
+              ]
+            },
+            "sep_m": 9214.5001,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  911
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  943
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  912
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  913
+                ]
+              ]
+            },
+            "sep_m": 11791.1958,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  912
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  913
+                ]
+              ]
+            },
+            "sep_m": 11791.1981,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  913
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  914
+                ]
+              ]
+            },
+            "sep_m": 11791.1958,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  913
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  914
+                ]
+              ]
+            },
+            "sep_m": 11791.1981,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  914
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  915
+                ]
+              ]
+            },
+            "sep_m": 11791.1958,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  914
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  915
+                ]
+              ]
+            },
+            "sep_m": 11791.1981,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  924
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  956
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  925
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  957
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  926
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  958
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  927
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  959
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  928
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  960
+                ]
+              ]
+            },
+            "sep_m": 9214.501,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  929
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  961
+                ]
+              ]
+            },
+            "sep_m": 9214.501,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  930
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  962
+                ]
+              ]
+            },
+            "sep_m": 9214.501,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  931
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  963
+                ]
+              ]
+            },
+            "sep_m": 9214.501,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  940
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  972
+                ]
+              ]
+            },
+            "sep_m": 9214.5001,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  940
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  972
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  941
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  973
+                ]
+              ]
+            },
+            "sep_m": 9214.5001,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  941
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  973
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  942
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  974
+                ]
+              ]
+            },
+            "sep_m": 9214.5001,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  942
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  974
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  943
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  975
+                ]
+              ]
+            },
+            "sep_m": 9214.5001,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  943
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  975
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  944
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  945
+                ]
+              ]
+            },
+            "sep_m": 11793.8817,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  944
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  945
+                ]
+              ]
+            },
+            "sep_m": 11793.884,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  945
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  946
+                ]
+              ]
+            },
+            "sep_m": 11793.8817,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  945
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  946
+                ]
+              ]
+            },
+            "sep_m": 11793.884,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  946
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  947
+                ]
+              ]
+            },
+            "sep_m": 11793.8817,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  946
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  947
+                ]
+              ]
+            },
+            "sep_m": 11793.884,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  956
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  988
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  957
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  989
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  958
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  990
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  959
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  991
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  960
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  992
+                ]
+              ]
+            },
+            "sep_m": 9214.501,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  961
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  993
+                ]
+              ]
+            },
+            "sep_m": 9214.501,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  962
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  994
+                ]
+              ]
+            },
+            "sep_m": 9214.501,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  963
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  995
+                ]
+              ]
+            },
+            "sep_m": 9214.501,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  972
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1004
+                ]
+              ]
+            },
+            "sep_m": 9214.5001,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  972
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1004
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  973
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1005
+                ]
+              ]
+            },
+            "sep_m": 9214.5001,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  973
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1005
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  974
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1006
+                ]
+              ]
+            },
+            "sep_m": 9214.5001,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  974
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1006
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  975
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1007
+                ]
+              ]
+            },
+            "sep_m": 9214.5001,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  975
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1007
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  976
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  977
+                ]
+              ]
+            },
+            "sep_m": 11796.566,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  976
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  977
+                ]
+              ]
+            },
+            "sep_m": 11796.5683,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  977
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  978
+                ]
+              ]
+            },
+            "sep_m": 11796.566,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  977
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  978
+                ]
+              ]
+            },
+            "sep_m": 11796.5683,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  978
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  979
+                ]
+              ]
+            },
+            "sep_m": 11796.566,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  978
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  979
+                ]
+              ]
+            },
+            "sep_m": 11796.5683,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  988
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1020
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  989
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1021
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  990
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1022
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  991
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1023
+                ]
+              ]
+            },
+            "sep_m": 9214.5023,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1008
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1009
+                ]
+              ]
+            },
+            "sep_m": 11799.2488,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1008
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1009
+                ]
+              ]
+            },
+            "sep_m": 11799.2511,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1009
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1010
+                ]
+              ]
+            },
+            "sep_m": 11799.2488,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1009
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1010
+                ]
+              ]
+            },
+            "sep_m": 11799.2511,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1010
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1011
+                ]
+              ]
+            },
+            "sep_m": 11799.2488,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1010
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1011
+                ]
+              ]
+            },
+            "sep_m": 11799.2511,
+            "threshold_m": 0.7199
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1024
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1056
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1025
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1057
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1026
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1058
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1027
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1059
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1032
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1033
+                ]
+              ]
+            },
+            "sep_m": 11801.93,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1033
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1034
+                ]
+              ]
+            },
+            "sep_m": 11801.93,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1034
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1035
+                ]
+              ]
+            },
+            "sep_m": 11801.93,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1036
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1068
+                ]
+              ]
+            },
+            "sep_m": 9214.5003,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1037
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1069
+                ]
+              ]
+            },
+            "sep_m": 9214.5003,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1038
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1070
+                ]
+              ]
+            },
+            "sep_m": 9214.5003,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1039
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1071
+                ]
+              ]
+            },
+            "sep_m": 9214.5003,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1044
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1076
+                ]
+              ]
+            },
+            "sep_m": 9214.5018,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1045
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1077
+                ]
+              ]
+            },
+            "sep_m": 9214.5018,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1046
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1078
+                ]
+              ]
+            },
+            "sep_m": 9214.5018,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1047
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1079
+                ]
+              ]
+            },
+            "sep_m": 9214.5018,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1056
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1088
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1057
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1089
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1058
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1090
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1059
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1091
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1064
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1065
+                ]
+              ]
+            },
+            "sep_m": 11804.6096,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1065
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1066
+                ]
+              ]
+            },
+            "sep_m": 11804.6096,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1066
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1067
+                ]
+              ]
+            },
+            "sep_m": 11804.6096,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1068
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1100
+                ]
+              ]
+            },
+            "sep_m": 9214.5003,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1069
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1101
+                ]
+              ]
+            },
+            "sep_m": 9214.5003,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1070
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1102
+                ]
+              ]
+            },
+            "sep_m": 9214.5003,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1071
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1103
+                ]
+              ]
+            },
+            "sep_m": 9214.5003,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1076
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1108
+                ]
+              ]
+            },
+            "sep_m": 9214.5018,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1077
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1109
+                ]
+              ]
+            },
+            "sep_m": 9214.5018,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1078
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1110
+                ]
+              ]
+            },
+            "sep_m": 9214.5018,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1079
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1111
+                ]
+              ]
+            },
+            "sep_m": 9214.5018,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1088
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1120
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1089
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1121
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1090
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1122
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1091
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1123
+                ]
+              ]
+            },
+            "sep_m": 9214.5014,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1096
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1097
+                ]
+              ]
+            },
+            "sep_m": 11807.2877,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1097
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1098
+                ]
+              ]
+            },
+            "sep_m": 11807.2877,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1098
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1099
+                ]
+              ]
+            },
+            "sep_m": 11807.2877,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1100
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1132
+                ]
+              ]
+            },
+            "sep_m": 9214.5003,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1101
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1133
+                ]
+              ]
+            },
+            "sep_m": 9214.5003,
+            "threshold_m": 0.7206
+          },
+          {
+            "pair_ids": {
+              "class": "L0_sparse",
+              "level": 0,
+              "src": [
+                51,
+                12,
+                [
+                  1102
+                ]
+              ],
+              "tgt": [
+                51,
+                12,
+                [
+                  1134
+                ]
+              ]
+            },
+            "sep_m": 9214.5003,
+            "threshold_m": 0.7206
+          }
+        ],
+        "sample_rule": "spread(60 of 1836 blocks, on-disc order, overlay_test.spread), leaves in index order, until 300 pairs or population exhausted (quota reached)",
+        "scale_mismatch": 0,
+        "unpaired": 7956
+      },
+      {
+        "alt_medians_m": {
+          "decoder_range": 8062.6875,
+          "double": 4607.25,
+          "half": 9214.5
+        },
+        "class": "L2",
+        "empty_slot": 0,
+        "level": 2,
+        "max_m": 32.7831,
+        "median_m": 0.0,
+        "n_leaves": 345,
+        "n_pairs": 550,
+        "neighbour_decode_failed": 0,
+        "neighbour_divided": 0,
+        "outside_coverage": 0,
+        "over_threshold": 5,
+        "over_threshold_fully_enumerated": true,
+        "p90_m": 0.0,
+        "population": 345,
+        "residual_examples": [
+          {
+            "pair_ids": {
+              "class": "L2",
+              "level": 2,
+              "src": [
+                23,
+                0,
+                [
+                  682
+                ]
+              ],
+              "tgt": [
+                23,
+                0,
+                [
+                  714
+                ]
+              ]
+            },
+            "sep_m": 10.0663,
+            "threshold_m": 2.4896
+          },
+          {
+            "pair_ids": {
+              "class": "L2",
+              "level": 2,
+              "src": [
+                23,
+                0,
+                [
+                  682
+                ]
+              ],
+              "tgt": [
+                23,
+                0,
+                [
+                  714
+                ]
+              ]
+            },
+            "sep_m": 25.7947,
+            "threshold_m": 2.4896
+          },
+          {
+            "pair_ids": {
+              "class": "L2",
+              "level": 2,
+              "src": [
+                23,
+                0,
+                [
+                  682
+                ]
+              ],
+              "tgt": [
+                23,
+                0,
+                [
+                  714
+                ]
+              ]
+            },
+            "sep_m": 23.4009,
+            "threshold_m": 2.4896
+          },
+          {
+            "pair_ids": {
+              "class": "L2",
+              "level": 2,
+              "src": [
+                23,
+                0,
+                [
+                  682
+                ]
+              ],
+              "tgt": [
+                23,
+                0,
+                [
+                  714
+                ]
+              ]
+            },
+            "sep_m": 8.3869,
+            "threshold_m": 2.4896
+          },
+          {
+            "pair_ids": {
+              "class": "L2",
+              "level": 2,
+              "src": [
+                23,
+                0,
+                [
+                  682
+                ]
+              ],
+              "tgt": [
+                23,
+                0,
+                [
+                  714
+                ]
+              ]
+            },
+            "sep_m": 32.7831,
+            "threshold_m": 2.4896
+          }
+        ],
+        "sample_rule": "spread(60 of 238 blocks, on-disc order, overlay_test.spread), leaves in index order, until 300 pairs or population exhausted (quota reached)",
+        "scale_mismatch": 0,
+        "unpaired": 3
+      },
+      {
+        "alt_medians_m": {
+          "decoder_range": 32250.75,
+          "double": 18429.0,
+          "half": 36858.0
+        },
+        "class": "L4",
+        "empty_slot": 0,
+        "level": 4,
+        "max_m": 0.0,
+        "median_m": 0.0,
+        "n_leaves": 202,
+        "n_pairs": 416,
+        "neighbour_decode_failed": 0,
+        "neighbour_divided": 1,
+        "outside_coverage": 0,
+        "over_threshold": 0,
+        "over_threshold_fully_enumerated": false,
+        "p90_m": 0.0,
+        "population": 202,
+        "residual_examples": null,
+        "sample_rule": "spread(20 of 20 blocks, on-disc order, overlay_test.spread), leaves in index order, until 300 pairs or population exhausted (quota reached)",
+        "scale_mismatch": 0,
+        "unpaired": 0
+      },
+      {
+        "alt_medians_m": {
+          "decoder_range": 129003.0,
+          "double": 73716.0,
+          "half": 147432.0
+        },
+        "class": "L6",
+        "empty_slot": 0,
+        "level": 6,
+        "max_m": 421.1455,
+        "median_m": 0.0,
+        "n_leaves": 177,
+        "n_pairs": 383,
+        "neighbour_decode_failed": 0,
+        "neighbour_divided": 10,
+        "outside_coverage": 0,
+        "over_threshold": 9,
+        "over_threshold_fully_enumerated": true,
+        "p90_m": 0.0,
+        "population": 177,
+        "residual_examples": [
+          {
+            "pair_ids": {
+              "class": "L6",
+              "level": 6,
+              "src": [
+                1,
+                0,
+                [
+                  172
+                ]
+              ],
+              "tgt": [
+                1,
+                0,
+                [
+                  188
+                ]
+              ]
+            },
+            "sep_m": 107.9824,
+            "threshold_m": 43.9745
+          },
+          {
+            "pair_ids": {
+              "class": "L6",
+              "level": 6,
+              "src": [
+                1,
+                0,
+                [
+                  173
+                ]
+              ],
+              "tgt": [
+                1,
+                0,
+                [
+                  189
+                ]
+              ]
+            },
+            "sep_m": 107.9824,
+            "threshold_m": 43.9745
+          },
+          {
+            "pair_ids": {
+              "class": "L6",
+              "level": 6,
+              "src": [
+                1,
+                0,
+                [
+                  173
+                ]
+              ],
+              "tgt": [
+                1,
+                0,
+                [
+                  189
+                ]
+              ]
+            },
+            "sep_m": 71.9883,
+            "threshold_m": 43.9745
+          },
+          {
+            "pair_ids": {
+              "class": "L6",
+              "level": 6,
+              "src": [
+                1,
+                0,
+                [
+                  173
+                ]
+              ],
+              "tgt": [
+                1,
+                0,
+                [
+                  189
+                ]
+              ]
+            },
+            "sep_m": 410.2371,
+            "threshold_m": 43.9745
+          },
+          {
+            "pair_ids": {
+              "class": "L6",
+              "level": 6,
+              "src": [
+                1,
+                0,
+                [
+                  173
+                ]
+              ],
+              "tgt": [
+                1,
+                0,
+                [
+                  189
+                ]
+              ]
+            },
+            "sep_m": 421.1455,
+            "threshold_m": 43.9745
+          },
+          {
+            "pair_ids": {
+              "class": "L6",
+              "level": 6,
+              "src": [
+                1,
+                0,
+                [
+                  173
+                ]
+              ],
+              "tgt": [
+                1,
+                0,
+                [
+                  189
+                ]
+              ]
+            },
+            "sep_m": 227.3089,
+            "threshold_m": 43.9745
+          },
+          {
+            "pair_ids": {
+              "class": "L6",
+              "level": 6,
+              "src": [
+                1,
+                0,
+                [
+                  173
+                ]
+              ],
+              "tgt": [
+                1,
+                0,
+                [
+                  189
+                ]
+              ]
+            },
+            "sep_m": 227.3089,
+            "threshold_m": 43.9745
+          },
+          {
+            "pair_ids": {
+              "class": "L6",
+              "level": 6,
+              "src": [
+                1,
+                0,
+                [
+                  173
+                ]
+              ],
+              "tgt": [
+                1,
+                0,
+                [
+                  189
+                ]
+              ]
+            },
+            "sep_m": 170.4817,
+            "threshold_m": 43.9745
+          },
+          {
+            "pair_ids": {
+              "class": "L6",
+              "level": 6,
+              "src": [
+                1,
+                0,
+                [
+                  173
+                ]
+              ],
+              "tgt": [
+                1,
+                0,
+                [
+                  189
+                ]
+              ]
+            },
+            "sep_m": 206.3984,
+            "threshold_m": 43.9745
+          }
+        ],
+        "sample_rule": "spread(6 of 6 blocks, on-disc order, overlay_test.spread), leaves in index order, until 300 pairs or population exhausted (quota reached)",
+        "scale_mismatch": 0,
+        "unpaired": 10
+      },
+      {
+        "alt_medians_m": {
+          "decoder_range": 516012.0,
+          "double": 294864.0,
+          "half": 589728.0
+        },
+        "class": "L8",
+        "empty_slot": 0,
+        "level": 8,
+        "max_m": 1701.9954,
+        "median_m": 0.0,
+        "n_leaves": 21,
+        "n_pairs": 34,
+        "neighbour_decode_failed": 0,
+        "neighbour_divided": 5,
+        "outside_coverage": 0,
+        "over_threshold": 1,
+        "over_threshold_fully_enumerated": true,
+        "p90_m": 0.0,
+        "population": 21,
+        "residual_examples": [
+          {
+            "pair_ids": {
+              "class": "L8",
+              "level": 8,
+              "src": [
+                1,
+                0,
+                [
+                  26
+                ]
+              ],
+              "tgt": [
+                1,
+                0,
+                [
+                  27
+                ]
+              ]
+            },
+            "sep_m": 1701.9954,
+            "threshold_m": 209.6825
+          }
+        ],
+        "sample_rule": "spread(6 of 6 blocks, on-disc order, overlay_test.spread), leaves in index order, until 300 pairs or population exhausted (exhausted)",
+        "scale_mismatch": 0,
+        "unpaired": 9
+      },
+      {
+        "alt_medians_m": {
+          "decoder_range": 0.0,
+          "double": 0.0,
+          "half": 0.0,
+          "own_leaf_bbox_own_range": 1151.8125
+        },
+        "class": "divided_pardiv1",
+        "empty_slot": 0,
+        "level": 0,
+        "max_m": 9.2345,
+        "median_m": 0.0,
+        "n_leaves": 52,
+        "n_pairs": 984,
+        "neighbour_decode_failed": 0,
+        "neighbour_divided": 0,
+        "outside_coverage": 0,
+        "over_threshold": 38,
+        "over_threshold_fully_enumerated": true,
+        "p90_m": 0.0,
+        "population": 52,
+        "residual_examples": [
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 1,
+              "top": 254
+            },
+            "sep_m": 0.8753,
+            "threshold_m": 0.6707
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 2,
+              "sub_b": 3,
+              "top": 254
+            },
+            "sep_m": 0.8753,
+            "threshold_m": 0.6707
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 1,
+              "sub_b": 3,
+              "top": 287
+            },
+            "sep_m": 2.0897,
+            "threshold_m": 0.6709
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 1,
+              "top": 318
+            },
+            "sep_m": 2.7425,
+            "threshold_m": 0.6711
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 1,
+              "top": 318
+            },
+            "sep_m": 7.3113,
+            "threshold_m": 0.6711
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 2,
+              "sub_b": 3,
+              "top": 318
+            },
+            "sep_m": 0.8756,
+            "threshold_m": 0.6711
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 2,
+              "top": 318
+            },
+            "sep_m": 2.3476,
+            "threshold_m": 0.6711
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 2,
+              "top": 318
+            },
+            "sep_m": 2.3476,
+            "threshold_m": 0.6711
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 1,
+              "sub_b": 3,
+              "top": 318
+            },
+            "sep_m": 2.3476,
+            "threshold_m": 0.6711
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 1,
+              "sub_b": 3,
+              "top": 318
+            },
+            "sep_m": 7.0046,
+            "threshold_m": 0.6711
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 1,
+              "sub_b": 3,
+              "top": 318
+            },
+            "sep_m": 6.8042,
+            "threshold_m": 0.6711
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 2,
+              "top": 319
+            },
+            "sep_m": 2.2496,
+            "threshold_m": 0.6711
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 1,
+              "sub_b": 3,
+              "top": 351
+            },
+            "sep_m": 1.6872,
+            "threshold_m": 0.6713
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 2,
+              "sub_b": 3,
+              "top": 627
+            },
+            "sep_m": 2.7853,
+            "threshold_m": 0.6963
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 1,
+              "top": 1115
+            },
+            "sep_m": 2.937,
+            "threshold_m": 0.7207
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 1,
+              "top": 1115
+            },
+            "sep_m": 8.4361,
+            "threshold_m": 0.7207
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 2,
+              "sub_b": 3,
+              "top": 1115
+            },
+            "sep_m": 2.2339,
+            "threshold_m": 0.7207
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 2,
+              "sub_b": 3,
+              "top": 1115
+            },
+            "sep_m": 4.0076,
+            "threshold_m": 0.7207
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 2,
+              "top": 1115
+            },
+            "sep_m": 1.8347,
+            "threshold_m": 0.7207
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 2,
+              "top": 1115
+            },
+            "sep_m": 3.6033,
+            "threshold_m": 0.7207
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 2,
+              "top": 1115
+            },
+            "sep_m": 4.8742,
+            "threshold_m": 0.7207
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 2,
+              "top": 1115
+            },
+            "sep_m": 4.8742,
+            "threshold_m": 0.7207
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 2,
+              "top": 1115
+            },
+            "sep_m": 1.5472,
+            "threshold_m": 0.7207
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 1,
+              "sub_b": 3,
+              "top": 1115
+            },
+            "sep_m": 1.8347,
+            "threshold_m": 0.7207
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 1,
+              "top": 165
+            },
+            "sep_m": 1.3275,
+            "threshold_m": 0.7051
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 1,
+              "sub_b": 3,
+              "top": 165
+            },
+            "sep_m": 1.5181,
+            "threshold_m": 0.7051
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 1,
+              "sub_b": 3,
+              "top": 165
+            },
+            "sep_m": 1.6872,
+            "threshold_m": 0.7051
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 1,
+              "sub_b": 3,
+              "top": 165
+            },
+            "sep_m": 2.7057,
+            "threshold_m": 0.7051
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 2,
+              "sub_b": 3,
+              "top": 166
+            },
+            "sep_m": 7.8364,
+            "threshold_m": 0.7051
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 2,
+              "sub_b": 3,
+              "top": 166
+            },
+            "sep_m": 1.8286,
+            "threshold_m": 0.7051
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 1,
+              "sub_b": 3,
+              "top": 166
+            },
+            "sep_m": 3.2864,
+            "threshold_m": 0.7051
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 1,
+              "sub_b": 3,
+              "top": 166
+            },
+            "sep_m": 1.6872,
+            "threshold_m": 0.7051
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 2,
+              "top": 167
+            },
+            "sep_m": 0.9019,
+            "threshold_m": 0.7051
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 2,
+              "top": 167
+            },
+            "sep_m": 9.2345,
+            "threshold_m": 0.7051
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 2,
+              "sub_b": 3,
+              "top": 198
+            },
+            "sep_m": 2.1157,
+            "threshold_m": 0.7052
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 2,
+              "sub_b": 3,
+              "top": 198
+            },
+            "sep_m": 2.8209,
+            "threshold_m": 0.7052
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 1,
+              "top": 1824
+            },
+            "sep_m": 3.4543,
+            "threshold_m": 0.7536
+          },
+          {
+            "pair_ids": {
+              "class": "divided_pardiv1",
+              "level": 0,
+              "sub_a": 0,
+              "sub_b": 2,
+              "top": 1824
+            },
+            "sep_m": 1.6872,
+            "threshold_m": 0.7536
+          }
+        ],
+        "sample_rule": "whole population (52 parent(s) with content-bearing siblings)",
+        "scale_mismatch": 0,
+        "unpaired": 81
+      }
+    ],
+    "over_threshold_total": 407,
+    "verdict": "fail"
+  },
+  "criterion_3_quadrant": {
+    "n_parents": 42,
+    "n_points": 1037716,
+    "n_subparcels": 168,
+    "parents_per_level": {
+      "0": 13,
+      "2": 4,
+      "4": 13,
+      "6": 7,
+      "8": 5
+    },
+    "readings": {
+      "parent_local": {
+        "description": "raw (x, y) tested directly against quadrant k's [qx*HALF,(qx+1)*HALF] x [qy*HALF,(qy+1)*HALF] of the parent's 4096 frame -- coordinates absolute in the parent frame, per docs/schema/map-frame.md and test_overlay_test.py's PARENT fixture.",
+        "violations": 0
+      },
+      "sub_local": {
+        "description": "raw (x, y) tested against [0,HALF] x [0,HALF] regardless of k -- coordinates relative to the sub's own quadrant, offset not added back.",
+        "violations": 798575
+      }
+    },
+    "reference_population": {
+      "by_level": {
+        "0": 13,
+        "2": 4,
+        "4": 13,
+        "6": 7,
+        "8": 5
+      },
+      "n_content_subparcels": 52,
+      "n_parents": 42
+    },
+    "verdict": "pass",
+    "violations": 0,
+    "violations_examples": []
+  },
+  "reference": "/run/media/codyh/464210-8480",
+  "residual_enum_cap": 200,
+  "sample_blocks": 60,
+  "tool": "continuity_census"
+}
