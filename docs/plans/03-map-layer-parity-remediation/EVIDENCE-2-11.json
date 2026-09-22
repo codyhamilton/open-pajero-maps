@@ -1,0 +1,1049 @@
+{
+  "classes": [
+    {
+      "blocks_visited": 13,
+      "class": "L0_urban",
+      "class_range": 4096,
+      "corner_incidences": 0,
+      "crossing_breakdown": {
+        "matched": {
+          "cross_block": 0,
+          "cross_blockset": 0,
+          "same_block": 408
+        },
+        "violations": {
+          "cross_block": 0,
+          "cross_blockset": 0,
+          "same_block": 0
+        }
+      },
+      "denominator": 408,
+      "empty_slot": 0,
+      "level": 0,
+      "matched": 408,
+      "meets_min_nodes_per_class": true,
+      "n_candidate_nodes": 522,
+      "n_leaves": 16,
+      "outside_coverage": 0,
+      "sample_rule": "spread(40 of 1836 blocks, on-disc order, overlay_test.spread) first, then every leaf of each chosen block in spread order, continuing past 40 blocks if 300 qualifying nodes are not yet reached, until the threshold is met or the block list (full population) is exhausted",
+      "scale_mismatch": 114,
+      "total_edge_incidences": 522,
+      "verdict": "pass",
+      "violation_examples": [],
+      "violations": 0
+    },
+    {
+      "blocks_visited": 9,
+      "class": "L0_sparse",
+      "class_range": 16384,
+      "corner_incidences": 0,
+      "crossing_breakdown": {
+        "matched": {
+          "cross_block": 228,
+          "cross_blockset": 8,
+          "same_block": 2648
+        },
+        "violations": {
+          "cross_block": 0,
+          "cross_blockset": 0,
+          "same_block": 8652
+        }
+      },
+      "denominator": 11536,
+      "empty_slot": 0,
+      "level": 0,
+      "matched": 2884,
+      "meets_min_nodes_per_class": true,
+      "n_candidate_nodes": 11536,
+      "n_leaves": 18432,
+      "outside_coverage": 0,
+      "sample_rule": "spread(40 of 1836 blocks, on-disc order, overlay_test.spread) first, then every leaf of each chosen block in spread order, continuing past 40 blocks if 300 qualifying nodes are not yet reached, until the threshold is met or the block list (full population) is exhausted",
+      "scale_mismatch": 0,
+      "total_edge_incidences": 11536,
+      "verdict": "pass_with_residual",
+      "violation_examples": [
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            6642,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            10854,
+            0
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              32
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              0
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            6642,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            6642,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            10854,
+            0
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              33
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              1
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            6642,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            6642,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            10854,
+            0
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              34
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              2
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            6642,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            6642,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            10854,
+            0
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              35
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              3
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            6642,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            11068,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            12601,
+            7485
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              56
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              24
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            11068,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            13568,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            12601,
+            7485
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              56
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              24
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            13568,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "E",
+          "expected_mirrored_raw": [
+            0,
+            9518
+          ],
+          "nearest_neighbour_raw": [
+            12601,
+            7485
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              25
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              24
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            16384,
+            9518
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "E",
+          "expected_mirrored_raw": [
+            0,
+            11360
+          ],
+          "nearest_neighbour_raw": [
+            11068,
+            16384
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              25
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              24
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            16384,
+            11360
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            11068,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            12601,
+            7485
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              57
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              25
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            11068,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            13568,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            12601,
+            7485
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              57
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              25
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            13568,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "E",
+          "expected_mirrored_raw": [
+            0,
+            9518
+          ],
+          "nearest_neighbour_raw": [
+            12601,
+            7485
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              26
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              25
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            16384,
+            9518
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "E",
+          "expected_mirrored_raw": [
+            0,
+            11360
+          ],
+          "nearest_neighbour_raw": [
+            11068,
+            16384
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              26
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              25
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            16384,
+            11360
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            11068,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            12601,
+            7485
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              58
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              26
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            11068,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            13568,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            12601,
+            7485
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              58
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              26
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            13568,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "E",
+          "expected_mirrored_raw": [
+            0,
+            9518
+          ],
+          "nearest_neighbour_raw": [
+            12601,
+            7485
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              27
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              26
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            16384,
+            9518
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "E",
+          "expected_mirrored_raw": [
+            0,
+            11360
+          ],
+          "nearest_neighbour_raw": [
+            11068,
+            16384
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              27
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              26
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            16384,
+            11360
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            11068,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            12601,
+            7485
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              59
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              27
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            11068,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            13568,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            12601,
+            7485
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              59
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              27
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            13568,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            3705,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            2807,
+            0
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              60
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              28
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            3705,
+            16384
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "N",
+          "expected_mirrored_raw": [
+            10955,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            10417,
+            914
+          ],
+          "neighbour": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              60
+            ],
+            "level": 0
+          },
+          "source": {
+            "block_index": 8,
+            "blockset_index": 23,
+            "leaf_path": [
+              28
+            ],
+            "level": 0
+          },
+          "source_raw": [
+            10955,
+            16384
+          ]
+        }
+      ],
+      "violations": 8652
+    },
+    {
+      "blocks_visited": 13,
+      "class": "L2",
+      "class_range": 4096,
+      "corner_incidences": 2,
+      "crossing_breakdown": {
+        "matched": {
+          "cross_block": 37,
+          "cross_blockset": 18,
+          "same_block": 4006
+        },
+        "violations": {
+          "cross_block": 0,
+          "cross_blockset": 0,
+          "same_block": 6
+        }
+      },
+      "denominator": 4067,
+      "empty_slot": 0,
+      "level": 2,
+      "matched": 4061,
+      "meets_min_nodes_per_class": true,
+      "n_candidate_nodes": 4176,
+      "n_leaves": 12287,
+      "outside_coverage": 0,
+      "sample_rule": "spread(40 of 238 blocks, on-disc order, overlay_test.spread) first, then every leaf of each chosen block in spread order, continuing past 40 blocks if 300 qualifying nodes are not yet reached, until the threshold is met or the block list (full population) is exhausted",
+      "scale_mismatch": 111,
+      "total_edge_incidences": 4178,
+      "verdict": "pass_with_residual",
+      "violation_examples": [
+        {
+          "crossing": "same_block",
+          "edge": "S",
+          "expected_mirrored_raw": [
+            4048,
+            4096
+          ],
+          "nearest_neighbour_raw": [
+            4046,
+            4096
+          ],
+          "neighbour": {
+            "block_index": 1,
+            "blockset_index": 38,
+            "leaf_path": [
+              440
+            ],
+            "level": 2
+          },
+          "source": {
+            "block_index": 1,
+            "blockset_index": 38,
+            "leaf_path": [
+              472
+            ],
+            "level": 2
+          },
+          "source_raw": [
+            4048,
+            0
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "W",
+          "expected_mirrored_raw": [
+            4096,
+            27
+          ],
+          "nearest_neighbour_raw": [
+            4096,
+            26
+          ],
+          "neighbour": {
+            "block_index": 1,
+            "blockset_index": 38,
+            "leaf_path": [
+              472
+            ],
+            "level": 2
+          },
+          "source": {
+            "block_index": 1,
+            "blockset_index": 38,
+            "leaf_path": [
+              473
+            ],
+            "level": 2
+          },
+          "source_raw": [
+            0,
+            27
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "W",
+          "expected_mirrored_raw": [
+            4096,
+            988
+          ],
+          "nearest_neighbour_raw": [
+            4096,
+            989
+          ],
+          "neighbour": {
+            "block_index": 1,
+            "blockset_index": 38,
+            "leaf_path": [
+              472
+            ],
+            "level": 2
+          },
+          "source": {
+            "block_index": 1,
+            "blockset_index": 38,
+            "leaf_path": [
+              473
+            ],
+            "level": 2
+          },
+          "source_raw": [
+            0,
+            988
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "W",
+          "expected_mirrored_raw": [
+            4096,
+            1100
+          ],
+          "nearest_neighbour_raw": [
+            4096,
+            1099
+          ],
+          "neighbour": {
+            "block_index": 1,
+            "blockset_index": 38,
+            "leaf_path": [
+              472
+            ],
+            "level": 2
+          },
+          "source": {
+            "block_index": 1,
+            "blockset_index": 38,
+            "leaf_path": [
+              473
+            ],
+            "level": 2
+          },
+          "source_raw": [
+            0,
+            1100
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "W",
+          "expected_mirrored_raw": [
+            4096,
+            4096
+          ],
+          "nearest_neighbour_raw": [
+            4092,
+            4096
+          ],
+          "neighbour": {
+            "block_index": 1,
+            "blockset_index": 38,
+            "leaf_path": [
+              661
+            ],
+            "level": 2
+          },
+          "source": {
+            "block_index": 1,
+            "blockset_index": 38,
+            "leaf_path": [
+              662
+            ],
+            "level": 2
+          },
+          "source_raw": [
+            0,
+            4096
+          ]
+        },
+        {
+          "crossing": "same_block",
+          "edge": "W",
+          "expected_mirrored_raw": [
+            4096,
+            0
+          ],
+          "nearest_neighbour_raw": [
+            4092,
+            0
+          ],
+          "neighbour": {
+            "block_index": 1,
+            "blockset_index": 38,
+            "leaf_path": [
+              693
+            ],
+            "level": 2
+          },
+          "source": {
+            "block_index": 1,
+            "blockset_index": 38,
+            "leaf_path": [
+              694
+            ],
+            "level": 2
+          },
+          "source_raw": [
+            0,
+            0
+          ]
+        }
+      ],
+      "violations": 6
+    },
+    {
+      "blocks_visited": 5,
+      "class": "L4",
+      "class_range": 4096,
+      "corner_incidences": 0,
+      "crossing_breakdown": {
+        "matched": {
+          "cross_block": 0,
+          "cross_blockset": 7,
+          "same_block": 818
+        },
+        "violations": {
+          "cross_block": 0,
+          "cross_blockset": 0,
+          "same_block": 0
+        }
+      },
+      "denominator": 825,
+      "empty_slot": 0,
+      "level": 4,
+      "matched": 825,
+      "meets_min_nodes_per_class": true,
+      "n_candidate_nodes": 870,
+      "n_leaves": 4350,
+      "outside_coverage": 0,
+      "sample_rule": "spread(40 of 20 blocks, on-disc order, overlay_test.spread) first, then every leaf of each chosen block in spread order, continuing past 40 blocks if 300 qualifying nodes are not yet reached, until the threshold is met or the block list (full population) is exhausted",
+      "scale_mismatch": 45,
+      "total_edge_incidences": 870,
+      "verdict": "pass",
+      "violation_examples": [],
+      "violations": 0
+    },
+    {
+      "blocks_visited": 6,
+      "class": "L6",
+      "class_range": 4096,
+      "corner_incidences": 0,
+      "crossing_breakdown": {
+        "matched": {
+          "cross_block": 0,
+          "cross_blockset": 4,
+          "same_block": 742
+        },
+        "violations": {
+          "cross_block": 0,
+          "cross_blockset": 0,
+          "same_block": 0
+        }
+      },
+      "denominator": 746,
+      "empty_slot": 0,
+      "level": 6,
+      "matched": 746,
+      "meets_min_nodes_per_class": true,
+      "n_candidate_nodes": 850,
+      "n_leaves": 911,
+      "outside_coverage": 0,
+      "sample_rule": "full population (6 blocks)",
+      "scale_mismatch": 104,
+      "total_edge_incidences": 850,
+      "verdict": "pass",
+      "violation_examples": [],
+      "violations": 0
+    },
+    {
+      "blocks_visited": 6,
+      "class": "L8",
+      "class_range": 4096,
+      "corner_incidences": 0,
+      "crossing_breakdown": {
+        "matched": {
+          "cross_block": 0,
+          "cross_blockset": 2,
+          "same_block": 64
+        },
+        "violations": {
+          "cross_block": 0,
+          "cross_blockset": 0,
+          "same_block": 0
+        }
+      },
+      "denominator": 66,
+      "empty_slot": 0,
+      "level": 8,
+      "matched": 66,
+      "meets_min_nodes_per_class": false,
+      "n_candidate_nodes": 89,
+      "n_leaves": 58,
+      "outside_coverage": 0,
+      "sample_rule": "full population (6 blocks)",
+      "scale_mismatch": 23,
+      "total_edge_incidences": 89,
+      "verdict": "pass",
+      "violation_examples": [],
+      "violations": 0
+    }
+  ],
+  "constants": {
+    "EXACT_ONLY": true,
+    "MIN_NODES_PER_CLASS": 300,
+    "MIRROR_TOL_RAW": 0,
+    "note": "pre-stated, not tuned"
+  },
+  "frame_extent_tol_rel": 1e-06,
+  "notes": {
+    "denominator_is_edge_incidences": "denominator/matched/violations/outside_coverage/empty_slot/scale_mismatch are node-edge incidences, not nodes: a corner node (both axes exact) contributes one incidence per qualifying edge (two), counted once in corner_incidences and twice across the incidence counters.",
+    "divided_sources_out_of_scope": "this unit walks only ptype=0 (undivided) leaves of L0_urban, L0_sparse, L2, L4, L6, L8; a divided neighbour is still resolvable via r_neighbours and is counted as scale_mismatch, per the brief.",
+    "node_dedup": "candidate nodes are deduped by (x, y) raw coordinate within a leaf before edge classification, so a shared link endpoint at an intersection is counted once, not once per link."
+  },
+  "reference": "/run/media/codyh/464210-8480",
+  "reproduction_targets_same_block_only": {
+    "L6": "316/316 matched (scratchpad census, retired)",
+    "L8": "64/64 matched (scratchpad census, retired)"
+  },
+  "sample_blocks": 40,
+  "tool": "boundary_mirror_census"
+}
