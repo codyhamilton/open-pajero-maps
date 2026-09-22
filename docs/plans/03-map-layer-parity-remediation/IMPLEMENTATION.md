@@ -275,3 +275,21 @@ Per class (denominator/matched/violations/outside_coverage/empty_slot/scale_mism
 Crossing breakdown of matched (same_block/cross_block/cross_blockset): L0_urban 408/0/0; L0_sparse 2648/228/8; L2 4006/37/18; L4 818/0/7; L6 742/0/4; L8 64/0/2. Both `cross_block` and `cross_blockset` carried matches in aggregate (cross_block 265 total from L0_sparse+L2; cross_blockset 39 total, present in every class) — consistent with 2-09's structural finding that `cross_block` is structurally absent at L0_urban/L4/L6/L8 (one block per blockset there), so those levels' load-bearing claim rests on `cross_blockset` alone.
 Verdict per class: pass (L0_urban, L4, L6, L8); pass_with_residual (L2, 6 violations enumerated); **L0_sparse is a real criterion-4 failure** — 8652 of 11536 denominator, majority same-block (violation examples show the neighbour resolving to a leaf far from where the mirrored coordinate should land, e.g. expected [6642,0], nearest actual [10854,0]). Worker flags this `needs context`: not a code defect fixable within this unit's fixed-constant scope; may mean L0_sparse leaves don't tile edge-to-edge the way other classes do, or need a different mirror rule for the tile frame. Not fixed here; carried to 2-12/gate verdict.
 Deviations: none from the brief; no pre-stated constant changed after a run (confirmed).
+
+### 2-10 continuity-and-quadrant — done with concerns (68ec29e, Sonnet)
+Built: `parser/tools/continuity_census.py` (criterion 2, cross-parcel edge-node continuity, built once under `overlay_test.model_frame` and re-scored unchanged under `half`/`double`/`decoder_range`/`own_leaf_bbox_own_range`; criterion 3, per-point divided-quadrant containment under both `parent_local` and `sub_local` readings) and `parser/tests/test_continuity_census.py` (6 tests). Thresholds pre-stated in the docstring: `EDGE_TOL_RAW=4`, `PAIR_TOL_RAW=16`, `PASS_RAW_UNITS=1.0`, `MIN_PAIRS_PER_CLASS=300` (per brief `2-10-continuity-and-quadrant.md`).
+Evidence: `pytest parser/tests/test_continuity_census.py -q` 6/6 pass; full suite 386 -> 392 passed, 0 regressions; tool run twice against R, sha256 `8041db0f6647144db0c0eef61fa1875cedd1f5250881a335fe6c2f9c49c1a15a` both times identical.
+Per-class continuity (n_pairs/median_m/max_m/over_threshold/unpaired, `double`(range*2) median alongside):
+| class | n_pairs | median_m | max_m | over_threshold | unpaired | double_median_m |
+|---|---|---|---|---|---|---|
+| L0_urban | 405 | 0.0 | 6899.1 | 26 | 78 | 1181.9 |
+| L0_sparse | 3068 | 0.0 | 11884.3 | 328 | 7956 | 4607.3 |
+| L2 | 550 | 0.0 | 32.8 | 5 | 3 | 4607.3 |
+| L4 | 416 | 0.0 | 0.0 | 0 | 0 | 18429.0 |
+| L6 | 383 | 0.0 | 421.1 | 9 | 10 | 73716.0 |
+| L8 | 34 | 0.0 | 1702.0 | 1 | 9 | 294864.0 |
+| divided_pardiv1 | 984 | 0.0 | 9.2 | **38** | 81 | own_leaf_bbox_own_range=1151.8 (double n/a, 0.0) |
+
+Quadrant containment: `n_subparcels`=168, `n_points`=1,037,716, `violations`=0 under `parent_local` (0 violations => pass); `sub_local` reading gives 798,575 violations, reported per the brief's instruction as a non-chosen alternative, not a competing claim (matches the settled contract in `docs/schema/map-frame.md`/`overlay_test.model_frame`/`test_overlay_test.py` that divided sub-parcel coordinates are absolute in the parent leaf frame).
+**Verdict: criterion 2 = fail** (`over_threshold_total`=407 across all classes, not fully enumerated so not `pass_with_residual` per the brief's rule); **criterion 3 = pass** (0 violations under `parent_local`).
+Deviations: none in method; `SAMPLE_BLOCKS=60` and `RESIDUAL_ENUM_CAP=200` are the worker's own sampling/reporting choices, explicitly documented in the module docstring as *not* among the four pre-stated constants. No pre-stated constant changed after a run (confirmed). No contradiction found between the brief and cited contracts. One internal bug (`_cell_dict` `NoneType` subscript) was caught and fixed during development, before any real-disc evidence run — not a carried defect.
