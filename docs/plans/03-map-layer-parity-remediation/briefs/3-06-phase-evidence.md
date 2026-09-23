@@ -77,3 +77,7 @@ Do not spawn agents beyond read-only research helpers. If this unit needs one, i
 ## Amendment after the R background-clip research (orchestrator, 2026-09-24)
 
 Unit 3-07 (`briefs/3-07-clip-to-frame.md`) is inserted before 3-05: G now clips background geometry to the frame as R does, which changes the disc again. This unit depends on 3-07 as well; any baseline sha quoted above is superseded by 3-07's reported build. The per-vertex quantisation round-trip is measured over **written vertices after clipping** (3-07's definition in `quantisation_roundtrip.py`), not over raw spool vertices.
+
+## Amendment after 3-07 (orchestrator, 2026-09-24)
+
+Fixers 3-09 (every cell a background shape overlaps receives it) and 3-10 (no out-of-coverage point clamped into an edge cell; name records outside their cell dropped at assembly) run before this unit. This unit depends on both. Any baseline sha quoted above is superseded by 3-10's reported build. The per-vertex round-trip is expected to exit 0 over every kind.
