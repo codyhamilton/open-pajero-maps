@@ -45,6 +45,7 @@ from kiwiw import frame_table as ft
 from kiwiw.spill import FrameSpill
 from kiwiw import synth
 from kiwiw.grid import ReferenceGrid
+from kiwiw import overlap
 from kiwiw.spool import SpoolReader
 
 # Read-only imports from the extractor: TileGrid/parcel_bounds are pure
@@ -245,12 +246,17 @@ def _merge_stats(dst: dict, src: dict) -> None:
 
 def _level_frames(level: int, reader: SpoolReader, fixture: str | None,
                   threshold_bytes: int, mask, kind_limits, trim_stats, name_halo: bool,
-                  row_range: tuple[int | None, int | None] = (None, None)):
+                  row_range: tuple[int | None, int | None] = (None, None),
+                  overlap_dir: str | None = None):
     """Yield `(ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes)` for the
     cells of `level` whose row `iy` lies in `row_range` (`[lo, hi)`, `None` =
     unbounded), in canonical order. Rows partition the `(iy, ix)` stream, so
     the concatenation of consecutive row ranges equals the whole-level stream
-    and `trim_stats` counters add up (`_merge_stats`)."""
+    and `trim_stats` counters add up (`_merge_stats`).
+
+    `overlap_dir` is the level's `kiwiw.overlap.build_level` output: each
+    cell's own spool record gets the background shapes of other cells that
+    overlap it appended (3-09) before it is counted and encoded."""
     row_lo, row_hi = row_range
     tile_grid = TileGrid.from_reference(level)
     cell_range = _fixture_cell_range(level, fixture, tile_grid) if fixture else None
@@ -277,25 +283,28 @@ def _level_frames(level: int, reader: SpoolReader, fixture: str | None,
         if not (rect[0] <= rect[1] and rect[2] <= rect[3]):
             rect = None
 
+    ov = overlap.open_rows(overlap_dir, level, row_lo, row_hi)
     enc = cenc.make_encoder(level, tile_grid, threshold_bytes, kind_limits)
     if enc is not None:
         return _level_frames_c(level, reader, a, b, _in_fixture, _count, rect, enc,
-                               threshold_bytes, kind_limits, trim_stats, name_halo)
+                               threshold_bytes, kind_limits, trim_stats, name_halo, ov)
 
-    def _cells():
+    def _own():
         for ix, iy, content in reader.iter_cells(level, a, b):
-            if not _in_fixture(ix, iy):
-                continue
+            if _in_fixture(ix, iy):
+                yield ix, iy, content
+
+    def cells_iter():
+        stream = _own()
+        if rect is not None:
+            from kiwiw.spool import _empty_content
+            stream = _fill_masked(stream, rect, _empty_content)
+        for ix, iy, content in stream:
+            if ov is not None:
+                content = ov.merge_content(ix, iy, content)
             _count(len(content.get("roads") or []), len(content.get("backgrounds") or []),
                    len(content.get("names") or []))
             yield ix, iy, content
-
-    cells_iter = _cells
-    if rect is not None:
-        from kiwiw.spool import _empty_content
-
-        def cells_iter():
-            return _fill_masked(_cells(), rect, _empty_content)
 
     return divide.plan_divisions(
         level, cells_iter(), threshold_bytes, _encode_one,
@@ -307,7 +316,7 @@ _HDR_COUNTS = struct.Struct("<9Q")
 
 
 def _level_frames_c(level, reader, a, b, in_fixture, count, rect, enc,
-                    threshold_bytes, kind_limits, trim_stats, name_halo):
+                    threshold_bytes, kind_limits, trim_stats, name_halo, ov=None):
     """C fast path: the kernel yields the frame for every cell that fits and
     breaches no kind budget; every other cell goes through the Python oracle
     (`divide.plan_divisions` on that one cell), so output is identical."""
@@ -315,11 +324,8 @@ def _level_frames_c(level, reader, a, b, in_fixture, count, rect, enc,
 
     def _raw_cells():
         for ix, iy, raw in reader.iter_cell_raw(level, a, b):
-            if not in_fixture(ix, iy):
-                continue
-            h = _HDR_COUNTS.unpack_from(raw)
-            count(h[0], h[3], h[5])
-            yield ix, iy, raw
+            if in_fixture(ix, iy):
+                yield ix, iy, raw
 
     stream = _raw_cells()
     if rect is not None:
@@ -329,6 +335,11 @@ def _level_frames_c(level, reader, a, b, in_fixture, count, rect, enc,
     # in every worker. Divided cells get theirs inside `plan_divisions`.
     coord_range = g_frame_range(level)
     for ix, iy, raw in stream:
+        if ov is not None:
+            raw = ov.merge_raw(ix, iy, raw)
+        if raw is not None:
+            h = _HDR_COUNTS.unpack_from(raw)
+            count(h[0], h[3], h[5])
         frame = enc.encode(raw, ix, iy, coord_range=coord_range)
         if frame is not None:
             yield ix, iy, 0, 0, 0, frame
@@ -395,13 +406,14 @@ _WORKER: dict = {}
 
 def _chunk_worker(job):
     """Process-pool entry: encode one row range; return its frames + counters."""
-    (spool_dir, level, fixture, threshold_bytes, mask, kind_limits, name_halo, rows) = job
+    (spool_dir, level, fixture, threshold_bytes, mask, kind_limits, name_halo, rows,
+     overlap_dir) = job
     reader = _WORKER.get(spool_dir)
     if reader is None:
         reader = _WORKER[spool_dir] = SpoolReader(spool_dir)
     stats: dict = {}
     frames = list(_level_frames(level, reader, fixture, threshold_bytes, mask,
-                                kind_limits, stats, name_halo, rows))
+                                kind_limits, stats, name_halo, rows, overlap_dir))
     return frames, stats
 
 
@@ -415,7 +427,7 @@ def _encode_chunk(job):
     `frame_table.FRAME_DTYPE` array (one row per frame, stream order), so no
     frame bytes or per-frame objects are pickled back to the parent."""
     (spool_dir, level, fixture, threshold_bytes, mask, kind_limits, name_halo, rows,
-     spill_dir, want_digest) = job
+     spill_dir, want_digest, overlap_dir) = job
     reader = _WORKER.get(spool_dir)
     if reader is None:
         reader = _WORKER[spool_dir] = SpoolReader(spool_dir)
@@ -429,7 +441,8 @@ def _encode_chunk(job):
     parts: list[bytes] = []
     lines: list[str] | None = [] if want_digest else None
     for ix, iy, pt, sx, sy, fb in _level_frames(level, reader, fixture, threshold_bytes, mask,
-                                                kind_limits, stats, name_halo, rows):
+                                                kind_limits, stats, name_halo, rows,
+                                                overlap_dir):
         ix_a.append(ix); iy_a.append(iy); pt_a.append(pt)
         sx_a.append(sx); sy_a.append(sy); ln_a.append(len(fb))
         parts.append(fb)
@@ -446,7 +459,8 @@ def _encode_chunk(job):
 
 def _encode_level_indexed(level: int, reader: SpoolReader, fixture, threshold_bytes: int,
                           mask, kind_limits, trim_stats: dict, name_halo: bool,
-                          spill_dir: str, digest_fh=None, pool=None, jobs: int = 1):
+                          spill_dir: str, digest_fh=None, pool=None, jobs: int = 1,
+                          overlap_dir: str | None = None):
     """`_encode_level` for the indexed assembly path: returns
     `(FrameTable, n_parcels, total_frame_bytes, n_divided_parents, max_frame)`.
     Chunks are submitted heaviest-first (LPT scheduling) and consumed in row
@@ -458,7 +472,7 @@ def _encode_level_indexed(level: int, reader: SpoolReader, fixture, threshold_by
 
     def _job(rows):
         return (str(reader.spool_dir), level, fixture, threshold_bytes, mask, kind_limits,
-                name_halo, rows, spill_dir, digest_fh is not None)
+                name_halo, rows, spill_dir, digest_fh is not None, overlap_dir)
 
     if len(chunks) > 1:
         weights = _chunk_weights(reader, level, chunks)
@@ -503,7 +517,8 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
                    kind_limits: dict[str, int] | None = None,
                    trim_stats: dict | None = None,
                    name_halo: bool = False,
-                   spill=None, digest_fh=None, pool=None, jobs: int = 1
+                   spill=None, digest_fh=None, pool=None, jobs: int = 1,
+                   overlap_dir: str | None = None
                    ) -> tuple[list[tuple[int, int, bytes]],
                               list[tuple[int, int, int, int, int, bytes]], int, int]:
     """Encode every spooled parcel at `level`, splitting any parcel whose
@@ -534,7 +549,7 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
         st: dict = {}
         yield (_level_frames(level, reader, fixture, threshold_bytes, mask, kind_limits,
                              st if trim_stats is not None else None, name_halo,
-                             chunks[0]), st)
+                             chunks[0], overlap_dir), st)
 
     def _parallel():
         from collections import deque
@@ -549,7 +564,7 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
                     return
                 pending.append(pool.apply_async(_chunk_worker, ((
                     str(reader.spool_dir), level, fixture, threshold_bytes, mask,
-                    kind_limits, name_halo, rows),)))
+                    kind_limits, name_halo, rows, overlap_dir),)))
         _fill()
         while pending:
             frames, st = pending.popleft().get()
@@ -595,6 +610,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     kind_budgets = _load_level_kind_budgets()
     trimmed_items: dict[str, dict] = {}
     halo_names: dict[str, int] = {}
+    overlap_stats: dict[str, dict] = {}
 
     spool_stats = {lvl: reader.stats(lvl) for lvl in levels}
     # Optional per-frame digest listing (plan 02): localizes a byte mismatch to a
@@ -629,18 +645,31 @@ def run(spool_dir: str, out_path: str, levels: list[int],
             continue
         threshold_bytes = thresholds.get(level, U16_MAPFRAME_BYTE_CEILING)
         trim_stats: dict = {}
+        # 3-09: every existing cell a background shape overlaps receives it.
+        t_ov = time.monotonic()
+        window = _fixture_cell_range(level, fixture, TileGrid.from_reference(level)) \
+            if fixture else None
+        overlap_dir, ov_stats = overlap.build_level(
+            spool_dir, level, spill_dir, mask_rect=(mask or {}).get(level), pool=pool,
+            jobs=workers, window=window)
+        overlap_stats[str(level)] = ov_stats
+        print(f"level {level}: overlap: {ov_stats['shared_shapes']:,} shapes shared into "
+              f"{ov_stats['edge_cells']:,} edge + {ov_stats['interior_cells']:,} interior "
+              f"cells, {ov_stats['skipped_missing_cells']:,} overlapped cells skipped "
+              f"(not emitted) [{time.monotonic() - t_ov:.1f}s]", flush=True)
         if indexed:
             table, n_parcels, n_bytes, n_div_parents, max_frame = _encode_level_indexed(
                 level, reader, fixture, threshold_bytes, mask, kind_budgets.get(level) or None,
                 trim_stats, (level in NAME_HALO_LEVELS), spill_dir, digest_fh=digest_fh,
-                pool=pool, jobs=workers)
+                pool=pool, jobs=workers, overlap_dir=overlap_dir)
             table_files += table.files
         else:
             parcels, divided_parcels, n_parcels, n_bytes = _encode_level(
                 level, grid, reader, fixture, threshold_bytes, mask=mask,
                 kind_limits=kind_budgets.get(level) or None, trim_stats=trim_stats,
                 name_halo=(level in NAME_HALO_LEVELS), spill=spill, digest_fh=digest_fh,
-                pool=pool, jobs=workers)
+                pool=pool, jobs=workers, overlap_dir=overlap_dir)
+        overlap.remove(overlap_dir)  # parent's copy; workers drop theirs on the next level
         if trim_stats.get("halo_names"):
             print(f"level {level}: name halo added {trim_stats['halo_names']:,} "
                   f"neighbouring road-name records to divided sub-cells",
@@ -713,6 +742,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         "layers_present": LAYERS_PRESENT,
         "trimmed_items": trimmed_items,
         "halo_names": halo_names,
+        "overlap": overlap_stats,
         "fixture": fixture,
     }
     manifest_path = os.path.join(os.path.dirname(out_path) or ".", "manifest.json")

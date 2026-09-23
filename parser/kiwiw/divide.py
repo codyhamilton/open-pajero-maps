@@ -39,10 +39,18 @@ modify the extractor):
   one on-disc link can carry that identity after division; WP2 must be
   aware its registry key is not guaranteed unique after a divided-parcel
   split).
-- Backgrounds and names are *not* clipped -- each whole shape/point is
-  assigned wholesale to whichever sub-cell contains its centroid
-  (backgrounds) or point (names), exactly as the original extractor
-  assigns whole shapes to a top-level parcel.
+- Backgrounds go to *every* sub-cell whose rectangle they overlap (Plan 03,
+  3-09, as R does): a shape whose raw bounding box in the parent frame lies
+  in one sub-cell goes to that one; otherwise to each candidate sub-cell
+  where clipping it to that sub-cell's rectangle writes something (the same
+  clip the encoder applies, `cenc.bg_shape_records` / `clip.shape_pieces`).
+  Each sub-parcel then clips the shape to its own rectangle (3-07), so the
+  sub-parcels on either side of an internal boundary meet. Shapes keep their
+  parent order within each sub-cell. A point shape (class 0) goes to the
+  sub-cell containing it.
+- Names are *not* clipped -- each point is assigned wholesale to whichever
+  sub-cell contains it, exactly as the original extractor assigns names to
+  a top-level parcel.
 
 Per-node road attributes (`oneway`/`tunnel`/`bridge`/`planned`) are not
 reproduced on re-split sub-chains: `split_polyline_by_parcel()` operates on
@@ -231,11 +239,71 @@ def _sub_frame(level: int, parent: BoundingBox, parcel_type: int, nx: int,
     return SubParcelBounds(**fields, clip_rect=sub_rect(cr, nx, nx, cell[0], cell[1]))
 
 
-def _retile_content(content: dict, sub_grid: TileGrid) -> dict[tuple[int, int], dict]:
+def _bg_sub_cells(shape, level: int, parent: BoundingBox, parcel_type: int,
+                  nx: int) -> list[tuple[int, int]]:
+    """The sub-cells of a `pardiv<parcel_type>` division of `parent` that a
+    background shape overlaps -- those whose clip of it writes something --
+    in ascending `(sub_iy, sub_ix)` order (see module docstring)."""
+    from . import cenc
+    from .clip import shape_pieces, to_raw
+    coords = shape.coords
+    if not coords:
+        return []
+    cr0 = g_frame_range(level, parcel_type, 0)
+    fx, fy = to_raw(coords, parent, cr0)
+    x0, x1, y0, y1 = min(fx), max(fx), min(fy), max(fy)
+    cand = []
+    for sy in range(nx):
+        for sx in range(nx):
+            cr = g_frame_range(level, parcel_type, sy * nx + sx)
+            k = cr / cr0
+            rx0 = sx * cr // nx
+            ry0 = sy * cr // nx
+            rx1 = (sx + 1) * cr // nx
+            ry1 = (sy + 1) * cr // nx
+            if x0 * k <= rx1 and x1 * k >= rx0 and y0 * k <= ry1 and y1 * k >= ry0:
+                cand.append((sx, sy))
+    if len(cand) <= 1:
+        if not cand:
+            return []
+        sx, sy = cand[0]
+        cr = g_frame_range(level, parcel_type, sy * nx + sx)
+        rx0, ry0 = sx * cr // nx, sy * cr // nx
+        rx1, ry1 = (sx + 1) * cr // nx, (sy + 1) * cr // nx
+        k = cr / cr0
+        if rx0 <= x0 * k and x1 * k <= rx1 and ry0 <= y0 * k and y1 * k <= ry1:
+            return cand  # wholly inside one sub-cell: no clip needed
+    out = []
+    for cell in cand:
+        sb = _sub_frame(level, parent, parcel_type, nx, cell)
+        cr = sb.coord_range
+        recs = cenc.bg_shape_records(shape, sb, cr)
+        if recs is None:
+            gx, gy = to_raw(coords, parent, cr)
+            recs = shape_pieces(gx, gy, shape.shape_class == 2, sb.clip_rect,
+                                shape.mult_const)
+        if recs:
+            out.append(cell)
+    return out
+
+
+def _retile_content(content: dict, sub_grid: TileGrid,
+                    parent: BoundingBox | None = None) -> dict[tuple[int, int], dict]:
     """Re-tile one parcel's content dict (`{"roads": [...], "backgrounds":
     [...], "names": [...]}`, the shape `SpoolReader.iter_level()` yields)
     into `sub_grid`'s cells. Returns `{(sub_ix, sub_iy): content}`; cells
-    with no content are simply absent (no empty placeholder entries)."""
+    with no content are simply absent (no empty placeholder entries).
+
+    `parent` is the frame the sub-parcels are encoded against (the parent
+    cell's `frame_bounds`); it defaults to `sub_grid`'s extent. Backgrounds
+    go to every sub-cell they overlap (module docstring, 3-09)."""
+    nx = sub_grid.nx
+    parcel_type = {n: t for t, (n, _m) in _SUBGRID_DIMS.items()}[nx]
+    if parent is None:
+        parent = BoundingBox(lat_lo=sub_grid.disc_lat_lo,
+                             lat_hi=sub_grid.disc_lat_lo + sub_grid.disc_lat_span,
+                             lon_lo=sub_grid.disc_lon_lo,
+                             lon_hi=sub_grid.disc_lon_lo + sub_grid.disc_lon_span)
     out: dict[tuple[int, int], dict] = {}
 
     def _bucket(cell: tuple[int, int]) -> dict:
@@ -262,12 +330,13 @@ def _retile_content(content: dict, sub_grid: TileGrid) -> dict[tuple[int, int], 
         coords = shape.coords
         if not coords:
             continue
-        lat = sum(c[0] for c in coords) / len(coords)
-        lon = sum(c[1] for c in coords) / len(coords)
-        cell = assign_to_parcel(lat, lon, sub_grid)
-        if cell is None:
+        if shape.shape_class not in (1, 2):  # a point: the sub-cell holding it
+            cell = assign_to_parcel(coords[0][0], coords[0][1], sub_grid)
+            if cell is not None:
+                _bucket(cell)["backgrounds"].append(shape)
             continue
-        _bucket(cell)["backgrounds"].append(shape)
+        for cell in _bg_sub_cells(shape, sub_grid.level, parent, parcel_type, nx):
+            _bucket(cell)["backgrounds"].append(shape)
 
     for rec in content.get("names") or []:
         if rec.lat is None or rec.lon is None:
@@ -700,7 +769,7 @@ def plan_divisions(
         for parcel_type in (1, 2):
             nx, ny = _SUBGRID_DIMS[parcel_type]
             sub_grid = _sub_tile_grid(level, bounds, nx, ny)
-            sub_content = _retile_content(content, sub_grid)
+            sub_content = _retile_content(content, sub_grid, bounds)
 
             frames: dict[tuple[int, int], bytes] = {}
             no_halo: set = set()

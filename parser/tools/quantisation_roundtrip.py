@@ -248,21 +248,53 @@ def _iter_legacy(spool_dir: str, level: int, start: int, stop: int):
             yield ix, iy, content_to_columns(merged)
 
 
+def _with_borrowed(cells, rows):
+    """3-09: each spool cell also writes the background shapes of other
+    cells that overlap it (`kiwiw.overlap`); measure those too."""
+    from kiwiw.spool import merge_columns
+    for ix, iy, cols in cells:
+        extra = rows.extra_columns(ix, iy) if rows is not None else None
+        yield ix, iy, (cols if extra is None else merge_columns([cols, extra]))
+
+
 def _work(args) -> tuple:
-    spool_dir, level, start, stop = args
+    spool_dir, level, start, stop, ov_dir = args
     if _legacy(spool_dir):
         return level, run_cells(level, _iter_legacy(spool_dir, level, start, stop), Frames(level))
+    from kiwiw import overlap
     from kiwiw.spool import SpoolReader
     reader = SpoolReader(spool_dir)
     try:
-        return level, run_cells(level, reader.iter_cell_columns(level, start, stop), Frames(level))
+        cells = _with_borrowed(reader.iter_cell_columns(level, start, stop),
+                               overlap.open_rows(ov_dir, level))
+        return level, run_cells(level, cells, Frames(level))
     finally:
         reader.close()
 
 
+def _overlaps(spool_dir: str, levels, tmp: str) -> dict:
+    """Per-level `kiwiw.overlap` pre-pass (spool cells only, no mask fill)."""
+    if _legacy(spool_dir):
+        return {}
+    from kiwiw import overlap
+    return {lv: overlap.build_level(spool_dir, lv, tmp)[0] for lv in levels}
+
+
 def roundtrip(spool_dir: str, workers: int = 1, chunk: int = 4000) -> dict:
-    jobs = [(spool_dir, level, a, min(a + chunk, n))
-            for level, n in _levels_and_counts(spool_dir) for a in range(0, n, chunk)]
+    import shutil
+    import tempfile
+    tmp = tempfile.mkdtemp(prefix="qrt_overlap_")
+    try:
+        return _roundtrip(spool_dir, workers, chunk, tmp)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _roundtrip(spool_dir: str, workers: int, chunk: int, tmp: str) -> dict:
+    counts = _levels_and_counts(spool_dir)
+    ovs = _overlaps(spool_dir, [lv for lv, _n in counts], tmp)
+    jobs = [(spool_dir, level, a, min(a + chunk, n), ovs.get(level))
+            for level, n in counts for a in range(0, n, chunk)]
     levels: dict = {}
     no_pos = 0
     if workers > 1:
