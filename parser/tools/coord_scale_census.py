@@ -158,6 +158,7 @@ def _work(args) -> list[dict]:
                 root = parse_parcel_mgmt_record(fh.read(blen), lmr)
             except Exception:  # noqa: BLE001
                 continue
+            sparse_cache: dict = {}
             for lp, entry, lb, pt in walk._iter_tree_leaves(root, bb, lmr, ()):
                 if (entry.dsa, entry.size) in seen:
                     continue  # divided-parcel slots share frames
@@ -165,9 +166,27 @@ def _work(args) -> list[dict]:
                 moff = volume.getsector(entry.dsa, ssz, lsz)
                 fh.seek(moff)
                 data = fh.read(entry.size * lsz)
+                # 2-13: the real coordinate frame (walk._leaf_frame), not the
+                # leaf slot bbox -- an L0 sparse leaf's frame is the 4x4 tile
+                # (range 16384; DESIGN Decisions, Amendment 2026-09-23 design
+                # agent). Feed the SAME frame to decode_parcel's MeshLocation
+                # and to WalkedParcel.frame_bounds: xy_to_latlon (decode) and
+                # parcel_measure's _raw() (invert) must round-trip through
+                # one bbox, or criterion 1's maxima move for no reason.
+                frame_bounds, frame_class = walk._leaf_frame(
+                    root, level, pt, lp, lb, bb, lmr, sparse_cache)
+                if frame_class == "l0_sparse_tile":
+                    fcls = "sparse"
+                elif level == 0:
+                    fcls = "divided" if pt else "urban"
+                else:
+                    fcls = "divided" if pt else "full"
+                div_state = "normal" if pt == 0 else f"pardiv{pt}_sub{lp[-1]}"
+                frame_range = walk._frame_range(level, fcls, div_state)
                 try:
                     loc = MeshLocation(level=level, parcel_type=pt, blockset_index=bsi,
-                                       block_index=bidx, parcel_index=lp[-1], bounds=lb,
+                                       block_index=bidx, parcel_index=lp[-1],
+                                       bounds=frame_bounds,
                                        sector_addr=entry.dsa, size_logical_sectors=entry.size)
                     parcel = decode_parcel(loc, data, n_basic_map=lmr.n_basic_map,
                                            n_ext_map=lmr.n_ext_map)
@@ -176,7 +195,8 @@ def _work(args) -> list[dict]:
                 wp = walk.WalkedParcel(level=level, blockset_index=bsi, block_index=bidx,
                                        parcel_type=pt, leaf_path=lp, bounds=lb,
                                        file_offset=moff, length=len(data), parcel=parcel,
-                                       error=None)
+                                       error=None, frame_bounds=frame_bounds,
+                                       frame_range=frame_range, frame_class=frame_class)
                 m = parcel_measure(wp)
                 if m is None:
                     continue
