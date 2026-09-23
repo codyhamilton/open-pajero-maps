@@ -351,6 +351,9 @@ Each assumption names the phase that tests it and what happens if it is false.
 - Foreign-land absence is accepted as natural (user). The 102 G-only L0 cells outside R's populated rectangle (13 BMT tables) are unexplained until Phase 6 lists them with lat/lon and content; each is then natural (source land outside R's rectangle) or a defect.
 - Whether the head unit requires `A=`/`1=` name tags or reads header word 0 / `dipid` — unknowable offline; treated as risk, mitigated by R-equivalence.
 - Extraction wall time at country scale (undocumented); affects how many full re-extractions Phases 3–5 can afford.
+- **`rg_size` (word 16) is unspecified** (Phase 2 Carried item 1). Bounced here by Phase 3's refinement rather than absorbed: Phase 3's Outcome does not claim word 16, and Phase 4's Outcome names words 0, 6, 7, 9–11 but not 16. It must be resolved in a design pass before Phase 4 is refined, or Phase 4 will be refined against a surface with no contract.
+- **`RESIDUAL_ENUM_CAP` has two contradicting values** (Phase 2 Carried item 8). `parser/tools/continuity_census.py` and `boundary_mirror_census.py` both set 400; the 2026-09-23 design-agent amendment states 200 for the same cap. Reported by 2-14 and again by 2-15, never resolved, and moot at Phase 2's 12 total residuals — but it is a contradiction between the design text and the code, so it is bounced here rather than fixed by a Phase 3 unit. One of the two sources is wrong and the design must say which.
+- **The L0 sparse frame is a shape difference between R and G, and no phase owns it.** R aliases sixteen leaf slots into one integrated-parcel tile at range 16384; G writes sixteen separate frames, which `harness/walk._is_sparse_tile` — a structural test against whichever disc is walked — correctly classes as `urban` at range 4096. Each disc is therefore self-consistent and Phase 3's amended Outcome (zero parcels exceeding their *own* class range) is provable on both, which is why this does not block Phase 3's refinement. But nothing in Phases 3–10 makes G build the 4x4 integrated-parcel tile that R builds, so the two discs will keep differing in frame shape at L0 sparse. Either that is accepted as a recorded deviation or a phase must claim it.
 
 ## Phases
 
@@ -421,6 +424,22 @@ Units, as re-briefed after the grounded gate returned NOT CLOSED (Decisions, "Am
 - Surfaces: `parser/kiwiw/{coordconv,synth,cenc,spool}.py`, `parser/kiwiw/_cenc.c`, `parser/osm_to_parcel_geometry.py`, `parser/build_alldata.py`, new `coord_scale` check, `parser/tests/{test_cenc,test_synth_*,test_spool_binary,test_build_alldata}.py`.
 - Approach: known
 - Depends on: Phase 2
+- Units:
+
+Refined against the Outcome as amended 2026-09-23 ("grounded phase gates"), which supersedes the maxima-equality clause above with zero parcels exceeding their class range plus a per-vertex quantisation round-trip. The migration is staged so each unit leaves the tree green: 3-01 lands `range_for` and the decode side behind a temporary legacy default, 3-02 threads the range into both encoders with output bytes unchanged, 3-03 supplies the real per-parcel ranges and deletes the legacy constant (this is where the disc's bytes change), and 3-04 builds the measurements in parallel on entirely new files. The determinism matrix is six full builds (roughly an hour), so it splits at the kickoff per the refine rule: 3-05 runs it and hands off shas, 3-06 verifies the phase outcome clause by clause.
+
+Surfaces beyond the list above, found in recon and in scope: `parser/kiwiw/{road,background,name,model,road_writer,background_writer,divide}.py`, `parser/harness/walk.py`, and the four `parser/tools/` censuses that invert the decoder's scale (`coord_scale_census`, `continuity_census`, `boundary_mirror_census`, `road_density_census`, `overlay_test`) — changing only one side of the conversion would silently move Phase 2's committed evidence. The `1 << 15` occurrences in `parser/kiwiw/{volume,volume_writer,route_planning}.py` and `parser/osm_to_route_planning.py` are bit flags, and `COORD_RANGE_RL` in `parser/tools/header_word_census.py` is a route-planning-layer constant; none is in scope for the "no `COORD_RANGE` constant remains" source check.
+
+| Unit | Brief | Depends on | May run alongside |
+|---|---|---|---|
+| 3-01 `range_for` and the decode side taking its range from the frame | `briefs/3-01-decode-side-range.md` | nothing | nothing |
+| 3-02 both encoders take the coordinate range as a parameter (bytes unchanged) | `briefs/3-02-encoders-take-range.md` | 3-01 | 3-04 |
+| 3-03 the build path supplies each parcel's real range; the legacy constant dies | `briefs/3-03-build-path-supplies-range.md` | 3-01, 3-02 | 3-04 |
+| 3-04 the `coord_scale` check and the per-vertex quantisation round-trip | `briefs/3-04-coord-scale-check-and-roundtrip.md` | 3-01 | 3-02, 3-03 |
+| 3-05 the determinism matrix (kickoff and hand-off) | `briefs/3-05-determinism-matrix.md` | 3-03 | nothing |
+| 3-06 Phase 3 evidence against the amended outcome | `briefs/3-06-phase-evidence.md` | 3-04, 3-05 | nothing |
+
+Phase 2's final Carried items are placed as follows. **Absorbed into Phase 3:** none of the open items belongs to it — the three Phase-3-relevant observations (the `COORD_RANGE` duplication across `coordconv`/`synth`/`osm_to_parcel_geometry`/`_cenc.c`, the 2-06 y-orientation result that every new signature must preserve, and the rebuild-cost premise that the spool carries lat/lon for every vertex kind) are written into 3-01, 3-02 and 3-03 as contract, and the rebuild-cost premise was re-confirmed against the code, with the correction that both encoders currently *prefer* the spool's 32768-scale `n_x`/`n_y` columns, which 3-02 must remove for spool reuse to be sound. **Left with their owners:** items 2 (pointer non-frame targets, Phase 9's), 3 (`road_density_census.py`'s stale `LENGTH_BASIS` wording, cosmetic), 4 (`pointer_nonframe_targets.examples` not regenerating identically), 9 (`continuity_census.py`'s greedy double-count), 10 (prior Phase 1 items). **Bounced to Open Questions**, because each touches a contract or a phase outcome rather than an implementation: item 1 (`rg_size`, word 16) and item 8 (the `RESIDUAL_ENUM_CAP` 400-vs-200 contradiction).
 
 ### Phase 4 — Header words and per-sub-frame size cap
 
