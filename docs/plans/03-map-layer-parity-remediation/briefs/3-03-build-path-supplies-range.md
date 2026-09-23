@@ -74,3 +74,19 @@ State the new disc's sha256, size and the exact command that produced it — 3-0
 A non-trivial bug outside your done evidence: report symptom, location, and root cause if found. Do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendment after 3-01 (landed `e029952`, 2026-09-24)
+
+3-01 landed the API with these exact signatures, all in `parser/kiwiw/coordconv.py`:
+`range_for(level: int, parcel_class: str, division_state: str = "normal") -> int` (`parcel_class` is a `coord_scale.json` key: `urban`/`sparse`/`full`/`divided`; raises `KeyError` on an absent triple; 4096 for any divided sub-parcel via `_SLOT_RANGE = 4096`);
+`xy_to_latlon(xc, yc, bounds, *, coord_range: int = _LEGACY_RANGE)`; `latlon_to_xy(lat, lon, bounds, *, coord_range: int = _LEGACY_RANGE)`; `encode_region_coord(xc, *, coord_range: int = _LEGACY_RANGE)` (inclusive `0 <= xc <= coord_range`). Temporary constant `coordconv._LEGACY_RANGE = 32768`.
+`BoundingBox` (`parser/kiwiw/model.py`) carries `coord_range: Optional[int] = None`; `harness/walk.py` exposes `leaf_frame_range(level, ptype, leaf_path, frame_class)` and `with_range(bounds, range)`. `walk.iter_parcels` decodes a divided sub-parcel against its **parent slot** (`frame_class="divided_parent"`), not its quadrant.
+
+Transitional shims 3-01 could not remove (its owned paths excluded the importers) — these are what "no `COORD_RANGE` constant remains" now depends on:
+1. `coordconv.COORD_RANGE = float(_LEGACY_RANGE)` — a public alias kept because `synth.py` and `parser/osm_to_parcel_geometry.py` import it.
+2. `_cenc.c`'s own `#define COORD_RANGE 32768.0`.
+3. `parser/tools/overlay_test.py`: `DECODER_RANGE` kept as an alias of `CONTROL_RANGE_32768` because `parser/tests/test_overlay_test.py` imports it.
+4. `parser/tools/road_density_census.py` falls back to `coordconv._LEGACY_RANGE` for a parcel with no frame, because `parser/tests/test_road_density_census.py` builds frameless fixtures at 32768.
+5. The decoders in `road.py`, `background.py`, `name.py` fall back to the legacy value when handed a `BoundingBox` whose `coord_range` is `None`.
+
+For this unit — **owned paths extended** to cover the shims: `parser/kiwiw/road.py`, `parser/kiwiw/background.py`, `parser/kiwiw/name.py`, `parser/kiwiw/model.py`, `parser/tools/overlay_test.py`, `parser/tools/road_density_census.py`, `parser/tests/test_overlay_test.py`, `parser/tests/test_road_density_census.py`. When `_LEGACY_RANGE` and the defaults go: delete the `COORD_RANGE` alias (1); drop `DECODER_RANGE` and move its test to `CONTROL_RANGE_32768` (3) — `control_32768` keeps its literal meaning; give the road-density fixtures an explicit range and delete the frameless fallback (4); make a `None` `coord_range` in the decoders raise rather than fall back (5). The continuity and mirror census sha256s (`da70cd59…`, `23854cf5…`, EVIDENCE-2-14) must still reproduce afterwards — add that to this unit's done evidence. The `git grep -n COORD_RANGE -- parser/kiwiw parser/harness parser/tools` check must then return only `COORD_RANGE_RL`.
