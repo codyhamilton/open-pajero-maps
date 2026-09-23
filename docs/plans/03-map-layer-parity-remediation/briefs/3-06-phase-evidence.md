@@ -73,3 +73,7 @@ Do not spawn agents beyond read-only research helpers. If this unit needs one, i
 - **Spool path.** Use `output/extract_timing/spool` (binary `KWSPIDX1`, stats match the manifest's `spool_stats`) wherever this brief says `output/spool`; `output/spool` is a legacy pickle spool that `SpoolReader` rejects.
 - **Baseline.** 3-02 removed the encoders' stored-pixel preference; road nodes' y moved from the spool's stale y-down pixels onto the settled y-up orientation. The pre-3-03 baseline is full disc `9407122122b9…` / Perth `99d72f0b1cf14b8b…`; `51c254ac…` / `e275879f…` are retired (they predate 2-06).
 - **Scratch.** `/tmp` hits its disk quota on full builds; put scratch under `output/scratch-<unit>/` (gitignored) and set `TMPDIR` there.
+
+## Amendment after the R background-clip research (orchestrator, 2026-09-24)
+
+Unit 3-07 (`briefs/3-07-clip-to-frame.md`) is inserted before 3-05: G now clips background geometry to the frame as R does, which changes the disc again. This unit depends on 3-07 as well; any baseline sha quoted above is superseded by 3-07's reported build. The per-vertex quantisation round-trip is measured over **written vertices after clipping** (3-07's definition in `quantisation_roundtrip.py`), not over raw spool vertices.

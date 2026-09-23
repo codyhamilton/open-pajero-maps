@@ -436,8 +436,9 @@ Surfaces beyond the list above, found in recon and in scope: `parser/kiwiw/{road
 | 3-02 both encoders take the coordinate range as a parameter (bytes unchanged) | `briefs/3-02-encoders-take-range.md` | 3-01 | 3-04 |
 | 3-03 the build path supplies each parcel's real range; the legacy constant dies | `briefs/3-03-build-path-supplies-range.md` | 3-01, 3-02 | 3-04 |
 | 3-04 the `coord_scale` check and the per-vertex quantisation round-trip | `briefs/3-04-coord-scale-check-and-roundtrip.md` | 3-01 | 3-02, 3-03 |
-| 3-05 the determinism matrix (kickoff and hand-off) | `briefs/3-05-determinism-matrix.md` | 3-03 | nothing |
-| 3-06 Phase 3 evidence against the amended outcome | `briefs/3-06-phase-evidence.md` | 3-04, 3-05 | nothing |
+| 3-07 clip background geometry to the frame, as R does (added 2026-09-24 by the orchestrator on R evidence) | `briefs/3-07-clip-to-frame.md` | 3-03, 3-04 | nothing |
+| 3-05 the determinism matrix (kickoff and hand-off) | `briefs/3-05-determinism-matrix.md` | 3-03, 3-07 | nothing |
+| 3-06 Phase 3 evidence against the amended outcome | `briefs/3-06-phase-evidence.md` | 3-04, 3-05, 3-07 | nothing |
 
 Phase 2's final Carried items are placed as follows. **Absorbed into Phase 3:** none of the open items belongs to it — the three Phase-3-relevant observations (the `COORD_RANGE` duplication across `coordconv`/`synth`/`osm_to_parcel_geometry`/`_cenc.c`, the 2-06 y-orientation result that every new signature must preserve, and the rebuild-cost premise that the spool carries lat/lon for every vertex kind) are written into 3-01, 3-02 and 3-03 as contract, and the rebuild-cost premise was re-confirmed against the code, with the correction that both encoders currently *prefer* the spool's 32768-scale `n_x`/`n_y` columns, which 3-02 must remove for spool reuse to be sound. **Left with their owners:** items 2 (pointer non-frame targets, Phase 9's), 3 (`road_density_census.py`'s stale `LENGTH_BASIS` wording, cosmetic), 4 (`pointer_nonframe_targets.examples` not regenerating identically), 9 (`continuity_census.py`'s greedy double-count), 10 (prior Phase 1 items). **Bounced to Open Questions**, because each touches a contract or a phase outcome rather than an implementation: item 1 (`rg_size`, word 16) and item 8 (the `RESIDUAL_ENUM_CAP` 400-vs-200 contradiction).
 
