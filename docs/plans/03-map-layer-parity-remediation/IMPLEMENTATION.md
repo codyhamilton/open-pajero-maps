@@ -393,3 +393,11 @@ Does not declare Phase 2 closed (2-15's job).
 - Scope: Phase 3 only ("Native coordinates"), under `DESIGN.md`'s Phase 3 Outcome as amended 2026-09-23 ("grounded phase gates"): `range_for` feeds both encoders and no `COORD_RANGE` constant remains; the `coord_scale` check PASSES; two builds are byte-identical at worker counts 1, 4 and 12; `pytest parser/tests` passes; zero parcels exceeding their class range; a per-vertex quantisation round-trip (lat/lon -> pixel -> lat/lon) agrees within half a pixel for every vertex written.
 - Model tier this run: Opus at medium reasoning effort for `refine`/design-reasoning dispatch; Sonnet at medium reasoning effort for build/worker/research dispatch.
 - Status: no Units list in DESIGN.md for Phase 3 and the surfaces span multiple files/encoders — `refine` dispatched.
+
+## Phase 3 run, resumed (2026-09-24)
+
+- Tool: Claude Code (CLI, remote-control), orchestrator model Opus 5.5
+- Session: https://claude.ai/code/session_01GLBUseFWng4Gw3XZHwPQYv
+- Started: 2026-09-24T00:18:53+10:00
+- Model tier this run (user-directed): Opus 5.5 at medium reasoning effort for every dispatched worker, verifier and helper (agent `opus-medium`).
+- Resume state: no Phase 3 unit had a recorded outcome. The working tree held uncommitted, unreported edits in 3-01's owned paths (`coordconv.py`, `road.py`, `background.py`, `name.py`, `model.py`, `harness/walk.py`, three censuses, new `tests/test_coordconv.py`) from the prior run's stalled 3-01 worker. Not resumed by message: a fresh 3-01 worker is dispatched with those edits as its handoff, to verify against the brief and keep or discard.
