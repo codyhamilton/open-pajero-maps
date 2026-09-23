@@ -18,7 +18,7 @@ from kiwiw.synth import build_map_frame_bytes, build_name_frame_bytes
 from harness.checks.spotcheck import _run_spotcheck
 from harness.context import Context
 
-_BOUNDS = BoundingBox(lat_lo=-32.0, lat_hi=-31.5, lon_lo=115.75, lon_hi=116.25)
+_BOUNDS = BoundingBox(lat_lo=-32.0, lat_hi=-31.5, lon_lo=115.75, lon_hi=116.25, coord_range=4096)
 LEVEL = 0
 # Centre of the single 1x1 grid cell -- well inside its bounds either way.
 _CENTRE_LAT = (_BOUNDS.lat_lo + _BOUNDS.lat_hi) / 2

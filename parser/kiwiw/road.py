@@ -5,18 +5,16 @@ every decoded field instead of only feeding a renderer.
 from __future__ import annotations
 
 from .bitutils import extract, i8, sws, u16, u32
-from .coordconv import _LEGACY_RANGE, decode_region_coord, xy_to_latlon
+from .coordconv import decode_region_coord, xy_to_latlon
 from .model import BoundingBox, RoadFrame, RoadLink, RoadNode
 from .roadtypes import road_type_label
 
 
 def decode_road_frame(buf: bytes, bounds: BoundingBox) -> RoadFrame:
     # `bounds.coord_range` is the frame's real range (set by callers that
-    # know the parcel's class, e.g. `harness.walk`); an unmigrated caller's
-    # plain BoundingBox (coord_range=None) falls back to the same fixed
-    # 2**15 this decoder always used before 3-01. Resolved once, passed
-    # explicitly below -- never relies on `xy_to_latlon`'s own default.
-    coord_range = bounds.coord_range if bounds.coord_range is not None else _LEGACY_RANGE
+    # know the parcel's class, e.g. `harness.walk`); a bbox without one
+    # raises. Resolved once, passed explicitly below.
+    coord_range = bounds.require_range()
     ninter = u16(buf, 2)
     ndc = buf[4]
     nad = buf[5]

@@ -14,7 +14,10 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from kiwiw.model import BoundingBox
-from kiwiw.coordconv import latlon_to_xy, xy_to_latlon, COORD_RANGE
+from kiwiw.coordconv import latlon_to_xy, range_for, xy_to_latlon
+
+# The largest real frame range (R's L0 sparse tile): exercises every region.
+_R = range_for(0, "sparse")
 from osm_to_parcel_geometry import (
     TileGrid,
     assign_to_parcel,
@@ -228,14 +231,14 @@ class TestCoordinateRoundtrip:
     """WGS84 lat/lon → parcel-local x/y → lat/lon round-trips within quantization."""
 
     def _roundtrip(self, lat: float, lon: float, bounds: BoundingBox):
-        xc, yc = latlon_to_xy(lat, lon, bounds)
-        lat2, lon2 = xy_to_latlon(xc, yc, bounds)
+        xc, yc = latlon_to_xy(lat, lon, bounds, coord_range=_R)
+        lat2, lon2 = xy_to_latlon(xc, yc, bounds, coord_range=_R)
         return lat2, lon2, xc, yc
 
     def _quant_tol(self, bounds: BoundingBox) -> tuple[float, float]:
         """Quantization tolerance: half a pixel in each axis."""
-        lat_tol = 0.5 * (bounds.lat_hi - bounds.lat_lo) / COORD_RANGE
-        lon_tol = 0.5 * (bounds.lon_hi - bounds.lon_lo) / COORD_RANGE
+        lat_tol = 0.5 * (bounds.lat_hi - bounds.lat_lo) / _R
+        lon_tol = 0.5 * (bounds.lon_hi - bounds.lon_lo) / _R
         return lat_tol, lon_tol
 
     def test_centre_roundtrip(self):
@@ -279,18 +282,28 @@ class TestCoordinateRoundtrip:
     def test_encode_decode_region_coord(self):
         """encode_region_coord(decode_region_coord(x)) is the identity."""
         from kiwiw.coordconv import encode_region_coord, decode_region_coord
-        test_values = [0, 1, 4095, 4096, 8191, 8192, 16383, 32767]
+        test_values = [0, 1, 4095, 4096, 8191, 8192, 16383, 16384]
         for v in test_values:
-            encoded = encode_region_coord(v)
+            encoded = encode_region_coord(v, coord_range=_R)
             decoded = decode_region_coord(encoded)
             assert decoded == v, f"encode→decode failed for {v}: got {decoded}"
+
+    def test_encode_region_coord_rejects_unpackable(self):
+        """Outside [0, coord_range], or past the 3-bit region word, raises."""
+        from kiwiw.coordconv import encode_region_coord
+        with pytest.raises(ValueError):
+            encode_region_coord(_R + 1, coord_range=_R)
+        with pytest.raises(ValueError):
+            encode_region_coord(8 * 4096, coord_range=8 * 4096)  # region 8
+        with pytest.raises(TypeError):
+            encode_region_coord(0)  # no default range any more
 
     def test_integer_pixel_exact(self):
         """xy_to_latlon composed with latlon_to_xy is exact for integer pixels."""
         bounds = BoundingBox(lat_lo=-33.0, lat_hi=-32.0, lon_lo=115.0, lon_hi=116.0)
-        for xc, yc in [(0, 0), (0, 32767), (32767, 0), (16384, 16384), (1000, 5000)]:
-            lat, lon = xy_to_latlon(xc, yc, bounds)
-            xc2, yc2 = latlon_to_xy(lat, lon, bounds)
+        for xc, yc in [(0, 0), (0, _R), (_R, 0), (_R // 2, _R // 2), (1000, 5000)]:
+            lat, lon = xy_to_latlon(xc, yc, bounds, coord_range=_R)
+            xc2, yc2 = latlon_to_xy(lat, lon, bounds, coord_range=_R)
             assert xc2 == xc, f"x roundtrip failed: {xc} → lat/lon → {xc2}"
             assert yc2 == yc, f"y roundtrip failed: {yc} → lat/lon → {yc2}"
 
@@ -413,11 +426,36 @@ class TestParcelBounds:
 
 
 def test_y_axis_increases_northward():
-    """y=0 is the south edge (lat_lo), y=COORD_RANGE the north edge (lat_hi);
+    """y=0 is the south edge (lat_lo), y=coord_range the north edge (lat_hi);
     latlon_to_xy inverts exactly (2-03 pooled evidence: y is up)."""
     bounds = BoundingBox(lat_lo=-33.0, lat_hi=-32.0, lon_lo=115.0, lon_hi=116.0)
-    for xc in (0, 1000, 32767):
-        assert xy_to_latlon(xc, 0, bounds)[0] == bounds.lat_lo
-        assert xy_to_latlon(xc, int(COORD_RANGE), bounds)[0] == bounds.lat_hi
-    for xc, yc in [(0, 0), (0, 32767), (32767, 0), (12345, 6789), (1000, 5000)]:
-        assert latlon_to_xy(*xy_to_latlon(xc, yc, bounds), bounds) == (xc, yc)
+    for xc in (0, 1000, _R):
+        assert xy_to_latlon(xc, 0, bounds, coord_range=_R)[0] == bounds.lat_lo
+        assert xy_to_latlon(xc, _R, bounds, coord_range=_R)[0] == bounds.lat_hi
+    for xc, yc in [(0, 0), (0, _R), (_R, 0), (12345, 6789), (1000, 5000)]:
+        assert latlon_to_xy(*xy_to_latlon(xc, yc, bounds, coord_range=_R), bounds,
+                            coord_range=_R) == (xc, yc)
+
+
+def test_every_g_l0_frame_encodes_at_4096():
+    """G writes one frame per L0 slot (no 4x4 integrated tile), so every L0
+    frame covers n=1 slot: range 4096 on the global lattice, like an L6 leaf."""
+    from osm_to_parcel_geometry import TileGrid, frame_bounds, g_frame_class, g_frame_range
+    assert g_frame_class(0) == "urban"
+    assert g_frame_range(0) == range_for(0, "urban") == 4096
+    assert g_frame_range(6) == 4096
+    g = TileGrid.from_reference(0)
+    for ix, iy in ((0, 0), (g.nx // 2, g.ny // 3), (g.nx - 1, g.ny - 1)):
+        assert frame_bounds(ix, iy, g).coord_range == 4096
+
+
+def test_range_for_any_division_type_is_parent_slot():
+    from osm_to_parcel_geometry import g_frame_range
+    assert range_for(8, "divided", "pardiv2_sub5") == 4096
+    assert range_for(8, "divided", "pardiv1_sub0") == 4096
+    assert g_frame_range(8, 2, 3) == 4096
+    for bad in ("pardiv9_sub0", "pardiv2", "sub0", "pardiv2_subx"):
+        with pytest.raises(KeyError):
+            range_for(8, "divided", bad)
+    with pytest.raises(KeyError):
+        range_for(99, "divided", "pardiv2_sub0")

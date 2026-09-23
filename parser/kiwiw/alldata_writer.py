@@ -57,6 +57,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from . import spill as _spill, volume, volume_writer, parcel_writer
+from .parcel import PARSE_RANGE
 from .model import BoundingBox, MeshLocation, Parcel, ParcelMapInfoEntry, ParcelMgmtRecord
 from .parcel import decode_parcel
 from .parcel_mgmt import parse_parcel_mgmt_record
@@ -133,7 +134,8 @@ def _block_base_bounds(pdmdh, lmr, bsx: int, bsy: int, blx: int, bly: int) -> Bo
     base_lon = pdmdh.coverage.lon_lo + base_ix * mx
     base_lat = pdmdh.coverage.lat_lo + base_iy * my
     return BoundingBox(lat_lo=base_lat, lat_hi=base_lat + npc_lat * my,
-                        lon_lo=base_lon, lon_hi=base_lon + npc_lng * mx)
+                        lon_lo=base_lon, lon_hi=base_lon + npc_lng * mx,
+                        coord_range=PARSE_RANGE)
 
 
 def _narrow_bounds(bounds: BoundingBox, gn_lat: int, gn_lng: int, idx: int) -> BoundingBox:
@@ -150,7 +152,8 @@ def _narrow_bounds(bounds: BoundingBox, gn_lat: int, gn_lng: int, idx: int) -> B
     lon_lo = bounds.lon_lo + lpx * lon_step
     lat_lo = bounds.lat_lo + lpy * lat_step
     return BoundingBox(lat_lo=lat_lo, lat_hi=lat_lo + lat_step,
-                        lon_lo=lon_lo, lon_hi=lon_lo + lon_step)
+                        lon_lo=lon_lo, lon_hi=lon_lo + lon_step,
+                        coord_range=PARSE_RANGE)
 
 
 # ---------------------------------------------------------------------

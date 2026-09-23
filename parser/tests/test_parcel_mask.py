@@ -52,7 +52,7 @@ def test_fill_only_masked_and_absent_cells(tmp_path):
         assert got[k] == f
     for k in masked - set(base_map):  # filled cells are the empty frame
         assert got[k] == build_alldata._encode_one(
-            0, k[0], k[1], build_alldata.parcel_bounds(k[0], k[1], build_alldata.TileGrid.from_reference(0)), {})
+            0, k[0], k[1], build_alldata.frame_bounds(k[0], k[1], build_alldata.TileGrid.from_reference(0)), {})
     assert (720, 30) in got  # spooled cell outside the mask passes through
 
 

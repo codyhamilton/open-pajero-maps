@@ -22,7 +22,7 @@ from kiwiw import synth
 from kiwiw.disc import AllData
 from kiwiw.grid import ReferenceGrid
 from kiwiw.model import BackgroundShape, BoundingBox
-from osm_to_parcel_geometry import TileGrid, parcel_bounds
+from osm_to_parcel_geometry import TileGrid, frame_bounds as parcel_bounds  # ranged G frame
 
 from harness.checks import decode as decode_checks
 from harness.context import Context
@@ -478,7 +478,7 @@ def test_hard_ceiling_path_uses_kind_budgets_in_plan_divisions(monkeypatch):
 
 
 def test_name_halo_adds_neighbour_road_names_within_budget():
-    b = BoundingBox(lat_lo=0.0, lat_hi=1.0, lon_lo=0.0, lon_hi=1.0)
+    b = BoundingBox(lat_lo=0.0, lat_hi=1.0, lon_lo=0.0, lon_hi=1.0, coord_range=4096)
 
     def nm(text, st, lat, lon):
         return SimpleNamespace(text=text, string_type=st, lat=lat, lon=lon)
@@ -498,3 +498,37 @@ def test_name_halo_adds_neighbour_road_names_within_budget():
     assert n == 1 and len(fb) == 20
     fb, n = divide._add_name_halo(m, 0, 0, 0, b, content, parent, {"name": 10}, 10**6, fb0)
     assert n == 0 and fb == fb0  # never exceeds the name budget
+
+
+# ---------------------------------------------------------------------------
+# Sub-parcels are encoded in the parent's 4096 frame (spec 7.2.2.1.1.2(2)/(3))
+# ---------------------------------------------------------------------------
+
+def test_subparcels_encode_in_parent_4096_frame():
+    from kiwiw.coordconv import latlon_to_xy
+    content = _quadrant_content(n_per_quadrant=20)
+    threshold = len(_encode(LEVEL, 0, 0, _BOUNDS, content)) - 1
+    seen = []
+
+    def spy(level, ix, iy, bounds, c):
+        seen.append((bounds, c))
+        return _encode(level, ix, iy, bounds, c)
+
+    out = list(divide.plan_divisions(LEVEL, [(0, 0, content)], threshold, spy))
+    assert {row[2] for row in out} == {1}
+    lat_mid = (_BOUNDS.lat_lo + _BOUNDS.lat_hi) / 2
+    lon_mid = (_BOUNDS.lon_lo + _BOUNDS.lon_hi) / 2
+    maxima = {}
+    for b, c in seen:
+        assert b.coord_range == 4096
+        assert (b.lat_lo, b.lat_hi, b.lon_lo, b.lon_hi) == \
+            (_BOUNDS.lat_lo, _BOUNDS.lat_hi, _BOUNDS.lon_lo, _BOUNDS.lon_hi)
+        for s in c["backgrounds"]:
+            for lat, lon in s.coords:
+                sub = (1 if lat > lat_mid else 0) * 2 + (1 if lon > lon_mid else 0)
+                x, y = latlon_to_xy(lat, lon, b, coord_range=b.coord_range)
+                maxima[sub] = max(maxima.get(sub, 0), x, y)
+    assert set(maxima) == {0, 1, 2, 3}
+    assert maxima[0] <= 2048, maxima
+    for sub in (1, 2, 3):
+        assert 2048 < maxima[sub] <= 4096, maxima

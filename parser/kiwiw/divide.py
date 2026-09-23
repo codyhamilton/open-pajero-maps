@@ -49,10 +49,18 @@ reproduced on re-split sub-chains: `split_polyline_by_parcel()` operates on
 bare `(lat, lon)` coordinate lists (`RoadLink.points`), which carry no
 per-node attribute data to correlate back to the new nodes built here. New
 sub-chain `RoadNode`s are built with those flags defaulted to false/0 and
-`x=y=0` so `synth.encode_road_link_bytes()` recomputes pixel coordinates
-from `lat`/`lon` against the new sub-cell bounds rather than reusing pixel
-coordinates computed against the parent cell (see that function's x==0/
-y==0 fallback).
+`x=y=0` as inert placeholders: both encoders derive every pixel from
+`lat`/`lon` (Plan 03, 3-02), never from a stored `x`/`y`.
+
+Coordinate frame of a sub-parcel (Plan 03, 3-03; spec 7.2.2.1.1.2(2)/(3),
+"the normalized coordinate in the original basic parcel is used"): every
+sub-parcel of a divided parcel -- whatever the division type -- is encoded
+against its *parent's* bounds at the parent slot's range
+(`g_frame_range(level, parcel_type, sub_index)`, 4096), not renormalised to
+its own sub-cell. The sub-cell only decides which content the sub-parcel
+carries. So sub 0 of a 2x2 division (the SW quadrant, sub_index =
+sub_iy * nx + sub_ix with sub_iy 0 = south) spans [0, 2048] and subs 1..3
+reach 4096 -- R's `coord_scale.json` `pardiv1_sub*` maxima.
 
 Deviation found during the Perth fixture's done-evidence build (report
 this, do not treat it as silently resolved): `synth.build_map_frame_bytes()`
@@ -95,7 +103,8 @@ from .model import BoundingBox, RoadNode
 # Read-only imports from the extractor (geometry helpers only; this module
 # never calls extract_parcel_geometry() and does not modify that file --
 # see docs/design/target-disc.md and this unit's own module docstring).
-from osm_to_parcel_geometry import TileGrid, assign_to_parcel, parcel_bounds, split_polyline_by_parcel
+from osm_to_parcel_geometry import (TileGrid, assign_to_parcel, frame_bounds, g_frame_range,
+                                     parcel_bounds, split_polyline_by_parcel)
 
 # (nx, ny) sub-grid dimensions per division type, confirmed constant across
 # every level in parser/refdata/grid.json: n_parcels_lat/lng index 1 is
@@ -206,6 +215,15 @@ def _sub_tile_grid(level: int, bounds: BoundingBox, nx: int, ny: int) -> TileGri
         ny=ny,
         target=bounds,
     )
+
+
+def _sub_frame(level: int, parent: BoundingBox, parcel_type: int, nx: int,
+               cell: tuple[int, int]) -> BoundingBox:
+    """Bounds a sub-parcel at `cell` = (sub_ix, sub_iy) of a
+    `pardiv<parcel_type>` division is encoded against: the parent's bounds
+    at the parent slot's range (see module docstring)."""
+    return dataclasses.replace(
+        parent, coord_range=g_frame_range(level, parcel_type, cell[1] * nx + cell[0]))
 
 
 def _retile_content(content: dict, sub_grid: TileGrid) -> dict[tuple[int, int], dict]:
@@ -567,11 +585,14 @@ def _halo_candidates(parent_names: list, sub_names: list, bounds: BoundingBox) -
 def _add_name_halo(measure: MeasureFn, level: int, ix: int, iy: int,
                    bounds: BoundingBox, content: dict, parent_names: list,
                    kind_limits: dict | None, threshold_bytes: int,
-                   fb: bytes) -> tuple[bytes, int]:
+                   fb: bytes, frame: BoundingBox | None = None) -> tuple[bytes, int]:
     """Brief 32: append to a divided sub-cell the nearby road names its
     point-based re-tiling left with a neighbour, as many (nearest first)
     as still meet the name kind budget and the frame threshold. Never
-    displaces existing content. Returns `(frame_bytes, n_added)`."""
+    displaces existing content. Returns `(frame_bytes, n_added)`.
+    `bounds` is the sub-cell (candidate selection); `frame` the bounds the
+    sub-parcel is encoded against (its parent's frame; default `bounds`)."""
+    frame = bounds if frame is None else frame
     cands = _halo_candidates(parent_names, content.get("names") or [], bounds)
     if not cands:
         return fb, 0
@@ -580,7 +601,7 @@ def _add_name_halo(measure: MeasureFn, level: int, ix: int, iy: int,
 
     def _try(k: int):
         try:
-            res = measure(level, ix, iy, bounds, dict(content, names=base + cands[:k]))
+            res = measure(level, ix, iy, frame, dict(content, names=base + cands[:k]))
         except ValueError:
             return None
         if len(res[0]) > threshold_bytes:
@@ -643,6 +664,7 @@ def plan_divisions(
 
     def _probe(lv, cx, cy, b, c):
         """-> (bytes | None, sizes | None); None = over the hard ceiling."""
+        b.require_range()  # outside the try: a missing range is not "oversize"
         if not use_kinds:
             return _try_encode(encode, lv, cx, cy, b, c), None
         try:
@@ -657,7 +679,7 @@ def plan_divisions(
     tile_grid = TileGrid.from_reference(level)
 
     for ix, iy, content in parcels:
-        bounds = parcel_bounds(ix, iy, tile_grid)
+        bounds = frame_bounds(ix, iy, tile_grid)
         whole_bytes, whole_sizes = _probe(level, ix, iy, bounds, content)
         if (whole_bytes is not None and len(whole_bytes) <= threshold_bytes
                 and not _kind_breach(whole_sizes or {}, kind_limits)):
@@ -680,7 +702,7 @@ def plan_divisions(
             oversize = False
             last_tier = parcel_type == 2
             for cell, c in sub_content.items():
-                sub_bounds = parcel_bounds(cell[0], cell[1], sub_grid)
+                sub_bounds = _sub_frame(level, bounds, parcel_type, nx, cell)
                 fb, sizes = _probe(level, cell[0], cell[1], sub_bounds, c)
                 if fb is None:
                     oversize = True
@@ -723,7 +745,8 @@ def plan_divisions(
                     sb = parcel_bounds(cell[0], cell[1], sub_grid)
                     frames[cell], _n = _add_name_halo(
                         measure, level, cell[0], cell[1], sb, c, parent_names,
-                        kind_limits, threshold_bytes, frames[cell])
+                        kind_limits, threshold_bytes, frames[cell],
+                        frame=_sub_frame(level, bounds, parcel_type, nx, cell))
                     if _n and trim_stats is not None:
                         trim_stats["halo_names"] = trim_stats.get("halo_names", 0) + _n
 

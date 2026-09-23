@@ -28,6 +28,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from dataclasses import replace
+
+from kiwiw.parcel import PARSE_RANGE
 from kiwiw.model import BoundingBox, NameRecord
 from kiwiw.name import decode_name_frame
 from kiwiw.synth import (
@@ -36,7 +39,7 @@ from kiwiw.synth import (
     encode_name_record_type6_bytes,
 )
 
-_BOUNDS = BoundingBox(lat_lo=-32.0, lat_hi=-31.5, lon_lo=115.75, lon_hi=116.25)
+_BOUNDS = BoundingBox(lat_lo=-32.0, lat_hi=-31.5, lon_lo=115.75, lon_hi=116.25, coord_range=4096)
 
 _PROFILE_PATH = Path(__file__).resolve().parent.parent / "refdata" / "profile" / "map.json"
 
@@ -179,7 +182,8 @@ def test_brisbane_level0_records_byte_identical_round_trip():
     with disc:
         parcel = disc.find_parcel(*BRISBANE, level=0)
         assert parcel is not None and parcel.name is not None
-        bounds = parcel.location.bounds
+        # the parser's explicit read frame (kiwiw.parcel.PARSE_RANGE)
+        bounds = replace(parcel.location.bounds, coord_range=PARSE_RANGE)
 
         type5_recs = [r for r in parcel.name.records if r.string_type == 5 and r.text]
         type6_recs = [r for r in parcel.name.records if r.string_type == 6]

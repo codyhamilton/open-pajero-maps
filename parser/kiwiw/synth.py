@@ -23,7 +23,7 @@ import numpy as np
 
 from . import cenc as _cenc
 from .bitutils import geo_secs_bytes
-from .coordconv import _LEGACY_RANGE, encode_region_coord, latlon_to_xy
+from .coordconv import encode_region_coord, latlon_to_xy
 from .model import BackgroundShape, BoundingBox, NameRecord, RoadLink
 
 _MAP_FRAME_HEADER_SIZE = 36
@@ -43,31 +43,23 @@ def _u32(v: int) -> bytes:
 
 def frame_range(bounds: BoundingBox, coord_range: int | None = None) -> int:
     """The coordinate range an encoder converts at: `coord_range` when
-    given, else `bounds.coord_range`, else the temporary legacy range
-    (`coordconv._LEGACY_RANGE`, deleted by 3-03). Both encoders (this module
-    and `cenc`/`_cenc.c`) resolve it here, so they agree."""
+    given, else `bounds.coord_range`; `ValueError` when neither is set (no
+    default range exists). Both encoders (this module and `cenc`/`_cenc.c`)
+    resolve it here, so they agree."""
     if coord_range is not None:
         return coord_range
-    if bounds.coord_range is not None:
-        return bounds.coord_range
-    return _LEGACY_RANGE
-
-
-# Largest value the region word can carry: 3-bit region (bits 13:15) x 4096 +
-# 12-bit value = 32767. A property of the packing, not of any frame range: the
-# clamp ceiling is min(coord_range, _PACK_MAX), so every real range (<= 16384)
-# is fully inclusive and only a 32768 frame's exact edge is unrepresentable.
-# Mirrors `_cenc.c`'s PACK_MAX.
-_PACK_MAX = 7 * 4096 + 4095
+    return bounds.require_range()
 
 
 def _coord_max(coord_range: int) -> int:
-    return min(coord_range, _PACK_MAX)
+    """Clamp ceiling: the frame's inclusive edge. Every real range (<= 16384,
+    `coordconv.range_for`) fits the 3-bit region word, so no packing cap
+    applies (`coordconv.encode_region_coord` rejects one that would not)."""
+    return coord_range
 
 
 def _clamp_coord(v: int, coord_range: int) -> int:
-    """Clamp to the frame's inclusive interval [0, coord_range] (capped at
-    the region word's `_PACK_MAX`)."""
+    """Clamp to the frame's inclusive interval [0, coord_range]."""
     return max(0, min(_coord_max(coord_range), v))
 
 

@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from kiwiw import synth
 from kiwiw.model import BackgroundShape, BoundingBox
 
-B = BoundingBox(lat_lo=-32.0, lat_hi=-31.0, lon_lo=115.0, lon_hi=116.0)
+B = BoundingBox(lat_lo=-32.0, lat_hi=-31.0, lon_lo=115.0, lon_hi=116.0, coord_range=4096)
 
 
 def _shape(rng, cls, n, step, mult, bounds_margin=0.0):

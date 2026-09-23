@@ -34,7 +34,7 @@ from kiwiw.synth import (
     mfde_table_len,
 )
 
-_BOUNDS = BoundingBox(lat_lo=-32.0, lat_hi=-31.5, lon_lo=115.75, lon_hi=116.25)
+_BOUNDS = BoundingBox(lat_lo=-32.0, lat_hi=-31.5, lon_lo=115.75, lon_hi=116.25, coord_range=4096)
 _LLPID = (_BOUNDS.lat_lo, _BOUNDS.lon_lo)
 _LLCODE = (3, 7)
 _LEVELS = [12, 10, 8, 6, 4, 2, 0]

@@ -18,7 +18,6 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from .coordconv import _LEGACY_RANGE  # TEMPORARY default; 3-03 supplies real ranges
 
 _SRC = Path(__file__).with_name("_cenc.c")
 _SO = Path(__file__).with_name("_cenc.so")
@@ -99,7 +98,7 @@ class CellEncoder:
         self._addr = ctypes.addressof(self._out)
 
     def encode(self, raw: bytes | None, ix: int, iy: int, *,
-               coord_range: int = _LEGACY_RANGE) -> bytes | None:
+               coord_range: int) -> bytes | None:
         """`coord_range`: the cell frame's coordinate range (`range_for`);
         the kernel converts every vertex from lat/lon at it."""
         n = self._fn(raw, len(raw) if raw else 0, self._level, ix, iy, self._grid,
@@ -159,7 +158,7 @@ def measure_content(level: int, ix: int, iy: int, bounds, content: dict, *,
     exactly as `build_alldata._measure_one`, or None when the kernel declines
     (over the ceiling, unmodelled input) -- the caller then runs the Python path.
     `coord_range` resolves as in `synth.frame_range` (explicit, else
-    `bounds.coord_range`, else the legacy range), so it matches the Python
+    `bounds.coord_range`, else `ValueError`), so it matches the Python
     encoders handed the same `bounds`."""
     global _m_fn
     if _m_fn is None:

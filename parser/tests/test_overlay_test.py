@@ -45,7 +45,7 @@ def test_correct_range_passes():
 def test_wrong_scale_fails_clustering():
     links, _ = _fixture()
     _, ways = _fixture()
-    r = ot.analyze(links, ways, CELL, TOL, ot.DECODER_RANGE)
+    r = ot.analyze(links, ways, CELL, TOL, ot.CONTROL_RANGE_32768)
     assert not r["criteria"]["no_clustering"]
     assert not r["criteria"]["coord_max"]
     assert not r["pass"]

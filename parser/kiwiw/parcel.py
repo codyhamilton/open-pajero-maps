@@ -4,11 +4,20 @@ kiwiread.c.
 """
 from __future__ import annotations
 
+from dataclasses import replace
+
 from .background import decode_background_frame
 from .bitutils import parcel_id_bounds, sws, u16, u32
 from .model import BoundingBox, MapFrame, MapFrameHeader, MeshLocation, Parcel
 from .name import decode_name_frame
 from .road import decode_road_frame
+
+# The kiwiread-port reader's decode frame: `mesh.locate_parcel` knows only the
+# leaf box, not the frame's structure, so it cannot pick `coordconv.range_for`'s
+# class. It decodes (and `alldata_writer` re-encodes) self-consistently at this
+# explicit control range. Not an encode lattice -- the harness walk supplies
+# real per-frame ranges (`harness.walk.with_range`).
+PARSE_RANGE = 32768
 
 MAPFRAME_HEADER_SIZE = 36  # size+llpid+llcode+dipid+pmcode+dsflag+rlx+rly+geo_str+geo_dec+rg_addr+rg_size+nregion
 
@@ -142,14 +151,16 @@ def decode_parcel(loc: MeshLocation, mapdata: bytes, n_basic_map: int = 3,
     bg_off, bg_size = entries[1] if len(entries) > 1 else (0xFFFFFFFF, 0)
     name_off, name_size = entries[2] if len(entries) > 2 else (0xFFFFFFFF, 0)
 
+    bounds = loc.bounds if loc.bounds.coord_range is not None \
+        else replace(loc.bounds, coord_range=PARSE_RANGE)
     if bg_size and bg_off != 0xFFFFFFFF:
         parcel.background = decode_background_frame(
-            mapdata[bg_off : bg_off + bg_size], loc.bounds)
+            mapdata[bg_off : bg_off + bg_size], bounds)
     if road_size and road_off != 0xFFFFFFFF:
         parcel.road = decode_road_frame(
-            mapdata[road_off : road_off + road_size], loc.bounds)
+            mapdata[road_off : road_off + road_size], bounds)
     if name_size and name_off != 0xFFFFFFFF:
         parcel.name = decode_name_frame(
-            mapdata[name_off : name_off + name_size], loc.bounds)
+            mapdata[name_off : name_off + name_size], bounds)
 
     return parcel

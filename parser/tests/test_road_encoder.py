@@ -23,10 +23,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from kiwiw import mesh
+from dataclasses import replace
+
+from kiwiw.parcel import PARSE_RANGE
 from kiwiw.coordconv import (
     decode_region_coord,
     encode_region_coord,
     latlon_to_xy,
+    range_for,
     xy_to_latlon,
 )
 from kiwiw.disc import AllData
@@ -75,7 +79,8 @@ def _load_parcel_with_road_links(disc):
                                n_basic_map=lmr.n_basic_map,
                                n_ext_map=lmr.n_ext_map)
         if parcel.road is not None and parcel.road.links:
-            return parcel, loc.bounds
+            # the parser's explicit read frame (kiwiw.parcel.PARSE_RANGE)
+            return parcel, replace(loc.bounds, coord_range=PARSE_RANGE)
     return None, None
 
 
@@ -86,10 +91,12 @@ def _load_parcel_with_road_links(disc):
 
 def test_encode_region_coord_roundtrip_synthetic():
     """encode_region_coord is the right inverse of decode_region_coord for
-    all representative pixel coordinates in 0..32767."""
-    test_values = [0, 1, 100, 4095, 4096, 4097, 8191, 8192, 16384, 24576, 32767]
+    all representative pixel coordinates in 0..16384 (the largest real
+    frame range, `range_for(0, "sparse")`)."""
+    rng = range_for(0, "sparse")
+    test_values = [0, 1, 100, 4095, 4096, 4097, 8191, 8192, 12288, 16383, 16384]
     for xc in test_values:
-        raw = encode_region_coord(xc)
+        raw = encode_region_coord(xc, coord_range=rng)
         recovered = decode_region_coord(raw)
         assert recovered == xc, (
             f"encode_region_coord({xc}) = {raw:#06x}, "
@@ -105,10 +112,11 @@ def test_latlon_to_xy_roundtrip_synthetic():
     # A bounding box typical for a level-0 Melbourne parcel.
     bounds = BoundingBox(lat_lo=-37.85, lat_hi=-37.80,
                          lon_lo=144.95, lon_hi=145.00)
-    test_pixels = [(0, 0), (100, 200), (16384, 16384), (32767, 0), (0, 32767)]
+    rng = range_for(0, "sparse")
+    test_pixels = [(0, 0), (100, 200), (8192, 8192), (16384, 0), (0, 16384)]
     for xc, yc in test_pixels:
-        lat, lon = xy_to_latlon(xc, yc, bounds)
-        xc2, yc2 = latlon_to_xy(lat, lon, bounds)
+        lat, lon = xy_to_latlon(xc, yc, bounds, coord_range=rng)
+        xc2, yc2 = latlon_to_xy(lat, lon, bounds, coord_range=rng)
         assert (xc2, yc2) == (xc, yc), (
             f"xy_to_latlon({xc},{yc}) -> ({lat:.8f},{lon:.8f}) -> "
             f"latlon_to_xy -> ({xc2},{yc2}), expected ({xc},{yc})"
@@ -134,7 +142,7 @@ def test_coordinate_encoder_roundtrip_real_nodes():
         for link in parcel.road.links:
             for node in link.nodes:
                 # Pixel-level round-trip for x
-                sx_encoded = encode_region_coord(node.x)
+                sx_encoded = encode_region_coord(node.x, coord_range=bounds.coord_range)
                 xc_recovered = decode_region_coord(sx_encoded)
                 assert xc_recovered == node.x, (
                     f"encode_region_coord({node.x}) = {sx_encoded:#06x}, "
@@ -142,7 +150,7 @@ def test_coordinate_encoder_roundtrip_real_nodes():
                 )
 
                 # Pixel-level round-trip for y
-                sy_encoded = encode_region_coord(node.y)
+                sy_encoded = encode_region_coord(node.y, coord_range=bounds.coord_range)
                 yc_recovered = decode_region_coord(sy_encoded)
                 assert yc_recovered == node.y, (
                     f"encode_region_coord({node.y}) = {sy_encoded:#06x}, "
@@ -151,7 +159,8 @@ def test_coordinate_encoder_roundtrip_real_nodes():
 
                 # latlon_to_xy must recover the exact pixel coords from
                 # the lat/lon that xy_to_latlon produced.
-                xc2, yc2 = latlon_to_xy(node.lat, node.lon, bounds)
+                xc2, yc2 = latlon_to_xy(node.lat, node.lon, bounds,
+                                      coord_range=bounds.coord_range)
                 assert (xc2, yc2) == (node.x, node.y), (
                     f"latlon_to_xy({node.lat},{node.lon}) -> ({xc2},{yc2}), "
                     f"expected ({node.x},{node.y})"

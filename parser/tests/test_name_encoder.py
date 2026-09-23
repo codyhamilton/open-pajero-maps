@@ -1,3 +1,4 @@
+from dataclasses import replace
 """Phase 3 encoder tests: name-record encoder.
 
 Verifies that `write_name_frame(encode=True)` re-serialises a decoded
@@ -26,6 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from kiwiw.parcel import PARSE_RANGE
 from kiwiw import mesh
 from kiwiw.disc import AllData
 from kiwiw.name import decode_name_frame
@@ -103,7 +105,7 @@ def test_name_encoder_roundtrip():
             print("SKIP: no parcel with name records found")
             return
 
-        bounds = loc.bounds
+        bounds = replace(loc.bounds, coord_range=PARSE_RANGE)  # parser read frame
         orig_frame = parcel.name
 
         # Re-encode in encode mode and check length.

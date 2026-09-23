@@ -53,10 +53,9 @@ _CS: dict = {}
 
 
 def _class_range(wp) -> int | None:
-    """R-census range for a walked parcel by the class rule, or None if `wp`
-    carries no grid position (synthetic callers) so the caller falls back."""
-    if not hasattr(wp, "blockset_index"):
-        return None
+    """R-census range for a walked parcel by the class rule (used when the
+    walker supplied no `frame_range`); the parcel must carry its grid
+    position -- there is no frameless fallback."""
     if not _CS:
         import coord_scale_census as csc
         d = json.loads(COORD_SCALE.read_text())
@@ -77,35 +76,21 @@ def parcel_metrics(wp) -> dict | None:
         return None
     # Span and range must come from the SAME frame: the stored coordinates
     # are expressed in the walker's frame (L0 sparse = the 4x4 tile at
-    # 16384), not in the leaf slot. Synthetic callers without a frame fall
-    # back to bounds (frame == leaf).
+    # 16384), not in the leaf slot. A caller without `frame_bounds` has
+    # frame == leaf.
     b = getattr(wp, "frame_bounds", None) or wp.bounds
     lon_span, lat_span = b.lon_hi - b.lon_lo, b.lat_hi - b.lat_lo
     cm = getattr(wp, "frame_range", None) or _class_range(wp)
-    if cm:
-        # A resolvable frame (real walked parcels): raw recovery and length
-        # scaling must share the SAME real range -- using a fixed decoder
-        # range for one and a guessed/class range for the other is the bug
-        # this unit exists to fix (Plan 03, 3-01).
-        rng = coord_max = float(cm)
-    else:
-        # No frame info at all (a synthetic caller with no grid position,
-        # e.g. a bare SimpleNamespace test fixture that encodes points
-        # assuming the decoder's fixed legacy range): fall back to that
-        # same legacy range for raw recovery, and guess coord_max from the
-        # observed peak, as before 3-01 -- kept for backward compatibility
-        # with callers that carry no resolvable frame at all.
-        rng = coordconv._LEGACY_RANGE
-        coord_max = None  # resolved below, once raw is known
+    # Raw recovery and length scaling share the SAME real range -- using a
+    # fixed decoder range for one and a guessed/class range for the other
+    # is the bug Plan 03 3-01 fixed.
+    rng = coord_max = float(cm)
     chains = []
     for link in parcel.road.links:
         pts = link.points or [(n.lat, n.lon) for n in link.nodes]
         raw = [((lon - b.lon_lo) / lon_span * rng,
                 (lat - b.lat_lo) / lat_span * rng) for lat, lon in pts]
         chains.append(raw)
-    if coord_max is None:
-        peak = max((c for ch in chains for p in ch for c in p), default=0.0)
-        coord_max = 16384.0 if (wp.level == 0 and peak > 4096.5) else 4096.0
     mid_lat = math.radians((b.lat_lo + b.lat_hi) / 2)
     kx = lon_span / coord_max * KM_PER_DEG * math.cos(mid_lat)
     ky = lat_span / coord_max * KM_PER_DEG

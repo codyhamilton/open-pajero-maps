@@ -15,7 +15,7 @@ Plan 03 settled the real model (`range_for` below): the combined value's
 range is not one fixed constant but a function of (level, parcel class,
 division state), read from `refdata/profile/coord_scale.json`. The
 per-call `coord_range` parameters below replace the old fixed-2**15
-assumption; `_LEGACY_RANGE` is a temporary shim -- see its docstring.
+assumption; every conversion now requires its frame's `coord_range`.
 
 Orientation (settled): y increases northward, so y=0 is the parcel's
 south edge (lat_lo) and y=coord_range its north edge (lat_hi); x increases
@@ -29,20 +29,11 @@ L0_sparse 0.717/26.51 vs 0.042/487.49.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Optional
 
 from .model import BoundingBox
-
-# TEMPORARY -- deleted by unit 3-03; no caller may rely on it.
-# Default of the three conversions' keyword-only `coord_range`, so the
-# unmigrated encoders (3-02/3-03's) keep their exact present behaviour.
-_LEGACY_RANGE = 32768
-
-# TEMPORARY -- deleted by unit 3-03 with `_LEGACY_RANGE`. 3-01's brief says
-# to delete this public name, but synth.py and osm_to_parcel_geometry.py
-# (out of 3-01's owned paths) still import it; an alias, not a second copy.
-COORD_RANGE = float(_LEGACY_RANGE)
 
 # Design rule "one global raw lattice per level": 4096 raw units per leaf
 # slot; a divided parent's frame is one slot.
@@ -52,6 +43,9 @@ _COORD_SCALE_PATH = (
     Path(__file__).resolve().parent.parent / "refdata" / "profile" / "coord_scale.json"
 )
 _RANGE_TABLE: Optional[dict] = None
+
+# A divided sub-parcel's division state: pardiv<parcel type>_sub<leaf index>.
+_DIVIDED_STATE = re.compile(r"pardiv[1-3]_sub\d+")
 
 
 def _ranges() -> dict:
@@ -79,9 +73,23 @@ def range_for(level: int, parcel_class: str, division_state: str = "normal") -> 
     which already equals the frame's true range for those classes.
 
     Raises `KeyError` if the (level, parcel_class, division_state) triple
-    is absent from `coord_scale.json` -- never falls back to a default.
+    is absent from `coord_scale.json` -- never falls back to a default --
+    except that a divided state needs only `(level, "divided")` to exist:
+    every `pardiv<t>_sub<i>` (t = 1..3) is the parent slot's frame.
     """
     table = _ranges()
+    if division_state != "normal":
+        # Spec 7.2.2.1.1.2(2)/(3): a sub-parcel uses "the normalized
+        # coordinate in the original basic parcel" -- whatever the division
+        # type -- so any well-formed pardiv<t>_sub<i> of a level that has a
+        # divided class is the parent slot's frame. R only uses pardiv1, so
+        # coord_scale.json has no pardiv2/3 rows; G's divider emits pardiv2.
+        if (parcel_class == "divided" and _DIVIDED_STATE.fullmatch(division_state)
+                and "divided" in table.get(str(level), {})):
+            return _SLOT_RANGE
+        raise KeyError(
+            f"no coord_scale.json range for (level={level}, "
+            f"parcel_class={parcel_class!r}, division_state={division_state!r})")
     try:
         entry = table[str(level)][parcel_class][division_state]
     except KeyError as exc:
@@ -89,13 +97,11 @@ def range_for(level: int, parcel_class: str, division_state: str = "normal") -> 
             f"no coord_scale.json range for (level={level}, "
             f"parcel_class={parcel_class!r}, division_state={division_state!r})"
         ) from exc
-    if division_state != "normal":
-        return _SLOT_RANGE
     return int(entry["max"])
 
 
 def xy_to_latlon(xc: int, yc: int, bounds: BoundingBox, *,
-                  coord_range: int = _LEGACY_RANGE) -> tuple[float, float]:
+                  coord_range: int) -> tuple[float, float]:
     lon = bounds.lon_lo + (xc / coord_range) * (bounds.lon_hi - bounds.lon_lo)
     lat = bounds.lat_lo + (yc / coord_range) * (bounds.lat_hi - bounds.lat_lo)
     return lat, lon
@@ -113,7 +119,7 @@ def decode_region_coord(raw: int) -> int:
     return value + region * 4096
 
 
-def encode_region_coord(xc: int, *, coord_range: int = _LEGACY_RANGE) -> int:
+def encode_region_coord(xc: int, *, coord_range: int) -> int:
     """Inverse of decode_region_coord: encode a parcel-local pixel coordinate
     to the raw 16-bit word form used throughout the road/background/name
     shape encodings.
@@ -135,11 +141,13 @@ def encode_region_coord(xc: int, *, coord_range: int = _LEGACY_RANGE) -> int:
         raise ValueError(f"pixel coordinate {xc} out of range 0..{coord_range}")
     region = xc // 4096
     value = xc % 4096
+    if region > 7:  # the 3-bit region field (bits 13:15) cannot hold it
+        raise ValueError(f"pixel coordinate {xc} does not fit the 3-bit region word")
     return value | (region << 13)
 
 
 def latlon_to_xy(lat: float, lon: float, bounds: BoundingBox, *,
-                  coord_range: int = _LEGACY_RANGE) -> tuple[int, int]:
+                  coord_range: int) -> tuple[int, int]:
     """Inverse of xy_to_latlon: convert geographic coordinates to
     parcel-local pixel coordinates.
 

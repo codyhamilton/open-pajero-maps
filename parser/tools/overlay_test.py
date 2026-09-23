@@ -94,7 +94,6 @@ sys.path.insert(0, str(ROOT))
 # The pre-Plan-03 decoder's fixed 2**15 range, kept only as the named
 # `control_32768` hypothesis variant; nothing decodes or inverts with it.
 CONTROL_RANGE_32768 = 32768.0
-DECODER_RANGE = CONTROL_RANGE_32768  # old name; test_overlay_test.py (not 3-01's) imports it
 GRID_N = 16
 MIN_LINKS = 20
 POOL_N = 12

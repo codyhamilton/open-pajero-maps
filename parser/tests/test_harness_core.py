@@ -29,6 +29,7 @@ from kiwiw.alldata_writer import SynthParcel, build_alldata_kwi
 from kiwiw.bitutils import sws, u16, u32
 from kiwiw.model import BoundingBox, MeshLocation, RoadLink, RoadNode
 from kiwiw.parcel import decode_parcel
+from osm_to_parcel_geometry import g_frame_range  # noqa: E402
 from kiwiw.synth import build_map_frame_bytes, build_road_frame_bytes
 
 from harness.checks import decode as decode_checks
@@ -49,19 +50,20 @@ def _cell_bounds(ix: int, iy: int) -> BoundingBox:
         lat_hi=_BOUNDS.lat_lo + (iy + 1) * cell_lat,
         lon_lo=_BOUNDS.lon_lo + ix * cell_lon,
         lon_hi=_BOUNDS.lon_lo + (ix + 1) * cell_lon,
+        coord_range=g_frame_range(LEVEL),  # G's frame range (Plan 03 3-03)
     )
 
 
 def _make_link(bounds: BoundingBox) -> RoadLink:
-    from kiwiw.coordconv import COORD_RANGE, xy_to_latlon
+    from kiwiw.coordconv import xy_to_latlon
 
     n_nodes = 2
-    step = int(COORD_RANGE) // (n_nodes + 1)
+    step = bounds.coord_range // (n_nodes + 1)
     nodes = []
     for k in range(n_nodes):
         xc = step * (k + 1)
         yc = step * (k + 1)
-        lat, lon = xy_to_latlon(xc, yc, bounds)
+        lat, lon = xy_to_latlon(xc, yc, bounds, coord_range=bounds.coord_range)
         nodes.append(RoadNode(x=xc, y=yc, lat=lat, lon=lon,
                                oneway=0, planned=0, tunnel=False, bridge=False))
     return RoadLink(

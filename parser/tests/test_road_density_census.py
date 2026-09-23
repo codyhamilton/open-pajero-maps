@@ -11,14 +11,17 @@ import road_density_census as rdc  # noqa: E402
 B = NS(lat_lo=-28.0, lat_hi=-27.0, lon_lo=153.0, lon_hi=154.0)
 
 
-def _pt(x, y):
-    # decoder convention: range 32768
-    return (B.lat_hi - y / 32768 * 1.0, B.lon_lo + x / 32768 * 1.0)
+def _pt(x, y, rng):
+    # frame convention: y up, raw 0..rng across the frame bounds B
+    return (B.lat_lo + y / rng * 1.0, B.lon_lo + x / rng * 1.0)
 
 
-def _wp(level, chains):
-    links = [NS(points=[_pt(x, y) for x, y in ch], nodes=[]) for ch in chains]
-    return NS(level=level, bounds=B, parcel=NS(road=NS(links=links)))
+def _wp(level, chains, rng=4096):
+    """A walked parcel with an explicit frame (bounds B at range `rng`) --
+    the census has no frameless fallback."""
+    links = [NS(points=[_pt(x, y, rng) for x, y in ch], nodes=[]) for ch in chains]
+    return NS(level=level, bounds=B, frame_bounds=B, frame_range=rng,
+              parcel=NS(road=NS(links=links)))
 
 
 def test_counts_and_length():
@@ -35,7 +38,7 @@ def test_counts_and_length():
 
 def test_sparse_l0_uses_16384():
     c = rdc.Census()
-    c.add(_wp(0, [[(0, 0), (10000, 0)]]))
+    c.add(_wp(0, [[(0, 0), (10000, 0)]], rng=16384))
     assert c.to_dict()["levels"]["0"]["parcels_by_coord_max"] == {"16384": 1}
 
 

@@ -12,7 +12,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import build_alldata as B
 from kiwiw import cenc, divide, spool, synth
 from kiwiw.model import BackgroundShape, BoundingBox, NameRecord, RoadLink, RoadNode
-from osm_to_parcel_geometry import TileGrid, parcel_bounds
+from osm_to_parcel_geometry import TileGrid, g_frame_range
+from osm_to_parcel_geometry import frame_bounds as parcel_bounds  # ranged G frame
 
 pytestmark = pytest.mark.skipif(cenc._load_lib() is None, reason="no C compiler")
 
@@ -99,14 +100,14 @@ def test_kernel_matches_python(level, tmp_path, no_c_bg):
         rc = spool.columns_to_content(spool.decode_columns(raws[(ix, iy)])) \
             if (ix, iy) in raws else spool._empty_content()
         want = _oracle(level, ix, iy, g, rc)
-        got = enc.encode(raws.get((ix, iy)), ix, iy)
+        got = enc.encode(raws.get((ix, iy)), ix, iy, coord_range=g_frame_range(level))
         assert got == want, (level, ix, iy)
 
 
 def test_empty_cell(no_c_bg):
     g = TileGrid.from_reference(0)
     enc = cenc.make_encoder(0, g, 131070, KL)
-    assert enc.encode(None, 5, 5) == _oracle(0, 5, 5, g, spool._empty_content())
+    assert enc.encode(None, 5, 5, coord_range=g_frame_range(0)) == _oracle(0, 5, 5, g, spool._empty_content())
 
 
 def test_column_table_matches_spool():
@@ -122,14 +123,15 @@ def test_column_table_matches_spool():
 
 def test_bg_shape_matches_scalar():
     rng = random.Random(7)
-    b = BoundingBox(lat_lo=-32.0, lat_hi=-31.0, lon_lo=115.0, lon_hi=116.0)
+    b = BoundingBox(lat_lo=-32.0, lat_hi=-31.0, lon_lo=115.0, lon_hi=116.0,
+                    coord_range=16384)
     for k in (1, 2, 3, 5, 50, 700):
         for mult in (0, 1, 3):
             s = BackgroundShape(
                 shape_class=1, type_code=5, type_label="", n_coords=k, mult_const=mult,
                 underground=bool(k & 1), pen_up=bool(k & 2),
                 coords=[(rng.uniform(-32.1, -30.9), rng.uniform(114.9, 116.1)) for _ in range(k)])
-            got = cenc.bg_shape_bytes(s, b, 32768)
+            got = cenc.bg_shape_bytes(s, b, b.coord_range)
             if got is not None:
                 assert got == synth.encode_background_shape_bytes_scalar(s, b), (k, mult)
 
@@ -155,7 +157,7 @@ def test_measure_content_matches_python(no_c_bg, monkeypatch):
 # ---------------------------------------------------------------- 3-02: the
 # coordinate range is a parameter of both encoders, not a constant either owns.
 
-RANGES = (32768, 16384, 4096)
+RANGES = (16384, 4096)  # every real frame range (range_for); 32768 is not one
 _C_BG = cenc.bg_shape_bytes
 
 
@@ -311,18 +313,13 @@ def test_stored_pixels_ignored_latlon_wins(coord_range, tmp_path, pure_py):
 @pytest.mark.parametrize("coord_range", RANGES)
 def test_frame_edge_is_inclusive(coord_range, tmp_path, pure_py):
     """A coordinate of exactly `coord_range` survives the clamp and encodes as
-    the next region's value 0; beyond it clamps to `coord_range`. The one
-    exception is the legacy 32768 frame, whose edge (region 8) does not fit the
-    3-bit region field: it clamps to 32767, the word's largest value."""
+    the next region's value 0; beyond it clamps to `coord_range`."""
     level = 8
     g = TileGrid.from_reference(level)
     ix, iy = 5, 5
     b = _ranged(parcel_bounds(ix, iy, g), coord_range)
-    if coord_range == 32768:
-        edge = 0xEFFF  # region 7, value 4095 = 32767
-    else:
-        edge = (coord_range % 4096) | ((coord_range // 4096) << 13)
-        assert edge & 0x1FFF == 0 and edge >> 13 == coord_range // 4096
+    edge = (coord_range % 4096) | ((coord_range // 4096) << 13)
+    assert edge & 0x1FFF == 0 and edge >> 13 == coord_range // 4096
     ne = _nd(0, 0, b.lat_hi, b.lon_hi)
     beyond = _nd(0, 0, b.lat_hi + 1.0, b.lon_hi + 1.0)
     py = synth.encode_road_link_bytes(_one_link([ne, beyond]), b)

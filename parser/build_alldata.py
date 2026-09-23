@@ -53,7 +53,8 @@ from kiwiw.spool import SpoolReader
 # geometry.py's own job, run as a separate, prior step). Not touching that
 # module's own contents; this is the same "TileGrid.from_reference()" every
 # extraction run already uses to agree on cell boundaries.
-from osm_to_parcel_geometry import FIXTURE_BBOXES, TileGrid, assign_to_parcel, parcel_bounds
+from osm_to_parcel_geometry import (FIXTURE_BBOXES, TileGrid, assign_to_parcel, g_frame_range,
+                                    frame_bounds)
 
 DEFAULT_SPOOL = str(Path(__file__).resolve().parent.parent / "output" / "spool")
 DEFAULT_OUT = str(Path(__file__).resolve().parent.parent / "output" / "ALLDATA.KWI")
@@ -148,7 +149,12 @@ def _measure_one(level: int, ix: int, iy: int, bounds, content: dict):
     grep across kiwiw/ -- nothing decodes or checks its value; see
     parser/kiwiw/parcel.py's decode docstring) -- used here as a generic
     position marker, valid for both a parent cell's own (ix, iy) and a
-    divided sub-cell's (sub_ix, sub_iy)."""
+    divided sub-cell's (sub_ix, sub_iy).
+
+    `bounds` carries the frame's coordinate range (`bounds.coord_range`, from
+    `osm_to_parcel_geometry.g_frame_range` via `divide.plan_divisions`): the
+    parcel's own frame, or a divided parent's frame for a sub-cell. Both
+    the C probe and the Python encoders read it there; none is a default."""
     # C probe first (byte-identical; declines on anything it does not model,
     # incl. the hard ceiling); the Python encoders below are the oracle.
     fast = cenc.measure_content(level, ix, iy, bounds, content)
@@ -318,8 +324,12 @@ def _level_frames_c(level, reader, a, b, in_fixture, count, rect, enc,
     stream = _raw_cells()
     if rect is not None:
         stream = _fill_masked(stream, rect, lambda: None)
+    # Every undivided cell of a level shares one frame shape (one slot), so
+    # one range: `g_frame_range`, a pure function of the level -- identical
+    # in every worker. Divided cells get theirs inside `plan_divisions`.
+    coord_range = g_frame_range(level)
     for ix, iy, raw in stream:
-        frame = enc.encode(raw, ix, iy)
+        frame = enc.encode(raw, ix, iy, coord_range=coord_range)
         if frame is not None:
             yield ix, iy, 0, 0, 0, frame
             continue

@@ -24,7 +24,7 @@ from kiwiw.disc import AllData
 from kiwiw.grid import ReferenceGrid
 from kiwiw.model import BoundingBox
 
-_SMALL_BOUNDS = BoundingBox(lat_lo=-1.0, lat_hi=1.0, lon_lo=-1.0, lon_hi=1.0)
+_SMALL_BOUNDS = BoundingBox(lat_lo=-1.0, lat_hi=1.0, lon_lo=-1.0, lon_hi=1.0, coord_range=4096)
 
 
 def _make_frame(level: int, ix: int, iy: int) -> bytes:

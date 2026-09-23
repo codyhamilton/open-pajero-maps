@@ -32,7 +32,8 @@ Coordinate representation
 -------------------------
 Parcel-local pixel coordinates are computed via
 ``coordconv.latlon_to_xy(lat, lon, bounds)`` which maps the parcel's
-geographic bounding box onto a 0..32767 pixel grid (COORD_RANGE = 2^15).
+geographic bounding box onto a 0..range pixel grid, range = the frame's
+``coordconv.range_for`` divisor (``g_frame_range``: 4096 per leaf slot).
 RoadNode.x/y and BackgroundShape.coords store these pixel values; the
 geographic lat/lon is also stored for readability.
 
@@ -65,7 +66,9 @@ from typing import Callable, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from kiwiw.coordconv import latlon_to_xy, COORD_RANGE
+import dataclasses
+
+from kiwiw.coordconv import latlon_to_xy, range_for
 from kiwiw.grid import ReferenceGrid
 from kiwiw.model import (
     BackgroundShape,
@@ -291,6 +294,38 @@ def parcel_bounds(ix: int, iy: int, grid: TileGrid) -> BoundingBox:
                        lon_lo=norm(lon_lo_raw), lon_hi=norm(lon_hi_raw))
 
 
+
+def g_frame_class(level: int) -> str:
+    """`coord_scale.json` parcel class of one undivided frame *as G writes it*.
+
+    G writes every leaf slot as its own Map Frame -- it never aliases the 16
+    slots of an L0 tile into one integrated-parcel frame as R does for its
+    L0 sparse tiles -- so under the one-global-lattice rule (range = n x 4096,
+    n = slots the frame covers) every G L0 frame is a basic parcel, n = 1:
+    class 'urban' (range 4096), whatever `class_rule` says about R's tile.
+    Every other level is 'full'. This is the one place a future
+    integrated-tile build changes (Plan 03 DESIGN.md Open Question "The L0
+    sparse frame is a shape difference between R and G")."""
+    return "urban" if level == 0 else "full"
+
+
+def g_frame_range(level: int, parcel_type: int = 0, sub_index: int = 0) -> int:
+    """The coordinate range (`coordconv.range_for`) of one G frame: an
+    undivided parcel (`parcel_type` 0) by `g_frame_class`, or sub-parcel
+    `sub_index` (= sub_iy * nx + sub_ix) of a `pardiv<parcel_type>` divided
+    parcel, which lives in its parent slot's frame. A pure function of its
+    arguments -- identical in every worker."""
+    if parcel_type:
+        return range_for(level, "divided", f"pardiv{parcel_type}_sub{sub_index}")
+    return range_for(level, g_frame_class(level), "normal")
+
+
+def frame_bounds(ix: int, iy: int, grid: TileGrid) -> BoundingBox:
+    """`parcel_bounds` of undivided cell (ix, iy), carrying its frame's
+    coordinate range (`g_frame_range`)."""
+    return dataclasses.replace(parcel_bounds(ix, iy, grid),
+                               coord_range=g_frame_range(grid.level))
+
 # ---------------------------------------------------------------------------
 # Road polyline clipping
 # ---------------------------------------------------------------------------
@@ -431,7 +466,8 @@ def _make_road_link(chain: list[tuple[float, float]],
     level", not "guess a default").
 
     The chain is a list of (lat, lon) pairs already clipped to the parcel.
-    Coordinate values outside [0, COORD_RANGE) are clamped.
+    Coordinate values outside the frame's [0, g_frame_range(level)] are
+    clamped (inclusive: a boundary node sits exactly on the frame edge).
 
     ``osm_way_id`` is the OSM way ID this polyline was derived from; it is
     stored as IR-only metadata (not encoded into KWI bytes) so that the RP
@@ -447,11 +483,11 @@ def _make_road_link(chain: list[tuple[float, float]],
     display_class = _DISPLAY_CLASS_VOCAB.lookup(level, tags)
     if road_type is None or display_class is None:
         return None
-    limit = int(COORD_RANGE) - 1
+    limit = g_frame_range(level)
 
     nodes = []
     for lat, lon in chain:
-        xc, yc = latlon_to_xy(lat, lon, bounds)
+        xc, yc = latlon_to_xy(lat, lon, bounds, coord_range=limit)
         xc = max(0, min(limit, xc))
         yc = max(0, min(limit, yc))
         nodes.append(RoadNode(
@@ -485,14 +521,8 @@ def _make_road_link(chain: list[tuple[float, float]],
 def _make_background_shape(ring: list[tuple[float, float]],
                             type_code: int,
                             bounds: BoundingBox) -> BackgroundShape:
-    """Build a synthetic BackgroundShape for one polygon ring."""
-    limit = int(COORD_RANGE) - 1
-    px_coords = []
-    for lat, lon in ring:
-        xc, yc = latlon_to_xy(lat, lon, bounds)
-        xc = max(0, min(limit, xc))
-        yc = max(0, min(limit, yc))
-        px_coords.append((lat, lon))  # keep as latlon; writer converts
+    """Build a synthetic BackgroundShape for one polygon ring. Coordinates
+    stay lat/lon; the writer converts them at the frame's range."""
 
     # shape_class: 2=polygon, 1=line
     shape_class = 2 if len(ring) >= 3 else 1
