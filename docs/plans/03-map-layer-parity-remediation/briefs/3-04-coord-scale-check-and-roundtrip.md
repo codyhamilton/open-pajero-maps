@@ -85,3 +85,9 @@ Transitional shims 3-01 could not remove (its owned paths excluded the importers
 5. The decoders in `road.py`, `background.py`, `name.py` fall back to the legacy value when handed a `BoundingBox` whose `coord_range` is `None`.
 
 For this unit: take each parcel's range from `walk.leaf_frame_range` / `range_for`, never from a local copy of the class arithmetic; a divided sub-parcel's frame is its parent slot.
+
+## Amendment after 3-02 (orchestrator, 2026-09-24)
+
+- **Spool path.** Use `output/extract_timing/spool` (binary `KWSPIDX1`, stats match the manifest's `spool_stats`) wherever this brief says `output/spool`; `output/spool` is a legacy pickle spool that `SpoolReader` rejects.
+- **Baseline.** 3-02 removed the encoders' stored-pixel preference; road nodes' y moved from the spool's stale y-down pixels onto the settled y-up orientation. The pre-3-03 baseline is full disc `9407122122b9…` / Perth `99d72f0b1cf14b8b…`; `51c254ac…` / `e275879f…` are retired (they predate 2-06).
+- **Scratch.** `/tmp` hits its disk quota on full builds; put scratch under `output/scratch-<unit>/` (gitignored) and set `TMPDIR` there.

@@ -88,3 +88,9 @@ Transitional shims 3-01 could not remove (its owned paths excluded the importers
 5. The decoders in `road.py`, `background.py`, `name.py` fall back to the legacy value when handed a `BoundingBox` whose `coord_range` is `None`.
 
 For this unit: `synth.py` must stop importing `COORD_RANGE` (shim 1's `synth.py` side) and `_cenc.c`'s `#define COORD_RANGE` must go (shim 2). The `coordconv` alias itself is 3-03's to delete.
+
+## Amendment after 3-02's first report (orchestrator, 2026-09-24)
+
+The "output bytes unchanged" done evidence rested on a false premise. The spool's stored road-node `n_x`/`n_y` were written y-down (spool extracted 21 Sep, before 2-06's y-up switch at 39c9c2f); x agrees with lat/lon everywhere, y agrees only with y-down. Removing the stored-pixel preference, which this brief requires and the design mandates ("encoders derive pixels from lat/lon"), therefore moves every road node's y onto the settled y-up orientation. That is a latent-defect fix, accepted. The expected shas `51c254ac…` / `e275879f…` also predate 2-06 and do not reproduce at HEAD.
+
+Replacement byte evidence: (a) new code with **only** the stored-pixel branch restored reproduces HEAD byte-for-byte (full disc `1518dc62…`, Perth `1d29e76e…`) — proving the range threading and inclusive clamp move no bytes; (b) the new build's Perth `-j 1` == `-j 4`. New baseline: full disc `9407122122b9…`, Perth `99d72f0b1cf14b8b…`. The spool of record is `output/extract_timing/spool` (binary `KWSPIDX1`); `output/spool` is a legacy pickle spool that `SpoolReader` rejects.
