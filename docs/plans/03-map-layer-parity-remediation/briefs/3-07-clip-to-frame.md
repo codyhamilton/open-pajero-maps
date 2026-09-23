@@ -58,3 +58,9 @@ Under 1,500 tokens. Status: `done` | `done with concerns` | `blocked` | `needs c
 A non-trivial bug outside your done evidence: report symptom, location, and root cause if found. Do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendment after 3-03 (orchestrator, 2026-09-24)
+
+- **Depends on 3-08 as well** (it removes `kiwiw.parcel.PARSE_RANGE` from test files this unit owns; start from the tree it leaves).
+- **The clip rectangle is the parcel's own extent within its frame.** For a normal parcel that is `[0, range]²`. For a divided sub-parcel, whose frame is the parent's 4096 frame, it is the sub-parcel's quadrant/cell within that frame — R's `pardiv1_sub0` observed max is 2048 because R clips sub-parcel content to the quadrant; G currently reaches 4096 at sub0 (3-03 finding). Clip background geometry to the sub-parcel's rectangle; roads' sub-parcel containment is Phase 5's, do not touch roads. Round-trip assertion (a) becomes "no written vertex outside its parcel's clip rectangle".
+- **Remove `_cenc.c`'s `PACK_MAX` 32767 cap** in `clamp_max` (3-03 left it; ranges ≤ 16384 make it dead). `encode_region_coord`'s region > 7 rejection is the only packing guard.

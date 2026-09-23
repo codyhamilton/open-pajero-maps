@@ -436,7 +436,8 @@ Surfaces beyond the list above, found in recon and in scope: `parser/kiwiw/{road
 | 3-02 both encoders take the coordinate range as a parameter (bytes unchanged) | `briefs/3-02-encoders-take-range.md` | 3-01 | 3-04 |
 | 3-03 the build path supplies each parcel's real range; the legacy constant dies | `briefs/3-03-build-path-supplies-range.md` | 3-01, 3-02 | 3-04 |
 | 3-04 the `coord_scale` check and the per-vertex quantisation round-trip | `briefs/3-04-coord-scale-check-and-roundtrip.md` | 3-01 | 3-02, 3-03 |
-| 3-07 clip background geometry to the frame, as R does (added 2026-09-24 by the orchestrator on R evidence) | `briefs/3-07-clip-to-frame.md` | 3-03, 3-04 | nothing |
+| 3-08 the parse path takes each frame's real range; `PARSE_RANGE` dies (added 2026-09-24, fixer for 3-03's finding) | `briefs/3-08-parse-path-range.md` | 3-03 | nothing |
+| 3-07 clip background geometry to the frame, as R does (added 2026-09-24 by the orchestrator on R evidence) | `briefs/3-07-clip-to-frame.md` | 3-03, 3-04, 3-08 | nothing |
 | 3-05 the determinism matrix (kickoff and hand-off) | `briefs/3-05-determinism-matrix.md` | 3-03, 3-07 | nothing |
 | 3-06 Phase 3 evidence against the amended outcome | `briefs/3-06-phase-evidence.md` | 3-04, 3-05, 3-07 | nothing |
 
