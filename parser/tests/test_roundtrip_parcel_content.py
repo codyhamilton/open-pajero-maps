@@ -57,13 +57,13 @@ def _for_each_point(fn):
     try:
         for label, lat, lon in TEST_POINTS:
             found = rtpc._find_block(disc.pdmdh, disc._zdat0, disc._fh, LEVEL,
-                                      lat, lon, disc.sector_sz, disc.logical_sz)
+                                     lat, lon, disc.sector_sz, disc.logical_sz)
             if found is None:
                 print(f"SKIP: {label}: no data block at this coordinate")
                 continue
             pdat, lmr, bmt_dsa, bmt_size = found
-            loc = mesh.locate_parcel(disc._fh, disc._zdat0, disc.pdmdh, LEVEL,
-                                      lat, lon, disc.sector_sz, disc.logical_sz)
+            loc = mesh.locate_frame(disc._fh, disc._zdat0, disc.pdmdh, LEVEL,
+                                     lat, lon, disc.sector_sz, disc.logical_sz)
             if loc is None:
                 print(f"SKIP: {label}: no leaf parcel at this coordinate")
                 continue
@@ -150,13 +150,13 @@ def test_negative_control_road_link_raw_bytes():
         return
     try:
         for label, lat, lon in TEST_POINTS:
-            loc = mesh.locate_parcel(disc._fh, disc._zdat0, disc.pdmdh, LEVEL,
-                                      lat, lon, disc.sector_sz, disc.logical_sz)
+            loc = mesh.locate_frame(disc._fh, disc._zdat0, disc.pdmdh, LEVEL,
+                                     lat, lon, disc.sector_sz, disc.logical_sz)
             if loc is None:
                 continue
             mapdata = _read_mapdata(disc, loc)
             found = rtpc._find_block(disc.pdmdh, disc._zdat0, disc._fh, LEVEL,
-                                      lat, lon, disc.sector_sz, disc.logical_sz)
+                                     lat, lon, disc.sector_sz, disc.logical_sz)
             if found is None:
                 continue
             _, lmr, _, _ = found
@@ -193,13 +193,13 @@ def test_negative_control_name_record_raw_bytes():
         return
     try:
         for label, lat, lon in TEST_POINTS:
-            loc = mesh.locate_parcel(disc._fh, disc._zdat0, disc.pdmdh, LEVEL,
-                                      lat, lon, disc.sector_sz, disc.logical_sz)
+            loc = mesh.locate_frame(disc._fh, disc._zdat0, disc.pdmdh, LEVEL,
+                                     lat, lon, disc.sector_sz, disc.logical_sz)
             if loc is None:
                 continue
             mapdata = _read_mapdata(disc, loc)
             found = rtpc._find_block(disc.pdmdh, disc._zdat0, disc._fh, LEVEL,
-                                      lat, lon, disc.sector_sz, disc.logical_sz)
+                                     lat, lon, disc.sector_sz, disc.logical_sz)
             if found is None:
                 continue
             _, lmr, _, _ = found
@@ -236,13 +236,13 @@ def test_negative_control_map_frame_tail_raw():
         return
     try:
         for label, lat, lon in TEST_POINTS:
-            loc = mesh.locate_parcel(disc._fh, disc._zdat0, disc.pdmdh, LEVEL,
-                                      lat, lon, disc.sector_sz, disc.logical_sz)
+            loc = mesh.locate_frame(disc._fh, disc._zdat0, disc.pdmdh, LEVEL,
+                                     lat, lon, disc.sector_sz, disc.logical_sz)
             if loc is None:
                 continue
             mapdata = _read_mapdata(disc, loc)
             found = rtpc._find_block(disc.pdmdh, disc._zdat0, disc._fh, LEVEL,
-                                      lat, lon, disc.sector_sz, disc.logical_sz)
+                                     lat, lon, disc.sector_sz, disc.logical_sz)
             if found is None:
                 continue
             _, lmr, _, _ = found

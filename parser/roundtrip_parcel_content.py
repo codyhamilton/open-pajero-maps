@@ -182,8 +182,8 @@ def main() -> int:
             print(f"  {r1}")
             results.append(r1)
 
-            loc = mesh.locate_parcel(disc._fh, disc._zdat0, disc.pdmdh, args.level,
-                                      lat, lon, disc.sector_sz, disc.logical_sz)
+            loc = mesh.locate_frame(disc._fh, disc._zdat0, disc.pdmdh, args.level,
+                                     lat, lon, disc.sector_sz, disc.logical_sz)
             if loc is None:
                 results.append(f"SKIP  {label}: no leaf parcel at this coordinate")
                 continue

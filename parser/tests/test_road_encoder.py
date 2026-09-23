@@ -23,9 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from kiwiw import mesh
-from dataclasses import replace
 
-from kiwiw.parcel import PARSE_RANGE
 from kiwiw.coordconv import (
     decode_region_coord,
     encode_region_coord,
@@ -68,7 +66,7 @@ def _load_parcel_with_road_links(disc):
         if found is None:
             continue
         _, lmr, _, _ = found
-        loc = mesh.locate_parcel(disc._fh, disc._zdat0, disc.pdmdh, LEVEL,
+        loc = mesh.locate_frame(disc._fh, disc._zdat0, disc.pdmdh, LEVEL,
                                   lat, lon, disc.sector_sz, disc.logical_sz)
         if loc is None:
             continue
@@ -79,8 +77,7 @@ def _load_parcel_with_road_links(disc):
                                n_basic_map=lmr.n_basic_map,
                                n_ext_map=lmr.n_ext_map)
         if parcel.road is not None and parcel.road.links:
-            # the parser's explicit read frame (kiwiw.parcel.PARSE_RANGE)
-            return parcel, replace(loc.bounds, coord_range=PARSE_RANGE)
+            return parcel, loc.bounds  # ranged decode frame (mesh.locate_frame)
     return None, None
 
 

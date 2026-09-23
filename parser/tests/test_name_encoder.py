@@ -1,4 +1,3 @@
-from dataclasses import replace
 """Phase 3 encoder tests: name-record encoder.
 
 Verifies that `write_name_frame(encode=True)` re-serialises a decoded
@@ -27,7 +26,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from kiwiw.parcel import PARSE_RANGE
 from kiwiw import mesh
 from kiwiw.disc import AllData
 from kiwiw.name import decode_name_frame
@@ -66,7 +64,7 @@ def _load_parcel_with_name_records(disc, require_type4: bool = False):
         if found is None:
             continue
         _, lmr, _, _ = found
-        loc = mesh.locate_parcel(disc._fh, disc._zdat0, disc.pdmdh, LEVEL,
+        loc = mesh.locate_frame(disc._fh, disc._zdat0, disc.pdmdh, LEVEL,
                                   lat, lon, disc.sector_sz, disc.logical_sz)
         if loc is None:
             continue
@@ -105,7 +103,7 @@ def test_name_encoder_roundtrip():
             print("SKIP: no parcel with name records found")
             return
 
-        bounds = replace(loc.bounds, coord_range=PARSE_RANGE)  # parser read frame
+        bounds = loc.bounds  # the leaf's ranged decode frame (mesh.locate_frame)
         orig_frame = parcel.name
 
         # Re-encode in encode mode and check length.

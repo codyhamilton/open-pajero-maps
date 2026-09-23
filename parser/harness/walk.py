@@ -32,13 +32,15 @@ from kiwiw.model import BoundingBox, Parcel, ParcelMgmtRecord
 from kiwiw.parcel import decode_parcel
 from kiwiw.parcel_mgmt import parse_parcel_mgmt_record
 from kiwiw.model import MeshLocation
+from kiwiw import mesh
+# The frame-shape rule lives in `kiwiw.mesh` (one implementation shared with
+# the point-lookup parse path); these names are kept for existing callers.
+from kiwiw.mesh import L0_TILE, leaf_frame_range  # noqa: F401
+from kiwiw.mesh import is_sparse_tile as _is_sparse_tile  # noqa: F401
+from kiwiw.mesh import narrow_bounds as _narrow_bounds  # noqa: F401
+from kiwiw.mesh import tile_bounds as _tile_bounds  # noqa: F401
 
 NO_DATA_DSA = 0xFFFFFFFF
-
-# L0 leaves sit on a 4x4-leaf "integrated parcel" tile grid (same constant
-# as tools/coord_scale_census.L0_TILE; tools are not importable from here).
-L0_TILE = 4
-
 
 # ---------------------------------------------------------------------
 # Container-level reads (header / extras / MHT / full PDMDH), no level
@@ -110,98 +112,19 @@ def _block_base_bounds(pdmdh: volume.Pdmdh, lmr, bsx: int, bsy: int, blx: int, b
                         lon_lo=base_lon, lon_hi=base_lon + npc_lng * mx)
 
 
-def _narrow_bounds(bounds: BoundingBox, gn_lat: int, gn_lng: int, idx: int) -> BoundingBox:
-    lpy, lpx = divmod(idx, gn_lng)
-    lon_step = (bounds.lon_hi - bounds.lon_lo) / gn_lng
-    lat_step = (bounds.lat_hi - bounds.lat_lo) / gn_lat
-    lon_lo = bounds.lon_lo + lpx * lon_step
-    lat_lo = bounds.lat_lo + lpy * lat_step
-    return BoundingBox(lat_lo=lat_lo, lat_hi=lat_lo + lat_step,
-                        lon_lo=lon_lo, lon_hi=lon_lo + lon_step)
-
-
-def _tile_bounds(bounds: BoundingBox, gn_lat: int, gn_lng: int, idx: int) -> BoundingBox:
-    """Bbox of the L0_TILE x L0_TILE aligned leaf tile containing slot `idx`
-    of a `gn_lat` x `gn_lng` leaf grid spanning `bounds`."""
-    ly, lx = divmod(idx, gn_lng)
-    ty, tx = ly // L0_TILE * L0_TILE, lx // L0_TILE * L0_TILE
-    lon_step = (bounds.lon_hi - bounds.lon_lo) / gn_lng
-    lat_step = (bounds.lat_hi - bounds.lat_lo) / gn_lat
-    lat_lo = bounds.lat_lo + ty * lat_step
-    lon_lo = bounds.lon_lo + tx * lon_step
-    return BoundingBox(lat_lo=lat_lo, lat_hi=lat_lo + L0_TILE * lat_step,
-                        lon_lo=lon_lo, lon_hi=lon_lo + L0_TILE * lon_step)
-
-
-def _is_sparse_tile(rec: ParcelMgmtRecord, gn_lng: int, idx: int) -> bool:
-    """True iff the aligned 4x4 tile holding top-level slot `idx` of an L0
-    normal record is an L0 *sparse* tile: all 16 slots are populated leaves
-    aliasing ONE Map Frame byte range. On R this partitions L0 exactly:
-    231,300 tiles resolve to 1 distinct (dsa, size), the other 252 to 16
-    (the urban tiles of the 2-01 class rule)."""
-    ly, lx = divmod(idx, gn_lng)
-    ty, tx = ly // L0_TILE * L0_TILE, lx // L0_TILE * L0_TILE
-    seen = set()
-    for dy in range(L0_TILE):
-        for dx in range(L0_TILE):
-            j = (ty + dy) * gn_lng + tx + dx
-            if j >= len(rec.entries):
-                return False
-            e = rec.entries[j]
-            if e.dsa == NO_DATA_DSA or e.subrecord is not None or not e.size:
-                return False
-            seen.add((e.dsa, e.size))
-    return len(seen) == 1
-
-
 def _leaf_frame(root, level, ptype, leaf_path, leaf_bounds, block_bounds, lmr, cache):
-    """(frame_bounds, frame_class) of one leaf. Recon (R, all 231,552 L0
-    tiles; block leaf grid 32x64 from mapinfo n_parcels_lng/lat 31/63): leaf
-    bboxes from `_narrow_bounds` are already distinct per slot; the 16 slots
-    of a sparse tile alias ONE Map Frame (16 slots -> 1 (dsa,size) on
-    231,300 tiles, 252 urban tiles -> 16). So the defect was not the leaf
-    bbox but that the FRAME (the 4x4 tile, range 16384) was never modelled:
-    decode used the leaf bbox for coordinates spanning the tile.
+    """(frame_bounds, frame_class) of one leaf: `kiwiw.mesh.leaf_frame_shape`
+    (L0 sparse 4x4 tile, divided sub-parcel's parent slot, else the leaf).
     `cache` (per block) memoises the per-tile sparse test."""
-    if level != 0 or ptype != 0 or len(leaf_path) != 1:
-        return leaf_bounds, "leaf"
-    gn_lat = 1 + lmr.n_parcels_lat[0]
     gn_lng = 1 + lmr.n_parcels_lng[0]
-    ly, lx = divmod(leaf_path[0], gn_lng)
-    tkey = (ly // L0_TILE, lx // L0_TILE)
-    if tkey not in cache:
-        cache[tkey] = _is_sparse_tile(root, gn_lng, leaf_path[0])
-    if cache[tkey]:
-        return _tile_bounds(block_bounds, gn_lat, gn_lng, leaf_path[0]), "l0_sparse_tile"
-    return leaf_bounds, "leaf"
 
-
-def _frame_range(level: int, cls: str, div_state: str) -> Optional[int]:
-    """Coordinate range of a frame: `coordconv.range_for` (None when the
-    (level, class, division_state) triple is absent from coord_scale.json).
-    `range_for` is the one place that knows a divided sub-parcel's range is
-    the parent's 4096 frame, not coord_scale.json's observed maximum."""
-    from kiwiw.coordconv import range_for
-    try:
-        return range_for(level, cls, div_state)
-    except KeyError:
-        return None
-
-
-def leaf_frame_range(level: int, ptype: int, leaf_path: tuple, frame_class: str) -> Optional[int]:
-    """`range_for` of one leaf, by coord_scale.json's content-independent
-    `class_rule`: division != 0 -> 'divided' (state pardiv<type>_sub<idx>);
-    level 0 -> 'sparse' when `_leaf_frame` resolved the 4x4 tile
-    (`_is_sparse_tile`, reconciled with class_rule in 2-13), else 'urban';
-    any other level -> 'full'."""
-    if ptype:
-        cls = "divided"
-    elif frame_class == "l0_sparse_tile":
-        cls = "sparse"
-    else:
-        cls = "urban" if level == 0 else "full"
-    div_state = "normal" if ptype == 0 else f"pardiv{ptype}_sub{leaf_path[-1]}"
-    return _frame_range(level, cls, div_state)
+    def sparse(idx):
+        ly, lx = divmod(idx, gn_lng)
+        key = (ly // L0_TILE, lx // L0_TILE)
+        if key not in cache:
+            cache[key] = _is_sparse_tile(root.entries, gn_lng, idx)
+        return cache[key]
+    return mesh.leaf_frame_shape(level, ptype, leaf_path, leaf_bounds, block_bounds, lmr, sparse)
 
 
 def with_range(bounds: BoundingBox, coord_range: Optional[int]) -> BoundingBox:
@@ -327,13 +250,6 @@ def iter_parcels(path: str) -> Iterator[WalkedParcel]:
                         frame_bounds, frame_class = _leaf_frame(
                             root, level, ptype, leaf_path, leaf_bounds, block_bounds, lmr,
                             sparse_cache)
-                        if ptype and len(leaf_path) > 1:
-                            # A divided sub-parcel's coordinates are absolute
-                            # in its PARENT's 4096 frame (criterion 3, 2-12/
-                            # 2-14), so the parent slot is its frame.
-                            frame_bounds, frame_class = _narrow_bounds(
-                                block_bounds, 1 + lmr.n_parcels_lat[0],
-                                1 + lmr.n_parcels_lng[0], leaf_path[0]), "divided_parent"
                         frame_range = leaf_frame_range(level, ptype, leaf_path, frame_class)
                         moff = volume.getsector(entry.dsa, sector_sz, logical_sz)
                         mlen = entry.size * logical_sz

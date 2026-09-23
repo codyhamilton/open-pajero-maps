@@ -57,7 +57,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from . import spill as _spill, volume, volume_writer, parcel_writer
-from .parcel import PARSE_RANGE
+from . import mesh
 from .model import BoundingBox, MeshLocation, Parcel, ParcelMapInfoEntry, ParcelMgmtRecord
 from .parcel import decode_parcel
 from .parcel_mgmt import parse_parcel_mgmt_record
@@ -134,8 +134,7 @@ def _block_base_bounds(pdmdh, lmr, bsx: int, bsy: int, blx: int, bly: int) -> Bo
     base_lon = pdmdh.coverage.lon_lo + base_ix * mx
     base_lat = pdmdh.coverage.lat_lo + base_iy * my
     return BoundingBox(lat_lo=base_lat, lat_hi=base_lat + npc_lat * my,
-                        lon_lo=base_lon, lon_hi=base_lon + npc_lng * mx,
-                        coord_range=PARSE_RANGE)
+                        lon_lo=base_lon, lon_hi=base_lon + npc_lng * mx)
 
 
 def _narrow_bounds(bounds: BoundingBox, gn_lat: int, gn_lng: int, idx: int) -> BoundingBox:
@@ -152,8 +151,7 @@ def _narrow_bounds(bounds: BoundingBox, gn_lat: int, gn_lng: int, idx: int) -> B
     lon_lo = bounds.lon_lo + lpx * lon_step
     lat_lo = bounds.lat_lo + lpy * lat_step
     return BoundingBox(lat_lo=lat_lo, lat_hi=lat_lo + lat_step,
-                        lon_lo=lon_lo, lon_hi=lon_lo + lon_step,
-                        coord_range=PARSE_RANGE)
+                        lon_lo=lon_lo, lon_hi=lon_lo + lon_step)
 
 
 # ---------------------------------------------------------------------
@@ -201,7 +199,10 @@ class LoadedRegion:
     blocks: list[LoadedBlock] = field(default_factory=list)
 
 
-def _walk_tree(rec: ParcelMgmtRecord, bounds: BoundingBox, lmr, leaves: list[tuple]) -> None:
+def _walk_tree(rec: ParcelMgmtRecord, bounds: BoundingBox, lmr, leaves: list[tuple],
+               path: tuple = ()) -> None:
+    """Append (entry, leaf_bounds, leaf_path, parcel_type) for every leaf;
+    parcel_type is the enclosing record's (0 = normal, 1..3 = pardiv)."""
     gn_lat = 1 + lmr.n_parcels_lat[rec.parcel_type]
     gn_lng = 1 + lmr.n_parcels_lng[rec.parcel_type]
     for idx, entry in enumerate(rec.entries):
@@ -209,9 +210,9 @@ def _walk_tree(rec: ParcelMgmtRecord, bounds: BoundingBox, lmr, leaves: list[tup
             continue
         child_bounds = _narrow_bounds(bounds, gn_lat, gn_lng, idx)
         if entry.subrecord is not None:
-            _walk_tree(entry.subrecord, child_bounds, lmr, leaves)
+            _walk_tree(entry.subrecord, child_bounds, lmr, leaves, path + (idx,))
         elif entry.size:
-            leaves.append((entry, child_bounds))
+            leaves.append((entry, child_bounds, path + (idx,), rec.parcel_type))
 
 
 def load_region(path: str, level: int, blockset_indices: list[int]) -> LoadedRegion:
@@ -276,13 +277,20 @@ def load_region(path: str, level: int, blockset_indices: list[int]) -> LoadedReg
                 raw_leaves: list[tuple] = []
                 _walk_tree(root, block_bounds, lmr, raw_leaves)
 
-                for entry, bounds in raw_leaves:
+                sparse = mesh.sparse_memo(root.entries, 1 + lmr.n_parcels_lng[0])
+                for entry, leaf_bounds, leaf_path, ptype in raw_leaves:
+                    # Decode against the leaf's real frame and range
+                    # (`mesh.leaf_frame`, as `harness.walk` does); the leaf
+                    # keeps those bounds, so any re-encode uses the same range.
+                    bounds, _ = mesh.leaf_frame(level, ptype, leaf_path, leaf_bounds,
+                                                block_bounds, lmr, sparse)
                     moff = volume.getsector(entry.dsa, hdr.sector_size, hdr.logical_sector_size)
                     mlen = entry.size * hdr.logical_sector_size
                     fh.seek(moff)
                     mapdata = fh.read(mlen)
-                    loc = MeshLocation(level=level, parcel_type=0, blockset_index=bsidx,
-                                        block_index=entry_index, parcel_index=0, bounds=bounds,
+                    loc = MeshLocation(level=level, parcel_type=ptype, blockset_index=bsidx,
+                                        block_index=entry_index, parcel_index=leaf_path[-1],
+                                        bounds=bounds,
                                         sector_addr=entry.dsa, size_logical_sectors=entry.size)
                     parcel = decode_parcel(loc, mapdata, n_basic_map=lmr.n_basic_map,
                                             n_ext_map=lmr.n_ext_map)

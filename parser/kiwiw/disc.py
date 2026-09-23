@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .mesh import locate_parcel
+from .mesh import locate_frame
 from .model import Parcel
 from .parcel import decode_parcel
 from .volume import (
@@ -64,7 +64,7 @@ class AllData:
         return self.pdmdh.levels
 
     def find_parcel(self, lat: float, lon: float, level: int = 0) -> Parcel | None:
-        loc = locate_parcel(
+        loc = locate_frame(
             self._fh, self._zdat0, self.pdmdh, level, lat, lon,
             self.sector_sz, self.logical_sz,
         )

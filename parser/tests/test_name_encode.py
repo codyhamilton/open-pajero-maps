@@ -28,9 +28,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from dataclasses import replace
 
-from kiwiw.parcel import PARSE_RANGE
 from kiwiw.model import BoundingBox, NameRecord
 from kiwiw.name import decode_name_frame
 from kiwiw.synth import (
@@ -182,8 +180,7 @@ def test_brisbane_level0_records_byte_identical_round_trip():
     with disc:
         parcel = disc.find_parcel(*BRISBANE, level=0)
         assert parcel is not None and parcel.name is not None
-        # the parser's explicit read frame (kiwiw.parcel.PARSE_RANGE)
-        bounds = replace(parcel.location.bounds, coord_range=PARSE_RANGE)
+        bounds = parcel.location.bounds  # ranged decode frame (disc.find_parcel)
 
         type5_recs = [r for r in parcel.name.records if r.string_type == 5 and r.text]
         type6_recs = [r for r in parcel.name.records if r.string_type == 6]

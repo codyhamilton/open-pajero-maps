@@ -99,11 +99,20 @@ def test_aliased_frame_judged_once_and_mixed_verdict_counts():
     assert r.status == "FAIL"
 
 
-def test_unranged_class_fails():
+def test_pardiv2_is_ranged_at_parent_4096():
+    # 3-03 amendment: any pardiv<t>_sub<i> is the parent slot's 4096 frame.
     wp = _wp(2, 10, ptype=2, leaf_path=(0, 0), frame_class="divided_parent")
-    assert wp.frame_range is None  # pardiv2 absent from coord_scale.json
-    r = _status(wp)
-    assert r.status == "FAIL" and r.details["parcels_unranged"] == 1
+    assert wp.frame_range == 4096
+
+
+def test_unranged_class_fails():
+    # Genuinely unranged frames: a level coord_scale.json does not know, and
+    # a divided sub-parcel at a level with no divided class (L10).
+    for wp in (_wp(5, 10), _wp(10, 10, ptype=1, leaf_path=(0, 0),
+                                frame_class="divided_parent")):
+        assert wp.frame_range is None
+        r = _status(wp)
+        assert r.status == "FAIL" and r.details["parcels_unranged"] == 1
 
 
 def test_registered():
