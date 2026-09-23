@@ -339,7 +339,7 @@ The 2026-09-23 amendment marked criterion 2's divided result provisional and sus
 
 Each assumption names the phase that tests it and what happens if it is false.
 
-- **Coordinate range 4096/16384 is the true full-cell range.** Tested in Phase 2. If false: hard stop, re-analyse (user decision).
+- **Coordinate range 4096/16384 is the true full-cell range.** Tested in Phase 2, CLOSED 2-15 (`GATE-2.md`). Rests on: one global raw lattice at 4096 raw units per top-level leaf slot (`X = gx0*4096 + x_local`, `Y = gy0*4096 + y_local`); a coordinate frame is an n x n block of leaf slots at range n x 4096 (n=1 a basic parcel, n=4 the L0 sparse integrated-parcel tile, range 16384); and the cross-class `L0_urban <-> L0_sparse` boundary-mirror measurement (criterion 4, 113 matched / 1 violation, committed re-run) as two-sided evidence that 16384 is exactly 4 x 4096, not an independent constant. If false: hard stop, re-analyse (user decision) — not triggered.
 - **Coastline lines in the extract close into land polygons** (extract-edge breaks, islands). Tested in Phase 6 by the no-land-labelled-as-sea audit. If false: ocean construction is re-analysed before Phase 6 closes.
 - **Name-matched R↔OSM cells are a valid basis for road vocabulary.** Tested in Phase 7 on held-out named arterials. If false: research a different basis before mapping.
 - **R's word 0 rule holds beyond the 95.5% (897/939) of sampled leaves where it equals the first data-slot offset.** Phase 2 explains the 42 exceptions before the gate closes; the criterion is "matches R's rule or the exception is explained".

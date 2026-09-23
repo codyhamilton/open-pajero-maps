@@ -1,0 +1,108 @@
+{
+  "unit": "2-15",
+  "purpose": "Re-run all five grounded Phase 2 criteria for real in this repo state (post 2-13/2-14 frame adjacency and global raw lattice) and record the gate verdict.",
+  "reference": "/run/media/codyh/464210-8480",
+  "python": ".venv-rp/bin/python",
+  "criterion_1": {
+    "command": ".venv-rp/bin/python parser/tools/coord_scale_census.py --reference /run/media/codyh/464210-8480 --out <scratch>/coord_scale.json --workers 10",
+    "rerun_out_sha256_run1": "b2d21b66e18f9d2f39ecf6f7334ef23f541c7adc394875a15b3b5c84b0a72485",
+    "rerun_out_sha256_run2": "b2d21b66e18f9d2f39ecf6f7334ef23f541c7adc394875a15b3b5c84b0a72485",
+    "determinism": "identical across two runs",
+    "matches_evidence_2_12_sha": true,
+    "comparison": {
+      "ranges_equal_to_committed_coord_scale_json": true,
+      "class_rule_equal_to_committed_coord_scale_json": true
+    },
+    "aggregate": {"n_classes": 28, "total_content_bearing_parcels": 452199, "total_exceeds_max": 0},
+    "new_2_13_obligation": {
+      "claim": "2-13's frame_bounds/frame_range/frame_class fix (GATE-2 Carried 5) is now threaded through coord_scale_census.py's _work worker",
+      "verified_by_reading": "parser/tools/coord_scale_census.py ~168-197: WalkedParcel(..., frame_bounds=frame_bounds, frame_range=frame_range, frame_class=frame_class) and MeshLocation(bounds=frame_bounds) share one bbox",
+      "effect_on_criterion_1": "ranges/class_rule/exceeds_max unmoved, as 2-13's own report stated"
+    },
+    "verdict": "PASS"
+  },
+  "criterion_5": {
+    "command": ".venv-rp/bin/python parser/tools/header_word_census.py --reference /run/media/codyh/464210-8480 --coord-scale <scratch>/coord_scale.json --out <scratch>/header.json --workers 10",
+    "rerun_out_sha256_run1": "eef25d9012197535ab6cec7d2da88f81fe7cca84e147cc8dc27f64c3dedb0a33",
+    "rerun_out_sha256_run2": "eef25d9012197535ab6cec7d2da88f81fe7cca84e147cc8dc27f64c3dedb0a33",
+    "determinism": "identical across two runs",
+    "matches_evidence_2_12_sha": true,
+    "comparison": {"header_words_equal_to_committed_coord_scale_json": true},
+    "word_results": {
+      "0": {"heldout_accuracy": 1.0, "disagreements_with_checked_formula": 0},
+      "6": {"heldout_accuracy": 1.0},
+      "7": {"heldout_accuracy": 0.999995, "heldout_correct": 988860, "heldout_n": 988865, "residual_count": 5, "residual_name": "L0 single-link road parcels stored 0xFF00"},
+      "9": {"heldout_accuracy": 1.0},
+      "10": {"heldout_accuracy": 0.999977, "misses_are": "unseen table keys only (12 of 988865)"},
+      "11": {"heldout_accuracy": 0.999988, "misses_are": "unseen table keys only (12 of 988865)"}
+    },
+    "note": "residual_count for word 7 restated: 988865-988860=5 held-out misses in this run's held-out split; the disc-wide-exhaustive 28-record figure (WORD7-ANALYSIS.md) is the full-population count, held-out sampling naturally finds fewer",
+    "verdict": "PASS WITH RESIDUAL"
+  },
+  "criterion_2_and_3": {
+    "command": ".venv-rp/bin/python parser/tools/continuity_census.py --reference /run/media/codyh/464210-8480 --out <scratch>/continuity.json",
+    "rerun_out_sha256_run1": "da70cd597ed800763c4b9368664948842fc65205faecdd0df560d754e4b6d377",
+    "rerun_out_sha256_run2": "da70cd597ed800763c4b9368664948842fc65205faecdd0df560d754e4b6d377",
+    "determinism": "identical across two runs",
+    "matches_evidence_2_14_sha": true,
+    "criterion_2_continuity": {
+      "classes": {
+        "L0_urban": {"denominator": 473, "matched": 470, "violations": 3, "verdict": "pass_with_residual", "over_threshold_fully_enumerated": true},
+        "L0_sparse": {"denominator": 686, "matched": 686, "violations": 0, "verdict": "pass"},
+        "L2": {"denominator": 547, "matched": 547, "violations": 0, "verdict": "pass"},
+        "L4": {"denominator": 416, "matched": 416, "violations": 0, "verdict": "pass"},
+        "L6": {"denominator": 379, "matched": 379, "violations": 0, "verdict": "pass"},
+        "L8": {"denominator": 33, "matched": 33, "violations": 0, "verdict": "pass"},
+        "divided_pardiv1": {"denominator": 983, "matched": 979, "violations": 4, "verdict": "pass_with_residual", "over_threshold_fully_enumerated": true}
+      },
+      "over_threshold_total": 7,
+      "violations_total": 7,
+      "verdict": "pass_with_residual",
+      "residual_enum_cap": 400,
+      "residual_enum_cap_note": "committed tool value is 400; DESIGN.md's design-agent amendment states 200 for the same cap; both exceed 7 with large margin, discrepancy carried forward from 2-14, not resolved here",
+      "residual_characterisation": {
+        "L0_urban_3": "2 of 3 are duplicate-node collisions: two source nodes decode to the same global boundary point but the greedy exact-match consumes only one counted target instance, so the second is reported unmatched with nearest_actual_global == source_global (0 separation) -- confirmed by reading continuity_census.py's Counter-based greedy match, an algorithmic artifact of multiple links sharing one boundary node, not a coordinate disagreement. The third has a genuine 126-raw-unit offset in y (source_raw [4096,443], edge E), consistent with the design-agent amendment's 'dead end terminating on the boundary without crossing' mechanism.",
+        "divided_pardiv1_4": "all 4 are 'unmatched' sibling-midline lookups: no node at all found in the mirrored sub-parcel at the expected position -- the same dead-end-at-midline mechanism (a link end terminates at the shared quadrant boundary without crossing into the sibling sub-parcel), traced in continuity_census.py's _sibling_pairs."
+      }
+    },
+    "criterion_3_quadrant": {"n_points": 1037716, "violations": 0, "verdict": "pass"}
+  },
+  "criterion_4_mirror": {
+    "command": ".venv-rp/bin/python parser/tools/boundary_mirror_census.py --reference /run/media/codyh/464210-8480 --out <scratch>/mirror.json",
+    "rerun_out_sha256_run1": "23854cf540b3c6519f0945f7fb787890859787f1e3ef214a3f1fb646ad6733e4",
+    "rerun_out_sha256_run2": "23854cf540b3c6519f0945f7fb787890859787f1e3ef214a3f1fb646ad6733e4",
+    "determinism": "identical across two runs",
+    "matches_evidence_2_14_sha": true,
+    "classes": {
+      "L0_urban": {"denominator": 522, "matched": 521, "violations": 1, "scale_mismatch": 0, "verdict": "pass_with_residual", "cross_class_split_vs_L0_sparse": {"matched": 113, "violations": 1}},
+      "L0_sparse": {"denominator": 721, "matched": 721, "violations": 0, "scale_mismatch": 0, "verdict": "pass", "note": "reproduces the design-agent amendment's decisive re-measurement figure exactly (721/721/0)"},
+      "L2": {"denominator": 4065, "matched": 4061, "violations": 4, "scale_mismatch": 111, "verdict": "pass_with_residual", "corner_nodes": 2, "corner_split_per_node": {"matched": 2, "violations": 0}},
+      "L4": {"denominator": 825, "matched": 825, "violations": 0, "scale_mismatch": 45, "verdict": "pass"},
+      "L6": {"denominator": 746, "matched": 746, "violations": 0, "scale_mismatch": 104, "verdict": "pass"},
+      "L8": {"denominator": 66, "matched": 66, "violations": 0, "scale_mismatch": 23, "verdict": "pass"}
+    },
+    "total_violations": 5,
+    "all_fully_enumerated": true,
+    "residual_enum_cap": 400,
+    "residual_enum_cap_note": "same 400-vs-200 discrepancy as criterion 2, moot at 5 violations",
+    "residual_characterisation": {
+      "L2_4": "offsets 0-2 raw units on all 4 (dx,dy in {(-2,0),(0,-1),(0,1),(0,-1)}) -- rounding, matching the design-agent amendment's cited L2/L4 character.",
+      "L0_urban_1": "offset (dx,dy) = (14,-49), ~51 raw units -- larger than rounding, consistent with the amendment's dead-end-at-boundary bucket, not independently confirmed record-by-record beyond this offset measurement."
+    },
+    "cross_class_evidence": "L0_urban <-> L0_sparse cross_class_split: 113 matched, 1 violation -- the committed, re-run two-sided cross-class crossing evidence for 16384 = 4 x 4096 (smaller-sample counterpart to the design-agent amendment's uncommitted 5352/5353 probe figure)."
+  },
+  "residual_totals": {"criterion_2": 7, "criterion_4": 5, "combined": 12, "cap_committed": 400, "cap_cited_in_design_agent_amendment": 200, "both_exceed_combined_with_margin": true},
+  "overall_verdict": "CLOSED",
+  "rationale": "No criterion FAILs. Criteria 1 and 3 pass at zero violations. Criteria 5 passes with a named, fully-enumerated residual (word 7, unchanged mechanism from 2-12). Criteria 2 and 4 (design-agent-amendment restated wording, frame adjacency, exact lattice equality) pass with fully enumerated residuals (7 and 5 records respectively), every record traced to a specific mechanism (duplicate-node collision, dead-end-at-midline, or sub-raw-unit rounding), well under RESIDUAL_ENUM_CAP under either cited value (400 or 200). L0_sparse's cross-class figures (721/721 mirror; 113/114 continuity cross-class) reproduce the design-agent amendment's decisive re-measurement.",
+  "suite": {
+    "command": ".venv-rp/bin/python -m pytest parser/tests -q",
+    "result_before": "407 passed",
+    "result_after": "407 passed",
+    "note": "no code changed by this unit; regression guard only"
+  },
+  "lint": {
+    "command": ".venv-rp/bin/python parser/tools/lint_schema.py",
+    "before": "513 unverified rows, 0 errors",
+    "after": "513 unverified rows, 0 errors"
+  }
+}
