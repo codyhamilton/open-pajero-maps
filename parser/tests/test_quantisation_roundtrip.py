@@ -1,5 +1,5 @@
-"""Per-vertex quantisation round-trip tool (plan 03, unit 3-04). Synthetic
-cells, no disc; one tiny spool for the end-to-end path."""
+"""Per-vertex quantisation round-trip tool (plan 03, units 3-04 and 3-07).
+Synthetic cells, no disc; one tiny spool for the end-to-end path."""
 from __future__ import annotations
 
 import json
@@ -15,26 +15,6 @@ from kiwiw.model import BackgroundShape, NameRecord, RoadLink, RoadNode  # noqa:
 from kiwiw import spool_legacy  # noqa: E402
 from kiwiw.spool import SpoolWriter, content_to_columns  # noqa: E402
 from tools import quantisation_roundtrip as qr  # noqa: E402
-
-
-def _cell(frames, bs, blk, lx, ly):
-    """Global (ix, iy) of leaf (lx, ly) in block `blk` of block set `bs`."""
-    bsy, bsx = divmod(bs, frames.nbs_lng)
-    bly, blx = divmod(blk, frames.nbl_lng)
-    ix = (bsx * frames.nbl_lng + blx) * frames.npc_lng + lx
-    iy = (bsy * frames.nbl_lat + bly) * frames.npc_lat + ly
-    return ix, iy
-
-
-def _urban_and_sparse(frames):
-    bs, blk, ty, tx = sorted(frames.urban)[0]
-    urban = _cell(frames, bs, blk, tx * 4 + 1, ty * 4 + 2)
-    # A tile of the same block that is not urban.
-    for sty in range(8):
-        for stx in range(8):
-            if (bs, blk, sty, stx) not in frames.urban:
-                return urban, _cell(frames, bs, blk, stx * 4 + 3, sty * 4 + 1)
-    raise AssertionError("no sparse tile")
 
 
 def _node(lat, lon):
@@ -62,53 +42,74 @@ def _name(lat, lon):
 
 def _inside(fr, fx, fy):
     """lat/lon at fractional frame position (fx, fy) in 0..1."""
-    _, _, lat_lo, lon_lo, lat_sp, lon_sp = fr
-    lon = lon_lo + fx * lon_sp
-    return lat_lo + fy * lat_sp, (lon + 180.0) % 360.0 - 180.0
+    _, _, lat_lo, lon_lo, lat_sp, lon_sp = fr[:6]
+    return lat_lo + fy * lat_sp, lon_lo + fx * lon_sp
 
 
-def test_l0_urban_4096_and_sparse_16384_tile_frame():
-    f = qr.Frames(0)
-    (uix, uiy), (six, siy) = _urban_and_sparse(f)
-    u, s = f.frame(uix, uiy), f.frame(six, siy)
-    assert (u[0], u[1]) == ("urban", 4096)
-    assert (s[0], s[1]) == ("sparse", 16384)
-    assert s[4] == pytest.approx(4 * f.cell_lat) and s[5] == pytest.approx(4 * f.cell_lon)
-    # The sparse frame is the tile: its origin is the tile anchor, not the leaf.
-    assert s[3] < f.lon0 + six * f.cell_lon
-
-
-def test_higher_level_full():
+def test_frames_are_the_frames_g_writes():
+    """G writes every cell as its own 4096 frame, L0 included (no sparse tile)."""
+    assert qr.Frames(0).frame(700, 300)[:2] == ("urban", 4096)
     f = qr.Frames(2)
-    assert f.frame(10, 10)[:2] == ("full", 4096)
+    fr = f.frame(10, 10)
+    assert fr[:2] == ("full", 4096)
+    assert fr[4] == pytest.approx(f.grid.cell_lat) and fr[5] == pytest.approx(f.grid.cell_lon)
 
 
 def test_inside_passes_outside_is_clamped_and_fails():
     f = qr.Frames(2)
     fr = f.frame(10, 10)
     lat, lon = _inside(fr, 1.0, 1.0)  # exactly on the NE corner: raw 4096, legal
-    assert qr.measure([lat], [lon], fr)[1:3] == (0, 0)
+    assert qr.measure([lat], [lon], fr)[:2] == (1, 0)
     step = fr[5] / fr[1]
-    n, fail, clamp, over, _ = qr.measure([lat], [lon + 3 * step], fr)
-    assert (n, fail, clamp) == (1, 1, 1)
-    assert over == pytest.approx(3.0, abs=1e-6)
+    n, fail, err = qr.measure([lat], [lon + 3 * step], fr)
+    assert (n, fail) == (1, 1)
+    assert err == pytest.approx(3.0, abs=1e-6)
 
 
-def test_run_cells_counts_every_kind_and_reports_clamps():
+def test_overhanging_background_is_clipped_and_passes():
+    """An overhanging polygon is measured as written: clipped, with crossing
+    and corner vertices, none outside the frame, none failing."""
+    f = qr.Frames(2)
+    fr = f.frame(10, 10)
+    ring = [_inside(fr, x, y) for x, y in [(0.99, 0.99), (1.01, 0.99), (1.01, 1.02), (0.99, 1.02)]]
+    content = {"roads": [], "backgrounds": [_bg(ring + ring[:1])], "names": []}
+    per, _ = qr.run_cells(2, [(10, 10, content_to_columns(content))], f)
+    st = per["full"]
+    bg = st["background"]
+    assert st["per_kind"]["c"]["failing"] == 0 and st["failing"] == 0
+    assert bg["input_vertices"] == 5 and bg["records"] == 1
+    assert bg["outside_rect"] == bg["crossing_off_edge"] == bg["step_overflow"] == 0
+    assert bg["written_by_provenance"]["crossing"] == 3  # 2 + the closing repeat
+    assert bg["written_by_provenance"]["corner"] == 1
+    assert st["worst_error_raw"] <= 0.5
+
+
+def test_background_outside_writes_nothing():
+    f = qr.Frames(2)
+    fr = f.frame(10, 10)
+    ring = [_inside(fr, x, y) for x, y in [(1.1, 0.2), (1.3, 0.2), (1.3, 0.4)]]
+    content = {"roads": [], "backgrounds": [_bg(ring)], "names": []}
+    per, _ = qr.run_cells(2, [(10, 10, content_to_columns(content))], f)
+    bg = per["full"]["background"]
+    assert per["full"]["per_kind"]["c"]["vertices"] == 0
+    assert bg["shapes"] == bg["shapes_dropped"] == 1 and bg["records"] == 0
+
+
+def test_run_cells_counts_every_kind_and_fails_clamped_roads():
     f = qr.Frames(2)
     fr = f.frame(10, 10)
     a, b = _inside(fr, 0.1, 0.2), _inside(fr, 0.9, 0.8)
     out_lat, out_lon = _inside(fr, 1.01, 0.5)  # ~41 raw units east of the frame
     content = {"roads": [_link([a, (out_lat, out_lon), b])],
-               "backgrounds": [_bg([a, b, a])],
+               "backgrounds": [_bg([a, _inside(fr, 0.12, 0.2), _inside(fr, 0.12, 0.22), a])],
                "names": [_name(*a), _name(None, None)]}
     per, no_pos = qr.run_cells(2, [(10, 10, content_to_columns(content))], f)
     st = per["full"]
     assert no_pos == 1
-    assert {k: v["vertices"] for k, v in st["per_kind"].items()} == {"n": 2, "p": 1, "c": 3, "s": 1}
-    assert st["failing"] == 1 and st["clamped"] == 1
+    assert {k: v["vertices"] for k, v in st["per_kind"].items()} == {"n": 2, "p": 1, "c": 4, "s": 1}
+    assert st["failing"] == 1
     assert st["per_kind"]["p"]["failing"] == 1
-    assert st["worst_overshoot_raw"] == pytest.approx(0.01 * 4096, rel=1e-3)
+    assert st["worst_error_raw"] == pytest.approx(0.01 * 4096, rel=1e-3)
     assert st["half_pixel_deg"]["lon"] == pytest.approx(fr[5] / (2 * 4096))
 
 
@@ -117,14 +118,14 @@ def test_run_cells_counts_every_kind_and_reports_clamps():
 def test_end_to_end_spool(tmp_path, writer):
     f = qr.Frames(2)
     fr = f.frame(10, 10)
-    a, b = _inside(fr, 0.25, 0.5), _inside(fr, 0.75, 0.5)
+    a, b, c = _inside(fr, 0.25, 0.5), _inside(fr, 0.27, 0.5), _inside(fr, 0.26, 0.52)
     with writer(tmp_path / "spool") as w:
-        w.add(2, 10, 10, roads=[_link([a, b])], backgrounds=[_bg([a, b])])
+        w.add(2, 10, 10, roads=[_link([a, b])], backgrounds=[_bg([a, b, c, a])])
     out = tmp_path / "rt.json"
     assert qr.main(["--spool", str(tmp_path / "spool"), "--out", str(out), "--workers", "1"]) == 0
     res = json.loads(out.read_text())
     assert res["pass"] is True
-    assert res["totals"]["vertices"] == 4
+    assert res["totals"]["vertices"] == 6
     assert list(res["levels"]) == ["2"]
     text = out.read_text()
     assert str(tmp_path) not in text

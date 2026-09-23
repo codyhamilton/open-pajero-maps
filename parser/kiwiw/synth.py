@@ -19,9 +19,9 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-import numpy as np
 
 from . import cenc as _cenc
+from . import clip as _clip
 from .bitutils import geo_secs_bytes
 from .coordconv import encode_region_coord, latlon_to_xy
 from .model import BackgroundShape, BoundingBox, NameRecord, RoadLink
@@ -238,191 +238,114 @@ def build_road_frame_bytes(links: list[RoadLink], bounds: BoundingBox, *,
 # Background
 # ---------------------------------------------------------------------------
 
-def _bg_fast(shape: BackgroundShape, bounds: BoundingBox, coord_range: int):
-    """numpy-assisted encoder for line/polygon shapes; None -> scalar oracle.
-
-    Pixel conversion is vectorized with `latlon_to_xy`'s exact float operation
-    order and half-to-even rounding (`numpy.rint`). Deltas are plain first
-    differences when the scalar accumulator provably tracks the target
-    (`mult_const <= 1` and every delta inside i8); otherwise the sequential
-    quantizing accumulation runs as a tight integer loop over the same
-    already-clamped pixels, exactly as the scalar encoder does.
-    """
-    c_out = _cenc.bg_shape_bytes(shape, bounds, coord_range)
-    if c_out is not None:
-        return c_out
-    arr = np.asarray(shape.coords, dtype=np.float64)
-    if arr.ndim != 2 or len(arr) < 2:
-        return None
-    x = np.rint((arr[:, 1] - bounds.lon_lo) / (bounds.lon_hi - bounds.lon_lo)
-                * coord_range).astype(np.int64)
-    y = np.rint((arr[:, 0] - bounds.lat_lo) / (bounds.lat_hi - bounds.lat_lo)
-                * coord_range).astype(np.int64)
-    np.clip(x, 0, _coord_max(coord_range), out=x)
-    np.clip(y, 0, _coord_max(coord_range), out=y)
+def _bg_mult(shape: BackgroundShape) -> tuple[int, int]:
+    """(mult, exponent): `mult_const` (>= 1) and the addl word's bits 0:2."""
     mc = shape.mult_const if shape.mult_const >= 1 else 1
     mult_exp = 0
     mc_check = 1
     while mc_check < mc:
         mc_check <<= 1
         mult_exp += 1
-    n = len(x) - 1
-    dx = np.diff(x)
-    dy = np.diff(y)
-    if mc == 1 and dx.min() >= -128 and dx.max() <= 127 \
-            and dy.min() >= -128 and dy.max() <= 127:
-        body = np.empty(2 * n, dtype=np.uint8)
-        body[0::2] = dx & 0xFF
-        body[1::2] = dy & 0xFF
-        body = body.tobytes()
-    else:
-        xs, ys = x.tolist(), y.tolist()
-        xc, yc = xs[0], ys[0]
-        cmax = _coord_max(coord_range)
-        buf = bytearray(2 * n)
-        j = 0
-        for i in range(1, n + 1):
-            ddx = (xs[i] - xc) // mc
-            ddy = (ys[i] - yc) // mc
-            if ddx < -128:
-                ddx = -128
-            elif ddx > 127:
-                ddx = 127
-            if ddy < -128:
-                ddy = -128
-            elif ddy > 127:
-                ddy = 127
-            xc += ddx * mc
-            yc += ddy * mc
-            xc = 0 if xc < 0 else cmax if xc > cmax else xc
-            yc = 0 if yc < 0 else cmax if yc > cmax else yc
-            buf[j] = ddx & 0xFF
-            buf[j + 1] = ddy & 0xFF
-            j += 2
-        body = bytes(buf)
-    rec_len = 12 + n * 2
+    return mc, mult_exp
+
+
+def _bg_piece_record(piece, shape: BackgroundShape, cr: int, mc: int, mult_exp: int) -> bytes:
+    """One line/polygon record from one clipped piece's rounded vertices.
+
+    Every vertex is inside the clip rectangle and every step fits the signed
+    delta (`clip.shape_pieces` guarantees both), so with `mult == 1` the
+    accumulator reproduces each vertex exactly. No vertex is clamped."""
+    n_deltas = len(piece) - 1
+    rec_len = 12 + n_deltas * 2
     out = bytearray(rec_len)
-    hdr = (rec_len // 2) & 0xFFF
-    out[0], out[1] = hdr >> 8, hdr & 0xFF
-    fw = n & 0x7FF
-    out[2], out[3] = fw >> 8, fw & 0xFF
+    hdr_word = (rec_len // 2) & 0xFFF   # bits 0:11
+    out[0], out[1] = (hdr_word >> 8) & 0xFF, hdr_word & 0xFF
+    flag_word = n_deltas & 0x7FF         # bits 0:10 = ncoord
+    out[2], out[3] = (flag_word >> 8) & 0xFF, flag_word & 0xFF
     out[4], out[5] = (shape.type_code >> 8) & 0xFF, shape.type_code & 0xFF
     addl = (mult_exp & 0x7) | (int(shape.underground) << 9) | (int(shape.pen_up) << 10)
-    out[6], out[7] = addl >> 8, addl & 0xFF
-    x0, y0 = int(x[0]), int(y[0])
-    sx = (x0 % 4096) | ((x0 // 4096) << 13)
-    sy = (y0 % 4096) | ((y0 // 4096) << 13)
-    out[8], out[9], out[10], out[11] = sx >> 8, sx & 0xFF, sy >> 8, sy & 0xFF
-    out[12:] = body
+    out[6], out[7] = (addl >> 8) & 0xFF, addl & 0xFF
+    xc, yc = piece[0][0], piece[0][1]
+    sx = encode_region_coord(xc, coord_range=cr)
+    sy = encode_region_coord(yc, coord_range=cr)
+    out[8], out[9], out[10], out[11] = (sx >> 8) & 0xFF, sx & 0xFF, (sy >> 8) & 0xFF, sy & 0xFF
+    j = 12
+    for v in piece[1:]:
+        dx = max(-128, min(127, (v[0] - xc) // mc))
+        dy = max(-128, min(127, (v[1] - yc) // mc))
+        xc += dx * mc
+        yc += dy * mc
+        out[j] = dx & 0xFF
+        out[j + 1] = dy & 0xFF
+        j += 2
     return bytes(out)
+
+
+def _bg_point_record(shape: BackgroundShape) -> bytes:
+    """Point shape: 12-byte record, no coords, no deltas."""
+    out = bytearray(12)
+    out[1] = 6  # rec_len // 2
+    out[4] = (shape.type_code >> 8) & 0xFF
+    out[5] = shape.type_code & 0xFF
+    return bytes(out)
+
+
+def encode_background_shape_records(shape: BackgroundShape, bounds: BoundingBox, *,
+                                    coord_range: int | None = None) -> list[bytes]:
+    """A BackgroundShape's records, clipped to its parcel (C when available,
+    else the Python oracle `encode_background_shape_records_scalar`).
+
+    Zero records when the shape lies outside the parcel (or degenerates on
+    rounding), several when a polygon leaves and re-enters or a line crosses
+    out and back (`kiwiw.clip`)."""
+    cr = frame_range(bounds, coord_range)
+    if shape.shape_class != 0:
+        fast = _cenc.bg_shape_records(shape, bounds, cr)
+        if fast is not None:
+            return fast
+    return encode_background_shape_records_scalar(shape, bounds, coord_range=cr)
+
+
+def encode_background_shape_records_scalar(shape: BackgroundShape, bounds: BoundingBox, *,
+                                           coord_range: int | None = None) -> list[bytes]:
+    """Python reference encoder (the byte-identity oracle for the C path).
+
+    Point shapes (`shape_class == 0`) produce one 12-byte record with no
+    coords. A line (class 1, or any open class) or polygon (class 2) is
+    clipped to the parcel's rectangle (`kiwiw.clip`, in the frame's raw
+    lattice before rounding); each piece is one record whose first vertex
+    is sx/sy and the rest signed-i8 delta pairs. Parseable by
+    ``background.decode_background_frame()``.
+    """
+    if shape.shape_class == 0:
+        return [_bg_point_record(shape)]
+    cr = frame_range(bounds, coord_range)
+    if not shape.coords:
+        raise ValueError(
+            f"BackgroundShape (shape_class={shape.shape_class}) has no coords"
+        )
+    mc, mult_exp = _bg_mult(shape)
+    fx, fy = _clip.to_raw(shape.coords, bounds, cr)
+    rect = _clip.clip_rect(bounds, cr)
+    pieces = _clip.shape_pieces(fx, fy, shape.shape_class == 2, rect, mc)
+    for piece in pieces:
+        for v in piece:
+            if not (rect[0] <= v[0] <= rect[2] and rect[1] <= v[1] <= rect[3]):
+                raise AssertionError(f"clipped vertex {v[:2]} outside {rect}")
+    return [_bg_piece_record(p, shape, cr, mc, mult_exp) for p in pieces]
 
 
 def encode_background_shape_bytes(shape: BackgroundShape, bounds: BoundingBox, *,
                                    coord_range: int | None = None) -> bytes:
-    """Encode a BackgroundShape (numpy fast path, scalar oracle fallback)."""
-    cr = frame_range(bounds, coord_range)
-    if shape.shape_class != 0:
-        fast = _bg_fast(shape, bounds, cr)
-        if fast is not None:
-            return fast
-    return encode_background_shape_bytes_scalar(shape, bounds, coord_range=cr)
+    """`encode_background_shape_records`, concatenated."""
+    return b"".join(encode_background_shape_records(shape, bounds, coord_range=coord_range))
 
 
 def encode_background_shape_bytes_scalar(shape: BackgroundShape, bounds: BoundingBox, *,
                                           coord_range: int | None = None) -> bytes:
-    """Scalar reference encoder (the byte-identity oracle for
-    `encode_background_shape_bytes`).
-
-    Encode a BackgroundShape to bytes from semantic fields.
-
-    Parseable by ``background.decode_background_frame()``.  Shapes with
-    ``shape_class == 0`` (point) produce a 12-byte record with no coords.
-    For line/polygon shapes, the first coord is encoded as sx/sy and the
-    remaining coords are encoded as signed-i8 delta pairs.
-    """
-    if shape.shape_class == 0:
-        # Point shape: 12-byte record, no coords, no deltas.
-        hdr = 6  # rec_len // 2 = 12 // 2
-        out = bytearray(12)
-        out[0] = (hdr >> 8) & 0xFF
-        out[1] = hdr & 0xFF
-        out[4] = (shape.type_code >> 8) & 0xFF
-        out[5] = shape.type_code & 0xFF
-        return bytes(out)
-
-    cr = frame_range(bounds, coord_range)
-    coords = shape.coords
-    if not coords:
-        raise ValueError(
-            f"BackgroundShape (shape_class={shape.shape_class}) has no coords"
-        )
-
-    # First coordinate.
-    lat0, lon0 = coords[0]
-    xc0, yc0 = latlon_to_xy(lat0, lon0, bounds, coord_range=cr)
-    xc0 = _clamp_coord(xc0, cr)
-    yc0 = _clamp_coord(yc0, cr)
-
-    # Determine mult_const exponent (bits 0:2 of addl word).
-    mc = shape.mult_const if shape.mult_const >= 1 else 1
-    mult_exp = 0
-    mc_check = 1
-    while mc_check < mc:
-        mc_check <<= 1
-        mult_exp += 1
-
-    # Compute delta pairs.
-    n_deltas = len(coords) - 1
-    deltas: list[tuple[int, int]] = []
-    xc, yc = xc0, yc0
-    for lat_i, lon_i in coords[1:]:
-        xc_i, yc_i = latlon_to_xy(lat_i, lon_i, bounds, coord_range=cr)
-        xc_i = _clamp_coord(xc_i, cr)
-        yc_i = _clamp_coord(yc_i, cr)
-        dx = max(-128, min(127, (xc_i - xc) // mc))
-        dy = max(-128, min(127, (yc_i - yc) // mc))
-        deltas.append((dx, dy))
-        # Accumulate with possible clamping quantization.
-        xc = _clamp_coord(xc + dx * mc, cr)
-        yc = _clamp_coord(yc + dy * mc, cr)
-
-    rec_len = 12 + n_deltas * 2
-    if rec_len % 2:
-        rec_len += 1    # pad to even
-
-    out = bytearray(rec_len)
-
-    hdr_word = (rec_len // 2) & 0xFFF   # bits 0:11
-    out[0] = (hdr_word >> 8) & 0xFF
-    out[1] = hdr_word & 0xFF
-
-    flag_word = n_deltas & 0x7FF         # bits 0:10 = ncoord
-    out[2] = (flag_word >> 8) & 0xFF
-    out[3] = flag_word & 0xFF
-
-    out[4] = (shape.type_code >> 8) & 0xFF
-    out[5] = shape.type_code & 0xFF
-
-    addl = (
-        (mult_exp & 0x7)
-        | (int(shape.underground) << 9)
-        | (int(shape.pen_up) << 10)
-    )
-    out[6] = (addl >> 8) & 0xFF
-    out[7] = addl & 0xFF
-
-    sx = encode_region_coord(xc0, coord_range=cr)
-    sy = encode_region_coord(yc0, coord_range=cr)
-    out[8]  = (sx >> 8) & 0xFF
-    out[9]  = sx & 0xFF
-    out[10] = (sy >> 8) & 0xFF
-    out[11] = sy & 0xFF
-
-    for i, (dx, dy) in enumerate(deltas):
-        out[12 + i * 2]     = dx & 0xFF
-        out[12 + i * 2 + 1] = dy & 0xFF
-
-    return bytes(out)
+    """`encode_background_shape_records_scalar`, concatenated."""
+    return b"".join(encode_background_shape_records_scalar(shape, bounds,
+                                                           coord_range=coord_range))
 
 
 def build_background_frame_bytes(
@@ -436,24 +359,18 @@ def build_background_frame_bytes(
     unit in the element's type-unit table).  Parseable by
     ``background.decode_background_frame()``.
     """
-    if not shapes:
+    # Encode shape records, grouped by shape_class in input order. A shape
+    # clipped away writes nothing; one split into pieces writes each piece.
+    class_encoded: dict[int, list[bytes]] = defaultdict(list)
+    for s in shapes:
+        class_encoded[s.shape_class].extend(
+            encode_background_shape_records(s, bounds, coord_range=coord_range))
+    class_encoded = {sc: recs for sc, recs in class_encoded.items() if recs}
+    if not class_encoded:
         # Minimal empty frame: header_size_raw=1 → hlen=sws(1)=2.
         return bytes([0, 1])
-
-    # Group by shape_class.
-    class_shapes: dict[int, list[BackgroundShape]] = defaultdict(list)
-    for s in shapes:
-        class_shapes[s.shape_class].append(s)
-    sorted_classes = sorted(class_shapes.keys())
+    sorted_classes = sorted(class_encoded.keys())
     n_units = len(sorted_classes)
-
-    # Encode shape records.
-    class_encoded: dict[int, list[bytes]] = {}
-    for sc in sorted_classes:
-        class_encoded[sc] = [
-            encode_background_shape_bytes(s, bounds, coord_range=coord_range)
-            for s in class_shapes[sc]
-        ]
 
     # Frame layout:
     #   [0-1] header_size_raw (u16)
@@ -503,7 +420,7 @@ def build_background_frame_bytes(
 
     # Type-unit table.
     for sc in sorted_classes:
-        n_shapes = len(class_shapes[sc])
+        n_shapes = len(class_encoded[sc])
         # boff_word: not used by the decoder → 0.
         buf[p] = 0; buf[p + 1] = 0
         # val_word: bits 0:11 = count, bits 14:15 = shape_class.

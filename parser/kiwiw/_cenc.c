@@ -106,18 +106,11 @@ static inline void put32(uint8_t *b, int64_t pos, int64_t v) {
 }
 
 /* range: the frame's coordinate range (coordconv.range_for), supplied by the
- * caller -- this file owns no range constant. The admissible pixel interval is
- * [0, range] inclusive (a boundary vertex lands exactly on the frame edge),
- * capped at PACK_MAX: cmax = min(range, PACK_MAX). */
-typedef struct { double lat_lo, lat_hi, lon_lo, lon_hi, range, cmax; } Bounds;
-
-/* Largest value the region word can carry: 3-bit region (bits 13:15) x 4096
- * + 12-bit value = 32767. A property of the packing, not of any frame range:
- * the clamp ceiling is min(range, PACK_MAX), so every real range (<= 16384)
- * is fully inclusive and only a 32768 frame's exact edge is unrepresentable. */
-#define PACK_MAX 32767.0
-
-static inline double clamp_max(double range) { return range < PACK_MAX ? range : PACK_MAX; }
+ * caller -- this file owns no range constant. Road and name vertices are
+ * clamped to the admissible pixel interval [0, range] inclusive (cmax =
+ * range; a boundary vertex lands exactly on the frame edge). Background
+ * geometry is clipped to `rect` (x0, y0, x1, y1), never clamped. */
+typedef struct { double lat_lo, lat_hi, lon_lo, lon_hi, range, cmax; double rect[4]; } Bounds;
 
 /* latlon_to_xy + _clamp_coord: 0 ok, -1 not representable (NaN). */
 static inline int to_xy(double lat, double lon, const Bounds *b, int64_t *x, int64_t *y) {
@@ -131,10 +124,6 @@ static inline int to_xy(double lat, double lon, const Bounds *b, int64_t *x, int
 
 static inline int64_t region_coord(int64_t v) { /* encode_region_coord */
     return (v % 4096) | ((v / 4096) << 13);
-}
-
-static inline int64_t clampc(int64_t v, int64_t cmax) {
-    return v < 0 ? 0 : v > cmax ? cmax : v;
 }
 
 /* ---------------------------------------------------------------- road */
@@ -247,84 +236,409 @@ static int64_t enc_road(const Rec *r, const Bounds *bd, uint8_t *out) {
 
 /* ---------------------------------------------------------- background */
 
-/* One line/polygon shape record (12 + 2*(nc-1) bytes) from nc coords at
- * lat[o + k*stride], lon[o + k*stride] (element indices). -1 on anything odd. */
-static int64_t bg_shape(const uint8_t *lat, const uint8_t *lon, int64_t o, int64_t stride,
-                        int64_t nc, int64_t mc, int64_t tc, int64_t fl, const Bounds *bd,
-                        uint8_t *o_, int64_t room) {
-    if (nc < 1) return -1;
-    if (mc < 1) mc = 1;
-    if (mc > ((int64_t)1 << 40)) return -1;
-    int64_t mult_exp = 0, mcc = 1;
-    while (mcc < mc) { mcc <<= 1; mult_exp++; }
-    int64_t nd = nc - 1;
-    int64_t rec_len = 12 + nd * 2;
-    if (rec_len > room) return -1;
-    int64_t x0, y0;
-    if (to_xy(rd_f64(lat, o), rd_f64(lon, o), bd, &x0, &y0)) return -1;
+/* Background geometry is clipped to the parcel's rectangle before rounding,
+ * never clamped: a port of kiwiw/clip.py (same algorithm, same float operation
+ * order; byte-identical, tests/test_cenc.py). Keep the two in step. */
+
+enum { KO = 0, KCX = 1, KCY = 2, KCO = 3, KDE = 4 };
+typedef struct { double x, y; int k; } Pt;
+typedef struct { int ok; Pt a, b; } Por;
+
+static __thread double *g_fx = NULL, *g_fy = NULL;
+static __thread Por *g_por = NULL;
+static __thread Pt *g_ch = NULL, *g_pc = NULL, *g_dn = NULL;
+static __thread int64_t *g_cs = NULL, *g_qx = NULL, *g_qy = NULL;
+static __thread int64_t g_cap_v = 0, g_cap_ch = 0, g_cap_pc = 0, g_cap_dn = 0, g_cap_qx = 0, g_cap_qy = 0;
+static __thread int g_full = 0;  /* last bg_shape ran out of room */
+static __thread double *g_sin = NULL, *g_sout = NULL;
+static __thread char *g_used = NULL;
+
+static int grow(void **p, int64_t *cap, int64_t n, size_t sz) {
+    if (n <= *cap) return 0;
+    int64_t c = *cap ? *cap : 256;
+    while (c < n) c *= 2;
+    void *q = realloc(*p, (size_t)c * sz);
+    if (!q) return -1;
+    *p = q;
+    *cap = c;
+    return 0;
+}
+
+static int ensure_v(int64_t n) {
+    if (n <= g_cap_v) return 0;
+    int64_t c = g_cap_v ? g_cap_v : 256;
+    while (c < n) c *= 2;
+    double *a = realloc(g_fx, (size_t)c * sizeof(double)); if (!a) return -1; g_fx = a;
+    a = realloc(g_fy, (size_t)c * sizeof(double)); if (!a) return -1; g_fy = a;
+    Por *p = realloc(g_por, (size_t)c * sizeof(Por)); if (!p) return -1; g_por = p;
+    int64_t *s = realloc(g_cs, (size_t)(c + 1) * sizeof(int64_t)); if (!s) return -1; g_cs = s;
+    a = realloc(g_sin, (size_t)c * sizeof(double)); if (!a) return -1; g_sin = a;
+    a = realloc(g_sout, (size_t)c * sizeof(double)); if (!a) return -1; g_sout = a;
+    char *u = realloc(g_used, (size_t)c); if (!u) return -1; g_used = u;
+    g_cap_v = c;
+    return 0;
+}
+
+static inline int pt_lt(double ax, double ay, double bx, double by) {
+    return ax < bx || (ax == bx && ay < by);
+}
+static inline double clampf(double v, double lo, double hi) {
+    return v < lo ? lo : v > hi ? hi : v;
+}
+
+static Pt edge_pt(double ax, double ay, double bx, double by, int edge, const double *R) {
+    Pt p;
+    if (pt_lt(bx, by, ax, ay)) { double t = ax; ax = bx; bx = t; t = ay; ay = by; by = t; }
+    if (edge <= 2) {
+        double xe = edge == 1 ? R[0] : R[2];
+        p.x = xe;
+        p.y = clampf(ay + (by - ay) * ((xe - ax) / (bx - ax)), R[1], R[3]);
+        p.k = KCX;
+    } else {
+        double ye = edge == 3 ? R[1] : R[3];
+        p.x = clampf(ax + (bx - ax) * ((ye - ay) / (by - ay)), R[0], R[2]);
+        p.y = ye;
+        p.k = KCY;
+    }
+    return p;
+}
+
+static Por seg(double ax, double ay, double bx, double by, const double *R) {
+    Por o;
+    o.ok = 0;
+    double dx = bx - ax, dy = by - ay, t0 = 0.0, t1 = 1.0;
+    int e0 = 0, e1 = 0;
+    double P[4] = {-dx, dx, -dy, dy};
+    double Q[4] = {ax - R[0], R[2] - ax, ay - R[1], R[3] - ay};
+    for (int j = 0; j < 4; j++) {
+        if (P[j] == 0.0) {
+            if (Q[j] < 0.0) return o;
+            continue;
+        }
+        double r = Q[j] / P[j];
+        if (P[j] < 0.0) {
+            if (r > t0) { t0 = r; e0 = j + 1; }
+        } else if (r < t1) { t1 = r; e1 = j + 1; }
+    }
+    if (!(t0 < t1)) return o;
+    o.ok = 1;
+    if (e0) o.a = edge_pt(ax, ay, bx, by, e0, R); else { o.a.x = ax; o.a.y = ay; o.a.k = KO; }
+    if (e1) o.b = edge_pt(ax, ay, bx, by, e1, R); else { o.b.x = bx; o.b.y = by; o.b.k = KO; }
+    return o;
+}
+
+/* inside runs -> g_ch (flat) with starts g_cs[0..m]; returns m, *whole */
+static int64_t chains(int64_t n, int closed, const double *R, int *whole) {
+    int64_t nseg = closed ? n : n - 1;
+    *whole = 0;
+    for (int64_t i = 0; i < nseg; i++) {
+        int64_t j = (i + 1) % n;
+        g_por[i] = seg(g_fx[i], g_fy[i], g_fx[j], g_fy[j], R);
+    }
+#define JOINS(i) (g_por[i].ok && g_por[i].a.k == KO && \
+    ((i) ? (g_por[(i) - 1].ok && g_por[(i) - 1].b.k == KO) \
+         : (closed && nseg > 0 && g_por[nseg - 1].ok && g_por[nseg - 1].b.k == KO)))
+    int64_t m = 0, np = 0;
+    for (int64_t s = 0; s < nseg; s++) {
+        if (!g_por[s].ok || JOINS(s)) continue;
+        if (grow((void **)&g_ch, &g_cap_ch, np + nseg + 2, sizeof(Pt))) return -1;
+        g_cs[m++] = np;
+        g_ch[np++] = g_por[s].a;
+        g_ch[np++] = g_por[s].b;
+        int64_t i = closed ? (s + 1) % nseg : s + 1;
+        while (i < nseg && i != s && g_por[i].ok && JOINS(i)) {
+            g_ch[np++] = g_por[i].b;
+            i = closed ? (i + 1) % nseg : i + 1;
+        }
+    }
+#undef JOINS
+    g_cs[m] = np;
+    if (closed && m == 0) {
+        int all = nseg > 0;
+        for (int64_t i = 0; i < nseg; i++) all &= g_por[i].ok;
+        *whole = all;
+    }
+    return m;
+}
+
+static double sparam(Pt p, const double *R) {
+    double w = R[2] - R[0], h = R[3] - R[1];
+    if (p.y == R[1]) return p.x - R[0];
+    if (p.x == R[2]) return w + (p.y - R[1]);
+    if (p.y == R[3]) return w + h + (R[2] - p.x);
+    return 2 * w + h + (R[3] - p.y);
+}
+
+static int pip(double px, double py, int64_t n) {
+    int inside = 0;
+    int64_t j = n - 1;
+    for (int64_t i = 0; i < n; i++) {
+        if ((g_fy[i] > py) != (g_fy[j] > py)) {
+            double xi = g_fx[i] + (py - g_fy[i]) / (g_fy[j] - g_fy[i]) * (g_fx[j] - g_fx[i]);
+            if (px < xi) inside = !inside;
+        }
+        j = i;
+    }
+    return inside;
+}
+
+typedef struct {
+    uint8_t *out;
+    int64_t room, len, nrec;
+    int64_t mc, mult_exp, tc, fl;
+    int closed;
+    const double *R;
+} Emit;
+
+/* densify + round/clean + write one record; 0 ok (possibly nothing), -1 fail */
+static int emit_piece(Emit *e, const Pt *pts, int64_t n) {
+    double lim = 127.0 * (double)e->mc - 1.0;
+    int closed = e->closed;
+    int64_t nseg = closed ? n : n - 1, nd = 0;
+    for (int64_t i = 0; i < n; i++) {
+        if (grow((void **)&g_dn, &g_cap_dn, nd + 1, sizeof(Pt))) return -1;
+        Pt a = pts[i];
+        g_dn[nd++] = a;
+        if (i >= nseg) break;
+        Pt b = pts[(i + 1) % n];
+        double dx = b.x - a.x, dy = b.y - a.y;
+        double mx = fabs(dx) > fabs(dy) ? fabs(dx) : fabs(dy);
+        if (mx > lim) {
+            double kf = ceil(mx / lim);
+            if (!(kf < 1e7)) return -1;
+            int64_t k = (int64_t)kf;
+            if (grow((void **)&g_dn, &g_cap_dn, nd + k, sizeof(Pt))) return -1;
+            for (int64_t j = 1; j < k; j++) {
+                double t = (double)j / (double)k;
+                g_dn[nd].x = a.x + dx * t;
+                g_dn[nd].y = a.y + dy * t;
+                g_dn[nd].k = KDE;
+                nd++;
+            }
+        }
+    }
+    if (grow((void **)&g_qx, &g_cap_qx, nd + 1, sizeof(int64_t))) return -1;
+    if (grow((void **)&g_qy, &g_cap_qy, nd + 1, sizeof(int64_t))) return -1;
+    int64_t *qx = g_qx, *qy = g_qy, q = 0;
+    for (int64_t i = 0; i < nd; i++) {
+        double rx = rint(g_dn[i].x), ry = rint(g_dn[i].y);
+        if (isnan(rx) || isnan(ry)) return -1;
+        int64_t x = (int64_t)rx, y = (int64_t)ry;
+        if (q && qx[q - 1] == x && qy[q - 1] == y) continue;
+        qx[q] = x; qy[q] = y; q++;
+    }
+    if (closed) {
+        while (q > 1 && qx[q - 1] == qx[0] && qy[q - 1] == qy[0]) q--;
+        while (q >= 3) {
+            int64_t i, found = -1;
+            for (i = 0; i < q; i++) {
+                int64_t a = i ? i - 1 : q - 1, c = (i + 1) % q;
+                if (qx[a] == qx[c] && qy[a] == qy[c]) { found = i; break; }
+            }
+            if (found < 0) break;
+            memmove(qx + found, qx + found + 1, (size_t)(q - found - 1) * sizeof(int64_t));
+            memmove(qy + found, qy + found + 1, (size_t)(q - found - 1) * sizeof(int64_t));
+            q--;
+            int64_t r = found < q ? found : 0;
+            memmove(qx + r, qx + r + 1, (size_t)(q - r - 1) * sizeof(int64_t));
+            memmove(qy + r, qy + r + 1, (size_t)(q - r - 1) * sizeof(int64_t));
+            q--;
+        }
+        if (q < 3) return 0;
+        int64_t area2 = 0;
+        for (int64_t i = 0; i < q; i++) {
+            int64_t j = (i + 1) % q;
+            area2 += qx[i] * qy[j] - qx[j] * qy[i];
+        }
+        if (area2 == 0) return 0;
+        if (area2 < 0) {
+            for (int64_t i = 1, j = q - 1; i < j; i++, j--) {
+                int64_t t = qx[i]; qx[i] = qx[j]; qx[j] = t;
+                t = qy[i]; qy[i] = qy[j]; qy[j] = t;
+            }
+        }
+        qx[q] = qx[0]; qy[q] = qy[0]; q++;
+    } else if (q < 2) {
+        return 0;
+    }
+    const double *R = e->R;
+    for (int64_t i = 0; i < q; i++)
+        if ((double)qx[i] < R[0] || (double)qx[i] > R[2] ||
+            (double)qy[i] < R[1] || (double)qy[i] > R[3]) return -1;  /* Python asserts */
+    int64_t ndl = q - 1, rec_len = 12 + ndl * 2;
+    if (e->len + rec_len > e->room) { g_full = 1; return -1; }
+    uint8_t *o_ = e->out + e->len;
     put16(o_, 0, (rec_len / 2) & 0xFFF);
-    put16(o_, 2, nd & 0x7FF);
-    put16(o_, 4, tc & 0xFFFF);
-    int64_t addl = (mult_exp & 7) | (((fl & 1) ? 1 : 0) << 9) | (((fl & 2) ? 1 : 0) << 10);
-    put16(o_, 6, addl);
-    put16(o_, 8, region_coord(x0));
-    put16(o_, 10, region_coord(y0));
-    int64_t xc = x0, yc = y0, cmax = (int64_t)bd->cmax;
-    for (int64_t k = 1; k <= nd; k++) {
-        int64_t xi, yi;
-        if (to_xy(rd_f64(lat, o + k * stride), rd_f64(lon, o + k * stride), bd, &xi, &yi))
-            return -1;
-        int64_t a = xi - xc, b = yi - yc;
+    put16(o_, 2, ndl & 0x7FF);
+    put16(o_, 4, e->tc & 0xFFFF);
+    put16(o_, 6, (e->mult_exp & 7) | (((e->fl & 1) ? 1 : 0) << 9) | (((e->fl & 2) ? 1 : 0) << 10));
+    put16(o_, 8, region_coord(qx[0]));
+    put16(o_, 10, region_coord(qy[0]));
+    int64_t xc = qx[0], yc = qy[0], mc = e->mc;
+    for (int64_t k = 1; k < q; k++) {
+        int64_t a = qx[k] - xc, b = qy[k] - yc;
         int64_t dx = a / mc, dy = b / mc;
         if ((a % mc != 0) && (a < 0)) dx--;
         if ((b % mc != 0) && (b < 0)) dy--;
         if (dx < -128) dx = -128; else if (dx > 127) dx = 127;
         if (dy < -128) dy = -128; else if (dy > 127) dy = 127;
-        xc = clampc(xc + dx * mc, cmax);
-        yc = clampc(yc + dy * mc, cmax);
+        xc += dx * mc;
+        yc += dy * mc;
         o_[12 + (k - 1) * 2] = (uint8_t)(dx & 0xFF);
         o_[12 + (k - 1) * 2 + 1] = (uint8_t)(dy & 0xFF);
     }
-    return rec_len;
+    e->len += rec_len;
+    e->nrec++;
+    return 0;
 }
 
-/* Python entry: interleaved (lat, lon) doubles, bounds = lat_lo,lat_hi,lon_lo,lon_hi.
- * Returns the record length or -1 (caller falls back to the scalar oracle). */
+/* Clip one line/polygon (nc coords at lat[o + k*stride], lon[...]) to bd's
+ * rectangle and write its records to out. Returns bytes written (>= 0) and
+ * *nrec; -1 on anything odd (the caller defers to Python). */
+static int64_t bg_shape(const uint8_t *lat, const uint8_t *lon, int64_t o, int64_t stride,
+                        int64_t nc, int closed, int64_t mc, int64_t tc, int64_t fl,
+                        const Bounds *bd, uint8_t *out, int64_t room, int64_t *nrec) {
+    *nrec = 0;
+    g_full = 0;
+    if (nc < 1) return -1;
+    if (mc < 1) mc = 1;
+    if (mc > ((int64_t)1 << 40)) return -1;
+    if (ensure_v(nc + 1)) return -1;
+    Emit e = {out, room, 0, 0, mc, 0, tc, fl, closed, bd->rect};
+    int64_t mcc = 1;
+    while (mcc < mc) { mcc <<= 1; e.mult_exp++; }
+    double dlon = bd->lon_hi - bd->lon_lo, dlat = bd->lat_hi - bd->lat_lo;
+    int64_t n = nc;
+    for (int64_t k = 0; k < n; k++) {
+        g_fx[k] = (rd_f64(lon, o + k * stride) - bd->lon_lo) / dlon * bd->range;
+        g_fy[k] = (rd_f64(lat, o + k * stride) - bd->lat_lo) / dlat * bd->range;
+        if (isnan(g_fx[k]) || isnan(g_fy[k])) return -1;
+    }
+    const double *R = bd->rect;
+    if (closed) {
+        if (n > 1 && g_fx[n - 1] == g_fx[0] && g_fy[n - 1] == g_fy[0]) n--;
+        double a2 = 0.0;
+        for (int64_t i = 0; i < n; i++) {
+            int64_t j = (i + 1) % n;
+            a2 += g_fx[i] * g_fy[j] - g_fx[j] * g_fy[i];
+        }
+        if (a2 < 0.0) {
+            for (int64_t i = 1, j = n - 1; i < j; i++, j--) {
+                double t = g_fx[i]; g_fx[i] = g_fx[j]; g_fx[j] = t;
+                t = g_fy[i]; g_fy[i] = g_fy[j]; g_fy[j] = t;
+            }
+        }
+    }
+    if ((closed && n < 3) || n < 2) return 0;
+    int inside = 1;
+    for (int64_t i = 0; i < n && inside; i++)
+        inside = R[0] <= g_fx[i] && g_fx[i] <= R[2] && R[1] <= g_fy[i] && g_fy[i] <= R[3];
+    if (inside) {
+        if (grow((void **)&g_pc, &g_cap_pc, n, sizeof(Pt))) return -1;
+        for (int64_t i = 0; i < n; i++) { g_pc[i].x = g_fx[i]; g_pc[i].y = g_fy[i]; g_pc[i].k = KO; }
+        if (emit_piece(&e, g_pc, n)) return -1;
+        *nrec = e.nrec;
+        return e.len;
+    }
+    int whole;
+    int64_t m = chains(n, closed, R, &whole);
+    if (m < 0) return -1;
+    if (!closed) {
+        for (int64_t c = 0; c < m; c++)
+            if (emit_piece(&e, g_ch + g_cs[c], g_cs[c + 1] - g_cs[c])) return -1;
+        *nrec = e.nrec;
+        return e.len;
+    }
+    Pt corners[4] = {{R[0], R[1], KCO}, {R[2], R[1], KCO}, {R[2], R[3], KCO}, {R[0], R[3], KCO}};
+    if (whole) {
+        if (grow((void **)&g_pc, &g_cap_pc, n, sizeof(Pt))) return -1;
+        for (int64_t i = 0; i < n; i++) { g_pc[i].x = g_fx[i]; g_pc[i].y = g_fy[i]; g_pc[i].k = KO; }
+        if (emit_piece(&e, g_pc, n)) return -1;
+    } else if (m == 0) {
+        double cx = (R[0] + R[2]) * 0.5, cy = (R[1] + R[3]) * 0.5;
+        if (pip(cx, cy, n) && emit_piece(&e, corners, 4)) return -1;
+    } else {
+        double w = R[2] - R[0], h = R[3] - R[1], per = 2.0 * (w + h);
+        double cs[4] = {0.0, w, w + h, 2 * w + h};
+        for (int64_t c = 0; c < m; c++) {
+            g_sin[c] = sparam(g_ch[g_cs[c]], R);
+            g_sout[c] = sparam(g_ch[g_cs[c + 1] - 1], R);
+            g_used[c] = 0;
+        }
+        for (int64_t c0 = 0; c0 < m; c0++) {
+            if (g_used[c0]) continue;
+            int64_t np = 0, c = c0;
+            for (int64_t guard = 0; guard < m + 1; guard++) {
+                g_used[c] = 1;
+                int64_t len = g_cs[c + 1] - g_cs[c];
+                if (grow((void **)&g_pc, &g_cap_pc, np + len + 4, sizeof(Pt))) return -1;
+                memcpy(g_pc + np, g_ch + g_cs[c], (size_t)len * sizeof(Pt));
+                np += len;
+                double sx = g_sout[c], bd_ = 0.0;
+                int64_t best = -1;
+                for (int64_t k = 0; k < m; k++) {
+                    double d = g_sin[k] - sx;
+                    if (d < 0.0) d += per;
+                    if (best < 0 || d < bd_) { best = k; bd_ = d; }
+                }
+                double dcs[4];
+                int idx[4], ni = 0;
+                for (int ci = 0; ci < 4; ci++) {
+                    double dc = cs[ci] - sx;
+                    if (dc < 0.0) dc += per;
+                    if (0.0 < dc && dc < bd_) {
+                        int j = ni++;  /* insertion sort by (dc, ci) */
+                        while (j > 0 && (dcs[j - 1] > dc)) { dcs[j] = dcs[j - 1]; idx[j] = idx[j - 1]; j--; }
+                        dcs[j] = dc; idx[j] = ci;
+                    }
+                }
+                for (int j = 0; j < ni; j++) g_pc[np++] = corners[idx[j]];
+                if (best == c0 || g_used[best]) break;
+                c = best;
+            }
+            if (emit_piece(&e, g_pc, np)) return -1;
+        }
+    }
+    *nrec = e.nrec;
+    return e.len;
+}
+
+/* Python entry: interleaved (lat, lon) doubles, b4 = lat_lo,lat_hi,lon_lo,lon_hi,
+ * rect4 = clip rectangle (x0,y0,x1,y1) or NULL for [0, range]^2. Writes the
+ * shape's records back to back; returns their total length (*nrec records),
+ * -2 when `room` is too small, -1 otherwise (the caller uses the oracle). */
 int64_t kw_bg_shape(const double *latlon, int64_t n, int64_t mult, int64_t type_code,
-                    int64_t flags, const double *b4, uint8_t *out, double coord_range) {
-    Bounds bd = {b4[0], b4[1], b4[2], b4[3], coord_range, clamp_max(coord_range)};
-    if (n < 2) return -1;
-    return bg_shape((const uint8_t *)latlon, (const uint8_t *)(latlon + 1), 0, 2, n, mult,
-                    type_code, flags, &bd, out, 12 + 2 * 2047 + 2);
+                    int64_t flags, int closed, const double *b4, const double *rect4,
+                    uint8_t *out, int64_t room, double coord_range, int64_t *nrec) {
+    Bounds bd = {b4[0], b4[1], b4[2], b4[3], coord_range, coord_range,
+                 {0.0, 0.0, coord_range, coord_range}};
+    if (rect4) memcpy(bd.rect, rect4, sizeof bd.rect);
+    int64_t r = bg_shape((const uint8_t *)latlon, (const uint8_t *)(latlon + 1), 0, 2, n,
+                         closed, mult, type_code, flags, &bd, out, room, nrec);
+    return r < 0 && g_full ? -2 : r;
 }
 
 static int64_t enc_bg(const Rec *r, const Bounds *bd, uint8_t *out) {
     int64_t nb = r->cnt[K_NB];
-    if (nb == 0) {
-        out[0] = 0;
-        out[1] = 1;
-        return 2;
-    }
     const uint8_t *cls = r->col[C_B_CLASS], *typ = r->col[C_B_TYPE], *mult = r->col[C_B_MULT];
     const uint8_t *bfl = r->col[C_B_FLAGS], *nst = r->col[C_B_NST];
     const uint8_t *clat = r->col[C_C_LAT], *clon = r->col[C_C_LON];
-    int64_t class_n[4] = {0, 0, 0, 0};
+    int64_t class_in[4] = {0, 0, 0, 0}, class_n[4] = {0, 0, 0, 0};
     for (int64_t i = 0; i < nb; i++) {
         int64_t c = rd_i32(cls, i);
         if (c < 0 || c > 3) return -1;
-        class_n[c]++;
+        class_in[c]++;
     }
-    int64_t n_units = 0;
-    for (int c = 0; c < 4; c++) n_units += class_n[c] > 0;
-    int64_t p = 6;
-    /* element section: n_units word, then unit table; filled after records */
-    int64_t unit_off = p;
-    p += 2 + n_units * 4;
+    /* records are written after a unit table sized for every input class;
+     * classes clipped away entirely are squeezed out afterwards */
+    int64_t n_in = 0;
+    for (int c = 0; c < 4; c++) n_in += class_in[c] > 0;
+    int64_t unit_off = 6;
+    int64_t rec0 = unit_off + 2 + n_in * 4;
+    int64_t p = rec0;
     if (p > SUB_CAP) return -1;
-    const Bounds bd_local = *bd;
-    /* per-shape coord start offsets need a prefix pass */
-    int64_t *cstart = (int64_t *)malloc((size_t)nb * sizeof(int64_t));
-    if (!cstart) return -1;
+    int64_t *cstart = nb ? (int64_t *)malloc((size_t)nb * sizeof(int64_t)) : NULL;
+    if (nb && !cstart) return -1;
     int64_t ci = 0;
     for (int64_t i = 0; i < nb; i++) {
         cstart[i] = ci;
@@ -332,7 +646,7 @@ static int64_t enc_bg(const Rec *r, const Bounds *bd, uint8_t *out) {
         if (ci > r->cnt[K_NC]) { free(cstart); return -1; }
     }
     for (int c = 0; c < 4; c++) {
-        if (!class_n[c]) continue;
+        if (!class_in[c]) continue;
         for (int64_t i = 0; i < nb; i++) {
             if (rd_i32(cls, i) != c) continue;
             int64_t tc = rd_i32(typ, i);
@@ -343,16 +657,30 @@ static int64_t enc_bg(const Rec *r, const Bounds *bd, uint8_t *out) {
                 put16(out, p, 6);
                 put16(out, p + 4, tc & 0xFFFF);
                 p += 12;
+                class_n[c]++;
                 continue;
             }
-            int64_t nc = rd_i32(nst, i);
-            int64_t rec_len = bg_shape(clat, clon, cstart[i], 1, nc, rd_i32(mult, i), tc,
-                                       fl, &bd_local, out + p, SUB_CAP - p);
-            if (rec_len < 0) { free(cstart); return -1; }
-            p += rec_len;
+            int64_t nrec;
+            int64_t len = bg_shape(clat, clon, cstart[i], 1, rd_i32(nst, i), c == 2,
+                                   rd_i32(mult, i), tc, fl, bd, out + p, SUB_CAP - p, &nrec);
+            if (len < 0) { free(cstart); return -1; }
+            p += len;
+            class_n[c] += nrec;
         }
     }
     free(cstart);
+    int64_t n_units = 0;
+    for (int c = 0; c < 4; c++) n_units += class_n[c] > 0;
+    if (n_units == 0) {
+        out[0] = 0;
+        out[1] = 1;
+        return 2;
+    }
+    if (n_units < n_in) {
+        int64_t shift = (n_in - n_units) * 4;
+        memmove(out + rec0 - shift, out + rec0, (size_t)(p - rec0));
+        p -= shift;
+    }
     int64_t esz = p - 6;
     out[0] = 0;
     out[1] = 3;
@@ -528,7 +856,7 @@ static int geo3(double deg, uint8_t *o) {
 static int64_t encode_common(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
                        int64_t iy, const double *grid, int64_t threshold,
                        const int64_t *lim, uint8_t *out, int64_t *sizes_out,
-                       const double *xb, double coord_range) {
+                       const double *xb, const double *xrect, double coord_range) {
     Rec r;
     static const uint8_t empty_hdr[72] = {0};
     if (rec == NULL || rec_len == 0) {
@@ -546,7 +874,9 @@ static int64_t encode_common(const uint8_t *rec, int64_t rec_len, int level, int
     else memcpy(b4, xb, sizeof b4);
     bd.lat_lo = b4[0]; bd.lat_hi = b4[1]; bd.lon_lo = b4[2]; bd.lon_hi = b4[3];
     bd.range = coord_range;
-    bd.cmax = clamp_max(coord_range);
+    bd.cmax = coord_range;
+    if (xrect) memcpy(bd.rect, xrect, sizeof bd.rect);
+    else { bd.rect[0] = 0.0; bd.rect[1] = 0.0; bd.rect[2] = coord_range; bd.rect[3] = coord_range; }
 
     uint8_t *road = g_sub, *bg = g_sub + SUB_CAP, *nm = g_sub + 2 * SUB_CAP;
     int64_t road_n = 0, bg_n, name_n;
@@ -607,15 +937,15 @@ int64_t kw_encode_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t i
                        int64_t iy, const double *grid, int64_t threshold,
                        const int64_t *lim, uint8_t *out, double coord_range) {
     return encode_common(rec, rec_len, level, ix, iy, grid, threshold, lim, out, NULL, NULL,
-                         coord_range);
+                         NULL, coord_range);
 }
 
 /* Probe: frame + per-kind (even-padded) sizes, no fit/budget checks. -1 = ask Python. */
 int64_t kw_measure_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
-                        int64_t iy, const double *bounds4, int64_t *sizes, uint8_t *out,
-                        double coord_range) {
+                        int64_t iy, const double *bounds4, const double *rect4,
+                        int64_t *sizes, uint8_t *out, double coord_range) {
     return encode_common(rec, rec_len, level, ix, iy, NULL, 0, NULL, out, sizes, bounds4,
-                         coord_range);
+                         rect4, coord_range);
 }
 
 /*

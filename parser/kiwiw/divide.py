@@ -221,9 +221,14 @@ def _sub_frame(level: int, parent: BoundingBox, parcel_type: int, nx: int,
                cell: tuple[int, int]) -> BoundingBox:
     """Bounds a sub-parcel at `cell` = (sub_ix, sub_iy) of a
     `pardiv<parcel_type>` division is encoded against: the parent's bounds
-    at the parent slot's range (see module docstring)."""
-    return dataclasses.replace(
-        parent, coord_range=g_frame_range(level, parcel_type, cell[1] * nx + cell[0]))
+    at the parent slot's range (see module docstring), carrying the raw
+    rectangle the sub-cell occupies in that frame -- its quadrant/cell -- as
+    the background clip rectangle (3-07; R's `pardiv1_sub0` max is 2048)."""
+    from .clip import SubParcelBounds, sub_rect
+    cr = g_frame_range(level, parcel_type, cell[1] * nx + cell[0])
+    fields = {f.name: getattr(parent, f.name) for f in dataclasses.fields(BoundingBox)}
+    fields["coord_range"] = cr
+    return SubParcelBounds(**fields, clip_rect=sub_rect(cr, nx, nx, cell[0], cell[1]))
 
 
 def _retile_content(content: dict, sub_grid: TileGrid) -> dict[tuple[int, int], dict]:

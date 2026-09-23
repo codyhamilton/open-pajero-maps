@@ -1,4 +1,4 @@
-"""Plan 02 phase 3: vectorized encoders are byte-identical to the scalar oracle."""
+"""Plan 02 phase 3: fast (C) encoders are byte-identical to the scalar oracle."""
 from __future__ import annotations
 
 import random
@@ -30,17 +30,18 @@ def _shape(rng, cls, n, step, mult, bounds_margin=0.0):
 def test_background_fast_equals_scalar_fuzz():
     rng = random.Random(1234)
     fast = 0
+    from kiwiw import cenc
     for i in range(4000):
         cls = rng.choice([1, 2, 2, 3])
         n = rng.choice([1, 2, 3, 10, 60, 300])
         step = rng.choice([1e-5, 1e-4, 5e-4, 5e-3, 0.3])  # small steps and saturating ones
         mult = rng.choice([0, 1, 1, 1, 2, 4, 8])
         s = _shape(rng, cls, n, step, mult, bounds_margin=rng.choice([0.0, 0.5]))
-        want = synth.encode_background_shape_bytes_scalar(s, B)
-        got = synth.encode_background_shape_bytes(s, B)
+        want = synth.encode_background_shape_records_scalar(s, B)
+        got = synth.encode_background_shape_records(s, B)
         assert got == want, (i, cls, n, step, mult)
-        fast += synth._bg_fast(s, B, 32768) is not None
-    assert fast > 3000  # nearly every multi-coord line/polygon takes the fast path
+        fast += cls != 0 and cenc.bg_shape_records(s, B, 4096) is not None
+    assert fast > 3000  # nearly every line/polygon takes the C path
 
 
 def test_background_point_and_grid_snap():

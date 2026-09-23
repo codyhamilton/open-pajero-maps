@@ -26,9 +26,11 @@ def _cell_latlon(level, ix, iy, g):
     return b, random.Random(level * 1000 + ix * 31 + iy)
 
 
-def _content(rng, b, n_roads, n_bgs, n_names):
-    def pt():
-        return (rng.uniform(b.lat_lo, b.lat_hi), rng.uniform(b.lon_lo, b.lon_hi))
+def _content(rng, b, n_roads, n_bgs, n_names, bg_margin=0.0):
+    def pt(m=0.0):
+        mla, mlo = (b.lat_hi - b.lat_lo) * m, (b.lon_hi - b.lon_lo) * m
+        return (rng.uniform(b.lat_lo - mla, b.lat_hi + mla),
+                rng.uniform(b.lon_lo - mlo, b.lon_hi + mlo))
     roads = []
     for i in range(n_roads):
         nodes = [RoadNode(x=rng.choice([0, 0, 5, 300, 1000]), y=rng.choice([0, 7, 900]),
@@ -51,7 +53,7 @@ def _content(rng, b, n_roads, n_bgs, n_names):
             shape_class=rng.randint(0, 2), type_code=rng.randint(0, 30),
             type_label="bg", n_coords=k, mult_const=rng.choice([0, 1, 2]),
             underground=bool(rng.getrandbits(1)), pen_up=bool(rng.getrandbits(1)),
-            coords=[pt() for _ in range(k)]))
+            coords=[pt(bg_margin) for _ in range(k)]))
     names = []
     for i in range(n_names):
         names.append(NameRecord(
@@ -76,7 +78,7 @@ def _oracle(level, ix, iy, g, content):
 
 @pytest.fixture()
 def no_c_bg(monkeypatch):
-    monkeypatch.setattr(cenc, "bg_shape_bytes", lambda *a: None)
+    monkeypatch.setattr(cenc, "bg_shape_records", lambda *a: None)
 
 
 @pytest.mark.parametrize("level", LEVELS)
@@ -131,9 +133,9 @@ def test_bg_shape_matches_scalar():
                 shape_class=1, type_code=5, type_label="", n_coords=k, mult_const=mult,
                 underground=bool(k & 1), pen_up=bool(k & 2),
                 coords=[(rng.uniform(-32.1, -30.9), rng.uniform(114.9, 116.1)) for _ in range(k)])
-            got = cenc.bg_shape_bytes(s, b, b.coord_range)
+            got = cenc.bg_shape_records(s, b, b.coord_range)
             if got is not None:
-                assert got == synth.encode_background_shape_bytes_scalar(s, b), (k, mult)
+                assert got == synth.encode_background_shape_records_scalar(s, b), (k, mult)
 
 
 def test_measure_content_matches_python(no_c_bg, monkeypatch):
@@ -158,13 +160,13 @@ def test_measure_content_matches_python(no_c_bg, monkeypatch):
 # coordinate range is a parameter of both encoders, not a constant either owns.
 
 RANGES = (16384, 4096)  # every real frame range (range_for); 32768 is not one
-_C_BG = cenc.bg_shape_bytes
+_C_BG = cenc.bg_shape_records
 
 
 @pytest.fixture()
 def pure_py(monkeypatch):
     """The Python encoders alone (no C probe, no C background shapes)."""
-    monkeypatch.setattr(cenc, "bg_shape_bytes", lambda *a: None)
+    monkeypatch.setattr(cenc, "bg_shape_records", lambda *a: None)
     monkeypatch.setattr(cenc, "measure_content", lambda *a, **k: None)
 
 
@@ -226,15 +228,12 @@ def test_bg_shape_matches_scalar_at_range(coord_range, monkeypatch):
                 shape_class=1, type_code=5, type_label="", n_coords=k, mult_const=mult,
                 underground=False, pen_up=False,
                 coords=[(rng.uniform(-32.1, -30.9), rng.uniform(114.9, 116.1)) for _ in range(k)])
-            want = synth.encode_background_shape_bytes_scalar(s, b)
-            got = cenc.bg_shape_bytes(s, b, coord_range)
+            want = synth.encode_background_shape_records_scalar(s, b)
+            got = cenc.bg_shape_records(s, b, coord_range)
             if got is not None:
                 got_any = True
                 assert got == want, (k, mult)
-            assert synth._bg_fast(s, b, coord_range) == want, (k, mult)  # via C
-            with monkeypatch.context() as m:  # the numpy path
-                m.setattr(cenc, "bg_shape_bytes", lambda *a: None)
-                assert synth._bg_fast(s, b, coord_range) == want, (k, mult)
+            assert synth.encode_background_shape_records(s, b) == want, (k, mult)
     assert got_any
 
 
@@ -313,7 +312,8 @@ def test_stored_pixels_ignored_latlon_wins(coord_range, tmp_path, pure_py):
 @pytest.mark.parametrize("coord_range", RANGES)
 def test_frame_edge_is_inclusive(coord_range, tmp_path, pure_py):
     """A coordinate of exactly `coord_range` survives the clamp and encodes as
-    the next region's value 0; beyond it clamps to `coord_range`."""
+    the next region's value 0; beyond it, road/name vertices clamp to
+    `coord_range` and background geometry is clipped at it."""
     level = 8
     g = TileGrid.from_reference(level)
     ix, iy = 5, 5
@@ -324,13 +324,15 @@ def test_frame_edge_is_inclusive(coord_range, tmp_path, pure_py):
     beyond = _nd(0, 0, b.lat_hi + 1.0, b.lon_hi + 1.0)
     py = synth.encode_road_link_bytes(_one_link([ne, beyond]), b)
     assert _node_words(py) == [(edge, edge), (edge, edge)]
+    # background geometry is clipped, not clamped (3-07): a line from beyond
+    # the NE corner to the centre starts exactly on the corner
+    mid = ((b.lat_lo + b.lat_hi) / 2, (b.lon_lo + b.lon_hi) / 2)
+    far = (b.lat_hi + (b.lat_hi - mid[0]), b.lon_hi + (b.lon_hi - mid[1]))
     s = BackgroundShape(shape_class=1, type_code=5, type_label="", n_coords=2, mult_const=1,
-                        underground=False, pen_up=False,
-                        coords=[(b.lat_hi, b.lon_hi), (b.lat_hi + 1.0, b.lon_hi + 1.0)])
-    bg = synth.encode_background_shape_bytes_scalar(s, b)
+                        underground=False, pen_up=False, coords=[far, mid])
+    (bg,) = synth.encode_background_shape_records_scalar(s, b)
     assert (bg[8] << 8 | bg[9], bg[10] << 8 | bg[11]) == (edge, edge)
-    assert bg[12:14] == b"\x00\x00"  # clamped at the edge: zero delta
-    assert _C_BG(s, b, coord_range) == bg
+    assert _C_BG(s, b, coord_range) == [bg]
     nm = NameRecord(string_type=1, type_code=1, type_label="", priority=0, vertical=False,
                     display_scale_flag=0, text="Edge", lat=b.lat_hi, lon=b.lon_hi)
     nb = synth.encode_name_record_bytes(nm, b)
@@ -340,3 +342,122 @@ def test_frame_edge_is_inclusive(coord_range, tmp_path, pure_py):
     rc = spool.columns_to_content(spool.decode_columns(raw))
     assert got is not None and got == B._measure_one(level, ix, iy, b, rc)[0]
     assert py in got and bg in got and nb in got
+
+
+# ---------------------------------------------------------------- 3-07: the
+# clip-to-frame background encoder, C == Python on every clip case.
+
+_CB = BoundingBox(lat_lo=-32.0, lat_hi=-31.0, lon_lo=115.0, lon_hi=116.0, coord_range=4096)
+
+
+def _raw_shape(cls, pts, mult=1):
+    r = 4096.0
+    return BackgroundShape(shape_class=cls, type_code=9, type_label="", n_coords=len(pts),
+                           mult_const=mult, underground=False, pen_up=False,
+                           coords=[(-32.0 + y / r, 115.0 + x / r) for x, y in pts])
+
+
+_CLIP_CASES = {
+    "leave_reenter": (2, [(3000, 100), (5000, 100), (5000, 900), (3000, 900), (3000, 700),
+                          (4500, 700), (4500, 300), (3000, 300)]),
+    "corner_covering": (2, [(4000, 4000), (4500, 4000), (4500, 4500), (4000, 4500)]),
+    "fully_inside": (2, [(100, 100), (100, 200), (200, 200), (200, 100), (100, 100)]),
+    "fully_outside": (2, [(5000, 5000), (5100, 5000), (5100, 5100), (5000, 5100)]),
+    "whole_frame": (2, [(-50, -50), (5000, -50), (5000, 5000), (-50, 5000)]),
+    "line_runs": (1, [(100, 100), (5000, 100), (5000, 200), (100, 200), (-100, 200),
+                      (-100, 300), (100, 300)]),
+    "line_outside": (1, [(-10, -10), (-10, 5000)]),
+    "two_corners": (2, [(-300, 1000), (4400, 1000), (4400, 4400), (-300, 4400)]),
+}
+
+
+@pytest.mark.parametrize("case", sorted(_CLIP_CASES))
+@pytest.mark.parametrize("rect", [None, (2048, 0, 4096, 2048), (1024, 3072, 2048, 4096)])
+def test_bg_clip_cases_c_equals_python(case, rect):
+    from kiwiw import clip
+    cls, pts = _CLIP_CASES[case]
+    b = _CB if rect is None else clip.SubParcelBounds(**vars(_CB), clip_rect=rect)
+    s = _raw_shape(cls, pts)
+    want = synth.encode_background_shape_records_scalar(s, b)
+    got = cenc.bg_shape_records(s, b, 4096)
+    assert got == want, case
+    if rect is None and case in ("fully_outside", "line_outside"):
+        assert want == []
+    if rect is None and case in ("leave_reenter", "line_runs"):
+        assert len(want) == (2 if case == "leave_reenter" else 3)
+
+
+def test_bg_clip_fuzz_c_equals_python():
+    from kiwiw import clip
+    rng = random.Random(307)
+    checked = 0
+    for i in range(3000):
+        n = rng.choice([2, 3, 4, 7, 20, 90])
+        cx, cy = rng.uniform(-3000, 7000), rng.uniform(-3000, 7000)
+        sc = rng.choice([30, 400, 3000, 9000])
+        cls = rng.choice([1, 2, 2, 3])
+        if cls == 2:
+            import math
+            angs = sorted(rng.uniform(0, 6.283) for _ in range(n))
+            pts = [(cx + math.cos(a) * rng.uniform(0.2, 1) * sc,
+                    cy + math.sin(a) * rng.uniform(0.2, 1) * sc) for a in angs]
+            if rng.random() < 0.5:
+                pts.append(pts[0])
+        else:
+            pts = [(cx + rng.uniform(-sc, sc), cy + rng.uniform(-sc, sc)) for _ in range(n)]
+        rect = rng.choice([None, None, clip.sub_rect(4096, 2, 2, rng.randrange(2), rng.randrange(2)),
+                           clip.sub_rect(4096, 4, 4, rng.randrange(4), rng.randrange(4))])
+        b = _CB if rect is None else clip.SubParcelBounds(**vars(_CB), clip_rect=rect)
+        s = _raw_shape(cls, pts, mult=rng.choice([0, 1, 1, 2]))
+        want = synth.encode_background_shape_records_scalar(s, b)
+        got = cenc.bg_shape_records(s, b, 4096)
+        assert got == want, i
+        checked += bool(want)
+    assert checked > 500
+
+
+@pytest.mark.parametrize("level", (8, 0))
+def test_kernel_matches_python_overhanging(level, tmp_path, no_c_bg):
+    """Whole-cell kernel == Python oracle when background shapes overhang the
+    cell (clipped: split, dropped, corner-filled)."""
+    g = TileGrid.from_reference(level)
+    enc = cenc.make_encoder(level, g, 131070, KL)
+    cells = []
+    for n, nb in enumerate([1, 3, 20, 60]):
+        ix, iy = 4 + n, 6 + 2 * n
+        cells.append((ix, iy, _encodable(_content(random.Random(n * 5 + level),
+                                                  parcel_bounds(ix, iy, g), 2, nb, 2,
+                                                  bg_margin=0.6))))
+    w = spool.SpoolWriter(tmp_path / "sp")
+    for ix, iy, c in cells:
+        w.add(level, ix, iy, roads=c["roads"], backgrounds=c["backgrounds"], names=c["names"])
+    w.close()
+    raws = {(ix, iy): raw for ix, iy, raw in spool.SpoolReader(tmp_path / "sp").iter_cell_raw(level)}
+    checked = 0
+    for ix, iy, _c in cells:
+        rc = spool.columns_to_content(spool.decode_columns(raws[(ix, iy)]))
+        want = _oracle(level, ix, iy, g, rc)
+        got = enc.encode(raws[(ix, iy)], ix, iy, coord_range=g_frame_range(level))
+        assert got == want, (level, ix, iy)
+        checked += want is not None
+    assert checked
+
+
+def test_measure_content_sub_parcel_rect(no_c_bg, monkeypatch):
+    """The C probe honours a divided sub-parcel's clip rectangle."""
+    from kiwiw import clip
+    g = TileGrid.from_reference(0)
+    checked = 0
+    for n in range(4):
+        ix, iy = 5 + n, 9 + n
+        pb = parcel_bounds(ix, iy, g)
+        b = clip.SubParcelBounds(**vars(pb), clip_rect=clip.sub_rect(4096, 2, 2, n & 1, n >> 1))
+        c = _encodable(_content(random.Random(n), pb, 3, 12, 4))
+        got = cenc.measure_content(0, ix, iy, b, c)
+        if got is None:
+            continue
+        with monkeypatch.context() as m:
+            m.setattr(cenc, "measure_content", lambda *a, **k: None)
+            assert got == B._measure_one(0, ix, iy, b, c)
+        checked += 1
+    assert checked

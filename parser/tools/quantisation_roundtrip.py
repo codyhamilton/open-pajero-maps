@@ -1,33 +1,34 @@
-#!/usr/bin/env python3
-"""Per-vertex quantisation round-trip over a build spool.
+"""Per-vertex quantisation round-trip over a build spool: the vertices G writes.
 
 Plan 03, DESIGN.md "Phase 3 -- Outcome, as amended": "lat/lon to pixel to
 lat/lon agrees within half a pixel for every vertex written".
 
-For every vertex in the spool -- road nodes (`n_lat`/`n_lon`), road
-intermediate points (`p_`), background shape vertices (`c_`) and name
-anchors (`s_`, where the record carries both lat and lon) -- this projects
-the vertex into its native frame at `coordconv.range_for`, quantises
-(round, then clamp to `[0, range]` inclusive, as an encoder must), maps back
-and measures the error in raw units.
+Every vertex is measured in the frame G writes it in: the spool cell's own
+Map Frame (`osm_to_parcel_geometry.frame_bounds`, range `g_frame_range` --
+4096 at every level; G never aliases an L0 sparse tile, `g_frame_class`).
+
+- **Background shapes (`c_`)** are clipped to the frame, never clamped
+  (3-07, `kiwiw.clip` -- the encoders' own algorithm). The written vertices
+  are the clipped pieces' vertices: original in-frame vertices plus inserted
+  crossing, corner and densified points. Each is compared with its exact
+  pre-rounding position on the clipped geometry (error <= 0.5 raw), and
+  additionally asserted (a) inside the parcel's clip rectangle, (b) on 0 or
+  `range` of its crossed axis exactly when it is a crossing vertex, and
+  (c) one signed-8-bit delta (`127 * mult`) from its predecessor. Any
+  breach counts as failing.
+- **Road nodes (`n_`), road intermediate points (`p_`) and name anchors
+  (`s_`, where both lat and lon are present)** are written clamped to
+  `[0, range]` by their encoders (untouched by 3-07): round, clamp, compare.
 
 **Half a pixel** is half of one raw unit: the frame's lon (lat) extent
 divided by `2 * range`. The per-class values in degrees are in the output.
 
-**What this really measures is clamping.** `round()` alone cannot err by
-more than half a raw unit, so a vertex fails the half-pixel criterion only
-when it falls outside its frame and is clamped. The output therefore
-reports the clamped vertices -- per (level, class): count and the worst
-overshoot in raw units -- not just a boolean.
-
-**The frame does not depend on division.** A divided sub-parcel is encoded
-in its parent's 4096 frame, so a vertex's frame is a function of
-`(level, ix, iy)` and `coord_scale.json`'s `class_rule` alone: the spool
-cell's slot (range 4096), or at level 0 in a non-urban tile the 4x4
-integrated-parcel tile (class `sparse`). No division policy is modelled.
+A divided sub-parcel is clipped to its quadrant/cell of the parent frame
+(`divide._sub_frame`); division is a build-time decision this tool does not
+replay, so every spool cell is measured against its whole frame.
 
 The spool's `n_x`/`n_y` columns (pixel values precomputed at extraction)
-are not used: the round-trip starts from lat/lon, as the encoders will.
+are not used: the round-trip starts from lat/lon, as the encoders do.
 
 Output is deterministic JSON (sorted keys, no timestamps, no paths).
 """
@@ -44,59 +45,33 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from kiwiw.coordconv import _COORD_SCALE_PATH, range_for  # noqa: E402
-from kiwiw.grid import ReferenceGrid  # noqa: E402
+from kiwiw import clip  # noqa: E402
+from osm_to_parcel_geometry import TileGrid, frame_bounds, g_frame_class  # noqa: E402
 
 KINDS = ("n", "p", "c", "s")
 _EPS = 1e-9  # float slack on the 0.5 bound; round() alone never exceeds 0.5
+_PROV = ("original", "crossing", "corner", "densified")
 
 
 class Frames:
-    """(level, ix, iy) -> (class, range, lat_lo, lon_lo, lat_span, lon_span)."""
+    """(level, ix, iy) -> (class, range, lat_lo, lon_lo, lat_span, lon_span,
+    bounds): the frame G writes cell (ix, iy) in."""
 
-    def __init__(self, level: int, grid: ReferenceGrid | None = None, class_rule=None):
-        grid = grid or ReferenceGrid.load()
-        if class_rule is None:
-            class_rule = json.loads(Path(_COORD_SCALE_PATH).read_text())["class_rule"]
-        lmr = grid._level_dict(level)
-        c = grid.coverage
-        lg = grid.level(level)
+    def __init__(self, level: int, grid: TileGrid | None = None):
         self.level = level
-        self.lat0, self.lon0 = c["lat_lo"], c["lon_lo"]
-        self.cell_lat, self.cell_lon = lg.cell_lat, lg.cell_lon
-        self.nbs_lng = 1 + lmr["n_blocksets_lng"]
-        self.nbl_lng, self.nbl_lat = 1 + lmr["n_blocks_lng"], 1 + lmr["n_blocks_lat"]
-        self.npc_lng, self.npc_lat = 1 + lmr["n_parcels_lng"][0], 1 + lmr["n_parcels_lat"][0]
-        self.tile = int(class_rule["l0_tile"])
-        self.urban = {tuple(t) for t in class_rule["urban_tiles"]}
-
-    def locate(self, ix: int, iy: int):
-        bsx, rx = divmod(ix, self.nbl_lng * self.npc_lng)
-        blx, lx = divmod(rx, self.npc_lng)
-        bsy, ry = divmod(iy, self.nbl_lat * self.npc_lat)
-        bly, ly = divmod(ry, self.npc_lat)
-        return bsy * self.nbs_lng + bsx, bly * self.nbl_lng + blx, lx, ly
+        self.grid = grid or TileGrid.from_reference(level)
+        self.cls = g_frame_class(level)
 
     def frame(self, ix: int, iy: int):
-        if self.level != 0:
-            cls, n, x0, y0 = "full", 1, ix, iy
-        else:
-            bs, blk, lx, ly = self.locate(ix, iy)
-            t = self.tile
-            if (bs, blk, ly // t, lx // t) in self.urban:
-                cls, n, x0, y0 = "urban", 1, ix, iy
-            else:
-                cls, n, x0, y0 = "sparse", t, ix - lx % t, iy - ly % t
-        rng = range_for(self.level, cls, "normal")
-        return (cls, rng, self.lat0 + y0 * self.cell_lat, self.lon0 + x0 * self.cell_lon,
-                n * self.cell_lat, n * self.cell_lon)
+        b = frame_bounds(ix, iy, self.grid)
+        return (self.cls, b.coord_range, b.lat_lo, b.lon_lo,
+                b.lat_hi - b.lat_lo, b.lon_hi - b.lon_lo, b)
 
 
 def cell_vertices(cols: dict) -> dict:
-    """{kind: (lat, lon)} arrays of one cell's vertices, plus the count of
-    name records without a full position (not a vertex)."""
-    out = {"n": (cols["n_lat"], cols["n_lon"]), "p": (cols["p_lat"], cols["p_lon"]),
-           "c": (cols["c_lat"], cols["c_lon"])}
+    """{kind: (lat, lon)} arrays of one cell's point vertices (n, p, s), plus
+    the count of name records without a full position (not a vertex)."""
+    out = {"n": (cols["n_lat"], cols["n_lon"]), "p": (cols["p_lat"], cols["p_lon"])}
     pr = cols["s_present"]
     has = (pr & 3) == 3
     out["s"] = (cols["s_lat"][has], cols["s_lon"][has])
@@ -104,43 +79,105 @@ def cell_vertices(cols: dict) -> dict:
 
 
 def measure(lat, lon, fr) -> tuple:
-    """(n, failing, clamped, worst overshoot raw, worst error raw) for one
-    batch of vertices in frame `fr`."""
-    _, rng, lat_lo, lon_lo, lat_sp, lon_sp = fr
-    dlon = np.mod(np.asarray(lon, dtype=np.float64) - lon_lo + 180.0, 360.0) - 180.0
-    fx = dlon / lon_sp * rng
+    """(n, failing, worst error raw) for one batch of road/name vertices in
+    frame `fr`, quantised as their encoders write them: round, clamp to
+    `[0, range]`. A clamped vertex errs by its overshoot and fails."""
+    _, rng, lat_lo, lon_lo, lat_sp, lon_sp = fr[:6]
+    fx = (np.asarray(lon, dtype=np.float64) - lon_lo) / lon_sp * rng
     fy = (np.asarray(lat, dtype=np.float64) - lat_lo) / lat_sp * rng
-    rx, ry = np.round(fx), np.round(fy)
-    # Clamped: the rounded pixel falls outside [0, range] (float noise at an
-    # edge rounds back onto it and is not a clamp).
-    clamped = (rx < 0) | (rx > rng) | (ry < 0) | (ry > rng)
-    over = np.maximum(np.maximum(fx - rng, -fx), np.maximum(fy - rng, -fy))
-    over = np.where(clamped, np.maximum(over, 0.0), 0.0)
-    qx, qy = np.clip(rx, 0, rng), np.clip(ry, 0, rng)
+    qx, qy = np.clip(np.round(fx), 0, rng), np.clip(np.round(fy), 0, rng)
     err = np.maximum(np.abs(qx - fx), np.abs(qy - fy))
     n = int(len(fx))
     if n == 0:
-        return 0, 0, 0, 0.0, 0.0
-    return (n, int((err > 0.5 + _EPS).sum()), int(clamped.sum()),
-            float(over.max()), float(err.max()))
+        return 0, 0, 0.0
+    return n, int((err > 0.5 + _EPS).sum()), float(err.max())
+
+
+def _blank_bg() -> dict:
+    return {"input_vertices": 0, "shapes": 0, "shapes_dropped": 0, "records": 0,
+            "max_deltas_per_record": 0, "outside_rect": 0, "crossing_off_edge": 0,
+            "step_overflow": 0, "written_by_provenance": {k: 0 for k in _PROV}}
+
+
+def measure_backgrounds(cols: dict, fr) -> dict:
+    """Clip every background line/polygon of one cell to frame `fr` exactly
+    as the encoders do and check each written vertex."""
+    b = fr[6]
+    rng = fr[1]
+    rect = clip.clip_rect(b, rng)
+    x0, y0, x1, y1 = rect
+    st = {"vertices": 0, "failing": 0, "worst_error_raw": 0.0, **_blank_bg()}
+    cls, nst, mult = cols["b_class"], cols["b_nstored"], cols["b_mult"]
+    fxa = (np.asarray(cols["c_lon"], dtype=np.float64) - b.lon_lo) / (b.lon_hi - b.lon_lo) * rng
+    fya = (np.asarray(cols["c_lat"], dtype=np.float64) - b.lat_lo) / (b.lat_hi - b.lat_lo) * rng
+    starts = np.concatenate(([0], np.cumsum(nst, dtype=np.int64)))
+    for i in range(len(cls)):
+        c = int(cls[i])
+        a, e = int(starts[i]), int(starts[i + 1])
+        if c == 0 or e == a:
+            continue
+        mc = max(int(mult[i]), 1)
+        st["shapes"] += 1
+        st["input_vertices"] += e - a
+        pieces = clip.shape_pieces(fxa[a:e].tolist(), fya[a:e].tolist(), c == 2, rect, mc)
+        if not pieces:
+            st["shapes_dropped"] += 1
+        lim = 127 * mc
+        for piece in pieces:
+            st["records"] += 1
+            st["max_deltas_per_record"] = max(st["max_deltas_per_record"], len(piece) - 1)
+            px = py = None
+            for x, y, fx, fy, kind in piece:
+                bad = False
+                err = max(abs(x - fx), abs(y - fy))
+                if err > st["worst_error_raw"]:
+                    st["worst_error_raw"] = err
+                if err > 0.5 + _EPS:
+                    bad = True
+                if not (x0 <= x <= x1 and y0 <= y <= y1):
+                    st["outside_rect"] += 1
+                    bad = True
+                if (kind == clip.CROSS_X and fx not in (x0, x1)) or \
+                        (kind == clip.CROSS_Y and fy not in (y0, y1)):
+                    st["crossing_off_edge"] += 1
+                    bad = True
+                if px is not None and (abs(x - px) > lim or abs(y - py) > lim):
+                    st["step_overflow"] += 1
+                    bad = True
+                px, py = x, y
+                st["vertices"] += 1
+                st["failing"] += bad
+                st["written_by_provenance"][clip.KIND_NAMES[kind]] += 1
+    return st
 
 
 def _blank_class(fr) -> dict:
-    _, rng, _, _, lat_sp, lon_sp = fr
+    _, rng, _, _, lat_sp, lon_sp = fr[:6]
     return {"range": rng, "half_pixel_deg": {"lat": lat_sp / (2 * rng), "lon": lon_sp / (2 * rng)},
-            "cells": 0, "vertices": 0, "failing": 0, "clamped": 0,
-            "worst_overshoot_raw": 0.0, "worst_error_raw": 0.0,
-            "per_kind": {k: {"vertices": 0, "failing": 0} for k in KINDS}}
+            "cells": 0, "vertices": 0, "failing": 0, "worst_error_raw": 0.0,
+            "per_kind": {k: {"vertices": 0, "failing": 0, "worst_error_raw": 0.0} for k in KINDS},
+            "background": _blank_bg()}
+
+
+def _merge_bg(a: dict, b: dict) -> None:
+    for key in ("input_vertices", "shapes", "shapes_dropped", "records", "outside_rect",
+                "crossing_off_edge", "step_overflow"):
+        a[key] += b[key]
+    a["max_deltas_per_record"] = max(a["max_deltas_per_record"], b["max_deltas_per_record"])
+    for k in _PROV:
+        a["written_by_provenance"][k] += b["written_by_provenance"][k]
 
 
 def _merge(a: dict, b: dict) -> None:
-    for key in ("cells", "vertices", "failing", "clamped"):
+    for key in ("cells", "vertices", "failing"):
         a[key] += b[key]
-    for key in ("worst_overshoot_raw", "worst_error_raw"):
-        a[key] = max(a[key], b[key])
+    a["worst_error_raw"] = max(a["worst_error_raw"], b["worst_error_raw"])
     for k in KINDS:
         for f in ("vertices", "failing"):
             a["per_kind"][k][f] += b["per_kind"][k][f]
+        a["per_kind"][k]["worst_error_raw"] = max(a["per_kind"][k]["worst_error_raw"],
+                                                  b["per_kind"][k]["worst_error_raw"])
+    _merge_bg(a["background"], b["background"])
 
 
 def run_cells(level: int, cells, frames: Frames) -> tuple[dict, int]:
@@ -154,17 +191,23 @@ def run_cells(level: int, cells, frames: Frames) -> tuple[dict, int]:
         st["cells"] += 1
         verts, np_ = cell_vertices(cols)
         no_pos += np_
-        for k in KINDS:
-            n, fail, clamp, ov, er = measure(*verts[k], fr)
-            if not n:
-                continue
+        for k in ("n", "p", "s"):
+            n, fail, er = measure(*verts[k], fr)
             st["vertices"] += n
             st["failing"] += fail
-            st["clamped"] += clamp
-            st["worst_overshoot_raw"] = max(st["worst_overshoot_raw"], ov)
             st["worst_error_raw"] = max(st["worst_error_raw"], er)
             st["per_kind"][k]["vertices"] += n
             st["per_kind"][k]["failing"] += fail
+            st["per_kind"][k]["worst_error_raw"] = max(st["per_kind"][k]["worst_error_raw"], er)
+        bg = measure_backgrounds(cols, fr)
+        st["vertices"] += bg["vertices"]
+        st["failing"] += bg["failing"]
+        st["worst_error_raw"] = max(st["worst_error_raw"], bg["worst_error_raw"])
+        st["per_kind"]["c"]["vertices"] += bg["vertices"]
+        st["per_kind"]["c"]["failing"] += bg["failing"]
+        st["per_kind"]["c"]["worst_error_raw"] = max(st["per_kind"]["c"]["worst_error_raw"],
+                                                     bg["worst_error_raw"])
+        _merge_bg(st["background"], bg)
     return per, no_pos
 
 
@@ -235,26 +278,35 @@ def roundtrip(spool_dir: str, workers: int = 1, chunk: int = 4000) -> dict:
                 _merge(lv[cls], st)
             else:
                 lv[cls] = st
-    totals = {"vertices": 0, "failing": 0, "clamped": 0, "worst_overshoot_raw": 0.0,
-              "per_kind": {k: {"vertices": 0, "failing": 0} for k in KINDS}}
+    totals = {"vertices": 0, "failing": 0, "worst_error_raw": 0.0,
+              "per_kind": {k: {"vertices": 0, "failing": 0, "worst_error_raw": 0.0} for k in KINDS},
+              "background": _blank_bg()}
     for lv in levels.values():
         for st in lv.values():
-            for key in ("vertices", "failing", "clamped"):
+            for key in ("vertices", "failing"):
                 totals[key] += st[key]
-            totals["worst_overshoot_raw"] = max(totals["worst_overshoot_raw"],
-                                                st["worst_overshoot_raw"])
+            totals["worst_error_raw"] = max(totals["worst_error_raw"], st["worst_error_raw"])
             for k in KINDS:
                 for f in ("vertices", "failing"):
                     totals["per_kind"][k][f] += st["per_kind"][k][f]
+                totals["per_kind"][k]["worst_error_raw"] = max(
+                    totals["per_kind"][k]["worst_error_raw"], st["per_kind"][k]["worst_error_raw"])
+            _merge_bg(totals["background"], st["background"])
     return {
-        "criterion": ("lat/lon -> round -> clamp to [0, range] -> lat/lon agrees within half "
-                      "a pixel; half a pixel = frame extent / (2 * range) = 0.5 raw units"),
+        "criterion": ("every written vertex agrees with its exact pre-rounding position within "
+                      "half a pixel (= frame extent / (2 * range) = 0.5 raw units). Background "
+                      "vertices are the clipped geometry's (kiwiw.clip) and must also lie in the "
+                      "parcel's clip rectangle, on the crossed edge exactly when a crossing, and "
+                      "one signed-8-bit delta from their predecessor; road nodes/points and name "
+                      "anchors are rounded then clamped to [0, range] as their encoders write them"),
         "coverage": {
             "kinds": {"n": "road nodes (n_lat/n_lon)", "p": "road intermediate points "
-                      "(p_lat/p_lon)", "c": "background shape vertices (c_lat/c_lon)",
+                      "(p_lat/p_lon)", "c": "background vertices written after clipping "
+                      "(from c_lat/c_lon)",
                       "s": "name anchors with both lat and lon present (s_lat/s_lon)"},
             "names_without_position": no_pos,
             "not_used": "n_x/n_y (extraction-time pixels); the round-trip starts from lat/lon",
+            "not_modelled": "division: sub-parcels clip to their quadrant/cell (build-time)",
         },
         "levels": {lv: {c: levels[lv][c] for c in sorted(levels[lv])}
                    for lv in sorted(levels, key=int)},
@@ -273,9 +325,10 @@ def main(argv=None) -> int:
     res = roundtrip(args.spool, workers=args.workers)
     Path(args.out).write_text(json.dumps(res, indent=2, sort_keys=True) + "\n")
     t = res["totals"]
-    print(f"vertices={t['vertices']} failing={t['failing']} clamped={t['clamped']} "
-          f"worst_overshoot_raw={t['worst_overshoot_raw']:.3f} "
+    print(f"vertices={t['vertices']} failing={t['failing']} "
+          f"worst_error_raw={t['worst_error_raw']:.6f} "
           f"per_kind={json.dumps(t['per_kind'], sort_keys=True)} "
+          f"background={json.dumps(t['background'], sort_keys=True)} "
           f"wall={time.monotonic() - t0:.1f}s", file=sys.stderr)
     return 0 if res["pass"] else 1
 

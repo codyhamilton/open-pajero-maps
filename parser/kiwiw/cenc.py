@@ -65,11 +65,12 @@ def _load_lib():
         lib.kw_bg_shape.restype = ctypes.c_int64
         lib.kw_bg_shape.argtypes = [
             ctypes.c_void_p, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_double]
+            ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int64,
+            ctypes.c_double, ctypes.c_void_p]
         lib.kw_measure_cell.restype = ctypes.c_int64
         lib.kw_measure_cell.argtypes = [
             ctypes.c_char_p, ctypes.c_int64, ctypes.c_int, ctypes.c_int64, ctypes.c_int64,
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_double]
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_double]
         lib.kw_copy_frames.restype = ctypes.c_int64
         lib.kw_copy_frames.argtypes = [
             ctypes.c_int, ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
@@ -113,15 +114,21 @@ def make_encoder(level: int, grid, threshold: int, kind_limits):
     return CellEncoder(lib, level, grid, threshold, kind_limits)
 
 
-_bg_out = ctypes.create_string_buffer(12 + 2 * 2047 + 2)
-_bg_out_addr = ctypes.addressof(_bg_out)
+_bg_room = 1 << 16
+_bg_out = ctypes.create_string_buffer(_bg_room)
+_bg_nrec = ctypes.c_int64(0)
 _bg_fn = None
 
 
-def bg_shape_bytes(shape, bounds, coord_range: int) -> bytes | None:
-    """One line/polygon background record via C at `coord_range`, or None
-    (use numpy/scalar)."""
-    global _bg_fn
+def _rect4(bounds):
+    r = getattr(bounds, "clip_rect", None)
+    return None if r is None else (ctypes.c_double * 4)(*(float(v) for v in r))
+
+
+def bg_shape_records(shape, bounds, coord_range: int) -> list[bytes] | None:
+    """A line/polygon's records, clipped to the parcel (`kiwiw.clip`), via C
+    at `coord_range`; None when the kernel declines (use the Python oracle)."""
+    global _bg_fn, _bg_out, _bg_room
     if _bg_fn is None:
         lib = _load_lib()
         _bg_fn = lib.kw_bg_shape if lib is not None else False
@@ -135,10 +142,28 @@ def bg_shape_bytes(shape, bounds, coord_range: int) -> bytes | None:
     if len(flat) != 2 * len(coords):
         return None
     b4 = array("d", (bounds.lat_lo, bounds.lat_hi, bounds.lon_lo, bounds.lon_hi))
+    rect = _rect4(bounds)
     flags = (1 if shape.underground else 0) | (2 if shape.pen_up else 0)
-    n = _bg_fn(flat.buffer_info()[0], len(coords), shape.mult_const, shape.type_code,
-               flags, b4.buffer_info()[0], _bg_out_addr, float(coord_range))
-    return None if n < 0 else ctypes.string_at(_bg_out_addr, n)
+    while True:
+        n = _bg_fn(flat.buffer_info()[0], len(coords), shape.mult_const, shape.type_code,
+                   flags, 1 if shape.shape_class == 2 else 0, b4.buffer_info()[0],
+                   rect, ctypes.addressof(_bg_out), _bg_room, float(coord_range),
+                   ctypes.addressof(_bg_nrec))
+        if n != -2 or _bg_room >= (1 << 26):
+            break
+        _bg_room <<= 2
+        _bg_out = ctypes.create_string_buffer(_bg_room)
+    if n < 0:
+        return None
+    raw = ctypes.string_at(ctypes.addressof(_bg_out), n)
+    recs, pos = [], 0
+    for _ in range(_bg_nrec.value):
+        ln = (((raw[pos] << 8) | raw[pos + 1]) & 0xFFF) * 2
+        recs.append(raw[pos:pos + ln])
+        pos += ln
+    if pos != n:  # a record over the 12-bit length field: let Python decide
+        return None
+    return recs
 
 
 def lib():
@@ -174,8 +199,8 @@ def measure_content(level: int, ix: int, iy: int, bounds, content: dict, *,
     except (AttributeError, TypeError, ValueError, UnicodeError):
         return None
     b4 = (ctypes.c_double * 4)(bounds.lat_lo, bounds.lat_hi, bounds.lon_lo, bounds.lon_hi)
-    n = _m_fn(raw, len(raw), level, ix, iy, ctypes.addressof(b4), _m_addr_sizes(), _m_addr,
-              float(cr))
+    n = _m_fn(raw, len(raw), level, ix, iy, ctypes.addressof(b4), _rect4(bounds),
+              _m_addr_sizes(), _m_addr, float(cr))
     if n < 0:
         return None
     return (ctypes.string_at(_m_addr, n),
