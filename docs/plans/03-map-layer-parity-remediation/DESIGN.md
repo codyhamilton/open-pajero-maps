@@ -265,6 +265,76 @@ Two conditions attach. The continuity and mirror checks currently exist only as 
 
 **Phase 2 is not closed by this amendment.** The design is left ready for a re-run against the criteria above; the verdict is the user's.
 
+### Amendment 2026-09-23 (design agent) — the adjacency unit is the frame, not the leaf slot
+
+**Provenance, stated plainly: this amendment is machine-driven research, not a user decision.** It was written by the design agent under the run's self-correction protocol after the grounded gate re-run (2-12) returned NOT CLOSED with criteria 2 and 4 failing at `L0_sparse`. Every figure below comes from direct measurement against R at `/run/media/codyh/464210-8480` by read-only probes in the session scratchpad; the probes are not checked in, and per this design's own evidence rule no criterion below is load-bearing until the committed tool re-runs it. The units this amendment adds (2-13, 2-14, 2-15) are what commits it. The user has not reviewed this; if the user disagrees with any of it, the units are the place to reverse it.
+
+**The Assumption Ledger's hard stop is not triggered.** The ledger entry "Coordinate range 4096/16384 is the true full-cell range. Tested in Phase 2. If false: hard stop, re-analyse (user decision)" names the case where the coordinate model is *false*. The research found the opposite: the model is confirmed, and confirmed more strongly than before, including by a two-sided cross-class measurement no earlier tool made. The entry stays untouched here for the same reason the 2026-09-23 user amendment left it untouched — Phase 2 is not closed by this amendment either — and 2-15 still owns updating it in the change that closes the phase.
+
+#### Root cause of the criterion 2 and 4 failures at L0_sparse
+
+Both failures have one cause, and it is a bookkeeping gap in the checking tools, not a property of R.
+
+`parser/tools/r_neighbours.py` (`LeafIndex.neighbour`, `EDGE_DELTA`) steps **one top-level leaf slot** on the level's global leaf grid. For every class except `L0_sparse` that is also one coordinate frame, so the step is correct. For `L0_sparse` it is not: unit 2-05 established that the L0 sparse coordinate frame is the **4x4 integrated-parcel tile at range 16384**, and all 16 leaf slots of such a tile alias **one** Map Frame. `r_neighbours` documents this gap in its own output notes (`"l0_is_per_leaf_slot"`: "a sparse tile aliases 16 leaf slots to one Map Frame; each slot is still counted and looked up independently here"). Units 2-10 and 2-11 consumed the leaf-step lookup anyway.
+
+Two consequences, both measured:
+
+- **Denominator inflation.** All 16 aliased slots return the same `(dsa, size)` and the same frame bbox, so `RReader.decode` returns identical links for all 16 and each tile's qualifying node set is counted 16 times. Probe: 128 of 128 tiles in the first sampled block resolve to one distinct `(dsa, size)`.
+- **Self-neighbours.** For 12 of the 16 aliased slots a one-slot step lands **inside the same frame**, so the "neighbour" is the source parcel itself and no mirrored node at `range - value` exists. Only the 4 slots in the column or row adjacent to the crossed edge reach a genuinely adjacent tile. That predicts exactly a 1-in-4 match rate, and criterion 4's numbers are exactly that: denominator `11536 = 16 x 721`, matched `2884 = 4 x 721`, violations `8652 = 3 x 2884`, with **100 % of the 8652 violations classified `same_block`** — the signature of a parcel failing to mirror against itself.
+
+Criterion 2's `L0_sparse` residual has the same origin. Its own recorded examples pair leaf 4 with leaf 36 and leaf 12 with leaf 13 — pairs of slots *inside one tile* — at frame-scale separations (9,214.5 m and 11,715.4 m). The 328 over-threshold pairs are not 328 disagreements about coordinates; they are within-tile pairs the leaf-step lookup should never have formed.
+
+**Decisive re-measurement.** Under the same sampling rule (spread over 40 blocks, `MIN_NODES_PER_CLASS 300`) and the same pre-stated constants, with the adjacency unit set to the tile instead of the leaf slot: `blocks_visited 9, n_tiles 1152, n_candidate_nodes 721, denominator 721, matched 721, violations 0`, crossings `same_block 662 / cross_block 57 / cross_blockset 2`. Criterion 4 at `L0_sparse` goes from 8,652 of 11,536 violations to **zero**.
+
+#### New grounded rule: one global raw lattice per level
+
+The fix is not a special case for L0 sparse. The research found a single formulation that covers every class and makes the invariant frame-shape-independent:
+
+> At every level, R's raw coordinate resolution is **4096 raw units per top-level leaf slot**. A coordinate frame covers an n x n block of slots and carries range `n x 4096`: n = 1 for a basic parcel (L0 urban, an L2-L8 leaf, a divided parent), n = 4 for an L0 sparse integrated-parcel tile, giving `4 x 4096 = 16384`. A parcel's global coordinate is `X = gx0 * 4096 + x_local`, `Y = gy0 * 4096 + y_local`, where `(gx0, gy0)` is the frame's south-west leaf slot on the level's global leaf grid.
+
+This is what spec 7.2.2.1.1.2 describes when it says "a basic parcel is 4096 x 4096 and an integrated parcel up to 4096 x 8 = 32768": the integrated parcel's range is a whole multiple of the basic parcel's, because the raw unit is the same physical size at both. Under the lattice, the mirror rule stops being a statement about one frame's range and becomes an identity: **a boundary end node appears at the identical global (X, Y) in every frame that shares that point.** `crossed = range - value` is the n = 1 special case.
+
+Measurements under this formulation, all against R, all at exact integer equality with no tolerance:
+
+- L0 sparse tiles, 9 blocks, 1,152 tiles: **721 / 721**, zero violations.
+- L0 urban, the **whole** urban population (all 252 urban tiles across 69 blocks, 2,863 urban frames with content), per edge incidence: denominator 100,958, matched 100,818, violations 140. By crossing kind: `L0_urban -> L0_sparse` **5,352 of 5,353** (one violation); `L0_urban -> L0_urban` 95,466 of 95,605.
+- Per-node figures (edge nodes / failures): L0 168,712 / 93; L2 (13 blocks) 4,063 / 4; L4 (20 blocks) 6,933 / 1; L6 (whole population) 746 / 0; L8 (whole population) 66 / 0. These reproduce the already-passing classes exactly — L2's 4,067 / 4,061 / 6 in `EVIDENCE-2-11.json` is the same population.
+
+The `L0_urban -> L0_sparse` figure is the load-bearing one. It is a **cross-class** crossing between a 4096 basic-parcel frame and a 16384 integrated-parcel tile frame, and it can only come out at 5,352 of 5,353 if 16384 is exactly 4 x 4096 *and* the tile's origin sits on the leaf grid where the model says. No earlier tool made a two-sided cross-class measurement; `boundary_mirror_census` excluded differing frame extents from the denominator as `scale_mismatch` (114 at L0_urban), which is precisely the crossings that carry this evidence. The 4096/16384 model is confirmed by the case the old check threw away.
+
+#### Corner incidences are a distinct case, and the spec grounds them
+
+Read per edge, corner nodes look catastrophic: 64 corner incidences at L0 with 51 violating (80 %). They are not violations of the lattice; they are a wrong reading of the invariant. Spec 7.2.2.1.1.3, the on-boundary node flag, says identical node information is held in neighbouring **parcels**, plural — and a node at a frame corner is shared by three other frames, not one. Scored per node ("some frame sharing this point holds a node at the identical global (X, Y)") the corner population collapses to **40 nodes / 1 failure** at L0 and **2 / 0** at L2. The per-node, any-sharing-frame reading is therefore the criterion, and the per-edge reading is retired as an artefact of testing one edge at a time.
+
+#### Criteria 2 and 4, as re-stated
+
+Criterion 1, 3 and 5 stand exactly as the 2026-09-23 user amendment wrote them; they passed on the re-run and are not touched. Criteria 2 and 4 are restated:
+
+**2. Cross-parcel continuity (restated).** A road link crossing a frame boundary is stored independently on both sides; the two copies of the shared endpoint occupy the same point on the level's global raw lattice. Per matched pair; denominator all boundary endpoint pairs at a shared **frame** edge, the adjacency unit being the frame, not the leaf slot. Endpoint *selection* is exact — a node qualifies only when its raw crossed-axis coordinate is exactly 0 or exactly the frame range — and pairing is exact lattice equality. This retires `EDGE_TOL_RAW` and `PAIR_TOL_RAW` under this design's own retirement rule: the grounded exact measure was found underneath the tolerance-based one, so the tolerance is retired rather than retuned. The alternative-range scoring (half, double, 32768, the two divided renormalisations) is kept, because it is what makes the criterion two-sided.
+
+**4. Boundary-node mirror (restated).** A link end node exactly on a frame edge is answered by an end node at the identical global (X, Y) in a frame sharing that point. Per node, at exact integer equality, zero tolerance. Denominator: all exact-coordinate nodes with at least one resolvable sharing frame, nodes at the extract's outer edge excluded from the denominator rather than failed, and counted-and-reported exclusions retained. A node at a frame corner is satisfied by **any** of the frames sharing that point (7.2.2.1.1.3, "neighbouring parcels", plural), not by one nominated edge neighbour. `scale_mismatch` is **no longer an exclusion**: under the lattice a 4096 frame facing a 16384 frame is an ordinary crossing and must be in the denominator, because it is the strongest available evidence for the range model.
+
+**The measured residual is 152 records disc-wide, and the enumeration cap must exceed it.** Composition: 93 at L0_urban, 1 at `L0_urban -> L0_sparse`, 4 at L2, 1 at L4, 53 at divided `pardiv1`. `RESIDUAL_ENUM_CAP = 200` is above that, but the reason 2-12 failed criterion 2 was a cap below the residual, so the cap must be checked against the residual it has to print and every record enumerated with both parcels' identifiers and both raw coordinates. Character of the residual, so the enumeration has something to say: at L2 and L4 the offsets are **1-2 raw units** — R's two copies of one node disagree by rounding. At L0_urban the 93 are mostly **44-245 raw units** with one at 1,243, which is too large for rounding and is consistent with a link *terminating on* the boundary without crossing it — the same "dead end on the line" mechanism this design already used to retire `b_clip_exact_share` — plus four at 1 unit. None of this is an explanation until 2-14 enumerates it record by record; the criterion is not satisfied by a plausible story about a residual.
+
+#### The carried `divided_pardiv1` provisional concern is resolved
+
+The 2026-09-23 amendment marked criterion 2's divided result provisional and suspected its 122 m median was the range-relative edge tolerance admitting nodes near but not on the midline. It was. Measured over the whole divided population with exact midline selection and **no tolerance**: 3,300 midline nodes (L0 1,951, L2 345, L4 738, L6 224, L8 95), **53 failures** (L0 3, L2 1, L4 44, L6 4, L8 1), so 3,247 exact. Nearest offsets on the failures sit at 1-24 raw units. The provisional marking is lifted: the divided parent-4096 model holds at exact equality, with a 53-record enumerable residual. Criterion 3 (spec-cited, tolerance-free, zero violations) is unaffected.
+
+#### Two tool defects that become load-bearing
+
+- **`coord_scale_census._work` builds `WalkedParcel` without `frame_bounds`** (GATE-2 Carried 5). `WalkedParcel.__post_init__` then defaults `frame_bounds` to the leaf bbox, so 075fc99's "invert against the frame bbox, not the leaf" never takes effect in that worker. It was harmless for criterion 1 because raw values round-trip through whichever bbox both directions use. It stops being harmless the moment anything computes the global lattice from that worker's output, so 2-13 fixes it.
+- **`boundary_mirror_census`'s verdict logic is wrong, independent of the L0_sparse bug.** `elif len(violation_examples) >= min(violations, 20): verdict = "pass_with_residual"` labels a class `pass_with_residual` whenever it can print twenty examples, whatever share of the denominator they cover; that is how a 75 % violation rate came back labelled `pass_with_residual` and needed GATE-2 to override it by hand. The verdict must be tied to the residual's **coverage of the denominator**: `pass` at zero violations, `pass_with_residual` only when every violation is enumerated, `fail` otherwise.
+
+#### Units this amendment adds
+
+2-09 through 2-12 are history and are not re-run or re-briefed; 2-12's gate verdict is superseded by 2-15. **This amendment does not re-run the gate and does not close Phase 2** — 2-15 does, and 2-15 owns the Assumption Ledger update in the same change.
+
+| Unit | Brief | Depends on | May run alongside |
+|---|---|---|---|
+| 2-13 frame adjacency and the global raw lattice in `r_neighbours.py` | `briefs/2-13-frame-adjacency.md` | nothing | nothing |
+| 2-14 continuity and mirror re-run on frame adjacency (criteria 2, 3, 4) | `briefs/2-14-continuity-and-mirror-rerun.md` | 2-13 | nothing |
+| 2-15 grounded gate verdict (criteria 1-5) and Assumption Ledger | `briefs/2-15-grounded-gate-verdict.md` | 2-13, 2-14 | nothing |
+
 ## Assumption Ledger
 
 Each assumption names the phase that tests it and what happens if it is false.
@@ -336,6 +406,14 @@ Units, as re-briefed for the grounded gate (Decisions, "Amendment 2026-09-23 (us
 | 2-10 cross-parcel continuity + divided quadrant containment (criteria 2, 3) | `briefs/2-10-continuity-and-quadrant.md` | 2-09 | 2-11 |
 | 2-11 boundary-node mirror across resolved neighbours (criterion 4) | `briefs/2-11-boundary-mirror.md` | 2-09 | 2-10 |
 | 2-12 grounded gate verdict (criteria 1–5) and schema rows | `briefs/2-12-grounded-gate-verdict.md` | 2-09, 2-10, 2-11 | nothing |
+
+Units, as re-briefed after the grounded gate returned NOT CLOSED (Decisions, "Amendment 2026-09-23 (design agent) — the adjacency unit is the frame, not the leaf slot"). 2-09 through 2-12 are history and are neither re-run nor re-briefed; 2-12's gate verdict is superseded by 2-15. The cause of criteria 2 and 4 failing was that `r_neighbours` steps one leaf slot where the L0 sparse frame is a 4x4 tile, so 2-13 fixes the adjacency unit, 2-14 re-runs both censuses on it, and 2-15 gives the verdict.
+
+| Unit | Brief | Depends on | May run alongside |
+|---|---|---|---|
+| 2-13 frame adjacency and the global raw lattice in `r_neighbours.py` | `briefs/2-13-frame-adjacency.md` | nothing | nothing |
+| 2-14 continuity and mirror re-run on frame adjacency (criteria 2, 3, 4) | `briefs/2-14-continuity-and-mirror-rerun.md` | 2-13 | nothing |
+| 2-15 grounded gate verdict (criteria 1–5) and Assumption Ledger | `briefs/2-15-grounded-gate-verdict.md` | 2-13, 2-14 | nothing |
 
 ### Phase 3 — Native coordinates
 
