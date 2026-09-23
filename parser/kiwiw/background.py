@@ -4,12 +4,16 @@ kiwiread.c.
 from __future__ import annotations
 
 from .bitutils import extract, sws, i8, u16, u32
-from .coordconv import decode_region_coord, xy_to_latlon
+from .coordconv import _LEGACY_RANGE, decode_region_coord, xy_to_latlon
 from .model import BackgroundElement, BackgroundFrame, BackgroundShape, BoundingBox
 from .roadtypes import background_type_label
 
 
 def decode_background_frame(buf: bytes, bounds: BoundingBox) -> BackgroundFrame:
+    # See road.py's decode_road_frame for the rationale: resolve the
+    # frame's real coord_range once, pass it explicitly below, never rely
+    # on xy_to_latlon's own default.
+    coord_range = bounds.coord_range if bounds.coord_range is not None else _LEGACY_RANGE
     header_size_raw = u16(buf, 0)
     hlen = sws(header_size_raw)
     frame = BackgroundFrame(header_size_raw=header_size_raw, frame_size=len(buf))
@@ -76,14 +80,14 @@ def decode_background_frame(buf: bytes, bounds: BoundingBox) -> BackgroundFrame:
                     xc = decode_region_coord(sx)
                     yc = decode_region_coord(sy)
                     coord_off = poff + 12
-                    lat, lon = xy_to_latlon(xc, yc, bounds)
+                    lat, lon = xy_to_latlon(xc, yc, bounds, coord_range=coord_range)
                     shape.coords.append((lat, lon))
                     for k in range(ncoord):
                         xo = i8(buf, coord_off + k * 2)
                         yo = i8(buf, coord_off + k * 2 + 1)
                         xc += xo * mult_const
                         yc += yo * mult_const
-                        lat, lon = xy_to_latlon(xc, yc, bounds)
+                        lat, lon = xy_to_latlon(xc, yc, bounds, coord_range=coord_range)
                         shape.coords.append((lat, lon))
 
                 poff += rec_len

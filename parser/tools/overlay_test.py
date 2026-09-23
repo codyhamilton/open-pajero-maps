@@ -91,7 +91,10 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-DECODER_RANGE = 32768.0
+# The pre-Plan-03 decoder's fixed 2**15 range, kept only as the named
+# `control_32768` hypothesis variant; nothing decodes or inverts with it.
+CONTROL_RANGE_32768 = 32768.0
+DECODER_RANGE = CONTROL_RANGE_32768  # old name; test_overlay_test.py (not 3-01's) imports it
 GRID_N = 16
 MIN_LINKS = 20
 POOL_N = 12
@@ -467,9 +470,12 @@ def pool(results: list[dict], tol: float, extents: list[float]) -> dict:
 # --------------------------------------------------------------- R reading
 
 def _raw(lat, lon, b):
-    """Invert coordconv's (y-up) decode to recover the raw (x, y) stored on disc."""
-    return (round((lon - b.lon_lo) / (b.lon_hi - b.lon_lo) * DECODER_RANGE, 6),
-            round((lat - b.lat_lo) / (b.lat_hi - b.lat_lo) * DECODER_RANGE, 6))
+    """Invert coordconv's (y-up) decode to recover the raw (x, y) stored on
+    disc, at the SAME range the decoder used (`b.coord_range`, the frame's
+    `range_for`)."""
+    rng = float(b.coord_range)
+    return (round((lon - b.lon_lo) / (b.lon_hi - b.lon_lo) * rng, 6),
+            round((lat - b.lat_lo) / (b.lat_hi - b.lat_lo) * rng, 6))
 
 
 def _links(parcel, b):
@@ -553,7 +559,8 @@ class RReader:
         from kiwiw.model import MeshLocation
         from kiwiw.parcel import decode_parcel
         _, bs_index, ei, _, _ = blk
-        lpath, le, lb, ptype, _, (fb, _fc) = leaf
+        lpath, le, lb, ptype, _, (fb, fc) = leaf
+        fb = self.walk.with_range(fb, self.walk.leaf_frame_range(lmr.level, ptype, lpath, fc))
         self.fh.seek(self.volume.getsector(le.dsa, self.ss, self.ls))
         buf = self.fh.read(le.size * self.ls)
         loc = MeshLocation(level=lmr.level, parcel_type=ptype, blockset_index=bs_index,
@@ -857,7 +864,7 @@ def main() -> int:
     def variants(c, rng, frame):
         """(name -> (frame, range)) alternatives for a cell's class."""
         v = {"range_half": (frame, rng / 2.0), "range_double": (frame, rng * 2.0),
-             "control_32768": (frame, DECODER_RANGE)}
+             "control_32768": (frame, CONTROL_RANGE_32768)}
         if c["ptype"] == 1:
             v["own_bounds"] = (c["bounds"], float(class_range(
                 ranges, c["level"], c["class"], c["sub"])))

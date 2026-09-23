@@ -32,6 +32,13 @@ class BoundingBox:
     lat_hi: float
     lon_lo: float
     lon_hi: float
+    # The coordinate range (`coordconv.range_for`'s divisor) the frame this
+    # bbox anchors is expressed in, when known. `None` (the default) means
+    # "not yet migrated to the per-frame range": a decoder receiving such a
+    # bbox falls back to `coordconv`'s temporary legacy default rather than
+    # guessing. Set by callers that know the frame's class (e.g.
+    # `harness.walk`), so a decoder is never asked to guess (Plan 03, 3-01).
+    coord_range: Optional[int] = None
 
 
 @dataclass

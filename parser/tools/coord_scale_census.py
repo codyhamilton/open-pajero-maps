@@ -29,7 +29,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from harness import walk  # noqa: E402
 
-DECODER_RANGE = 32768.0
 EXCEPTION_EXAMPLES = 20
 # Observed-max buckets: a parcel's "observed range" is the smallest of these
 # that holds its maximum (R's ranges are powers of two); anything larger is
@@ -37,9 +36,11 @@ EXCEPTION_EXAMPLES = 20
 NAMES = {0: "normal", 1: "pardiv1", 2: "pardiv2", 3: "pardiv3"}
 
 
-def _raw(lat: float, lon: float, b) -> tuple[int, int]:
-    x = (lon - b.lon_lo) / (b.lon_hi - b.lon_lo) * DECODER_RANGE
-    y = (lat - b.lat_lo) / (b.lat_hi - b.lat_lo) * DECODER_RANGE
+def _raw(lat: float, lon: float, b, rng: float) -> tuple[int, int]:
+    """Invert xy_to_latlon at `rng`, which must be the range the decoder
+    used for this parcel (`wp.frame_range`, its frame's `range_for`)."""
+    x = (lon - b.lon_lo) / (b.lon_hi - b.lon_lo) * rng
+    y = (lat - b.lat_lo) / (b.lat_hi - b.lat_lo) * rng
     return int(round(x)), int(round(y))
 
 
@@ -49,6 +50,7 @@ def parcel_measure(wp) -> dict | None:
     if p is None:
         return None
     b = wp.frame_bounds  # decode anchors lat/lon on the frame, not the leaf
+    rng = wp.frame_range  # ...and at the frame's range
     mx = my = -1
     end_max = -1
     road_max = -1
@@ -63,7 +65,7 @@ def parcel_measure(wp) -> dict | None:
                 if i in (0, len(link.nodes) - 1):
                     end_max = max(end_max, nd.x, nd.y)
             for lat, lon in (link.points or []):
-                x, y = _raw(lat, lon, b)
+                x, y = _raw(lat, lon, b, rng)
                 mx, my = max(mx, x), max(my, y)
                 road_max = max(road_max, x, y)
                 n += 1
@@ -71,7 +73,7 @@ def parcel_measure(wp) -> dict | None:
     if bg is not None:
         for sh in bg.shapes:
             for lat, lon in sh.coords:
-                x, y = _raw(lat, lon, b)
+                x, y = _raw(lat, lon, b, rng)
                 mx, my = max(mx, x), max(my, y)
                 n += 1
     if n == 0:
@@ -175,18 +177,11 @@ def _work(args) -> list[dict]:
                 # one bbox, or criterion 1's maxima move for no reason.
                 frame_bounds, frame_class = walk._leaf_frame(
                     root, level, pt, lp, lb, bb, lmr, sparse_cache)
-                if frame_class == "l0_sparse_tile":
-                    fcls = "sparse"
-                elif level == 0:
-                    fcls = "divided" if pt else "urban"
-                else:
-                    fcls = "divided" if pt else "full"
-                div_state = "normal" if pt == 0 else f"pardiv{pt}_sub{lp[-1]}"
-                frame_range = walk._frame_range(level, fcls, div_state)
+                frame_range = walk.leaf_frame_range(level, pt, lp, frame_class)
                 try:
                     loc = MeshLocation(level=level, parcel_type=pt, blockset_index=bsi,
                                        block_index=bidx, parcel_index=lp[-1],
-                                       bounds=frame_bounds,
+                                       bounds=walk.with_range(frame_bounds, frame_range),
                                        sector_addr=entry.dsa, size_logical_sectors=entry.size)
                     parcel = decode_parcel(loc, data, n_basic_map=lmr.n_basic_map,
                                            n_ext_map=lmr.n_ext_map)

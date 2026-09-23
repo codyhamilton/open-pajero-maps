@@ -38,7 +38,7 @@ frame -- see `_sibling_pairs`).
 Anti-circularity (binding, carried from 2-10, still true here): node
 *selection* and *pairing* run once, under the hypothesis of record. The
 resulting pair list is then re-scored UNCHANGED under every alternative
-range hypothesis (half, double, `overlay_test.DECODER_RANGE`) via
+range hypothesis (half, double, `overlay_test.CONTROL_RANGE_32768`) via
 `score_pair`, purely as diagnostic evidence for how R-consistent the
 lattice model is -- no alternative may add, drop or re-pair a node. Because
 pairing is now exact-lattice equality rather than a metre threshold, a
@@ -422,8 +422,8 @@ def continuity_class(rdr, idx_cache, key, level, ptype, urban):
                                             p["frame_t"], p["rng_t"] / 2))
         alt_seps["double"].append(score_pair(p, p["frame_s"], p["rng_s"] * 2,
                                               p["frame_t"], p["rng_t"] * 2))
-        alt_seps["decoder_range"].append(score_pair(p, p["frame_s"], ot.DECODER_RANGE,
-                                                      p["frame_t"], ot.DECODER_RANGE))
+        alt_seps["decoder_range"].append(score_pair(p, p["frame_s"], ot.CONTROL_RANGE_32768,
+                                                      p["frame_t"], ot.CONTROL_RANGE_32768))
         if own_leaf_seps is not None:
             own_leaf_seps.append(score_pair(p, p["own_leaf_s"], p["own_rng_s"],
                                              p["own_leaf_t"], p["own_rng_t"]))
@@ -498,14 +498,16 @@ def _decode_full(rdr, lmr, blk, leaf_row):
     this duplicates its two-line read+parse rather than reusing it, to keep
     the rest of the road frame and the background shapes too), road
     intermediate points, and background vertices. `fb` (the leaf/sub's own
-    frame_bounds) is used identically for decode_parcel's internal lat/lon
-    conversion and for the `_raw()` inversion below, so the round trip
+    frame_bounds, carrying its frame's `range_for`) is used identically for
+    decode_parcel's internal lat/lon conversion and for the `_raw()`
+    inversion below, so the round trip
     recovers the exact raw stored coordinate regardless of whether `fb` is
     the "correct" hypothesis frame."""
     from kiwiw.model import MeshLocation
     from kiwiw.parcel import decode_parcel
     _, bs_index, ei, _, _ = blk
-    lpath, le, lb, ptype, _, (fb, _fc) = leaf_row
+    lpath, le, lb, ptype, _, (fb, fc) = leaf_row
+    fb = rdr.walk.with_range(fb, rdr.walk.leaf_frame_range(lmr.level, ptype, lpath, fc))
     rdr.fh.seek(rdr.volume.getsector(le.dsa, rdr.ss, rdr.ls))
     buf = rdr.fh.read(le.size * rdr.ls)
     loc = MeshLocation(level=lmr.level, parcel_type=ptype, blockset_index=bs_index,

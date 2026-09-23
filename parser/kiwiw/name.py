@@ -24,7 +24,7 @@ raw bytes are still captured, just without semantic fields.
 from __future__ import annotations
 
 from .bitutils import extract, sws, u16
-from .coordconv import decode_region_coord, xy_to_latlon
+from .coordconv import _LEGACY_RANGE, decode_region_coord, xy_to_latlon
 from .model import BoundingBox, NameFrame, NameList, NameRecord
 from .roadtypes import background_type_label
 
@@ -34,6 +34,8 @@ def _cstr(buf: bytes, off: int, length: int) -> str:
 
 
 def decode_name_frame(buf: bytes, bounds: BoundingBox) -> NameFrame:
+    # See road.py's decode_road_frame for the rationale.
+    coord_range = bounds.coord_range if bounds.coord_range is not None else _LEGACY_RANGE
     header_size_raw = u16(buf, 0)
     hlen = sws(header_size_raw)
     frame = NameFrame(header_size_raw=header_size_raw, frame_size=len(buf))
@@ -82,7 +84,7 @@ def decode_name_frame(buf: bytes, bounds: BoundingBox) -> NameFrame:
                 sy = u16(buf, body + 4)
                 xc = decode_region_coord(sx)
                 yc = decode_region_coord(sy)
-                lat, lon = xy_to_latlon(xc, yc, bounds)
+                lat, lon = xy_to_latlon(xc, yc, bounds, coord_range=coord_range)
 
             if st == 1:
                 # 7.4.2.1.2 Barycentric string

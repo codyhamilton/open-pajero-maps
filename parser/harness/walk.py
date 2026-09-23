@@ -17,9 +17,8 @@ yielded.
 """
 from __future__ import annotations
 
-import json
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Iterator, Optional
 
@@ -39,8 +38,6 @@ NO_DATA_DSA = 0xFFFFFFFF
 # L0 leaves sit on a 4x4-leaf "integrated parcel" tile grid (same constant
 # as tools/coord_scale_census.L0_TILE; tools are not importable from here).
 L0_TILE = 4
-_COORD_SCALE = Path(__file__).resolve().parent.parent / "refdata" / "profile" / "coord_scale.json"
-_RANGES: dict = {}
 
 
 # ---------------------------------------------------------------------
@@ -180,17 +177,36 @@ def _leaf_frame(root, level, ptype, leaf_path, leaf_bounds, block_bounds, lmr, c
 
 
 def _frame_range(level: int, cls: str, div_state: str) -> Optional[int]:
-    """Coordinate range of a frame class from `coord_scale.json` `ranges`
-    (None when the profile or the class is absent)."""
-    if not _RANGES:
-        try:
-            _RANGES["r"] = json.loads(_COORD_SCALE.read_text())["ranges"]
-        except (OSError, KeyError, ValueError):
-            _RANGES["r"] = {}
+    """Coordinate range of a frame: `coordconv.range_for` (None when the
+    (level, class, division_state) triple is absent from coord_scale.json).
+    `range_for` is the one place that knows a divided sub-parcel's range is
+    the parent's 4096 frame, not coord_scale.json's observed maximum."""
+    from kiwiw.coordconv import range_for
     try:
-        return int(_RANGES["r"][str(level)][cls][div_state]["max"])
+        return range_for(level, cls, div_state)
     except KeyError:
         return None
+
+
+def leaf_frame_range(level: int, ptype: int, leaf_path: tuple, frame_class: str) -> Optional[int]:
+    """`range_for` of one leaf, by coord_scale.json's content-independent
+    `class_rule`: division != 0 -> 'divided' (state pardiv<type>_sub<idx>);
+    level 0 -> 'sparse' when `_leaf_frame` resolved the 4x4 tile
+    (`_is_sparse_tile`, reconciled with class_rule in 2-13), else 'urban';
+    any other level -> 'full'."""
+    if ptype:
+        cls = "divided"
+    elif frame_class == "l0_sparse_tile":
+        cls = "sparse"
+    else:
+        cls = "urban" if level == 0 else "full"
+    div_state = "normal" if ptype == 0 else f"pardiv{ptype}_sub{leaf_path[-1]}"
+    return _frame_range(level, cls, div_state)
+
+
+def with_range(bounds: BoundingBox, coord_range: Optional[int]) -> BoundingBox:
+    """`bounds` carrying the frame's coordinate range for the decoders."""
+    return replace(bounds, coord_range=coord_range)
 
 
 # ---------------------------------------------------------------------
@@ -213,9 +229,10 @@ class WalkedParcel:
       coordinate range the Map Frame's stored coordinates are expressed in.
       Use it to convert stored coordinates to lat/lon or back. It equals
       `bounds` except for an L0 *sparse* leaf, whose frame is the 4x4
-      integrated-parcel tile (16 slots alias one Map Frame; range 16384).
-    `frame_range` comes from `coord_scale.json` `ranges` for the leaf's
-    class (frame_class: "l0_sparse_tile" or "leaf")."""
+      integrated-parcel tile (16 slots alias one Map Frame; range 16384)
+      and a divided sub-parcel, whose frame is its parent slot (range 4096).
+    `frame_range` is `coordconv.range_for` of the leaf (`leaf_frame_range`;
+    frame_class: "l0_sparse_tile", "divided_parent" or "leaf")."""
     level: int
     blockset_index: int
     block_index: int
@@ -310,14 +327,14 @@ def iter_parcels(path: str) -> Iterator[WalkedParcel]:
                         frame_bounds, frame_class = _leaf_frame(
                             root, level, ptype, leaf_path, leaf_bounds, block_bounds, lmr,
                             sparse_cache)
-                        if frame_class == "l0_sparse_tile":
-                            cls = "sparse"
-                        elif level == 0:
-                            cls = "divided" if ptype else "urban"
-                        else:
-                            cls = "divided" if ptype else "full"
-                        div_state = "normal" if ptype == 0 else f"pardiv{ptype}_sub{leaf_path[-1]}"
-                        frame_range = _frame_range(level, cls, div_state)
+                        if ptype and len(leaf_path) > 1:
+                            # A divided sub-parcel's coordinates are absolute
+                            # in its PARENT's 4096 frame (criterion 3, 2-12/
+                            # 2-14), so the parent slot is its frame.
+                            frame_bounds, frame_class = _narrow_bounds(
+                                block_bounds, 1 + lmr.n_parcels_lat[0],
+                                1 + lmr.n_parcels_lng[0], leaf_path[0]), "divided_parent"
+                        frame_range = leaf_frame_range(level, ptype, leaf_path, frame_class)
                         moff = volume.getsector(entry.dsa, sector_sz, logical_sz)
                         mlen = entry.size * logical_sz
                         try:
@@ -327,11 +344,8 @@ def iter_parcels(path: str) -> Iterator[WalkedParcel]:
                                 level=level, parcel_type=ptype,
                                 blockset_index=bs.blockset_index,
                                 block_index=entry_index, parcel_index=leaf_path[-1],
-                                # Decode against the FRAME bbox: stored
-                                # coordinates are expressed in the frame, not
-                                # the leaf (extent only -- the decoder's own
-                                # 2**15 range vs frame_range is Phase 3's).
-                                bounds=frame_bounds, sector_addr=entry.dsa,
+                                # Decode against the frame bbox and range.
+                                bounds=with_range(frame_bounds, frame_range), sector_addr=entry.dsa,
                                 size_logical_sectors=entry.size)
                             parcel = decode_parcel(loc, mapdata, n_basic_map=lmr.n_basic_map,
                                                     n_ext_map=lmr.n_ext_map)

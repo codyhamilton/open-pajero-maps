@@ -5,12 +5,18 @@ every decoded field instead of only feeding a renderer.
 from __future__ import annotations
 
 from .bitutils import extract, i8, sws, u16, u32
-from .coordconv import decode_region_coord, xy_to_latlon
+from .coordconv import _LEGACY_RANGE, decode_region_coord, xy_to_latlon
 from .model import BoundingBox, RoadFrame, RoadLink, RoadNode
 from .roadtypes import road_type_label
 
 
 def decode_road_frame(buf: bytes, bounds: BoundingBox) -> RoadFrame:
+    # `bounds.coord_range` is the frame's real range (set by callers that
+    # know the parcel's class, e.g. `harness.walk`); an unmigrated caller's
+    # plain BoundingBox (coord_range=None) falls back to the same fixed
+    # 2**15 this decoder always used before 3-01. Resolved once, passed
+    # explicitly below -- never relies on `xy_to_latlon`'s own default.
+    coord_range = bounds.coord_range if bounds.coord_range is not None else _LEGACY_RANGE
     ninter = u16(buf, 2)
     ndc = buf[4]
     nad = buf[5]
@@ -76,7 +82,7 @@ def decode_road_frame(buf: bytes, bounds: BoundingBox) -> RoadFrame:
                     sy = u16(buf, xoff + noff + 4)
                     xc = decode_region_coord(sx)
                     yc = decode_region_coord(sy)
-                    lat, lon = xy_to_latlon(xc, yc, bounds)
+                    lat, lon = xy_to_latlon(xc, yc, bounds, coord_range=coord_range)
                     link.nodes.append(RoadNode(
                         x=xc, y=yc, lat=lat, lon=lon,
                         oneway=oneway, planned=planned, tunnel=tunnel, bridge=bridge,
@@ -86,7 +92,7 @@ def decode_road_frame(buf: bytes, bounds: BoundingBox) -> RoadFrame:
                     for _l in range(nip):
                         xc += i8(buf, xoff + noff)
                         yc += i8(buf, xoff + noff + 1)
-                        lat, lon = xy_to_latlon(xc, yc, bounds)
+                        lat, lon = xy_to_latlon(xc, yc, bounds, coord_range=coord_range)
                         link.points.append((lat, lon))
                         noff += 2
 

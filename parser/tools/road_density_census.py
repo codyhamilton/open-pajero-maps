@@ -5,10 +5,9 @@ For each level: links, vertices (nodes + intermediate points), vertices per
 link, total road length (km) and vertices per km, as totals plus mean/p50/p90.
 Reads only through `harness.walk` (no writer modules).
 
-Length basis: the true coordinate model is unsettled until Phase 2, so each
-parcel's raw coordinates are recovered from the decoder's lat/lon (which
-assumes a 2**15 range) and rescaled as raw / coord_max * leaf extent, where
-coord_max is 4096, or 16384 for an L0 parcel whose raw coordinates exceed 4096.
+Length basis: Plan 03's settled coordinate model (`coordconv.range_for`) gives
+each walked parcel its real coord_range/coord_max; raw coordinates are
+recovered from the decoder's lat/lon at that same range (see `parcel_metrics`).
 """
 from __future__ import annotations
 
@@ -22,14 +21,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from harness import walk  # noqa: E402
+from kiwiw import coordconv  # noqa: E402
 
-DECODER_RANGE = float(1 << 15)
 KM_PER_DEG = 111.32
-LENGTH_BASIS = ("leaf bounds extent / coord_max; coord_max from refdata/profile/coord_scale.json "
-                "by the content-independent class rule (level, grid position, division): "
-                "4096 (L2-L12 full, urban L0, divided sub 1-3), 2048 (divided sub 0), "
-                "16384 (sparse L0); raw recovered from decoder lat/lon at range 32768; "
-                "equirectangular km")
+LENGTH_BASIS = ("leaf bounds extent / coord_max; coord_max from coordconv.range_for "
+                "(refdata/profile/coord_scale.json, content-independent class rule): "
+                "4096 (L2-L12 full, urban L0, every divided sub incl. sub0 -- range_for "
+                "returns the parent frame's range 4096, never coord_scale.json's smaller "
+                "observed-maximum for sub0), 16384 (sparse L0); raw recovered from decoder "
+                "lat/lon at that same range; equirectangular km")
 COORD_SCALE = Path(__file__).resolve().parent.parent / "refdata" / "profile" / "coord_scale.json"
 
 
@@ -60,14 +60,14 @@ def _class_range(wp) -> int | None:
     if not _CS:
         import coord_scale_census as csc
         d = json.loads(COORD_SCALE.read_text())
-        _CS["r"] = d["ranges"]
         _CS["u"] = {tuple(t) for t in d["class_rule"]["urban_tiles"]}
         _CS["csc"] = csc
     csc = _CS["csc"]
     div = wp.parcel_type
     cls = csc.parcel_class(wp.level, div, (wp.blockset_index, wp.block_index, wp.leaf_path[0]),
                            _CS["u"])
-    return _CS["r"][str(wp.level)][cls][csc.division_state(div, wp.leaf_path[-1])]["max"]
+    div_state = csc.division_state(div, wp.leaf_path[-1])
+    return coordconv.range_for(wp.level, cls, div_state)
 
 
 def parcel_metrics(wp) -> dict | None:
@@ -81,15 +81,31 @@ def parcel_metrics(wp) -> dict | None:
     # back to bounds (frame == leaf).
     b = getattr(wp, "frame_bounds", None) or wp.bounds
     lon_span, lat_span = b.lon_hi - b.lon_lo, b.lat_hi - b.lat_lo
+    cm = getattr(wp, "frame_range", None) or _class_range(wp)
+    if cm:
+        # A resolvable frame (real walked parcels): raw recovery and length
+        # scaling must share the SAME real range -- using a fixed decoder
+        # range for one and a guessed/class range for the other is the bug
+        # this unit exists to fix (Plan 03, 3-01).
+        rng = coord_max = float(cm)
+    else:
+        # No frame info at all (a synthetic caller with no grid position,
+        # e.g. a bare SimpleNamespace test fixture that encodes points
+        # assuming the decoder's fixed legacy range): fall back to that
+        # same legacy range for raw recovery, and guess coord_max from the
+        # observed peak, as before 3-01 -- kept for backward compatibility
+        # with callers that carry no resolvable frame at all.
+        rng = coordconv._LEGACY_RANGE
+        coord_max = None  # resolved below, once raw is known
     chains = []
     for link in parcel.road.links:
         pts = link.points or [(n.lat, n.lon) for n in link.nodes]
-        raw = [((lon - b.lon_lo) / lon_span * DECODER_RANGE,
-                (lat - b.lat_lo) / lat_span * DECODER_RANGE) for lat, lon in pts]
+        raw = [((lon - b.lon_lo) / lon_span * rng,
+                (lat - b.lat_lo) / lat_span * rng) for lat, lon in pts]
         chains.append(raw)
-    peak = max((c for ch in chains for p in ch for c in p), default=0.0)
-    cm = getattr(wp, "frame_range", None) or _class_range(wp)
-    coord_max = float(cm) if cm else (16384.0 if (wp.level == 0 and peak > 4096.5) else 4096.0)
+    if coord_max is None:
+        peak = max((c for ch in chains for p in ch for c in p), default=0.0)
+        coord_max = 16384.0 if (wp.level == 0 and peak > 4096.5) else 4096.0
     mid_lat = math.radians((b.lat_lo + b.lat_hi) / 2)
     kx = lon_span / coord_max * KM_PER_DEG * math.cos(mid_lat)
     ky = lat_span / coord_max * KM_PER_DEG
