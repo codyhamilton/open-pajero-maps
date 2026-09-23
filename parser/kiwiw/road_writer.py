@@ -28,9 +28,11 @@ from __future__ import annotations
 from .bitutils import extract, sws
 from .coordconv import encode_region_coord
 from .model import BoundingBox, RoadLink
+from .synth import frame_range
 
 
-def encode_road_link(link: RoadLink, bounds: BoundingBox) -> bytes:
+def encode_road_link(link: RoadLink, bounds: BoundingBox, *,
+                     coord_range: int | None = None) -> bytes:
     """Re-encode a decoded RoadLink to bytes that road.decode_road_frame()
     would parse back to an equivalent RoadLink.
 
@@ -45,6 +47,10 @@ def encode_road_link(link: RoadLink, bounds: BoundingBox) -> bytes:
         fully-synthetic encoder that starts from lat/lon would use it to
         encode intermediate-point deltas); the current implementation does
         not need it because it reads delta bytes from raw_bytes verbatim.
+    coord_range:
+        The frame's coordinate range (`synth.frame_range`: explicit, else
+        `bounds.coord_range`, else legacy) -- the validity bound of the
+        re-encoded node words.
 
     Returns
     -------
@@ -96,6 +102,7 @@ def encode_road_link(link: RoadLink, bounds: BoundingBox) -> bytes:
     hdr = (raw[0] << 24) | (raw[1] << 16) | (raw[2] << 8) | raw[3]
     noff = sws(extract(hdr, 0, 7))
 
+    cr = frame_range(bounds, coord_range)
     node_off = noff
     for node in link.nodes:
         # nodeattr word (bytes 0-1 of this 6-byte node record):
@@ -123,8 +130,8 @@ def encode_road_link(link: RoadLink, bounds: BoundingBox) -> bytes:
         # sx, sy (bytes 2-3 and 4-5 of this node record): re-encode from
         # RoadNode.x/RoadNode.y (already exact pixel coords, no lat/lon
         # round-trip needed).
-        sx = encode_region_coord(node.x)
-        sy = encode_region_coord(node.y)
+        sx = encode_region_coord(node.x, coord_range=cr)
+        sy = encode_region_coord(node.y, coord_range=cr)
         buf[node_off + 2] = (sx >> 8) & 0xFF
         buf[node_off + 3] = sx & 0xFF
         buf[node_off + 4] = (sy >> 8) & 0xFF

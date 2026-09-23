@@ -31,9 +31,11 @@ from __future__ import annotations
 
 from .coordconv import encode_region_coord, latlon_to_xy
 from .model import BackgroundShape, BoundingBox
+from .synth import frame_range
 
 
-def encode_background_shape(shape: BackgroundShape, bounds: BoundingBox) -> bytes:
+def encode_background_shape(shape: BackgroundShape, bounds: BoundingBox, *,
+                            coord_range: int | None = None) -> bytes:
     """Re-encode a decoded BackgroundShape to bytes that
     background.decode_background_frame() would parse back to an equivalent
     BackgroundShape.
@@ -48,6 +50,9 @@ def encode_background_shape(shape: BackgroundShape, bounds: BoundingBox) -> byte
         The parcel's bounding box, required to convert shape.coords[0] from
         (lat, lon) back to parcel-local pixel coordinates for the sx/sy
         re-encoding.
+    coord_range:
+        The frame's coordinate range (`synth.frame_range`: explicit, else
+        `bounds.coord_range`, else legacy).
 
     Returns
     -------
@@ -74,9 +79,10 @@ def encode_background_shape(shape: BackgroundShape, bounds: BoundingBox) -> byte
     # corresponding (lat, lon) as shape.coords[0].  Re-encode from there.
     if shape.shape_class != 0 and shape.coords:
         lat0, lon0 = shape.coords[0]
-        xc, yc = latlon_to_xy(lat0, lon0, bounds)
-        sx = encode_region_coord(xc)
-        sy = encode_region_coord(yc)
+        cr = frame_range(bounds, coord_range)
+        xc, yc = latlon_to_xy(lat0, lon0, bounds, coord_range=cr)
+        sx = encode_region_coord(xc, coord_range=cr)
+        sy = encode_region_coord(yc, coord_range=cr)
         buf[8]  = (sx >> 8) & 0xFF
         buf[9]  = sx & 0xFF
         buf[10] = (sy >> 8) & 0xFF

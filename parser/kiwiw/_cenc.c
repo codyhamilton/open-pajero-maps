@@ -24,8 +24,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define COORD_RANGE 32768.0
-#define COORD_MAX 32767
 #define SUB_CAP 0x20000 /* sub-frame scratch capacity (> 131070 ceiling) */
 #define MAX_FRAME 131070
 
@@ -107,15 +105,27 @@ static inline void put32(uint8_t *b, int64_t pos, int64_t v) {
     b[pos + 3] = (uint8_t)(v & 0xFF);
 }
 
-typedef struct { double lat_lo, lat_hi, lon_lo, lon_hi; } Bounds;
+/* range: the frame's coordinate range (coordconv.range_for), supplied by the
+ * caller -- this file owns no range constant. The admissible pixel interval is
+ * [0, range] inclusive (a boundary vertex lands exactly on the frame edge),
+ * capped at PACK_MAX: cmax = min(range, PACK_MAX). */
+typedef struct { double lat_lo, lat_hi, lon_lo, lon_hi, range, cmax; } Bounds;
+
+/* Largest value the region word can carry: 3-bit region (bits 13:15) x 4096
+ * + 12-bit value = 32767. A property of the packing, not of any frame range:
+ * the clamp ceiling is min(range, PACK_MAX), so every real range (<= 16384)
+ * is fully inclusive and only a 32768 frame's exact edge is unrepresentable. */
+#define PACK_MAX 32767.0
+
+static inline double clamp_max(double range) { return range < PACK_MAX ? range : PACK_MAX; }
 
 /* latlon_to_xy + _clamp_coord: 0 ok, -1 not representable (NaN). */
 static inline int to_xy(double lat, double lon, const Bounds *b, int64_t *x, int64_t *y) {
-    double fx = rint((lon - b->lon_lo) / (b->lon_hi - b->lon_lo) * COORD_RANGE);
-    double fy = rint((lat - b->lat_lo) / (b->lat_hi - b->lat_lo) * COORD_RANGE);
+    double fx = rint((lon - b->lon_lo) / (b->lon_hi - b->lon_lo) * b->range);
+    double fy = rint((lat - b->lat_lo) / (b->lat_hi - b->lat_lo) * b->range);
     if (isnan(fx) || isnan(fy)) return -1;
-    *x = fx < 0 ? 0 : fx > COORD_MAX ? COORD_MAX : (int64_t)fx;
-    *y = fy < 0 ? 0 : fy > COORD_MAX ? COORD_MAX : (int64_t)fy;
+    *x = fx < 0 ? 0 : fx > b->cmax ? (int64_t)b->cmax : (int64_t)fx;
+    *y = fy < 0 ? 0 : fy > b->cmax ? (int64_t)b->cmax : (int64_t)fy;
     return 0;
 }
 
@@ -123,8 +133,8 @@ static inline int64_t region_coord(int64_t v) { /* encode_region_coord */
     return (v % 4096) | ((v / 4096) << 13);
 }
 
-static inline int64_t clampc(int64_t v) {
-    return v < 0 ? 0 : v > COORD_MAX ? COORD_MAX : v;
+static inline int64_t clampc(int64_t v, int64_t cmax) {
+    return v < 0 ? 0 : v > cmax ? cmax : v;
 }
 
 /* ---------------------------------------------------------------- road */
@@ -179,7 +189,6 @@ static int64_t enc_road(const Rec *r, const Bounds *bd, uint8_t *out) {
     out[4] = (uint8_t)n_dc;
 
     const uint8_t *rtype = r->col[C_R_TYPE], *p3d = r->col[C_R_P3D], *fl = r->col[C_R_FLAGS];
-    const uint8_t *nx = r->col[C_N_X], *ny = r->col[C_N_Y];
     const uint8_t *nlat = r->col[C_N_LAT], *nlon = r->col[C_N_LON];
     const uint8_t *now = r->col[C_N_ONEWAY], *npl = r->col[C_N_PLANNED], *nfl = r->col[C_N_FLAGS];
 
@@ -217,13 +226,10 @@ static int64_t enc_road(const Rec *r, const Bounds *bd, uint8_t *out) {
             put16(o, 14, lattr);
             int64_t pos = 16;
             for (int64_t j = g_nstart[i]; j < g_nstart[i] + ns; j++) {
-                int64_t x = rd_i32(nx, j), y = rd_i32(ny, j);
-                if (x != 0 || y != 0) {
-                    x = clampc(x);
-                    y = clampc(y);
-                } else if (to_xy(rd_f64(nlat, j), rd_f64(nlon, j), bd, &x, &y)) {
-                    return -1;
-                }
+                /* always from lat/lon at the frame's range: the spool's n_x/n_y
+                 * were computed at another range/orientation and are not read */
+                int64_t x, y;
+                if (to_xy(rd_f64(nlat, j), rd_f64(nlon, j), bd, &x, &y)) return -1;
                 int64_t nfj = nfl[j];
                 int64_t na = ((nfj & 2) ? 1 : 0) << 11 | (((nfj & 1) ? 1 : 0) << 12)
                     | (rd_i32(npl, j) << 13) | (rd_i32(now, j) << 15);
@@ -263,7 +269,7 @@ static int64_t bg_shape(const uint8_t *lat, const uint8_t *lon, int64_t o, int64
     put16(o_, 6, addl);
     put16(o_, 8, region_coord(x0));
     put16(o_, 10, region_coord(y0));
-    int64_t xc = x0, yc = y0;
+    int64_t xc = x0, yc = y0, cmax = (int64_t)bd->cmax;
     for (int64_t k = 1; k <= nd; k++) {
         int64_t xi, yi;
         if (to_xy(rd_f64(lat, o + k * stride), rd_f64(lon, o + k * stride), bd, &xi, &yi))
@@ -274,8 +280,8 @@ static int64_t bg_shape(const uint8_t *lat, const uint8_t *lon, int64_t o, int64
         if ((b % mc != 0) && (b < 0)) dy--;
         if (dx < -128) dx = -128; else if (dx > 127) dx = 127;
         if (dy < -128) dy = -128; else if (dy > 127) dy = 127;
-        xc = clampc(xc + dx * mc);
-        yc = clampc(yc + dy * mc);
+        xc = clampc(xc + dx * mc, cmax);
+        yc = clampc(yc + dy * mc, cmax);
         o_[12 + (k - 1) * 2] = (uint8_t)(dx & 0xFF);
         o_[12 + (k - 1) * 2 + 1] = (uint8_t)(dy & 0xFF);
     }
@@ -285,8 +291,8 @@ static int64_t bg_shape(const uint8_t *lat, const uint8_t *lon, int64_t o, int64
 /* Python entry: interleaved (lat, lon) doubles, bounds = lat_lo,lat_hi,lon_lo,lon_hi.
  * Returns the record length or -1 (caller falls back to the scalar oracle). */
 int64_t kw_bg_shape(const double *latlon, int64_t n, int64_t mult, int64_t type_code,
-                    int64_t flags, const double *b4, uint8_t *out) {
-    Bounds bd = {b4[0], b4[1], b4[2], b4[3]};
+                    int64_t flags, const double *b4, uint8_t *out, double coord_range) {
+    Bounds bd = {b4[0], b4[1], b4[2], b4[3], coord_range, clamp_max(coord_range)};
     if (n < 2) return -1;
     return bg_shape((const uint8_t *)latlon, (const uint8_t *)(latlon + 1), 0, 2, n, mult,
                     type_code, flags, &bd, out, 12 + 2 * 2047 + 2);
@@ -522,7 +528,7 @@ static int geo3(double deg, uint8_t *o) {
 static int64_t encode_common(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
                        int64_t iy, const double *grid, int64_t threshold,
                        const int64_t *lim, uint8_t *out, int64_t *sizes_out,
-                       const double *xb) {
+                       const double *xb, double coord_range) {
     Rec r;
     static const uint8_t empty_hdr[72] = {0};
     if (rec == NULL || rec_len == 0) {
@@ -539,6 +545,8 @@ static int64_t encode_common(const uint8_t *rec, int64_t rec_len, int level, int
     if (grid) kw_bounds(ix, iy, grid[0], grid[1], grid[2], grid[3], b4);
     else memcpy(b4, xb, sizeof b4);
     bd.lat_lo = b4[0]; bd.lat_hi = b4[1]; bd.lon_lo = b4[2]; bd.lon_hi = b4[3];
+    bd.range = coord_range;
+    bd.cmax = clamp_max(coord_range);
 
     uint8_t *road = g_sub, *bg = g_sub + SUB_CAP, *nm = g_sub + 2 * SUB_CAP;
     int64_t road_n = 0, bg_n, name_n;
@@ -597,14 +605,17 @@ static int64_t encode_common(const uint8_t *rec, int64_t rec_len, int level, int
 
 int64_t kw_encode_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
                        int64_t iy, const double *grid, int64_t threshold,
-                       const int64_t *lim, uint8_t *out) {
-    return encode_common(rec, rec_len, level, ix, iy, grid, threshold, lim, out, NULL, NULL);
+                       const int64_t *lim, uint8_t *out, double coord_range) {
+    return encode_common(rec, rec_len, level, ix, iy, grid, threshold, lim, out, NULL, NULL,
+                         coord_range);
 }
 
 /* Probe: frame + per-kind (even-padded) sizes, no fit/budget checks. -1 = ask Python. */
 int64_t kw_measure_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
-                        int64_t iy, const double *bounds4, int64_t *sizes, uint8_t *out) {
-    return encode_common(rec, rec_len, level, ix, iy, NULL, 0, NULL, out, sizes, bounds4);
+                        int64_t iy, const double *bounds4, int64_t *sizes, uint8_t *out,
+                        double coord_range) {
+    return encode_common(rec, rec_len, level, ix, iy, NULL, 0, NULL, out, sizes, bounds4,
+                         coord_range);
 }
 
 /*

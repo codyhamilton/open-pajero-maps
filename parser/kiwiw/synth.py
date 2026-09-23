@@ -23,10 +23,9 @@ import numpy as np
 
 from . import cenc as _cenc
 from .bitutils import geo_secs_bytes
-from .coordconv import encode_region_coord, latlon_to_xy, COORD_RANGE
+from .coordconv import _LEGACY_RANGE, encode_region_coord, latlon_to_xy
 from .model import BackgroundShape, BoundingBox, NameRecord, RoadLink
 
-_COORD_MAX = int(COORD_RANGE) - 1
 _MAP_FRAME_HEADER_SIZE = 36
 
 
@@ -42,15 +41,42 @@ def _u32(v: int) -> bytes:
     return bytes(((v >> 24) & 0xFF, (v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF))
 
 
-def _clamp_coord(v: int) -> int:
-    return max(0, min(_COORD_MAX, v))
+def frame_range(bounds: BoundingBox, coord_range: int | None = None) -> int:
+    """The coordinate range an encoder converts at: `coord_range` when
+    given, else `bounds.coord_range`, else the temporary legacy range
+    (`coordconv._LEGACY_RANGE`, deleted by 3-03). Both encoders (this module
+    and `cenc`/`_cenc.c`) resolve it here, so they agree."""
+    if coord_range is not None:
+        return coord_range
+    if bounds.coord_range is not None:
+        return bounds.coord_range
+    return _LEGACY_RANGE
+
+
+# Largest value the region word can carry: 3-bit region (bits 13:15) x 4096 +
+# 12-bit value = 32767. A property of the packing, not of any frame range: the
+# clamp ceiling is min(coord_range, _PACK_MAX), so every real range (<= 16384)
+# is fully inclusive and only a 32768 frame's exact edge is unrepresentable.
+# Mirrors `_cenc.c`'s PACK_MAX.
+_PACK_MAX = 7 * 4096 + 4095
+
+
+def _coord_max(coord_range: int) -> int:
+    return min(coord_range, _PACK_MAX)
+
+
+def _clamp_coord(v: int, coord_range: int) -> int:
+    """Clamp to the frame's inclusive interval [0, coord_range] (capped at
+    the region word's `_PACK_MAX`)."""
+    return max(0, min(_coord_max(coord_range), v))
 
 
 # ---------------------------------------------------------------------------
 # Road
 # ---------------------------------------------------------------------------
 
-def encode_road_link_bytes(link: RoadLink, bounds: BoundingBox) -> bytes:
+def encode_road_link_bytes(link: RoadLink, bounds: BoundingBox, *,
+                           coord_range: int | None = None) -> bytes:
     """Encode a RoadLink to bytes from semantic fields (no raw_bytes needed).
 
     Produces a record parseable by ``road.decode_road_frame()``. Each node
@@ -58,6 +84,7 @@ def encode_road_link_bytes(link: RoadLink, bounds: BoundingBox) -> bytes:
     emitted (nip = 0 for all nodes).
     """
     nodes = link.nodes
+    cr = frame_range(bounds, coord_range)
     n_nodes = len(nodes)
     if n_nodes == 0:
         raise ValueError("RoadLink must have at least one node")
@@ -101,15 +128,11 @@ def encode_road_link_bytes(link: RoadLink, bounds: BoundingBox) -> bytes:
     out += _u16(lattr)
 
     for node in nodes:
-        # Use precomputed pixel coords (set by _make_road_link in osm_to_parcel_geometry).
-        # If .x/.y are 0 (not set), fall back to lat/lon conversion.
-        if node.x != 0 or node.y != 0:
-            xc = _clamp_coord(node.x)
-            yc = _clamp_coord(node.y)
-        else:
-            xc, yc = latlon_to_xy(node.lat, node.lon, bounds)
-            xc = _clamp_coord(xc)
-            yc = _clamp_coord(yc)
+        # Always from lat/lon at this frame's range: node.x/.y (the spool's
+        # n_x/n_y) were computed at another range/orientation and are not read.
+        xc, yc = latlon_to_xy(node.lat, node.lon, bounds, coord_range=cr)
+        xc = _clamp_coord(xc, cr)
+        yc = _clamp_coord(yc, cr)
 
         nodeattr = (
             0                        # nip = 0 (no intermediate points)
@@ -120,14 +143,15 @@ def encode_road_link_bytes(link: RoadLink, bounds: BoundingBox) -> bytes:
             | (node.oneway << 15)
         )
         out += _u16(nodeattr)
-        out += _u16(encode_region_coord(xc))
-        out += _u16(encode_region_coord(yc))
+        out += _u16(encode_region_coord(xc, coord_range=cr))
+        out += _u16(encode_region_coord(yc, coord_range=cr))
 
     assert len(out) == total_len
     return bytes(out)
 
 
-def build_road_frame_bytes(links: list[RoadLink], bounds: BoundingBox) -> bytes:
+def build_road_frame_bytes(links: list[RoadLink], bounds: BoundingBox, *,
+                           coord_range: int | None = None) -> bytes:
     """Build a complete Road Data Frame binary from a list of RoadLinks.
 
     Groups links by display_class; each display class gets its own section
@@ -154,7 +178,8 @@ def build_road_frame_bytes(links: list[RoadLink], bounds: BoundingBox) -> bytes:
     # Encode every link record for the occupied DCs.
     dc_link_bytes: dict[int, list[bytes]] = {}
     for dc in dc_links:
-        dc_link_bytes[dc] = [encode_road_link_bytes(lk, bounds) for lk in dc_links[dc]]
+        dc_link_bytes[dc] = [encode_road_link_bytes(lk, bounds, coord_range=coord_range)
+                             for lk in dc_links[dc]]
 
     # Layout:
     #   8-byte common header
@@ -221,7 +246,7 @@ def build_road_frame_bytes(links: list[RoadLink], bounds: BoundingBox) -> bytes:
 # Background
 # ---------------------------------------------------------------------------
 
-def _bg_fast(shape: BackgroundShape, bounds: BoundingBox):
+def _bg_fast(shape: BackgroundShape, bounds: BoundingBox, coord_range: int):
     """numpy-assisted encoder for line/polygon shapes; None -> scalar oracle.
 
     Pixel conversion is vectorized with `latlon_to_xy`'s exact float operation
@@ -231,18 +256,18 @@ def _bg_fast(shape: BackgroundShape, bounds: BoundingBox):
     quantizing accumulation runs as a tight integer loop over the same
     already-clamped pixels, exactly as the scalar encoder does.
     """
-    c_out = _cenc.bg_shape_bytes(shape, bounds)
+    c_out = _cenc.bg_shape_bytes(shape, bounds, coord_range)
     if c_out is not None:
         return c_out
     arr = np.asarray(shape.coords, dtype=np.float64)
     if arr.ndim != 2 or len(arr) < 2:
         return None
     x = np.rint((arr[:, 1] - bounds.lon_lo) / (bounds.lon_hi - bounds.lon_lo)
-                * COORD_RANGE).astype(np.int64)
+                * coord_range).astype(np.int64)
     y = np.rint((arr[:, 0] - bounds.lat_lo) / (bounds.lat_hi - bounds.lat_lo)
-                * COORD_RANGE).astype(np.int64)
-    np.clip(x, 0, _COORD_MAX, out=x)
-    np.clip(y, 0, _COORD_MAX, out=y)
+                * coord_range).astype(np.int64)
+    np.clip(x, 0, _coord_max(coord_range), out=x)
+    np.clip(y, 0, _coord_max(coord_range), out=y)
     mc = shape.mult_const if shape.mult_const >= 1 else 1
     mult_exp = 0
     mc_check = 1
@@ -261,7 +286,7 @@ def _bg_fast(shape: BackgroundShape, bounds: BoundingBox):
     else:
         xs, ys = x.tolist(), y.tolist()
         xc, yc = xs[0], ys[0]
-        cmax = _COORD_MAX
+        cmax = _coord_max(coord_range)
         buf = bytearray(2 * n)
         j = 0
         for i in range(1, n + 1):
@@ -300,16 +325,19 @@ def _bg_fast(shape: BackgroundShape, bounds: BoundingBox):
     return bytes(out)
 
 
-def encode_background_shape_bytes(shape: BackgroundShape, bounds: BoundingBox) -> bytes:
+def encode_background_shape_bytes(shape: BackgroundShape, bounds: BoundingBox, *,
+                                   coord_range: int | None = None) -> bytes:
     """Encode a BackgroundShape (numpy fast path, scalar oracle fallback)."""
+    cr = frame_range(bounds, coord_range)
     if shape.shape_class != 0:
-        fast = _bg_fast(shape, bounds)
+        fast = _bg_fast(shape, bounds, cr)
         if fast is not None:
             return fast
-    return encode_background_shape_bytes_scalar(shape, bounds)
+    return encode_background_shape_bytes_scalar(shape, bounds, coord_range=cr)
 
 
-def encode_background_shape_bytes_scalar(shape: BackgroundShape, bounds: BoundingBox) -> bytes:
+def encode_background_shape_bytes_scalar(shape: BackgroundShape, bounds: BoundingBox, *,
+                                          coord_range: int | None = None) -> bytes:
     """Scalar reference encoder (the byte-identity oracle for
     `encode_background_shape_bytes`).
 
@@ -330,6 +358,7 @@ def encode_background_shape_bytes_scalar(shape: BackgroundShape, bounds: Boundin
         out[5] = shape.type_code & 0xFF
         return bytes(out)
 
+    cr = frame_range(bounds, coord_range)
     coords = shape.coords
     if not coords:
         raise ValueError(
@@ -338,9 +367,9 @@ def encode_background_shape_bytes_scalar(shape: BackgroundShape, bounds: Boundin
 
     # First coordinate.
     lat0, lon0 = coords[0]
-    xc0, yc0 = latlon_to_xy(lat0, lon0, bounds)
-    xc0 = _clamp_coord(xc0)
-    yc0 = _clamp_coord(yc0)
+    xc0, yc0 = latlon_to_xy(lat0, lon0, bounds, coord_range=cr)
+    xc0 = _clamp_coord(xc0, cr)
+    yc0 = _clamp_coord(yc0, cr)
 
     # Determine mult_const exponent (bits 0:2 of addl word).
     mc = shape.mult_const if shape.mult_const >= 1 else 1
@@ -355,15 +384,15 @@ def encode_background_shape_bytes_scalar(shape: BackgroundShape, bounds: Boundin
     deltas: list[tuple[int, int]] = []
     xc, yc = xc0, yc0
     for lat_i, lon_i in coords[1:]:
-        xc_i, yc_i = latlon_to_xy(lat_i, lon_i, bounds)
-        xc_i = _clamp_coord(xc_i)
-        yc_i = _clamp_coord(yc_i)
+        xc_i, yc_i = latlon_to_xy(lat_i, lon_i, bounds, coord_range=cr)
+        xc_i = _clamp_coord(xc_i, cr)
+        yc_i = _clamp_coord(yc_i, cr)
         dx = max(-128, min(127, (xc_i - xc) // mc))
         dy = max(-128, min(127, (yc_i - yc) // mc))
         deltas.append((dx, dy))
         # Accumulate with possible clamping quantization.
-        xc = _clamp_coord(xc + dx * mc)
-        yc = _clamp_coord(yc + dy * mc)
+        xc = _clamp_coord(xc + dx * mc, cr)
+        yc = _clamp_coord(yc + dy * mc, cr)
 
     rec_len = 12 + n_deltas * 2
     if rec_len % 2:
@@ -390,8 +419,8 @@ def encode_background_shape_bytes_scalar(shape: BackgroundShape, bounds: Boundin
     out[6] = (addl >> 8) & 0xFF
     out[7] = addl & 0xFF
 
-    sx = encode_region_coord(xc0)
-    sy = encode_region_coord(yc0)
+    sx = encode_region_coord(xc0, coord_range=cr)
+    sy = encode_region_coord(yc0, coord_range=cr)
     out[8]  = (sx >> 8) & 0xFF
     out[9]  = sx & 0xFF
     out[10] = (sy >> 8) & 0xFF
@@ -405,7 +434,8 @@ def encode_background_shape_bytes_scalar(shape: BackgroundShape, bounds: Boundin
 
 
 def build_background_frame_bytes(
-    shapes: list[BackgroundShape], bounds: BoundingBox
+    shapes: list[BackgroundShape], bounds: BoundingBox, *,
+    coord_range: int | None = None,
 ) -> bytes:
     """Build a complete Background Data Frame binary.
 
@@ -429,7 +459,8 @@ def build_background_frame_bytes(
     class_encoded: dict[int, list[bytes]] = {}
     for sc in sorted_classes:
         class_encoded[sc] = [
-            encode_background_shape_bytes(s, bounds) for s in class_shapes[sc]
+            encode_background_shape_bytes(s, bounds, coord_range=coord_range)
+            for s in class_shapes[sc]
         ]
 
     # Frame layout:
@@ -525,7 +556,8 @@ def build_background_frame_bytes(
 # contradicts it.
 # ---------------------------------------------------------------------------
 
-def encode_name_record_bytes(record: NameRecord, bounds: BoundingBox) -> bytes:
+def encode_name_record_bytes(record: NameRecord, bounds: BoundingBox, *,
+                             coord_range: int | None = None) -> bytes:
     """Encode a NameRecord of string_type=1 (Barycentric) to bytes.
 
     Other string types are not supported by this function and return
@@ -545,14 +577,15 @@ def encode_name_record_bytes(record: NameRecord, bounds: BoundingBox) -> bytes:
     slen_word = slen // 2
 
     # Pixel coordinates.
+    cr = frame_range(bounds, coord_range)
     if record.lat is not None and record.lon is not None:
-        xc, yc = latlon_to_xy(record.lat, record.lon, bounds)
-        xc = _clamp_coord(xc)
-        yc = _clamp_coord(yc)
+        xc, yc = latlon_to_xy(record.lat, record.lon, bounds, coord_range=cr)
+        xc = _clamp_coord(xc, cr)
+        yc = _clamp_coord(yc, cr)
     else:
         xc = yc = 0
-    sx = encode_region_coord(xc)
-    sy = encode_region_coord(yc)
+    sx = encode_region_coord(xc, coord_range=cr)
+    sy = encode_region_coord(yc, coord_range=cr)
 
     # Body layout for string_type=1 (Barycentric), from name.py:
     #   body+0,1: u16 (undecoded word0, 0)
@@ -584,7 +617,7 @@ def encode_name_record_bytes(record: NameRecord, bounds: BoundingBox) -> bytes:
     return _u16(na) + _u16(attr1) + _u16(attr2) + body
 
 
-def _encode_barycentric_coords(lat, lon, bounds: BoundingBox) -> bytes:
+def _encode_barycentric_coords(lat, lon, bounds: BoundingBox, coord_range: int) -> bytes:
     """The 6-byte "Barycentric Coordinates Information" (spec 7.4.2.1.2.1),
     shared verbatim by string types 1, 5 and 6 (Ch.7.4.2.1.6/.7 both say
     "similar to that applies when string type is barycentric string").
@@ -593,13 +626,13 @@ def _encode_barycentric_coords(lat, lon, bounds: BoundingBox) -> bytes:
     correctly and completely expresses (not an unknown-bytes zero-fill).
     """
     if lat is not None and lon is not None:
-        xc, yc = latlon_to_xy(lat, lon, bounds)
-        xc = _clamp_coord(xc)
-        yc = _clamp_coord(yc)
+        xc, yc = latlon_to_xy(lat, lon, bounds, coord_range=coord_range)
+        xc = _clamp_coord(xc, coord_range)
+        yc = _clamp_coord(yc, coord_range)
     else:
         xc = yc = 0
-    sx = encode_region_coord(xc)
-    sy = encode_region_coord(yc)
+    sx = encode_region_coord(xc, coord_range=coord_range)
+    sy = encode_region_coord(yc, coord_range=coord_range)
     return _u16(0) + _u16(sx) + _u16(sy)
 
 
@@ -638,7 +671,8 @@ def _encode_attr1(priority: int, vertical: bool, string_type: int,
     )
 
 
-def encode_name_record_type5_bytes(record: NameRecord, bounds: BoundingBox) -> bytes:
+def encode_name_record_type5_bytes(record: NameRecord, bounds: BoundingBox, *,
+                                   coord_range: int | None = None) -> bytes:
     """Encode a NameRecord of string_type=5 (Linear-C, spec 7.4.2.1.6):
     Barycentric Coordinates Information + Display Angle Information (2
     bytes) + Character Information Data List. Self-contained (no
@@ -660,7 +694,8 @@ def encode_name_record_type5_bytes(record: NameRecord, bounds: BoundingBox) -> b
     if record.string_type != 5:
         return b""
 
-    coords = _encode_barycentric_coords(record.lat, record.lon, bounds)
+    coords = _encode_barycentric_coords(record.lat, record.lon, bounds,
+                                        frame_range(bounds, coord_range))
     angle_deg = record.angle_deg if record.angle_deg is not None else 0.0
     angle_low9 = (int(round(angle_deg)) + 90) & 0x1FF
     angle_field = ((record.angle_flags & 0x7F) << 9) | angle_low9
@@ -676,7 +711,8 @@ def encode_name_record_type5_bytes(record: NameRecord, bounds: BoundingBox) -> b
     return _u16(na) + _u16(attr1) + _u16(attr2) + body
 
 
-def encode_name_record_type6_bytes(record: NameRecord, bounds: BoundingBox) -> bytes:
+def encode_name_record_type6_bytes(record: NameRecord, bounds: BoundingBox, *,
+                                   coord_range: int | None = None) -> bytes:
     """Encode a NameRecord of string_type=6 (Symbol+String, spec 7.4.2.1.7):
     Barycentric Coordinates Information (coordinates = center of symbol) +
     String Placement (2 bytes) + Character Information Data List.
@@ -693,7 +729,8 @@ def encode_name_record_type6_bytes(record: NameRecord, bounds: BoundingBox) -> b
     if record.string_type != 6:
         return b""
 
-    coords = _encode_barycentric_coords(record.lat, record.lon, bounds)
+    coords = _encode_barycentric_coords(record.lat, record.lon, bounds,
+                                        frame_range(bounds, coord_range))
     placement = (0b10 << 14) | (0b00 << 12)   # center-aligned, above symbol
     char_info = _encode_char_info_list(record.text)
 
@@ -717,7 +754,8 @@ _NAME_ENCODERS_BY_STRING_TYPE = {
 
 
 def build_name_frame_bytes(records: list[NameRecord], bounds: BoundingBox,
-                            level: int | None = None) -> bytes:
+                            level: int | None = None, *,
+                            coord_range: int | None = None) -> bytes:
     """Build a complete Name Data Frame binary.
 
     All records are placed in a single list. Parseable by
@@ -764,7 +802,7 @@ def build_name_frame_bytes(records: list[NameRecord], bounds: BoundingBox,
         allowed = {1, 5}
 
     encoded = [
-        _NAME_ENCODERS_BY_STRING_TYPE[r.string_type](r, bounds)
+        _NAME_ENCODERS_BY_STRING_TYPE[r.string_type](r, bounds, coord_range=coord_range)
         for r in records if r.string_type in allowed
     ]
     encoded = [e for e in encoded if e]     # drop unsupported types

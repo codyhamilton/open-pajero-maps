@@ -39,7 +39,7 @@ def test_background_fast_equals_scalar_fuzz():
         want = synth.encode_background_shape_bytes_scalar(s, B)
         got = synth.encode_background_shape_bytes(s, B)
         assert got == want, (i, cls, n, step, mult)
-        fast += synth._bg_fast(s, B) is not None
+        fast += synth._bg_fast(s, B, 32768) is not None
     assert fast > 3000  # nearly every multi-coord line/polygon takes the fast path
 
 

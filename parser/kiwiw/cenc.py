@@ -18,6 +18,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from .coordconv import _LEGACY_RANGE  # TEMPORARY default; 3-03 supplies real ranges
+
 _SRC = Path(__file__).with_name("_cenc.c")
 _SO = Path(__file__).with_name("_cenc.so")
 _OUT_CAP = 0x20000
@@ -60,15 +62,15 @@ def _load_lib():
         lib.kw_encode_cell.argtypes = [
             ctypes.c_char_p, ctypes.c_int64, ctypes.c_int, ctypes.c_int64, ctypes.c_int64,
             ctypes.POINTER(ctypes.c_double), ctypes.c_int64,
-            ctypes.POINTER(ctypes.c_int64), ctypes.c_void_p]
+            ctypes.POINTER(ctypes.c_int64), ctypes.c_void_p, ctypes.c_double]
         lib.kw_bg_shape.restype = ctypes.c_int64
         lib.kw_bg_shape.argtypes = [
             ctypes.c_void_p, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
-            ctypes.c_void_p, ctypes.c_void_p]
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_double]
         lib.kw_measure_cell.restype = ctypes.c_int64
         lib.kw_measure_cell.argtypes = [
             ctypes.c_char_p, ctypes.c_int64, ctypes.c_int, ctypes.c_int64, ctypes.c_int64,
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_double]
         lib.kw_copy_frames.restype = ctypes.c_int64
         lib.kw_copy_frames.argtypes = [
             ctypes.c_int, ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
@@ -96,9 +98,12 @@ class CellEncoder:
         self._out = ctypes.create_string_buffer(_OUT_CAP)
         self._addr = ctypes.addressof(self._out)
 
-    def encode(self, raw: bytes | None, ix: int, iy: int) -> bytes | None:
+    def encode(self, raw: bytes | None, ix: int, iy: int, *,
+               coord_range: int = _LEGACY_RANGE) -> bytes | None:
+        """`coord_range`: the cell frame's coordinate range (`range_for`);
+        the kernel converts every vertex from lat/lon at it."""
         n = self._fn(raw, len(raw) if raw else 0, self._level, ix, iy, self._grid,
-                     self._threshold, self._lim, self._addr)
+                     self._threshold, self._lim, self._addr, float(coord_range))
         return None if n < 0 else ctypes.string_at(self._addr, n)
 
 
@@ -114,8 +119,9 @@ _bg_out_addr = ctypes.addressof(_bg_out)
 _bg_fn = None
 
 
-def bg_shape_bytes(shape, bounds) -> bytes | None:
-    """One line/polygon background record via C, or None (use numpy/scalar)."""
+def bg_shape_bytes(shape, bounds, coord_range: int) -> bytes | None:
+    """One line/polygon background record via C at `coord_range`, or None
+    (use numpy/scalar)."""
     global _bg_fn
     if _bg_fn is None:
         lib = _load_lib()
@@ -132,7 +138,7 @@ def bg_shape_bytes(shape, bounds) -> bytes | None:
     b4 = array("d", (bounds.lat_lo, bounds.lat_hi, bounds.lon_lo, bounds.lon_hi))
     flags = (1 if shape.underground else 0) | (2 if shape.pen_up else 0)
     n = _bg_fn(flat.buffer_info()[0], len(coords), shape.mult_const, shape.type_code,
-               flags, b4.buffer_info()[0], _bg_out_addr)
+               flags, b4.buffer_info()[0], _bg_out_addr, float(coord_range))
     return None if n < 0 else ctypes.string_at(_bg_out_addr, n)
 
 
@@ -147,10 +153,14 @@ _m_sizes = (ctypes.c_int64 * 3)()
 _m_fn = None
 
 
-def measure_content(level: int, ix: int, iy: int, bounds, content: dict):
+def measure_content(level: int, ix: int, iy: int, bounds, content: dict, *,
+                    coord_range: int | None = None):
     """C probe of one (sub-)cell content dict: `(frame, {road,background,name})`
     exactly as `build_alldata._measure_one`, or None when the kernel declines
-    (over the ceiling, unmodelled input) -- the caller then runs the Python path."""
+    (over the ceiling, unmodelled input) -- the caller then runs the Python path.
+    `coord_range` resolves as in `synth.frame_range` (explicit, else
+    `bounds.coord_range`, else the legacy range), so it matches the Python
+    encoders handed the same `bounds`."""
     global _m_fn
     if _m_fn is None:
         lib = _load_lib()
@@ -158,12 +168,15 @@ def measure_content(level: int, ix: int, iy: int, bounds, content: dict):
     if _m_fn is False:
         return None
     from .spool import content_to_columns, encode_columns
+    from .synth import frame_range
+    cr = frame_range(bounds, coord_range)
     try:
         raw = encode_columns(content_to_columns(content))
     except (AttributeError, TypeError, ValueError, UnicodeError):
         return None
     b4 = (ctypes.c_double * 4)(bounds.lat_lo, bounds.lat_hi, bounds.lon_lo, bounds.lon_hi)
-    n = _m_fn(raw, len(raw), level, ix, iy, ctypes.addressof(b4), _m_addr_sizes(), _m_addr)
+    n = _m_fn(raw, len(raw), level, ix, iy, ctypes.addressof(b4), _m_addr_sizes(), _m_addr,
+              float(cr))
     if n < 0:
         return None
     return (ctypes.string_at(_m_addr, n),
