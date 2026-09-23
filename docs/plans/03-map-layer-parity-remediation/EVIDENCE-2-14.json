@@ -1,0 +1,936 @@
+{
+  "criterion_2_and_3": {
+    "constants": {
+      "MIN_PAIRS_PER_CLASS": 300,
+      "PASS_RAW_UNITS": 1.0,
+      "RAW_PER_SLOT": 4096,
+      "note": "pre-stated, not tuned; EDGE_TOL_RAW/PAIR_TOL_RAW retired 2-14 (exact lattice equality replaces tolerance-based selection/pairing)"
+    },
+    "criterion_2_continuity": {
+      "classes": [
+        {
+          "alt_medians_m": {
+            "decoder_range": 2116.2249,
+            "double": 1151.8125,
+            "half": 2303.625
+          },
+          "class": "L0_urban",
+          "cross_class_split": {
+            "matched": 91,
+            "violations": 0
+          },
+          "denominator": 473,
+          "empty_slot": 0,
+          "level": 0,
+          "matched": 470,
+          "max_m": 0.0,
+          "median_m": 0.0,
+          "n_frames": 30,
+          "n_pairs": 470,
+          "neighbour_decode_failed": 0,
+          "neighbour_divided": 0,
+          "outside_coverage": 0,
+          "over_threshold_fully_enumerated": true,
+          "p90_m": 0.0,
+          "population": 30,
+          "residual_examples": [
+            {
+              "candidate_frames": [
+                {
+                  "block_index": 9,
+                  "blockset_index": 23,
+                  "leaf_path": [
+                    714
+                  ],
+                  "level": 0
+                }
+              ],
+              "cross_class": false,
+              "edge": "N",
+              "nearest_actual_global": [
+                7514800,
+                1400832
+              ],
+              "source": {
+                "block_index": 9,
+                "blockset_index": 23,
+                "class": "L0_urban",
+                "leaf_path": [
+                  682
+                ],
+                "level": 0
+              },
+              "source_global": [
+                7514800,
+                1400832
+              ],
+              "source_raw": [
+                2736,
+                4096
+              ]
+            },
+            {
+              "candidate_frames": [
+                {
+                  "block_index": 9,
+                  "blockset_index": 23,
+                  "leaf_path": [
+                    746
+                  ],
+                  "level": 0
+                }
+              ],
+              "cross_class": false,
+              "edge": "E",
+              "nearest_actual_global": [
+                7512064,
+                1405497
+              ],
+              "source": {
+                "block_index": 9,
+                "blockset_index": 23,
+                "class": "L0_urban",
+                "leaf_path": [
+                  745
+                ],
+                "level": 0
+              },
+              "source_global": [
+                7512064,
+                1405371
+              ],
+              "source_raw": [
+                4096,
+                443
+              ]
+            },
+            {
+              "candidate_frames": [
+                {
+                  "block_index": 17,
+                  "blockset_index": 23,
+                  "leaf_path": [
+                    869
+                  ],
+                  "level": 0
+                }
+              ],
+              "cross_class": false,
+              "edge": "N",
+              "nearest_actual_global": [
+                7491796,
+                1683456
+              ],
+              "source": {
+                "block_index": 17,
+                "blockset_index": 23,
+                "class": "L0_urban",
+                "leaf_path": [
+                  837
+                ],
+                "level": 0
+              },
+              "source_global": [
+                7491796,
+                1683456
+              ],
+              "source_raw": [
+                212,
+                4096
+              ]
+            }
+          ],
+          "sample_rule": "spread(60 of 1836 blocks, on-disc order, overlay_test.spread), leaves in index order, one query per distinct frame (FrameId-deduped), until 300 pairs or population exhausted (quota reached)",
+          "verdict": "pass_with_residual",
+          "violations": 3
+        },
+        {
+          "alt_medians_m": {
+            "decoder_range": 4607.25,
+            "double": 4607.25,
+            "half": 9214.5
+          },
+          "class": "L0_sparse",
+          "cross_class_split": {
+            "matched": 0,
+            "violations": 0
+          },
+          "denominator": 686,
+          "empty_slot": 0,
+          "level": 0,
+          "matched": 686,
+          "max_m": 0.0,
+          "median_m": 0.0,
+          "n_frames": 128,
+          "n_pairs": 686,
+          "neighbour_decode_failed": 0,
+          "neighbour_divided": 0,
+          "outside_coverage": 0,
+          "over_threshold_fully_enumerated": true,
+          "p90_m": 0.0,
+          "population": 128,
+          "residual_examples": [],
+          "sample_rule": "spread(60 of 1836 blocks, on-disc order, overlay_test.spread), leaves in index order, one query per distinct frame (FrameId-deduped), until 300 pairs or population exhausted (quota reached)",
+          "verdict": "pass",
+          "violations": 0
+        },
+        {
+          "alt_medians_m": {
+            "decoder_range": 8062.6875,
+            "double": 4607.25,
+            "half": 9214.5
+          },
+          "class": "L2",
+          "cross_class_split": {
+            "matched": 0,
+            "violations": 0
+          },
+          "denominator": 547,
+          "empty_slot": 0,
+          "level": 2,
+          "matched": 547,
+          "max_m": 0.0,
+          "median_m": 0.0,
+          "n_frames": 345,
+          "n_pairs": 547,
+          "neighbour_decode_failed": 0,
+          "neighbour_divided": 0,
+          "outside_coverage": 0,
+          "over_threshold_fully_enumerated": true,
+          "p90_m": 0.0,
+          "population": 345,
+          "residual_examples": [],
+          "sample_rule": "spread(60 of 238 blocks, on-disc order, overlay_test.spread), leaves in index order, one query per distinct frame (FrameId-deduped), until 300 pairs or population exhausted (quota reached)",
+          "verdict": "pass",
+          "violations": 0
+        },
+        {
+          "alt_medians_m": {
+            "decoder_range": 32250.75,
+            "double": 18429.0,
+            "half": 36858.0
+          },
+          "class": "L4",
+          "cross_class_split": {
+            "matched": 0,
+            "violations": 0
+          },
+          "denominator": 416,
+          "empty_slot": 0,
+          "level": 4,
+          "matched": 416,
+          "max_m": 0.0,
+          "median_m": 0.0,
+          "n_frames": 202,
+          "n_pairs": 416,
+          "neighbour_decode_failed": 0,
+          "neighbour_divided": 4,
+          "outside_coverage": 0,
+          "over_threshold_fully_enumerated": true,
+          "p90_m": 0.0,
+          "population": 202,
+          "residual_examples": [],
+          "sample_rule": "spread(20 of 20 blocks, on-disc order, overlay_test.spread), leaves in index order, one query per distinct frame (FrameId-deduped), until 300 pairs or population exhausted (quota reached)",
+          "verdict": "pass",
+          "violations": 0
+        },
+        {
+          "alt_medians_m": {
+            "decoder_range": 129003.0,
+            "double": 73716.0,
+            "half": 147432.0
+          },
+          "class": "L6",
+          "cross_class_split": {
+            "matched": 0,
+            "violations": 0
+          },
+          "denominator": 379,
+          "empty_slot": 0,
+          "level": 6,
+          "matched": 379,
+          "max_m": 0.0,
+          "median_m": 0.0,
+          "n_frames": 177,
+          "n_pairs": 379,
+          "neighbour_decode_failed": 0,
+          "neighbour_divided": 40,
+          "outside_coverage": 0,
+          "over_threshold_fully_enumerated": true,
+          "p90_m": 0.0,
+          "population": 177,
+          "residual_examples": [],
+          "sample_rule": "spread(6 of 6 blocks, on-disc order, overlay_test.spread), leaves in index order, one query per distinct frame (FrameId-deduped), until 300 pairs or population exhausted (quota reached)",
+          "verdict": "pass",
+          "violations": 0
+        },
+        {
+          "alt_medians_m": {
+            "decoder_range": 516012.0,
+            "double": 294864.0,
+            "half": 589728.0
+          },
+          "class": "L8",
+          "cross_class_split": {
+            "matched": 0,
+            "violations": 0
+          },
+          "denominator": 33,
+          "empty_slot": 0,
+          "level": 8,
+          "matched": 33,
+          "max_m": 0.0,
+          "median_m": 0.0,
+          "n_frames": 21,
+          "n_pairs": 33,
+          "neighbour_decode_failed": 0,
+          "neighbour_divided": 20,
+          "outside_coverage": 0,
+          "over_threshold_fully_enumerated": true,
+          "p90_m": 0.0,
+          "population": 21,
+          "residual_examples": [],
+          "sample_rule": "spread(6 of 6 blocks, on-disc order, overlay_test.spread), leaves in index order, one query per distinct frame (FrameId-deduped), until 300 pairs or population exhausted (exhausted)",
+          "verdict": "pass",
+          "violations": 0
+        },
+        {
+          "alt_medians_m": {
+            "decoder_range": 0.0,
+            "double": 0.0,
+            "half": 0.0,
+            "own_leaf_bbox_own_range": 1151.8125
+          },
+          "class": "divided_pardiv1",
+          "cross_class_split": {
+            "matched": 0,
+            "violations": 0
+          },
+          "denominator": 983,
+          "empty_slot": 0,
+          "level": 0,
+          "matched": 979,
+          "max_m": 0.0,
+          "median_m": 0.0,
+          "n_frames": 52,
+          "n_pairs": 979,
+          "neighbour_decode_failed": 0,
+          "neighbour_divided": 0,
+          "outside_coverage": 0,
+          "over_threshold_fully_enumerated": true,
+          "p90_m": 0.0,
+          "population": 52,
+          "residual_examples": [
+            {
+              "candidate_sub": 1,
+              "edge": "W",
+              "source": {
+                "block_index": 14,
+                "blockset_index": 38,
+                "class": "divided_pardiv1",
+                "level": 0,
+                "sub": 0,
+                "top": 286
+              },
+              "source_raw": [
+                2048,
+                200
+              ]
+            },
+            {
+              "candidate_sub": 2,
+              "edge": "S",
+              "source": {
+                "block_index": 14,
+                "blockset_index": 38,
+                "class": "divided_pardiv1",
+                "level": 0,
+                "sub": 0,
+                "top": 318
+              },
+              "source_raw": [
+                1339,
+                2048
+              ]
+            },
+            {
+              "candidate_sub": 3,
+              "edge": "W",
+              "source": {
+                "block_index": 14,
+                "blockset_index": 38,
+                "class": "divided_pardiv1",
+                "level": 0,
+                "sub": 2,
+                "top": 351
+              },
+              "source_raw": [
+                2048,
+                2228
+              ]
+            },
+            {
+              "candidate_sub": 2,
+              "edge": "S",
+              "source": {
+                "block_index": 24,
+                "blockset_index": 38,
+                "class": "divided_pardiv1",
+                "level": 0,
+                "sub": 0,
+                "top": 627
+              },
+              "source_raw": [
+                976,
+                2048
+              ]
+            }
+          ],
+          "sample_rule": "whole population (52 parent(s) with content-bearing siblings)",
+          "verdict": "pass_with_residual",
+          "violations": 4
+        }
+      ],
+      "over_threshold_total": 7,
+      "verdict": "pass_with_residual",
+      "violations_total": 7
+    },
+    "criterion_3_quadrant": {
+      "n_parents": 42,
+      "n_points": 1037716,
+      "n_subparcels": 168,
+      "parents_per_level": {
+        "0": 13,
+        "2": 4,
+        "4": 13,
+        "6": 7,
+        "8": 5
+      },
+      "readings": {
+        "parent_local": {
+          "description": "raw (x, y) tested directly against quadrant k's [qx*HALF,(qx+1)*HALF] x [qy*HALF,(qy+1)*HALF] of the parent's 4096 frame -- coordinates absolute in the parent frame, per docs/schema/map-frame.md and test_overlay_test.py's PARENT fixture.",
+          "violations": 0
+        },
+        "sub_local": {
+          "description": "raw (x, y) tested against [0,HALF] x [0,HALF] regardless of k -- coordinates relative to the sub's own quadrant, offset not added back.",
+          "violations": 798575
+        }
+      },
+      "reference_population": {
+        "by_level": {
+          "0": 13,
+          "2": 4,
+          "4": 13,
+          "6": 7,
+          "8": 5
+        },
+        "n_content_subparcels": 52,
+        "n_parents": 42
+      },
+      "verdict": "pass",
+      "violations": 0,
+      "violations_examples": []
+    },
+    "reference": "/run/media/codyh/464210-8480",
+    "residual_enum_cap": 400,
+    "residual_enum_cap_note": "brief (2-14-continuity-and-mirror-rerun.md) states 400; DESIGN.md's design-agent amendment states 200 for this same cap -- both exceed the measured residual with margin; this run follows the brief and reports the discrepancy rather than resolving it silently.",
+    "sample_blocks": 60,
+    "tool": "continuity_census"
+  },
+  "criterion_4_mirror": {
+    "classes": [
+      {
+        "blocks_visited": 13,
+        "class": "L0_urban",
+        "class_range": 4096,
+        "corner_nodes": 0,
+        "corner_split_per_edge_2_11_comparable": {
+          "matched": 0,
+          "violations": 0
+        },
+        "corner_split_per_node": {
+          "matched": 0,
+          "violations": 0
+        },
+        "cross_class_split": {
+          "matched": 113,
+          "violations": 1
+        },
+        "crossing_breakdown": {
+          "matched": {
+            "cross_block": 0,
+            "cross_blockset": 0,
+            "same_block": 521
+          },
+          "violations": {
+            "cross_block": 0,
+            "cross_blockset": 0,
+            "same_block": 1
+          }
+        },
+        "denominator": 522,
+        "empty_slot": 0,
+        "level": 0,
+        "matched": 521,
+        "meets_min_nodes_per_class": true,
+        "n_candidate_nodes": 522,
+        "n_frames": 16,
+        "outside_coverage": 0,
+        "sample_rule": "spread(40 of 1836 blocks, on-disc order, overlay_test.spread) first, then every leaf of each chosen block in spread order, one frame per distinct FrameId, continuing past 40 blocks if 300 qualifying nodes are not yet reached, until the threshold is met or the block list (full population) is exhausted",
+        "scale_mismatch": 0,
+        "total_incidences": 522,
+        "verdict": "pass_with_residual",
+        "violation_examples": [
+          {
+            "candidate_frames": [
+              {
+                "block_index": 13,
+                "blockset_index": 38,
+                "leaf_path": [
+                  632
+                ],
+                "level": 0
+              }
+            ],
+            "corner": false,
+            "crossing": "same_block",
+            "edge": "S",
+            "nearest_actual_global": [
+              7054577,
+              2441167
+            ],
+            "source": {
+              "block_index": 13,
+              "blockset_index": 38,
+              "leaf_path": [
+                666
+              ],
+              "level": 0
+            },
+            "source_global": [
+              7054563,
+              2441216
+            ],
+            "source_raw": [
+              1251,
+              0
+            ]
+          }
+        ],
+        "violation_examples_fully_enumerated": true,
+        "violations": 1
+      },
+      {
+        "blocks_visited": 9,
+        "class": "L0_sparse",
+        "class_range": 16384,
+        "corner_nodes": 0,
+        "corner_split_per_edge_2_11_comparable": {
+          "matched": 0,
+          "violations": 0
+        },
+        "corner_split_per_node": {
+          "matched": 0,
+          "violations": 0
+        },
+        "cross_class_split": {
+          "matched": 0,
+          "violations": 0
+        },
+        "crossing_breakdown": {
+          "matched": {
+            "cross_block": 57,
+            "cross_blockset": 2,
+            "same_block": 662
+          },
+          "violations": {
+            "cross_block": 0,
+            "cross_blockset": 0,
+            "same_block": 0
+          }
+        },
+        "denominator": 721,
+        "empty_slot": 0,
+        "level": 0,
+        "matched": 721,
+        "meets_min_nodes_per_class": true,
+        "n_candidate_nodes": 721,
+        "n_frames": 1152,
+        "outside_coverage": 0,
+        "sample_rule": "spread(40 of 1836 blocks, on-disc order, overlay_test.spread) first, then every leaf of each chosen block in spread order, one frame per distinct FrameId, continuing past 40 blocks if 300 qualifying nodes are not yet reached, until the threshold is met or the block list (full population) is exhausted",
+        "scale_mismatch": 0,
+        "total_incidences": 721,
+        "verdict": "pass",
+        "violation_examples": [],
+        "violation_examples_fully_enumerated": true,
+        "violations": 0
+      },
+      {
+        "blocks_visited": 13,
+        "class": "L2",
+        "class_range": 4096,
+        "corner_nodes": 2,
+        "corner_split_per_edge_2_11_comparable": {
+          "matched": 2,
+          "violations": 2
+        },
+        "corner_split_per_node": {
+          "matched": 2,
+          "violations": 0
+        },
+        "cross_class_split": {
+          "matched": 0,
+          "violations": 0
+        },
+        "crossing_breakdown": {
+          "matched": {
+            "cross_block": 37,
+            "cross_blockset": 18,
+            "same_block": 4006
+          },
+          "violations": {
+            "cross_block": 0,
+            "cross_blockset": 0,
+            "same_block": 4
+          }
+        },
+        "denominator": 4065,
+        "empty_slot": 0,
+        "level": 2,
+        "matched": 4061,
+        "meets_min_nodes_per_class": true,
+        "n_candidate_nodes": 4176,
+        "n_frames": 12287,
+        "outside_coverage": 0,
+        "sample_rule": "spread(40 of 238 blocks, on-disc order, overlay_test.spread) first, then every leaf of each chosen block in spread order, one frame per distinct FrameId, continuing past 40 blocks if 300 qualifying nodes are not yet reached, until the threshold is met or the block list (full population) is exhausted",
+        "scale_mismatch": 111,
+        "total_incidences": 4176,
+        "verdict": "pass_with_residual",
+        "violation_examples": [
+          {
+            "candidate_frames": [
+              {
+                "block_index": 1,
+                "blockset_index": 38,
+                "leaf_path": [
+                  440
+                ],
+                "level": 2
+              }
+            ],
+            "corner": false,
+            "crossing": "same_block",
+            "edge": "S",
+            "nearest_actual_global": [
+              1806286,
+              581632
+            ],
+            "source": {
+              "block_index": 1,
+              "blockset_index": 38,
+              "leaf_path": [
+                472
+              ],
+              "level": 2
+            },
+            "source_global": [
+              1806288,
+              581632
+            ],
+            "source_raw": [
+              4048,
+              0
+            ]
+          },
+          {
+            "candidate_frames": [
+              {
+                "block_index": 1,
+                "blockset_index": 38,
+                "leaf_path": [
+                  472
+                ],
+                "level": 2
+              }
+            ],
+            "corner": false,
+            "crossing": "same_block",
+            "edge": "W",
+            "nearest_actual_global": [
+              1806336,
+              581658
+            ],
+            "source": {
+              "block_index": 1,
+              "blockset_index": 38,
+              "leaf_path": [
+                473
+              ],
+              "level": 2
+            },
+            "source_global": [
+              1806336,
+              581659
+            ],
+            "source_raw": [
+              0,
+              27
+            ]
+          },
+          {
+            "candidate_frames": [
+              {
+                "block_index": 1,
+                "blockset_index": 38,
+                "leaf_path": [
+                  472
+                ],
+                "level": 2
+              }
+            ],
+            "corner": false,
+            "crossing": "same_block",
+            "edge": "W",
+            "nearest_actual_global": [
+              1806336,
+              582621
+            ],
+            "source": {
+              "block_index": 1,
+              "blockset_index": 38,
+              "leaf_path": [
+                473
+              ],
+              "level": 2
+            },
+            "source_global": [
+              1806336,
+              582620
+            ],
+            "source_raw": [
+              0,
+              988
+            ]
+          },
+          {
+            "candidate_frames": [
+              {
+                "block_index": 1,
+                "blockset_index": 38,
+                "leaf_path": [
+                  472
+                ],
+                "level": 2
+              }
+            ],
+            "corner": false,
+            "crossing": "same_block",
+            "edge": "W",
+            "nearest_actual_global": [
+              1806336,
+              582731
+            ],
+            "source": {
+              "block_index": 1,
+              "blockset_index": 38,
+              "leaf_path": [
+                473
+              ],
+              "level": 2
+            },
+            "source_global": [
+              1806336,
+              582732
+            ],
+            "source_raw": [
+              0,
+              1100
+            ]
+          }
+        ],
+        "violation_examples_fully_enumerated": true,
+        "violations": 4
+      },
+      {
+        "blocks_visited": 5,
+        "class": "L4",
+        "class_range": 4096,
+        "corner_nodes": 0,
+        "corner_split_per_edge_2_11_comparable": {
+          "matched": 0,
+          "violations": 0
+        },
+        "corner_split_per_node": {
+          "matched": 0,
+          "violations": 0
+        },
+        "cross_class_split": {
+          "matched": 0,
+          "violations": 0
+        },
+        "crossing_breakdown": {
+          "matched": {
+            "cross_block": 0,
+            "cross_blockset": 7,
+            "same_block": 818
+          },
+          "violations": {
+            "cross_block": 0,
+            "cross_blockset": 0,
+            "same_block": 0
+          }
+        },
+        "denominator": 825,
+        "empty_slot": 0,
+        "level": 4,
+        "matched": 825,
+        "meets_min_nodes_per_class": true,
+        "n_candidate_nodes": 870,
+        "n_frames": 4350,
+        "outside_coverage": 0,
+        "sample_rule": "spread(40 of 20 blocks, on-disc order, overlay_test.spread) first, then every leaf of each chosen block in spread order, one frame per distinct FrameId, continuing past 40 blocks if 300 qualifying nodes are not yet reached, until the threshold is met or the block list (full population) is exhausted",
+        "scale_mismatch": 45,
+        "total_incidences": 870,
+        "verdict": "pass",
+        "violation_examples": [],
+        "violation_examples_fully_enumerated": true,
+        "violations": 0
+      },
+      {
+        "blocks_visited": 6,
+        "class": "L6",
+        "class_range": 4096,
+        "corner_nodes": 0,
+        "corner_split_per_edge_2_11_comparable": {
+          "matched": 0,
+          "violations": 0
+        },
+        "corner_split_per_node": {
+          "matched": 0,
+          "violations": 0
+        },
+        "cross_class_split": {
+          "matched": 0,
+          "violations": 0
+        },
+        "crossing_breakdown": {
+          "matched": {
+            "cross_block": 0,
+            "cross_blockset": 5,
+            "same_block": 741
+          },
+          "violations": {
+            "cross_block": 0,
+            "cross_blockset": 0,
+            "same_block": 0
+          }
+        },
+        "denominator": 746,
+        "empty_slot": 0,
+        "level": 6,
+        "matched": 746,
+        "meets_min_nodes_per_class": true,
+        "n_candidate_nodes": 850,
+        "n_frames": 911,
+        "outside_coverage": 0,
+        "sample_rule": "full population (6 blocks)",
+        "scale_mismatch": 104,
+        "total_incidences": 850,
+        "verdict": "pass",
+        "violation_examples": [],
+        "violation_examples_fully_enumerated": true,
+        "violations": 0
+      },
+      {
+        "blocks_visited": 6,
+        "class": "L8",
+        "class_range": 4096,
+        "corner_nodes": 0,
+        "corner_split_per_edge_2_11_comparable": {
+          "matched": 0,
+          "violations": 0
+        },
+        "corner_split_per_node": {
+          "matched": 0,
+          "violations": 0
+        },
+        "cross_class_split": {
+          "matched": 0,
+          "violations": 0
+        },
+        "crossing_breakdown": {
+          "matched": {
+            "cross_block": 0,
+            "cross_blockset": 4,
+            "same_block": 62
+          },
+          "violations": {
+            "cross_block": 0,
+            "cross_blockset": 0,
+            "same_block": 0
+          }
+        },
+        "denominator": 66,
+        "empty_slot": 0,
+        "level": 8,
+        "matched": 66,
+        "meets_min_nodes_per_class": false,
+        "n_candidate_nodes": 89,
+        "n_frames": 58,
+        "outside_coverage": 0,
+        "sample_rule": "full population (6 blocks)",
+        "scale_mismatch": 23,
+        "total_incidences": 89,
+        "verdict": "pass",
+        "violation_examples": [],
+        "violation_examples_fully_enumerated": true,
+        "violations": 0
+      }
+    ],
+    "constants": {
+      "EXACT_ONLY": true,
+      "MIN_NODES_PER_CLASS": 300,
+      "MIRROR_TOL_RAW": 0,
+      "RAW_PER_SLOT": 4096,
+      "note": "pre-stated, not tuned; FRAME_EXTENT_TOL_REL retired 2-14 (the global raw lattice replaces frame-bbox-span comparison for detecting a genuine scale mismatch)"
+    },
+    "notes": {
+      "cross_class_no_longer_excluded": "a neighbour of a different frame size (e.g. an L0_urban n=1 frame facing an L0_sparse n=4 tile) is an ordinary crossing, included in denominator/matched/violations and reported separately in cross_class_split. scale_mismatch now means only: every candidate frame at that edge/corner resolves to a genuinely divided leaf (a different coordinate scale, quadrant-relative).",
+      "denominator_is_nodes": "denominator/matched/violations/outside_coverage/empty_slot/scale_mismatch are per NODE (2-14), not per edge incidence (2-11's reading): a corner node (both axes exact) is tested once via corner_frames' any-sharing-frame rule, counted once in corner_nodes and once across the incidence counters. The corner's per-edge reading (2-11-comparable, each of the two edges tested independently) is reported separately in corner_split_per_edge_2_11_comparable and is NOT part of denominator/matched/violations.",
+      "divided_sources_out_of_scope": "this unit walks only ptype=0 (undivided) leaves of L0_urban, L0_sparse, L2, L4, L6, L8; a divided neighbour is still resolvable via r_neighbours and is counted as scale_mismatch.",
+      "node_dedup": "candidate nodes are deduped by (x, y) raw coordinate within a leaf before edge classification, so a shared link endpoint at an intersection is counted once, not once per link."
+    },
+    "reference": "/run/media/codyh/464210-8480",
+    "reproduction_targets_same_block_only": {
+      "L6": "316/316 matched (scratchpad census, retired)",
+      "L8": "64/64 matched (scratchpad census, retired)"
+    },
+    "residual_enum_cap": 400,
+    "residual_enum_cap_note": "brief (2-14-continuity-and-mirror-rerun.md) states 400; DESIGN.md's design-agent amendment states 200 for this same cap -- both exceed the measured residual with margin; this run follows the brief and reports the discrepancy rather than resolving it silently.",
+    "sample_blocks": 40,
+    "tool": "boundary_mirror_census"
+  },
+  "description": "Continuity (criterion 2), quadrant containment (criterion 3) and boundary-node mirror (criterion 4) re-run on 2-13's frame adjacency and global raw lattice. Two top-level sections, one per tool -- criterion_2_continuity and criterion_3_quadrant are nested inside criterion_2_and_3 (continuity_census.py's own output), criterion_4_mirror is boundary_mirror_census.py's own output.",
+  "lint_schema": {
+    "after": "513 unverified rows, 0 errors",
+    "before": "513 unverified rows, 0 errors"
+  },
+  "pytest": {
+    "full_suite_after": "407 passed in 141.01s",
+    "synthetic_fixture_files_after": "test_boundary_mirror_census.py + test_continuity_census.py: 25 passed",
+    "synthetic_fixture_files_before": "test_boundary_mirror_census.py: 9 passed, 2 failed (pre-existing WIP fixture bugs); test_continuity_census.py: 5 failed (AttributeError, stale API from 2-10)"
+  },
+  "reproducibility": {
+    "boundary_mirror_census_sha256": [
+      "23854cf540b3c6519f0945f7fb787890859787f1e3ef214a3f1fb646ad6733e4",
+      "23854cf540b3c6519f0945f7fb787890859787f1e3ef214a3f1fb646ad6733e4"
+    ],
+    "continuity_census_sha256": [
+      "da70cd597ed800763c4b9368664948842fc65205faecdd0df560d754e4b6d377",
+      "da70cd597ed800763c4b9368664948842fc65205faecdd0df560d754e4b6d377"
+    ],
+    "identical_across_runs": true,
+    "runs_per_tool": 2
+  },
+  "unit": "2-14"
+}

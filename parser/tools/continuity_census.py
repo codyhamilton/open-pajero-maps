@@ -1,40 +1,78 @@
 #!/usr/bin/env python3
-"""Cross-parcel continuity (Plan 03 unit 2-10, criterion 2) and divided
-sub-parcel quadrant containment (criterion 3), grounded and tolerance-fixed
-per DESIGN Decisions, Amendment 2026-09-23 (user).
+"""Cross-parcel continuity (Plan 03 unit 2-14, criterion 2) and divided
+sub-parcel quadrant containment (criterion 3, unchanged from 2-10), rerun
+against 2-13's frame-level adjacency and the level's global raw lattice, per
+DESIGN Decisions, "Amendment 2026-09-23 (design agent) -- the adjacency unit
+is the frame, not the leaf slot", and the 2-14 brief that cites it.
 
-Criterion 2: a link end-node on a shared parcel edge is stored independently
-on both sides; decoded under the frame hypothesis of record
-(`overlay_test.model_frame`), the two copies land on the same place, and do
-not under the named alternatives. Criterion 3: every shape point of divided
-sub-parcel k falls inside quadrant k of the parent leaf's 4096 frame.
+Criterion 2 (restated by the brief): "A road link crossing a frame boundary
+is stored independently on both sides; the two copies of the shared endpoint
+occupy the same point on the level's global raw lattice. Per matched pair;
+denominator all boundary endpoint pairs at a shared frame edge, the
+adjacency unit being the frame, not the leaf slot. Endpoint selection is
+exact -- a node qualifies only when its raw crossed-axis coordinate is
+exactly 0 or exactly the frame range -- and pairing is exact lattice
+equality." Criterion 3 (unchanged): every shape point of divided sub-parcel
+k falls inside quadrant k of the parent leaf's 4096 frame.
 
-Anti-circularity (binding, per the amendment): node *selection*
-(`EDGE_TOL_RAW`) and *pairing* (`PAIR_TOL_RAW`) run once, in raw units,
-under the hypothesis of record. The resulting pair list is then re-scored
-UNCHANGED under every alternative -- no alternative may add, drop or re-pair
-a node. This is structurally true in the code: `collect_pairs()` builds the
-pair list once; `score_pair()` scores one already-built pair under a named
-frame/range choice and is the only function alternatives call.
+Root cause fixed here (GATE-2.md carried items 6/7, DESIGN.md's design-agent
+amendment): the 2-10 run stepped one *leaf slot* where L0 sparse's leaf
+slots are 16-aliased onto one 4x4-tile *frame*, inflating the L0_sparse
+denominator 16x and manufacturing self-neighbour false failures. This
+version uses `r_neighbours.FrameId`/`frame_of`/`frame_neighbour` to walk one
+frame per distinct `FrameId` (never a leaf slot), and `to_global`/
+`to_frame_local` to match/report in the level's global raw lattice, so a
+frame is compared against *every* distinct neighbouring frame its edge
+faces (which can be more than one, at a class-size boundary), not one
+leaf-slot-nominated neighbour.
 
-Pre-stated, not tuned -- fixed at refine time (2-10 brief). If one of these
-turns out to be wrong, that is a `needs context` report, not an edit:
+Retirement (binding, per DESIGN.md's "retirement rule" -- where a grounded
+exact measure is found underneath a fuzzy one, the fuzzy one is retired, not
+retuned): `EDGE_TOL_RAW` and `PAIR_TOL_RAW` (2-10's tolerance-based
+selection/pairing) are retired. Selection is exact-integer membership at 0
+or the frame range; pairing is exact integer equality of the global raw
+lattice coordinate (same-frame siblings, criterion 2's `divided_pardiv1`
+class only, compare directly in frame-local raw since both sides share one
+frame -- see `_sibling_pairs`).
 
-  EDGE_TOL_RAW = 4        raw coordinate units from 0 or the class range on
-                          the crossed axis -- a node counts as an edge node.
-  PAIR_TOL_RAW = 16       raw coordinate units of along-edge agreement (after
-                          mapping to the shared edge's own parameter) for two
-                          edge nodes on opposite sides to be paired.
-  PASS_RAW_UNITS = 1.0    pass means every matched pair's hypothesis
-                          separation is at most this many raw units expressed
-                          in metres: max(width_m, height_m) / range of the
-                          pair's own (source-side) frame.
+Anti-circularity (binding, carried from 2-10, still true here): node
+*selection* and *pairing* run once, under the hypothesis of record. The
+resulting pair list is then re-scored UNCHANGED under every alternative
+range hypothesis (half, double, `overlay_test.DECODER_RANGE`) via
+`score_pair`, purely as diagnostic evidence for how R-consistent the
+lattice model is -- no alternative may add, drop or re-pair a node. Because
+pairing is now exact-lattice equality rather than a metre threshold, a
+matched pair's hypothesis separation is definitionally ~0 (floating-point
+noise only); `score_pair`/`PASS_RAW_UNITS` remain for that diagnostic, not
+for deciding matched/violation, which is `_greedy_exact_pair`'s job.
+
+Pre-stated, not tuned -- fixed before this unit's first run. If one of
+these turns out wrong, that is a `needs context` report, not an edit:
+
+  PASS_RAW_UNITS = 1.0       diagnostic-only sanity threshold on a matched
+                             pair's hypothesis separation (should be ~0 by
+                             construction); not part of the pass/fail
+                             decision.
   MIN_PAIRS_PER_CLASS = 300  for the full-leaf classes; the divided class is
-                          measured over its whole population (small: single
-                          digits of parents), never sampled.
+                             measured over its whole population (small:
+                             single digits of parents), never sampled.
+  RESIDUAL_ENUM_CAP = 400    a class is `pass_with_residual` only if every
+                             one of its violations is enumerated in the
+                             output; past this cap the criterion's own
+                             "enumerated residual, record by record" promise
+                             cannot be honoured and the class (and so the
+                             whole criterion) is `fail`. NOTE: the brief
+                             states 400; DESIGN.md's design-agent amendment
+                             states 200 for this same cap -- both exceed the
+                             measured residual (152) with margin, so this
+                             run follows the brief (this module's direct
+                             governing contract) and the discrepancy is
+                             reported, not silently resolved.
 
 Reads R only, through `overlay_test.RReader` and `r_neighbours.LeafIndex`
-(both reused unmodified); imports no writer module. No OSM input.
+plus its frame-adjacency API (`FrameId`, `frame_of`, `frame_neighbour`,
+`to_global`, `to_frame_local` -- all reused unmodified, 2-13); imports no
+writer module. No OSM input.
 """
 from __future__ import annotations
 
@@ -44,7 +82,6 @@ import json
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -53,23 +90,18 @@ sys.path.insert(0, str(ROOT / "tools"))
 import overlay_test as ot  # noqa: E402
 import r_neighbours as rn  # noqa: E402
 
-EDGE_TOL_RAW = 4
-PAIR_TOL_RAW = 16
 PASS_RAW_UNITS = 1.0
 MIN_PAIRS_PER_CLASS = 300
 
-# Sample rule knob (not one of the four pre-stated constants above): how many
+# Sample rule knob (not one of the pre-stated constants above): how many
 # blocks `overlay_test.spread` puts first before the remainder follows in
 # on-disc order (see `_class_pairs`'s docstring for the full rule).
 SAMPLE_BLOCKS = 60
 
-# Residual-enumeration cap: a criterion-2 residual is only reported
-# `pass_with_residual` if every over-threshold pair fits in the JSON
-# record-by-record; past this the amendment's "enumerated residual" promise
-# cannot be honoured and the criterion is `fail`. Not a pre-stated constant
-# (it gates *reporting*, not selection/pairing/pass-per-pair), stated here
-# once, before any run, and not changed after seeing a result.
-RESIDUAL_ENUM_CAP = 200
+# Residual-enumeration cap -- see module docstring for the brief-vs-DESIGN.md
+# discrepancy (400 here, 200 in DESIGN.md); not changed after seeing a
+# result.
+RESIDUAL_ENUM_CAP = 400
 
 OPPOSITE = {"E": "W", "W": "E", "N": "S", "S": "N"}
 HALF = 2048  # criterion 3: quadrant half-extent of the parent's 4096 frame
@@ -102,12 +134,6 @@ def _percentile(xs, p):
     return s[f] + (k - f) * (s[c] - s[f])
 
 
-def _cell_dict(level, ptype, cls, lb, parent, fr, sub):
-    tile = fr[0] if fr is not None and fr[1] == "l0_sparse_tile" else None
-    return {"ptype": ptype, "level": level, "class": cls, "bounds": lb, "parent": parent,
-            "sub": sub, "tile": tile}
-
-
 def score_pair(pair, frame_s, rng_s, frame_t, rng_t):
     """Metre separation of one already-built pair, decoded on each side in
     its own (frame, range), scored via `overlay_test.decode_uv` against a
@@ -123,67 +149,72 @@ def score_pair(pair, frame_s, rng_s, frame_t, rng_t):
     return float((dx * dx + dy * dy) ** 0.5)
 
 
-def _select_edge_nodes(pts, edge, rng, tol):
-    axis = 0 if edge in ("E", "W") else 1
-    lo = edge in ("W", "S")
-    target = 0.0 if lo else float(rng)
-    return [p for p in pts if abs(p[axis] - target) <= tol]
-
-
 def _along(edge):
     return 1 if edge in ("E", "W") else 0
 
 
-def _pair_nodes(src_nodes, tgt_nodes, edge, rng_s, rng_t, tol):
-    """Pair source/target edge nodes by along-edge agreement. If the two
-    ranges differ, mapping is only defined when one is an exact multiple of
-    the other (`scale_mismatch` otherwise): the target's along-edge raw
-    value is rescaled into the source's raw units before the tolerance
-    check, which is equivalent to scaling the tolerance by the same exact
-    ratio in the other direction. Greedy nearest-first, each target used at
-    most once. Returns (pairs, unpaired_src_count, scale_mismatch_count)."""
-    ax = _along(edge)
-    if rng_s == rng_t:
-        ratio = 1.0
-    elif max(rng_s, rng_t) % min(rng_s, rng_t) == 0:
-        ratio = rng_s / rng_t
-    else:
-        return [], len(src_nodes), len(src_nodes)
+def _select_edge_nodes(pts, edge, rng):
+    """Exact selection: a node qualifies only when its raw crossed-axis
+    coordinate is exactly 0 or exactly `rng`, as an integer. No tolerance --
+    `EDGE_TOL_RAW` is retired (module docstring, retirement rule)."""
+    axis = 0 if edge in ("E", "W") else 1
+    lo = edge in ("W", "S")
+    target = 0 if lo else int(rng)
+    return [p for p in pts if int(p[axis]) == target]
 
-    cand = [(t, t[ax] * ratio) for t in tgt_nodes]
-    used = [False] * len(cand)
-    pairs, unpaired = [], 0
-    for s in src_nodes:
-        sv = s[ax]
-        best_i, best_d = None, None
-        for i, (t, tv) in enumerate(cand):
-            if used[i]:
-                continue
-            d = abs(sv - tv)
-            if d <= tol and (best_d is None or d < best_d):
-                best_i, best_d = i, d
-        if best_i is None:
-            unpaired += 1
-            continue
-        used[best_i] = True
-        pairs.append((s, cand[best_i][0]))
-    return pairs, unpaired, 0
+
+def _select_edge_nodes_mid(pts, edge, mid):
+    """Exact midline selection for divided siblings (criterion 2's internal
+    edge, not an outer frame edge)."""
+    axis = 0 if edge in ("E", "W") else 1
+    return [p for p in pts if int(p[axis]) == int(mid)]
+
+
+def _greedy_exact_pair(src_items, tgt_items, key_fn):
+    """Pair `src_items` to `tgt_items` by exact equality of `key_fn(item)`,
+    each target consumed at most once (first-available, deterministic
+    within one call since both lists are already in a stable order).
+    Returns (pairs, unmatched_src) where each pair is (src_item, tgt_item)."""
+    buckets: dict = {}
+    for t in tgt_items:
+        buckets.setdefault(key_fn(t), []).append(t)
+    pairs, unmatched = [], []
+    for s in src_items:
+        b = buckets.get(key_fn(s))
+        if b:
+            pairs.append((s, b.pop(0)))
+        else:
+            unmatched.append(s)
+    return pairs, unmatched
+
+
+def _nearest_point(g, global_points):
+    best, bd = None, None
+    for p in global_points:
+        d = (p[0] - g[0]) ** 2 + (p[1] - g[1]) ** 2
+        if bd is None or d < bd:
+            bd, best = d, p
+    return best
 
 
 # ----------------------------------------------------------- criterion two
 
-def _class_pairs(rdr, idx, key, level, ptype, urban):
+def _class_pairs(rdr, idx, key, level, ptype, urban, class_rule, ranges):
     """Sample rule: `overlay_test.spread` over the level's leaf-index-ordered
     block list (`SAMPLE_BLOCKS` spread evenly first, then every remaining
-    block in on-disc order -- `spread` already returns the full permutation,
-    see its docstring), leaves visited in index order within each block,
+    block in on-disc order), leaves visited in index order within each
+    block, one frame visited at most once (deduped by `FrameId` -- an L0
+    sparse tile's 16 aliased leaf slots contribute exactly one frame),
     stopping once `MIN_PAIRS_PER_CLASS` raw pairs are collected or the
-    population is exhausted. Returns (pairs, stats, n_leaves, population_note)."""
+    population is exhausted. Returns (pairs, stats, n_frames, exhausted,
+    n_blocks_total, residual)."""
     keys = list(idx.blocks.keys())
     order = ot.spread(keys, min(SAMPLE_BLOCKS, len(keys)) or 1)
     stats = Counter()
     pairs = []
-    n_leaves = 0
+    residual = []
+    n_frames = 0
+    seen_frames: set = set()
     exhausted = True
     for bkey in order:
         if len(pairs) >= MIN_PAIRS_PER_CLASS:
@@ -196,72 +227,117 @@ def _class_pairs(rdr, idx, key, level, ptype, urban):
             if lptype != ptype or len(lpath) != 1:
                 continue
             if level == 0 and ptype == 0 and urban is not None:
-                if ot._urban(CLASS_RULE, blk[1], blk[2], lpath[0]) != urban:
+                if ot._urban(class_rule, blk[1], blk[2], lpath[0]) != urban:
                     continue
+            handle = (idx.lmr, blk, row)
+            fid, agrees = rn.frame_of(idx, handle, class_rule, ranges)
+            if fid in seen_frames:
+                continue
+            seen_frames.add(fid)
+            if not agrees:
+                stats["tile_disagreements"] += 1
             links = rdr.decode(idx.lmr, blk, row)
             if not links:
                 continue
-            n_leaves += 1
-            c = _cell_dict(level, 0, key, lb, parent, fr, None)
-            frame_s, rng_s = ot.model_frame(c, RANGES)
-            ends = [pt for lk in links for pt in lk["ends"]]
-            handle = (idx.lmr, blk, row)
+            n_frames += 1
+            rng_s = fid.n * rn.RAW_PER_SLOT
+            fb_s = fr[0]
+            ends = [(int(p[0]), int(p[1])) for lk in links for p in lk["ends"]]
+            src_ident = {"level": level, "class": key,
+                         "blockset_index": blk[1], "block_index": blk[2],
+                         "leaf_path": list(lpath)}
             for edge in ("E", "N"):
-                src_nodes = _select_edge_nodes(ends, edge, rng_s, EDGE_TOL_RAW)
+                src_nodes = _select_edge_nodes(ends, edge, rng_s)
                 if not src_nodes:
                     continue
-                nb = idx.neighbour(handle, edge)
-                if nb.status in ("outside_coverage", "empty_slot"):
-                    stats[nb.status] += 1
+                fnb = rn.frame_neighbour(idx, fid, edge, class_rule, ranges)
+                if fnb.status in ("outside_coverage", "empty_slot"):
+                    stats[fnb.status] += len(src_nodes)
                     continue
-                if nb.divided:
-                    stats["neighbour_divided"] += 1
+                candidates = []
+                for tgt_fid, handles, crossing in zip(fnb.frames, fnb.handles, fnb.crossings):
+                    t_lmr, t_blk, t_row = handles[0]
+                    t_lpath, t_le, t_lb, t_lptype, t_parent, t_fr = t_row
+                    if t_lptype != 0:
+                        stats["neighbour_divided"] += len(handles)
+                        continue
+                    t_links = rdr.decode(t_lmr, t_blk, t_row)
+                    if not t_links:
+                        stats["neighbour_decode_failed"] += 1
+                        continue
+                    t_ends = [(int(p[0]), int(p[1])) for lk in t_links for p in lk["ends"]]
+                    t_rng = tgt_fid.n * rn.RAW_PER_SLOT
+                    candidates.append({
+                        "fid": tgt_fid, "crossing": crossing,
+                        "fb": t_fr[0], "rng": t_rng,
+                        "cross_class": t_rng != rng_s,
+                        "global": [rn.to_global(tgt_fid, x, y) for (x, y) in t_ends],
+                        "ident": {"level": level,
+                                  "blockset_index": t_blk[1], "block_index": t_blk[2],
+                                  "leaf_path": list(t_lpath)},
+                    })
+                if not candidates:
                     continue
-                n_lmr, n_blk, n_row = nb.handles[0]
-                n_lpath, n_le, n_lb, n_lptype, n_parent, n_fr = n_row
-                n_links = rdr.decode(n_lmr, n_blk, n_row)
-                if not n_links:
-                    stats["neighbour_decode_failed"] += 1
-                    continue
-                n_key = ot._class_key(level, n_lptype, CLASS_RULE, n_blk, n_lpath)
-                n_c = _cell_dict(level, 0, n_key, n_lb, n_parent, n_fr, None)
-                frame_t, rng_t = ot.model_frame(n_c, RANGES)
-                n_ends = [pt for lk in n_links for pt in lk["ends"]]
-                tgt_nodes = _select_edge_nodes(n_ends, OPPOSITE[edge], rng_t, EDGE_TOL_RAW)
-                matched, unpaired, mismatch = _pair_nodes(
-                    src_nodes, tgt_nodes, edge, rng_s, rng_t, PAIR_TOL_RAW)
-                stats["unpaired"] += unpaired
-                stats["scale_mismatch"] += mismatch
-                for s_pt, t_pt in matched:
+                all_global = []
+                for tc in candidates:
+                    all_global.extend(tc["global"])
+                counts = Counter(all_global)
+                for (x, y) in src_nodes:
+                    g = rn.to_global(fid, x, y)
+                    if counts.get(g, 0) <= 0:
+                        stats["unmatched"] += 1
+                        cross_class = any(tc["cross_class"] for tc in candidates)
+                        if len(residual) < RESIDUAL_ENUM_CAP:
+                            nearest = _nearest_point(g, all_global)
+                            residual.append({
+                                "source": src_ident, "edge": edge,
+                                "source_raw": [x, y], "source_global": list(g),
+                                "candidate_frames": [c["ident"] for c in candidates],
+                                "nearest_actual_global": (list(nearest) if nearest else None),
+                                "cross_class": cross_class,
+                            })
+                        continue
+                    counts[g] -= 1
+                    # attribute the match to a candidate that still holds g
+                    hit_tc = None
+                    for tc in candidates:
+                        if g in tc["global"]:
+                            hit_tc = tc
+                            break
+                    t_local = rn.to_frame_local(hit_tc["fid"], g[0], g[1])
                     pairs.append({
-                        "s_pt": s_pt, "t_pt": t_pt, "edge": edge,
-                        "frame_s": frame_s, "rng_s": rng_s,
-                        "frame_t": frame_t, "rng_t": rng_t,
+                        "s_pt": (float(x), float(y)), "t_pt": (float(t_local[0]), float(t_local[1])),
+                        "edge": edge,
+                        "frame_s": fb_s, "rng_s": float(rng_s),
+                        "frame_t": hit_tc["fb"], "rng_t": float(hit_tc["rng"]),
                         "ref_cell": lb,
-                        "ids": {"level": level, "class": key,
-                                "src": [blk[1], blk[2], list(lpath)],
-                                "tgt": [n_blk[1], n_blk[2], list(n_lpath)]},
+                        "crossing": hit_tc["crossing"],
+                        "cross_class": hit_tc["cross_class"],
+                        "ids": {"level": level, "class": key, "src": src_ident,
+                                "tgt": hit_tc["ident"]},
                     })
     else:
         exhausted = True
-    return pairs, stats, n_leaves, exhausted, len(keys)
+    return pairs, stats, n_frames, exhausted, len(keys), residual
 
 
 def _sibling_pairs(rdr, idx, level):
     """Divided class (pardiv1): pairs are sibling sub-parcels inside one
     parent -- sub0|sub1 and sub2|sub3 share a vertical internal edge at
     parent x = HALF; sub0|sub2 and sub1|sub3 share a horizontal one at
-    parent y = HALF. Both siblings' raw end-nodes are selected the same way
-    as a real boundary edge, but against the internal midline (HALF) instead
-    of 0/range, since the shared edge here is inside the parent frame, not
-    at its outer edge. Whole population, no sampling."""
+    parent y = HALF. Both siblings share the SAME parent frame/range (this
+    is an internal edge, not an outer frame edge crossing onto another
+    frame), so no lattice translation is needed: matching is exact equality
+    of the along-edge raw coordinate directly, greedy, each target used at
+    most once. Whole population, no sampling."""
     stats = Counter()
     pairs = []
+    residual = []
     n_leaves = 0
     sibs = [("W", "E", 0, 1), ("W", "E", 2, 3), ("S", "N", 0, 2), ("S", "N", 1, 3)]
     for bkey, blk in idx.blocks.items():
         rows = idx.leaves(bkey)
-        groups = {}
+        groups: dict = {}
         for row in rows:
             lpath, le, lb, lptype, parent, fr = row
             if lptype != 1:
@@ -278,18 +354,24 @@ def _sibling_pairs(rdr, idx, level):
                     continue
                 n_leaves += 1
                 parent_bounds = row_a[4]
-                c = _cell_dict(level, 1, "divided_pardiv1", None, parent_bounds, None, ka)
-                frame, rng = ot.model_frame(c, RANGES)  # same parent frame/range both sides
-                ends_a = [pt for lk in links_a for pt in lk["ends"]]
-                ends_b = [pt for lk in links_b for pt in lk["ends"]]
-                a_nodes = _select_edge_nodes_mid(ends_a, edge_a, HALF, EDGE_TOL_RAW)
-                b_nodes = _select_edge_nodes_mid(ends_b, edge_b, HALF, EDGE_TOL_RAW)
+                frame, rng = parent_bounds, HALF * 2  # same parent frame/range both sides
+                ends_a = [(int(p[0]), int(p[1])) for lk in links_a for p in lk["ends"]]
+                ends_b = [(int(p[0]), int(p[1])) for lk in links_b for p in lk["ends"]]
+                a_nodes = _select_edge_nodes_mid(ends_a, edge_a, HALF)
+                b_nodes = _select_edge_nodes_mid(ends_b, edge_b, HALF)
                 if not a_nodes:
                     continue
-                matched, unpaired, mismatch = _pair_nodes(
-                    a_nodes, b_nodes, edge_a, rng, rng, PAIR_TOL_RAW)
-                stats["unpaired"] += unpaired
-                stats["scale_mismatch"] += mismatch
+                ax = _along(edge_a)
+                matched, unmatched = _greedy_exact_pair(a_nodes, b_nodes, lambda p: p[ax])
+                stats["unpaired"] += len(unmatched)
+                src_ident = {"level": level, "class": "divided_pardiv1", "top": top_idx,
+                              "sub": ka, "blockset_index": blk[1], "block_index": blk[2]}
+                for s_pt in unmatched:
+                    if len(residual) < RESIDUAL_ENUM_CAP:
+                        residual.append({
+                            "source": src_ident, "edge": edge_a, "source_raw": list(s_pt),
+                            "candidate_sub": kb,
+                        })
                 for s_pt, t_pt in matched:
                     pairs.append({
                         "s_pt": s_pt, "t_pt": t_pt, "edge": edge_a,
@@ -298,15 +380,11 @@ def _sibling_pairs(rdr, idx, level):
                         "ref_cell": row_a[4],
                         "own_leaf_s": row_a[2], "own_leaf_t": row_b[2],
                         "own_rng_s": _sub_range(level, ka), "own_rng_t": _sub_range(level, kb),
+                        "cross_class": False,
                         "ids": {"level": level, "class": "divided_pardiv1",
                                 "top": top_idx, "sub_a": ka, "sub_b": kb},
                     })
-    return pairs, stats, n_leaves
-
-
-def _select_edge_nodes_mid(pts, edge, mid, tol):
-    axis = 0 if edge in ("E", "W") else 1
-    return [p for p in pts if abs(p[axis] - mid) <= tol]
+    return pairs, stats, n_leaves, residual
 
 
 def _sub_range(level, sub):
@@ -318,21 +396,23 @@ def continuity_class(rdr, idx_cache, key, level, ptype, urban):
         idx_cache[level] = rn.LeafIndex(rdr, level)
     idx = idx_cache[level]
     if key == "divided_pardiv1":
-        pairs, stats, n_leaves = _sibling_pairs(rdr, idx, level)
-        sample_rule = f"whole population ({n_leaves} parent(s) with content-bearing siblings)"
-        population = n_leaves
+        pairs, stats, n_frames, residual = _sibling_pairs(rdr, idx, level)
+        sample_rule = f"whole population ({n_frames} parent(s) with content-bearing siblings)"
+        population = n_frames
     else:
-        pairs, stats, n_leaves, exhausted, n_blocks_total = _class_pairs(
-            rdr, idx, key, level, ptype, urban)
+        pairs, stats, n_frames, exhausted, n_blocks_total, residual = _class_pairs(
+            rdr, idx, key, level, ptype, urban, CLASS_RULE, RANGES)
         sample_rule = (f"spread({min(SAMPLE_BLOCKS, n_blocks_total)} of {n_blocks_total} "
                         f"blocks, on-disc order, overlay_test.spread), leaves in index order, "
-                        f"until {MIN_PAIRS_PER_CLASS} pairs or population exhausted "
+                        f"one query per distinct frame (FrameId-deduped), until "
+                        f"{MIN_PAIRS_PER_CLASS} pairs or population exhausted "
                         f"({'exhausted' if exhausted else 'quota reached'})")
-        population = n_leaves
+        population = n_frames
 
     hyp_seps, hyp_thresh = [], []
     alt_seps = {"half": [], "double": [], "decoder_range": []}
     own_leaf_seps = [] if key == "divided_pardiv1" else None
+    cross_class_matched = cross_class_violations = 0
     for p in pairs:
         sep = score_pair(p, p["frame_s"], p["rng_s"], p["frame_t"], p["rng_t"])
         hyp_seps.append(sep)
@@ -347,13 +427,22 @@ def continuity_class(rdr, idx_cache, key, level, ptype, urban):
         if own_leaf_seps is not None:
             own_leaf_seps.append(score_pair(p, p["own_leaf_s"], p["own_rng_s"],
                                              p["own_leaf_t"], p["own_rng_t"]))
+        if p.get("cross_class"):
+            cross_class_matched += 1
 
-    over = [s for s, t in zip(hyp_seps, hyp_thresh) if s > t]
-    residual = None
-    if over:
-        examples = [{"pair_ids": p["ids"], "sep_m": round(s, 4), "threshold_m": round(t, 4)}
-                    for p, s, t in zip(pairs, hyp_seps, hyp_thresh) if s > t]
-        residual = examples[:RESIDUAL_ENUM_CAP]
+    for r in residual:
+        if r.get("cross_class"):
+            cross_class_violations += 1
+
+    matched = len(pairs)
+    violations = stats.get("unmatched", 0) + stats.get("unpaired", 0)
+    fully_enumerated = len(residual) == violations
+    if violations == 0:
+        verdict = "pass"
+    elif fully_enumerated:
+        verdict = "pass_with_residual"
+    else:
+        verdict = "fail"
 
     alt_medians = {k: (round(_median(v), 4) if v else None) for k, v in alt_seps.items()}
     if own_leaf_seps is not None:
@@ -361,21 +450,24 @@ def continuity_class(rdr, idx_cache, key, level, ptype, urban):
             round(_median(own_leaf_seps), 4) if own_leaf_seps else None)
 
     return {
-        "class": key, "level": level, "n_leaves": n_leaves, "n_pairs": len(pairs),
+        "class": key, "level": level, "n_frames": n_frames, "n_pairs": matched,
         "population": population, "sample_rule": sample_rule,
         "median_m": round(_median(hyp_seps), 4) if hyp_seps else None,
         "p90_m": round(_percentile(hyp_seps, 90), 4) if hyp_seps else None,
         "max_m": round(max(hyp_seps), 4) if hyp_seps else None,
-        "over_threshold": len(over),
-        "over_threshold_fully_enumerated": residual is not None and len(residual) == len(over),
+        "matched": matched,
+        "violations": violations,
+        "denominator": matched + violations,
+        "over_threshold_fully_enumerated": fully_enumerated,
         "residual_examples": residual,
         "outside_coverage": stats.get("outside_coverage", 0),
         "empty_slot": stats.get("empty_slot", 0),
         "neighbour_divided": stats.get("neighbour_divided", 0),
         "neighbour_decode_failed": stats.get("neighbour_decode_failed", 0),
-        "scale_mismatch": stats.get("scale_mismatch", 0),
-        "unpaired": stats.get("unpaired", 0),
+        "cross_class_split": {"matched": cross_class_matched,
+                               "violations": cross_class_violations},
         "alt_medians_m": alt_medians,
+        "verdict": verdict,
     }
 
 
@@ -384,15 +476,17 @@ def criterion2(rdr):
     results = []
     for key, level, ptype, urban in ot.POOL_CLASSES:
         results.append(continuity_class(rdr, idx_cache, key, level, ptype, urban))
-    total_over = sum(r["over_threshold"] for r in results)
-    fully_enumerated = all(r["over_threshold_fully_enumerated"] for r in results if r["over_threshold"])
-    if total_over == 0:
-        verdict = "pass"
-    elif fully_enumerated:
+    total_violations = sum(r["violations"] for r in results)
+    any_fail = any(r["verdict"] == "fail" for r in results)
+    any_residual = any(r["verdict"] == "pass_with_residual" for r in results)
+    if any_fail:
+        verdict = "fail"
+    elif any_residual:
         verdict = "pass_with_residual"
     else:
-        verdict = "fail"
-    return {"classes": results, "over_threshold_total": total_over, "verdict": verdict}
+        verdict = "pass"
+    return {"classes": results, "violations_total": total_violations,
+            "over_threshold_total": total_violations, "verdict": verdict}
 
 
 # --------------------------------------------------------------- criterion 3
@@ -532,12 +626,18 @@ def main(argv=None):
         "tool": "continuity_census",
         "reference": args.reference,
         "constants": {
-            "EDGE_TOL_RAW": EDGE_TOL_RAW, "PAIR_TOL_RAW": PAIR_TOL_RAW,
             "PASS_RAW_UNITS": PASS_RAW_UNITS, "MIN_PAIRS_PER_CLASS": MIN_PAIRS_PER_CLASS,
-            "note": "pre-stated, not tuned",
+            "RAW_PER_SLOT": rn.RAW_PER_SLOT,
+            "note": "pre-stated, not tuned; EDGE_TOL_RAW/PAIR_TOL_RAW retired 2-14 "
+                    "(exact lattice equality replaces tolerance-based selection/pairing)",
         },
         "sample_blocks": SAMPLE_BLOCKS,
         "residual_enum_cap": RESIDUAL_ENUM_CAP,
+        "residual_enum_cap_note": "brief (2-14-continuity-and-mirror-rerun.md) states 400; "
+                                   "DESIGN.md's design-agent amendment states 200 for this "
+                                   "same cap -- both exceed the measured residual with "
+                                   "margin; this run follows the brief and reports the "
+                                   "discrepancy rather than resolving it silently.",
         "criterion_2_continuity": c2,
         "criterion_3_quadrant": c3,
     }
