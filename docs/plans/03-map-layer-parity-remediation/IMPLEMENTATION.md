@@ -447,3 +447,42 @@ Concerns: (1) **content loss at cell edges** — the extractor (`osm_to_parcel_g
 
 ### Orchestrator decision after 3-07 (2026-09-24)
 The user asked that G match R. R's frame-edge mirror shows that R gives a background shape to every cell it overlaps, so G's centroid-only assignment is a defect exposed by clipping, not a new scope. Two fixers were added. **3-09** (`briefs/3-09-shape-to-every-overlapped-cell.md`) makes every existing cell and divided sub-parcel receive each shape it overlaps, at assembly time from the spool (no re-extraction), independent of `-j`. **3-10** (`briefs/3-10-name-cell-clamp.md`) fixes the root cause in `assign_to_parcel`, which clamps an out-of-span longitude into an edge cell, and drops name records outside their cell at assembly, with counts. 3-05 and 3-06 now also depend on 3-09 and 3-10, and their briefs are amended. 3-07's concern (3), the residual bridges and spikes, is re-measured by 3-09's probe.
+
+### 3-09 shape-to-every-overlapped-cell — done with concerns (3738613, Opus 5.5)
+**Built:**
+- New `kiwiw/overlap.py`, a deterministic per-level pre-pass that runs in parallel over spool chunks.
+  - A shape that reaches outside its own cell is recorded against the cells its outline passes through, plus, for polygons, the cells wholly inside it.
+  - Only existing cells receive shapes: spool cells plus the level mask fill. The rest are counted as skipped.
+  - A wholly covered interior cell gets a small ring just outside the cell, which clips to the same frame rectangle.
+  - Order within a cell: own shapes in spool order, then borrowed shapes by source `(iy, ix)` and spool index.
+- `build_alldata.py` merges borrowed shapes after mask fill, on both the C and Python paths, and records the counts in the manifest under `"overlap"`.
+- `divide.py` sub-parcels receive every shape whose clip to their sub-rectangle is non-empty.
+- `quantisation_roundtrip.py` measures borrowed shapes too.
+- New `test_overlap.py`, 7 tests.
+
+**Evidence:**
+- pytest: 504 → 511.
+- Full disc `860e78018c73…` at 2,137,628,064 B, up from 1,414,851,520. Wall time 98.7 s (was 36.7), peak RSS unchanged at about 828 MB.
+- Perth `0eecee390fc2…`, identical at `-j 1` and `-j 4`.
+- `coord_scale` PASS: 0 of 1,461,362 parcels exceed.
+- Round-trip: background 273,418,176 written, 0 failing, worst 0.49999999. The name-anchor failure is still 1 (3-10's).
+- Overlap at L0: 708,857 shapes shared, 1.91M outline cells, 1.58M interior cells, 821,967 skipped (cell absent).
+- Divided parents at L0: 544 → 564. L0 background trim: 168 → 227.
+- Crossing mirror, exact / ≤ 4 raw:
+
+  | Level | G | R |
+  |---|---|---|
+  | L8 | 81 / 100 | 88 / 96 |
+  | L6 | 91 / 98 | 90 / 95 |
+  | L4 | 92 / 99 | 100 |
+  | L2 | 95 / 99 | n/a |
+  | L0 | 99 / 99.5 (6,000 frames) | 76 / 98 |
+
+**Deviations:**
+- At 400 frames every sampled L0 frame is now a covered interior rectangle, so the L0 probe was re-run at 6,000 frames.
+- Over the line budget: about 640 lines including tests.
+
+**Concerns:**
+1. The disc is 2.14 GB against R's 1.53 GB. 3-07's one-byte step split densifies each whole-cover frame rectangle to about 130 points, and the densified vertices went from 31M to 141M. The large type-288 polygons span up to about 1.2M L0 cells. Whether R densifies whole-cover rectangles the same way is unverified.
+2. Build time is 2.7× longer.
+3. L0 edge spikes: 607 per 6,000 frames in G, against R's 9 per 400.
