@@ -382,3 +382,14 @@ Criteria 1 and 3 pass at zero violations. Criteria 2, 4 and 5 pass with residual
 9. **OPEN, minor, not a correctness bug.** `continuity_census.py`'s greedy exact-match can double-count residuals when two source nodes decode to the same global boundary point (up to 1-2 of L0_urban's 3 criterion-2 residuals). Correctly counted and enumerated either way; a future unit touching `continuity_census.py` may want to dedupe source nodes the way target nodes already are.
 10. Prior Phase 1 Carried items 1, 3, 5, 6, 7 remain with their original owners, unchanged.
 Does not declare Phase 2 closed (2-15's job).
+
+---
+
+# Phase 3 run (native coordinates, 2026-09-23)
+
+- Tool: Claude Code (Agent SDK), orchestrator model Sonnet 5
+- Session: https://claude.ai/code/session_01RexnjYaodJxiRvFV9nsAaE
+- Started: 2026-09-23
+- Scope: Phase 3 only ("Native coordinates"), under `DESIGN.md`'s Phase 3 Outcome as amended 2026-09-23 ("grounded phase gates"): `range_for` feeds both encoders and no `COORD_RANGE` constant remains; the `coord_scale` check PASSES; two builds are byte-identical at worker counts 1, 4 and 12; `pytest parser/tests` passes; zero parcels exceeding their class range; a per-vertex quantisation round-trip (lat/lon -> pixel -> lat/lon) agrees within half a pixel for every vertex written.
+- Model tier this run: Opus at medium reasoning effort for `refine`/design-reasoning dispatch; Sonnet at medium reasoning effort for build/worker/research dispatch.
+- Status: no Units list in DESIGN.md for Phase 3 and the surfaces span multiple files/encoders — `refine` dispatched.
