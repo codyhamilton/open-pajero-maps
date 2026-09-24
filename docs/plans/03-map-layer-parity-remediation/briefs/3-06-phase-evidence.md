@@ -3,7 +3,7 @@
 Consumer: the orchestrator, which records the phase verdict in `IMPLEMENTATION.md` and decides whether Phase 4 starts.
 Owned paths: new `docs/plans/03-map-layer-parity-remediation/EVIDENCE-3.json`, and the untracked build outputs `output/ALLDATA.KWI` / `output/manifest.json`. Touch no source file.
 Commits: Commit `EVIDENCE-3.json` to the current branch.
-Depends on: 3-04, 3-05.
+Depends on: 3-04, 3-05, 3-11, 3-12.
 Runs alongside: nothing.
 Budget: 6 files to read, about 150 lines to write, 40 tool turns. Past the budget, stop: commit what passes, and report `over budget` with the handoff **in your report back, not in a file** — the orchestrator owns `IMPLEMENTATION.md`.
 

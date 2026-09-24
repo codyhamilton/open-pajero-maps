@@ -3,7 +3,7 @@
 Consumer: 3-06, which verifies the phase outcome from the shas this unit hands off.
 Owned paths: none under version control. Write builds and logs only into your scratch directory. Touch no tracked file, and do not promote anything into `output/`.
 Commits: nothing to commit — this unit changes no tracked file. Report only.
-Depends on: 3-03.
+Depends on: 3-03, 3-07, 3-09, 3-10, 3-11, 3-12.
 Runs alongside: nothing (it saturates the machine).
 Budget: 3 files to read, no code to change, 30 tool turns. The wall clock is long — roughly an hour — and that is expected; the turn budget is what you count. Past the budget, stop and report `over budget` with whichever builds completed and their shas, **in your report back, not in a file**.
 
