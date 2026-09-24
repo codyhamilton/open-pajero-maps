@@ -238,22 +238,34 @@ def build_road_frame_bytes(links: list[RoadLink], bounds: BoundingBox, *,
 # Background
 # ---------------------------------------------------------------------------
 
-def _bg_mult(shape: BackgroundShape) -> tuple[int, int]:
-    """(mult, exponent): `mult_const` (>= 1) and the addl word's bits 0:2."""
-    mc = shape.mult_const if shape.mult_const >= 1 else 1
+def _mult_exp(mc: int) -> int:
+    """The addl word's bits 0:2 (a 3-bit exponent, `mult_const` in 1..128)
+    for a given `mult_const`."""
     mult_exp = 0
     mc_check = 1
     while mc_check < mc:
         mc_check <<= 1
         mult_exp += 1
-    return mc, mult_exp
+    return mult_exp
+
+
+def _bg_mult(shape: BackgroundShape) -> tuple[int, int]:
+    """(mult, exponent): the shape's base/fallback `mult_const` (>= 1, from
+    extraction, currently always 1 -- see `osm_to_parcel_geometry._make_
+    background_shape`) and the addl word's bits 0:2. `encode_background_
+    shape_records_scalar` may still write an individual piece at a larger,
+    per-piece `mult_const` when `clip.shape_pieces` proves it safe (3-11,
+    `clip._rect_mult`); that decision is made per piece, not here."""
+    mc = shape.mult_const if shape.mult_const >= 1 else 1
+    return mc, _mult_exp(mc)
 
 
 def _bg_piece_record(piece, shape: BackgroundShape, cr: int, mc: int, mult_exp: int) -> bytes:
     """One line/polygon record from one clipped piece's rounded vertices.
 
-    Every vertex is inside the clip rectangle and every step fits the signed
-    delta (`clip.shape_pieces` guarantees both), so with `mult == 1` the
+    Every vertex is inside the clip rectangle and every step is an exact
+    multiple of `mc` and fits the signed delta (`clip.shape_pieces`
+    guarantees all three -- by construction for `mc > 1`, 3-11), so the
     accumulator reproduces each vertex exactly. No vertex is clamped."""
     n_deltas = len(piece) - 1
     rec_len = 12 + n_deltas * 2
@@ -324,15 +336,16 @@ def encode_background_shape_records_scalar(shape: BackgroundShape, bounds: Bound
         raise ValueError(
             f"BackgroundShape (shape_class={shape.shape_class}) has no coords"
         )
-    mc, mult_exp = _bg_mult(shape)
+    mc, _ = _bg_mult(shape)
     fx, fy = _clip.to_raw(shape.coords, bounds, cr)
     rect = _clip.clip_rect(bounds, cr)
-    pieces = _clip.shape_pieces(fx, fy, shape.shape_class == 2, rect, mc)
-    for piece in pieces:
+    pieces = _clip.shape_pieces(fx, fy, shape.shape_class == 2, rect, mc,
+                                auto_rect_mult=True)
+    for piece, _pm in pieces:
         for v in piece:
             if not (rect[0] <= v[0] <= rect[2] and rect[1] <= v[1] <= rect[3]):
                 raise AssertionError(f"clipped vertex {v[:2]} outside {rect}")
-    return [_bg_piece_record(p, shape, cr, mc, mult_exp) for p in pieces]
+    return [_bg_piece_record(p, shape, cr, pm, _mult_exp(pm)) for p, pm in pieces]
 
 
 def encode_background_shape_bytes(shape: BackgroundShape, bounds: BoundingBox, *,

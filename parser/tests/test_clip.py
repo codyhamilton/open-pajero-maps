@@ -136,19 +136,22 @@ def test_fuzz_invariants():
 
 
 def _raw_records(recs):
-    """(start x, y, deltas) decoded from each 12+2n record (mult 1)."""
+    """(start x, y, deltas) decoded from each 12+2n record, as `background.py`
+    decodes it: `mult_const = 1 << (addl & 0x7)`, `xc += xo * mult_const`."""
     out = []
     for r in recs:
         n = ((r[2] << 8) | r[3]) & 0x7FF
         assert len(r) == 12 + 2 * n
+        addl = (r[6] << 8) | r[7]
+        mc = 1 << (addl & 0x7)
         sx, sy = (r[8] << 8) | r[9], (r[10] << 8) | r[11]
         x = (sx & 0x1FFF) + (sx >> 13) * 4096
         y = (sy & 0x1FFF) + (sy >> 13) * 4096
         pts = [(x, y)]
         for k in range(n):
             dx, dy = r[12 + 2 * k], r[13 + 2 * k]
-            x += dx - 256 if dx > 127 else dx
-            y += dy - 256 if dy > 127 else dy
+            x += (dx - 256 if dx > 127 else dx) * mc
+            y += (dy - 256 if dy > 127 else dy) * mc
             pts.append((x, y))
         out.append(pts)
     return out
@@ -172,6 +175,72 @@ def test_encoder_clips_not_clamps():
     assert all(0 <= x <= R and 0 <= y <= R for x, y in pts)
     assert set(pts) == {(4000, 4000), (R, 4000), (R, R), (4000, R)}
     assert synth.encode_background_shape_records(s, B) == recs
+
+
+def test_rect_mult_picks_largest_safe_divisor():
+    assert clip._rect_mult([(0, 0, 0), (4096, 0, 3), (4096, 4096, 3), (0, 4096, 3)],
+                           (0, 0, 4096, 4096)) == 128
+    # not a power-of-two edge length: falls back to the largest divisor that fits
+    assert clip._rect_mult([(0, 0, 0), (192, 0, 3), (192, 192, 3), (0, 192, 3)],
+                           (0, 0, 192, 192)) == 64
+    # not the rectangle (only 3 of 4 corners): no coarse mult
+    assert clip._rect_mult([(0, 0, 0), (4096, 0, 3), (4096, 4096, 3)], (0, 0, 4096, 4096)) is None
+    # a genuine 4-vertex piece that just isn't rect's corners
+    assert clip._rect_mult([(0, 0, 0), (100, 0, 3), (100, 100, 3), (0, 100, 3)],
+                           (0, 0, 4096, 4096)) is None
+
+
+def test_edge_steps_exact_multiples_and_R_example():
+    # R's own example (module docstring / brief): a 16384 edge at mult 64
+    steps = clip._edge_steps(16384, 64)
+    assert steps == [5440, 5440, 5504]
+    assert sum(steps) == 16384
+    assert all(s % 64 == 0 and s <= 127 * 64 for s in steps)
+    # fuzz: every length/mult combination sums exactly and stays in-bounds
+    rng = random.Random(11)
+    for _ in range(500):
+        mult = rng.choice([1, 2, 4, 8, 16, 32, 64, 128])
+        length = mult * rng.randint(1, 4000)
+        steps = clip._edge_steps(length, mult)
+        assert sum(steps) == length
+        assert all(0 < s <= 127 * mult and s % mult == 0 for s in steps)
+
+
+def test_encoder_whole_cell_rect_coarse_mult():
+    """3-11: a background shape whose clip is exactly the frame rectangle is
+    written at a coarse mult_const (largest power of 2 dividing coord_range),
+    not the ~33-step-per-edge mult_const=1 densification -- and decodes back
+    to the exact same rounded corners."""
+    from kiwiw.background import decode_background_frame
+    r = 4096
+    b = BoundingBox(lat_lo=-32.0, lat_hi=-31.0, lon_lo=115.0, lon_hi=116.0, coord_range=r)
+
+    def _ll(x, y):
+        return (-32.0 + y / r, 115.0 + x / r)
+
+    s = _bg([_ll(x, y) for x, y in
+             [(-50, -50), (r + 50, -50), (r + 50, r + 50), (-50, r + 50)]])
+    # before (legacy mult_const=1 path, as shape_pieces defaults without auto_rect_mult)
+    fx, fy = clip.to_raw(s.coords, b, r)
+    rect = clip.clip_rect(b, r)
+    legacy = clip.shape_pieces(fx, fy, True, rect, 1)
+    assert len(legacy) == 1
+    assert len(legacy[0]) > 125  # ~33 steps/edge x 4 + close, unoptimized
+
+    recs = synth.encode_background_shape_records_scalar(s, b)
+    assert len(recs) == 1
+    n_deltas = ((recs[0][2] << 8) | recs[0][3]) & 0x7FF
+    assert n_deltas <= 8  # coarse mult: a handful of steps, not ~130
+
+    frame = synth.build_background_frame_bytes([s], b)
+    dec = decode_background_frame(frame, b)
+    (ds,) = dec.shapes
+    assert ds.mult_const > 1
+    dfx, dfy = clip.to_raw(ds.coords, b, r)
+    pts = [(round(x), round(y)) for x, y in zip(dfx, dfy)]
+    assert set(pts[:-1]) == {(0, 0), (r, 0), (r, r), (0, r)}  # exact round-trip
+
+    assert synth.encode_background_shape_records(s, b) == recs  # C == Python
 
 
 def test_encoder_outside_and_split():

@@ -387,6 +387,26 @@ def test_bg_clip_cases_c_equals_python(case, rect):
         assert len(want) == (2 if case == "leave_reenter" else 3)
 
 
+@pytest.mark.parametrize("coord_range", [4096, 65536])
+def test_bg_whole_cell_rect_coarse_mult_c_equals_python(coord_range):
+    """3-11: a shape covering the whole frame clips to exactly the frame
+    rectangle -- C and Python must pick the same coarse mult_const and emit
+    byte-identical records, including the multi-step case (coord_range=65536,
+    mult_const=128 needs several exact-multiple steps per edge)."""
+    r = float(coord_range)
+    pts = [(-50, -50), (r + 50, -50), (r + 50, r + 50), (-50, r + 50)]
+    s = BackgroundShape(shape_class=2, type_code=9, type_label="", n_coords=len(pts),
+                        mult_const=1, underground=False, pen_up=False,
+                        coords=[(-32.0 + y / r, 115.0 + x / r) for x, y in pts])
+    b = BoundingBox(lat_lo=-32.0, lat_hi=-31.0, lon_lo=115.0, lon_hi=116.0, coord_range=coord_range)
+    want = synth.encode_background_shape_records_scalar(s, b)
+    got = cenc.bg_shape_records(s, b, r)
+    assert got == want
+    (rec,) = want
+    addl = (rec[6] << 8) | rec[7]
+    assert (1 << (addl & 0x7)) > 1  # coarser than mult_const=1
+
+
 def test_bg_clip_fuzz_c_equals_python():
     from kiwiw import clip
     rng = random.Random(307)

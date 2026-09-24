@@ -390,8 +390,116 @@ typedef struct {
     const double *R;
 } Emit;
 
+/* 3-11: `pts` (pre-densify, closed) is a whole-cell/sub-cell fill -- exactly
+ * `R`'s four corners, in some rotation -- iff true, with the largest
+ * mult_const in {128,...,1} dividing both of R's edge lengths in *mult_out
+ * (mirrors clip.py's `_rect_mult`). */
+static int rect_mult_for(const Pt *pts, int64_t n, const double *R, int64_t *mult_out) {
+    if (n != 4) return 0;
+    double cx[4] = {R[0], R[2], R[2], R[0]}, cy[4] = {R[1], R[1], R[3], R[3]};
+    int seen[4] = {0, 0, 0, 0};
+    for (int64_t i = 0; i < 4; i++) {
+        int matched = -1;
+        for (int c = 0; c < 4; c++)
+            if (pts[i].x == cx[c] && pts[i].y == cy[c]) { matched = c; break; }
+        if (matched < 0 || seen[matched]) return 0;
+        seen[matched] = 1;
+    }
+    double w = R[2] - R[0], h = R[3] - R[1];
+    if (!(w > 0.0) || !(h > 0.0)) return 0;
+    int64_t wi = (int64_t)w, hi = (int64_t)h;
+    static const int64_t cands[8] = {128, 64, 32, 16, 8, 4, 2, 1};
+    for (int i = 0; i < 8; i++)
+        if (wi % cands[i] == 0 && hi % cands[i] == 0) { *mult_out = cands[i]; return 1; }
+    *mult_out = 1;  /* unreachable: 1 always divides */
+    return 1;
+}
+
+/* Round-clean q[0..q) already built (rect path skips densify/round since its
+ * vertices are exact integers by construction); write one record at `mc`. */
+static int write_record(Emit *e, const int64_t *qx, const int64_t *qy, int64_t q,
+                        int64_t mc, int64_t mult_exp) {
+    const double *R = e->R;
+    for (int64_t i = 0; i < q; i++)
+        if ((double)qx[i] < R[0] || (double)qx[i] > R[2] ||
+            (double)qy[i] < R[1] || (double)qy[i] > R[3]) return -1;  /* Python asserts */
+    int64_t ndl = q - 1, rec_len = 12 + ndl * 2;
+    if (e->len + rec_len > e->room) { g_full = 1; return -1; }
+    uint8_t *o_ = e->out + e->len;
+    put16(o_, 0, (rec_len / 2) & 0xFFF);
+    put16(o_, 2, ndl & 0x7FF);
+    put16(o_, 4, e->tc & 0xFFFF);
+    put16(o_, 6, (mult_exp & 7) | (((e->fl & 1) ? 1 : 0) << 9) | (((e->fl & 2) ? 1 : 0) << 10));
+    put16(o_, 8, region_coord(qx[0]));
+    put16(o_, 10, region_coord(qy[0]));
+    int64_t xc = qx[0], yc = qy[0];
+    for (int64_t k = 1; k < q; k++) {
+        int64_t a = qx[k] - xc, b = qy[k] - yc;
+        int64_t dx = a / mc, dy = b / mc;
+        if ((a % mc != 0) && (a < 0)) dx--;
+        if ((b % mc != 0) && (b < 0)) dy--;
+        if (dx < -128) dx = -128; else if (dx > 127) dx = 127;
+        if (dy < -128) dy = -128; else if (dy > 127) dy = 127;
+        xc += dx * mc;
+        yc += dy * mc;
+        o_[12 + (k - 1) * 2] = (uint8_t)(dx & 0xFF);
+        o_[12 + (k - 1) * 2 + 1] = (uint8_t)(dy & 0xFF);
+    }
+    e->len += rec_len;
+    e->nrec++;
+    return 0;
+}
+
+/* 3-11: the rectangle case -- `pts` (4 corners, CCW) split into exact
+ * multiples of `mult` per edge (mirrors clip.py's `_rect_ring`/`_edge_steps`),
+ * no proportional densify, no rounding (the corners are exact integers). */
+static int emit_rect_piece(Emit *e, const Pt *pts, int64_t mult) {
+    int64_t mult_exp = 0, mcc = 1;
+    while (mcc < mult) { mcc <<= 1; mult_exp++; }
+    int64_t q = 0;
+    if (grow((void **)&g_qx, &g_cap_qx, q + 1, sizeof(int64_t))) return -1;
+    if (grow((void **)&g_qy, &g_cap_qy, q + 1, sizeof(int64_t))) return -1;
+    g_qx[q] = (int64_t)pts[0].x;
+    g_qy[q] = (int64_t)pts[0].y;
+    q++;
+    for (int64_t i = 0; i < 4; i++) {
+        int64_t ax = (int64_t)pts[i].x, ay = (int64_t)pts[i].y;
+        int64_t bx = (int64_t)pts[(i + 1) % 4].x, by = (int64_t)pts[(i + 1) % 4].y;
+        int64_t dx = bx - ax, dy = by - ay;
+        int64_t length = dx != 0 ? (dx > 0 ? dx : -dx) : (dy > 0 ? dy : -dy);
+        int64_t sx = dx > 0 ? 1 : (dx < 0 ? -1 : 0), sy = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
+        if (length > 0) {
+            /* Evenly distribute length/mult units over k = ceil(length/(127*mult))
+             * steps: k - r steps of q units, r steps of q + 1 units (mirrors
+             * clip.py's _edge_steps -- dumping the whole remainder on the last
+             * step, as a naive "k-1 equal + remainder" split would, can exceed
+             * the 127*mult per-step cap when the remainder is large). */
+            int64_t lim = 127 * mult;
+            int64_t k = (length + lim - 1) / lim;  /* ceil */
+            int64_t lu = length / mult;  /* exact: length is a multiple of mult */
+            int64_t qu = lu / k, r = lu % k;
+            int64_t x = ax, y = ay;
+            for (int64_t s = 0; s < k - 1; s++) {
+                int64_t units = qu + (s >= (k - r) ? 1 : 0);
+                x += units * mult * sx;
+                y += units * mult * sy;
+                if (grow((void **)&g_qx, &g_cap_qx, q + 1, sizeof(int64_t))) return -1;
+                if (grow((void **)&g_qy, &g_cap_qy, q + 1, sizeof(int64_t))) return -1;
+                g_qx[q] = x; g_qy[q] = y; q++;
+            }
+        }
+        if (grow((void **)&g_qx, &g_cap_qx, q + 1, sizeof(int64_t))) return -1;
+        if (grow((void **)&g_qy, &g_cap_qy, q + 1, sizeof(int64_t))) return -1;
+        g_qx[q] = bx; g_qy[q] = by; q++;
+    }
+    return write_record(e, g_qx, g_qy, q, mult, mult_exp);
+}
+
 /* densify + round/clean + write one record; 0 ok (possibly nothing), -1 fail */
 static int emit_piece(Emit *e, const Pt *pts, int64_t n) {
+    int64_t rmc;
+    if (e->closed && rect_mult_for(pts, n, e->R, &rmc))
+        return emit_rect_piece(e, pts, rmc);
     double lim = 127.0 * (double)e->mc - 1.0;
     int closed = e->closed;
     int64_t nseg = closed ? n : n - 1, nd = 0;
@@ -461,35 +569,7 @@ static int emit_piece(Emit *e, const Pt *pts, int64_t n) {
     } else if (q < 2) {
         return 0;
     }
-    const double *R = e->R;
-    for (int64_t i = 0; i < q; i++)
-        if ((double)qx[i] < R[0] || (double)qx[i] > R[2] ||
-            (double)qy[i] < R[1] || (double)qy[i] > R[3]) return -1;  /* Python asserts */
-    int64_t ndl = q - 1, rec_len = 12 + ndl * 2;
-    if (e->len + rec_len > e->room) { g_full = 1; return -1; }
-    uint8_t *o_ = e->out + e->len;
-    put16(o_, 0, (rec_len / 2) & 0xFFF);
-    put16(o_, 2, ndl & 0x7FF);
-    put16(o_, 4, e->tc & 0xFFFF);
-    put16(o_, 6, (e->mult_exp & 7) | (((e->fl & 1) ? 1 : 0) << 9) | (((e->fl & 2) ? 1 : 0) << 10));
-    put16(o_, 8, region_coord(qx[0]));
-    put16(o_, 10, region_coord(qy[0]));
-    int64_t xc = qx[0], yc = qy[0], mc = e->mc;
-    for (int64_t k = 1; k < q; k++) {
-        int64_t a = qx[k] - xc, b = qy[k] - yc;
-        int64_t dx = a / mc, dy = b / mc;
-        if ((a % mc != 0) && (a < 0)) dx--;
-        if ((b % mc != 0) && (b < 0)) dy--;
-        if (dx < -128) dx = -128; else if (dx > 127) dx = 127;
-        if (dy < -128) dy = -128; else if (dy > 127) dy = 127;
-        xc += dx * mc;
-        yc += dy * mc;
-        o_[12 + (k - 1) * 2] = (uint8_t)(dx & 0xFF);
-        o_[12 + (k - 1) * 2 + 1] = (uint8_t)(dy & 0xFF);
-    }
-    e->len += rec_len;
-    e->nrec++;
-    return 0;
+    return write_record(e, qx, qy, q, e->mc, e->mult_exp);
 }
 
 /* Clip one line/polygon (nc coords at lat[o + k*stride], lon[...]) to bd's

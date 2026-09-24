@@ -21,7 +21,11 @@ axis. Only then is every vertex rounded (half-to-even, as `latlon_to_xy`).
 
 After clipping, each piece is densified so that no rounded step exceeds the
 record's signed-8-bit delta (`127 * mult`): the encoder then writes every
-vertex exactly, with no saturating drift.
+vertex exactly, with no saturating drift. `mult` is `1` except for one
+provably-safe case (3-11, `_rect_mult`/`_rect_ring`, `shape_pieces`'s
+`auto_rect_mult`): a piece that clips to exactly `rect`'s four corners is
+split into a handful of exact-multiple edge steps at the largest `mult_const`
+that divides both of `rect`'s edges, instead of ~33 unit steps per edge.
 
 `_cenc.c` implements the same algorithm with the same float operation order;
 the two are byte-identical (`tests/test_cenc.py`). Keep them in step.
@@ -307,10 +311,81 @@ def _round_clean(pts, closed):
     return q
 
 
-def shape_pieces(fx, fy, closed: bool, rect: tuple, mult: int = 1):
-    """Clip one shape (raw floats) to `rect`; each written piece as a list of
-    `(x, y, fx, fy, kind)` -- rounded vertex, its exact pre-rounding position,
-    provenance. Rings are closed (last == first) and counter-clockwise."""
+_RECT_MULTS = (128, 64, 32, 16, 8, 4, 2, 1)
+
+
+def _rect_mult(piece, rect) -> Optional[int]:
+    """(3-11) `piece` (pre-densify) is a whole-cell/sub-cell fill -- exactly
+    `rect`'s four corners, in some rotation -- return the largest
+    `mult_const` in `{128,...,1}` that divides both of `rect`'s edge
+    lengths; else `None`. This is the only provably-exact case where a
+    coarser mult is safe: every edge length is then an exact multiple of
+    the chosen mult by construction, so `_rect_ring`'s steps are too."""
+    if len(piece) != 4:
+        return None
+    x0, y0, x1, y1 = rect
+    want = {(x0, y0), (x1, y0), (x1, y1), (x0, y1)}
+    if {(p[0], p[1]) for p in piece} != want:
+        return None
+    w, h = x1 - x0, y1 - y0
+    if not (w > 0 and h > 0):
+        return None
+    w, h = int(w), int(h)
+    for m in _RECT_MULTS:
+        if w % m == 0 and h % m == 0:
+            return m
+    return 1  # unreachable: m=1 always divides
+
+
+def _edge_steps(length: int, mult: int) -> list[int]:
+    """Split an edge of `length` (a multiple of `mult`) into `k` steps, each
+    an exact multiple of `mult` and each `<= 127 * mult`, summing exactly to
+    `length`. `k` is the fewest steps that can fit (`ceil(length / (127 *
+    mult))`); `length / mult` divided by `k` distributes as evenly as
+    possible -- `k - r` steps of `q` and `r` steps of `q + 1` (in units of
+    `mult`), never dumping a whole remainder onto one step (which, unlike
+    the simple "last step absorbs the remainder" phrasing, can exceed the
+    signed-8-bit cap when `length / mult` doesn't divide `k` near-evenly --
+    e.g. `length=454016, mult=128` needs this; R's own worked example,
+    `length=16384, mult=64` -> `[5440, 5440, 5504]`, has `r=1` so the two
+    forms agree)."""
+    if length <= 0:
+        return []
+    lim = 127 * mult
+    k = -(-length // lim)  # ceil
+    lu = length // mult  # exact: length is a multiple of mult
+    q, r = divmod(lu, k)
+    return [q * mult] * (k - r) + [(q + 1) * mult] * r
+
+
+def _rect_ring(piece, mult: int):
+    """The exact vertex sequence for a 4-corner rectangle `piece` at `mult`
+    -- corners plus exact-multiple edge steps, closed (ends on `piece[0]`
+    again), in `piece`'s own (already CCW) corner order."""
+    x0, y0 = piece[0][0], piece[0][1]
+    pts = [(x0, y0, x0, y0, CORNER)]
+    n = len(piece)
+    for i in range(n):
+        ax, ay = piece[i][0], piece[i][1]
+        bx, by = piece[(i + 1) % n][0], piece[(i + 1) % n][1]
+        dx, dy = bx - ax, by - ay
+        length = int(abs(dx)) if dx != 0 else int(abs(dy))
+        sx = 0 if dx == 0 else (1 if dx > 0 else -1)
+        sy = 0 if dy == 0 else (1 if dy > 0 else -1)
+        x, y = ax, ay
+        steps = _edge_steps(length, mult)
+        for s in steps[:-1]:
+            x += s * sx
+            y += s * sy
+            pts.append((x, y, x, y, DENSE))
+        pts.append((bx, by, bx, by, CORNER))
+    return pts
+
+
+def _raw_pieces(fx, fy, closed: bool, rect: tuple):
+    """The un-densified, un-rounded pieces `shape_pieces` clips `(fx, fy)`
+    to -- one list of `(x, y, kind)` per piece, in the frame's raw lattice
+    (before rounding, before edge densification)."""
     fx, fy = list(fx), list(fy)
     if closed:
         if len(fx) > 1 and fx[-1] == fx[0] and fy[-1] == fy[0]:
@@ -326,17 +401,38 @@ def shape_pieces(fx, fy, closed: bool, rect: tuple, mult: int = 1):
             fy = [fy[0]] + fy[:0:-1]
     x0, y0, x1, y1 = rect
     if closed and len(fx) < 3 or len(fx) < 2:
-        raw = []
-    elif all(x0 <= x <= x1 for x in fx) and all(y0 <= y <= y1 for y in fy):
-        raw = [[(fx[i], fy[i], ORIG) for i in range(len(fx))]]  # nothing to clip
-    elif closed:
-        raw = _ring_pieces(fx, fy, rect)
-    else:
-        raw = _chains(fx, fy, rect, False)[0]
-    lim = 127.0 * (mult if mult >= 1 else 1) - 1.0
+        return []
+    if all(x0 <= x <= x1 for x in fx) and all(y0 <= y <= y1 for y in fy):
+        return [[(fx[i], fy[i], ORIG) for i in range(len(fx))]]  # nothing to clip
+    if closed:
+        return _ring_pieces(fx, fy, rect)
+    return _chains(fx, fy, rect, False)[0]
+
+
+def shape_pieces(fx, fy, closed: bool, rect: tuple, mult: int = 1,
+                  auto_rect_mult: bool = False):
+    """Clip one shape (raw floats) to `rect`; each written piece as a list of
+    `(x, y, fx, fy, kind)` -- rounded vertex, its exact pre-rounding position,
+    provenance. Rings are closed (last == first) and counter-clockwise.
+
+    With `auto_rect_mult` (3-11), a piece that clips to exactly `rect`'s four
+    corners -- the provably-safe whole-cell/sub-cell fill case -- is written
+    with the largest safe `mult_const` (`_rect_mult`) using exact-multiple
+    edge steps (`_rect_ring`), never the proportional `_densify`; every other
+    piece stays at `mult`. The return value is then a list of
+    `(piece, piece_mult)` pairs instead of bare pieces."""
+    raw = _raw_pieces(fx, fy, closed, rect)
+    base_mult = mult if mult >= 1 else 1
+    lim = 127.0 * base_mult - 1.0
     out = []
     for p in raw:
-        q = _round_clean(_densify(p, closed, lim), closed)
-        if q is not None:
-            out.append(q)
+        rm = _rect_mult(p, rect) if auto_rect_mult and closed else None
+        if rm is not None:
+            q = _rect_ring(p, rm)
+        else:
+            rm = base_mult
+            q = _round_clean(_densify(p, closed, lim), closed)
+        if q is None:
+            continue
+        out.append((q, rm) if auto_rect_mult else q)
     return out
