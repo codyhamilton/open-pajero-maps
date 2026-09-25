@@ -534,3 +534,11 @@ Verification tools:
 - `coord_scale` (10–15 min) is single-process, uses a full Python `decode_parcel`, and makes a lat/lon round-trip of every vertex inside `parcel_extent`.
 
 The researcher recommended porting the scan and the chunk driver/merge to C behind one call per row range (~50 s est.), with divide kept in Python for now. That is narrower than the user's cell-range boundary decision above, which puts divide on the C side too. The design amendment settles it. Scratch is at `output/research-hotpath/` (gitignored).
+
+# Phase 3C run (build pipeline in C at the cell-range boundary, 2026-09-25)
+
+- Tool: Claude Code (Agent SDK), phase orchestrator model Opus 5.5
+- Started: 2026-09-25 (phase orchestrator, dispatched by the user's session)
+- Scope: Phase 3C only, per `DESIGN.md` as amended at b62de24 and settled at 6301d91. Phase 3's remaining units (3-10, 3-13, 3-05, 3-06) are not started.
+- Model tier this run (user-directed): Sonnet workers (`general-purpose`, `model: sonnet`) for bounded units; `opus-medium` for the hard ports (E2 range encoder, divide in C) and for `refine`. A failed unit gets one retry on the next tier, then stops.
+- Status: no Units list for Phase 3C and the work spans several stages — `refine` dispatched.
