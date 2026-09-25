@@ -591,3 +591,23 @@ The worker spent its budget on choosing candidate cells and wrote no owned-path 
 - L0 divided parents with halo (832,857), (831,860), (826,866), (2021,1070), (2017,1079).
 **Open:** none of these, nor (1974,820) (the 131,062 B frame), shows a non-zero `trimmed_items` in a windowed build, although the full-AU manifest has exactly one trimmed L0 cell. So the "divided L0 parent with trim and name halo" golden has no cell yet, and it is unclear whether trim depends on context that a window does not reproduce. That would matter for the closure proof. Interior-cover and borrowed-edge cells are not yet picked. Single-cell windowed builds took 190–199 s each on the full spool.
 Agent: 77 tool uses, ~70k final context, 19 min, across a context compaction. Before compaction it ran a serial probe loop in the foreground that stalled, against the waiting rules. Retried on `opus-medium` with this handoff.
+
+### 3C-02 c-test-scaffolding — done with concerns (c8d8f3a, Sonnet)
+**Built:**
+- `kiwiw/cbuild.py` builds `_cenc.so` and the layer (b) test binary on demand, with content-hash staleness (not mtime) and an atomic install. `cenc._load_lib` uses it; the no-compiler fallback is kept for now, since it is deleted in 3C-08/3C-12.
+- `kiwiw/ctest/test_cenc_internals.c` is the layer (b) seed: it `#include`s `_cenc.c` and tests `rect_mult_for` and the 3-11 edge-step split against hand-computed values. `tests/test_c_units.py` runs it.
+- `tests/boundary.py` and `test_boundary_helpers.py` are the layer (a) helpers. They cover the fixture spool write/read, Map Frame decode through the Python decoder, and the range, bounds, delta and frame-size invariants. They import no build module, and no helper computes an expected encoding.
+- `.gitignore` and `docs/provenance.md` have entries for the hash stamps and test binary. The worker also corrected the `_cenc.so` provenance entry's out-of-date "rebuilt when source is newer" claim.
+
+**Evidence:**
+- The new tests were missing before and pass after: 7 passed, re-run by the orchestrator in 0.65 s.
+- Rebuilds were observed as specified: touching a file without changing it causes no rebuild, a content edit rebuilds, and a revert rebuilds once and is then stable. While doing this the worker found and fixed its own bug: the test binary's hash had ignored the `_cenc.c` it includes.
+- Full suite 520 → 527 passed (942 s, under contention).
+- Perth `-j 1` `da13a775…`.
+- No build products are staged.
+
+**Deviations:** the commit's co-author trailer names "Claude Sonnet 5", not the directed trailer. It is already pushed and not rewritten.
+
+**Concerns:** `test_boundary_helpers.py` decodes from `output/scratch-3-11/perth_j1` and skips when that scratch build is absent. On a clean checkout the layer (a) helpers would be untested. 3C-03's committed fixtures should replace that source.
+
+Agent: 95 tool uses, final context ~98k tokens, 31 min.
