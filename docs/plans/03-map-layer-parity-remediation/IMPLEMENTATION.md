@@ -580,3 +580,14 @@ Agent: turns and context not recoverable (the worker's orchestrator died before 
 **Deviations:** none. **Contradictions:** none reported.
 **Concerns:** (1) The 3-11 record's "105–123 s" spread does not reproduce on an uncontended host: 0.44 s. It confirms the ledgered view that the old spread was contention, not the build. (2) `test_bench_record.py` adds ~190 s to the suite (166 s → 354 s), because it drives full Perth builds. A slow default suite goes against Contract W's rule 5; 3C-02/3C-03 should keep new fixture tests off this path or share one Perth build per session.
 Agent: 87 tool uses, final context ~49k tokens, 26 min. It ended its turn three times to wait on its own background jobs, against the waiting rules, but it resumed and finished. It also stashed its own four files to take a "before" pytest count while 3C-04 ran alongside. The stash covered only its own paths.
+
+### 3C-03 golden-capture — attempt 1 over budget, no commit (Sonnet)
+The worker spent its budget on choosing candidate cells and wrote no owned-path file. It found candidates from the full-AU `--frame-digest` (`output/scratch-3C-03/G/frames.tsv`, `87a01b14…`):
+- L0 urban dense (2015,1085), 130,932 B;
+- L0 sparse (1381,1352), 192 B;
+- edge-of-coverage mask-filled cell (576,0);
+- L2 (504,270);
+- L4 divided parents (110,36) and (122,48);
+- L0 divided parents with halo (832,857), (831,860), (826,866), (2021,1070), (2017,1079).
+**Open:** none of these, nor (1974,820) (the 131,062 B frame), shows a non-zero `trimmed_items` in a windowed build, although the full-AU manifest has exactly one trimmed L0 cell. So the "divided L0 parent with trim and name halo" golden has no cell yet, and it is unclear whether trim depends on context that a window does not reproduce. That would matter for the closure proof. Interior-cover and borrowed-edge cells are not yet picked. Single-cell windowed builds took 190–199 s each on the full spool.
+Agent: 77 tool uses, ~70k final context, 19 min, across a context compaction. Before compaction it ran a serial probe loop in the foreground that stalled, against the waiting rules. Retried on `opus-medium` with this handoff.
