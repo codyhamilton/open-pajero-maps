@@ -14,11 +14,9 @@ import time
 from array import array
 from itertools import chain
 import os
-import shutil
-import subprocess
-import tempfile
 from pathlib import Path
 
+from . import cbuild
 
 _SRC = Path(__file__).with_name("_cenc.c")
 _SO = Path(__file__).with_name("_cenc.so")
@@ -74,24 +72,6 @@ def worker_stats() -> dict:
     return {"calls": dict(_calls), "c_s": sum(c.values()), "handoff_s": sum(handoff.values())}
 
 
-def _build() -> bool:
-    cc = shutil.which("gcc") or shutil.which("cc")
-    if cc is None:
-        return False
-    fd, tmp = tempfile.mkstemp(suffix=".so", dir=str(_SO.parent))
-    os.close(fd)
-    try:
-        subprocess.run([cc, "-O2", "-ffp-contract=off", "-fPIC", "-shared", "-o", tmp,
-                        str(_SRC), "-lm"], check=True, capture_output=True)
-        os.replace(tmp, _SO)  # atomic: concurrent builders never see a partial .so
-        return True
-    except (subprocess.CalledProcessError, OSError):
-        return False
-    finally:
-        if os.path.exists(tmp):
-            os.unlink(tmp)
-
-
 def _load_lib():
     global _lib, _tried
     if _tried:
@@ -100,9 +80,12 @@ def _load_lib():
     if os.environ.get("KIWIW_NO_C"):
         return None
     try:
-        if not _SO.exists() or _SO.stat().st_mtime < _SRC.stat().st_mtime:
-            if not _build():
-                return None
+        try:
+            cbuild.build_ext()  # compiles on demand through cbuild (3C-02)
+        except cbuild.BuildError:
+            # Unchanged behaviour: no compiler / a failed build falls back
+            # to the Python oracle here (deleted only by 3C-08/3C-12).
+            return None
         lib = ctypes.CDLL(str(_SO))
         lib.kw_encode_cell.restype = ctypes.c_int64
         lib.kw_encode_cell.argtypes = [

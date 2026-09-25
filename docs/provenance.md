@@ -223,9 +223,32 @@ same commit.
 - **What**: shared library of the whole-cell Map Frame encoder (`parser/kiwiw/_cenc.c`)
   used by `build_alldata.py` (plan 03) and by `synth._bg_fast`. Pure build artifact.
 - **Source**: compiled from the committed `_cenc.c`; `kiwiw/cenc.py` builds it
-  automatically on first import (atomically, rebuilt when the source is newer).
+  automatically on first import via `kiwiw/cbuild.py` (atomically, rebuilt when a
+  content hash over the source bytes + compile flags no longer matches the stamp
+  in `_cenc.so.hash` -- not mtime, so a worktree/stash mtime skew never causes a
+  stale reuse or a spurious rebuild; see 3C-02).
   `KIWIW_NO_C=1` or a missing compiler falls back to the pure-Python path, which is the
   byte-identity oracle.
 - **Why not committed**: platform-specific compiled binary.
 - **Reproduce**: `gcc -O2 -ffp-contract=off -fPIC -shared parser/kiwiw/_cenc.c -o
   parser/kiwiw/_cenc.so -lm` (`-ffp-contract=off` is required for float parity).
+
+## `parser/kiwiw/_cenc.so.hash`, `parser/kiwiw/ctest/_ctest_bin`, `parser/kiwiw/ctest/_ctest_bin.hash`
+
+- **What**: Contract T (plan 03, 3C-02) build-product bookkeeping. `_cenc.so.hash`
+  is the content-hash stamp (source bytes + compile flags) that `kiwiw/cbuild.py`
+  uses to decide whether `_cenc.so` is stale. `ctest/_ctest_bin` is the layer (b) C
+  unit-test binary, compiled from every `parser/kiwiw/ctest/*.c` file (each
+  `#include`s the extension source(s) it exercises, so no source is compiled
+  twice and `static` internals stay testable without exporting them);
+  `_ctest_bin.hash` is its own content-hash stamp, hashed over both the `ctest/*.c`
+  files and the extension sources they `#include` (an edit to `_cenc.c` alone must
+  still invalidate the test binary even though no `ctest/*.c` file's own bytes
+  changed).
+- **Source**: built on demand by `kiwiw/cbuild.py`'s `build_ext()`/`build_test_bin()`,
+  called from `kiwiw/cenc.py` and `parser/tests/test_c_units.py` respectively.
+  Same atomic temp-file-then-`os.replace` install as `_cenc.so`; each `.hash` file
+  is written only after that rename.
+- **Why not committed**: platform-specific compiled/derived build artifacts.
+- **Reproduce**: run `parser/tests/test_c_units.py` (or import `kiwiw.cbuild` and
+  call `build_ext()`/`build_test_bin()` directly) with a C compiler on `PATH`.

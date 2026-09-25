@@ -25,3 +25,10 @@ output/
 
 # C cell encoder, built on demand from parser/kiwiw/_cenc.c (see docs/provenance.md)
 parser/kiwiw/_cenc.so
+
+# Contract-T C build products (built on demand by parser/kiwiw/cbuild.py, see
+# docs/provenance.md): the extension's content-hash stamp, and the layer (b)
+# C unit-test binary + its content-hash stamp.
+parser/kiwiw/_cenc.so.hash
+parser/kiwiw/ctest/_ctest_bin
+parser/kiwiw/ctest/_ctest_bin.hash
