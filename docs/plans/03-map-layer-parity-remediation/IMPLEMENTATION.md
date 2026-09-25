@@ -542,3 +542,6 @@ The researcher recommended porting the scan and the chunk driver/merge to C behi
 - Scope: Phase 3C only, per `DESIGN.md` as amended at b62de24 and settled at 6301d91. Phase 3's remaining units (3-10, 3-13, 3-05, 3-06) are not started.
 - Model tier this run (user-directed): Sonnet workers (`general-purpose`, `model: sonnet`) for bounded units; `opus-medium` for the hard ports (E2 range encoder, divide in C) and for `refine`. A failed unit gets one retry on the next tier, then stops.
 - Status: no Units list for Phase 3C and the work spans several stages — `refine` dispatched.
+
+### refine (Phase 3C) — proceed (87f36cc, opus-medium)
+13 units, `briefs/3C-01`…`3C-13`, Units table and refine notes in `DESIGN.md` (Phase 3C). Settled at refine and binding on the briefs: cell range = today's `_plan_chunks` row span (ARCHITECTURE's "by cell count" wording corrected at close); E1 row layout (32 B) and E1's additive overlap counters (an addition to Contract B's E1 output); E2 frame-index row (36 B) written against a caller-provided spill fd; heavy-job lock (`flock output/.heavy.lock`) serialising every full build and `-j 12` run so units may run alongside; Contract W markers `STEP … OK|FAIL`, `ALLDONE`, `ABORT`.
