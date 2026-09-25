@@ -711,6 +711,36 @@ Phase 2's final Carried items are placed as follows. **Absorbed into Phase 3:** 
 - Approach: known. The byte-exact C parity technique (`-ffp-contract=off`, `rint`, identical operation order) is already proven by `_cenc.c`, and every step has a byte-identity yardstick.
 - Depends on: Phase 3 units 3-01 to 3-04, 3-07, 3-08, 3-09 and 3-11.
 - **Downstream effect.** Phase 3 resumes after this phase (3-10, 3-13, 3-05, 3-06). Phases 4–10 name Python build modules (`synth`, `divide`) in their Surfaces lists. From this phase on, those surfaces are read as the C sources behind E1/E2, and Contract B governs where the work lands.
+- **Refine notes (2026-09-25, refine).** Settled so the briefs can be written. Each is binding on the briefs and flagged in the refine report.
+  - **Cell range.** A range is a contiguous `[lo, hi)` row span as `_plan_chunks` produces it today (weight-balanced, `jobs*64`). `docs/ARCHITECTURE.md`'s "by cell count" wording is corrected at close (3C-13). E1 runs once per encode range, over the same ranges as E2. Windowed and fixture builds still partition the whole level; the window travels in the descriptor as the output and receiver rectangle, so E1 calls = E2 calls always.
+  - **E1 row**, packed little-endian, 32 bytes: `tix i4, tiy i4, six i4, siy i4, cell_off u8` (source cell blob offset in the level `.data`), `shape u4` (index within the cell's columns), `kind u1` (0 edge, 1 interior cover), 3 pad. E1 also returns the additive overlap counters (`shared_shapes`, `edge_cells`, `interior_cells`, `skipped_missing_cells`), which E2 cannot compute additively. This is an addition to Contract B's E1 output.
+  - **E2 frame index row**, packed, 36 bytes, canonical order: `ix i4, iy i4, level u1, pt u1, sx u1, sy u1, off u8, len u4, road u4, bg u4, name u4`. E2 writes frame bytes into a caller-provided spill file descriptor at a caller-given start offset, so `off` is absolute in that file (today's `ChunkSpill` / `FrameTable` semantics).
+  - **Declined list row**: `ix i4, iy i4, reason u4, off u8, len u8`, pointing into a merged-content blob in `spool.encode_columns` format. Reason `1` = needs division, the only reason.
+  - **Goldens.** Closure is a conservative bounding-box superset: every source cell holding a shape whose lat/lon bbox meets the golden window. The capture tool has its own index and never feeds the build. Closure is proven three ways: full-build `--frame-digest`, a windowed build on the full spool, and a windowed build on the fixture spool agree byte for byte. The golden test drives `build_alldata.py --window … --frame-dump …` on the fixture spool, so it survives the port.
+  - **Deletion order.** The object (no-C) `_encode_level` path uses `overlap.py`, so it and `KIWIW_NO_C` in `cenc.py` and `build_alldata.py` are deleted in Stage 1 (3C-08), earlier than Stage 2 lists. `alldata_writer.py`'s `KIWIW_NO_C` goes in 3C-12.
+  - **E3's surface.** Today's divide calls both `kw_measure_cell` and the per-shape `kw_bg_shape` (via `cenc.bg_shape_records` in `_bg_sub_cells`). Refine reads E3 as both calls, confined to the transitional divide and removed from the build path by 3C-09.
+  - **Extractor imports.** `TileGrid` geometry, `assign_to_parcel`'s rule, `g_frame_range`, `frame_bounds` and `FIXTURE_BBOXES` get build-side homes in `kiwiw/mesh.py` or the descriptor (3C-06); `build_alldata.py` switches in 3C-08. The extractor may import from `mesh.py`.
+  - **Heavy-job lock.** Every full build and every `-j 12` timing or verification run takes `flock output/.heavy.lock`, so units may run in parallel while builds are serialised. Monitor timeouts cover the lock wait.
+  - **Contract W markers.** Briefs write `STEP <name> OK <s>` / `STEP <name> FAIL <rc> <s>`, a final `ALLDONE` (which contains `DONE`), and `ABORT` from an exit trap; the monitor matches `ALLDONE|ABORT|FAIL|Traceback`.
+- **Units.**
+
+  | Unit | Brief | Depends on | May run alongside | Tier |
+  |---|---|---|---|---|
+  | 3C-01 bench split, `--window`, `--frame-dump`, baseline | `briefs/3C-01-bench-window-baseline.md` | — | 3C-04, 3C-05 | Sonnet |
+  | 3C-02 Contract T scaffolding | `briefs/3C-02-c-test-scaffolding.md` | 3C-01 | 3C-03, 3C-04, 3C-05 | Sonnet |
+  | 3C-03 golden capture | `briefs/3C-03-golden-capture.md` | 3C-01 | 3C-02, 3C-04, 3C-05, 3C-06 | Sonnet |
+  | 3C-04 `quantisation_roundtrip` redesign | `briefs/3C-04-roundtrip-redesign.md` | — | 3C-01 to 3C-03, 3C-05 to 3C-07 | Sonnet |
+  | 3C-05 `coord_scale` parallel and raw | `briefs/3C-05-coord-scale-parallel.md` | — | 3C-01 to 3C-04, 3C-06, 3C-07 | Sonnet |
+  | 3C-06 level descriptor and E1 | `briefs/3C-06-descriptor-e1.md` | 3C-02 | 3C-03, 3C-04, 3C-05 | opus-medium |
+  | 3C-07 E2 Stage 1 kernel | `briefs/3C-07-e2-stage1-kernel.md` | 3C-06, 3C-03 | 3C-04, 3C-05 | opus-medium |
+  | 3C-08 wire E1/E2; delete overlap and the per-cell path | `briefs/3C-08-wire-e1-e2.md` | 3C-07, 3C-04, 3C-03 | — | opus-medium |
+  | 3C-09 division, retile, trim, halo into E2; delete divide and E3 | `briefs/3C-09-division-into-e2.md` | 3C-08 | — | opus-medium |
+  | 3C-10 harness and writer tests off `synth` | `briefs/3C-10-harness-tests-off-synth.md` | 3C-09 | 3C-11 | Sonnet |
+  | 3C-11 H4 vectorised indexed assembly | `briefs/3C-11-indexed-assembly-h4.md` | 3C-09 | 3C-10 | opus-medium |
+  | 3C-12 delete `synth` encoders, `clip`, `kw_bg_shape`, last `KIWIW_NO_C` | `briefs/3C-12-python-encoder-deletion.md` | 3C-10, 3C-11 | — | Sonnet |
+  | 3C-13 close | `briefs/3C-13-close.md` | 3C-01 to 3C-12 | — | Sonnet |
+
+  "May run alongside" assumes the heavy-job lock: parallel units never run full builds or `-j 12` checks at the same time. 3C-02 and 3C-03 both append to `docs/provenance.md`, each its own entry, rebased not overwritten.
 
 ### Phase 4 — Header words and per-sub-frame size cap
 
