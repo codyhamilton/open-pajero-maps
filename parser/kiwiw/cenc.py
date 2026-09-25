@@ -10,6 +10,7 @@ returns None and the caller re-runs the Python path for that cell.
 from __future__ import annotations
 
 import ctypes
+import time
 from array import array
 from itertools import chain
 import os
@@ -25,6 +26,52 @@ _OUT_CAP = 0x20000
 _NO_LIMIT = (1 << 62)
 _lib = None
 _tried = False
+
+# 3C-01 bench instrumentation: process-local call counters and wrapper (ctypes
+# marshalling) wall time for the legacy per-cell entry points, named so E1/E2
+# counts (`e1`, `e2`) slot in alongside them later. Off by default -- only
+# `build_alldata.py --bench` pays the per-call timing overhead (set_bench()).
+_CALL_NAMES = ("kw_encode_cell", "kw_measure_cell", "kw_bg_shape")
+_BENCH = False
+_calls: dict[str, int] = {n: 0 for n in _CALL_NAMES}
+_wrap_ns: dict[str, float] = {n: 0.0 for n in _CALL_NAMES}
+
+
+def set_bench(on: bool) -> None:
+    """Enable/disable per-call wrapper timing (`--bench`). With `on=False`
+    neither the counters nor the timers move, so an un-benched build pays no
+    extra cost."""
+    global _BENCH
+    _BENCH = on
+
+
+def reset_worker_stats() -> None:
+    """Zero this process's call counters and the C-side time accumulators
+    (3C-01). Called once per chunk so `worker_stats()` reports that chunk's
+    share only."""
+    global _calls, _wrap_ns
+    _calls = {n: 0 for n in _CALL_NAMES}
+    _wrap_ns = {n: 0.0 for n in _CALL_NAMES}
+    lib = _load_lib()
+    if lib is not None:
+        buf = (ctypes.c_double * 3)()
+        lib.kw_get_reset_c_times(buf)  # discard: reset only
+
+
+def worker_stats() -> dict:
+    """This process's `kw_encode_cell`/`kw_measure_cell`/`kw_bg_shape` call
+    counts and C/handoff time split since the last `reset_worker_stats()`
+    (Contract H: C time is the C-side entry-point timer; handoff is wrapper
+    time outside C). Python time is the caller's to compute (chunk wall minus
+    `c_s` minus `handoff_s`)."""
+    lib = _load_lib()
+    c = {n: 0.0 for n in _CALL_NAMES}
+    if lib is not None:
+        buf = (ctypes.c_double * 3)()
+        lib.kw_get_reset_c_times(buf)
+        c = {"kw_encode_cell": buf[0], "kw_measure_cell": buf[1], "kw_bg_shape": buf[2]}
+    handoff = {n: max(0.0, _wrap_ns[n] / 1e9 - c[n]) for n in _CALL_NAMES}
+    return {"calls": dict(_calls), "c_s": sum(c.values()), "handoff_s": sum(handoff.values())}
 
 
 def _build() -> bool:
@@ -79,6 +126,8 @@ def _load_lib():
         lib.kw_write_rows.argtypes = [
             ctypes.c_int, ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p,
             ctypes.c_int64, ctypes.c_int64]
+        lib.kw_get_reset_c_times.restype = None
+        lib.kw_get_reset_c_times.argtypes = [ctypes.POINTER(ctypes.c_double)]
         _lib = lib
     except OSError:
         _lib = None
@@ -102,8 +151,15 @@ class CellEncoder:
                coord_range: int) -> bytes | None:
         """`coord_range`: the cell frame's coordinate range (`range_for`);
         the kernel converts every vertex from lat/lon at it."""
-        n = self._fn(raw, len(raw) if raw else 0, self._level, ix, iy, self._grid,
-                     self._threshold, self._lim, self._addr, float(coord_range))
+        if _BENCH:
+            t0 = time.perf_counter_ns()
+            n = self._fn(raw, len(raw) if raw else 0, self._level, ix, iy, self._grid,
+                         self._threshold, self._lim, self._addr, float(coord_range))
+            _wrap_ns["kw_encode_cell"] += time.perf_counter_ns() - t0
+            _calls["kw_encode_cell"] += 1
+        else:
+            n = self._fn(raw, len(raw) if raw else 0, self._level, ix, iy, self._grid,
+                         self._threshold, self._lim, self._addr, float(coord_range))
         return None if n < 0 else ctypes.string_at(self._addr, n)
 
 
@@ -144,6 +200,7 @@ def bg_shape_records(shape, bounds, coord_range: int) -> list[bytes] | None:
     b4 = array("d", (bounds.lat_lo, bounds.lat_hi, bounds.lon_lo, bounds.lon_hi))
     rect = _rect4(bounds)
     flags = (1 if shape.underground else 0) | (2 if shape.pen_up else 0)
+    t0 = time.perf_counter_ns() if _BENCH else 0
     while True:
         n = _bg_fn(flat.buffer_info()[0], len(coords), shape.mult_const, shape.type_code,
                    flags, 1 if shape.shape_class == 2 else 0, b4.buffer_info()[0],
@@ -153,6 +210,9 @@ def bg_shape_records(shape, bounds, coord_range: int) -> list[bytes] | None:
             break
         _bg_room <<= 2
         _bg_out = ctypes.create_string_buffer(_bg_room)
+    if _BENCH:
+        _wrap_ns["kw_bg_shape"] += time.perf_counter_ns() - t0
+        _calls["kw_bg_shape"] += 1
     if n < 0:
         return None
     raw = ctypes.string_at(ctypes.addressof(_bg_out), n)
@@ -199,8 +259,15 @@ def measure_content(level: int, ix: int, iy: int, bounds, content: dict, *,
     except (AttributeError, TypeError, ValueError, UnicodeError):
         return None
     b4 = (ctypes.c_double * 4)(bounds.lat_lo, bounds.lat_hi, bounds.lon_lo, bounds.lon_hi)
-    n = _m_fn(raw, len(raw), level, ix, iy, ctypes.addressof(b4), _rect4(bounds),
-              _m_addr_sizes(), _m_addr, float(cr))
+    if _BENCH:
+        t0 = time.perf_counter_ns()
+        n = _m_fn(raw, len(raw), level, ix, iy, ctypes.addressof(b4), _rect4(bounds),
+                  _m_addr_sizes(), _m_addr, float(cr))
+        _wrap_ns["kw_measure_cell"] += time.perf_counter_ns() - t0
+        _calls["kw_measure_cell"] += 1
+    else:
+        n = _m_fn(raw, len(raw), level, ix, iy, ctypes.addressof(b4), _rect4(bounds),
+                  _m_addr_sizes(), _m_addr, float(cr))
     if n < 0:
         return None
     return (ctypes.string_at(_m_addr, n),

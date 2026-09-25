@@ -244,10 +244,19 @@ def _merge_stats(dst: dict, src: dict) -> None:
             dst[k] = dst.get(k, 0) + v
 
 
+def _combined_cell_range(level, fixture, tile_grid, window_rect):
+    """`--window`'s cell rectangle takes precedence over `--fixture`'s (the
+    two are not used together); either narrows which cells are read, mask-
+    filled and emitted -- planning only, per Contract B (3C-01)."""
+    if window_rect is not None:
+        return window_rect
+    return _fixture_cell_range(level, fixture, tile_grid) if fixture else None
+
+
 def _level_frames(level: int, reader: SpoolReader, fixture: str | None,
                   threshold_bytes: int, mask, kind_limits, trim_stats, name_halo: bool,
                   row_range: tuple[int | None, int | None] = (None, None),
-                  overlap_dir: str | None = None):
+                  overlap_dir: str | None = None, window_rect=None):
     """Yield `(ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes)` for the
     cells of `level` whose row `iy` lies in `row_range` (`[lo, hi)`, `None` =
     unbounded), in canonical order. Rows partition the `(iy, ix)` stream, so
@@ -259,7 +268,7 @@ def _level_frames(level: int, reader: SpoolReader, fixture: str | None,
     overlap it appended (3-09) before it is counted and encoded."""
     row_lo, row_hi = row_range
     tile_grid = TileGrid.from_reference(level)
-    cell_range = _fixture_cell_range(level, fixture, tile_grid) if fixture else None
+    cell_range = _combined_cell_range(level, fixture, tile_grid, window_rect)
     a, b = reader.row_bounds(level, row_lo, row_hi)
 
     def _in_fixture(ix, iy):
@@ -363,15 +372,15 @@ def _level_rect(mask, level, cell_range):
 _EMPTY_CELL_WEIGHT = 512
 
 
-def _plan_chunks(reader: SpoolReader, level: int, fixture, mask, n_chunks: int
-                 ) -> list[tuple[int | None, int | None]]:
+def _plan_chunks(reader: SpoolReader, level: int, fixture, mask, n_chunks: int,
+                 window_rect=None) -> list[tuple[int | None, int | None]]:
     """Split the level's row space into <= `n_chunks` weight-balanced `[lo, hi)`
     row ranges (first lo / last hi unbounded). Any partition yields identical
     output; this only balances work."""
     import numpy as np
     iy, length = reader.cell_weights(level)
-    rect = _level_rect(mask, level, _fixture_cell_range(level, fixture, TileGrid.from_reference(level))
-                       if fixture else None)
+    rect = _level_rect(mask, level, _combined_cell_range(
+        level, fixture, TileGrid.from_reference(level), window_rect))
     r_lo = int(iy[0]) if len(iy) else 0
     r_hi = int(iy[-1]) if len(iy) else -1
     if rect is not None and rect[0] <= rect[1] and rect[2] <= rect[3]:
@@ -407,13 +416,14 @@ _WORKER: dict = {}
 def _chunk_worker(job):
     """Process-pool entry: encode one row range; return its frames + counters."""
     (spool_dir, level, fixture, threshold_bytes, mask, kind_limits, name_halo, rows,
-     overlap_dir) = job
+     overlap_dir, window_rect) = job
     reader = _WORKER.get(spool_dir)
     if reader is None:
         reader = _WORKER[spool_dir] = SpoolReader(spool_dir)
     stats: dict = {}
     frames = list(_level_frames(level, reader, fixture, threshold_bytes, mask,
-                                kind_limits, stats, name_halo, rows, overlap_dir))
+                                kind_limits, stats, name_halo, rows, overlap_dir,
+                                window_rect=window_rect))
     return frames, stats
 
 
@@ -423,11 +433,14 @@ _SPILL: dict = {}
 def _encode_chunk(job):
     """Encode one row range straight into this process's spill file.
 
-    Returns `(spill_path, rec, stats, digest_lines)`: `rec` is a
-    `frame_table.FRAME_DTYPE` array (one row per frame, stream order), so no
-    frame bytes or per-frame objects are pickled back to the parent."""
+    Returns `(spill_path, rec, stats, digest_lines, bench, dump_recs)`: `rec`
+    is a `frame_table.FRAME_DTYPE` array (one row per frame, stream order), so
+    no frame bytes or per-frame objects are pickled back to the parent unless
+    `want_dump` (3C-01 `--frame-dump`, small windowed captures only). `bench`
+    is this chunk's `{py_s, c_s, handoff_s, calls}` (3C-01 `--bench`), or None
+    when not requested -- an un-benched build pays no extra timing cost."""
     (spool_dir, level, fixture, threshold_bytes, mask, kind_limits, name_halo, rows,
-     spill_dir, want_digest, overlap_dir) = job
+     spill_dir, want_digest, overlap_dir, window_rect, want_bench, want_dump) = job
     reader = _WORKER.get(spool_dir)
     if reader is None:
         reader = _WORKER[spool_dir] = SpoolReader(spool_dir)
@@ -440,39 +453,66 @@ def _encode_chunk(job):
                                           array("B"), array("B"), array("I"))
     parts: list[bytes] = []
     lines: list[str] | None = [] if want_digest else None
+    dump_recs: list[tuple] | None = [] if want_dump else None
+    cenc.set_bench(want_bench)
+    if want_bench:
+        cenc.reset_worker_stats()
+    t0 = time.perf_counter()
     for ix, iy, pt, sx, sy, fb in _level_frames(level, reader, fixture, threshold_bytes, mask,
                                                 kind_limits, stats, name_halo, rows,
-                                                overlap_dir):
+                                                overlap_dir, window_rect=window_rect):
         ix_a.append(ix); iy_a.append(iy); pt_a.append(pt)
         sx_a.append(sx); sy_a.append(sy); ln_a.append(len(fb))
         parts.append(fb)
         if lines is not None:
             lines.append(f"{level} {ix} {iy} {pt} {sx} {sy} {len(fb)} "
                          f"{hashlib.sha256(fb).hexdigest()}\n")
+        if dump_recs is not None:
+            dump_recs.append((ix, iy, pt, sx, sy, fb))
+    bench = None
+    if want_bench:
+        wall = time.perf_counter() - t0
+        ws = cenc.worker_stats()
+        py_s = max(0.0, wall - ws["c_s"] - ws["handoff_s"])
+        bench = {"py_s": py_s, "c_s": ws["c_s"], "handoff_s": ws["handoff_s"],
+                 "calls": ws["calls"]}
     rec = np.zeros(len(ln_a), ft.FRAME_DTYPE)
     rec["ix"], rec["iy"], rec["pt"] = ix_a, iy_a, pt_a
     rec["sx"], rec["sy"], rec["len"] = sx_a, sy_a, ln_a
     base = spill.append(b"".join(parts))
     rec["off"] = base + np.cumsum(rec["len"], dtype=np.uint64) - rec["len"]
-    return spill.path, rec, stats, lines
+    return spill.path, rec, stats, lines, bench, dump_recs
+
+
+def _merge_bench(dst: dict, src: dict) -> None:
+    dst["py_s"] = dst.get("py_s", 0.0) + src["py_s"]
+    dst["c_s"] = dst.get("c_s", 0.0) + src["c_s"]
+    dst["handoff_s"] = dst.get("handoff_s", 0.0) + src["handoff_s"]
+    calls = dst.setdefault("calls", {})
+    for k, v in src["calls"].items():
+        calls[k] = calls.get(k, 0) + v
 
 
 def _encode_level_indexed(level: int, reader: SpoolReader, fixture, threshold_bytes: int,
                           mask, kind_limits, trim_stats: dict, name_halo: bool,
                           spill_dir: str, digest_fh=None, pool=None, jobs: int = 1,
-                          overlap_dir: str | None = None):
+                          overlap_dir: str | None = None, window_rect=None,
+                          bench: bool = False, dump=None):
     """`_encode_level` for the indexed assembly path: returns
-    `(FrameTable, n_parcels, total_frame_bytes, n_divided_parents, max_frame)`.
-    Chunks are submitted heaviest-first (LPT scheduling) and consumed in row
-    order, so output and counters equal the serial run for any `jobs`."""
+    `(FrameTable, n_parcels, total_frame_bytes, n_divided_parents, max_frame,
+    level_bench)`. Chunks are submitted heaviest-first (LPT scheduling) and
+    consumed in row order, so output and counters equal the serial run for
+    any `jobs`. `level_bench` is `{py_s, c_s, handoff_s, calls, ranges,
+    workers}` summed over this level's chunks, or None without `bench`."""
     if pool is not None and jobs > 1:
-        chunks = _plan_chunks(reader, level, fixture, mask, jobs * 64)
+        chunks = _plan_chunks(reader, level, fixture, mask, jobs * 64, window_rect=window_rect)
     else:
         chunks = [(None, None)]
 
     def _job(rows):
         return (str(reader.spool_dir), level, fixture, threshold_bytes, mask, kind_limits,
-                name_halo, rows, spill_dir, digest_fh is not None, overlap_dir)
+                name_halo, rows, spill_dir, digest_fh is not None, overlap_dir, window_rect,
+                bench, dump is not None)
 
     if len(chunks) > 1:
         weights = _chunk_weights(reader, level, chunks)
@@ -484,11 +524,20 @@ def _encode_level_indexed(level: int, reader: SpoolReader, fixture, threshold_by
         results = iter([_encode_chunk(_job(chunks[0]))])
 
     tables = []
-    for path, rec, st, lines in results:
+    level_bench = {"py_s": 0.0, "c_s": 0.0, "handoff_s": 0.0, "calls": {}} if bench else None
+    for path, rec, st, lines, chunk_bench, dump_recs in results:
         tables.append((path, rec))
         if digest_fh is not None:
             digest_fh.writelines(lines)
+        if dump is not None and dump_recs:
+            for ix, iy, pt, sx, sy, fb in dump_recs:
+                dump.write(level, ix, iy, pt, sx, sy, fb)
+        if level_bench is not None and chunk_bench is not None:
+            _merge_bench(level_bench, chunk_bench)
         _merge_stats(trim_stats, st)
+    if level_bench is not None:
+        level_bench["ranges"] = len(chunks)
+        level_bench["workers"] = jobs if (pool is not None and jobs > 1) else 1
     table = ft.merge_tables(tables)
     rec = table.rec
     n_parcels = len(rec)
@@ -496,7 +545,7 @@ def _encode_level_indexed(level: int, reader: SpoolReader, fixture, threshold_by
     div = rec[rec["pt"] != 0]
     n_div_parents = len(np.unique((div["ix"].astype(np.int64) << 32) | div["iy"].astype(np.int64))) if len(div) else 0
     max_frame = int(rec["len"].max()) if n_parcels else 0
-    return table, n_parcels, n_bytes, n_div_parents, max_frame
+    return table, n_parcels, n_bytes, n_div_parents, max_frame, level_bench
 
 
 def _chunk_weights(reader: SpoolReader, level: int, chunks) -> list[float]:
@@ -564,7 +613,7 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
                     return
                 pending.append(pool.apply_async(_chunk_worker, ((
                     str(reader.spool_dir), level, fixture, threshold_bytes, mask,
-                    kind_limits, name_halo, rows, overlap_dir),)))
+                    kind_limits, name_halo, rows, overlap_dir, None),)))
         _fill()
         while pending:
             frames, st = pending.popleft().get()
@@ -595,12 +644,58 @@ def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
     return out, divided_out, n_parcels, n_bytes
 
 
+class FrameDump:
+    """`--frame-dump PATH` (3C-01): appends every emitted frame's bytes to
+    `PATH.bin` and an index row to `PATH.tsv` (`level ix iy parcel_type
+    sub_ix sub_iy offset len sha256`), in the build's canonical frame order.
+    Planning/IO only -- no build logic."""
+
+    def __init__(self, path_prefix: str):
+        self._bin = open(path_prefix + ".bin", "ab")
+        self._tsv = open(path_prefix + ".tsv", "w")
+        self._off = 0
+
+    def write(self, level: int, ix: int, iy: int, parcel_type: int,
+              sub_ix: int, sub_iy: int, frame_bytes: bytes) -> None:
+        self._bin.write(frame_bytes)
+        n = len(frame_bytes)
+        self._tsv.write(
+            f"{level}\t{ix}\t{iy}\t{parcel_type}\t{sub_ix}\t{sub_iy}\t"
+            f"{self._off}\t{n}\t{hashlib.sha256(frame_bytes).hexdigest()}\n")
+        self._off += n
+
+    def close(self) -> None:
+        self._bin.close()
+        self._tsv.close()
+
+
 def run(spool_dir: str, out_path: str, levels: list[int],
         fixture: str | None, disk_title: str, fill_mask: bool = False,
-        frame_digest: str | None = None, workers: int = 1) -> int:
+        frame_digest: str | None = None, workers: int = 1,
+        window: tuple[int, int, int, int, int] | None = None,
+        bench_path: str | None = None, frame_dump: str | None = None) -> int:
+    """`window`: `(level, ix0, iy0, ix1, iy1)`, a half-open `[ix0,ix1) x
+    [iy0,iy1)` cell rectangle (3C-01) -- restricts the build to that one
+    level and emits frames only for cells inside it (planning, not build
+    logic: it only narrows which cells are emitted; source shapes still come
+    from the whole level's spool, so borrowed edge shapes from outside the
+    window still arrive). `bench_path`/`frame_dump` are the `--bench` and
+    `--frame-dump` outputs."""
+    t_start = time.monotonic()
     if not os.path.isdir(spool_dir):
         print(f"ERROR: spool directory not found: {spool_dir}", file=sys.stderr)
         return 1
+
+    window_rect = None
+    if window is not None:
+        win_level, ix0, iy0, ix1, iy1 = window
+        if ix1 <= ix0 or iy1 <= iy0:
+            print("ERROR: --window is empty (IX1 <= IX0 or IY1 <= IY0)", file=sys.stderr)
+            return 1
+        levels = [win_level]
+        window_rect = (ix0, ix1 - 1, iy0, iy1 - 1)  # half-open -> inclusive
+
+    dump = FrameDump(frame_dump) if frame_dump else None
 
     reader = SpoolReader(spool_dir)
     mask = load_parcel_mask() if fill_mask else None
@@ -611,6 +706,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     trimmed_items: dict[str, dict] = {}
     halo_names: dict[str, int] = {}
     overlap_stats: dict[str, dict] = {}
+    bench_levels: dict[str, dict] = {}
 
     spool_stats = {lvl: reader.stats(lvl) for lvl in levels}
     # Optional per-frame digest listing (plan 02): localizes a byte mismatch to a
@@ -646,23 +742,33 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         threshold_bytes = thresholds.get(level, U16_MAPFRAME_BYTE_CEILING)
         trim_stats: dict = {}
         # 3-09: every existing cell a background shape overlaps receives it.
+        # `--window` narrows only which cells are *emitted* (below); the overlap
+        # pre-pass keeps scanning the whole level so borrowed edge shapes from
+        # outside the window still arrive at cells inside it.
         t_ov = time.monotonic()
-        window = _fixture_cell_range(level, fixture, TileGrid.from_reference(level)) \
-            if fixture else None
+        ov_window = _combined_cell_range(level, fixture, TileGrid.from_reference(level), None)
         overlap_dir, ov_stats = overlap.build_level(
             spool_dir, level, spill_dir, mask_rect=(mask or {}).get(level), pool=pool,
-            jobs=workers, window=window)
+            jobs=workers, window=ov_window)
         overlap_stats[str(level)] = ov_stats
+        prepass_s = time.monotonic() - t_ov
         print(f"level {level}: overlap: {ov_stats['shared_shapes']:,} shapes shared into "
               f"{ov_stats['edge_cells']:,} edge + {ov_stats['interior_cells']:,} interior "
               f"cells, {ov_stats['skipped_missing_cells']:,} overlapped cells skipped "
-              f"(not emitted) [{time.monotonic() - t_ov:.1f}s]", flush=True)
+              f"(not emitted) [{prepass_s:.1f}s]", flush=True)
         if indexed:
-            table, n_parcels, n_bytes, n_div_parents, max_frame = _encode_level_indexed(
-                level, reader, fixture, threshold_bytes, mask, kind_budgets.get(level) or None,
-                trim_stats, (level in NAME_HALO_LEVELS), spill_dir, digest_fh=digest_fh,
-                pool=pool, jobs=workers, overlap_dir=overlap_dir)
+            table, n_parcels, n_bytes, n_div_parents, max_frame, level_bench = \
+                _encode_level_indexed(
+                    level, reader, fixture, threshold_bytes, mask,
+                    kind_budgets.get(level) or None, trim_stats,
+                    (level in NAME_HALO_LEVELS), spill_dir, digest_fh=digest_fh,
+                    pool=pool, jobs=workers, overlap_dir=overlap_dir,
+                    window_rect=window_rect, bench=bench_path is not None, dump=dump)
             table_files += table.files
+            if level_bench is not None:
+                level_bench["wall_s"] = time.monotonic() - t_level
+                level_bench["prepass_s"] = prepass_s
+                bench_levels[str(level)] = level_bench
         else:
             parcels, divided_parcels, n_parcels, n_bytes = _encode_level(
                 level, grid, reader, fixture, threshold_bytes, mask=mask,
@@ -750,6 +856,21 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         json.dump(manifest, fh, indent=2)
     print(f"wrote {manifest_path}", flush=True)
 
+    if dump is not None:
+        dump.close()
+
+    if bench_path is not None:
+        wall_s = time.monotonic() - t_start
+        bench_record = {
+            "wall_s": wall_s,
+            "outside_encode_s": wall_s - sum(
+                lv.get("wall_s", 0.0) for lv in bench_levels.values()),
+            "levels": bench_levels,
+        }
+        with open(bench_path, "w") as fh:
+            json.dump(bench_record, fh, indent=2)
+        print(f"wrote {bench_path}", flush=True)
+
     return 0
 
 
@@ -778,12 +899,28 @@ def main() -> int:
     ap.add_argument("--frame-digest", default=None, metavar="PATH",
                      help="Write a per-frame sha256 listing (level ix iy parcel_type "
                           "sub_ix sub_iy len sha256) for byte-diff localization")
+    ap.add_argument("--bench", default=None, metavar="PATH",
+                     help="Write a Contract H bench record (JSON: per-level "
+                          "wall/prepass/py/c/handoff/ranges/workers/calls, plus "
+                          "top-level wall and outside_encode_s) (3C-01)")
+    ap.add_argument("--window", type=int, nargs=5, default=None,
+                     metavar=("LEVEL", "IX0", "IY0", "IX1", "IY1"),
+                     help="Restrict the build to one level and emit frames only for "
+                          "cells inside this half-open [IX0,IX1) x [IY0,IY1) cell "
+                          "rectangle; source shapes still come from the whole level's "
+                          "spool (3C-01)")
+    ap.add_argument("--frame-dump", default=None, metavar="PATH",
+                     help="Write every emitted frame's bytes to PATH.bin and an index "
+                          "PATH.tsv (level ix iy parcel_type sub_ix sub_iy offset len "
+                          "sha256), in canonical frame order (3C-01)")
     args = ap.parse_args()
 
+    window = tuple(args.window) if args.window is not None else None
     return run(spool_dir=args.spool, out_path=args.out, levels=args.levels,
                fixture=args.fixture, disk_title=args.disk_title,
                fill_mask=not args.no_fill_mask,
-               frame_digest=args.frame_digest, workers=args.workers)
+               frame_digest=args.frame_digest, workers=args.workers,
+               window=window, bench_path=args.bench, frame_dump=args.frame_dump)
 
 
 if __name__ == "__main__":

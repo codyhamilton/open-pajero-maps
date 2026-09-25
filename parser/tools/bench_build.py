@@ -64,6 +64,22 @@ def main() -> int:
     if a.out:
         with open(a.out, "w") as fh:
             json.dump(rec, fh, indent=2)
+    # 3C-01: if the wrapped command wrote its own Contract H bench record
+    # (`--bench PATH` among its args), merge this process tree's wall time
+    # and peak RSS into that same file rather than only into --out, so a
+    # bench record is self-contained for anyone reading it without --out.
+    if "--bench" in cmd:
+        bpath = cmd[cmd.index("--bench") + 1]
+        try:
+            with open(bpath) as fh:
+                bench = json.load(fh)
+        except (OSError, ValueError):
+            bench = None
+        if bench is not None:
+            bench["wall_s_tree"] = rec["wall_s"]
+            bench["peak_rss_tree_mb"] = rec["peak_rss_tree_mb"]
+            with open(bpath, "w") as fh:
+                json.dump(bench, fh, indent=2)
     return proc.returncode
 
 

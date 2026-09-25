@@ -22,10 +22,32 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #define SUB_CAP 0x20000 /* sub-frame scratch capacity (> 131070 ceiling) */
 #define MAX_FRAME 131070
+
+/* 3C-01: per-entry-point C-time accumulators (process-static; a fork worker
+ * gets its own copy). Read and zeroed by kw_get_reset_c_times(). Never
+ * exported to the manifest -- bench record only. */
+static double g_c_ns_encode = 0.0, g_c_ns_measure = 0.0, g_c_ns_bg = 0.0;
+
+static inline double now_ns(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec * 1e9 + (double)ts.tv_nsec;
+}
+
+/* out3[0]=kw_encode_cell seconds, out3[1]=kw_measure_cell seconds,
+ * out3[2]=kw_bg_shape seconds, accumulated since the previous call (or
+ * process start); each accumulator is reset to 0 after reading. */
+void kw_get_reset_c_times(double *out3) {
+    out3[0] = g_c_ns_encode / 1e9;
+    out3[1] = g_c_ns_measure / 1e9;
+    out3[2] = g_c_ns_bg / 1e9;
+    g_c_ns_encode = g_c_ns_measure = g_c_ns_bg = 0.0;
+}
 
 enum { K_NR, K_NN, K_NP, K_NB, K_NC, K_NS, K_BL, K_NL, K_NT, N_KEYS };
 
@@ -690,11 +712,13 @@ static int64_t bg_shape(const uint8_t *lat, const uint8_t *lon, int64_t o, int64
 int64_t kw_bg_shape(const double *latlon, int64_t n, int64_t mult, int64_t type_code,
                     int64_t flags, int closed, const double *b4, const double *rect4,
                     uint8_t *out, int64_t room, double coord_range, int64_t *nrec) {
+    double t0 = now_ns();
     Bounds bd = {b4[0], b4[1], b4[2], b4[3], coord_range, coord_range,
                  {0.0, 0.0, coord_range, coord_range}};
     if (rect4) memcpy(bd.rect, rect4, sizeof bd.rect);
     int64_t r = bg_shape((const uint8_t *)latlon, (const uint8_t *)(latlon + 1), 0, 2, n,
                          closed, mult, type_code, flags, &bd, out, room, nrec);
+    g_c_ns_bg += now_ns() - t0;
     return r < 0 && g_full ? -2 : r;
 }
 
@@ -1016,16 +1040,22 @@ static int64_t encode_common(const uint8_t *rec, int64_t rec_len, int level, int
 int64_t kw_encode_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
                        int64_t iy, const double *grid, int64_t threshold,
                        const int64_t *lim, uint8_t *out, double coord_range) {
-    return encode_common(rec, rec_len, level, ix, iy, grid, threshold, lim, out, NULL, NULL,
-                         NULL, coord_range);
+    double t0 = now_ns();
+    int64_t r = encode_common(rec, rec_len, level, ix, iy, grid, threshold, lim, out, NULL,
+                              NULL, NULL, coord_range);
+    g_c_ns_encode += now_ns() - t0;
+    return r;
 }
 
 /* Probe: frame + per-kind (even-padded) sizes, no fit/budget checks. -1 = ask Python. */
 int64_t kw_measure_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
                         int64_t iy, const double *bounds4, const double *rect4,
                         int64_t *sizes, uint8_t *out, double coord_range) {
-    return encode_common(rec, rec_len, level, ix, iy, NULL, 0, NULL, out, sizes, bounds4,
-                         rect4, coord_range);
+    double t0 = now_ns();
+    int64_t r = encode_common(rec, rec_len, level, ix, iy, NULL, 0, NULL, out, sizes, bounds4,
+                              rect4, coord_range);
+    g_c_ns_measure += now_ns() - t0;
+    return r;
 }
 
 /*
