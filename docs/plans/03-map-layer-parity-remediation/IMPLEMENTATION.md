@@ -559,3 +559,24 @@ The first 3C orchestrator hit an API usage limit at about 11:53 and its workers 
 **Deviation (brief amendment, written by the worker):** the "judge raw coordinates, skip `parcel_extent`'s lat/lon round-trip" half is not realised. Road intermediate points and background vertices are decoded straight to lat/lon (`road.py`, `background.py`); no raw ints survive on the model, so `parcel_extent`'s inverse is the only route to raw values without touching `model.py`/`road.py`/`background.py`, which the brief does not own. `parcel_extent` is unchanged.
 **Concerns:** (1) The raw half of the design's `coord_scale` decision is unmet; the time budget is met by parallelism alone, with ~7 s margin under contention. Carrying raw ints on the decoded models would be a small cross-cutting unit — for the user to decide whether it is wanted. (2) The margin is thin enough that heavier contention or a larger disc could cross 120 s.
 Agent: turns and context not recoverable (the worker's orchestrator died before its report arrived).
+
+### 3C-01 bench-window-baseline — done with concerns (bea2aac, Sonnet)
+**Built:** `build_alldata.py --bench PATH` (per-level `wall_s`, `prepass_s`, worker-summed `py_s`/`c_s`/`handoff_s`, `ranges`, `workers`, `calls`; top-level `wall_s`, `outside_encode_s`), `--window LEVEL IX0 IY0 IX1 IY1` (narrows emission only; pre-pass and range partition still cover the whole level), `--frame-dump PATH` (`.bin` + `.tsv` in canonical order). `_cenc.c` gains `CLOCK_MONOTONIC` accumulators around the three exported entry points and `kw_get_reset_c_times`; `cenc.py` wrapper timers/counters gated by `set_bench()`. `bench_build.py` merges its tree wall and peak RSS into the bench JSON. New `test_bench_record.py` (2 tests). The dead worker's uncommitted diff was reviewed against the brief and kept nearly as-is (one garbled docstring fixed).
+**Evidence (orchestrator re-checked the hashes and manifest):**
+- pytest: targeted test fails before (`run() got an unexpected keyword argument 'window'`), passes after; full suite 518 → 520 passed.
+- Perth `-j 1` and `-j 4`: both `da13a775064…`.
+- Three full-AU `-j 12` builds with `--bench`, each under the heavy lock: all `87a01b14…`, 1,731,021,568 B; manifest byte-identical to `output/scratch-3-11/G/manifest.json`. Walls 100.35 / 100.24 / 100.68 s: **median 100.35 s, spread 0.44 s (0.4 %)**. This spread is the Contract H regression tolerance for every later 3C step. Call counts identical across the three runs. Peak tree RSS ~3.57 GB.
+- Median run (bench1), per level, split scaled to wall (py / C / handoff), ranges, calls (`kw_encode_cell`, `kw_measure_cell`, `kw_bg_shape`):
+
+  | Level | Wall | Pre-pass | Py / C / handoff | Ranges | Calls | Budget |
+  |---|---|---|---|---|---|---|
+  | L0 | 89.95 s | 26.67 s | 81.11 / 4.86 / 3.97 | 394 | 3,704,934 / 21,709 / 3,013,441 | ≤ 38 s, pre-pass ≤ 5 s — **over** |
+  | L2 | 1.59 s | 0.71 s | 1.31 / 0.12 / 0.16 | 221 | 231,564 / 15 / 6,754 | ≤ 2 s — met |
+  | L4–L12 | 1.69 s together | 0.11 s | mostly Python | 66 | — | ≤ 2 s — met |
+  | Outside encode | 7.11 s | | | | | ≤ 10 s — met |
+  | **Full wall** | **100.35 s** | | | | | ≤ 60 s — **over** (expected at Stage 0) |
+
+  Bench records: `output/scratch-3C-01/bench{1,2,3}.json` (gitignored).
+**Deviations:** none. **Contradictions:** none reported.
+**Concerns:** (1) The 3-11 record's "105–123 s" spread does not reproduce on an uncontended host: 0.44 s. It confirms the ledgered view that the old spread was contention, not the build. (2) `test_bench_record.py` adds ~190 s to the suite (166 s → 354 s), because it drives full Perth builds. A slow default suite goes against Contract W's rule 5; 3C-02/3C-03 should keep new fixture tests off this path or share one Perth build per session.
+Agent: 87 tool uses, final context ~49k tokens, 26 min. It ended its turn three times to wait on its own background jobs, against the waiting rules, but it resumed and finished. It also stashed its own four files to take a "before" pytest count while 3C-04 ran alongside. The stash covered only its own paths.
