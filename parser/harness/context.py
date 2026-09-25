@@ -81,10 +81,15 @@ def _compute_walk_summary(path: str) -> WalkSummary:
 
 
 class Context:
-    def __init__(self, reference: Optional[str], generated: str, config: dict):
+    def __init__(self, reference: Optional[str], generated: str, config: dict,
+                 workers: int = 1):
         self.reference = reference
         self.generated = generated
         self.config = config
+        # Worker-pool width a check may use for a parallel-over-blocks decode
+        # (e.g. `coord_scale`); 1 (the default) keeps every check's prior
+        # single-process behaviour. Set from `compare_disc.py --workers`.
+        self.workers = workers
         self._profile_cache: dict = {}
         self._walk_summary_cache: dict = {}
 

@@ -118,3 +118,46 @@ def test_unranged_class_fails():
 def test_registered():
     assert [c.id for c in coord_scale.CHECKS] == ["coord_scale"]
     assert coord_scale.CHECKS[0].layer == "map"
+
+
+_PERTH = _PARSER_DIR.parent / "output" / "scratch-3-11" / "perth_j1" / "ALLDATA.KWI"
+
+
+def _run(path, workers):
+    from types import SimpleNamespace
+    ctx = SimpleNamespace(generated=str(path), workers=workers,
+                          layer_present=lambda layer: True)
+    return coord_scale._run_coord_scale(ctx)
+
+
+def test_parallel_matches_single_process_on_perth():
+    """3C-05: identical verdict and per-class counts at 1 and 4 workers
+    (skipped if the Perth fixture build is absent)."""
+    if not _PERTH.exists():
+        import pytest
+        pytest.skip("Perth fixture build not present: "
+                    f"{_PERTH}")
+    r1 = _run(_PERTH, 1)
+    r4 = _run(_PERTH, 4)
+    assert r1.status == r4.status
+    assert r1.details["parcels_judged"] == r4.details["parcels_judged"]
+    assert r1.details["parcels_exceeding"] == r4.details["parcels_exceeding"]
+    assert r1.details["parcels_unranged"] == r4.details["parcels_unranged"]
+    assert r1.details["per_class"] == r4.details["per_class"]
+
+
+def test_parallel_catches_injected_out_of_range_raw_coordinate():
+    """An injected raw vertex one unit over its class range is caught
+    identically whether judged sequentially or via the parallel
+    accumulate/merge path (`_accumulate`/`_merge`/`_finalize`)."""
+    wp = _wp(2, 4097)  # one raw unit over range 4096, as in the sequential test above
+    acc = coord_scale._new_acc()
+    coord_scale._accumulate(acc, wp)
+    merged = coord_scale._merge([acc])
+    r = coord_scale._finalize(merged)
+    assert r.status == "FAIL"
+    assert r.details["parcels_exceeding"] == 1
+    assert r.details["per_class"]["2/full/normal"]["observed_max"] == 4097
+    # A second, empty shard must not change the merged verdict.
+    r_two_shards = coord_scale._finalize(coord_scale._merge([acc, coord_scale._new_acc()]))
+    assert r_two_shards.details == r.details

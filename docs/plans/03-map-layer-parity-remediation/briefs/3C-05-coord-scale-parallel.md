@@ -113,3 +113,27 @@ Over budget: stop, commit what passes, and put the handoff (done, not done, what
 A non-trivial bug outside your done evidence: report symptom, location, and root cause if found. Do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendment 2026-09-25 (worker)
+
+The contract's "It judges raw coordinates against the class range directly, skipping
+`parcel_extent`'s lat/lon round-trip" cannot be realized in full within this unit's owned
+paths. Checked `parser/kiwiw/road.py` and `parser/kiwiw/background.py`: road nodes already
+carry raw `x`/`y` (`RoadNode.x/.y`, never round-tripped -- `parcel_extent` already uses them
+directly). But road **intermediate points** (`RoadLink.points`) and every **background
+vertex** (`BackgroundShape.coords`) are decoded straight to `(lat, lon)` -- the raw delta-coded
+`xc`/`yc` ints computed mid-decode (`road.py` lines ~78-93, `background.py` lines ~79-90) are
+never retained on the model. `parcel_extent`'s `_inv` is the only way to recover a raw value
+for those vertices, and it is the exact inverse of `coordconv.xy_to_latlon` -- a real,
+unavoidable round-trip, not a redundant one. Removing it would need `RoadLink`/`BackgroundShape`
+(or new sibling fields) to carry raw ints, in `parser/kiwiw/model.py`, `road.py`, `background.py`
+-- none owned by this brief, and `coord_scale_census.py`'s own `_raw()` performs the identical
+round-trip already (so this isn't a new gap this unit introduced).
+
+Resolution taken: `parcel_extent` is kept unchanged and correct (used identically by every
+worker), and the actual, measured, contract-tested win -- parallel decode over blocks, ≤120s
+at `-j 12` with identical verdict and counts -- is delivered in full. The per-vertex `_inv`
+call is not removed. Flagged here per the boundary rule rather than resolved silently; a
+follow-up to add raw-coordinate fields to the road/background models, if ever wanted purely
+for this check's constant-factor speed, is a separate, small, cross-cutting unit outside this
+brief's paths.

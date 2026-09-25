@@ -67,6 +67,10 @@ def main() -> int:
                                          "beside it)")
     ap.add_argument("--no-manifest", action="store_true",
                      help="Skip manifest binding (report records manifest_bound=false)")
+    ap.add_argument("--workers", type=int, default=1,
+                     help="Worker-pool width for checks that support a "
+                          "parallel-over-blocks decode (default: 1, today's "
+                          "single-process behaviour; only coord_scale uses it)")
     args = ap.parse_args()
 
     if args.profile:
@@ -95,7 +99,8 @@ def main() -> int:
         print(err, file=sys.stderr)
         return 2
 
-    ctx = Context(reference=reference_path, generated=generated_path, config=config)
+    ctx = Context(reference=reference_path, generated=generated_path, config=config,
+                  workers=args.workers)
 
     all_checks = registry.discover()
     if args.checks:
