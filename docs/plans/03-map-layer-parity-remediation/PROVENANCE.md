@@ -55,3 +55,26 @@ Interactive posture only. Headless runs carry intent, the assumption ledger, and
 
 - Unknowns and the flag table move from `docs/ARCHITECTURE.md` / `docs/design/flag-table.md` to `docs/schema/` (`UNKNOWNS.md`, `flags.md`). Surface amendment only; no outcome, contract or phase change.
 - Each phase that learns a format fact updates the schema rows it touches in the same change.
+
+### Turn 4 (build hot path to C, 2026-09-25)
+
+**User responded** (relayed by the orchestrator):
+
+- One C call per cell range. C takes spool bytes plus pre-pass data and returns finished frame bytes plus declined cells. C owns overlap, clip, `mult_const`, encoding, division, retile and halo. Python owns planning, mask and thresholds, CLI, the pool, the manifest, assembly orchestration, and verification. "It has to be absolutely clear, since our main problem is new work (tests and build) hit python and then we have to refactor later onto C. Clearer boundaries on both sides will avoid this."
+- Hot paths are design contracts. The full-AU `-j 12` wall is under 60 s. Budgets are per level. Any unit touching a hot path reports a Python / C / handoff split.
+- Tests have three layers: pytest boundary tests decoded by the Python decoder (the default), a small C unit binary run from pytest, and goldens captured before each port and matched byte for byte. No Python copy of build logic may exist, not even as an oracle.
+- Worker waiting rules are a process contract that every brief carries.
+- Port in profile order: the overlap scan with merge first, then divide. Every step is gated on the full-disc sha and deletes the Python it replaced. Verification-tool speed is its own item.
+
+**Agent decisions:**
+
+- Placement: a lettered Phase 3C between Phase 3's done units and its remaining ones, so later phases keep their numbers.
+- Two entry points: E1 (the pre-pass, once per spool chunk) and E2 (the range encode, once per cell range).
+- Declined cells are transitional: "needs division" only, and the list is empty at close.
+- 3-12 is withdrawn, and its size question becomes 3-13 on the C pipeline.
+- 3-10 is held until after 3C: its extractor half stays Python and its drop guard goes into C.
+- 3-05 and 3-06 run on the C pipeline.
+- `quantisation_roundtrip` becomes a check of the decoded disc against the spool with no build imports. This drops the per-origin breakdown and supersedes "pass a pool to `build_level`".
+- `coord_scale` becomes parallel and raw.
+- Per-level budgets are derived from the 3-07 and 3-11 profiles.
+- Open for the user: an extraction boundary, the C build mechanism, and golden fixture size.

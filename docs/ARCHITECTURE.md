@@ -35,8 +35,9 @@ Stages communicate through files, not in-process state, so each can be rerun alo
 ## Stage contracts
 
 **Spool.** Per level, a `.data` file of per-cell records and a `.idx` file, little-endian,
-fixed-width, mmap-able, no pickle. Cells ascend `(iy, ix)`. Coordinates are baked into the
-spool at extraction, so a coordinate-range change means re-extraction.
+fixed-width, mmap-able, no pickle. Cells ascend `(iy, ix)`. The spool carries lat/lon for every
+vertex, and encoders derive pixels at assembly from each frame's range, so a coordinate-range
+change needs only re-assembly, not re-extraction.
 
 **Assembly.** `ALLDATA.KWI` layout is a pure function of the spool and the parcel mask.
 Frames are keyed `(level, ix, iy, parcel_type, sub_ix, sub_iy)`. Blocks are written in

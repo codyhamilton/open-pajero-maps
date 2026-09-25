@@ -335,6 +335,194 @@ The 2026-09-23 amendment marked criterion 2's divided result provisional and sus
 | 2-14 continuity and mirror re-run on frame adjacency (criteria 2, 3, 4) | `briefs/2-14-continuity-and-mirror-rerun.md` | 2-13 | nothing |
 | 2-15 grounded gate verdict (criteria 1-5) and Assumption Ledger | `briefs/2-15-grounded-gate-verdict.md` | 2-13, 2-14 | nothing |
 
+### Amendment 2026-09-25 (user) — the build hot path moves to C at a cell-range boundary
+
+**Provenance.** The decisions below are the user's, relayed by the orchestrator (`IMPLEMENTATION.md`: "Orchestrator decision: the build hot path moves to C at a cell-range boundary", "Research: where the build time goes, and the C porting scope", "3-12 … stopped, no outcome"). The design agent chose the placement, the stage order within the constraints the user set, the per-level budgets (derived from the profile below), and the `quantisation_roundtrip` redesign. Each of those choices is in the Assumption Ledger.
+
+**Why.** The full-Australia build went from 36.7 s (3-07) to about 108 s (3-11). New per-shape and per-cell work (3-09's overlap pre-pass, 3-11's rectangle detection) and its tests landed in Python first. C mirrors followed, and a Python→C handoff ran once per cell. Profile of L0 at `-j 12` on the 3-11 tree (full build 108.3 s, L0 96.3 s): overlap scan `_scan` 27.1 s (Python/numpy); overlap `merge_raw` about 30 s (Python; re-serialises every record, handing 11.25 GB to C from a 4.45 GB spool); the divide fallback for 563 parents about 27 s (Python, with C measuring); per-cell glue about 6.5 s; C `kw_encode_cell` about 5 s (3.70M ctypes calls, 2.27M of them for empty cells). The user's words: "It has to be absolutely clear, since our main problem is new work (tests and build) hit python and then we have to refactor later onto C. Clearer boundaries on both sides will avoid this."
+
+This amendment adds **Phase 3C** (Phases section). It pauses Phase 3's remaining units until 3C closes and changes what those units are (Phase 3's units table). It also adds four standing contracts. They bind every phase from 3C onward, and every brief must carry them.
+
+#### Contract B — the build boundary
+
+The build pipeline (`build_alldata.py` and everything it calls) has exactly two C entry points, E1 and E2, plus the transitional E3 (Stage 1 only), and the assembly copy under H4. Nothing else crosses from Python to C on the build path.
+
+Both entry points are called once per cell range, over the same contiguous cell-count ranges (the partition in `docs/ARCHITECTURE.md`, "Partition and merge"). So per level, E1 calls = E2 calls = number of ranges. The gate asserts that equality.
+
+- **E1, level pre-pass: one call per cell range.**
+  - Input: the level descriptor (below), the range, and the level's whole spool `.data`/`.idx`, zero-copy from the mmap.
+  - Output: fixed-width routing rows `(target ix, target iy, source spool offset, coverage kind)`. There is one row for each existing cell *outside its source cell* that a shape in this range passes through, or that a polygon wholly covers (`coverage kind` = interior cover). These are rows only, with no geometry. Copying geometry would rebuild the 11.25 GB handoff that this boundary removes.
+  - Python may only concatenate and partition these rows by target range, as one vectorised operation. It never interprets them further.
+- **E2, range encode: one call per cell range.**
+  - Input: the level descriptor, the range, the level's whole spool (zero-copy, so borrowed shapes are read in place from any range), and the E1 rows routed to this range.
+  - C orders each cell's borrowed shapes canonically, by source `(iy, ix)` then spool index. So the output does not depend on the range partition or on the order rows arrive.
+  - Output:
+    1. **A frame buffer.** All finished Map Frame bytes for the range, including divided sub-frames.
+    2. **A frame index.** One row per frame, in canonical order, keyed `(level, ix, iy, parcel_type, sub_ix, sub_iy)`, with offset, size and per-kind sub-frame sizes. Python assembles from the buffer and index without making a Python object per frame. The row layout is fixed at refine.
+    3. **A declined list** of `(ix, iy, reason)`, one row per cell C did not finish.
+    4. **Merged content for declined cells, transitional.** Each declined cell's own and borrowed shapes, in spool-record format.
+    5. **Additive deterministic counters** for the manifest. Before 3-10 these are exactly 3-11's counters (overlap statistics, trimmed items, halo names). 3-10 adds the dropped-name-anchor counter, and that is a deliberate manifest change.
+    6. **C-side stage timers.** These go to the bench record and never to the manifest (Output invariance, `docs/ARCHITECTURE.md`).
+  - E2 also emits the frames for masked-in empty cells (today's `_fill_masked`), so no per-cell Python remains.
+- **E3, transitional sub-parcel measure (Stage 1 only).** While division is still Python, the transitional divide may call a C measure once per candidate sub-parcel, as today's divide does. Without it, the divide path falls back to Python encoding and the Stage 1 wall gate cannot be met. E3 is the only permitted third entry point. It is deleted in Stage 2, together with the declined list's only reason.
+- **The level descriptor** is built by Python once per level and passed as data. It holds:
+  - the grid geometry;
+  - the frame-class and range rule as a table from `coord_scale.json` via `kiwiw/mesh.py`;
+  - the level mask of existing cells;
+  - the 131,070-byte ceiling and the kind limits;
+  - the priority and keep-order tables used for trimming and division;
+  - every vocabulary table the encoders read.
+  C evaluates these per cell. Python does not. The build takes no imports from the extractor (`assign_to_parcel`, `g_frame_range` and `frame_bounds` today). Their rules become descriptor data from `kiwiw/mesh.py`.
+- **Declined cells are transitional.** While division is still Python (Stage 1), the only permitted reason is "needs division". At Phase 3C's close, no reason is permitted, E3 and output 4 are gone, a non-empty declined list is a build error, and no Python fallback exists.
+- **Cross-cell dependent fields.** Some fields depend on a neighbour's state, not the cell's own content. Examples are the header or entry fields that differ next to a divided neighbour (Phase 2's 42 word-0 exceptions) and the neighbour pointers (Phase 9). Such fields are resolved in C, by one of two routes:
+  - a division-state pass, before E2, whose result travels in the descriptor; or
+  - a C patch during assembly (H4).
+  They are never patched in Python. The phase that first needs such a field chooses between the two, in a design amendment if the choice changes E1/E2.
+
+**C owns everything on the per-shape and per-cell path:**
+- decoding spool records for encoding;
+- the overlap scan and the merge of borrowed shapes;
+- clip, densify and round;
+- `mult_const` selection;
+- road, background and name record encoding, sub-frame and Map Frame encoding, and size measurement;
+- division, retile, trim and name halo;
+- per-cell frame class and range evaluation;
+- the out-of-cell name-anchor drop (3-10's assembly half).
+
+**Python owns:**
+- planning: the level list, the cell-range partition and the level descriptor;
+- the mask and the thresholds, as data;
+- the CLI and the worker pool;
+- reading spool bytes and routing pre-pass bytes;
+- assembly orchestration: the frame table, block placement, DSA/BMT and the `ALLDATA.KWI` write, all vectorised over C's buffer and index. Today `IndexedLayout` builds divided blocks per frame in Python. That is a leak: it moves to the vectorised or C path in Stage 2;
+- the manifest and the bench record;
+- every verification and analysis tool: decoders, `SpoolReader`, the harness, censuses, `compare_disc.py`, the R round-trip writers.
+
+**Never implemented in Python.** None of the following may exist in Python in any form: a build module, a test helper, a test oracle, a fallback, or a tool that re-runs it. The single exception is the R round-trip writers named below. They encode *decoded R* for decoder proofs, never spool content.
+- a loop over the shapes, records or vertices of a cell for the build;
+- spool-record decoding feeding an encoder;
+- overlap or cell-coverage computation;
+- clipping, densifying or rounding of written geometry;
+- `mult_const` choice;
+- record, sub-frame or Map Frame encoding, or size measurement of an encoding;
+- division, retile, trim or name-halo selection;
+- a per-cell or per-shape call into C.
+
+A Python fallback for when C is absent is also forbidden: `KIWIW_NO_C` and the no-compiler fallback are deleted, and a build without a compiler fails. New build behaviour lands in C with its tests at the boundary (Contract T), or it does not land.
+
+**Outside this boundary:** extraction (`osm_to_parcel_geometry.py` and the other `osm_to_*` stages). It produces the spool and stays Python. 3-10's extractor half is therefore Python work. See Open Questions for whether extraction later gets a boundary of its own.
+
+**The R round-trip writers** (`road_writer`, `background_writer`, `name_writer`, `parcel_writer`, `alldata_writer`'s replicate mode) re-encode *decoded R* to prove the decoders byte-exact. They are verification tools and stay Python. They may never be called on the build path, and never used to produce or check G's bytes. Their shared helper `synth.frame_range` moves to `kiwiw/mesh.py` when `synth.py`'s encoders are deleted.
+
+#### Contract H — hot paths and budgets
+
+The named hot paths:
+
+| ID | Hot path | Side |
+|---|---|---|
+| H1 | Level pre-pass (E1) over every spool chunk | C |
+| H2 | Range encode (E2): spool decode through finished frames, including division | C |
+| H3 | Handoff: building E1/E2 arguments and unpacking their results | Python wrapper around C |
+| H4 | Assembly: frame table merge, block placement, `ALLDATA.KWI` write | Python/numpy vectorised over C's buffers; any per-frame work in C |
+
+Budget: a full-Australia build at `-j 12` from `output/extract_timing/spool`, on the project build host, completes in **under 60 s wall**. The 35 s baseline predates the overlap work. The per-level budgets are derived from the 3-07 build (no overlap) and the 3-11 profile:
+
+| Stage | 3-07 measured | 3-11 measured | Budget |
+|---|---|---|---|
+| L0 encode, pre-pass included | 27.9 s | 96.3 s | ≤ 38 s |
+| &nbsp;&nbsp;of which L0 pre-pass (H1) | none | 27.1 s | ≤ 5 s |
+| L2 encode | 0.5 s | 1.6 s | ≤ 2 s |
+| L4–L12 encode, together | 1.4 s | 1.7 s | ≤ 2 s |
+| Outside encode (spool open, H4, manifest) | 6.8 s | 8.2 s | ≤ 10 s |
+| **Full build wall** | **36.7 s** | **108.3 s** (105–123 s spread) | **≤ 60 s** (budgets sum to 52 s; 8 s headroom) |
+
+**Done evidence.** Any unit that touches a hot path reports, per level:
+- the Python / C / handoff time split. C time is the E1/E2 timers summed over workers. Handoff time is the time in the Python wrapper around each C call, outside C. Python time is the rest of worker time. All three are scaled to wall as in the 2026-09-25 profile.
+- the full-build wall.
+- the E1 and E2 call counts.
+
+Timings and call counts go to the bench record, never the manifest.
+
+**Measurement.** Every wall and stage figure used as a gate is the median of three full builds. One run is not a verdict.
+
+**Regressions.** A unit whose full-build wall rises above the previous recorded build by more than the run-to-run spread must name the specific mechanism. That spread is measured at 3C's baseline, three runs. Accepting the rise as a trade-off is not enough. From Phase 3C's close onward, **every phase outcome includes a full build at `-j 12` within the wall and per-level budgets.**
+
+#### Contract T — tests
+
+The build logic has no Python copy, not even as a test oracle. The oracle is:
+- the Python decoder;
+- the goldens;
+- invariants measured on R.
+
+Tests come in three layers.
+
+- **(a) Boundary tests: the default home for every new build test.**
+  - pytest calls E1/E2 through `cenc.py` on fixture spool bytes and fixture pre-pass bytes.
+  - It decodes the output with the Python decoder.
+  - It asserts on decoded content or on invariants: in-range coordinates, clip-rectangle containment, delta representability, frame-size ceilings and the like.
+- **(b) A C unit-test binary for internals the boundary reaches poorly**, such as edge-step splitting, rectangle detection and clip corner cases.
+  - It is built by the same mechanism that builds the extension.
+  - It is run from pytest, so `pytest parser/tests` stays the single entry point.
+- **(c) Goldens.**
+  - A golden is a **closed fixture spool**: a cell range plus every cell whose shapes reach into it, in spool format, together with the expected frame bytes and their sha256. The pre-pass is never stored. The test always produces it by running E1 on the fixture, so goldens captured in Stage 0, before E1 exists, stay valid across the port. Layer (a) boundary fixtures are built the same way.
+  - Before each port step, the goldens are captured from the current build. The ranges must cover:
+    - L0 urban dense;
+    - L0 sparse;
+    - a cell receiving borrowed edge shapes and one receiving an interior-cover rectangle;
+    - a divided L0 parent with trim and name halo;
+    - L2;
+    - a divided L4 parent;
+    - an edge-of-coverage cell.
+  - The fixture set is committed under `parser/tests/fixtures/` and chosen small enough to commit. Anything that cannot be committed is recorded in `docs/provenance.md`.
+  - The port must reproduce every golden byte for byte. After that, the Python module and its internals-level tests are deleted, and the goldens stay as regression tests.
+  - A unit that *intends* to change output bytes re-captures the goldens it affects in the same commit and states why. Byte-identity gates apply to ports only.
+
+Current exposure, all removed or rewritten by Phase 3C's close:
+- `synth` is imported by 10 test files. Harness tests that use it to fabricate fixture frames switch to layer (a) fixtures produced through E2, or to committed fixture bytes.
+- `divide` is imported by 3 test files, `clip` by 2 and `overlap` by 1.
+- `test_cenc.py` checks C against the Python encoder. Its C-vs-Python cases are replaced by goldens and boundary tests, then deleted.
+
+#### Contract W — worker waiting rules (process; every brief carries it verbatim)
+
+1. Chain every slow check (builds, `compare_disc`, round-trips, probes) in one background script that writes a status line per step: `STEP <name> OK|FAIL <seconds>`, then a final `DONE` or `ABORT`.
+2. Block on that script with **one** monitor whose match covers every terminal state (`DONE`, `ABORT`, any `FAIL`, script exit).
+3. Never end the turn to wait. A subagent that ends its turn has ended. Never spend no-op turns polling.
+4. Never pipe a long command through `| tail` (or any filter that hides progress and defeats backgrounding). Redirect to a log file and read the log.
+5. A check slow enough to need many waits is a finding to investigate, not a thing to wait out.
+
+#### Verification-tool decisions
+
+- **`quantisation_roundtrip.py` becomes a check of the decoded disc against the spool.** Today it re-runs Python `clip.shape_pieces` and `overlap.build_level` to reconstruct the written vertices. Contract B forbids that as a copy of build logic, and the 3-11 record shows the danger: the tool silently did not exercise the coarse-`mult_const` path.
+  - The tool reads the built `ALLDATA.KWI` with the Python decoder and the spool with `SpoolReader`. It imports no build module.
+  - It runs in parallel over blocks.
+  - It keeps the invariants that do not need the clip algorithm:
+    - every decoded vertex lies inside `[0, range]`;
+    - road nodes, road points and name anchors each agree with their spool source record within half a raw unit per axis;
+    - every decoded background vertex not on the frame boundary lies within half a raw unit per axis of an outline of a spool shape of the same type at that level, found by the tool's own spatial index;
+    - every decoded background vertex *on* the frame boundary lies inside or on a same-type spool polygon (point in polygon, with half-unit tolerance). This covers crossings, corners, coarse-`mult_const` rectangles and interior covers, which 3-11 showed can otherwise go untested;
+    - completeness: for each `(cell, type)`, every spool polygon whose interior meets the cell appears as at least one decoded piece. For each interior-cover cell, the cell centre lies inside its source polygon;
+    - every step is representable.
+  - It gives up the per-origin breakdown (original / crossing / corner / step-split), which needs the clip algorithm. Crossing and corner correctness stays with the frame-edge mirror probe against R.
+  - The earlier instruction to pass a pool to `build_level` is superseded, because the tool no longer calls `build_level`.
+  - This redesign lands before `overlap.py` or `clip.py` is deleted.
+- **`coord_scale` is parallel and raw.**
+  - It decodes in parallel over blocks.
+  - It judges raw coordinates against the class range directly, skipping `parcel_extent`'s lat/lon round-trip.
+  - On the 3-11 disc (`87a01b14…`) it must return the identical verdict and counts (PASS, 0 of 1,461,347 parcels, 73 classes) in ≤ 120 s at `-j 12`. It currently takes 10–15 min single-process.
+- The redesigned round-trip on the 3-11 disc must report 0 failing background vertices, and exactly the one known name-anchor failure (3-10's), in ≤ 120 s at `-j 12`.
+
+#### Phase 3's remaining units
+
+- **3-12 is withdrawn.** Its premise, trimming overlap duplication in `overlap.py`, would be work on Python that Phase 3C deletes. Its wall-time half is absorbed by Contract H. Its disc-size question is re-issued as **3-13**, which runs on the C pipeline after 3C closes: is interior-cell duplication still the dominant disc-size cost against R? It is measured first, and "no code change" is a complete outcome. Any trim lands in C, at the boundary, under Contract T.
+- **3-10 is held and re-scoped.**
+  - The extractor half (`assign_to_parcel` returns `None` outside the lon span) is unchanged and stays Python.
+  - The assembly half, dropping name records outside their cell with counts, lands in C inside E2 and reports through the E2 counters.
+  - Its round-trip alignment is the redesigned tool's name-anchor rule.
+  - Phase 3 re-uses the existing spool, so the extractor fix does not reach the disc in Phase 3. It is verified by a unit test, and it takes effect at the next re-extraction (Phase 8). Phase 3's disc evidence is the C drop guard alone.
+  - It depends on Phase 3C.
+- **Phase 3's Outcome clause "`range_for` feeds both the Python and C encoders"** reads, from 3C onward, as "`range_for`'s rule reaches the C encoder through the level descriptor". No Python encoder remains to feed.
+- **3-05** (determinism matrix) and **3-06** (phase evidence) run on the C pipeline. They depend on Phase 3C, 3-10 and 3-13. 3-06 also reports the Contract H budget table.
+
 ## Assumption Ledger
 
 Each assumption names the phase that tests it and what happens if it is false.
@@ -345,6 +533,30 @@ Each assumption names the phase that tests it and what happens if it is false.
 - **R's word 0 rule holds beyond the 95.5% (897/939) of sampled leaves where it equals the first data-slot offset.** Phase 2 explains the 42 exceptions before the gate closes; the criterion is "matches R's rule or the exception is explained".
 - **Copying R's value for a flag whose meaning is unknown is harmless to the head unit.** Not accepted blindly (user decision): each such flag is a flag-table entry and a ledger deviation with a later test; none is undocumented.
 - **Country-scale re-extraction is affordable** (needed for Phase 8). Phase 1 measures extraction wall time.
+- **(2026-09-25, design agent) Phase 3C is a lettered phase between Phase 3 and Phase 4, not a Phase 4 that renumbers the rest.**
+  - Rationale: the user required the C pipeline before 3-12, 3-10, 3-05 and 3-06, and Phase 3's outcome ("two builds byte-identical at 1/4/12") is only honest if it is measured on the pipeline that ships.
+  - Renumbering would invalidate every brief and record that cites Phases 4–10.
+  - If wrong, the phases are renumbered at close-out. No outcome changes.
+- **(2026-09-25, design agent) Port order: Stage 1 is the overlap scan, merge and per-cell encode together; Stage 2 is division.**
+  - Rationale: the order follows the profile's payoff (the user's rule). Merge and per-cell encode share one handoff, so porting the scan alone would leave the 11.25 GB re-serialisation in place.
+  - If wrong, Stage 1 splits in two. The gates are unchanged.
+- **(2026-09-25, design agent) A declined cell returns its merged content in spool-record format, so the transitional Python divide can run without Python overlap.**
+  - Rationale: this lets Stage 1 delete `overlap.py` while division is still Python.
+  - If wrong, Stage 1 keeps `overlap.py` until Stage 2. The declined list still must be empty at close.
+- **(2026-09-25, design agent) The per-level budgets are derived, not measured.**
+  - L0 ≤ 38 s is a ceiling, not a model: 3-07's 27.9 s L0 (which still included the Python divide and per-cell glue that 3C removes) plus about 10 s for the pre-pass and borrowed-shape encode that 3-09 added. The other stages are 3-11's measured values rounded up. Stage 0 re-derives the L0 split from C-cost terms (pre-pass, encode, divide) once its baseline exists.
+  - If Stage 0's baseline shows the derivation is wrong, the per-level split may be re-derived in a design amendment. The 60 s wall does not move (user).
+- **(2026-09-25, design agent) The 3-11 record's "rect-detection overhead" attribution for its 105–123 s wall spread is wrong.** The research profile found no such cost.
+  - Consequence: Stage 0 re-measures the baseline three times, and the spread from those runs is the regression threshold.
+  - If the spread is itself large (over 10 %), finding its cause is Stage 0 work before any port.
+- **(2026-09-25, design agent) `quantisation_roundtrip` gives up its per-origin breakdown** (original / crossing / corner / step-split) because it no longer re-runs the clip.
+  - Crossing and corner correctness is covered by the frame-edge mirror probe against R, and by golden and boundary tests on clip corner cases.
+  - If a defect later hides behind the lost breakdown, the fix is a layer (b) C test, never a Python clip.
+- **(2026-09-25, design agent) The R round-trip writers stay Python and are verification-only.** They re-encode decoded R, not the spool, so they duplicate the format, not the build.
+  - If one is later needed on the build path, that need lands in C, and the writer stays a verifier.
+- **(2026-09-25, design agent) 3-12 is withdrawn rather than re-scoped, and its size question becomes 3-13.**
+  - Rationale: 3-12's brief is written against `overlap.py`, which Stage 1 deletes.
+  - If wrong, nothing is lost: 3-13 asks the same question on the surviving code.
 
 ## Open Questions
 
@@ -354,10 +566,13 @@ Each assumption names the phase that tests it and what happens if it is false.
 - **`rg_size` (word 16) is unspecified** (Phase 2 Carried item 1). Bounced here by Phase 3's refinement rather than absorbed: Phase 3's Outcome does not claim word 16, and Phase 4's Outcome names words 0, 6, 7, 9–11 but not 16. It must be resolved in a design pass before Phase 4 is refined, or Phase 4 will be refined against a surface with no contract.
 - **`RESIDUAL_ENUM_CAP` has two contradicting values** (Phase 2 Carried item 8). `parser/tools/continuity_census.py` and `boundary_mirror_census.py` both set 400; the 2026-09-23 design-agent amendment states 200 for the same cap. Reported by 2-14 and again by 2-15, never resolved, and moot at Phase 2's 12 total residuals — but it is a contradiction between the design text and the code, so it is bounced here rather than fixed by a Phase 3 unit. One of the two sources is wrong and the design must say which.
 - **The L0 sparse frame is a shape difference between R and G, and no phase owns it.** R aliases sixteen leaf slots into one integrated-parcel tile at range 16384; G writes sixteen separate frames, which `harness/walk._is_sparse_tile` — a structural test against whichever disc is walked — correctly classes as `urban` at range 4096. Each disc is therefore self-consistent and Phase 3's amended Outcome (zero parcels exceeding their *own* class range) is provable on both, which is why this does not block Phase 3's refinement. But nothing in Phases 3–10 makes G build the 4x4 integrated-parcel tile that R builds, so the two discs will keep differing in frame shape at L0 sparse. Either that is accepted as a recorded deviation or a phase must claim it.
+- **Does extraction get its own C boundary and wall budget?** (2026-09-25) Contract B deliberately stops at the spool. Extraction (`osm_to_parcel_geometry.py`, Python) is outside it, and its country-scale wall time is still not recorded here. Phase 8 needs re-extraction. If extraction is slow enough to limit how often Phases 5–8 can iterate, a boundary like Contract B may be needed there too. That is a user decision, not a guess.
+- **How the multi-file C extension and the layer (b) test binary are built.** (2026-09-25) Today `cenc.load()` compiles one file with gcc on demand into `_cenc.so`. Contract B removes the no-compiler fallback, so gcc becomes a hard build requirement. Two choices are open: on-demand compile versus an explicit setup step, and whether the build products are gitignored (and so recorded in `docs/provenance.md`). Refine settles the mechanism for Stage 0. If a setup step is chosen, it changes how the project is run, which is a user decision.
+- **Do fixture goldens for all seven ranges fit in git?** (2026-09-25) The L0 dense and divided-parent spool slices may be large. Anything that does not fit is regenerated from the full spool and recorded in `docs/provenance.md` (CLAUDE.md rule). The layer (c) contract then depends on a local spool, and CI cannot run it. Stage 0 measures the sizes. Whether a spool-dependent golden is acceptable is a user decision.
 
 ## Phases
 
-The count and order are fixed at sign-off. Phases 6 and 7 both edit `selection.json` and are sequenced, not parallel. Phases 8 and 9 touch the same encoder and check files and are sequential (8 then 9). Phase 3 (coordinates) and Phase 4 (header words, cap) are separate so failures stay isolated.
+The count and order are fixed at sign-off. The one exception is Phase 3C, which the 2026-09-25 user amendment inserted mid-Phase 3. It is lettered, not numbered, so that Phases 4–10 keep their numbers and every brief reference to them stays valid. Order: Phase 3 units through 3-11, then Phase 3C, then Phase 3's remaining units, then Phase 4. Phases 6 and 7 both edit `selection.json` and are sequenced, not parallel. Phases 8 and 9 touch the same encoder and check files and are sequential (8 then 9). Phase 3 (coordinates) and Phase 4 (header words, cap) are separate so failures stay isolated.
 
 ### Phase 1 — Baseline truth and non-invasive harness hardening
 
@@ -439,13 +654,63 @@ Surfaces beyond the list above, found in recon and in scope: `parser/kiwiw/{road
 | 3-08 the parse path takes each frame's real range; `PARSE_RANGE` dies (added 2026-09-24, fixer for 3-03's finding) | `briefs/3-08-parse-path-range.md` | 3-03 | nothing |
 | 3-07 clip background geometry to the frame, as R does (added 2026-09-24 by the orchestrator on R evidence) | `briefs/3-07-clip-to-frame.md` | 3-03, 3-04, 3-08 | nothing |
 | 3-09 every cell a background shape overlaps receives it (added 2026-09-24, fixer for 3-07's edge content loss) | `briefs/3-09-shape-to-every-overlapped-cell.md` | 3-07 | nothing |
-| 3-10 a point outside coverage is not clamped into an edge cell (added 2026-09-24, fixer for the name-anchor round-trip failure) | `briefs/3-10-name-cell-clamp.md` | 3-09 | nothing |
+| 3-10 a point outside coverage is not clamped into an edge cell (added 2026-09-24, fixer for the name-anchor round-trip failure) — **re-scoped and re-sequenced 2026-09-25**, see the 3-10 row below | `briefs/3-10-name-cell-clamp.md` | — | — |
 | 3-11 mult_const selection for exact-rectangle background shapes (added 2026-09-24, fixer for 3-09's disc-size concern) | `briefs/3-11-mult-const-selection.md` | 3-09 | 3-10 |
-| 3-12 re-measure overlap duplication cost after mult_const, trim if it still dominates (added 2026-09-24, fixer for 3-09's disc-size concern) | `briefs/3-12-overlap-duplication-remeasure.md` | 3-11 | nothing |
-| 3-05 the determinism matrix (kickoff and hand-off) | `briefs/3-05-determinism-matrix.md` | 3-03, 3-07, 3-09, 3-10, 3-11, 3-12 | nothing |
-| 3-06 Phase 3 evidence against the amended outcome | `briefs/3-06-phase-evidence.md` | 3-04, 3-05, 3-07, 3-09, 3-10, 3-11, 3-12 | nothing |
+| 3-12 re-measure overlap duplication cost after mult_const, trim if it still dominates (added 2026-09-24) — **withdrawn 2026-09-25**, superseded by Phase 3C and 3-13 | `briefs/3-12-overlap-duplication-remeasure.md` | — | — |
+| 3-10 (re-scoped 2026-09-25): extractor half in Python; the assembly drop guard in C inside E2 | `briefs/3-10-name-cell-clamp.md` (to be re-briefed) | Phase 3C | 3-13 |
+| 3-13 re-measure interior-cell duplication's share of disc size on the C pipeline; trim in C only if it dominates (added 2026-09-25) | to be briefed | Phase 3C | 3-10 |
+| 3-05 the determinism matrix (kickoff and hand-off), on the C pipeline | `briefs/3-05-determinism-matrix.md` (to be re-briefed) | Phase 3C, 3-10, 3-13 | nothing |
+| 3-06 Phase 3 evidence against the amended outcome, plus the Contract H budget table | `briefs/3-06-phase-evidence.md` (to be re-briefed) | 3-04, 3-05, 3-07, 3-09, 3-10, 3-11, 3-13, Phase 3C | nothing |
+
+As amended 2026-09-25, the last four rows above are authoritative for 3-10, 3-13, 3-05 and 3-06. Units 3-01 to 3-04, 3-07, 3-08, 3-09 and 3-11 are done and stand. Phase 3 is paused after 3-11 while Phase 3C runs, and resumes with 3-10 and 3-13. Phase 3 closes only after Phase 3C closes.
 
 Phase 2's final Carried items are placed as follows. **Absorbed into Phase 3:** none of the open items belongs to it — the three Phase-3-relevant observations (the `COORD_RANGE` duplication across `coordconv`/`synth`/`osm_to_parcel_geometry`/`_cenc.c`, the 2-06 y-orientation result that every new signature must preserve, and the rebuild-cost premise that the spool carries lat/lon for every vertex kind) are written into 3-01, 3-02 and 3-03 as contract, and the rebuild-cost premise was re-confirmed against the code, with the correction that both encoders currently *prefer* the spool's 32768-scale `n_x`/`n_y` columns, which 3-02 must remove for spool reuse to be sound. **Left with their owners:** items 2 (pointer non-frame targets, Phase 9's), 3 (`road_density_census.py`'s stale `LENGTH_BASIS` wording, cosmetic), 4 (`pointer_nonframe_targets.examples` not regenerating identically), 9 (`continuity_census.py`'s greedy double-count), 10 (prior Phase 1 items). **Bounced to Open Questions**, because each touches a contract or a phase outcome rather than an implementation: item 1 (`rg_size`, word 16) and item 8 (the `RESIDUAL_ENUM_CAP` 400-vs-200 contradiction).
+
+### Phase 3C — Build pipeline in C at the cell-range boundary
+
+- **Outcome.** At phase close, all of the following hold:
+  - `build_alldata.py` crosses into C only through E1 and E2, each once per cell range with equal call counts, and through the H4 assembly copy, as Contract B defines them. E3 is gone.
+  - None of the following exists anywhere in `parser/`, checked by grep: `parser/kiwiw/overlap.py`, `clip.py` or `divide.py`; `synth.py`'s `build_road_frame_bytes`, `build_background_frame_bytes`, `build_name_frame_bytes` and `build_map_frame_bytes`; `cenc.py`'s per-cell API (`kw_encode_cell`); `KIWIW_NO_C`; extractor imports in `build_alldata.py`.
+  - A full-Australia build at `-j 12` from `output/extract_timing/spool` produces `ALLDATA.KWI` with sha256 `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862` (1,731,021,568 B), the 3-11 disc. Its manifest counters are equal to 3-11's.
+  - E2's declined list is empty at every level.
+  - The Perth fixture build is byte-identical at `-j 1` and `-j 4` (sha256 `da13a775…`).
+  - The bench record shows every Contract H budget met: full wall ≤ 60 s, L0 ≤ 38 s with pre-pass ≤ 5 s, L2 ≤ 2 s, L4–L12 ≤ 2 s, outside-encode ≤ 10 s. It also shows the per-level Python / C / handoff split.
+  - `pytest parser/tests` passes. It runs the Contract T layers: boundary tests, the C unit-test binary, and the goldens.
+  - No test imports a deleted module, and no test compares C against a Python encoder.
+  - The redesigned `quantisation_roundtrip` and `coord_scale` meet their verification-tool outcomes (0 background failures and exactly 1 name-anchor failure; PASS with 0 of 1,461,347 parcels), each in ≤ 120 s at `-j 12`.
+  - `docs/ARCHITECTURE.md`'s module map and its "C kernel" and "Spill and indexed assembly" contracts describe Contract B, not the per-cell kernel.
+- **Stages.** The order is fixed; refine cuts the units.
+  - **Stage 0, baseline and scaffolds:**
+    - re-measure the 3-11 build three times with the split, which gives the run-to-run spread (the 3-11 attribution of its 105–123 s spread is ledgered as wrong);
+    - bench-record instrumentation for the split;
+    - the Contract T layer (a) harness and the layer (b) binary build;
+    - golden capture for every fixture range.
+    The verification-tool redesigns run alongside Stage 0. They must land before Stage 1 deletes `overlap.py`.
+  - **Stage 1, E1 and E2 take the overlap scan, the merge and the per-cell encode (the profile's largest block, about 55–60 s of L0).**
+    - Divisions are still declined. The transitional Python divide consumes E2's merged content and measures through E3.
+    - Delete `overlap.py`, the per-cell ctypes path, and their internals tests.
+  - **Stage 2, division, retile, trim and name halo move into E2.**
+    - The declined list becomes empty.
+    - Delete `divide.py`, `clip.py`, E3, E2's merged-content output, the per-frame Python in `IndexedLayout`'s divided blocks, `synth.py`'s build encoders, `KIWIW_NO_C` and the no-compiler fallback, and `test_cenc.py`'s C-vs-Python cases.
+    - `frame_range` moves to `kiwiw/mesh.py`.
+    - Harness tests stop fabricating fixtures through `synth`.
+  - **Close:** rewrite `docs/ARCHITECTURE.md` and verify the budget table.
+- **Step gates.** Every stage 1 and stage 2 step that changes the build path is gated on all of these:
+  - the full-disc sha `87a01b14…` at `-j 12`;
+  - Perth `-j 1` == `-j 4`;
+  - the goldens;
+  - a step wall within Contract H's regression rule.
+  Each step deletes the Python it replaced in the same unit.
+- Surfaces:
+  - `parser/kiwiw/_cenc.c` (may split into several C sources), `parser/kiwiw/cenc.py`;
+  - `parser/build_alldata.py`;
+  - `parser/kiwiw/{overlap,clip,divide,synth,spill,frame_table,alldata_writer,mesh}.py`;
+  - `parser/tools/{quantisation_roundtrip,bench_build}.py`, the `coord_scale` check and census;
+  - `parser/tests/` (`test_cenc`, `test_clip`, `test_divide`, `test_overlap`, `test_synth_*`, `test_harness_*`, `test_name_encode`, `test_alldata_writer`, and new boundary, golden and C-unit tests), `parser/tests/fixtures/`;
+  - `docs/ARCHITECTURE.md`, `docs/provenance.md` (if any fixture is not committed).
+- Approach: known. The byte-exact C parity technique (`-ffp-contract=off`, `rint`, identical operation order) is already proven by `_cenc.c`, and every step has a byte-identity yardstick.
+- Depends on: Phase 3 units 3-01 to 3-04, 3-07, 3-08, 3-09 and 3-11.
+- **Downstream effect.** Phase 3 resumes after this phase (3-10, 3-13, 3-05, 3-06). Phases 4–10 name Python build modules (`synth`, `divide`) in their Surfaces lists. From this phase on, those surfaces are read as the C sources behind E1/E2, and Contract B governs where the work lands.
 
 ### Phase 4 — Header words and per-sub-frame size cap
 
