@@ -518,3 +518,19 @@ The worker was stopped at the user's request after 84 tool calls in ~14 min, wit
 
 ### Orchestrator decision: the build hot path moves to C at a cell-range boundary (2026-09-25, user)
 Build time tripled from 36.7 s (3-07) to 108 s (3-11) because new per-shape/per-cell work (3-09's overlap pre-pass, 3-11's rect detection) and its tests landed in Python first, with C mirrors added afterwards and a per-shape Python→C handoff on the path. The user's decision: the compute-heavy pipeline goes to C with an absolutely clear boundary, so new build work and its tests land on the C side directly instead of in Python first and then being refactored. The boundary is **one C call per cell range**: C takes the spool bytes for a cell range and returns finished frame bytes (overlap, clip/densify/round, mult selection, record encoding, division). Python keeps orchestration, CLI, worker pool, manifest, and verification/analysis tools. Hot paths and a per-level time budget become design contracts, with a Python/C/handoff profile split required in done evidence. A read-only profiling pass (running) splits L0's time by stage and scopes the port. It feeds a `design` amendment adding the C-pipeline phase and the boundary contract. 3-12 and 3-10 are held until that amendment lands, since tuning the Python path now would be rework.
+
+### Research: where the build time goes, and the C porting scope (2026-09-25, read-only)
+Profiled L0 at `-j 12` on HEAD, 3-07 (`ab7681b`) and 3-09 (`3738613`), with per-stage timers summed over workers and scaled to wall. Full build 108.3 s, L0 96.3 s. The L0 split:
+- overlap pre-pass `_scan`, Python/numpy: 27.1 s measured (per-shape numpy overhead in `_shape_cell_keys`)
+- overlap `merge_raw`, Python: ~30 s (re-serialises every record; 11.25 GB handed to C from a 4.45 GB spool)
+- divide fallback for 563 parents, Python with C measuring: ~27 s
+- per-cell glue, Python: ~6.5 s
+- C encode `kw_encode_cell`: ~5 s (one ctypes call per cell, 3.70M calls, 2.27M of them empty cells)
+
+Attribution: 3-07 → 3-09 is +62 s (pre-pass +28, merge +31, retile +6.5). 3-09 → 3-11 left L0 unchanged (98.3 vs 98.0 s), so **the 3-11 record's "rect-detection overhead" attribution is wrong**. Its 105–123 s spread is outside L0 or noise (not profiled).
+
+Verification tools:
+- `quantisation_roundtrip.py` (280 s) runs the overlap scan serially because it calls `build_level` without a pool.
+- `coord_scale` (10–15 min) is single-process, uses a full Python `decode_parcel`, and makes a lat/lon round-trip of every vertex inside `parcel_extent`.
+
+The researcher recommended porting the scan and the chunk driver/merge to C behind one call per row range (~50 s est.), with divide kept in Python for now. That is narrower than the user's cell-range boundary decision above, which puts divide on the C side too. The design amendment settles it. Scratch is at `output/research-hotpath/` (gitignored).
