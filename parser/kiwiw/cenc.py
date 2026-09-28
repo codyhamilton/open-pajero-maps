@@ -259,3 +259,111 @@ def measure_content(level: int, ix: int, iy: int, bounds, content: dict, *,
 
 def _m_addr_sizes() -> int:
     return ctypes.addressof(_m_sizes)
+
+
+# ---------------------------------------------------------------- E1 (3C-06)
+# The C level pre-pass (`_e1.c`; DESIGN.md Contract B, "E1"). One ctypes
+# call per row range; no Python fallback (a build failure raises).
+
+E1_COUNTERS = ("shared_shapes", "edge_cells", "interior_cells", "skipped_missing_cells")
+_E1_NSLOTS = 8          # counters[0..3] above, 4 cells, 5 shapes, 6 leaving, 7 C ns
+_E1_ERRORS = {-1: "bad descriptor", -2: "bad spool index", -3: "bad spool record",
+              -4: "out of memory"}
+_e1_lib = None
+_e1_stats = {"ranges": 0, "calls": 0, "rows": 0, "cells": 0, "shapes": 0, "leaving": 0,
+             "py_s": 0.0, "c_s": 0.0, "handoff_s": 0.0}
+
+
+class E1Error(RuntimeError):
+    """E1 rejected its input (descriptor, spool index or record)."""
+
+
+def _load_e1():
+    global _e1_lib
+    if _e1_lib is None:
+        cbuild.build_ext()
+        lib = ctypes.CDLL(str(_SO))
+        lib.kw_e1.restype = ctypes.c_int64
+        lib.kw_e1.argtypes = [ctypes.c_void_p, ctypes.c_int64, ctypes.c_void_p, ctypes.c_int64,
+                              ctypes.c_void_p, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
+                              ctypes.c_void_p, ctypes.c_int64, ctypes.c_void_p]
+        _e1_lib = lib
+    return _e1_lib
+
+
+class E1Spool:
+    """One level's spool `.idx` and `.data`, memory-mapped read-only for E1
+    (zero-copy: C reads the mapped pages directly)."""
+
+    def __init__(self, spool_dir, level: int):
+        import numpy as np
+        self.level = level
+        d = Path(spool_dir)
+        self.idx = np.memmap(d / f"level_{level}.idx", dtype=np.uint8, mode="r")
+        p = d / f"level_{level}.data"
+        self.data = (np.memmap(p, dtype=np.uint8, mode="r") if p.stat().st_size
+                     else np.zeros(0, np.uint8))
+
+    def close(self) -> None:
+        self.idx = self.data = None
+
+
+_E1_I64_MIN, _E1_I64_MAX = -(1 << 63), (1 << 63) - 1
+_e1_buf = None
+
+
+def e1(desc: bytes, spool: E1Spool, row_lo: int | None, row_hi: int | None,
+       cap_hint: int | None = None):
+    """Run E1 over source rows `[row_lo, row_hi)` (`None` = unbounded).
+    Returns `(rows, counters)`: a `descriptor.E1_ROW_DTYPE` array (a copy)
+    and `{name: int}` over `E1_COUNTERS`. If the output buffer is too small
+    C reports the rows it needs; the buffer grows and the call repeats (the
+    repeat is counted in `e1_stats()["calls"]`)."""
+    import numpy as np
+    from .descriptor import E1_ROW_DTYPE, MAGIC, parse_level
+    global _e1_buf
+    t0 = time.perf_counter()
+    # (a bad magic is C's to reject; this only pairs a good one with its spool)
+    if bytes(desc[:8]) == MAGIC and parse_level(desc) != spool.level:
+        raise E1Error(f"descriptor level {parse_level(desc)} != spool level {spool.level}")
+    rb = E1_ROW_DTYPE.itemsize
+    lib = _load_e1()
+    if cap_hint is not None:
+        _e1_buf = np.empty(max(1, cap_hint) * rb, np.uint8)
+    elif _e1_buf is None:
+        _e1_buf = np.empty((1 << 16) * rb, np.uint8)
+    lo = _E1_I64_MIN if row_lo is None else int(row_lo)
+    hi = _E1_I64_MAX if row_hi is None else int(row_hi)
+    dbuf = np.frombuffer(desc, np.uint8)
+    idx, data = spool.idx, spool.data
+    wall = c_ns = 0.0
+    while True:
+        cnt = np.zeros(_E1_NSLOTS, np.int64)
+        tc = time.perf_counter()
+        n = lib.kw_e1(dbuf.ctypes.data, len(dbuf), idx.ctypes.data, len(idx),
+                      data.ctypes.data, len(data), lo, hi,
+                      _e1_buf.ctypes.data, len(_e1_buf) // rb, cnt.ctypes.data)
+        wall += time.perf_counter() - tc
+        c_ns += float(cnt[7])
+        _e1_stats["calls"] += 1
+        if n < 0:
+            raise E1Error(_E1_ERRORS.get(n, f"error {n}"))
+        if n <= len(_e1_buf) // rb:
+            break
+        _e1_buf = np.empty(int(n + n // 4) * rb, np.uint8)
+    # raw bytes (pad included), then viewed: a structured copy skips the pad
+    rows = _e1_buf[:n * rb].copy().view(E1_ROW_DTYPE)
+    s = _e1_stats
+    s["ranges"] += 1
+    s["rows"] += int(n)
+    s["cells"] += int(cnt[4]); s["shapes"] += int(cnt[5]); s["leaving"] += int(cnt[6])
+    s["c_s"] += c_ns / 1e9
+    s["handoff_s"] += max(0.0, wall - c_ns / 1e9)
+    s["py_s"] += max(0.0, (time.perf_counter() - t0) - wall)
+    return rows, {k: int(cnt[i]) for i, k in enumerate(E1_COUNTERS)}
+
+
+def e1_stats() -> dict:
+    """Process-local E1 totals: ranges, ctypes calls (ranges + retries),
+    rows, and the Python / C / handoff time split."""
+    return dict(_e1_stats)

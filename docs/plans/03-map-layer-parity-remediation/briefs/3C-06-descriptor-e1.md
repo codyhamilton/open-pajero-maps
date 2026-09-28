@@ -126,3 +126,35 @@ Over budget: stop, commit what passes, and put the handoff (done, not done, what
 A non-trivial bug outside your done evidence: report symptom, location, and root cause if found. Do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendment (2026-09-25, 3C-06 worker)
+
+1. **One C test binary, one `main`.** `ctest/test_cenc_internals.c` says "one
+   executable per `ctest/*.c`", but `cbuild.build_test_bin()` links every
+   `ctest/*.c` into one executable, and that file already defines `main`.
+   `ctest/test_e1_cells.c` therefore has no `main`. A constructor runs its
+   cases and prints the usual `CASE <name> OK|FAIL` lines. An `atexit`
+   handler turns any failure into exit status 1. cbuild is unchanged apart
+   from its source list, and so is the other file's comment (not owned).
+2. **Layouts live in `_e1.c`'s header comment and `descriptor.py`'s
+   docstring, not in a shared `.h`.** cbuild compiles every
+   `EXT_SOURCES` entry, so a header cannot sit on that list. The two
+   tables are kept identical, and `test_descriptor.py` pins the offsets.
+3. **Hard-coded C tables found.** `_cenc.c` keeps its own copy of the
+   spool column layout (`COLS[]`) and the mult candidates
+   (`cands[8] = {128, …, 1}`). E1 does not use them. It reads the column
+   layout from the descriptor, which is derived from `spool._COLUMNS`.
+   Moving `_cenc.c` onto the descriptor is left to E2 (3C-07). Python
+   passes no vocabulary tables today, so the descriptor carries none.
+4. **Output growth protocol.** `kw_e1` returns the number of rows it
+   needs. It counts rows past `rows_cap` but does not write them. The
+   binding grows its buffer and calls again. The ranges stay one per
+   call, and the repeat call shows in `e1_stats()["calls"]`.
+5. **E1 rejects a spool/level mismatch in Python.** The spool index does
+   not record its level. The binding therefore compares the descriptor's
+   level with `E1Spool.level` before the call. This check is only a
+   pairing guard; no build logic moves into Python.
+6. **Existence (the descriptor bitmap).** A cell exists when it is a spool
+   index cell or lies inside the level's mask rect. This matches
+   `overlap._Exists`. The default window is the whole level, which gives
+   the same result as the build's `window=None`.

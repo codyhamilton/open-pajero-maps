@@ -379,3 +379,111 @@ def _locate(fh, zdat0: bytes, pdmdh: Pdmdh, level: int, lat: float, lon: float,
 def _pread(fh, size: int, offset: int) -> bytes:
     fh.seek(offset)
     return fh.read(size)
+
+
+# ---------------------------------------------------------------------------
+# Build-side cell grid (plan 03, 3C-06).
+#
+# The build's home for the extractor's grid rules (`TileGrid`,
+# `assign_to_parcel`, `parcel_bounds`, `g_frame_class`, `g_frame_range`,
+# `frame_bounds`, `FIXTURE_BBOXES`, the fixture cell range) so build code
+# stops importing the extractor (3C-08 switches the build over). Same
+# arithmetic, same results; checked against the extractor's copies in
+# tests/test_descriptor.py.
+# ---------------------------------------------------------------------------
+
+# Named fixture boxes: (lon_left, lat_bottom, lon_right, lat_top).
+FIXTURE_BBOXES = {"perth": (115.5, -32.5, 116.5, -31.5)}
+
+
+@dataclass(frozen=True)
+class CellGrid:
+    """One level's cell lattice over the reference coverage box
+    (`kiwiw.grid.ReferenceGrid`): cell (ix, iy) spans lat
+    `disc_lat_lo + iy*cell_lat ..` and lon `disc_lon_lo + ix*cell_lon ..`
+    (modulo the antimeridian)."""
+    level: int
+    disc_lat_lo: float
+    disc_lon_lo: float
+    disc_lat_span: float
+    disc_lon_span: float
+    nx: int
+    ny: int
+
+    @property
+    def cell_lat(self) -> float:
+        return self.disc_lat_span / self.ny
+
+    @property
+    def cell_lon(self) -> float:
+        return self.disc_lon_span / self.nx
+
+    @classmethod
+    def from_reference(cls, level: int) -> "CellGrid":
+        from .grid import ReferenceGrid
+        rg = ReferenceGrid.load()
+        c = rg.coverage
+        lg = rg.level(level)
+        return cls(level=level, disc_lat_lo=c["lat_lo"], disc_lon_lo=c["lon_lo"],
+                   disc_lat_span=c["lat_hi"] - c["lat_lo"],
+                   disc_lon_span=_lon_span(c["lon_lo"], c["lon_hi"]), nx=lg.nx, ny=lg.ny)
+
+
+def assign_to_parcel(lat: float, lon: float, grid: CellGrid) -> Optional[tuple[int, int]]:
+    """The (ix, iy) cell holding (lat, lon), or None outside the coverage."""
+    dlat = lat - grid.disc_lat_lo
+    if dlat < 0 or dlat >= grid.disc_lat_span:
+        return None
+    dlon = _lon_delta(grid.disc_lon_lo, lon, grid.disc_lon_span)
+    return (_clamp(int(dlon / grid.cell_lon), 0, grid.nx - 1),
+            _clamp(int(dlat / grid.cell_lat), 0, grid.ny - 1))
+
+
+def _norm_lon(v: float) -> float:
+    while v > 360:
+        v -= 360
+    while v < -180:
+        v += 360
+    return v
+
+
+def parcel_bounds(ix: int, iy: int, grid: CellGrid) -> BoundingBox:
+    """Geographic bounds of cell (ix, iy), longitudes normalised to [-180, 360]."""
+    lat_lo = grid.disc_lat_lo + iy * grid.cell_lat
+    lon_lo = grid.disc_lon_lo + ix * grid.cell_lon
+    return BoundingBox(lat_lo=lat_lo, lat_hi=lat_lo + grid.cell_lat,
+                       lon_lo=_norm_lon(lon_lo), lon_hi=_norm_lon(lon_lo + grid.cell_lon))
+
+
+def g_frame_class(level: int) -> str:
+    """`coord_scale.json` class of one undivided G frame: every G frame is
+    one slot, so L0 is 'urban' (range 4096) and every other level 'full'."""
+    return "urban" if level == 0 else "full"
+
+
+def g_frame_range(level: int, parcel_type: int = 0, sub_index: int = 0) -> int:
+    """Coordinate range of an undivided frame (`parcel_type` 0) or of
+    sub-parcel `sub_index` of a `pardiv<parcel_type>` divided parcel.
+    Raises `KeyError` where `coord_scale.json` has no such class."""
+    from .coordconv import range_for
+    if parcel_type:
+        return range_for(level, "divided", f"pardiv{parcel_type}_sub{sub_index}")
+    return range_for(level, g_frame_class(level), "normal")
+
+
+def frame_bounds(ix: int, iy: int, grid: CellGrid) -> BoundingBox:
+    """`parcel_bounds` carrying the undivided frame's coordinate range."""
+    return replace(parcel_bounds(ix, iy, grid), coord_range=g_frame_range(grid.level))
+
+
+def fixture_cell_range(level: int, fixture: str,
+                       grid: Optional[CellGrid] = None) -> tuple[int, int, int, int]:
+    """Inclusive (ix_lo, ix_hi, iy_lo, iy_hi) of the cells holding the
+    corners of `FIXTURE_BBOXES[fixture]` at `level`."""
+    grid = grid or CellGrid.from_reference(level)
+    lon_l, lat_b, lon_r, lat_t = FIXTURE_BBOXES[fixture]
+    cs = [c for c in (assign_to_parcel(la, lo, grid) for la, lo in
+                      ((lat_b, lon_l), (lat_b, lon_r), (lat_t, lon_l), (lat_t, lon_r)))
+          if c is not None]
+    return (min(c[0] for c in cs), max(c[0] for c in cs),
+            min(c[1] for c in cs), max(c[1] for c in cs))
