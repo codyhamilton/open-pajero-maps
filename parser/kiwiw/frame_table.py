@@ -4,10 +4,10 @@
 Encode workers append frames to their own spill file and describe them as
 rows of a numpy `FRAME_DTYPE` array (a `FrameTable`), so neither frame bytes
 nor per-frame Python objects cross the process boundary. `IndexedLayout`
-computes every frame/block position from those arrays with numpy, producing
-exactly the layout the per-object path in `alldata_writer` produces (that path
-stays as the byte-identity oracle); `write_frames` copies frames with a
-GIL-free C loop across threads.
+computes every frame/block position, and every block record (divided parents'
+sub-records included, `divided_block_rows`), from those arrays with numpy: no
+Python object or loop per frame or per block. `write_frames` copies frames with
+a GIL-free C loop across threads.
 """
 from __future__ import annotations
 
@@ -154,21 +154,27 @@ class IndexedLayout:
                         | (self.local[di][1:] != self.local[di][:-1]))
             pi = di[newp]
             gn = np.zeros(len(pi), np.int64)
-            for lvl in np.unique(self.lvl[pi]):
+            gn_lng = np.zeros(len(pi), np.int64)
+            for lvl in np.unique(self.lvl[pi]):          # per level and type, not per frame
                 lmr = lmr_by_level[int(lvl)]
                 sel = self.lvl[pi] == lvl
                 for pt in np.unique(self.rec["pt"][pi][sel]):
                     m = sel & (self.rec["pt"][pi] == pt)
-                    gn[m] = (1 + lmr.n_parcels_lat[int(pt)]) * (1 + lmr.n_parcels_lng[int(pt)])
+                    gn_lng[m] = 1 + lmr.n_parcels_lng[int(pt)]
+                    gn[m] = (1 + lmr.n_parcels_lat[int(pt)]) * gn_lng[m]
             blk_of = np.searchsorted(self.first, pi, side="right") - 1
             np.add.at(self.blk_sub_bytes, blk_of, 4 + 6 * gn)
             np.add.at(self.blk_n_div, blk_of, 1)
             self.parent_idx, self.parent_gn, self.parent_blk = pi, gn, blk_of
+            self.parent_gn_lng = gn_lng
+            self.div_idx = di                            # divided frames (rec order)
+            self.div_parent = np.cumsum(newp) - 1        # parent ordinal of each
         slots = np.zeros(self.n_blocks, np.int64)
         for l in np.unique(self.blk_lvl):
             slots[self.blk_lvl == l] = dims[int(l)]["npc_lat"] * dims[int(l)]["npc_lng"]
         self.blk_slots = slots
-        sub_cursor = footprint_entries(slots) + self.blk_sub_bytes
+        self.blk_footprint = footprint_entries(slots)
+        sub_cursor = self.blk_footprint + self.blk_sub_bytes
         self.block_total = ((sub_cursor + lg - 1) // lg) * lg
 
     def _check_conflicts(self) -> None:
@@ -234,6 +240,77 @@ class IndexedLayout:
         ent[rows, cols, 0:4] = self.item_dsa[m].astype(">u4").view(np.uint8).reshape(-1, 4)
         ent[rows, cols, 4:6] = self.item_size[m].astype(">u2").view(np.uint8).reshape(-1, 2)
         return sel, arr
+
+    def divided_block_rows(self):
+        """Block records for every block that carries divided parents, built
+        with numpy over the whole table (no per-frame or per-block Python).
+
+        Returns `[(block_off u64[n], rows u8[n, total])]`, one entry per
+        distinct block total, ready for `kw_write_rows`. Call after `place`.
+        Each block is the root record (header, one entry per slot: NO_DATA,
+        a type-0 frame's DSA/size, or `sub_off/2` with size 0 for a divided
+        parent), then the parents' sub-records in slot order (`4 + 6*gn`
+        each: the type word, `gn` entries NO_DATA or a sub-frame's DSA/size),
+        then zeros. All 32-bit and 16-bit fields are big endian.
+        """
+        if not self.blk_n_div.any():
+            return []
+        bsel = np.flatnonzero(self.blk_n_div)
+        # sort by total so each size class is one contiguous slab of `flat`
+        bsel = bsel[np.argsort(self.block_total[bsel], kind="stable")]
+        tot = self.block_total[bsel]
+        start = np.cumsum(tot) - tot
+        flat = np.zeros(int(tot.sum()), np.uint8)
+        ord_of = np.full(self.n_blocks, -1, np.int64)
+        ord_of[bsel] = np.arange(len(bsel))
+
+        def put(pos, dsa, size):
+            pos = pos[:, None] + np.arange(6)
+            flat[pos[:, :4]] = np.asarray(dsa, ">u4").view(np.uint8).reshape(-1, 4)
+            flat[pos[:, 4:]] = np.asarray(size, ">u2").view(np.uint8).reshape(-1, 2)
+
+        def run_pos(base, count):
+            run = np.repeat(np.arange(len(count)), count)
+            k = np.arange(int(count.sum())) - (np.cumsum(count) - count)[run]
+            return base[run] + 6 * k
+
+        # parents: sub-record offsets inside their block, in slot order
+        pb = ord_of[self.parent_blk]
+        sub_sz = 4 + 6 * self.parent_gn
+        excl = np.cumsum(sub_sz) - sub_sz
+        first_par = np.searchsorted(self.parent_blk, self.parent_blk, side="left")
+        sub_off = self.blk_footprint[self.parent_blk] + (excl - excl[first_par])
+        sub_at = start[pb] + sub_off
+
+        # every entry starts as NO_DATA (DSA 0xFFFFFFFF, size 0)
+        nd = np.concatenate([run_pos(start + 4, self.blk_slots[bsel]),
+                             run_pos(sub_at + 4, self.parent_gn)])
+        put(nd, np.full(len(nd), 0xFFFFFFFF, np.uint32), np.zeros(len(nd), np.uint16))
+        # sub-record type words (parcel type in the high byte, list type 0)
+        flat[sub_at] = self.rec["pt"][self.parent_idx]
+        # root entries of divided parents point at their sub-record
+        put(start[pb] + 4 + 6 * self.local[self.parent_idx],
+            (sub_off // 2).astype(np.uint32), np.zeros(len(pb), np.uint16))
+        # type-0 frames sharing these blocks
+        blk_of_item = np.repeat(np.arange(self.n_blocks),
+                                np.diff(np.append(self.first, len(self.rec))))
+        m0 = (self.group == 0) & (ord_of[blk_of_item] >= 0)
+        put(start[ord_of[blk_of_item[m0]]] + 4 + 6 * self.local[m0],
+            self.item_dsa[m0], self.item_size[m0])
+        # divided sub-frames at (sy * gn_lng + sx) in their parent's sub-record
+        di, par = self.div_idx, self.div_parent
+        r = self.rec[di]
+        put(sub_at[par] + 4 + 6 * (r["sy"].astype(np.int64) * self.parent_gn_lng[par]
+                                     + r["sx"]),
+            self.item_dsa[di], self.item_size[di])
+
+        out = []
+        for t in np.unique(tot):
+            sel = np.flatnonzero(tot == t)
+            a, n = int(start[sel[0]]), len(sel)
+            out.append((np.ascontiguousarray(self.block_off[bsel[sel]].astype(np.uint64)),
+                        flat[a:a + n * int(t)].reshape(n, int(t))))
+        return out
 
     # ---- writing -------------------------------------------------------
     def write_frames(self, lib, out_fd: int, threads: int) -> None:

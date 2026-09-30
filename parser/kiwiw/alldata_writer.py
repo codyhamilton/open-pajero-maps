@@ -1137,43 +1137,7 @@ def _build_alldata_kwi_multilevel(
             sel, arr = lay.simple_block_rows(lvl, 4 + bmt_entry_size * n_slots, t_simple)
             if len(sel):
                 idx_simple.append((np.ascontiguousarray(lay.block_off[sel].astype(np.uint64)), arr))
-        for b in np.flatnonzero(lay.blk_n_div):
-            b = int(b)
-            level = int(lay.blk_lvl[b])
-            d = dims[level]
-            lmr = lmr_by_level[level]
-            n_slots = d["npc_lat"] * d["npc_lng"]
-            lo = int(lay.first[b])
-            hi = int(lay.first[b + 1]) if b + 1 < lay.n_blocks else len(lay.rec)
-            entries = [_PMI(dsa=NO_DATA_DSA, size=0) for _ in range(n_slots)]
-            sub_cursor = 4 + bmt_entry_size * n_slots
-            i = lo
-            while i < hi:
-                local = int(lay.local[i])
-                if lay.group[i] == 0:
-                    entries[local] = _PMI(dsa=int(lay.item_dsa[i]), size=int(lay.item_size[i]))
-                    i += 1
-                    continue
-                parcel_type = int(lay.rec["pt"][i])
-                gn_lng = 1 + lmr.n_parcels_lng[parcel_type]
-                gn = (1 + lmr.n_parcels_lat[parcel_type]) * gn_lng
-                sub_entries = [_PMI(dsa=NO_DATA_DSA, size=0) for _ in range(gn)]
-                while i < hi and lay.group[i] == 1 and int(lay.local[i]) == local:
-                    r = lay.rec[i]
-                    sub_entries[int(r["sy"]) * gn_lng + int(r["sx"])] = _PMI(
-                        dsa=int(lay.item_dsa[i]), size=int(lay.item_size[i]))
-                    i += 1
-                sub_rec = _PMR(parcel_type=parcel_type, list_type=0, offset=sub_cursor,
-                                entries=sub_entries, header_gap_raw=b"\x00\x00", tail_raw=b"")
-                entries[local] = _PMI(dsa=sub_cursor // 2, size=0, subrecord=sub_rec)
-                sub_cursor += 4 + gn * bmt_entry_size
-            block_total = align_up(sub_cursor, logical_sz)
-            assert block_total == int(lay.block_total[b])
-            root = _PMR(parcel_type=0, list_type=0, offset=0, entries=entries,
-                        header_gap_raw=b"\x00\x00", tail_raw=bytes(block_total - sub_cursor))
-            buf = bytearray([POISON]) * block_total
-            parcel_writer.write_parcel_mgmt_record(root, buf)
-            block_regions.append((int(lay.block_off[b]), bytes(buf)))
+        idx_simple.extend(lay.divided_block_rows())
     else:
         for (level, bsidx, blidx), slots in sorted(block_slots.items()):
             d = dims[level]
