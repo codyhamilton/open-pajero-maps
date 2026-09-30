@@ -1,0 +1,48 @@
+{
+ "level": 2,
+ "window": [
+  269,
+  194,
+  270,
+  195
+ ],
+ "covers": "L2",
+ "frames": 1,
+ "frame_sha256": [
+  "3837256115daa18589c64a7677faff9228885cb9bf4a785329c5c80ae3bfdb39"
+ ],
+ "total_sha256": "3837256115daa18589c64a7677faff9228885cb9bf4a785329c5c80ae3bfdb39",
+ "frame_bytes": 20560,
+ "fixture_spool_bytes": 256608,
+ "source_cells": [
+  [
+   268,
+   194
+  ],
+  [
+   269,
+   194
+  ],
+  [
+   270,
+   194
+  ],
+  [
+   274,
+   201
+  ]
+ ],
+ "manifest": {
+  "trimmed_items": {},
+  "halo_names": {},
+  "overlap": {
+   "2": {
+    "shared_shapes": 12,
+    "edge_cells": 50,
+    "interior_cells": 5,
+    "skipped_missing_cells": 0
+   }
+  }
+ },
+ "capture_build_s": 0.3
+}

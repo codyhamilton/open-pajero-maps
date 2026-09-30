@@ -1,0 +1,68 @@
+{
+ "level": 0,
+ "window": [
+  1780,
+  814,
+  1781,
+  815
+ ],
+ "covers": "L0 sparse",
+ "frames": 1,
+ "frame_sha256": [
+  "a195e76bd6753d932d74fc478dae08f8902a86fcbde86550faf064451bd9becd"
+ ],
+ "total_sha256": "a195e76bd6753d932d74fc478dae08f8902a86fcbde86550faf064451bd9becd",
+ "frame_bytes": 752,
+ "fixture_spool_bytes": 23728,
+ "source_cells": [
+  [
+   1780,
+   813
+  ],
+  [
+   1781,
+   813
+  ],
+  [
+   1775,
+   814
+  ],
+  [
+   1779,
+   814
+  ],
+  [
+   1780,
+   814
+  ],
+  [
+   1780,
+   815
+  ],
+  [
+   1812,
+   834
+  ],
+  [
+   1759,
+   876
+  ],
+  [
+   1891,
+   893
+  ]
+ ],
+ "manifest": {
+  "trimmed_items": {},
+  "halo_names": {},
+  "overlap": {
+   "0": {
+    "shared_shapes": 6,
+    "edge_cells": 6248,
+    "interior_cells": 89780,
+    "skipped_missing_cells": 0
+   }
+  }
+ },
+ "capture_build_s": 0.6
+}

@@ -252,3 +252,25 @@ same commit.
 - **Why not committed**: platform-specific compiled/derived build artifacts.
 - **Reproduce**: run `parser/tests/test_c_units.py` (or import `kiwiw.cbuild` and
   call `build_ext()`/`build_test_bin()` directly) with a C compiler on `PATH`.
+
+## `output/goldens-3C/` (local-only Contract T goldens, 3C-03)
+
+- **What**: Contract T (c) goldens too large to commit (limit used: ~2 MB fixture
+  spool per golden, ~10 MB for all committed goldens). Each `<name>/` holds a
+  closed fixture spool (`spool/level_<L>.{idx,data}`), the expected frames
+  (`frames.bin`, `frames.tsv`) and `golden.json`. Currently one:
+  `l0_divided_trim_halo` (L0 window `1755 591 1756 592`, the full-AU build's
+  only trimmed L0 cell; 6.5 MB spool). The list lives in
+  `parser/tests/fixtures/goldens/local.json`; `parser/tests/test_goldens.py`
+  skips a listed golden when its directory is absent. `output/goldens-3C/index/`
+  caches `golden_capture.py`'s bounding-box index per spool level (regenerated
+  automatically).
+- **Source**: the spool of record `output/extract_timing/spool` and the build at
+  the 3-11 reference (`87a01b14…`).
+- **Why not committed**: size.
+- **Reproduce**: `.venv-rp/bin/python parser/tools/golden_capture.py capture
+  --out output/goldens-3C --name l0_divided_trim_halo --level 0 --window 1755
+  591 1756 592 --covers "divided L0 parent with trim and name halo"`; verify
+  with `golden_capture.py prove --golden output/goldens-3C/l0_divided_trim_halo
+  --digest <full-AU --frame-digest listing> --work <dir> -j 12` (under
+  `flock output/.heavy.lock`).

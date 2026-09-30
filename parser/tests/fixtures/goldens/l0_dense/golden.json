@@ -1,0 +1,92 @@
+{
+ "level": 0,
+ "window": [
+  827,
+  833,
+  828,
+  834
+ ],
+ "covers": "L0 urban dense",
+ "frames": 1,
+ "frame_sha256": [
+  "9aea901ce42193e2f5d739fd8a9547becee26fcd8f3bd87904a5d856b8ac5e2f"
+ ],
+ "total_sha256": "9aea901ce42193e2f5d739fd8a9547becee26fcd8f3bd87904a5d856b8ac5e2f",
+ "frame_bytes": 111222,
+ "fixture_spool_bytes": 1494864,
+ "source_cells": [
+  [
+   866,
+   787
+  ],
+  [
+   829,
+   817
+  ],
+  [
+   826,
+   819
+  ],
+  [
+   825,
+   831
+  ],
+  [
+   826,
+   832
+  ],
+  [
+   827,
+   832
+  ],
+  [
+   828,
+   832
+  ],
+  [
+   826,
+   833
+  ],
+  [
+   827,
+   833
+  ],
+  [
+   828,
+   833
+  ],
+  [
+   827,
+   834
+  ],
+  [
+   828,
+   834
+  ],
+  [
+   827,
+   835
+  ],
+  [
+   827,
+   837
+  ],
+  [
+   779,
+   1086
+  ]
+ ],
+ "manifest": {
+  "trimmed_items": {},
+  "halo_names": {},
+  "overlap": {
+   "0": {
+    "shared_shapes": 115,
+    "edge_cells": 3925,
+    "interior_cells": 109308,
+    "skipped_missing_cells": 0
+   }
+  }
+ },
+ "capture_build_s": 0.6
+}

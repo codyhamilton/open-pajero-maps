@@ -1,0 +1,45 @@
+{
+ "level": 0,
+ "window": [
+  956,
+  1420,
+  958,
+  1421
+ ],
+ "covers": "edge-of-coverage (mask-filled cell beside a spool cell)",
+ "frames": 2,
+ "frame_sha256": [
+  "b8335c83d174b523ccd30a0291d9a377dfbdcd4547e60f500f0465d287c57a9f",
+  "9bbba2520b57dcf88ab32d17b34061efaa0fc0f6661078020955bba295e403b2"
+ ],
+ "total_sha256": "ea78237aab100c17126c2d04eddc23bcd4135d1b7eb24600d45255918904e180",
+ "frame_bytes": 914,
+ "fixture_spool_bytes": 10960,
+ "source_cells": [
+  [
+   949,
+   1416
+  ],
+  [
+   957,
+   1420
+  ],
+  [
+   958,
+   1421
+  ]
+ ],
+ "manifest": {
+  "trimmed_items": {},
+  "halo_names": {},
+  "overlap": {
+   "0": {
+    "shared_shapes": 2,
+    "edge_cells": 152,
+    "interior_cells": 56,
+    "skipped_missing_cells": 0
+   }
+  }
+ },
+ "capture_build_s": 0.3
+}

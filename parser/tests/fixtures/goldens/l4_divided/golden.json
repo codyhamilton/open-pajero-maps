@@ -1,0 +1,51 @@
+{
+ "level": 4,
+ "window": [
+  97,
+  45,
+  98,
+  46
+ ],
+ "covers": "divided L4 parent",
+ "frames": 4,
+ "frame_sha256": [
+  "f518983bb1efb1de64f4e919b7be2a22e26ec4468854550492ac0f3464d29512",
+  "25d425d1c3015b208098a2c3aeca138de2cd386fe31507a1dc6665cb9c93147f",
+  "08ef69e215975e5e8a77452af2467af19cfac103f339815392d7b85d23a8784d",
+  "cd799e121f97bc631efbadb2b9830302d18cb03118a23f0122266aee8934436a"
+ ],
+ "total_sha256": "f8df1bcb1b7364bcea3fe4af75b9dd25232229325c6f4f69bbd938c6e158e319",
+ "frame_bytes": 138530,
+ "fixture_spool_bytes": 1124520,
+ "source_cells": [
+  [
+   97,
+   44
+  ],
+  [
+   96,
+   45
+  ],
+  [
+   97,
+   45
+  ],
+  [
+   97,
+   46
+  ]
+ ],
+ "manifest": {
+  "trimmed_items": {},
+  "halo_names": {},
+  "overlap": {
+   "4": {
+    "shared_shapes": 0,
+    "edge_cells": 0,
+    "interior_cells": 0,
+    "skipped_missing_cells": 0
+   }
+  }
+ },
+ "capture_build_s": 0.7
+}

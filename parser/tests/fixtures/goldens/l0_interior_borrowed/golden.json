@@ -1,0 +1,52 @@
+{
+ "level": 0,
+ "window": [
+  1667,
+  1621,
+  1668,
+  1622
+ ],
+ "covers": "cell receiving borrowed edge shapes; cell receiving an interior-cover rectangle",
+ "frames": 1,
+ "frame_sha256": [
+  "5d89e04a8ff26c865a8fb8c8627537ab23d011a60c3d73df16d58b3e872893d1"
+ ],
+ "total_sha256": "5d89e04a8ff26c865a8fb8c8627537ab23d011a60c3d73df16d58b3e872893d1",
+ "frame_bytes": 518,
+ "fixture_spool_bytes": 5720,
+ "source_cells": [
+  [
+   1662,
+   1614
+  ],
+  [
+   1663,
+   1619
+  ],
+  [
+   1666,
+   1621
+  ],
+  [
+   1667,
+   1621
+  ],
+  [
+   1667,
+   1622
+  ]
+ ],
+ "manifest": {
+  "trimmed_items": {},
+  "halo_names": {},
+  "overlap": {
+   "0": {
+    "shared_shapes": 2,
+    "edge_cells": 234,
+    "interior_cells": 641,
+    "skipped_missing_cells": 0
+   }
+  }
+ },
+ "capture_build_s": 0.3
+}
