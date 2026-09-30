@@ -135,3 +135,11 @@ Over budget: stop, commit what passes, and put the handoff (done, not done, what
 A non-trivial bug outside your done evidence: report symptom, location, and root cause if found. Do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendment 2026-09-30 (orchestrator, after 3C-08..3C-11 landed)
+
+Scope additions, carried from earlier outcomes:
+- `parser/tests/test_alldata_writer.py` and `parser/kiwiw/alldata_writer.py` are now owned. Delete the legacy object-path assembler (`SynthParcel`, `build_alldata_kwi(parcels=...)`, `_PMI`/`_PMR` if unused) if the only users are tests; `test_indexed_matches_object_path` uses it as a Python oracle (Contract T forbids) so delete it, and re-base the three 3C-10-converted tests that use `SynthParcel` onto the indexed assembler / E2 fixture (`tests/fixtures/harness/e2_fixture.py`) without losing what they assert. If some non-test code still needs the object path, keep it and report why.
+- Clean stale text: `alldata_writer.py` ~869 `KIWIW_NO_C` message, `test_descriptor.py` ~73, `frame_table.py` docstrings and the `plan_divisions()` mention in the conflict error (update any test asserting it), `quantisation_roundtrip.py` ~768.
+- `kw_bg_shape`/`bg_shape_records` are deletable now (users: `synth.py:315`, two `test_cenc.py` cases; both go).
+- Leave `docs/ARCHITECTURE.md` to 3C-13. Unit test suite must stay fast (~210 s full suite today); every step gate above still applies.
