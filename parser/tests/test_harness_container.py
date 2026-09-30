@@ -14,7 +14,6 @@ _PARSER_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PARSER_DIR))
 
 from kiwiw import volume as _volume
-from kiwiw.alldata_writer import SynthParcel, build_alldata_kwi
 from kiwiw.model import BoundingBox
 
 from harness.checks import container as container_checks

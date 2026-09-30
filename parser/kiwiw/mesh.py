@@ -124,6 +124,15 @@ def is_sparse_tile(entries: Sequence, gn_lng: int, idx: int) -> bool:
     return len(seen) == 1
 
 
+def frame_range(bounds: BoundingBox, coord_range: int | None = None) -> int:
+    """The coordinate range the R round-trip writers convert at:
+    `coord_range` when given, else `bounds.coord_range`; `ValueError` when
+    neither is set (no default range exists)."""
+    if coord_range is not None:
+        return coord_range
+    return bounds.require_range()
+
+
 def leaf_frame_range(level: int, ptype: int, leaf_path: tuple, frame_class: str) -> Optional[int]:
     """`coordconv.range_for` of one leaf, by coord_scale.json's
     content-independent `class_rule`: division != 0 -> 'divided' (state

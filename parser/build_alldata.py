@@ -48,9 +48,9 @@ DEFAULT_SPOOL = str(Path(__file__).resolve().parent.parent / "output" / "spool")
 DEFAULT_OUT = str(Path(__file__).resolve().parent.parent / "output" / "ALLDATA.KWI")
 DEFAULT_LEVELS = [12, 10, 8, 6, 4, 2, 0]
 
-# `synth.build_map_frame_bytes()`'s hard format ceiling (Map Frame header's
-# size field is a 16-bit word count: `total_size // 2` must fit in u16) --
-# see synth.py:851 and unit 12's done evidence (IMPLEMENTATION.md, "Unit
+# The Map Frame's hard format ceiling (Map Frame header's
+# size field is a 16-bit word count: `total_size // 2` must fit in u16;
+# enforced in C by `_cenc.c`) and unit 12's done evidence (IMPLEMENTATION.md, "Unit
 # 12"). Unit 13's Amendment: the threshold E2 divides
 # against is `min(profile's per-level mapframe_size.max, this ceiling)`,
 # not the profile max alone -- some of R's own level-0 parcels the profile

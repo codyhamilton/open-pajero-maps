@@ -765,7 +765,7 @@ def _road_rescue(dec, region, kind):
     of a spool road polyline:
     - `<kind>_subcell_on_polyline`: in a divided sub-cell leaf, where a road
       is re-tiled into chains whose every point is a node, cut where it
-      crosses a sub-cell edge (`divide._retile_content`);
+      crosses a sub-cell edge (E2's retile, `_e2.c`);
     - `<kind>_on_leaf_edge`: elsewhere, a vertex on its leaf rectangle's
       edge -- the vertex the clip makes where a road leaves the leaf."""
     L = dec.leaf

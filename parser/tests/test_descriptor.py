@@ -70,7 +70,7 @@ def test_assign_bounds_and_frame_rules_match_extractor(level):
 
 
 # Captured from `build_alldata._fixture_cell_range(L, "perth", TileGrid...)`
-# at 9e9f3de (not imported here: `build_alldata` imports `overlap`).
+# at 9e9f3de (the Python cell-range code it came from is gone).
 _PERTH_RANGES = {0: (816, 848, 839, 887), 2: (204, 212, 209, 221), 4: (51, 53, 52, 55),
                  6: (12, 13, 13, 13), 8: (3, 3, 3, 3), 10: (0, 0, 0, 0), 12: (0, 0, 0, 0)}
 

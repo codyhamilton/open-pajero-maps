@@ -28,7 +28,7 @@ from __future__ import annotations
 from .bitutils import extract, sws
 from .coordconv import encode_region_coord
 from .model import BoundingBox, RoadLink
-from .synth import frame_range
+from .mesh import frame_range
 
 
 def encode_road_link(link: RoadLink, bounds: BoundingBox, *,
@@ -48,7 +48,7 @@ def encode_road_link(link: RoadLink, bounds: BoundingBox, *,
         encode intermediate-point deltas); the current implementation does
         not need it because it reads delta bytes from raw_bytes verbatim.
     coord_range:
-        The frame's coordinate range (`synth.frame_range`: explicit, else
+        The frame's coordinate range (`mesh.frame_range`: explicit, else
         `bounds.coord_range`, else legacy) -- the validity bound of the
         re-encoded node words.
 

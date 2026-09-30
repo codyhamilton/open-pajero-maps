@@ -12,7 +12,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from kiwiw.alldata_writer import SynthParcel, build_alldata_kwi
 from kiwiw.model import NameRecord
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "fixtures" / "harness"))
@@ -42,10 +41,7 @@ def _fixture_bytes_with_name(text: str) -> bytes:
         angle_deg=0, angle_flags=0,
     )
     with tempfile.TemporaryDirectory() as d:
-        frames = e2_fixture.e2_frames(d, LEVEL, {(_IX, _IY): {"names": [name_record]}})
-    parcel = SynthParcel(ix=0, iy=0, bounds=_BOUNDS, map_frame_bytes=frames[(_IX, _IY)])
-    return build_alldata_kwi(parcels=[parcel], coverage=_BOUNDS, level=LEVEL,
-                              grid_nx=1, grid_ny=1)
+        return e2_fixture.alldata_bytes(d, LEVEL, {(_IX, _IY): {"names": [name_record]}})
 
 
 def _build_fixture_bytes() -> bytes:

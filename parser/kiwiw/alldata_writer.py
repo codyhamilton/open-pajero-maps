@@ -459,9 +459,7 @@ def assemble_denovo(region: LoadedRegion) -> DenovoResult:
 # Whole-Australia, all-seven-level synthetic ALLDATA.KWI builder (unit 12)
 # ---------------------------------------------------------------------
 #
-# Replaces the single-level `SynthParcel`/`build_alldata_kwi` above (unit
-# 09's proof-of-concept, one LMR/one BSMR/one BMT/one block) with an
-# assembler driven by `kiwiw.grid.ReferenceGrid`: one LMR per level (grid
+# An assembler driven by `kiwiw.grid.ReferenceGrid`: one LMR per level (grid
 # contract), the reference's own 601-entry BSMR array with real blocksets
 # only where `grid.json` says `R` has them, and a Block Management Table
 # for every one of those. See docs/design/target-disc.md ("Grid contract",
@@ -529,8 +527,8 @@ class LevelBuild:
     ``parcels`` yields ``(ix, iy, map_frame_bytes)`` in ascending
     ``(iy, ix)`` -- global grid-cell indices (0-based, row-major, matching
     `kiwiw.grid.ReferenceGrid.level(n)`'s `nx`/`ny`) and the finished
-    output of `synth.build_map_frame_bytes()`. `SpoolReader.iter_level()`
-    already yields in this order, so a typical `LevelBuild` just wraps it.
+    output of E2 (or `SpoolReader.iter_level()` in tests)
+    already in this order, so a typical `LevelBuild` just wraps it.
     """
     level: int
     parcels: Iterable[tuple[int, int, bytes]] = ()
@@ -581,284 +579,6 @@ def _pad_zero(data: bytes, granularity: int) -> bytes:
     return data + bytes(granularity - rem) if rem else data
 
 
-def build_alldata_kwi(*args, **kwargs):
-    """Dispatches between unit 12's multi-level assembler (``levels: dict[int,
-    LevelBuild]``, ``grid: ReferenceGrid``, ...) and unit 09's legacy
-    single-level assembler (``parcels: list[SynthParcel]``, ``coverage``,
-    ``level``, ``grid_nx``, ``grid_ny``, ...), kept side by side rather than
-    merged into one signature so callers outside this unit's owned paths
-    that still import ``SynthParcel``/the old signature
-    (`parser/tests/test_harness_core.py`, `test_harness_container.py`,
-    `test_harness_profile.py`, `test_harness_spotcheck.py`) keep working
-    unmodified. This mirrors unit 11's precedent for
-    `build_name_frame_bytes()` (kept its legacy `(records, bounds,
-    level=None)` signature working rather than break unowned callers) --
-    see this unit's report in
-    `docs/plans/01-eval-harness-and-map-layer.md`.
-
-    Dispatch rule: the legacy signature is recognised by its distinctive
-    ``parcels``/``coverage``/``level`` keywords, or a first positional
-    argument that is a ``list``/``tuple`` of ``SynthParcel`` (as opposed to
-    the new signature's first positional argument, a ``dict[int,
-    LevelBuild]``).
-    """
-    is_legacy = bool({"parcels", "coverage", "level", "grid_nx", "grid_ny"} & kwargs.keys())
-    if not is_legacy and args:
-        is_legacy = isinstance(args[0], (list, tuple))
-    if is_legacy:
-        return _build_alldata_kwi_legacy(*args, **kwargs)
-    return _build_alldata_kwi_multilevel(*args, **kwargs)
-
-
-@dataclass
-class SynthParcel:
-    """One synthetic parcel ready for assembly by the legacy single-level
-    `_build_alldata_kwi_legacy()` (unit 09's proof-of-concept assembler,
-    kept for unowned callers -- see `build_alldata_kwi()`'s dispatch
-    docstring above).
-
-    ``ix`` / ``iy`` are the column / row indices within the parcel grid
-    (0-based, matching the TileGrid used when the map frame bytes were
-    encoded). ``bounds`` must be the same BoundingBox used during encoding
-    so that pixel coordinates decode back to the correct lat/lon values.
-    ``map_frame_bytes`` is the output of ``synth.build_map_frame_bytes()``.
-    """
-    ix: int
-    iy: int
-    bounds: BoundingBox
-    map_frame_bytes: bytes
-
-
-def _build_alldata_kwi_legacy(
-    parcels: list[SynthParcel],
-    coverage: BoundingBox,
-    level: int,
-    grid_nx: int,
-    grid_ny: int,
-    sector_sz: int = 2048,
-    logical_sz: int = 32,
-) -> bytes:
-    """Unit 09's original minimal single-level/single-block assembler:
-    one LMR, one BSMR, one BMT, one block. Kept verbatim (not owned by
-    this unit) purely so `SynthParcel`-based callers outside unit 12's
-    owned paths keep working -- see `build_alldata_kwi()`'s dispatch
-    docstring. Produces a file with:
-    - a synthetic Data Volume header (2048 bytes)
-    - a synthetic Management Header Table (2048 bytes)
-    - a synthetic PDMDH with one LMR / one BSMR / one BMT (one block)
-    - one block buffer (a flat Parcel Management Record)
-    - map frame bytes for each provided parcel
-
-    Parameters
-    ----------
-    parcels:
-        List of encoded parcels. Parcels outside (grid_nx, grid_ny) raise.
-    coverage:
-        Geographic bounding box stored in the PDMDH and volume header.
-    level:
-        Map level number (0, 2, 4, 6, 8 on the real disc).
-    grid_nx, grid_ny:
-        Total parcel grid dimensions; determines the Parcel Management
-        Record grid and the LMR n_parcels_* fields.
-    sector_sz, logical_sz:
-        Sector / logical-sector sizes (default: real disc values 2048/32).
-    """
-    from . import volume as _vol
-    from . import volume_writer as _vw
-    from .model import (
-        BlockSetMgmtRecord as _BSMR,
-        LevelMgmtRecord as _LMR,
-        ParcelMapInfoEntry as _PMI,
-        ParcelMgmtRecord as _PMR,
-        VolumeHeader as _VH,
-    )
-
-    _POISON = POISON
-
-    def _pad(data: bytes, granularity: int) -> bytes:
-        rem = len(data) % granularity
-        return data + bytes(granularity - rem) if rem else data
-
-    datavol_offset = 0
-    mht_offset     = _vol.DATAVOL_SIZE          # 2048
-    pdmdh_offset   = _vol.DATAVOL_SIZE + _vol.MHT_SIZE  # 4096
-
-    lmr_size = _vol.LMR_BASE_SIZE               # 40 bytes (no extended frame info)
-    bsmr_size_bytes = _vol.BSMR_SIZE            # 10 bytes
-    bmt_entry_size = _vol.BMT_SIZE              # 6 bytes (= 2 * bmr_sz where bmr_sz=3)
-    bmr_sz = bmt_entry_size // 2               # 3 (stored halved)
-
-    bsmr_table_offset = 30 + lmr_size          # = 70
-    bmt_in_pdmdh      = bsmr_table_offset + bsmr_size_bytes  # = 80
-
-    pdmdh_record_size = bmt_in_pdmdh + bmt_entry_size   # = 86
-    pdmdh_total_size  = align_up(pdmdh_record_size, logical_sz)   # = 96
-    pdmdh_logical     = pdmdh_total_size // logical_sz    # = 3
-
-    n_entries = grid_nx * grid_ny
-    block_data_size = 4 + n_entries * bmt_entry_size   # 4 + n*6
-    block_total_size = align_up(block_data_size, logical_sz)
-    block_logical    = block_total_size // logical_sz
-
-    block_offset = pdmdh_offset + pdmdh_total_size     # byte offset in file
-
-    frame_slot_bytes: dict[int, bytes] = {}  # flat_index -> padded frame bytes
-    for sp in parcels:
-        if not (0 <= sp.ix < grid_nx and 0 <= sp.iy < grid_ny):
-            raise ValueError(
-                f"SynthParcel ({sp.ix}, {sp.iy}) outside grid "
-                f"{grid_nx}×{grid_ny}")
-        flat = sp.iy * grid_nx + sp.ix
-        frame_slot_bytes[flat] = _pad(sp.map_frame_bytes, logical_sz)
-
-    frame_offsets: dict[int, int] = {}   # flat_index -> byte offset in file
-    cursor = block_offset + block_total_size
-    for idx in sorted(frame_slot_bytes):
-        frame_offsets[idx] = cursor
-        cursor += len(frame_slot_bytes[idx])
-
-    total_file_size = cursor
-
-    entries: list[_PMI] = []
-    for flat in range(n_entries):
-        if flat in frame_offsets:
-            foff = frame_offsets[flat]
-            fsz  = len(frame_slot_bytes[flat])
-            dsa  = encode_sector_addr(foff, sector_sz, logical_sz)
-            sz   = fsz // logical_sz
-            entries.append(_PMI(dsa=dsa, size=sz))
-        else:
-            entries.append(_PMI(dsa=NO_DATA_DSA, size=0))
-
-    record_footprint = 4 + n_entries * bmt_entry_size   # = block_data_size
-    tail_len = block_total_size - record_footprint
-    root_pmr = _PMR(
-        parcel_type=0,
-        list_type=0,
-        offset=0,
-        entries=entries,
-        header_gap_raw=b"\x00\x00",
-        tail_raw=bytes(tail_len),
-    )
-
-    block_dsa  = encode_sector_addr(block_offset, sector_sz, logical_sz)
-    bmt_entry  = _vol.BmtEntry(dsa=block_dsa, size=block_logical)
-
-    bmt_table = _vol.BmtTable(
-        blockset_ordinal=0,
-        offset=bmt_in_pdmdh,
-        entries=[bmt_entry],
-    )
-
-    blockset = _BSMR(
-        level=level,
-        blockset_index=0,
-        bmt_offset=bmt_in_pdmdh,   # sws-decoded: stored as bmt_in_pdmdh // 2
-        bmt_size=bmt_entry_size,    # sws-decoded: 6 (stored as 3)
-    )
-
-    lmr = _LMR(
-        level=level,
-        upper_level=level,
-        lower_level=level,
-        n_basic_map=3,
-        n_ext_map=0,
-        n_basic_route=0,
-        n_ext_route=0,
-        display_flags=[0] * 5,
-        n_blocksets_lat=0,
-        n_blocksets_lng=0,
-        n_blocks_lat=0,
-        n_blocks_lng=0,
-        n_parcels_lat=[grid_ny - 1, 0, 0, 0],
-        n_parcels_lng=[grid_nx - 1, 0, 0, 0],
-        bsmr_offset=bsmr_table_offset,   # = 70; stored as 35 in LMR
-        node_record_size=6,              # = sws(3); arbitrary typical value
-        grid_nx=grid_nx,
-        grid_ny=grid_ny,
-        n_road_frames=None,
-        raw_tail_hex="",
-    )
-
-    pdmdh = _vol.Pdmdh(
-        coverage=coverage,
-        lmr_size=lmr_size,
-        bsmr_size=bsmr_size_bytes,
-        bmr_size=bmr_sz,
-        n_lmr=1,
-        n_bsmr=1,
-        levels=[lmr],
-        blocksets=[blockset],
-        bsmr_table_offset=bsmr_table_offset,
-        bmt_table_base=0,
-        record_size=pdmdh_record_size,
-        total_size=pdmdh_total_size,
-        header_gap_hex="00" * 6,
-        bmt_tables=[bmt_table],
-        trailing_padding_hex="00" * (pdmdh_total_size - pdmdh_record_size),
-    )
-
-    mid_zero = _vol.Mid(lat=0.0, lon=0.0, lat_exponent=0, lon_exponent=0,
-                        floor=0, reserved=0, date=0)
-    extras = _vol.VolumeHeaderExtras(
-        mids=[mid_zero, mid_zero, mid_zero],
-        maker_defined_hex=["00" * 52, "00" * 52, "00" * 20],
-        contents_word0_low=0,
-        contents_words_1_3=[0, 0, 0],
-        coverage_exponents=[0, 0, 0, 0],
-        background_low=0,
-        reserved_478_hex="00" * 14,
-        level_mgmt_info_hex="00" * 256,
-        reserved_748_hex="00" * 1300,
-    )
-    hdr = _VH(
-        format_version="KIWI-W SYNTHETIC 001",
-        data_version="SYNTHETIC",
-        disk_title="OSM SYNTHETIC BUILD",
-        media_version="001",
-        system_specific_id="",
-        data_author_id="",
-        system_id="",
-        contents_main_map=True,
-        contents_route_planning=False,
-        contents_index_data=False,
-        coverage=coverage,
-        logical_sector_size=logical_sz,
-        sector_size=sector_sz,
-        background_in_map_is_sea=False,
-        background_out_of_map_is_sea=False,
-    )
-
-    mht_entries = [
-        _vol.MhrEntry(index=i, dsa=0, size=0, name="")
-        for i in range(_vol.MHT_RECORD_COUNT)
-    ]
-    mht_entries[0].dsa  = encode_sector_addr(pdmdh_offset, sector_sz, logical_sz)
-    mht_entries[0].size = pdmdh_logical
-    mht = _vol.ManagementHeaderTable(
-        entries=mht_entries,
-        tail_hex="00" * (_vol.MHT_SIZE - _vol.MHT_RECORD_COUNT * _vol.MHR_SIZE),
-    )
-
-    block_buf = bytearray([_POISON]) * block_total_size
-    parcel_writer.write_parcel_mgmt_record(root_pmr, block_buf)
-
-    buf = bytearray(total_file_size)
-
-    def _put_at(off: int, data: bytes) -> None:
-        buf[off:off + len(data)] = data
-
-    _put_at(datavol_offset, _vw.write_volume_header(hdr, extras))
-    _put_at(mht_offset,     _vw.write_management_header_table(mht))
-    _put_at(pdmdh_offset,   _vw.write_pdmdh(pdmdh))
-    _put_at(block_offset,   bytes(block_buf))
-
-    for idx, frame_bytes in frame_slot_bytes.items():
-        _put_at(frame_offsets[idx], frame_bytes)
-
-    return bytes(buf)
-
-
 def _write_indexed(lay, fixed_regions, simple_blocks, out_path: str, total: int,
                    logical_sz: int) -> "AssembledFile":
     """Indexed path writer: C frame copy across threads into a sparse file, then
@@ -866,7 +586,7 @@ def _write_indexed(lay, fixed_regions, simple_blocks, out_path: str, total: int,
     from . import cenc as _cenc
     lib = _cenc.lib()
     if lib is None:
-        raise RuntimeError("indexed assembly needs the C helpers (unset KIWIW_NO_C)")
+        raise RuntimeError("indexed assembly needs the C helpers (the C extension failed to load)")
     threads = max(1, min(os.cpu_count() or 1, 16))
     fd = os.open(out_path, os.O_RDWR | os.O_CREAT | os.O_TRUNC, 0o644)
     try:
@@ -891,7 +611,7 @@ def _write_indexed(lay, fixed_regions, simple_blocks, out_path: str, total: int,
     return AssembledFile(size=total, sha256=digest.hexdigest())
 
 
-def _build_alldata_kwi_multilevel(
+def build_alldata_kwi(
     levels: dict[int, "LevelBuild"],
     grid: ReferenceGrid,
     *,
@@ -916,11 +636,11 @@ def _build_alldata_kwi_multilevel(
 
     `divided` (unit 13): per level, an iterable of ``(ix, iy, parcel_type,
     sub_ix, sub_iy, map_frame_bytes)`` -- the divided-parcel-type (1 or 2)
-    output of ``kiwiw.divide.plan_divisions()`` -- for parent cells whose
+    output of E2 (`_e2.c`) -- for parent cells whose
     whole-cell Map Frame was too large to place directly. ``(ix, iy)`` is
     the *parent* cell's global grid position (the same coordinate space as
     ``levels[level].parcels``; a given ``(ix, iy)`` must appear in at most
-    one of ``levels``/``divided``, never both -- ``plan_divisions()`` never
+    one of ``levels``/``divided``, never both -- E2 never
     yields both for the same parent). Each parent's own
     ``ParcelMapInfoEntry`` gets ``size=0`` and a [D]-encoded (halved)
     in-buffer offset to a nested ``ParcelMgmtRecord`` (Ch.6 divided/
@@ -1007,8 +727,8 @@ def _build_alldata_kwi_multilevel(
         # ---- bucket divided-parcel sub-frames by parent block/slot ----------
         # divided_index[(level, blockset_index, block_index)][local_idx] ->
         # list[(parcel_type, sub_ix, sub_iy, map_frame_bytes)], one list per
-        # parent cell that plan_divisions() split (parcel_type is the same for
-        # every item in one parent's list -- plan_divisions() picks one type
+        # parent cell that E2 split (parcel_type is the same for
+        # every item in one parent's list -- E2 picks one type
         # per parent, never mixes 1 and 2 for the same cell).
         divided = divided or {}
         divided_index: dict[tuple[int, int, int], dict[int, list[tuple[int, int, int, bytes]]]] = {}
@@ -1060,7 +780,7 @@ def _build_alldata_kwi_multilevel(
                     raise ValueError(
                         f"level {level}: block ({bsidx},{blidx}) local slot "
                         f"{local_idx} has both a type-0 parcel and divided "
-                        f"sub-frames -- plan_divisions() should never yield both "
+                        f"sub-frames -- E2 should never yield both "
                         f"for the same parent cell")
                 n_parcels_placed += 1
 

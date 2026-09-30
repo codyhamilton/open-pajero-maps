@@ -63,7 +63,7 @@ def test_pipeline_writes_output_and_manifest(tmp_path):
 def test_background_mfde_slot_always_in_buffer(tmp_path):
     """DESIGN.md section 4 / mfde index 1: `R` never emits `absent` for the
     background sub-frame, even when a parcel has zero background shapes --
-    `_encode_one()` must call `build_background_frame_bytes()`
+    the background encoder must run
     unconditionally (a real bug: it used to skip the call, and thus emit
     the absent sentinel, whenever a parcel's `backgrounds` list was empty --
     the 2026-09-09 full-Australia build's mfde entry-index-1 discrepancy).

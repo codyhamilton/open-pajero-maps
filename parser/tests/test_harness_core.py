@@ -27,7 +27,6 @@ _PARSER_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PARSER_DIR))
 
 from kiwiw import volume as _volume
-from kiwiw.alldata_writer import SynthParcel, build_alldata_kwi
 from kiwiw.bitutils import sws, u16, u32
 from kiwiw.model import BoundingBox, MeshLocation, RoadLink, RoadNode
 from kiwiw.parcel import decode_parcel
@@ -84,12 +83,7 @@ def _build_fixture_bytes() -> bytes:
     cells = {(IX0 + ix, IY0 + iy): {"roads": [_make_link(_cell_bounds(ix, iy))]}
              for iy in range(NY) for ix in range(NX)}
     with tempfile.TemporaryDirectory() as d:
-        frames = e2_fixture.e2_frames(d, LEVEL, cells)
-    synth_parcels = [SynthParcel(ix=ix, iy=iy, bounds=_cell_bounds(ix, iy),
-                                 map_frame_bytes=frames[(IX0 + ix, IY0 + iy)])
-                     for iy in range(NY) for ix in range(NX)]
-    return build_alldata_kwi(parcels=synth_parcels, coverage=_BOUNDS, level=LEVEL,
-                              grid_nx=NX, grid_ny=NY)
+        return e2_fixture.alldata_bytes(d, LEVEL, cells)
 
 
 @pytest.fixture()

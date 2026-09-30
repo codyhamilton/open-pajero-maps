@@ -192,7 +192,7 @@ class IndexedLayout:
             raise ValueError(
                 f"level {int(self.lvl[i])}: block key {int(self.blockkey[i])} local slot "
                 f"{int(self.local[i])} has both a type-0 parcel and divided sub-frames -- "
-                f"plan_divisions() should never yield both for the same parent cell")
+                f"E2 should never yield both for the same parent cell")
 
     @property
     def present_blocksets(self) -> set[tuple[int, int]]:

@@ -4,17 +4,14 @@
 into `_cenc.so` beside this file; a failed build raises (no Python fallback).
 Entry points: E1 (`e1`) and E2 (`e2`), each called once per row range
 (DESIGN.md Contract B); E2 also divides, retiles, trims and adds the name halo
-(3C-09), so nothing per (sub-)cell crosses this boundary any more. What is
-left besides is `bg_shape_records` (`kw_bg_shape`, used by `synth` and its
-tests only, off the build path; 3C-12 deletes it with `synth`), the
-column-name accessor and the assembly copy helpers (`lib()`).
+(3C-09), so nothing per (sub-)cell or per shape crosses this boundary. What is
+left besides is the column-name accessor and the assembly copy helpers
+(`lib()`).
 """
 from __future__ import annotations
 
 import ctypes
 import time
-from array import array
-from itertools import chain
 from pathlib import Path
 
 from . import cbuild
@@ -31,11 +28,6 @@ def _load_lib():
     try:
         cbuild.build_ext()  # compiles on demand through cbuild (3C-02); raises on failure
         lib = ctypes.CDLL(str(_SO))
-        lib.kw_bg_shape.restype = ctypes.c_int64
-        lib.kw_bg_shape.argtypes = [
-            ctypes.c_void_p, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
-            ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int64,
-            ctypes.c_double, ctypes.c_void_p]
         lib.kw_col_name.restype = ctypes.c_char_p
         lib.kw_col_name.argtypes = [ctypes.c_int]
         lib.kw_copy_frames.restype = ctypes.c_int64
@@ -51,58 +43,6 @@ def _load_lib():
         _lib = None
     _tried = True
     return _lib
-
-
-_bg_room = 1 << 16
-_bg_out = ctypes.create_string_buffer(_bg_room)
-_bg_nrec = ctypes.c_int64(0)
-_bg_fn = None
-
-
-def _rect4(bounds):
-    r = getattr(bounds, "clip_rect", None)
-    return None if r is None else (ctypes.c_double * 4)(*(float(v) for v in r))
-
-
-def bg_shape_records(shape, bounds, coord_range: int) -> list[bytes] | None:
-    """A line/polygon's records, clipped to the parcel (`kiwiw.clip`), via C
-    at `coord_range`; None when the kernel declines (use the Python oracle)."""
-    global _bg_fn, _bg_out, _bg_room
-    if _bg_fn is None:
-        lib = _load_lib()
-        _bg_fn = lib.kw_bg_shape if lib is not None else False
-    if _bg_fn is False:
-        return None
-    coords = shape.coords
-    try:
-        flat = array("d", chain.from_iterable(coords))
-    except (TypeError, ValueError):
-        return None
-    if len(flat) != 2 * len(coords):
-        return None
-    b4 = array("d", (bounds.lat_lo, bounds.lat_hi, bounds.lon_lo, bounds.lon_hi))
-    rect = _rect4(bounds)
-    flags = (1 if shape.underground else 0) | (2 if shape.pen_up else 0)
-    while True:
-        n = _bg_fn(flat.buffer_info()[0], len(coords), shape.mult_const, shape.type_code,
-                   flags, 1 if shape.shape_class == 2 else 0, b4.buffer_info()[0],
-                   rect, ctypes.addressof(_bg_out), _bg_room, float(coord_range),
-                   ctypes.addressof(_bg_nrec))
-        if n != -2 or _bg_room >= (1 << 26):
-            break
-        _bg_room <<= 2
-        _bg_out = ctypes.create_string_buffer(_bg_room)
-    if n < 0:
-        return None
-    raw = ctypes.string_at(ctypes.addressof(_bg_out), n)
-    recs, pos = [], 0
-    for _ in range(_bg_nrec.value):
-        ln = (((raw[pos] << 8) | raw[pos + 1]) & 0xFFF) * 2
-        recs.append(raw[pos:pos + ln])
-        pos += ln
-    if pos != n:  # a record over the 12-bit length field: let Python decide
-        return None
-    return recs
 
 
 def lib():

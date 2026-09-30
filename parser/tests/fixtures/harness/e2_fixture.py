@@ -92,3 +92,16 @@ def e2_frames(work_dir, level: int, cells: dict | None = None,
         assert int(r["pt"]) == 0, "fixture cell was divided; use a smaller fixture"
         frames[(int(r["ix"]), int(r["iy"]))] = blob[int(r["off"]):int(r["off"]) + int(r["len"])]
     return {c: frames[c] for c in want}
+
+
+def alldata_bytes(work_dir, level: int, cells: dict | None = None, empty=(),
+                  disk_title: str = "TEST") -> bytes:
+    """A single-level `ALLDATA.KWI` on the real reference grid holding the
+    frames E2 emits for `cells`/`empty` (see `e2_frames`), assembled by
+    `alldata_writer.build_alldata_kwi` (the only assembler)."""
+    from kiwiw import alldata_writer as aw
+    from kiwiw.grid import ReferenceGrid
+    frames = e2_frames(work_dir, level, cells, empty)
+    parcels = [(ix, iy, frames[(ix, iy)]) for (ix, iy) in sorted(frames, key=lambda c: (c[1], c[0]))]
+    return aw.build_alldata_kwi({level: aw.LevelBuild(level=level, parcels=parcels)},
+                                ReferenceGrid.load(), disk_title=disk_title)

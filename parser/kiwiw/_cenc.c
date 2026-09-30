@@ -1,10 +1,9 @@
 /*
  * Whole-cell Map Frame encoder (plan 03: build performance, C hot path).
  *
- * Port of the Python oracle in synth.py (build_road_frame_bytes,
- * build_background_frame_bytes, build_name_frame_bytes, build_map_frame_bytes)
- * plus osm_to_parcel_geometry.parcel_bounds, operating straight on one binary
- * spool cell record (kiwiw/spool.py `_COLUMNS` layout).
+ * The build's only frame encoder (the Python encoders it was ported from
+ * are gone, 3C-12), plus osm_to_parcel_geometry.parcel_bounds, operating
+ * straight on one binary spool cell record (kiwiw/spool.py `_COLUMNS` layout).
  *
  * Contract: the whole-cell encoder (reached through E2, `_e2.c`, via
  * kw__encode_rec) returns the frame length when the cell fits the frame
@@ -267,8 +266,9 @@ static int64_t enc_road(const Rec *r, const Bounds *bd, uint8_t *out) {
 /* ---------------------------------------------------------- background */
 
 /* Background geometry is clipped to the parcel's rectangle before rounding,
- * never clamped: a port of kiwiw/clip.py (same algorithm, same float operation
- * order; byte-identical, tests/test_cenc.py). Keep the two in step. */
+ * never clamped (the goldens and tests/test_bg_clip_boundary.py check it; the
+ * Python clipper this was ported from is gone, 3C-12). Keep the float
+ * operation order: -ffp-contract=off, rint() == Python's half-even round(). */
 
 enum { KO = 0, KCX = 1, KCY = 2, KCO = 3, KDE = 4 };
 typedef struct { double x, y; int k; } Pt;
@@ -423,7 +423,7 @@ typedef struct {
 /* 3-11: `pts` (pre-densify, closed) is a whole-cell/sub-cell fill -- exactly
  * `R`'s four corners, in some rotation -- iff true, with the largest
  * mult_const in {128,...,1} dividing both of R's edge lengths in *mult_out
- * (mirrors clip.py's `_rect_mult`). */
+ * (the retired clip.py's `_rect_mult`). */
 static int rect_mult_for(const Pt *pts, int64_t n, const double *R, int64_t *mult_out) {
     if (n != 4) return 0;
     double cx[4] = {R[0], R[2], R[2], R[0]}, cy[4] = {R[1], R[1], R[3], R[3]};
@@ -481,7 +481,7 @@ static int write_record(Emit *e, const int64_t *qx, const int64_t *qy, int64_t q
 }
 
 /* 3-11: the rectangle case -- `pts` (4 corners, CCW) split into exact
- * multiples of `mult` per edge (mirrors clip.py's `_rect_ring`/`_edge_steps`),
+ * multiples of `mult` per edge (the retired clip.py's `_rect_ring`/`_edge_steps`),
  * no proportional densify, no rounding (the corners are exact integers). */
 static int emit_rect_piece(Emit *e, const Pt *pts, int64_t mult) {
     int64_t mult_exp = 0, mcc = 1;
@@ -501,7 +501,7 @@ static int emit_rect_piece(Emit *e, const Pt *pts, int64_t mult) {
         if (length > 0) {
             /* Evenly distribute length/mult units over k = ceil(length/(127*mult))
              * steps: k - r steps of q units, r steps of q + 1 units (mirrors
-             * clip.py's _edge_steps -- dumping the whole remainder on the last
+             * the retired clip.py's _edge_steps -- dumping the whole remainder on the last
              * step, as a naive "k-1 equal + remainder" split would, can exceed
              * the 127*mult per-step cap when the remainder is large). */
             int64_t lim = 127 * mult;
@@ -1082,23 +1082,6 @@ int64_t kw__bg_shape(const double *lat, const double *lon, int64_t nc, int close
     if (rect4) memcpy(bd.rect, rect4, sizeof bd.rect);
     int64_t r = bg_shape((const uint8_t *)lat, (const uint8_t *)lon, 0, 1, nc, closed, mc, tc,
                          fl, &bd, out, room, nrec);
-    return r < 0 && g_full ? -2 : r;
-}
-
-/* Python entry for `synth` / `cenc.bg_shape_records` (no longer on the build
- * path; 3C-12 deletes it with synth): interleaved (lat, lon) doubles, b4 =
- * lat_lo,lat_hi,lon_lo,lon_hi, rect4 = clip rectangle (x0,y0,x1,y1) or NULL
- * for [0, range]^2. Writes the shape's records back to back and returns
- * their total length (*nrec records), -2 when `room` is too small, -1
- * otherwise (the caller uses the oracle). */
-int64_t kw_bg_shape(const double *latlon, int64_t n, int64_t mult, int64_t type_code,
-                    int64_t flags, int closed, const double *b4, const double *rect4,
-                    uint8_t *out, int64_t room, double coord_range, int64_t *nrec) {
-    Bounds bd = {b4[0], b4[1], b4[2], b4[3], coord_range, coord_range,
-                 {0.0, 0.0, coord_range, coord_range}};
-    if (rect4) memcpy(bd.rect, rect4, sizeof bd.rect);
-    int64_t r = bg_shape((const uint8_t *)latlon, (const uint8_t *)(latlon + 1), 0, 2, n,
-                         closed, mult, type_code, flags, &bd, out, room, nrec);
     return r < 0 && g_full ? -2 : r;
 }
 

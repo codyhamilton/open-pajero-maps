@@ -31,7 +31,6 @@ import pytest
 _PARSER_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PARSER_DIR))
 
-from kiwiw.alldata_writer import SynthParcel, build_alldata_kwi
 from kiwiw.model import BackgroundShape, BoundingBox, NameRecord, RoadLink, RoadNode
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "fixtures" / "harness"))
@@ -118,12 +117,7 @@ def _build_fixture_bytes(display_classes=None) -> bytes:
                 "names": [_make_name_record(bounds)]}
             idx += 1
     with tempfile.TemporaryDirectory() as d:
-        frames = e2_fixture.e2_frames(d, LEVEL, cells)
-    synth_parcels = [SynthParcel(ix=ix, iy=iy, bounds=_cell_bounds(ix, iy),
-                                 map_frame_bytes=frames[(IX0 + ix, IY0 + iy)])
-                     for iy in range(NY) for ix in range(NX)]
-    return build_alldata_kwi(parcels=synth_parcels, coverage=_BOUNDS, level=LEVEL,
-                              grid_nx=NX, grid_ny=NY)
+        return e2_fixture.alldata_bytes(d, LEVEL, cells)
 
 
 def _write_fixture(tmp_path, display_classes=None) -> str:

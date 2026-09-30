@@ -31,7 +31,7 @@ from __future__ import annotations
 
 from .coordconv import encode_region_coord, latlon_to_xy
 from .model import BackgroundShape, BoundingBox
-from .synth import frame_range
+from .mesh import frame_range
 
 
 def encode_background_shape(shape: BackgroundShape, bounds: BoundingBox, *,
@@ -51,7 +51,7 @@ def encode_background_shape(shape: BackgroundShape, bounds: BoundingBox, *,
         (lat, lon) back to parcel-local pixel coordinates for the sx/sy
         re-encoding.
     coord_range:
-        The frame's coordinate range (`synth.frame_range`: explicit, else
+        The frame's coordinate range (`mesh.frame_range`: explicit, else
         `bounds.coord_range`, else legacy).
 
     Returns
