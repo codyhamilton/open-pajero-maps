@@ -56,7 +56,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from . import spill as _spill, volume, volume_writer, parcel_writer
+from . import volume, volume_writer, parcel_writer
 from . import mesh
 from .model import BoundingBox, MeshLocation, Parcel, ParcelMapInfoEntry, ParcelMgmtRecord
 from .parcel import decode_parcel
@@ -466,7 +466,6 @@ def assemble_denovo(region: LoadedRegion) -> DenovoResult:
 # "Copy-through management data", "Unknown bytes policy") and
 # docs/schema/map-frame.md.
 
-from typing import Iterable
 
 from .grid import ReferenceGrid
 
@@ -520,22 +519,15 @@ MHT_LOW_ABSENT_LIMIT = 48
 
 @dataclass
 class LevelBuild:
-    """One level's worth of already-encoded parcel content, ready for
-    `build_alldata_kwi()` to place into the reference's blockset/block
-    structure for that level.
+    """One level's already-encoded content, ready for `build_alldata_kwi()` to
+    place into the reference's blockset/block structure for that level.
 
-    ``parcels`` yields ``(ix, iy, map_frame_bytes)`` in ascending
-    ``(iy, ix)`` -- global grid-cell indices (0-based, row-major, matching
-    `kiwiw.grid.ReferenceGrid.level(n)`'s `nx`/`ny`) and the finished
-    output of E2 (or `SpoolReader.iter_level()` in tests)
-    already in this order, so a typical `LevelBuild` just wraps it.
+    ``table`` is a `kiwiw.frame_table.FrameTable` holding the level's type-0
+    *and* divided frames as numpy rows over the encode workers' spill files
+    (E2's output, in canonical stream order). ``None`` (the default) is a
+    level with no content: it still gets its LMR and empty BSMR entries.
     """
     level: int
-    parcels: Iterable[tuple[int, int, bytes]] = ()
-    # Indexed alternative to `parcels`/`divided` (plan 02 step 3): a
-    # `kiwiw.frame_table.FrameTable` holding this level's type-0 *and* divided
-    # frames as numpy rows over worker spill files. Selects the vectorised
-    # assembly path (requires `return_bytes=False`); output is byte-identical.
     table: object = None
 
 
@@ -564,19 +556,9 @@ def _locate(ix: int, iy: int, d: dict) -> tuple[int, int, int, int]:
 
 @dataclass
 class AssembledFile:
-    """Result of a streamed (`return_bytes=False`) assembly."""
+    """Result of an assembly: file size and sha256."""
     size: int
     sha256: str
-
-
-def _padded_len(n: int, granularity: int) -> int:
-    rem = n % granularity
-    return n + granularity - rem if rem else n
-
-
-def _pad_zero(data: bytes, granularity: int) -> bytes:
-    rem = len(data) % granularity
-    return data + bytes(granularity - rem) if rem else data
 
 
 def _write_indexed(lay, fixed_regions, simple_blocks, out_path: str, total: int,
@@ -619,9 +601,7 @@ def build_alldata_kwi(
     out_path: str | None = None,
     sector_sz: int = 2048,
     logical_sz: int = 32,
-    divided: dict[int, Iterable[tuple[int, int, int, int, int, bytes]]] | None = None,
-    return_bytes: bool = True,
-) -> "bytes | AssembledFile":
+) -> "AssembledFile":
     """Assemble a whole-of-coverage ALLDATA.KWI: the reference's own
     per-level LMR/BSMR/BMT shape (`grid`), the record-29 copy-through
     frame at its reference location, and `levels`' encoded parcel content
@@ -634,36 +614,21 @@ def build_alldata_kwi(
     7-level build (`build_alldata.py`) passes all seven, which reproduces
     the reference's full 601-entry BSMR array.
 
-    `divided` (unit 13): per level, an iterable of ``(ix, iy, parcel_type,
-    sub_ix, sub_iy, map_frame_bytes)`` -- the divided-parcel-type (1 or 2)
-    output of E2 (`_e2.c`) -- for parent cells whose
-    whole-cell Map Frame was too large to place directly. ``(ix, iy)`` is
-    the *parent* cell's global grid position (the same coordinate space as
-    ``levels[level].parcels``; a given ``(ix, iy)`` must appear in at most
-    one of ``levels``/``divided``, never both -- E2 never
-    yields both for the same parent). Each parent's own
-    ``ParcelMapInfoEntry`` gets ``size=0`` and a [D]-encoded (halved)
-    in-buffer offset to a nested ``ParcelMgmtRecord`` (Ch.6 divided/
-    integrated-parcel subrecord) written into the *same* block buffer,
-    right after that block's own root record; every ``(sub_ix, sub_iy)``
-    frame becomes its own leaf, sector-addressed exactly like a type-0
-    parcel's frame. ``None``/omitted (every caller before unit 13) leaves
-    every parcel type-0, unchanged from before this parameter existed --
-    `entries` for divided/integrated parcel types 1..3 are only ever
-    generated for parents this parameter actually names.
-
-    Frames (in `levels[*].parcels` and `divided`) may be raw ``bytes`` or
-    `kiwiw.spill.FrameRef`s; only lengths are needed to lay the file out and
-    frame bytes are resolved one at a time while writing. With
-    ``return_bytes=False`` (requires `out_path`) the file is streamed to disk
-    and an `AssembledFile` (size, sha256) is returned instead of the bytes.
+    Each level's `LevelBuild.table` (a `kiwiw.frame_table.FrameTable`) carries
+    both its type-0 frames and its divided-parcel (type 1/2) frames from E2
+    (`_e2.c`). A divided parent's own ``ParcelMapInfoEntry`` gets ``size=0``
+    and a [D]-encoded (halved) in-buffer offset to a nested
+    ``ParcelMgmtRecord`` (Ch.6 divided/integrated-parcel subrecord) written
+    into the *same* block buffer, right after that block's own root record;
+    every sub-frame becomes its own leaf, sector-addressed exactly like a
+    type-0 parcel's frame. Frames are copied by C from the workers' spill
+    files straight into `out_path` (required); an `AssembledFile` (size,
+    sha256) is returned.
     """
     from . import volume as _vol
     from . import volume_writer as _vw
     from .model import (
         BlockSetMgmtRecord as _BSMR,
-        ParcelMapInfoEntry as _PMI,
-        ParcelMgmtRecord as _PMR,
         VolumeHeader as _VH,
     )
 
@@ -710,94 +675,22 @@ def build_alldata_kwi(
                 f"{got}-byte LMR, pdmdh declares lmr_size={lmr_size}")
     lmr_by_level = {lmr.level: lmr for lmr in lmrs}
 
-    indexed = any(lb.table is not None for lb in levels.values())
-    lay = None
-    if indexed:
-        if return_bytes or out_path is None:
-            raise ValueError("indexed (FrameTable) assembly requires return_bytes=False and out_path")
-        if divided:
-            raise ValueError("indexed assembly carries divided frames in the FrameTable")
-        from .frame_table import IndexedLayout, locate_np
-        lay = IndexedLayout(levels, dims, lmr_by_level, sector_sz, logical_sz, locate_np,
-                            lambda slots: 4 + bmt_entry_size * slots)
-        has_bmt = lay.present_blocksets
-        block_slots = {}
-        divided_index = {}
-    else:
-        # ---- bucket divided-parcel sub-frames by parent block/slot ----------
-        # divided_index[(level, blockset_index, block_index)][local_idx] ->
-        # list[(parcel_type, sub_ix, sub_iy, map_frame_bytes)], one list per
-        # parent cell that E2 split (parcel_type is the same for
-        # every item in one parent's list -- E2 picks one type
-        # per parent, never mixes 1 and 2 for the same cell).
-        divided = divided or {}
-        divided_index: dict[tuple[int, int, int], dict[int, list[tuple[int, int, int, bytes]]]] = {}
-        for level, items in divided.items():
-            d = dims[level]
-            for ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes in items:
-                bsidx, blidx, local_ix, local_iy = _locate(ix, iy, d)
-                key = (level, bsidx, blidx)
-                local_idx = local_iy * d["npc_lng"] + local_ix
-                divided_index.setdefault(key, {}).setdefault(local_idx, []).append(
-                    (parcel_type, sub_ix, sub_iy, frame_bytes))
-
-        # ---- bucket every (ix, iy, frame_bytes) into its block -------------
-        # block_slots[(level, blockset_index, block_index)] -> list[bytes|None],
-        # one slot per top-level parcel position in that block (row-major).
-        block_slots: dict[tuple[int, int, int], list] = {}
-        n_parcels_placed = 0
-        for level, lb in levels.items():
-            d = dims[level]
-            n_slots = d["npc_lat"] * d["npc_lng"]
-            for ix, iy, frame_bytes in lb.parcels:
-                bsidx, blidx, local_ix, local_iy = _locate(ix, iy, d)
-                key = (level, bsidx, blidx)
-                slots = block_slots.get(key)
-                if slots is None:
-                    slots = [None] * n_slots
-                    block_slots[key] = slots
-                local_idx = local_iy * d["npc_lng"] + local_ix
-                if slots[local_idx] is not None:
-                    raise ValueError(
-                        f"level {level}: duplicate parcel at ix={ix} iy={iy}")
-                slots[local_idx] = frame_bytes
-                n_parcels_placed += 1
-
-        # Seed a block_slots entry (all-None) for any block that has divided
-        # parcels but no type-0 parcels of its own -- the loop above only
-        # creates an entry when it sees a `levels[level].parcels` item, which
-        # a divided-only block never contributes.
-        for (level, bsidx, blidx), local_map in divided_index.items():
-            d = dims[level]
-            n_slots = d["npc_lat"] * d["npc_lng"]
-            key = (level, bsidx, blidx)
-            slots = block_slots.get(key)
-            if slots is None:
-                slots = [None] * n_slots
-                block_slots[key] = slots
-            for local_idx in local_map:
-                if slots[local_idx] is not None:
-                    raise ValueError(
-                        f"level {level}: block ({bsidx},{blidx}) local slot "
-                        f"{local_idx} has both a type-0 parcel and divided "
-                        f"sub-frames -- E2 should never yield both "
-                        f"for the same parent cell")
-                n_parcels_placed += 1
-
-        # has_bmt is content-driven, not copied from grid.json's own boolean:
-        # the brief's contract is "BMTs for every non-empty block" / "empty
-        # ones point at empty BMTs" -- i.e. *this build's* emptiness, not R's.
-        # `grid.json`'s per-blockset markers reflect R's own Australia-wide
-        # OSM coverage, which a partial build (e.g. --fixture perth) will not
-        # reproduce; a content-driven choice is also what makes the BSMR/BMT
-        # *shape* still self-consistent for a partial build while keeping the
-        # 601-entry array's level/blockset_index ordering identical to R (the
-        # part `container`'s allowlist does *not* excuse). The bmt_offset/
-        # bmt_size fields this changes are exactly the ones `container_allowlist`
-        # marks as build-specific (`bsmr_bmt_offset`, `bsmr_bmt_size`), so a
-        # full-coverage build naturally converges to R's own has_bmt pattern
-        # without this writer needing to special-case it.
-        has_bmt = {(level, bsidx) for (level, bsidx, _blidx) in block_slots}
+    if not any(lb.table is not None for lb in levels.values()):
+        raise ValueError("no frames to assemble (every level's FrameTable is absent)")
+    if out_path is None:
+        raise ValueError("build_alldata_kwi needs out_path (frames are copied by C into the file)")
+    from .frame_table import IndexedLayout, locate_np
+    lay = IndexedLayout(levels, dims, lmr_by_level, sector_sz, logical_sz, locate_np,
+                        lambda slots: 4 + bmt_entry_size * slots)
+    # has_bmt is content-driven, not copied from grid.json's own boolean:
+    # the contract is "BMTs for every non-empty block" / "empty ones point at
+    # empty BMTs" -- i.e. *this build's* emptiness, not R's. `grid.json`'s
+    # per-blockset markers reflect R's own Australia-wide OSM coverage, which a
+    # partial build (e.g. --fixture perth) will not reproduce; the bmt_offset/
+    # bmt_size fields this changes are exactly the ones `container_allowlist`
+    # marks as build-specific (`bsmr_bmt_offset`, `bsmr_bmt_size`), so a
+    # full-coverage build naturally converges to R's own has_bmt pattern.
+    has_bmt = lay.present_blocksets
 
     # ---- fixed-size regions ---------------------------------------------
     datavol_offset = 0
@@ -837,100 +730,23 @@ def build_alldata_kwi(
 
     # ---- place block buffers, then map frames ----------------------------
     cursor = pdmdh_offset + pdmdh_total_size
-    block_regions: list[tuple[int, bytes]] = []   # (file_offset, buffer)
-    frame_regions: list[tuple[int, bytes]] = []    # (file_offset, buffer)
-
     idx_simple: list = []
-    if indexed:
-        lay.place(cursor)
-        cursor = lay.total_size
-        nb_bl = {lvl: dims[lvl]["nbl_lat"] * dims[lvl]["nbl_lng"] for lvl in dims}
-        for b in range(lay.n_blocks):
-            level = int(lay.blk_lvl[b])
-            bsidx, blidx = divmod(int(lay.blk_key[b]), nb_bl[level])
-            ordinal = bmt_for_ordinal[(level, bsidx)]
-            bmt_tables[ordinal].entries[blidx] = _vol.BmtEntry(
-                dsa=int(lay.block_dsa[b]), size=int(lay.block_size[b]))
-        for lvl in sorted({int(v) for v in lay.blk_lvl}):
-            n_slots = dims[lvl]["npc_lat"] * dims[lvl]["npc_lng"]
-            t_simple = align_up(4 + bmt_entry_size * n_slots, logical_sz)
-            sel, arr = lay.simple_block_rows(lvl, 4 + bmt_entry_size * n_slots, t_simple)
-            if len(sel):
-                idx_simple.append((np.ascontiguousarray(lay.block_off[sel].astype(np.uint64)), arr))
-        idx_simple.extend(lay.divided_block_rows())
-    else:
-        for (level, bsidx, blidx), slots in sorted(block_slots.items()):
-            d = dims[level]
-            divided_here = divided_index.get((level, bsidx, blidx), {})
-            entries: list[_PMI] = []
-            for local_idx, slot in enumerate(slots):
-                if local_idx in divided_here:
-                    # Patched below, once the nested subrecord's own in-buffer
-                    # offset is known -- entries list must be fully allocated
-                    # first so record_footprint (and thus every subrecord's
-                    # offset) is fixed before any subrecord is placed.
-                    entries.append(_PMI(dsa=NO_DATA_DSA, size=0))
-                    continue
-                if slot is None:
-                    entries.append(_PMI(dsa=NO_DATA_DSA, size=0))
-                    continue
-                foff = cursor
-                padded_len = _padded_len(len(slot), logical_sz)
-                frame_regions.append((foff, slot))
-                cursor += padded_len
-                entries.append(_PMI(dsa=encode_sector_addr(foff, sector_sz, logical_sz),
-                                     size=padded_len // logical_sz))
-
-            record_footprint = 4 + len(entries) * bmt_entry_size
-
-            # ---- divided-parcel subrecords: nested ParcelMgmtRecords placed
-            # in this SAME block buffer, right after the root record's own
-            # footprint (record_footprint is always even -- 4 plus a multiple
-            # of 6 -- so this starting offset is always a valid [D]-encodable
-            # (even) in-buffer offset without further alignment).
-            lmr = lmr_by_level[level]
-            sub_cursor = record_footprint
-            for local_idx, items in sorted(divided_here.items()):
-                parcel_type = items[0][0]
-                gn_lat = 1 + lmr.n_parcels_lat[parcel_type]
-                gn_lng = 1 + lmr.n_parcels_lng[parcel_type]
-                gn = gn_lat * gn_lng
-                sub_entries: list[_PMI] = [_PMI(dsa=NO_DATA_DSA, size=0) for _ in range(gn)]
-                for _pt, sub_ix, sub_iy, frame_bytes in items:
-                    padded_len = _padded_len(len(frame_bytes), logical_sz)
-                    foff = cursor
-                    frame_regions.append((foff, frame_bytes))
-                    cursor += padded_len
-                    pos_idx = sub_iy * gn_lng + sub_ix
-                    sub_entries[pos_idx] = _PMI(
-                        dsa=encode_sector_addr(foff, sector_sz, logical_sz),
-                        size=padded_len // logical_sz)
-
-                sub_off = sub_cursor
-                assert sub_off % 2 == 0, "in-buffer subrecord offset must be even ([D]-encodable)"
-                sub_rec = _PMR(parcel_type=parcel_type, list_type=0, offset=sub_off,
-                                entries=sub_entries, header_gap_raw=b"\x00\x00", tail_raw=b"")
-                entries[local_idx] = _PMI(dsa=sub_off // 2, size=0, subrecord=sub_rec)
-                sub_cursor += 4 + gn * bmt_entry_size
-
-            block_total = align_up(sub_cursor, logical_sz)
-            root = _PMR(parcel_type=0, list_type=0, offset=0, entries=entries,
-                        header_gap_raw=b"\x00\x00",
-                        tail_raw=bytes(block_total - sub_cursor))
-            buf = bytearray([POISON]) * block_total
-            parcel_writer.write_parcel_mgmt_record(root, buf)
-
-            # Placed after its own frames in the file (cursor already advanced
-            # by the loop above); dsa/size fields are absolute so this is
-            # self-consistent regardless of layout order.
-            block_off = cursor
-            cursor += block_total
-            block_regions.append((block_off, bytes(buf)))
-
-            ordinal = bmt_for_ordinal[(level, bsidx)]
-            bmt_tables[ordinal].entries[blidx] = _vol.BmtEntry(
-                dsa=encode_sector_addr(block_off, sector_sz, logical_sz),
-                size=block_total // logical_sz)
+    lay.place(cursor)
+    cursor = lay.total_size
+    nb_bl = {lvl: dims[lvl]["nbl_lat"] * dims[lvl]["nbl_lng"] for lvl in dims}
+    for b in range(lay.n_blocks):
+        level = int(lay.blk_lvl[b])
+        bsidx, blidx = divmod(int(lay.blk_key[b]), nb_bl[level])
+        ordinal = bmt_for_ordinal[(level, bsidx)]
+        bmt_tables[ordinal].entries[blidx] = _vol.BmtEntry(
+            dsa=int(lay.block_dsa[b]), size=int(lay.block_size[b]))
+    for lvl in sorted({int(v) for v in lay.blk_lvl}):
+        n_slots = dims[lvl]["npc_lat"] * dims[lvl]["npc_lng"]
+        t_simple = align_up(4 + bmt_entry_size * n_slots, logical_sz)
+        sel, arr = lay.simple_block_rows(lvl, 4 + bmt_entry_size * n_slots, t_simple)
+        if len(sel):
+            idx_simple.append((np.ascontiguousarray(lay.block_off[sel].astype(np.uint64)), arr))
+    idx_simple.extend(lay.divided_block_rows())
 
     total_file_size = cursor
 
@@ -1015,48 +831,13 @@ def build_alldata_kwi(
     )
 
     # ---- write everything ---------------------------------------------
-    # Small fixed regions and block records are in memory; frames are
-    # resolved (and zero-padded to logical_sz) one at a time.
+    # Small fixed regions are in memory; the frames and block records are
+    # copied / written by C (`_write_indexed`).
     fixed_regions: list[tuple[int, bytes]] = [
         (datavol_offset, _vw.write_volume_header(hdr, extras)),
         (mht_offset, _vw.write_management_header_table(mht)),
         (record29_offset, record29_frame),
         (pdmdh_offset, _vw.write_pdmdh(pdmdh)),
-    ] + block_regions
-
-    def _frame(frame) -> bytes:
-        return _pad_zero(_spill.frame_bytes(frame), logical_sz)
-
-    if indexed:
-        return _write_indexed(lay, fixed_regions, idx_simple, out_path, total_file_size,
-                              logical_sz)
-
-    if return_bytes:
-        buf = bytearray(total_file_size)
-        for off, data in fixed_regions:
-            buf[off:off + len(data)] = data
-        for off, frame in frame_regions:
-            data = _frame(frame)
-            buf[off:off + len(data)] = data
-        result = bytes(buf)
-        if out_path is not None:
-            with open(out_path, "wb") as fh:
-                fh.write(result)
-        return result
-
-    if out_path is None:
-        raise ValueError("return_bytes=False requires out_path")
-    # Streaming path: regions are disjoint; write in ascending offset order
-    # (frames + blocks are already in layout order) and leave gaps zero.
-    every = sorted([(o, d, False) for o, d in fixed_regions]
-                   + [(o, f, True) for o, f in frame_regions], key=lambda r: r[0])
-    with open(out_path, "wb") as fh:
-        for off, data, is_frame in every:
-            fh.seek(off)
-            fh.write(_frame(data) if is_frame else data)
-        fh.truncate(total_file_size)
-    digest = hashlib.sha256()
-    with open(out_path, "rb") as fh:
-        while chunk := fh.read(1 << 24):
-            digest.update(chunk)
-    return AssembledFile(size=total_file_size, sha256=digest.hexdigest())
+    ]
+    return _write_indexed(lay, fixed_regions, idx_simple, out_path, total_file_size,
+                          logical_sz)

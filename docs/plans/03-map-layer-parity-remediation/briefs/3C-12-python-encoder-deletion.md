@@ -143,3 +143,13 @@ Scope additions, carried from earlier outcomes:
 - Clean stale text: `alldata_writer.py` ~869 `KIWIW_NO_C` message, `test_descriptor.py` ~73, `frame_table.py` docstrings and the `plan_divisions()` mention in the conflict error (update any test asserting it), `quantisation_roundtrip.py` ~768.
 - `kw_bg_shape`/`bg_shape_records` are deletable now (users: `synth.py:315`, two `test_cenc.py` cases; both go).
 - Leave `docs/ARCHITECTURE.md` to 3C-13. Unit test suite must stay fast (~210 s full suite today); every step gate above still applies.
+
+## Amendment 2026-10-01 (reviewer, on the 3C-12 draft)
+
+Edits outside the owned paths, each forced by a deletion above (none gratuitous):
+- `parser/tests/test_harness_container.py`, `test_harness_core.py`, `test_harness_profile.py`, `test_harness_spotcheck.py`: these built their `ALLDATA.KWI` with `SynthParcel` / `build_alldata_kwi(parcels=...)` and synth frames, all deleted. Re-based onto `tests/fixtures/harness/e2_fixture.py` (`alldata_bytes`, `level_build`), same assertions; the container test's "parcel-free" file is now one empty E2 frame because the indexed assembler needs at least one frame.
+- `parser/tests/test_descriptor.py`, `parser/quantisation_roundtrip.py`, `parser/kiwiw/frame_table.py`, `parser/build_alldata.py`: comment/docstring/error-text cleanup naming deleted code, plus `build_alldata.py` dropping the `divided_builds` and `return_bytes` arguments of `build_alldata_kwi`. The first three are the stale-text list of the 2026-09-30 amendment; `build_alldata.py` is the only production caller and had to follow the signature change.
+- `parser/kiwiw/mesh.py` (`frame_range`), `road_writer.py`, `background_writer.py`: `frame_range` lived in the deleted `synth.py` and is used by the two R round-trip writers (Contract B keeps them), so it moved to `mesh.py`.
+- `parser/kiwiw/alldata_writer.py`: the object path is deleted in full, not only `SynthParcel`: `LevelBuild.parcels`, the `divided` and `return_bytes` parameters, `_PMI`/`_PMR`, the bytes-returning tail. The only remaining users were tests, which now use the indexed assembler (`LevelBuild(table=...)`, `out_path` required, returns `AssembledFile`). `_locate` stays: `test_indexed_assembly.py` uses it as a decode-side locator.
+- `parser/kiwiw/spill.py` (`FrameSpill`/`FrameRef`): orphaned once the object path went (its only importers were that path and one test), so deleted.
+- `test_alldata_writer.py::test_streaming_matches_bytes_path` deleted: it compared two paths and one is gone; `test_indexed_assembly.py` (3C-11 sha and decoder read-back) covers the indexed assembler. `test_deterministic` now compares two indexed builds; `test_requires_out_path_and_frames` added.

@@ -106,7 +106,7 @@ def built(tmp_path_factory):
               for lvl, r in rows.items()}
     out = tmp / "ALLDATA.KWI"
     res = aw.build_alldata_kwi(levels, ReferenceGrid.load(), disk_title="T",
-                               out_path=str(out), return_bytes=False)
+                               out_path=str(out))
     return rows, out, res
 
 

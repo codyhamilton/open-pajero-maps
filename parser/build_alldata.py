@@ -493,7 +493,6 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         pool = mp.get_context("fork").Pool(workers)
 
     level_builds: dict[int, aw.LevelBuild] = {}
-    divided_builds: dict[int, list[tuple[int, int, int, int, int, bytes]]] = {}
     manifest_levels: dict[str, dict] = {}
     t_run = time.monotonic()
     for level in levels:
@@ -501,7 +500,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         print(f"level {level}: encoding ...", flush=True)
         if level not in available:
             print(f"level {level}: no spooled content, skipping", flush=True)
-            level_builds[level] = aw.LevelBuild(level=level, parcels=[])
+            level_builds[level] = aw.LevelBuild(level=level)
             manifest_levels[str(level)] = {"parcels": 0, "bytes": 0, "divided_parents": 0}
             continue
         threshold_bytes = thresholds.get(level, U16_MAPFRAME_BYTE_CEILING)
@@ -560,8 +559,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         pool.close()
         pool.join()
     assembled = aw.build_alldata_kwi(level_builds, grid, disk_title=disk_title,
-                                      out_path=out_path, divided=divided_builds,
-                                      return_bytes=False)
+                                      out_path=out_path)
     for f in set(table_files):
         try:
             os.unlink(f)

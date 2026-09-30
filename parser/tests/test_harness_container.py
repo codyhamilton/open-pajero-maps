@@ -6,7 +6,9 @@ synthetic `ALLDATA.KWI` buffers assembled in-test with
 from __future__ import annotations
 
 import dataclasses
+import functools
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -22,21 +24,33 @@ from kiwiw.model import BoundingBox
 from harness.checks import container as container_checks
 from harness.context import Context
 
+sys.path.insert(0, str(Path(__file__).resolve().parent / "fixtures" / "harness"))
+import e2_fixture  # noqa: E402
+
 _BOUNDS = BoundingBox(lat_lo=-32.0, lat_hi=-31.5, lon_lo=115.75, lon_hi=116.25)
 _OTHER_BOUNDS = BoundingBox(lat_lo=-33.0, lat_hi=-30.0, lon_lo=115.0, lon_hi=117.0)
 LEVEL = 0
 
 
+@functools.lru_cache(maxsize=1)
+def _one_frame() -> bytes:
+    """One empty E2 Map Frame: the assembler needs at least one frame, and
+    this check only reads the container skeleton, never leaf content."""
+    with tempfile.TemporaryDirectory() as d:
+        return e2_fixture.e2_frames(d, LEVEL, empty=[(0, 0)])[(0, 0)]
+
+
 def _build(coverage: BoundingBox = _BOUNDS, disk_title: str | None = None,
            media_version: str | None = None) -> bytes:
-    """A tiny, single-level, parcel-free `ALLDATA.KWI` (no map frames
-    needed for this check -- it never reads leaf content, only the
-    container skeleton)."""
+    """A tiny single-level `ALLDATA.KWI` holding one empty frame."""
     grid = _ReferenceGrid.load()
     grid.data["coverage"] = dataclasses.asdict(coverage)
-    raw = _aw.build_alldata_kwi(
-        {LEVEL: _aw.LevelBuild(level=LEVEL, parcels=[])},
-        grid, disk_title="TEST", return_bytes=True)
+    with tempfile.TemporaryDirectory() as d:
+        out = Path(d) / "ALLDATA.KWI"
+        _aw.build_alldata_kwi(
+            {LEVEL: e2_fixture.level_build(d, LEVEL, {(0, 0): _one_frame()})},
+            grid, disk_title="TEST", out_path=str(out))
+        raw = out.read_bytes()
     if disk_title is None and media_version is None:
         return raw
     buf = bytearray(raw)

@@ -94,14 +94,31 @@ def e2_frames(work_dir, level: int, cells: dict | None = None,
     return {c: frames[c] for c in want}
 
 
+def level_build(work_dir, level: int, frames: dict):
+    """A `LevelBuild` whose `FrameTable` holds `frames` ({(ix, iy): bytes},
+    all whole cells) as rows over a spill file under `work_dir` -- the shape
+    the encode workers hand the assembler."""
+    from kiwiw import alldata_writer as aw
+    from kiwiw import frame_table as ft
+    sp = ft.ChunkSpill(str(work_dir))
+    cells = sorted(frames, key=lambda c: (c[1], c[0]))
+    rec = np.zeros(len(cells), ft.FRAME_DTYPE)
+    for i, (ix, iy) in enumerate(cells):
+        fb = frames[(ix, iy)]
+        rec[i] = (ix, iy, 0, 0, 0, 0, len(fb), sp.append(fb))
+    sp.close()
+    return aw.LevelBuild(level=level, table=ft.merge_tables([(sp.path, rec)]))
+
+
 def alldata_bytes(work_dir, level: int, cells: dict | None = None, empty=(),
                   disk_title: str = "TEST") -> bytes:
     """A single-level `ALLDATA.KWI` on the real reference grid holding the
     frames E2 emits for `cells`/`empty` (see `e2_frames`), assembled by
-    `alldata_writer.build_alldata_kwi` (the only assembler)."""
+    `alldata_writer.build_alldata_kwi` (the only assembler) and read back."""
     from kiwiw import alldata_writer as aw
     from kiwiw.grid import ReferenceGrid
     frames = e2_frames(work_dir, level, cells, empty)
-    parcels = [(ix, iy, frames[(ix, iy)]) for (ix, iy) in sorted(frames, key=lambda c: (c[1], c[0]))]
-    return aw.build_alldata_kwi({level: aw.LevelBuild(level=level, parcels=parcels)},
-                                ReferenceGrid.load(), disk_title=disk_title)
+    out = Path(work_dir) / f"ALLDATA{level}.KWI"
+    aw.build_alldata_kwi({level: level_build(work_dir, level, frames)},
+                         ReferenceGrid.load(), disk_title=disk_title, out_path=str(out))
+    return out.read_bytes()

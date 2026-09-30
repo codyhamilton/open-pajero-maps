@@ -37,11 +37,9 @@ def _make_frame(level: int, ix: int, iy: int) -> bytes:
         return e2_fixture.e2_frames(d, level, empty=[(ix, iy)])[(ix, iy)]
 
 
-def _level_build(level: int, coords: list[tuple[int, int]]) -> aw.LevelBuild:
-    return aw.LevelBuild(
-        level=level,
-        parcels=[(ix, iy, _make_frame(level, ix, iy)) for ix, iy in coords],
-    )
+def _level_build(level: int, coords: list[tuple[int, int]], work_dir) -> aw.LevelBuild:
+    return e2_fixture.level_build(
+        work_dir, level, {(ix, iy): _make_frame(level, ix, iy) for ix, iy in coords})
 
 
 def _grid() -> ReferenceGrid:
@@ -57,12 +55,11 @@ def test_two_level_roundtrip(tmp_path):
     # Level 12's grid is exactly 1x1 (a single top-level parcel covering all
     # of Australia), so it can only ever hold one distinct cell position.
     levels = {
-        12: _level_build(12, [(0, 0)]),
-        0: _level_build(0, [(512, 0), (513, 0), (520, 10)]),
+        12: _level_build(12, [(0, 0)], tmp_path),
+        0: _level_build(0, [(512, 0), (513, 0), (520, 10)], tmp_path),
     }
     out_path = tmp_path / "test.kwi"
-    data = aw.build_alldata_kwi(levels, grid, disk_title="TEST", out_path=str(out_path))
-    assert out_path.read_bytes() == data
+    aw.build_alldata_kwi(levels, grid, disk_title="TEST", out_path=str(out_path))
 
     cov = grid.coverage
     lg0 = grid.level(0)
@@ -85,7 +82,7 @@ def test_two_level_roundtrip(tmp_path):
 
 def test_seven_levels_lmr_shape(tmp_path):
     grid = _grid()
-    levels = {lvl: _level_build(lvl, [(0, 0)]) for lvl in (12, 10, 8, 6, 4, 2, 0)}
+    levels = {lvl: _level_build(lvl, [(0, 0)], tmp_path) for lvl in (12, 10, 8, 6, 4, 2, 0)}
     out_path = tmp_path / "test.kwi"
     aw.build_alldata_kwi(levels, grid, disk_title="TEST", out_path=str(out_path))
 
@@ -101,11 +98,11 @@ def test_seven_levels_lmr_shape(tmp_path):
 
 def test_mht29_copy_through(tmp_path):
     grid = _grid()
-    levels = {0: _level_build(0, [(0, 0)])}
+    levels = {0: _level_build(0, [(0, 0)], tmp_path)}
     out_path = tmp_path / "test.kwi"
-    data = aw.build_alldata_kwi(levels, grid, disk_title="TEST", out_path=str(out_path))
+    aw.build_alldata_kwi(levels, grid, disk_title="TEST", out_path=str(out_path))
 
-    frame = data[4096:4096 + 2048]
+    frame = out_path.read_bytes()[4096:4096 + 2048]
     assert frame == grid.mht29_frame_bytes()
 
 
@@ -141,7 +138,7 @@ def test_antimeridian_wrap(tmp_path):
     ix_e = _ix_for_lon(179.9)
     ix_w = _ix_for_lon(-179.9)
 
-    levels = {0: _level_build(0, [(ix_e, iy), (ix_w, iy)])}
+    levels = {0: _level_build(0, [(ix_e, iy), (ix_w, iy)], tmp_path)}
     out_path = tmp_path / "test.kwi"
     aw.build_alldata_kwi(levels, grid, disk_title="TEST", out_path=str(out_path))
 
@@ -156,40 +153,24 @@ def test_antimeridian_wrap(tmp_path):
 # Determinism
 # ---------------------------------------------------------------------------
 
-def test_deterministic():
+def test_deterministic(tmp_path):
     grid = _grid()
     levels = {
-        12: _level_build(12, [(0, 0)]),
-        0: _level_build(0, [(512, 0), (513, 0), (520, 10)]),
+        12: _level_build(12, [(0, 0)], tmp_path),
+        0: _level_build(0, [(512, 0), (513, 0), (520, 10)], tmp_path),
     }
-    data1 = aw.build_alldata_kwi(levels, grid, disk_title="TEST")
-    data2 = aw.build_alldata_kwi(levels, grid, disk_title="TEST")
-    assert data1 == data2
+    a, b = tmp_path / "a.kwi", tmp_path / "b.kwi"
+    ra = aw.build_alldata_kwi(levels, grid, disk_title="TEST", out_path=str(a))
+    rb = aw.build_alldata_kwi(levels, grid, disk_title="TEST", out_path=str(b))
+    assert a.read_bytes() == b.read_bytes()
+    assert ra.sha256 == rb.sha256 and ra.size == rb.size == a.stat().st_size
 
 
-# ---------------------------------------------------------------------------
-# Streaming assembly (plan 02 phase 1): spill-backed frames + streamed output
-# equal the bytes-returning path.
-# ---------------------------------------------------------------------------
-
-def test_streaming_matches_bytes_path(tmp_path):
-    import hashlib
-
-    from kiwiw.spill import FrameSpill
-
+def test_requires_out_path_and_frames(tmp_path):
+    import pytest
     grid = _grid()
-    coords = [(512, 0), (513, 0), (520, 10), (600, 40)]
-    ref = aw.build_alldata_kwi({12: _level_build(12, [(0, 0)]),
-                                0: _level_build(0, coords)},
-                               grid, disk_title="TEST")
-    with FrameSpill(str(tmp_path)) as spill:
-        def spilled(level, cs):
-            return aw.LevelBuild(level=level, parcels=[
-                (ix, iy, spill.add(_make_frame(level, ix, iy))) for ix, iy in cs])
-        out = tmp_path / "streamed.kwi"
-        res = aw.build_alldata_kwi({12: spilled(12, [(0, 0)]), 0: spilled(0, coords)},
-                                   grid, disk_title="TEST", out_path=str(out),
-                                   return_bytes=False)
-    assert out.read_bytes() == ref
-    assert res.size == len(ref)
-    assert res.sha256 == hashlib.sha256(ref).hexdigest()
+    with pytest.raises(ValueError, match="out_path"):
+        aw.build_alldata_kwi({0: _level_build(0, [(0, 0)], tmp_path)}, grid, disk_title="TEST")
+    with pytest.raises(ValueError, match="no frames"):
+        aw.build_alldata_kwi({0: aw.LevelBuild(level=0)}, grid, disk_title="TEST",
+                             out_path=str(tmp_path / "x.kwi"))
