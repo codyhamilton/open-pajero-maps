@@ -118,3 +118,44 @@ Over budget: stop, commit what passes, and put the handoff (done, not done, what
 A non-trivial bug outside your done evidence: report symptom, location, and root cause if found. Do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendment (2026-09-30, 3C-04 retry outcome)
+
+Heavy run (disc `output/scratch-3-11/G`, 12 workers, under `flock output/.heavy.lock`): **wall 918 s**
+(target ≤ 120 s), peak summed PSS 15.2 GB, min MemAvailable 9.2 GB, rc=1.
+
+| kind | checked | failing |
+|---|---|---|
+| range | 309,192,246 | 0 |
+| step | 252,444,802 | 0 |
+| road_node | 42,995,770 | 0 |
+| road_point | 0 | 0 |
+| name_anchor | 2,317,983 | 1 (L0 cell (0,541) leaf 928, raw (0,370), lat -38.7273 lon 90.0) |
+| background | 174,332,105 | 1,438,558 (L0 1,431,789; L2 6,769) |
+| background_boundary | 89,546,388 | 16,549,569 (L0 16,429,512; L2 116,053; L6 4,004) |
+| completeness | 1,800,514 | 752 (L0) |
+| interior_cover | 1,592,016 | 824 (L0 823, L6 1) |
+
+Contradictions / deviations recorded here:
+
+1. **120 s is infeasible with the Python decoder.** The decode (`kiwiw` Python) is ~70 % of CPU;
+   serial cost is ~2,500 s+ and the machine is 6-core SMT, memory bound. Meeting 120 s needs a C
+   decoder (or a C checker), which is outside 3C-04's owned paths. `coordconv.decode_region_coord`
+   also re-imports `bitutils` per call (small, not owned).
+2. **"0 background failures" does not hold on G.** Confirmed disc defect: whole-cell fill pieces
+   (type 288 and others) are written 4–6 cells outside giant spool polygon 65623, whose ring carries a
+   bogus ~1.9M-raw near-closing edge (winding and parity both say outside); sliver+rect and chord
+   pieces also seen. Suspects: overlap cover/interior logic or clip handling of the long edge. The
+   magnitude (16.5 M boundary vertices) is larger than that one polygon plausibly explains, so a
+   residual checker false positive has **not** been excluded; triage should sample by type/cell before
+   treating all as disc findings. No tolerance was loosened.
+3. **Divide-produced artefacts are explained, not failed**, and counted per level under
+   `explained`: `name_anchor_halo` 311,347 (manifest `halo_names` 311,354) for halo names clamped into
+   sub-cell rects inset 1 %; `road_node_subcell_on_polyline` 551,530 total for chain points turned
+   into nodes by `_retile_content`/`split_polyline_by_parcel` (on the spool polyline within 0.5 raw);
+   `*_on_leaf_edge` 0. This re-encodes public divide geometry, not build logic.
+4. The tool uses SpoolReader private accessors (`_load_idx`, `_read_cell`, `decode_columns`) for
+   bulk columnar reads; still SpoolReader-only access.
+5. `road_point` checked 0 on G (no road carries separate shape points after divide); the check is
+   exercised by the unit tests only.
+6. "Exactly 1 name-anchor failure" holds (location above; lon 90.0 is the west edge of the lattice).

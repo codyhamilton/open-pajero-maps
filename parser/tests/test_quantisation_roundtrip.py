@@ -1,20 +1,30 @@
-"""Per-vertex quantisation round-trip tool (plan 03, units 3-04 and 3-07).
-Synthetic cells, no disc; one tiny spool for the end-to-end path."""
+"""Quantisation round-trip tool (plan 03, units 3-04, 3-07, 3C-04).
+
+The tool decodes a built `ALLDATA.KWI` and checks it against the spool, so
+these tests build tiny real discs (`build_alldata.run`, level 0 only) from
+synthetic spools (`kiwiw.spool.SpoolWriter`) and then check them against the
+same spool or a deliberately mismatched one."""
 from __future__ import annotations
 
 import json
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
-_PARSER_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(_PARSER_DIR))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import build_alldata  # noqa: E402
 from kiwiw.model import BackgroundShape, NameRecord, RoadLink, RoadNode  # noqa: E402
-from kiwiw import spool_legacy  # noqa: E402
-from kiwiw.spool import SpoolWriter, content_to_columns  # noqa: E402
+from kiwiw.spool import SpoolWriter  # noqa: E402
 from tools import quantisation_roundtrip as qr  # noqa: E402
+
+# Level-0 cell (512, 0) is lat -50..-49.97917, lon 106..106.03125.
+CELL_LAT, CELL_LON = 1 / 48, 1 / 32
+LAT0, LON0 = -49.99, 106.01
+D = 0.002
+RAW_LON = CELL_LON / 4096     # one raw unit of longitude at level 0
 
 
 def _node(lat, lon):
@@ -27,108 +37,169 @@ def _link(pts):
                     route_type_guidance_flag=False, pseudo3d_updown=0,
                     route_planning_tag=False, link_id_flag=False, selected_link_flag=False,
                     toll_flag=False, route_number_flag=False, infra_link_flag=False,
-                    link_id_number_flag=False, n_nodes=2, nodes=nodes, points=list(pts[1:-1]))
+                    link_id_number_flag=False, n_nodes=2, nodes=nodes, points=list(pts))
 
 
-def _bg(coords):
-    return BackgroundShape(shape_class=2, type_code=1, type_label="x", n_coords=len(coords),
-                           mult_const=1, underground=False, pen_up=False, coords=coords)
+def _square(lat0, lon0, d=D, dlon=None):
+    e = d if dlon is None else dlon
+    return [(lat0 - d, lon0 - e), (lat0 + d, lon0 - e), (lat0 + d, lon0 + e),
+            (lat0 - d, lon0 + e), (lat0 - d, lon0 - e)]
+
+
+def _bg(coords, type_code=1):
+    return BackgroundShape(shape_class=2, type_code=type_code, type_label="x",
+                           n_coords=len(coords), mult_const=1, underground=False,
+                           pen_up=False, coords=coords)
 
 
 def _name(lat, lon):
-    return NameRecord(string_type=1, type_code=1, type_label="x", priority=0, vertical=False,
+    # string_type 6 / type_code 0: other codes are dropped by the name encoder
+    return NameRecord(string_type=6, type_code=0, type_label="", priority=0, vertical=False,
                       display_scale_flag=0, text="n", lat=lat, lon=lon)
 
 
-def _inside(fr, fx, fy):
-    """lat/lon at fractional frame position (fx, fy) in 0..1."""
-    _, _, lat_lo, lon_lo, lat_sp, lon_sp = fr[:6]
-    return lat_lo + fy * lat_sp, lon_lo + fx * lon_sp
+def _centre(ix, iy):
+    return -50 + (iy + 0.5) * CELL_LAT, 90 + (ix + 0.5) * CELL_LON
 
 
-def test_frames_are_the_frames_g_writes():
-    """G writes every cell as its own 4096 frame, L0 included (no sparse tile)."""
-    assert qr.Frames(0).frame(700, 300)[:2] == ("urban", 4096)
-    f = qr.Frames(2)
-    fr = f.frame(10, 10)
-    assert fr[:2] == ("full", 4096)
-    assert fr[4] == pytest.approx(f.grid.cell_lat) and fr[5] == pytest.approx(f.grid.cell_lon)
+def _write_spool(path: Path, cells: dict) -> Path:
+    with SpoolWriter(str(path)) as w:
+        for (ix, iy), content in sorted(cells.items()):
+            w.add(0, ix, iy, **content)
+    return path
 
 
-def test_inside_passes_outside_is_clamped_and_fails():
-    f = qr.Frames(2)
-    fr = f.frame(10, 10)
-    lat, lon = _inside(fr, 1.0, 1.0)  # exactly on the NE corner: raw 4096, legal
-    assert qr.measure([lat], [lon], fr)[:2] == (1, 0)
-    step = fr[5] / fr[1]
-    n, fail, err = qr.measure([lat], [lon + 3 * step], fr)
-    assert (n, fail) == (1, 1)
-    assert err == pytest.approx(3.0, abs=1e-6)
+def _base_cells(bg=True, bg_shift_lon=0.0):
+    a, m, b = (LAT0, LON0), (LAT0 + 0.0003, LON0 + 0.0001), (LAT0 + 0.0005, LON0 + 0.0005)
+    bgs = [_bg(_square(LAT0, LON0 + bg_shift_lon))] if bg else []
+    return {(512, 0): {"roads": [_link([a, m, b])], "backgrounds": bgs, "names": [_name(*a)]}}
 
 
-def test_overhanging_background_is_clipped_and_passes():
-    """An overhanging polygon is measured as written: clipped, with crossing
-    and corner vertices, none outside the frame, none failing."""
-    f = qr.Frames(2)
-    fr = f.frame(10, 10)
-    ring = [_inside(fr, x, y) for x, y in [(0.99, 0.99), (1.01, 0.99), (1.01, 1.02), (0.99, 1.02)]]
-    content = {"roads": [], "backgrounds": [_bg(ring + ring[:1])], "names": []}
-    per, _ = qr.run_cells(2, [(10, 10, content_to_columns(content))], f)
-    st = per["full"]
-    bg = st["background"]
-    assert st["per_kind"]["c"]["failing"] == 0 and st["failing"] == 0
-    assert bg["input_vertices"] == 5 and bg["records"] == 1
-    assert bg["outside_rect"] == bg["crossing_off_edge"] == bg["step_overflow"] == 0
-    assert bg["written_by_provenance"]["crossing"] == 3  # 2 + the closing repeat
-    assert bg["written_by_provenance"]["corner"] == 1
-    assert st["worst_error_raw"] <= 0.5
+def _big_cells(shift_lon=0.0):
+    """A polygon 2.5 cells square homed in cell (514, 3), so it crosses cell
+    edges (boundary vertices) and covers the centre cell (interior cover);
+    every cell it touches is emitted through a name of its own."""
+    clat, clon = _centre(514, 3)
+    cells = {}
+    for ix in range(513, 516):
+        for iy in range(2, 5):
+            cells[(ix, iy)] = {"roads": [], "backgrounds": [], "names": [_name(*_centre(ix, iy))]}
+    cells[(514, 3)]["backgrounds"] = [_bg(_square(clat, clon + shift_lon, 1.25 * CELL_LAT,
+                                                  1.25 * CELL_LON), type_code=2)]
+    return cells
 
 
-def test_background_outside_writes_nothing():
-    f = qr.Frames(2)
-    fr = f.frame(10, 10)
-    ring = [_inside(fr, x, y) for x, y in [(1.1, 0.2), (1.3, 0.2), (1.3, 0.4)]]
-    content = {"roads": [], "backgrounds": [_bg(ring)], "names": []}
-    per, _ = qr.run_cells(2, [(10, 10, content_to_columns(content))], f)
-    bg = per["full"]["background"]
-    assert per["full"]["per_kind"]["c"]["vertices"] == 0
-    assert bg["shapes"] == bg["shapes_dropped"] == 1 and bg["records"] == 0
+def _build(tmp_path: Path, name: str, cells: dict):
+    spool = _write_spool(tmp_path / f"spool_{name}", cells)
+    disc = tmp_path / name / "ALLDATA.KWI"
+    rc = build_alldata.run(spool_dir=str(spool), out_path=str(disc), levels=[0],
+                           fixture=None, disk_title="TEST")
+    assert rc == 0
+    return disc, spool
 
 
-def test_run_cells_counts_every_kind_and_fails_clamped_roads():
-    f = qr.Frames(2)
-    fr = f.frame(10, 10)
-    a, b = _inside(fr, 0.1, 0.2), _inside(fr, 0.9, 0.8)
-    out_lat, out_lon = _inside(fr, 1.01, 0.5)  # ~41 raw units east of the frame
-    content = {"roads": [_link([a, (out_lat, out_lon), b])],
-               "backgrounds": [_bg([a, _inside(fr, 0.12, 0.2), _inside(fr, 0.12, 0.22), a])],
-               "names": [_name(*a), _name(None, None)]}
-    per, no_pos = qr.run_cells(2, [(10, 10, content_to_columns(content))], f)
-    st = per["full"]
-    assert no_pos == 1
-    assert {k: v["vertices"] for k, v in st["per_kind"].items()} == {"n": 2, "p": 1, "c": 4, "s": 1}
-    assert st["failing"] == 1
-    assert st["per_kind"]["p"]["failing"] == 1
-    assert st["worst_error_raw"] == pytest.approx(0.01 * 4096, rel=1e-3)
-    assert st["half_pixel_deg"]["lon"] == pytest.approx(fr[5] / (2 * 4096))
+def _failing(res):
+    return {k: v["failing"] for k, v in res["totals"].items() if v["failing"]}
 
 
-@pytest.mark.parametrize("writer", [SpoolWriter, spool_legacy.SpoolWriter],
-                         ids=["binary", "legacy_pickle"])
-def test_end_to_end_spool(tmp_path, writer):
-    f = qr.Frames(2)
-    fr = f.frame(10, 10)
-    a, b, c = _inside(fr, 0.25, 0.5), _inside(fr, 0.27, 0.5), _inside(fr, 0.26, 0.52)
-    with writer(tmp_path / "spool") as w:
-        w.add(2, 10, 10, roads=[_link([a, b])], backgrounds=[_bg([a, b, c, a])])
-    out = tmp_path / "rt.json"
-    assert qr.main(["--spool", str(tmp_path / "spool"), "--out", str(out), "--workers", "1"]) == 0
-    res = json.loads(out.read_text())
-    assert res["pass"] is True
-    assert res["totals"]["vertices"] == 6
-    assert list(res["levels"]) == ["2"]
-    text = out.read_text()
+# ------------------------------------------------------------------ geometry units
+
+def test_point_set_is_chebyshev_within_half_unit():
+    ps = qr.PointSet(np.array([10.4, 20.0]), np.array([5.2, 7.6]))
+    d = ps.nearest(np.array([10, 20, 30]), np.array([5, 8, 0]))
+    assert d[0] == pytest.approx(0.4) and d[1] == pytest.approx(0.4) and np.isinf(d[2])
+
+
+def test_cheb_seg_distance():
+    d = qr._cheb_seg(np.array([5.0, 0.0]), np.array([3.0, 0.0]),
+                     np.array([0.0, 10.0]), np.array([0.0, 10.0]),
+                     np.array([10.0, 20.0]), np.array([0.0, 10.0]))
+    assert d[0] == pytest.approx(3.0)
+    # diagonal segment (10,10)-(20,10)... distance from origin is 10
+    assert d[1] == pytest.approx(10.0)
+
+
+# ------------------------------------------------------------------ end to end
+
+def test_passes_against_its_own_spool(tmp_path):
+    cells = {**_base_cells(), **_big_cells()}
+    disc, spool = _build(tmp_path, "full", cells)
+    res = qr.roundtrip(str(disc), str(spool), workers=1)
+    assert res["pass"] is True, (_failing(res), res["levels"]["0"]["failures"])
+    t = res["totals"]
+    for kind in ("road_node", "name_anchor", "background", "background_boundary",
+                 "completeness", "interior_cover", "range", "step"):
+        assert t[kind]["checked"] > 0, kind
+    text = json.dumps(res, sort_keys=True)
     assert str(tmp_path) not in text
-    qr.main(["--spool", str(tmp_path / "spool"), "--out", str(tmp_path / "rt2.json"),
-             "--workers", "1"])
-    assert (tmp_path / "rt2.json").read_text() == text
+    res2 = qr.roundtrip(str(disc), str(spool), workers=1)
+    res.pop("wall_s")
+    res2.pop("wall_s")
+    assert res2 == res
+
+
+def test_cli_exit_code_and_report(tmp_path):
+    disc, spool = _build(tmp_path, "full", _base_cells())
+    out = tmp_path / "rt.json"
+    assert qr.main(["--disc", str(disc), "--spool", str(spool), "--out", str(out),
+                    "--workers", "1"]) == 0
+    assert json.loads(out.read_text())["pass"] is True
+    _, other = _build(tmp_path, "nobg", _base_cells(bg=False))
+    assert qr.main(["--disc", str(disc), "--spool", str(other), "--out", str(out),
+                    "--workers", "1"]) == 1
+
+
+def test_vertex_outside_every_source_polygon_is_caught(tmp_path):
+    """Check a disc against a spool whose same-type polygon sits 8 raw units
+    east: every decoded vertex is then outside every source polygon's
+    half-unit neighbourhood."""
+    disc, _ = _build(tmp_path, "full", _base_cells())
+    _, moved = _build(tmp_path, "moved", _base_cells(bg_shift_lon=8 * RAW_LON))
+    res = qr.roundtrip(str(disc), str(moved), workers=1)
+    assert res["pass"] is False
+    assert _failing(res) == {"background": res["totals"]["background"]["failing"]}
+    fails = [f for f in res["levels"]["0"]["failures"] if f["kind"] == "background"]
+    assert fails and all(f["error_raw"] is None or f["error_raw"] > 0.5 for f in fails)
+    assert all(f["cell"] == [512, 0] for f in fails)
+
+
+def test_boundary_vertex_outside_every_source_polygon_is_caught(tmp_path):
+    """The large polygon moved 8 raw units east: boundary vertices on its
+    west side then lie outside it, and interior vertices off its outline."""
+    disc, _ = _build(tmp_path, "full", _big_cells())
+    _, moved = _build(tmp_path, "moved", _big_cells(shift_lon=8 * RAW_LON))
+    res = qr.roundtrip(str(disc), str(moved), workers=1)
+    assert res["pass"] is False
+    assert res["totals"]["background_boundary"]["failing"] > 0
+
+
+def test_removed_piece_is_caught(tmp_path):
+    """A disc built without the polygon, checked against the spool that has
+    it: the (cell, type) has no decoded piece."""
+    disc, _ = _build(tmp_path, "nobg", _base_cells(bg=False))
+    _, spool = _build(tmp_path, "full", _base_cells())
+    res = qr.roundtrip(str(disc), str(spool), workers=1)
+    assert res["pass"] is False
+    assert _failing(res) == {"completeness": 1}
+    (f,) = [f for f in res["levels"]["0"]["failures"] if f["kind"] == "completeness"]
+    assert f["cell"] == [512, 0] and f["type"] == 1
+
+
+def test_removed_cover_piece_is_caught(tmp_path):
+    """Removing the large polygon loses its pieces in all nine cells."""
+    cells = _big_cells()
+    disc, _ = _build(tmp_path, "full", cells)
+    stripped = {k: {**v, "backgrounds": []} for k, v in cells.items()}
+    disc2, _ = _build(tmp_path, "stripped", stripped)
+    _, spool = _build(tmp_path, "spool", cells)
+    res = qr.roundtrip(str(disc2), str(spool), workers=1)
+    assert _failing(res) == {"completeness": 9}
+
+
+def test_moved_road_node_and_name_are_caught(tmp_path):
+    disc, _ = _build(tmp_path, "full", _base_cells(bg=False))
+    a, b = (LAT0, LON0 + 3 * RAW_LON), (LAT0 + 0.0005, LON0 + 0.0005)
+    moved = {(512, 0): {"roads": [_link([a, b])], "backgrounds": [], "names": [_name(*a)]}}
+    _, spool = _build(tmp_path, "moved", moved)
+    res = qr.roundtrip(str(disc), str(spool), workers=1)
+    assert _failing(res) == {"road_node": 1, "name_anchor": 1}
