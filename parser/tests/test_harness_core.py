@@ -143,11 +143,19 @@ def _find_first_leaf_mfde_offset(buf: bytearray) -> int:
     block_off = _volume.getsector(first_entry.dsa, hdr.sector_size, hdr.logical_sector_size)
     block_len = first_entry.size * hdr.logical_sector_size
     block_buf = bytes(buf[block_off:block_off + block_len])
-    # Root Parcel Management Record: [type word(2)][gap(2)][mapinfo entries]
+    # Root Parcel Management Record: [type word(2)][gap(2)][mapinfo entries].
+    # On the real reference grid the fixture's cells land mid-block, so the
+    # first slot is an empty NO_DATA entry; scan for the first real leaf.
     mapinfo_off = 4
-    leaf_dsa = u32(block_buf, mapinfo_off)
-    leaf_size = u16(block_buf, mapinfo_off + 4)
-    assert leaf_size, "expected the first mapinfo slot to be a real leaf"
+    n_slots = (len(block_buf) - mapinfo_off) // 6
+    leaf_dsa = leaf_size = 0
+    for i in range(n_slots):
+        dsa = u32(block_buf, mapinfo_off + 6 * i)
+        size = u16(block_buf, mapinfo_off + 6 * i + 4)
+        if dsa != 0xFFFFFFFF and size:
+            leaf_dsa, leaf_size = dsa, size
+            break
+    assert leaf_size, "expected a real leaf in the first non-empty block"
     leaf_off = _volume.getsector(leaf_dsa, hdr.sector_size, hdr.logical_sector_size)
     # Map Frame header is 36 bytes, nregion at offset 34; mfde table starts
     # right after the region list.

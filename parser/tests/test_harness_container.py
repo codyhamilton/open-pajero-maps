@@ -5,6 +5,7 @@ synthetic `ALLDATA.KWI` buffers assembled in-test with
 """
 from __future__ import annotations
 
+import dataclasses
 import sys
 from pathlib import Path
 
@@ -13,7 +14,9 @@ import pytest
 _PARSER_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PARSER_DIR))
 
+from kiwiw import alldata_writer as _aw
 from kiwiw import volume as _volume
+from kiwiw.grid import ReferenceGrid as _ReferenceGrid
 from kiwiw.model import BoundingBox
 
 from harness.checks import container as container_checks
@@ -21,17 +24,19 @@ from harness.context import Context
 
 _BOUNDS = BoundingBox(lat_lo=-32.0, lat_hi=-31.5, lon_lo=115.75, lon_hi=116.25)
 _OTHER_BOUNDS = BoundingBox(lat_lo=-33.0, lat_hi=-30.0, lon_lo=115.0, lon_hi=117.0)
-NX, NY = 2, 2
 LEVEL = 0
 
 
 def _build(coverage: BoundingBox = _BOUNDS, disk_title: str | None = None,
            media_version: str | None = None) -> bytes:
-    """A tiny 2x2, single-level, parcel-free `ALLDATA.KWI` (no map frames
+    """A tiny, single-level, parcel-free `ALLDATA.KWI` (no map frames
     needed for this check -- it never reads leaf content, only the
     container skeleton)."""
-    raw = build_alldata_kwi(parcels=[], coverage=coverage, level=LEVEL,
-                             grid_nx=NX, grid_ny=NY)
+    grid = _ReferenceGrid.load()
+    grid.data["coverage"] = dataclasses.asdict(coverage)
+    raw = _aw.build_alldata_kwi(
+        {LEVEL: _aw.LevelBuild(level=LEVEL, parcels=[])},
+        grid, disk_title="TEST", return_bytes=True)
     if disk_title is None and media_version is None:
         return raw
     buf = bytearray(raw)

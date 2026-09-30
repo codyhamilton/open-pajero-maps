@@ -299,21 +299,15 @@ def test_mfde_fails_on_entry_count_mismatch(tmp_path):
 # spotcheck) needs -- and `build_profile()` must not sum `wp.length` once
 # per yield or the total balloons past the file size.
 #
-# NOTE ON DEVIATION FROM THE BRIEF: the brief asks for this fixture to be
-# "a synthetic ALLDATA.KWI built with alldata_writer.build_alldata_kwi
-# using a divided parcel (type 1, 2 or 3)". As of this brief,
-# `build_alldata_kwi()`/`SynthParcel` only support a single flat,
-# parcel_type-0 grid -- there is no way to ask it for a subrecord tree or
-# for two leaf slots that alias the same `dsa`/`size`, and extending it is
-# outside this brief's owned paths (`parser/kiwiw/alldata_writer.py` is
-# not listed). This test instead exercises the exact seam that changed
-# (`build_profile()`'s accumulation over `walk.iter_parcels()` yields) by
-# monkeypatching `iter_parcels()` to yield the real-disc-observed
-# aliasing pattern directly: N leaf slots sharing one `(file_offset,
-# length)`, alongside one distinct range, against a real (flat) synthetic
-# container so `read_container()`/`blocks_bytes_total` still see valid
-# structure. Report this contradiction rather than silently building a
-# fixture the brief's own wording didn't anticipate.
+# This test's fixture is now built through E2 / `e2_fixture` (3C-10):
+# `_write_fixture` runs `e2_fixture.alldata_bytes`, which assembles a real
+# (flat) synthetic container via `build_alldata_kwi`, so
+# `read_container()`/`blocks_bytes_total` still see valid structure. The
+# exact seam under test is `build_profile()`'s accumulation over
+# `walk.iter_parcels()` yields, so rather than build a divided-parcel
+# container the test monkeypatches `iter_parcels()` to yield the
+# real-disc-observed aliasing pattern directly: N leaf slots sharing one
+# `(file_offset, length)`, alongside one distinct range.
 def test_mapframes_bytes_total_dedupes_aliased_leaf_slots(tmp_path):
     path = _write_fixture(tmp_path)
     file_size = len(_build_fixture_bytes())

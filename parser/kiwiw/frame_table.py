@@ -83,7 +83,7 @@ def _sector_addr(off: np.ndarray, sector_sz: int, logical_sz: int) -> np.ndarray
 
 
 class IndexedLayout:
-    """Vectorised equivalent of the object path's bucket/place loops.
+    """Vectorised bucket/place layout for `build_alldata_kwi`'s frames.
 
     Blocks are ordered by (level, blockset, block); within a block the type-0
     frames come first in slot order, then divided sub-frames grouped by parent
