@@ -126,3 +126,53 @@ Over budget: stop, commit what passes, and put the handoff (done, not done, what
 A non-trivial bug outside your done evidence: report symptom, location, and root cause if found. Do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendment (2026-09-30)
+
+Recorded by the 3C-07 worker.
+
+- **Borrowed-shape order.** The canonical order (target (iy, ix), then
+  source (iy, ix), then spool shape index) reproduces every golden byte for
+  byte. The local `l0_divided_trim_halo` has no undivided frame, but its
+  declined parent and merged content check out too. No divergence from
+  today's `overlap` order was found. Routing is one stable
+  `np.lexsort((tix, tiy))` over E1's rows. E2 checks this order is strictly
+  increasing and fails the call (-5) otherwise. Rows that target a cell
+  outside the call's range, or a cell that does not receive, also fail it.
+  Rows are never dropped silently.
+- **3C-06 deferral (`COLS[]`, `cands[8]`).**
+  - `COLS[]` stays in `_cenc.c`. The per-cell encoders are bound to that
+    schema through the `C_*` column enum, so it cannot be data-driven
+    without rewriting the encoders. It is now a checked mirror: E2 reads the
+    column layout from the descriptor and compares it with `COLS[]` (sizes,
+    count keys and roles) through `kw_ncols`, `kw_col_size`, `kw_col_key`
+    and a hidden `kw__col_index`. A mismatch fails the call (-7, tested).
+  - `cands[8]` is a format constant (the `mult_const` candidates that mirror
+    `clip._rect_mult`), not a layout, so it stays.
+- **`_cenc.c` refactor.** It is additive only. Two hidden-visibility
+  helpers were added: `kw__encode_rec` (a thin wrapper over
+  `encode_common`) and `kw__col_index`. The exported ABI and the encoders
+  are unchanged.
+- **Declined row.** 28 bytes, packed: ix i4, iy i4, reason u4, off u8,
+  len u8 (`descriptor.E2_DECLINED_DTYPE`). A declined cell with no content
+  stores the 72-byte empty record.
+- **Output buffers.** The index, declined rows and blob are thread-local
+  buffers that C grows itself. `kw_e2` returns their addresses through
+  `bufs[3]` and their sizes through the counters, and Python copies them
+  out. This keeps one ctypes call per range, with no size-query retry.
+  Frames go to the caller's fd through a 4 MiB (`E2_WBUF`) buffer with
+  `pwrite`.
+- **Counters** (`cenc.E2_COUNTERS`, int64, additive over ranges):
+  - cells, frames, declined, frame_bytes, blob_bytes;
+  - total_road, total_bg, total_name: the manifest's `trim_stats["total"]`,
+    summed from each merged record over every emitted or declined cell;
+  - borrowed_shapes, cover_rings;
+  - slot 10: C time in ns (`cenc.e2_stats()["c_s"]`), for the bench record.
+- **Suite flake (not E2).** One full-suite run failed in
+  `test_bench_record::test_bench_output_byte_identical_to_unbenched`. The
+  overlap `_scan` worker could not open its `store_*.f64` because its
+  `.overlap_L0_*` temp directory had gone. That path belongs to
+  `overlap.py`, which E2 neither touches nor is called by. The test passed
+  on two isolated reruns (583 passed, 1 failed in the full run).
+- **Size.** About 960 changed lines against the budget of about 900. Most
+  of it is `_e2.c` (471 lines, about half of them contract comments).

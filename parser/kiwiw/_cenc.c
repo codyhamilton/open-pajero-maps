@@ -53,7 +53,12 @@ enum { K_NR, K_NN, K_NP, K_NB, K_NC, K_NS, K_BL, K_NL, K_NT, N_KEYS };
 
 typedef struct { int size; int key; } ColSpec;
 
-/* Must mirror kiwiw/spool.py _COLUMNS exactly (checked by the tests). */
+/* Must mirror kiwiw/spool.py _COLUMNS exactly (checked by the tests). The
+ * per-cell encoders below address columns by the C_* enum, so this table is
+ * a schema binding, not just a layout: E2 (3C-07) reads the layout from the
+ * level descriptor and rejects a descriptor whose column table differs
+ * from this one (kw_ncols / kw_col_size / kw_col_key), so spool/encoder
+ * schema drift fails loudly instead of being misread. */
 static const ColSpec COLS[] = {
     {4, K_NR}, {4, K_NR}, {4, K_NR}, {4, K_NR}, {4, K_NR}, {4, K_NR},
     {8, K_NR}, {2, K_NR}, {4, K_NR}, {4, K_NR},
@@ -1045,6 +1050,38 @@ int64_t kw_encode_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t i
                               NULL, NULL, coord_range);
     g_c_ns_encode += now_ns() - t0;
     return r;
+}
+
+/* 3C-07: internal entry points for E2 (`_e2.c`, linked into the same
+ * object). Not part of the ctypes ABI (hidden visibility); output is
+ * exactly kw_encode_cell's (same encode_common call), plus the per-kind
+ * sizes on success, and no C-time accounting (E2 keeps its own timer). */
+__attribute__((visibility("hidden")))
+int64_t kw__encode_rec(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
+                       int64_t iy, const double *grid, int64_t threshold,
+                       const int64_t *lim, uint8_t *out, int64_t *sizes_out,
+                       double coord_range) {
+    return encode_common(rec, rec_len, level, ix, iy, grid, threshold, lim, out, sizes_out,
+                         NULL, NULL, coord_range);
+}
+
+/* The COLS[] index of a column E2's merge treats specially: 0 b_ncoords,
+ * 1 b_label_len, 2 blob_bg_label (no descriptor role), and 3 b_nstored,
+ * 4 c_lat, 5 c_lon, 6 b_class (checked against the descriptor's roles);
+ * -1 otherwise. (E2 checks the descriptor's column table
+ * equals COLS[] first, so these indices address the descriptor's table.) */
+__attribute__((visibility("hidden")))
+int kw__col_index(int which) {
+    switch (which) {
+    case 0: return C_B_NCOORDS;
+    case 1: return C_B_LLEN;
+    case 2: return C_BLOB_BG;
+    case 3: return C_B_NST;
+    case 4: return C_C_LAT;
+    case 5: return C_C_LON;
+    case 6: return C_B_CLASS;
+    default: return -1;
+    }
 }
 
 /* Probe: frame + per-kind (even-padded) sizes, no fit/budget checks. -1 = ask Python. */

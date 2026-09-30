@@ -35,6 +35,13 @@ E1 row layout (`E1_ROW_DTYPE`, 32 bytes): tix i32, tiy i32, six i32,
 siy i32, cell_off u64 (source record's .data offset), shape u32 (index
 among the source cell's backgrounds), kind u8 (0 edge, 1 interior cover),
 3 zero pad bytes.
+
+E2 (3C-07) outputs. Frame index row (`E2_INDEX_DTYPE`, 36 bytes packed):
+ix i32, iy i32, level u8, pt u8, sx u8, sy u8, off u64 (absolute offset of
+the frame in E2's output fd), len u32, road u32, bg u32, name u32 (the
+frame's section sizes). Declined row (`E2_DECLINED_DTYPE`, 28 bytes
+packed): ix i32, iy i32, reason u32 (1 = needs division), off u64, len u64
+(the cell's merged record, `spool.encode_columns` form, in E2's blob).
 """
 from __future__ import annotations
 
@@ -62,6 +69,18 @@ E1_ROW_DTYPE = np.dtype({
     "formats": ["<i4", "<i4", "<i4", "<i4", "<u8", "<u4", "u1"],
     "offsets": [0, 4, 8, 12, 16, 24, 28],
     "itemsize": 32})
+
+E2_INDEX_DTYPE = np.dtype({
+    "names": ["ix", "iy", "level", "pt", "sx", "sy", "off", "len", "road", "bg", "name"],
+    "formats": ["<i4", "<i4", "u1", "u1", "u1", "u1", "<u8", "<u4", "<u4", "<u4", "<u4"],
+    "offsets": [0, 4, 8, 9, 10, 11, 12, 20, 24, 28, 32],
+    "itemsize": 36})
+
+E2_DECLINED_DTYPE = np.dtype({
+    "names": ["ix", "iy", "reason", "off", "len"],
+    "formats": ["<i4", "<i4", "<u4", "<u8", "<u8"],
+    "offsets": [0, 4, 8, 12, 20],
+    "itemsize": 28})
 
 
 def _pad8(n: int) -> int:

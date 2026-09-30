@@ -40,7 +40,7 @@ _HERE = Path(__file__).parent
 CFLAGS: tuple[str, ...] = ("-O2", "-ffp-contract=off", "-fPIC")
 
 # The extension's C sources, one place. 3C-06/3C-07 append E1/E2 sources here.
-EXT_SOURCES: tuple[Path, ...] = (_HERE / "_cenc.c", _HERE / "_e1.c")
+EXT_SOURCES: tuple[Path, ...] = (_HERE / "_cenc.c", _HERE / "_e1.c", _HERE / "_e2.c")
 EXT_SO = _HERE / "_cenc.so"
 
 CTEST_DIR = _HERE / "ctest"

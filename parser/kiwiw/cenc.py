@@ -367,3 +367,95 @@ def e1_stats() -> dict:
     """Process-local E1 totals: ranges, ctypes calls (ranges + retries),
     rows, and the Python / C / handoff time split."""
     return dict(_e1_stats)
+
+
+# ---------------------------------------------------------------- E2 (3C-07)
+# The C Stage 1 kernel (`_e2.c`; DESIGN.md Contract B, "E2"). One ctypes
+# call per target row range; C grows its own output buffers and hands back
+# their addresses, which are copied out here. No Python fallback.
+
+E2_COUNTERS = ("cells", "frames", "declined", "frame_bytes", "blob_bytes",
+               "total_road", "total_bg", "total_name", "borrowed_shapes", "cover_rings")
+_E2_NSLOTS = 11         # counters above, then 10 = C ns
+_E2_ERRORS = {-1: "bad descriptor", -2: "bad spool index", -3: "bad spool record",
+              -4: "out of memory", -5: "bad rows (order, or target not a receiving cell "
+              "of the range)", -6: "frame write failed",
+              -7: "descriptor column table differs from _cenc.c COLS[]"}
+_e2_lib = None
+_e2_stats = {"ranges": 0, "cells": 0, "frames": 0, "declined": 0,
+             "py_s": 0.0, "c_s": 0.0, "handoff_s": 0.0}
+
+
+class E2Error(RuntimeError):
+    """E2 rejected its input (descriptor, spool, rows) or could not write."""
+
+
+def _load_e2():
+    global _e2_lib
+    if _e2_lib is None:
+        cbuild.build_ext()
+        lib = ctypes.CDLL(str(_SO))
+        lib.kw_e2.restype = ctypes.c_int64
+        lib.kw_e2.argtypes = [ctypes.c_void_p, ctypes.c_int64, ctypes.c_void_p, ctypes.c_int64,
+                              ctypes.c_void_p, ctypes.c_int64, ctypes.c_void_p, ctypes.c_int64,
+                              ctypes.c_int64, ctypes.c_int64, ctypes.c_int, ctypes.c_uint64,
+                              ctypes.c_void_p, ctypes.c_void_p]
+        _e2_lib = lib
+    return _e2_lib
+
+
+def e2(desc: bytes, spool: E1Spool, rows, row_lo: int | None, row_hi: int | None,
+       fd: int, off: int):
+    """Run E2 over target rows `[row_lo, row_hi)` (`None` = unbounded) of the
+    descriptor's window. `rows` are the E1 rows targeting that range, routed
+    (target (iy, ix), then source (iy, ix), then shape). Frames are written
+    to `fd` from byte `off` on. Returns `(index, declined, blob, counters)`:
+    `descriptor.E2_INDEX_DTYPE` / `E2_DECLINED_DTYPE` arrays, the declined
+    cells' merged records (uint8 array) and `{name: int}` over
+    `E2_COUNTERS`."""
+    import numpy as np
+    from .descriptor import (E1_ROW_DTYPE, E2_DECLINED_DTYPE, E2_INDEX_DTYPE, MAGIC,
+                             parse_level)
+    t0 = time.perf_counter()
+    if bytes(desc[:8]) == MAGIC and parse_level(desc) != spool.level:
+        raise E2Error(f"descriptor level {parse_level(desc)} != spool level {spool.level}")
+    if rows.dtype != E1_ROW_DTYPE:
+        raise E2Error("rows are not descriptor.E1_ROW_DTYPE")
+    rows = np.ascontiguousarray(rows)
+    lib = _load_e2()
+    lo = _E1_I64_MIN if row_lo is None else int(row_lo)
+    hi = _E1_I64_MAX if row_hi is None else int(row_hi)
+    dbuf = np.frombuffer(desc, np.uint8)
+    idx, data = spool.idx, spool.data
+    cnt = np.zeros(_E2_NSLOTS, np.int64)
+    bufs = (ctypes.c_void_p * 3)()
+    tc = time.perf_counter()
+    rc = lib.kw_e2(dbuf.ctypes.data, len(dbuf), idx.ctypes.data, len(idx),
+                   data.ctypes.data, len(data), rows.ctypes.data if len(rows) else None,
+                   len(rows), lo, hi, int(fd), int(off), bufs, cnt.ctypes.data)
+    wall = time.perf_counter() - tc
+    if rc < 0:
+        raise E2Error(_E2_ERRORS.get(rc, f"error {rc}"))
+
+    def take(i, n, dt):
+        if n == 0:
+            return np.zeros(0, dt)
+        return np.frombuffer(ctypes.string_at(bufs[i], n), np.uint8).view(dt).copy()
+
+    index = take(0, int(cnt[1]) * E2_INDEX_DTYPE.itemsize, E2_INDEX_DTYPE)
+    declined = take(1, int(cnt[2]) * E2_DECLINED_DTYPE.itemsize, E2_DECLINED_DTYPE)
+    blob = take(2, int(cnt[4]), np.uint8)
+    c_s = float(cnt[10]) / 1e9
+    s = _e2_stats
+    s["ranges"] += 1
+    s["cells"] += int(cnt[0]); s["frames"] += int(cnt[1]); s["declined"] += int(cnt[2])
+    s["c_s"] += c_s
+    s["handoff_s"] += max(0.0, wall - c_s)
+    s["py_s"] += max(0.0, (time.perf_counter() - t0) - wall)
+    return index, declined, blob, {k: int(cnt[i]) for i, k in enumerate(E2_COUNTERS)}
+
+
+def e2_stats() -> dict:
+    """Process-local E2 totals: ranges, cells, frames, declined, and the
+    Python / C / handoff time split."""
+    return dict(_e2_stats)
