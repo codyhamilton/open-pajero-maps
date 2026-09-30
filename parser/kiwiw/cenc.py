@@ -1,11 +1,11 @@
-"""ctypes binding for the whole-cell C encoder `_cenc.c` (plan 03).
+"""ctypes bindings for the C build kernels in `_cenc.so` (plan 03).
 
-`load()` compiles `_cenc.c` on demand (gcc, `-ffp-contract=off` for float
-parity with the Python oracle) into `_cenc.so` beside it and returns a
-`CellEncoder`, or None when no compiler is available / `KIWIW_NO_C=1` -- callers
-then use the pure-Python path, which stays the oracle. The kernel only answers
-"this cell fits and has no kind breach" (-> frame bytes); anything else
-returns None and the caller re-runs the Python path for that cell.
+`cbuild.build_ext()` compiles the sources on demand (gcc, `-ffp-contract=off`)
+into `_cenc.so` beside this file; a failed build raises (no Python fallback).
+Entry points: E1 (`e1`) and E2 (`e2`), each called once per row range
+(DESIGN.md Contract B); the transitional E3 probes `measure_content`
+(`kw_measure_cell`) and `bg_shape_records` (`kw_bg_shape`), used only inside
+the divide path; and the assembly copy helpers (`lib()`).
 """
 from __future__ import annotations
 
@@ -13,7 +13,6 @@ import ctypes
 import time
 from array import array
 from itertools import chain
-import os
 from pathlib import Path
 
 from . import cbuild
@@ -26,10 +25,10 @@ _lib = None
 _tried = False
 
 # 3C-01 bench instrumentation: process-local call counters and wrapper (ctypes
-# marshalling) wall time for the legacy per-cell entry points, named so E1/E2
-# counts (`e1`, `e2`) slot in alongside them later. Off by default -- only
+# marshalling) wall time for the E3 per-(sub-)cell entry points (E1/E2 keep
+# their own totals: `e1_stats()` / `e2_stats()`). Off by default -- only
 # `build_alldata.py --bench` pays the per-call timing overhead (set_bench()).
-_CALL_NAMES = ("kw_encode_cell", "kw_measure_cell", "kw_bg_shape")
+_CALL_NAMES = ("kw_measure_cell", "kw_bg_shape")
 _BENCH = False
 _calls: dict[str, int] = {n: 0 for n in _CALL_NAMES}
 _wrap_ns: dict[str, float] = {n: 0.0 for n in _CALL_NAMES}
@@ -52,12 +51,12 @@ def reset_worker_stats() -> None:
     _wrap_ns = {n: 0.0 for n in _CALL_NAMES}
     lib = _load_lib()
     if lib is not None:
-        buf = (ctypes.c_double * 3)()
+        buf = (ctypes.c_double * 2)()
         lib.kw_get_reset_c_times(buf)  # discard: reset only
 
 
 def worker_stats() -> dict:
-    """This process's `kw_encode_cell`/`kw_measure_cell`/`kw_bg_shape` call
+    """This process's `kw_measure_cell`/`kw_bg_shape` (E3) call
     counts and C/handoff time split since the last `reset_worker_stats()`
     (Contract H: C time is the C-side entry-point timer; handoff is wrapper
     time outside C). Python time is the caller's to compute (chunk wall minus
@@ -65,9 +64,9 @@ def worker_stats() -> dict:
     lib = _load_lib()
     c = {n: 0.0 for n in _CALL_NAMES}
     if lib is not None:
-        buf = (ctypes.c_double * 3)()
+        buf = (ctypes.c_double * 2)()
         lib.kw_get_reset_c_times(buf)
-        c = {"kw_encode_cell": buf[0], "kw_measure_cell": buf[1], "kw_bg_shape": buf[2]}
+        c = {"kw_measure_cell": buf[0], "kw_bg_shape": buf[1]}
     handoff = {n: max(0.0, _wrap_ns[n] / 1e9 - c[n]) for n in _CALL_NAMES}
     return {"calls": dict(_calls), "c_s": sum(c.values()), "handoff_s": sum(handoff.values())}
 
@@ -76,22 +75,9 @@ def _load_lib():
     global _lib, _tried
     if _tried:
         return _lib
-    _tried = True
-    if os.environ.get("KIWIW_NO_C"):
-        return None
     try:
-        try:
-            cbuild.build_ext()  # compiles on demand through cbuild (3C-02)
-        except cbuild.BuildError:
-            # Unchanged behaviour: no compiler / a failed build falls back
-            # to the Python oracle here (deleted only by 3C-08/3C-12).
-            return None
+        cbuild.build_ext()  # compiles on demand through cbuild (3C-02); raises on failure
         lib = ctypes.CDLL(str(_SO))
-        lib.kw_encode_cell.restype = ctypes.c_int64
-        lib.kw_encode_cell.argtypes = [
-            ctypes.c_char_p, ctypes.c_int64, ctypes.c_int, ctypes.c_int64, ctypes.c_int64,
-            ctypes.POINTER(ctypes.c_double), ctypes.c_int64,
-            ctypes.POINTER(ctypes.c_int64), ctypes.c_void_p, ctypes.c_double]
         lib.kw_bg_shape.restype = ctypes.c_int64
         lib.kw_bg_shape.argtypes = [
             ctypes.c_void_p, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
@@ -114,43 +100,8 @@ def _load_lib():
         _lib = lib
     except OSError:
         _lib = None
+    _tried = True
     return _lib
-
-
-class CellEncoder:
-    def __init__(self, lib, level: int, grid, threshold: int, kind_limits):
-        self._fn = lib.kw_encode_cell
-        self._level = level
-        self._grid = (ctypes.c_double * 4)(grid.disc_lat_lo, grid.disc_lon_lo,
-                                           grid.cell_lat, grid.cell_lon)
-        self._threshold = threshold
-        kl = kind_limits or {}
-        self._lim = (ctypes.c_int64 * 3)(*(kl.get(k, _NO_LIMIT)
-                                           for k in ("road", "background", "name")))
-        self._out = ctypes.create_string_buffer(_OUT_CAP)
-        self._addr = ctypes.addressof(self._out)
-
-    def encode(self, raw: bytes | None, ix: int, iy: int, *,
-               coord_range: int) -> bytes | None:
-        """`coord_range`: the cell frame's coordinate range (`range_for`);
-        the kernel converts every vertex from lat/lon at it."""
-        if _BENCH:
-            t0 = time.perf_counter_ns()
-            n = self._fn(raw, len(raw) if raw else 0, self._level, ix, iy, self._grid,
-                         self._threshold, self._lim, self._addr, float(coord_range))
-            _wrap_ns["kw_encode_cell"] += time.perf_counter_ns() - t0
-            _calls["kw_encode_cell"] += 1
-        else:
-            n = self._fn(raw, len(raw) if raw else 0, self._level, ix, iy, self._grid,
-                         self._threshold, self._lim, self._addr, float(coord_range))
-        return None if n < 0 else ctypes.string_at(self._addr, n)
-
-
-def make_encoder(level: int, grid, threshold: int, kind_limits):
-    lib = _load_lib()
-    if lib is None:
-        return None
-    return CellEncoder(lib, level, grid, threshold, kind_limits)
 
 
 _bg_room = 1 << 16

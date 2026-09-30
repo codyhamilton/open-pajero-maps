@@ -6,8 +6,8 @@
  * to it (read in place from the spool), adds interior-cover rings, and
  * encodes the cell with `_cenc.c`'s per-cell encoder. A cell that fits is
  * written to `out_fd` and indexed; a cell that does not is declined
- * (reason 1: needs division) with its merged content, for Stage 2. Not
- * wired into the build by this unit.
+ * (reason 1: needs division) with its merged content, for Stage 2 (the
+ * build's transitional divide, `build_alldata.py`, 3C-08).
  *
  * Inputs: the level descriptor (layout: `_e1.c` / `descriptor.py`), the
  * level's spool `.idx` / `.data` bytes (zero-copy), and the routed E1 rows
@@ -17,8 +17,7 @@
  *
  * Receiving cells: every cell of the descriptor window, rows clipped to
  * [row_lo, row_hi), whose existence bit is set (a spool cell, or a cell of
- * the mask rect; a mask cell with no record is encoded empty -- today's
- * `_fill_masked`).
+ * the mask rect; a mask cell with no record is encoded empty).
  *
  * Merge (today's `overlap.RowOverlap.merge_raw`, byte for byte): borrowed
  * shapes are appended after the cell's own backgrounds, in row order. Every

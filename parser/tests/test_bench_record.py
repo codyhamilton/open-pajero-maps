@@ -58,7 +58,8 @@ def test_bench_output_byte_identical_to_unbenched(tmp_path):
     for key in ("wall_s", "prepass_s", "py_s", "c_s", "handoff_s", "ranges",
                 "workers", "calls"):
         assert key in lvl, key
-    for key in ("kw_encode_cell", "kw_measure_cell", "kw_bg_shape"):
+    assert lvl["calls"]["e1"] == lvl["calls"]["e2"] == lvl["ranges"]
+    for key in ("e1", "e2", "e3", "kw_measure_cell", "kw_bg_shape"):
         assert key in lvl["calls"], key
         assert lvl["calls"][key] > 0
 

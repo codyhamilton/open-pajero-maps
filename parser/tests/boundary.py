@@ -15,7 +15,7 @@ from kiwiw.model import BoundingBox, MeshLocation, RoadNode
 from kiwiw.parcel import decode_parcel
 from kiwiw.spool import SpoolReader, SpoolWriter
 
-# `kw_encode_cell`/E1/E2's own hard ceiling (`_cenc.c`'s `MAX_FRAME`); used
+# E2's own hard ceiling (`_cenc.c`'s `MAX_FRAME`); used
 # only as an invariant bound, never to compute a frame's bytes.
 MAX_FRAME_BYTES = 131070
 
@@ -48,8 +48,8 @@ def open_spool(spool_dir) -> SpoolReader:
 # ---------------------------------------------------------------------------
 
 def decode_frame(mapframe_bytes: bytes, bounds: BoundingBox):
-    """Decode one whole-cell Map Frame's bytes -- as `kw_encode_cell`/E1/E2
-    produce, or as sliced out of a real disc -- into a `kiwiw.model.Parcel`
+    """Decode one whole-cell Map Frame's bytes -- as E2 (or the divide)
+    produces, or as sliced out of a real disc -- into a `kiwiw.model.Parcel`
     via the existing Python decoders (`kiwiw.parcel.decode_parcel`), giving
     `.road`/`.background`/`.name` plain structures to assert on.
 

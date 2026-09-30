@@ -143,3 +143,40 @@ Over budget: stop, commit what passes, and put the handoff (done, not done, what
 A non-trivial bug outside your done evidence: report symptom, location, and root cause if found. Do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendment (2026-09-30, 3C-08 implementer)
+
+Contradictions and deviations found while executing this brief:
+
+1. **Non-owned tests used the deleted API.** `parser/tests/test_parcel_mask.py`
+   called the removed `build_alldata._encode_level(level, grid, reader, …)` and
+   `build_alldata.frame_bounds`/`TileGrid` (the extractor re-exports).
+   `parser/tests/test_bench_record.py` asserted a `kw_encode_cell` call count,
+   and `parser/tests/boundary.py` named `kw_encode_cell` in two comments. None
+   of these is an owned path, but the deletions this brief requires break them.
+   Minimal edits were made: test_parcel_mask now goes through the new
+   `_encode_level` and reads the frames back via `FrameDump`; test_bench_record
+   asserts `e1 == e2 == ranges` plus e3/kw_measure_cell/kw_bg_shape > 0; the
+   boundary.py comments now say E2.
+2. **Grep scope vs. extractor tests.** The done-evidence grep covers all of
+   `parser/tests`, which includes the extractor's own tests
+   (`test_parcel_geometry`, `test_extractor_scale`, `test_link_id_registry`,
+   `test_name_record_vocab`, `test_harness_*`, `test_selection`, `test_grid_data`,
+   `test_divide`, `test_descriptor`). Those import `osm_to_parcel_geometry` on
+   purpose (they test the extractor, or compare `mesh` with it) and are not
+   owned here. They are left as they are. `test_descriptor.py:73`'s prose
+   ("`build_alldata` imports `overlap`") is now stale; it is not owned, so it is
+   left for the orchestrator. The remaining hits in `build_alldata.py` are the
+   manifest's `overlap` key, its log line, and prose naming the extractor as the
+   spool's writer.
+3. **`--window` overlap counters.** The old pre-pass scanned with the fixture
+   window only. `--window` builds therefore reported whole-level (or
+   whole-fixture) `overlap` counters. E1 now receives the combined receiver
+   window through the descriptor, so a `--window` build reports counters for its
+   window. Full and `--fixture` builds are unchanged, and so is the manifest
+   equality with 3-11 G.
+4. **`test_cenc.py`.** Beyond deleting the `make_encoder` cases,
+   `test_stored_pixels_ignored_latlon_wins` and `test_frame_edge_is_inclusive`
+   were kept. Their C side now calls the E3 probe (`cenc.measure_content`)
+   instead of `kw_encode_cell`, which keeps the lat/lon-wins and
+   inclusive-edge coverage without the legacy binding.

@@ -111,7 +111,7 @@ def test_budgets_and_thresholds_are_u16_ceiling_everywhere():
 
 
 def test_measure_one_sizes_match_frame():
-    from osm_to_parcel_geometry import TileGrid, frame_bounds
+    from kiwiw.mesh import CellGrid as TileGrid, frame_bounds
     bounds = frame_bounds(0, 0, TileGrid.from_reference(0))
     frame, sizes = build_alldata._measure_one(0, 0, 0, bounds, {})
     assert frame == build_alldata._encode_one(0, 0, 0, bounds, {})

@@ -6,13 +6,13 @@
  * plus osm_to_parcel_geometry.parcel_bounds, operating straight on one binary
  * spool cell record (kiwiw/spool.py `_COLUMNS` layout).
  *
- * Contract: kw_encode_cell() returns the frame length when the cell fits the
- * frame threshold and the per-kind byte budgets; -1 for *anything else*
- * (oversize, kind breach, any input the Python encoders would raise on or that
- * this port does not model, malformed record). The caller then runs the Python
- * oracle (columns_to_content + divide.plan_divisions) for that cell, so this
- * file only ever has to be exactly right on the common path, and refuses
- * everything it is unsure of.
+ * Contract: the whole-cell encoder (reached through E2, `_e2.c`, via
+ * kw__encode_rec) returns the frame length when the cell fits the frame
+ * threshold and the per-kind byte budgets; -1 for *anything else* (oversize,
+ * kind breach, any input the Python encoders would raise on or that this
+ * port does not model, malformed record). E2 then declines the cell to the
+ * divide path, so this file only ever has to be exactly right on the common
+ * path, and refuses everything it is unsure of.
  *
  * Float exactness: build with -ffp-contract=off (no FMA), and keep the same
  * operation order as the Python expressions; rint() == Python's half-even
@@ -31,7 +31,7 @@
 /* 3C-01: per-entry-point C-time accumulators (process-static; a fork worker
  * gets its own copy). Read and zeroed by kw_get_reset_c_times(). Never
  * exported to the manifest -- bench record only. */
-static double g_c_ns_encode = 0.0, g_c_ns_measure = 0.0, g_c_ns_bg = 0.0;
+static double g_c_ns_measure = 0.0, g_c_ns_bg = 0.0;
 
 static inline double now_ns(void) {
     struct timespec ts;
@@ -39,14 +39,13 @@ static inline double now_ns(void) {
     return (double)ts.tv_sec * 1e9 + (double)ts.tv_nsec;
 }
 
-/* out3[0]=kw_encode_cell seconds, out3[1]=kw_measure_cell seconds,
- * out3[2]=kw_bg_shape seconds, accumulated since the previous call (or
- * process start); each accumulator is reset to 0 after reading. */
-void kw_get_reset_c_times(double *out3) {
-    out3[0] = g_c_ns_encode / 1e9;
-    out3[1] = g_c_ns_measure / 1e9;
-    out3[2] = g_c_ns_bg / 1e9;
-    g_c_ns_encode = g_c_ns_measure = g_c_ns_bg = 0.0;
+/* out2[0]=kw_measure_cell seconds, out2[1]=kw_bg_shape seconds (E3),
+ * accumulated since the previous call (or process start); each accumulator
+ * is reset to 0 after reading. */
+void kw_get_reset_c_times(double *out2) {
+    out2[0] = g_c_ns_measure / 1e9;
+    out2[1] = g_c_ns_bg / 1e9;
+    g_c_ns_measure = g_c_ns_bg = 0.0;
 }
 
 enum { K_NR, K_NN, K_NP, K_NB, K_NC, K_NS, K_BL, K_NL, K_NT, N_KEYS };
@@ -1042,20 +1041,9 @@ static int64_t encode_common(const uint8_t *rec, int64_t rec_len, int level, int
     return cur;
 }
 
-int64_t kw_encode_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
-                       int64_t iy, const double *grid, int64_t threshold,
-                       const int64_t *lim, uint8_t *out, double coord_range) {
-    double t0 = now_ns();
-    int64_t r = encode_common(rec, rec_len, level, ix, iy, grid, threshold, lim, out, NULL,
-                              NULL, NULL, coord_range);
-    g_c_ns_encode += now_ns() - t0;
-    return r;
-}
-
 /* 3C-07: internal entry points for E2 (`_e2.c`, linked into the same
  * object). Not part of the ctypes ABI (hidden visibility); output is
- * exactly kw_encode_cell's (same encode_common call), plus the per-kind
- * sizes on success, and no C-time accounting (E2 keeps its own timer). */
+ * the whole-cell frame (encode_common), plus the per-kind sizes on success, and no C-time accounting (E2 keeps its own timer). */
 __attribute__((visibility("hidden")))
 int64_t kw__encode_rec(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
                        int64_t iy, const double *grid, int64_t threshold,

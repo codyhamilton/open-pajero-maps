@@ -1,4 +1,5 @@
-"""C whole-cell encoder (plan 03): byte-identical to the Python oracle."""
+"""C per-cell encoders (plan 03; E3 probe and background shapes): byte-identical
+to the Python oracle."""
 from __future__ import annotations
 
 import random
@@ -10,15 +11,13 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import build_alldata as B
-from kiwiw import cenc, divide, spool, synth
+from kiwiw import cenc, spool, synth
 from kiwiw.model import BackgroundShape, BoundingBox, NameRecord, RoadLink, RoadNode
-from osm_to_parcel_geometry import TileGrid, g_frame_range
-from osm_to_parcel_geometry import frame_bounds as parcel_bounds  # ranged G frame
+from kiwiw.mesh import CellGrid as TileGrid
+from kiwiw.mesh import frame_bounds as parcel_bounds  # ranged G frame
 
 pytestmark = pytest.mark.skipif(cenc._load_lib() is None, reason="no C compiler")
 
-KL = {"road": 131070, "background": 131070, "name": 131070}
-LEVELS = (12, 8, 6, 4, 0)
 
 
 def _cell_latlon(level, ix, iy, g):
@@ -66,50 +65,9 @@ def _content(rng, b, n_roads, n_bgs, n_names, bg_margin=0.0):
     return {"roads": roads, "backgrounds": bgs, "names": names}
 
 
-def _oracle(level, ix, iy, g, content):
-    try:
-        fr, sz = B._measure_one(level, ix, iy, parcel_bounds(ix, iy, g), content)
-    except ValueError:
-        return None
-    if len(fr) > 131070 or divide._kind_breach(sz, KL):
-        return None
-    return fr
-
-
 @pytest.fixture()
 def no_c_bg(monkeypatch):
     monkeypatch.setattr(cenc, "bg_shape_records", lambda *a: None)
-
-
-@pytest.mark.parametrize("level", LEVELS)
-def test_kernel_matches_python(level, tmp_path, no_c_bg):
-    g = TileGrid.from_reference(level)
-    enc = cenc.make_encoder(level, g, 131070, KL)
-    cells = []
-    for n, (nr, nb, nn) in enumerate([(0, 0, 0), (1, 0, 0), (5, 2, 3), (0, 3, 0),
-                                      (0, 0, 4), (30, 10, 10), (400, 20, 50), (2000, 5, 5)]):
-        ix, iy = 3 + n, 7 + 2 * n
-        b = parcel_bounds(ix, iy, g)
-        cells.append((ix, iy, _content(random.Random(n + level), b, nr, nb, nn)))
-    w = spool.SpoolWriter(tmp_path / "sp")
-    for ix, iy, c in cells:
-        w.add(level, ix, iy, roads=c["roads"], backgrounds=c["backgrounds"], names=c["names"])
-    w.close()
-    raws = {(ix, iy): raw for ix, iy, raw in spool.SpoolReader(tmp_path / "sp").iter_cell_raw(level)}
-    assert raws
-    for ix, iy, c in cells:
-        # the reader returns the round-tripped content, which is what the oracle sees
-        rc = spool.columns_to_content(spool.decode_columns(raws[(ix, iy)])) \
-            if (ix, iy) in raws else spool._empty_content()
-        want = _oracle(level, ix, iy, g, rc)
-        got = enc.encode(raws.get((ix, iy)), ix, iy, coord_range=g_frame_range(level))
-        assert got == want, (level, ix, iy)
-
-
-def test_empty_cell(no_c_bg):
-    g = TileGrid.from_reference(0)
-    enc = cenc.make_encoder(0, g, 131070, KL)
-    assert enc.encode(None, 5, 5, coord_range=g_frame_range(0)) == _oracle(0, 5, 5, g, spool._empty_content())
 
 
 def test_column_table_matches_spool():
@@ -161,6 +119,7 @@ def test_measure_content_matches_python(no_c_bg, monkeypatch):
 
 RANGES = (16384, 4096)  # every real frame range (range_for); 32768 is not one
 _C_BG = cenc.bg_shape_records
+_C_MEASURE = cenc.measure_content
 
 
 @pytest.fixture()
@@ -182,38 +141,6 @@ def _encodable(c):
 def _ranged(b, r):
     import dataclasses
     return dataclasses.replace(b, coord_range=r)
-
-
-@pytest.mark.parametrize("coord_range", RANGES)
-@pytest.mark.parametrize("level", (8, 0))
-def test_kernel_matches_python_at_range(level, coord_range, tmp_path, pure_py):
-    """Road links, background shapes and names: C kernel == Python oracle at
-    each supplied range (Python reads the range from `bounds.coord_range`)."""
-    g = TileGrid.from_reference(level)
-    enc = cenc.make_encoder(level, g, 131070, KL)
-    cells = []
-    for n, (nr, nb, nn) in enumerate([(1, 0, 0), (5, 2, 3), (30, 10, 10), (200, 20, 40)]):
-        ix, iy = 4 + n, 6 + 2 * n
-        cells.append((ix, iy, _encodable(_content(random.Random(n * 7 + level),
-                                                  parcel_bounds(ix, iy, g), nr, nb, nn))))
-    w = spool.SpoolWriter(tmp_path / "sp")
-    for ix, iy, c in cells:
-        w.add(level, ix, iy, roads=c["roads"], backgrounds=c["backgrounds"], names=c["names"])
-    w.close()
-    raws = {(ix, iy): raw for ix, iy, raw in spool.SpoolReader(tmp_path / "sp").iter_cell_raw(level)}
-    checked = 0
-    for ix, iy, _c in cells:
-        rc = spool.columns_to_content(spool.decode_columns(raws[(ix, iy)]))
-        b = _ranged(parcel_bounds(ix, iy, g), coord_range)
-        try:
-            fr, sz = B._measure_one(level, ix, iy, b, rc)
-        except ValueError:
-            fr = None
-        want = None if fr is None or len(fr) > 131070 or divide._kind_breach(sz, KL) else fr
-        got = enc.encode(raws[(ix, iy)], ix, iy, coord_range=coord_range)
-        assert got == want, (level, coord_range, ix, iy)
-        checked += want is not None
-    assert checked
 
 
 @pytest.mark.parametrize("coord_range", RANGES)
@@ -275,13 +202,14 @@ def _node_words(link_bytes):
             for j in range((len(link_bytes) - 16) // 6)]
 
 
-def _c_cell(level, ix, iy, content, coord_range, tmp_path):
+def _c_cell(level, ix, iy, content, b, tmp_path):
+    """The spool record of `content` and its frame from the C probe (E3)."""
     w = spool.SpoolWriter(tmp_path / "sp1")
     w.add(level, ix, iy, **content)
     w.close()
     (_, _, raw), = spool.SpoolReader(tmp_path / "sp1").iter_cell_raw(level)
-    enc = cenc.make_encoder(level, TileGrid.from_reference(level), 131070, KL)
-    return raw, enc.encode(raw, ix, iy, coord_range=coord_range)
+    got = _C_MEASURE(level, ix, iy, b, spool.columns_to_content(spool.decode_columns(raw)))
+    return raw, None if got is None else got[0]
 
 
 @pytest.mark.parametrize("coord_range", RANGES)
@@ -302,7 +230,7 @@ def test_stored_pixels_ignored_latlon_wins(coord_range, tmp_path, pure_py):
     want = ((3 * q) % 4096) | ((3 * q // 4096) << 13), (q % 4096) | ((q // 4096) << 13)
     assert _node_words(py) == [want, want]
     content = {"roads": [_one_link(lied)], "backgrounds": [], "names": []}
-    raw, got = _c_cell(level, ix, iy, content, coord_range, tmp_path)
+    raw, got = _c_cell(level, ix, iy, content, b, tmp_path)
     rc = spool.columns_to_content(spool.decode_columns(raw))
     assert rc["roads"][0].nodes[0].x == 1234  # the spool really carries the lie
     assert got is not None and got == B._measure_one(level, ix, iy, b, rc)[0]
@@ -338,7 +266,7 @@ def test_frame_edge_is_inclusive(coord_range, tmp_path, pure_py):
     nb = synth.encode_name_record_bytes(nm, b)
     assert (nb[8] << 8 | nb[9], nb[10] << 8 | nb[11]) == (edge, edge)
     content = {"roads": [_one_link([ne, beyond])], "backgrounds": [s], "names": [nm]}
-    raw, got = _c_cell(level, ix, iy, content, coord_range, tmp_path)
+    raw, got = _c_cell(level, ix, iy, content, b, tmp_path)
     rc = spool.columns_to_content(spool.decode_columns(raw))
     assert got is not None and got == B._measure_one(level, ix, iy, b, rc)[0]
     assert py in got and bg in got and nb in got
@@ -434,33 +362,6 @@ def test_bg_clip_fuzz_c_equals_python():
         assert got == want, i
         checked += bool(want)
     assert checked > 500
-
-
-@pytest.mark.parametrize("level", (8, 0))
-def test_kernel_matches_python_overhanging(level, tmp_path, no_c_bg):
-    """Whole-cell kernel == Python oracle when background shapes overhang the
-    cell (clipped: split, dropped, corner-filled)."""
-    g = TileGrid.from_reference(level)
-    enc = cenc.make_encoder(level, g, 131070, KL)
-    cells = []
-    for n, nb in enumerate([1, 3, 20, 60]):
-        ix, iy = 4 + n, 6 + 2 * n
-        cells.append((ix, iy, _encodable(_content(random.Random(n * 5 + level),
-                                                  parcel_bounds(ix, iy, g), 2, nb, 2,
-                                                  bg_margin=0.6))))
-    w = spool.SpoolWriter(tmp_path / "sp")
-    for ix, iy, c in cells:
-        w.add(level, ix, iy, roads=c["roads"], backgrounds=c["backgrounds"], names=c["names"])
-    w.close()
-    raws = {(ix, iy): raw for ix, iy, raw in spool.SpoolReader(tmp_path / "sp").iter_cell_raw(level)}
-    checked = 0
-    for ix, iy, _c in cells:
-        rc = spool.columns_to_content(spool.decode_columns(raws[(ix, iy)]))
-        want = _oracle(level, ix, iy, g, rc)
-        got = enc.encode(raws[(ix, iy)], ix, iy, coord_range=g_frame_range(level))
-        assert got == want, (level, ix, iy)
-        checked += want is not None
-    assert checked
 
 
 def test_measure_content_sub_parcel_rect(no_c_bg, monkeypatch):

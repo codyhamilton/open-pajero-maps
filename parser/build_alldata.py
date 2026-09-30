@@ -28,10 +28,8 @@ import argparse
 import hashlib
 import json
 import os
-import struct
 import sys
 import time
-from array import array
 from pathlib import Path
 
 import numpy as np
@@ -40,22 +38,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from kiwiw import alldata_writer as aw
 from kiwiw import cenc
+from kiwiw import descriptor
 from kiwiw import divide
 from kiwiw import frame_table as ft
-from kiwiw.spill import FrameSpill
+from kiwiw import mesh
 from kiwiw import synth
 from kiwiw.grid import ReferenceGrid
-from kiwiw import overlap
-from kiwiw.spool import SpoolReader
-
-# Read-only imports from the extractor: TileGrid/parcel_bounds are pure
-# geometry helpers with no OSM/PBF dependency of their own (build_alldata.py
-# never calls extract_parcel_geometry() -- that is unit 07/osm_to_parcel_
-# geometry.py's own job, run as a separate, prior step). Not touching that
-# module's own contents; this is the same "TileGrid.from_reference()" every
-# extraction run already uses to agree on cell boundaries.
-from osm_to_parcel_geometry import (FIXTURE_BBOXES, TileGrid, assign_to_parcel, g_frame_range,
-                                    frame_bounds)
+from kiwiw.spool import SpoolReader, columns_to_content, decode_columns
 
 DEFAULT_SPOOL = str(Path(__file__).resolve().parent.parent / "output" / "spool")
 DEFAULT_OUT = str(Path(__file__).resolve().parent.parent / "output" / "ALLDATA.KWI")
@@ -116,24 +105,6 @@ def _level_dims(grid: ReferenceGrid, level: int) -> dict:
     )
 
 
-def _fixture_cell_range(level: int, fixture: str, tile_grid: TileGrid) -> tuple[int, int, int, int]:
-    """(ix_lo, ix_hi, iy_lo, iy_hi) inclusive global-cell range covering a
-    named fixture bbox at `level`, via the same `assign_to_parcel()` the
-    extractor itself uses -- so `--fixture perth` restricts to exactly the
-    same global cells `osm_to_parcel_geometry.py --fixture perth` would
-    have populated, regardless of what else the input spool contains."""
-    lon_l, lat_b, lon_r, lat_t = FIXTURE_BBOXES[fixture]
-    corners = [
-        assign_to_parcel(lat_b, lon_l, tile_grid),
-        assign_to_parcel(lat_b, lon_r, tile_grid),
-        assign_to_parcel(lat_t, lon_l, tile_grid),
-        assign_to_parcel(lat_t, lon_r, tile_grid),
-    ]
-    ixs = [c[0] for c in corners if c is not None]
-    iys = [c[1] for c in corners if c is not None]
-    return min(ixs), max(ixs), min(iys), max(iys)
-
-
 def _encode_one(level: int, ix: int, iy: int, bounds, content: dict) -> bytes:
     """`plan_divisions()`'s `encode` callback (bytes only)."""
     return _measure_one(level, ix, iy, bounds, content)[0]
@@ -153,7 +124,7 @@ def _measure_one(level: int, ix: int, iy: int, bounds, content: dict):
     divided sub-cell's (sub_ix, sub_iy).
 
     `bounds` carries the frame's coordinate range (`bounds.coord_range`, from
-    `osm_to_parcel_geometry.g_frame_range` via `divide.plan_divisions`): the
+    `mesh.g_frame_range` via `divide.plan_divisions`): the
     parcel's own frame, or a divided parent's frame for a sub-cell. Both
     the C probe and the Python encoders read it there; none is a default."""
     # C probe first (byte-identical; declines on anything it does not model,
@@ -205,32 +176,6 @@ def load_parcel_mask(path: str | os.PathLike | None = None) -> dict[int, tuple[i
     return {int(k): (v["ix_lo"], v["ix_hi"], v["iy_lo"], v["iy_hi"]) for k, v in raw.items()}
 
 
-def _fill_masked(cells, mask_rect, empty_factory):
-    """Merge a `(iy, ix)`-ascending stream of `(ix, iy, content)` with every
-    cell of `mask_rect`: cells the stream lacks are yielded with empty
-    content; stream cells outside the mask are passed through unchanged."""
-    ix_lo, ix_hi, iy_lo, iy_hi = mask_rect
-
-    def _mask():
-        for iy in range(iy_lo, iy_hi + 1):
-            for ix in range(ix_lo, ix_hi + 1):
-                yield (iy, ix)
-
-    m = _mask()
-    nxt = next(m, None)
-    for ix, iy, content in cells:
-        key = (iy, ix)
-        while nxt is not None and nxt < key:
-            yield nxt[1], nxt[0], empty_factory()
-            nxt = next(m, None)
-        if nxt == key:
-            nxt = next(m, None)
-        yield ix, iy, content
-    while nxt is not None:
-        yield nxt[1], nxt[0], empty_factory()
-        nxt = next(m, None)
-
-
 def _merge_stats(dst: dict, src: dict) -> None:
     """Add `src`'s additive counters (`total`/`dropped`/`cells` maps and
     `halo_names`) into `dst`, inserting keys in `src`'s order so the merged
@@ -244,120 +189,14 @@ def _merge_stats(dst: dict, src: dict) -> None:
             dst[k] = dst.get(k, 0) + v
 
 
-def _combined_cell_range(level, fixture, tile_grid, window_rect):
+def _combined_cell_range(level, fixture, window_rect):
     """`--window`'s cell rectangle takes precedence over `--fixture`'s (the
-    two are not used together); either narrows which cells are read, mask-
-    filled and emitted -- planning only, per Contract B (3C-01)."""
+    two are not used together); either narrows which cells receive, are
+    mask-filled and emitted -- it rides in the level descriptor's window
+    (planning only, per Contract B)."""
     if window_rect is not None:
         return window_rect
-    return _fixture_cell_range(level, fixture, tile_grid) if fixture else None
-
-
-def _level_frames(level: int, reader: SpoolReader, fixture: str | None,
-                  threshold_bytes: int, mask, kind_limits, trim_stats, name_halo: bool,
-                  row_range: tuple[int | None, int | None] = (None, None),
-                  overlap_dir: str | None = None, window_rect=None):
-    """Yield `(ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes)` for the
-    cells of `level` whose row `iy` lies in `row_range` (`[lo, hi)`, `None` =
-    unbounded), in canonical order. Rows partition the `(iy, ix)` stream, so
-    the concatenation of consecutive row ranges equals the whole-level stream
-    and `trim_stats` counters add up (`_merge_stats`).
-
-    `overlap_dir` is the level's `kiwiw.overlap.build_level` output: each
-    cell's own spool record gets the background shapes of other cells that
-    overlap it appended (3-09) before it is counted and encoded."""
-    row_lo, row_hi = row_range
-    tile_grid = TileGrid.from_reference(level)
-    cell_range = _combined_cell_range(level, fixture, tile_grid, window_rect)
-    a, b = reader.row_bounds(level, row_lo, row_hi)
-
-    def _in_fixture(ix, iy):
-        if cell_range is None:
-            return True
-        ix_lo, ix_hi, iy_lo, iy_hi = cell_range
-        return ix_lo <= ix <= ix_hi and iy_lo <= iy <= iy_hi
-
-    def _count(n_roads, n_bgs, n_names):
-        if trim_stats is not None:
-            t = trim_stats.setdefault("total", {})
-            t["road"] = t.get("road", 0) + n_roads
-            t["background"] = t.get("background", 0) + n_bgs
-            t["name"] = t.get("name", 0) + n_names
-
-    rect = _level_rect(mask, level, cell_range)
-    if rect is not None:
-        rect = (rect[0], rect[1],
-                rect[2] if row_lo is None else max(rect[2], row_lo),
-                rect[3] if row_hi is None else min(rect[3], row_hi - 1))
-        if not (rect[0] <= rect[1] and rect[2] <= rect[3]):
-            rect = None
-
-    ov = overlap.open_rows(overlap_dir, level, row_lo, row_hi)
-    enc = cenc.make_encoder(level, tile_grid, threshold_bytes, kind_limits)
-    if enc is not None:
-        return _level_frames_c(level, reader, a, b, _in_fixture, _count, rect, enc,
-                               threshold_bytes, kind_limits, trim_stats, name_halo, ov)
-
-    def _own():
-        for ix, iy, content in reader.iter_cells(level, a, b):
-            if _in_fixture(ix, iy):
-                yield ix, iy, content
-
-    def cells_iter():
-        stream = _own()
-        if rect is not None:
-            from kiwiw.spool import _empty_content
-            stream = _fill_masked(stream, rect, _empty_content)
-        for ix, iy, content in stream:
-            if ov is not None:
-                content = ov.merge_content(ix, iy, content)
-            _count(len(content.get("roads") or []), len(content.get("backgrounds") or []),
-                   len(content.get("names") or []))
-            yield ix, iy, content
-
-    return divide.plan_divisions(
-        level, cells_iter(), threshold_bytes, _encode_one,
-        kind_limits=kind_limits, measure=_measure_one,
-        trim_stats=trim_stats, name_halo=name_halo)
-
-
-_HDR_COUNTS = struct.Struct("<9Q")
-
-
-def _level_frames_c(level, reader, a, b, in_fixture, count, rect, enc,
-                    threshold_bytes, kind_limits, trim_stats, name_halo, ov=None):
-    """C fast path: the kernel yields the frame for every cell that fits and
-    breaches no kind budget; every other cell goes through the Python oracle
-    (`divide.plan_divisions` on that one cell), so output is identical."""
-    from kiwiw.spool import _empty_content, columns_to_content, decode_columns
-
-    def _raw_cells():
-        for ix, iy, raw in reader.iter_cell_raw(level, a, b):
-            if in_fixture(ix, iy):
-                yield ix, iy, raw
-
-    stream = _raw_cells()
-    if rect is not None:
-        stream = _fill_masked(stream, rect, lambda: None)
-    # Every undivided cell of a level shares one frame shape (one slot), so
-    # one range: `g_frame_range`, a pure function of the level -- identical
-    # in every worker. Divided cells get theirs inside `plan_divisions`.
-    coord_range = g_frame_range(level)
-    for ix, iy, raw in stream:
-        if ov is not None:
-            raw = ov.merge_raw(ix, iy, raw)
-        if raw is not None:
-            h = _HDR_COUNTS.unpack_from(raw)
-            count(h[0], h[3], h[5])
-        frame = enc.encode(raw, ix, iy, coord_range=coord_range)
-        if frame is not None:
-            yield ix, iy, 0, 0, 0, frame
-            continue
-        content = _empty_content() if raw is None else columns_to_content(decode_columns(raw))
-        yield from divide.plan_divisions(
-            level, iter(((ix, iy, content),)), threshold_bytes, _encode_one,
-            kind_limits=kind_limits, measure=_measure_one,
-            trim_stats=trim_stats, name_halo=name_halo)
+    return mesh.fixture_cell_range(level, fixture) if fixture else None
 
 
 def _level_rect(mask, level, cell_range):
@@ -372,15 +211,14 @@ def _level_rect(mask, level, cell_range):
 _EMPTY_CELL_WEIGHT = 512
 
 
-def _plan_chunks(reader: SpoolReader, level: int, fixture, mask, n_chunks: int,
-                 window_rect=None) -> list[tuple[int | None, int | None]]:
-    """Split the level's row space into <= `n_chunks` weight-balanced `[lo, hi)`
-    row ranges (first lo / last hi unbounded). Any partition yields identical
-    output; this only balances work."""
-    import numpy as np
+def _plan_chunks(reader: SpoolReader, level: int, mask,
+                 n_chunks: int) -> list[tuple[int | None, int | None]]:
+    """Split the whole level's row space into <= `n_chunks` weight-balanced
+    `[lo, hi)` row ranges (first lo / last hi unbounded) -- also under
+    `--fixture`/`--window`, whose rectangle rides in the descriptor. Any
+    partition yields identical output; this only balances work."""
     iy, length = reader.cell_weights(level)
-    rect = _level_rect(mask, level, _combined_cell_range(
-        level, fixture, TileGrid.from_reference(level), window_rect))
+    rect = _level_rect(mask, level, None)
     r_lo = int(iy[0]) if len(iy) else 0
     r_hi = int(iy[-1]) if len(iy) else -1
     if rect is not None and rect[0] <= rect[1] and rect[2] <= rect[3]:
@@ -411,121 +249,181 @@ def _plan_chunks(reader: SpoolReader, level: int, fixture, mask, n_chunks: int,
 
 
 _WORKER: dict = {}
-
-
-def _chunk_worker(job):
-    """Process-pool entry: encode one row range; return its frames + counters."""
-    (spool_dir, level, fixture, threshold_bytes, mask, kind_limits, name_halo, rows,
-     overlap_dir, window_rect) = job
-    reader = _WORKER.get(spool_dir)
-    if reader is None:
-        reader = _WORKER[spool_dir] = SpoolReader(spool_dir)
-    stats: dict = {}
-    frames = list(_level_frames(level, reader, fixture, threshold_bytes, mask,
-                                kind_limits, stats, name_halo, rows, overlap_dir,
-                                window_rect=window_rect))
-    return frames, stats
-
-
 _SPILL: dict = {}
 
 
-def _encode_chunk(job):
-    """Encode one row range straight into this process's spill file.
+def _e1spool(spool_dir: str, level: int) -> cenc.E1Spool:
+    """This process's memory-mapped spool for `level` (one per level)."""
+    sp = _WORKER.get("e1spool")
+    if sp is None or sp[0] != (os.getpid(), spool_dir, level):
+        sp = _WORKER["e1spool"] = ((os.getpid(), spool_dir, level),
+                                   cenc.E1Spool(spool_dir, level))
+    return sp[1]
+
+
+def _e1_job(job):
+    """Pool entry, stage 1: E1 over source rows `[lo, hi)`. Returns the
+    routing rows, E1's counters and this call's time split."""
+    spool_dir, level, desc, (lo, hi) = job
+    t0 = time.perf_counter()
+    s0 = cenc.e1_stats()
+    rows, counters = cenc.e1(desc, _e1spool(spool_dir, level), lo, hi)
+    s1 = cenc.e1_stats()
+    d = {k: s1[k] - s0[k] for k in ("ranges", "calls", "c_s", "handoff_s")}
+    d["py_s"] = max(0.0, time.perf_counter() - t0 - d["c_s"] - d["handoff_s"])
+    return rows, counters, d
+
+
+def _e2_job(job):
+    """Pool entry, stage 2: E2 over target rows `[lo, hi)` into this
+    process's spill file, then the transitional divide on the range's
+    declined cells (E2's merged record -> content -> `plan_divisions`,
+    measuring through E3).
 
     Returns `(spill_path, rec, stats, digest_lines, bench, dump_recs)`: `rec`
-    is a `frame_table.FRAME_DTYPE` array (one row per frame, stream order), so
-    no frame bytes or per-frame objects are pickled back to the parent unless
-    `want_dump` (3C-01 `--frame-dump`, small windowed captures only). `bench`
-    is this chunk's `{py_s, c_s, handoff_s, calls}` (3C-01 `--bench`), or None
-    when not requested -- an un-benched build pays no extra timing cost."""
-    (spool_dir, level, fixture, threshold_bytes, mask, kind_limits, name_halo, rows,
-     spill_dir, want_digest, overlap_dir, window_rect, want_bench, want_dump) = job
-    reader = _WORKER.get(spool_dir)
-    if reader is None:
-        reader = _WORKER[spool_dir] = SpoolReader(spool_dir)
+    is a `frame_table.FRAME_DTYPE` array in canonical order (E2's frames and
+    the divided frames, stably sorted on the cell key), so no frame bytes are
+    pickled back unless `want_dump` (small windowed captures only)."""
+    (spool_dir, level, desc, (lo, hi), rows, spill_dir, threshold_bytes, kind_limits,
+     name_halo, want_digest, want_bench, want_dump) = job
+    t0 = time.perf_counter()
     sp = _SPILL.get(spill_dir)
     if sp is None or sp[0] != os.getpid():
         sp = _SPILL[spill_dir] = (os.getpid(), ft.ChunkSpill(spill_dir))
     spill = sp[1]
-    stats: dict = {}
-    ix_a, iy_a, pt_a, sx_a, sy_a, ln_a = (array("i"), array("i"), array("B"),
-                                          array("B"), array("B"), array("I"))
-    parts: list[bytes] = []
-    lines: list[str] | None = [] if want_digest else None
-    dump_recs: list[tuple] | None = [] if want_dump else None
     cenc.set_bench(want_bench)
     if want_bench:
         cenc.reset_worker_stats()
-    t0 = time.perf_counter()
-    for ix, iy, pt, sx, sy, fb in _level_frames(level, reader, fixture, threshold_bytes, mask,
-                                                kind_limits, stats, name_halo, rows,
-                                                overlap_dir, window_rect=window_rect):
-        ix_a.append(ix); iy_a.append(iy); pt_a.append(pt)
-        sx_a.append(sx); sy_a.append(sy); ln_a.append(len(fb))
-        parts.append(fb)
-        if lines is not None:
-            lines.append(f"{level} {ix} {iy} {pt} {sx} {sy} {len(fb)} "
-                         f"{hashlib.sha256(fb).hexdigest()}\n")
-        if dump_recs is not None:
-            dump_recs.append((ix, iy, pt, sx, sy, fb))
+    s0 = cenc.e2_stats()
+    index, declined, blob, cnt = cenc.e2(desc, _e1spool(spool_dir, level), rows, lo, hi,
+                                         spill._fd, spill.end)
+    spill.end += cnt["frame_bytes"]
+    s1 = cenc.e2_stats()
+    stats: dict = {"total": {"road": cnt["total_road"], "background": cnt["total_bg"],
+                             "name": cnt["total_name"]}}
+    div: list[tuple] = []
+    for r in declined:
+        o = int(r["off"])
+        content = columns_to_content(decode_columns(blob[o:o + int(r["len"])].tobytes()))
+        div.extend(divide.plan_divisions(
+            level, iter(((int(r["ix"]), int(r["iy"]), content),)), threshold_bytes,
+            _encode_one, kind_limits=kind_limits, measure=_measure_one,
+            trim_stats=stats, name_halo=name_halo))
+    ne, nd = len(index), len(div)
+    rec = np.zeros(ne + nd, ft.FRAME_DTYPE)
+    for k in ("ix", "iy", "pt", "sx", "sy", "len", "off"):
+        rec[k][:ne] = index[k]
+    if nd:
+        cols = list(zip(*div))
+        for k, v in zip(("ix", "iy", "pt", "sx", "sy"), cols[:5]):
+            rec[k][ne:] = v
+        rec["len"][ne:] = [len(fb) for fb in cols[5]]
+        base = spill.append(b"".join(cols[5]))
+        dl = rec["len"][ne:].astype(np.uint64)
+        rec["off"][ne:] = base + np.cumsum(dl, dtype=np.uint64) - dl
+    rec = rec[np.lexsort((rec["ix"], rec["iy"]))]   # stable: sub-frames keep their order
+    lines: list[str] | None = [] if want_digest else None
+    dump_recs: list[tuple] | None = [] if want_dump else None
+    if (want_digest or want_dump) and len(rec):
+        rfd = os.open(spill.path, os.O_RDONLY)
+        try:
+            for r in rec:
+                fb = os.pread(rfd, int(r["len"]), int(r["off"]))
+                ix, iy, pt, sx, sy = (int(r["ix"]), int(r["iy"]), int(r["pt"]),
+                                      int(r["sx"]), int(r["sy"]))
+                if lines is not None:
+                    lines.append(f"{level} {ix} {iy} {pt} {sx} {sy} {len(fb)} "
+                                 f"{hashlib.sha256(fb).hexdigest()}\n")
+                if dump_recs is not None:
+                    dump_recs.append((ix, iy, pt, sx, sy, fb))
+        finally:
+            os.close(rfd)
     bench = None
     if want_bench:
-        wall = time.perf_counter() - t0
         ws = cenc.worker_stats()
-        py_s = max(0.0, wall - ws["c_s"] - ws["handoff_s"])
-        bench = {"py_s": py_s, "c_s": ws["c_s"], "handoff_s": ws["handoff_s"],
-                 "calls": ws["calls"]}
-    rec = np.zeros(len(ln_a), ft.FRAME_DTYPE)
-    rec["ix"], rec["iy"], rec["pt"] = ix_a, iy_a, pt_a
-    rec["sx"], rec["sy"], rec["len"] = sx_a, sy_a, ln_a
-    base = spill.append(b"".join(parts))
-    rec["off"] = base + np.cumsum(rec["len"], dtype=np.uint64) - rec["len"]
+        e2c, e2h = s1["c_s"] - s0["c_s"], s1["handoff_s"] - s0["handoff_s"]
+        c_s, h_s = e2c + ws["c_s"], e2h + ws["handoff_s"]
+        e3 = sum(ws["calls"].values())
+        bench = {"py_s": max(0.0, time.perf_counter() - t0 - c_s - h_s), "c_s": c_s,
+                 "handoff_s": h_s, "e2_c_s": e2c, "e3_c_s": ws["c_s"],
+                 "calls": {"e2": s1["ranges"] - s0["ranges"], "e3": e3, **ws["calls"]}}
     return spill.path, rec, stats, lines, bench, dump_recs
 
 
 def _merge_bench(dst: dict, src: dict) -> None:
-    dst["py_s"] = dst.get("py_s", 0.0) + src["py_s"]
-    dst["c_s"] = dst.get("c_s", 0.0) + src["c_s"]
-    dst["handoff_s"] = dst.get("handoff_s", 0.0) + src["handoff_s"]
-    calls = dst.setdefault("calls", {})
-    for k, v in src["calls"].items():
-        calls[k] = calls.get(k, 0) + v
+    for k, v in src.items():
+        if k == "calls":
+            calls = dst.setdefault("calls", {})
+            for kk, vv in v.items():
+                calls[kk] = calls.get(kk, 0) + vv
+        else:
+            dst[k] = dst.get(k, 0.0) + v
 
 
-def _encode_level_indexed(level: int, reader: SpoolReader, fixture, threshold_bytes: int,
-                          mask, kind_limits, trim_stats: dict, name_halo: bool,
-                          spill_dir: str, digest_fh=None, pool=None, jobs: int = 1,
-                          overlap_dir: str | None = None, window_rect=None,
-                          bench: bool = False, dump=None):
-    """`_encode_level` for the indexed assembly path: returns
-    `(FrameTable, n_parcels, total_frame_bytes, n_divided_parents, max_frame,
-    level_bench)`. Chunks are submitted heaviest-first (LPT scheduling) and
-    consumed in row order, so output and counters equal the serial run for
-    any `jobs`. `level_bench` is `{py_s, c_s, handoff_s, calls, ranges,
-    workers}` summed over this level's chunks, or None without `bench`."""
-    if pool is not None and jobs > 1:
-        chunks = _plan_chunks(reader, level, fixture, mask, jobs * 64, window_rect=window_rect)
-    else:
-        chunks = [(None, None)]
+def _run_ranges(pool, fn, jobs, weights=None):
+    """Results of `fn` over `jobs`, in job order; with a pool, submitted
+    heaviest-first (LPT) and consumed in order."""
+    if pool is None or len(jobs) <= 1:
+        return [fn(j) for j in jobs]
+    futs = [None] * len(jobs)
+    order = range(len(jobs)) if weights is None else sorted(range(len(jobs)),
+                                                            key=lambda i: -weights[i])
+    for i in order:
+        futs[i] = pool.apply_async(fn, (jobs[i],))
+    return [f.get() for f in futs]
 
-    def _job(rows):
-        return (str(reader.spool_dir), level, fixture, threshold_bytes, mask, kind_limits,
-                name_halo, rows, spill_dir, digest_fh is not None, overlap_dir, window_rect,
-                bench, dump is not None)
 
-    if len(chunks) > 1:
-        weights = _chunk_weights(reader, level, chunks)
-        futs = {i: None for i in range(len(chunks))}
-        for i in sorted(range(len(chunks)), key=lambda i: -weights[i]):
-            futs[i] = pool.apply_async(_encode_chunk, (_job(chunks[i]),))
-        results = (futs[i].get() for i in range(len(chunks)))
-    else:
-        results = iter([_encode_chunk(_job(chunks[0]))])
+def _encode_level(level: int, reader: SpoolReader, fixture, threshold_bytes: int,
+                  mask, kind_limits, trim_stats: dict, name_halo: bool,
+                  spill_dir: str, digest_fh=None, pool=None, jobs: int = 1,
+                  window_rect=None, bench: bool = False, dump=None):
+    """Encode one level: E1 then E2, once per row range (Contract B).
+
+    Returns `(FrameTable, n_parcels, total_frame_bytes, n_divided_parents,
+    max_frame, overlap_counters, level_bench)`. Output and counters equal
+    the serial run's for any `jobs`: ranges are consumed in row order."""
+    spool_dir = str(reader.spool_dir)
+    kl = kind_limits or {}
+    desc = descriptor.build_for_spool(
+        spool_dir, level, mask_rect=(mask or {}).get(level),
+        window=_combined_cell_range(level, fixture, window_rect), threshold=threshold_bytes,
+        kind_limits={"road": kl.get("road"), "bg": kl.get("background"),
+                     "name": kl.get("name")})
+    chunks = _plan_chunks(reader, level, mask, jobs * 64 if pool is not None else 1)
+    weights = _chunk_weights(reader, level, chunks)
+
+    # Stage 1: E1 per range; route the rows to their target ranges with one
+    # stable sort on the target key and one split at the range edges.
+    t_e1 = time.monotonic()
+    e1_out = _run_ranges(pool, _e1_job, [(spool_dir, level, desc, c) for c in chunks], weights)
+    rows = np.zeros(sum(len(r) for r, _c, _d in e1_out), descriptor.E1_ROW_DTYPE)
+    at = 0
+    for r, _c, _d in e1_out:    # (np.concatenate would drop the dtype's padding)
+        rows[at:at + len(r)] = r
+        at += len(r)
+    rows = rows[np.lexsort((rows["tix"], rows["tiy"]))]
+    edges = np.searchsorted(rows["tiy"], [hi for _lo, hi in chunks[:-1]])
+    parts = np.split(rows, edges)
+    ov = {k: sum(c[k] for _r, c, _d in e1_out) for k in cenc.E1_COUNTERS}
+    prepass_s = time.monotonic() - t_e1
+
+    # Stage 2: E2 (+ the transitional divide of its declined cells) per range.
+    e2_out = _run_ranges(pool, _e2_job, [
+        (spool_dir, level, desc, c, parts[i], spill_dir, threshold_bytes, kind_limits,
+         name_halo, digest_fh is not None, bench, dump is not None)
+        for i, c in enumerate(chunks)], weights)
 
     tables = []
-    level_bench = {"py_s": 0.0, "c_s": 0.0, "handoff_s": 0.0, "calls": {}} if bench else None
-    for path, rec, st, lines, chunk_bench, dump_recs in results:
+    level_bench = None
+    if bench:
+        level_bench = {"prepass_s": prepass_s, "py_s": 0.0, "c_s": 0.0, "handoff_s": 0.0,
+                       "e1_c_s": 0.0, "e2_c_s": 0.0, "e3_c_s": 0.0,
+                       "calls": {"e1": 0, "e1_ctypes": 0}}
+        for _r, _c, d in e1_out:
+            _merge_bench(level_bench, {"py_s": d["py_s"], "c_s": d["c_s"],
+                                       "handoff_s": d["handoff_s"], "e1_c_s": d["c_s"],
+                                       "calls": {"e1": d["ranges"], "e1_ctypes": d["calls"]}})
+    for path, rec, st, lines, chunk_bench, dump_recs in e2_out:
         tables.append((path, rec))
         if digest_fh is not None:
             digest_fh.writelines(lines)
@@ -537,7 +435,7 @@ def _encode_level_indexed(level: int, reader: SpoolReader, fixture, threshold_by
         _merge_stats(trim_stats, st)
     if level_bench is not None:
         level_bench["ranges"] = len(chunks)
-        level_bench["workers"] = jobs if (pool is not None and jobs > 1) else 1
+        level_bench["workers"] = jobs if pool is not None else 1
     table = ft.merge_tables(tables)
     rec = table.rec
     n_parcels = len(rec)
@@ -545,7 +443,7 @@ def _encode_level_indexed(level: int, reader: SpoolReader, fixture, threshold_by
     div = rec[rec["pt"] != 0]
     n_div_parents = len(np.unique((div["ix"].astype(np.int64) << 32) | div["iy"].astype(np.int64))) if len(div) else 0
     max_frame = int(rec["len"].max()) if n_parcels else 0
-    return table, n_parcels, n_bytes, n_div_parents, max_frame, level_bench
+    return table, n_parcels, n_bytes, n_div_parents, max_frame, ov, level_bench
 
 
 def _chunk_weights(reader: SpoolReader, level: int, chunks) -> list[float]:
@@ -558,90 +456,6 @@ def _chunk_weights(reader: SpoolReader, level: int, chunks) -> list[float]:
         ln = length[a:b].astype(np.float64)
         out.append(float((ln + ln * ln / 65536.0).sum()) + 1.0)
     return out
-
-
-def _encode_level(level: int, grid: ReferenceGrid, reader: SpoolReader,
-                   fixture: str | None, threshold_bytes: int,
-                   mask: dict[int, tuple[int, int, int, int]] | None = None,
-                   kind_limits: dict[str, int] | None = None,
-                   trim_stats: dict | None = None,
-                   name_halo: bool = False,
-                   spill=None, digest_fh=None, pool=None, jobs: int = 1,
-                   overlap_dir: str | None = None
-                   ) -> tuple[list[tuple[int, int, bytes]],
-                              list[tuple[int, int, int, int, int, bytes]], int, int]:
-    """Encode every spooled parcel at `level`, splitting any parcel whose
-    whole-cell Map Frame would exceed `threshold_bytes` via
-    `divide.plan_divisions()` (unit 13). Returns (parcels, divided_parcels,
-    n_parcels, total_frame_bytes) -- `parcels` is type-0 (undivided)
-    ``(ix, iy, frame_bytes)`` for ``LevelBuild``, `divided_parcels` is
-    ``(ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes)`` for
-    ``build_alldata_kwi(..., divided=...)``; `n_parcels`/total bytes count
-    every frame actually placed (divided sub-frames included, the parent
-    cell itself does not).
-
-    With `spill` (a `kiwiw.spill.FrameSpill`) each frame is appended to the
-    spill file and the returned tuples carry a `FrameRef` instead of bytes
-    (`len()` still works), so frame bytes are never accumulated in RAM.
-    `digest_fh` receives one ``level ix iy type sub_ix sub_iy len sha256``
-    line per frame.
-
-    With `pool` (a `multiprocessing.Pool`) the level's row space is cut into
-    weight-balanced row ranges encoded in parallel; results are consumed in
-    row order, so output and counters equal the serial run for any `jobs`."""
-    if pool is not None and jobs > 1:
-        chunks = _plan_chunks(reader, level, fixture, mask, jobs * 8)
-    else:
-        chunks = [(None, None)]
-
-    def _serial():
-        st: dict = {}
-        yield (_level_frames(level, reader, fixture, threshold_bytes, mask, kind_limits,
-                             st if trim_stats is not None else None, name_halo,
-                             chunks[0], overlap_dir), st)
-
-    def _parallel():
-        from collections import deque
-        pending: deque = deque()
-        it = iter(chunks)
-        depth = jobs * 2
-
-        def _fill():
-            while len(pending) < depth:
-                rows = next(it, None)
-                if rows is None:
-                    return
-                pending.append(pool.apply_async(_chunk_worker, ((
-                    str(reader.spool_dir), level, fixture, threshold_bytes, mask,
-                    kind_limits, name_halo, rows, overlap_dir, None),)))
-        _fill()
-        while pending:
-            frames, st = pending.popleft().get()
-            _fill()
-            yield frames, st
-
-    out: list[tuple[int, int, bytes]] = []
-    divided_out: list[tuple[int, int, int, int, int, bytes]] = []
-    n_bytes = 0
-    n_parcels = 0
-    for frames, st in (_parallel() if len(chunks) > 1 else _serial()):
-        for ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes in frames:
-            n_frame = len(frame_bytes)
-            if digest_fh is not None:
-                digest_fh.write(f"{level} {ix} {iy} {parcel_type} {sub_ix} {sub_iy} "
-                                f"{n_frame} {hashlib.sha256(frame_bytes).hexdigest()}\n")
-            if spill is not None:
-                frame_bytes = spill.add(frame_bytes)
-            if parcel_type == 0:
-                out.append((ix, iy, frame_bytes))
-            else:
-                divided_out.append((ix, iy, parcel_type, sub_ix, sub_iy, frame_bytes))
-            n_parcels += 1
-            n_bytes += n_frame
-        if trim_stats is not None:
-            _merge_stats(trim_stats, st)
-
-    return out, divided_out, n_parcels, n_bytes
 
 
 class FrameDump:
@@ -713,11 +527,8 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     # (level, ix, iy, parcel_type, sub_ix, sub_iy) frame. Regenerable, never committed.
     digest_fh = open(frame_digest, "w") if frame_digest else None
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    # Indexed path (workers spill frames to their own files, vectorised assembly) needs
-    # the C helpers; without them fall back to the object path (the byte-identity oracle).
-    indexed = cenc.lib() is not None
+    # Workers spill frames to their own files; assembly is vectorised over the tables.
     spill_dir = os.path.dirname(out_path) or "."
-    spill = None if indexed else FrameSpill(spill_dir)
     table_files: list[str] = []
 
     pool = None
@@ -741,41 +552,24 @@ def run(spool_dir: str, out_path: str, levels: list[int],
             continue
         threshold_bytes = thresholds.get(level, U16_MAPFRAME_BYTE_CEILING)
         trim_stats: dict = {}
-        # 3-09: every existing cell a background shape overlaps receives it.
-        # `--window` narrows only which cells are *emitted* (below); the overlap
-        # pre-pass keeps scanning the whole level so borrowed edge shapes from
-        # outside the window still arrive at cells inside it.
-        t_ov = time.monotonic()
-        ov_window = _combined_cell_range(level, fixture, TileGrid.from_reference(level), None)
-        overlap_dir, ov_stats = overlap.build_level(
-            spool_dir, level, spill_dir, mask_rect=(mask or {}).get(level), pool=pool,
-            jobs=workers, window=ov_window)
+        # 3-09 / 3C-08: E1 then E2 once per row range; E1's counters are the
+        # manifest's `overlap` block. `--window`/`--fixture` narrow only the
+        # receiving (emitted) cells -- source shapes come from the whole level.
+        (table, n_parcels, n_bytes, n_divided_parents, max_frame, ov_stats,
+         level_bench) = _encode_level(
+            level, reader, fixture, threshold_bytes, mask, kind_budgets.get(level) or None,
+            trim_stats, (level in NAME_HALO_LEVELS), spill_dir, digest_fh=digest_fh,
+            pool=pool, jobs=workers, window_rect=window_rect,
+            bench=bench_path is not None, dump=dump)
         overlap_stats[str(level)] = ov_stats
-        prepass_s = time.monotonic() - t_ov
         print(f"level {level}: overlap: {ov_stats['shared_shapes']:,} shapes shared into "
               f"{ov_stats['edge_cells']:,} edge + {ov_stats['interior_cells']:,} interior "
               f"cells, {ov_stats['skipped_missing_cells']:,} overlapped cells skipped "
-              f"(not emitted) [{prepass_s:.1f}s]", flush=True)
-        if indexed:
-            table, n_parcels, n_bytes, n_div_parents, max_frame, level_bench = \
-                _encode_level_indexed(
-                    level, reader, fixture, threshold_bytes, mask,
-                    kind_budgets.get(level) or None, trim_stats,
-                    (level in NAME_HALO_LEVELS), spill_dir, digest_fh=digest_fh,
-                    pool=pool, jobs=workers, overlap_dir=overlap_dir,
-                    window_rect=window_rect, bench=bench_path is not None, dump=dump)
-            table_files += table.files
-            if level_bench is not None:
-                level_bench["wall_s"] = time.monotonic() - t_level
-                level_bench["prepass_s"] = prepass_s
-                bench_levels[str(level)] = level_bench
-        else:
-            parcels, divided_parcels, n_parcels, n_bytes = _encode_level(
-                level, grid, reader, fixture, threshold_bytes, mask=mask,
-                kind_limits=kind_budgets.get(level) or None, trim_stats=trim_stats,
-                name_halo=(level in NAME_HALO_LEVELS), spill=spill, digest_fh=digest_fh,
-                pool=pool, jobs=workers, overlap_dir=overlap_dir)
-        overlap.remove(overlap_dir)  # parent's copy; workers drop theirs on the next level
+              f"(not emitted)", flush=True)
+        table_files += table.files
+        if level_bench is not None:
+            level_bench["wall_s"] = time.monotonic() - t_level
+            bench_levels[str(level)] = level_bench
         if trim_stats.get("halo_names"):
             print(f"level {level}: name halo added {trim_stats['halo_names']:,} "
                   f"neighbouring road-name records to divided sub-cells",
@@ -793,18 +587,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
                 print(f"level {level}: TRIM {k}: dropped {n:,}/{total.get(k, 0):,} "
                       f"({pct:.3f}%) in {trim_stats.get('cells', {}).get(k, 0)} sub-cells"
                       + ("  ** >1% BLOCKER **" if pct > 1.0 else ""), flush=True)
-        if indexed:
-            level_builds[level] = aw.LevelBuild(level=level, table=table)
-            n_divided_parents = n_div_parents
-        else:
-            level_builds[level] = aw.LevelBuild(level=level, parcels=parcels)
-            if divided_parcels:
-                divided_builds[level] = divided_parcels
-            n_divided_parents = len({(ix, iy) for ix, iy, *_ in divided_parcels})
-            max_frame = max(
-                [len(fb) for _ix, _iy, fb in parcels]
-                + [len(fb) for *_rest, fb in divided_parcels],
-                default=0)
+        level_builds[level] = aw.LevelBuild(level=level, table=table)
         manifest_levels[str(level)] = {
             "parcels": n_parcels, "bytes": n_bytes,
             "divided_parents": n_divided_parents,
@@ -828,8 +611,6 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     assembled = aw.build_alldata_kwi(level_builds, grid, disk_title=disk_title,
                                       out_path=out_path, divided=divided_builds,
                                       return_bytes=False)
-    if spill is not None:
-        spill.close()
     for f in set(table_files):
         try:
             os.unlink(f)
@@ -884,7 +665,7 @@ def main() -> int:
                      help="Output ALLDATA.KWI path (default: %(default)s)")
     ap.add_argument("--levels", type=int, nargs="+", default=DEFAULT_LEVELS,
                      help="Map levels to build (default: %(default)s)")
-    ap.add_argument("--fixture", choices=sorted(FIXTURE_BBOXES), default=None,
+    ap.add_argument("--fixture", choices=sorted(mesh.FIXTURE_BBOXES), default=None,
                      help="Restrict the build to a named dev fixture's cells "
                           "(e.g. 'perth'); container shape stays the full 7-level "
                           "structure regardless")
