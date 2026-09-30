@@ -7,14 +7,14 @@ numpy sort, and E2 encodes the window. No build logic lives here and
 nothing is compared with a Python re-implementation: the oracle is the
 golden's frame bytes (`frames.bin` / `frames.tsv`).
 
-For every golden:
-  * every frame E2 emits is byte-equal to the golden's undivided frame
-    (`pt == 0`) of that cell, in the golden's order;
-  * E2's declined set is exactly the golden's divided parents (cells with
-    any `pt != 0` frame), each declined for reason 1 (needs division);
-  * a range split into two calls gives the same frames and index as one;
-  * each declined cell's merged content decodes with `decode_columns` and
-    re-encodes to the same bytes.
+For every golden (3C-09: E2 divides, retiles, trims and halos itself):
+  * every frame E2 emits -- undivided (`pt == 0`) and divided sub-frames
+    (`pt`, `sx`, `sy`) alike -- is byte-equal to the golden's frame, in the
+    golden's order;
+  * E2's declined list is empty;
+  * E2's trim and name-halo counters equal the golden's manifest
+    (`trimmed_items`, `halo_names`);
+  * a range split into two calls gives the same frames and index as one.
 """
 from __future__ import annotations
 
@@ -28,7 +28,6 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from kiwiw import cenc, descriptor
-from kiwiw.spool import decode_columns, encode_columns
 
 import build_alldata
 
@@ -52,8 +51,9 @@ def _golden_frames(g: Path):
     blob = (g / "frames.bin").read_bytes()
     out = []
     for r in rows:
-        ix, iy, pt, off, ln = int(r[1]), int(r[2]), int(r[3]), int(r[6]), int(r[7])
-        out.append((ix, iy, pt, blob[off:off + ln]))
+        ix, iy, pt, sx, sy = (int(v) for v in r[1:6])
+        off, ln = int(r[6]), int(r[7])
+        out.append((ix, iy, pt, sx, sy, blob[off:off + ln]))
     return out
 
 
@@ -66,7 +66,7 @@ def _setup(g: Path):
     budgets = build_alldata._load_level_kind_budgets().get(level) or {}
     desc = descriptor.build_for_spool(
         g / "spool", level, mask_rect=mask.get(level), window=win,
-        threshold=build_alldata._load_level_thresholds()[level],
+        threshold=build_alldata._load_level_thresholds()[level], name_halo=(level == 0),
         kind_limits={"road": budgets.get("road"), "bg": budgets.get("background"),
                      "name": budgets.get("name")})
     sp = cenc.E1Spool(g / "spool", level)
@@ -78,20 +78,31 @@ def _setup(g: Path):
 
 def _run(desc, sp, rows, bounds, path: Path):
     """E2 over consecutive target-row ranges `bounds` (edges; None = open),
-    each range's frames appended to `path`. Returns (index, declined, blobs)."""
-    idx, dec, blobs = [], [], []
+    each range's frames appended to `path`. Returns (index, declined,
+    counters summed over the ranges, frame bytes)."""
+    idx, dec, cnts = [], [], []
     with open(path, "wb") as fh:
         off = 0
         for lo, hi in zip(bounds[:-1], bounds[1:]):
             a = 0 if lo is None else int(np.searchsorted(rows["tiy"], lo))
             b = len(rows) if hi is None else int(np.searchsorted(rows["tiy"], hi))
-            ix, de, blob, cnt = cenc.e2(desc, sp, rows[a:b], lo, hi, fh.fileno(), off)
+            res = cenc.e2(desc, sp, rows[a:b], lo, hi, fh.fileno(), off)
+            ix, de, cnt = res[0], res[1], res[-1]
             assert ix.dtype == descriptor.E2_INDEX_DTYPE
             assert de.dtype == descriptor.E2_DECLINED_DTYPE
             assert cnt["frame_bytes"] == int(ix["len"].sum())
             off += cnt["frame_bytes"]
-            idx.append(ix); dec.append(de); blobs.append((de, blob))
-    return np.concatenate(idx), np.concatenate(dec), blobs, path.read_bytes()
+            idx.append(ix); dec.append(de); cnts.append(cnt)
+    return np.concatenate(idx), np.concatenate(dec), cnts, path.read_bytes()
+
+
+def _trim_manifest(level, cnts):
+    """The manifest's `trimmed_items` / `halo_names` blocks from E2's
+    counters, assembled as `build_alldata.run` does."""
+    st: dict = {}
+    for c in cnts:
+        build_alldata._merge_stats(st, build_alldata._e2_trim_stats(c))
+    return build_alldata._trim_manifest_blocks(level, st)
 
 
 @pytest.mark.parametrize("golden", _cases())
@@ -100,35 +111,31 @@ def test_e2_matches_golden(golden: Path, tmp_path: Path):
         pytest.skip(f"local golden {golden.name} absent (see docs/provenance.md)")
     level, win, desc, sp, rows = _setup(golden)
     gold = _golden_frames(golden)
-    idx, dec, blobs, fbytes = _run(desc, sp, rows, [None, None], tmp_path / "one.bin")
+    idx, dec, cnts, fbytes = _run(desc, sp, rows, [None, None], tmp_path / "one.bin")
 
-    # frames: E2's undivided frames, in stream order, equal the golden's pt==0 frames
-    want = [(ix, iy, fb) for ix, iy, pt, fb in gold if pt == 0]
-    got = [(int(r["ix"]), int(r["iy"]), fbytes[int(r["off"]):int(r["off"]) + int(r["len"])])
-           for r in idx]
-    assert [(a, b) for a, b, _ in got] == [(a, b) for a, b, _ in want]
-    for (ix, iy, g), (_, _, w) in zip(got, want):
-        assert g == w, f"frame ({ix},{iy}) differs from the golden"
-    assert (idx["level"] == level).all() and not idx["pt"].any()
-    assert not idx["sx"].any() and not idx["sy"].any()
+    # frames: every golden frame (undivided and divided), in the golden's order
+    got = [(int(r["ix"]), int(r["iy"]), int(r["pt"]), int(r["sx"]), int(r["sy"]),
+            fbytes[int(r["off"]):int(r["off"]) + int(r["len"])]) for r in idx]
+    assert [g[:5] for g in got] == [w[:5] for w in gold]
+    for g, w in zip(got, gold):
+        assert g[5] == w[5], f"frame {g[:5]} differs from the golden"
+    assert (idx["level"] == level).all()
     assert (idx["road"] + idx["bg"] + idx["name"] <= idx["len"]).all()
 
-    # declined: exactly the golden's divided parents, reason 1
-    parents = sorted({(iy, ix) for ix, iy, pt, _ in gold if pt != 0})
-    assert [(int(r["iy"]), int(r["ix"])) for r in dec] == parents
-    assert (dec["reason"] == 1).all()
+    # declined: none -- E2 alone produces every frame
+    assert len(dec) == 0, [(int(r["ix"]), int(r["iy"]), int(r["reason"])) for r in dec]
 
-    # declined merged content: decodes and round-trips through encode_columns
-    for de, blob in blobs:
-        for r in de:
-            rec = blob[int(r["off"]):int(r["off"]) + int(r["len"])].tobytes()
-            assert encode_columns(decode_columns(rec)) == rec
+    # trim / halo counters equal the golden's manifest
+    meta = json.loads((golden / "golden.json").read_text())["manifest"]
+    trimmed, halo = _trim_manifest(level, cnts)
+    assert trimmed == meta.get("trimmed_items", {})
+    assert halo == meta.get("halo_names", {})
 
     # a split range gives the same frames and index
     mid = (win[2] + win[3] + 1) // 2
-    idx2, dec2, _b, fbytes2 = _run(desc, sp, rows, [None, mid, None], tmp_path / "two.bin")
+    idx2, dec2, _c, fbytes2 = _run(desc, sp, rows, [None, mid, None], tmp_path / "two.bin")
     assert idx2.tobytes() == idx.tobytes()
-    assert dec2[["ix", "iy", "reason", "len"]].tobytes() == dec[["ix", "iy", "reason", "len"]].tobytes()
+    assert len(dec2) == 0
     assert fbytes2 == fbytes
     sp.close()
 
@@ -159,3 +166,14 @@ def test_e2_rejects_foreign_column_table(tmp_path: Path):
     with open(tmp_path / "f.bin", "wb") as fh, pytest.raises(cenc.E2Error, match="COLS"):
         cenc.e2(bytes(bad), sp, rows, None, None, fh.fileno(), 0)
     sp.close()
+
+
+def test_c_column_names_match_spool():
+    """E2 addresses spool columns by its own enum and checks each name
+    against `_cenc.c`'s table at descriptor parse; that table is `spool._COLUMNS`."""
+    from kiwiw import spool
+    lib = cenc._load_lib()
+    assert lib.kw_ncols() == len(spool._COLUMNS)
+    for i, (name, _dt, _key) in enumerate(spool._COLUMNS):
+        assert lib.kw_col_name(i) == name.encode(), (i, name)
+    assert lib.kw_col_name(len(spool._COLUMNS)) is None

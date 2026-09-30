@@ -43,7 +43,7 @@ def test_e1_e2_once_per_range(tmp_path):
         lvl = rec["levels"]["6"]
         assert lvl["ranges"] >= (2 if workers > 1 else 1)
         assert lvl["calls"]["e1"] == lvl["calls"]["e2"] == lvl["ranges"], lvl
-        assert "e3" in lvl["calls"]
+        assert "e3" not in lvl["calls"]
         for k in ("e1_c_s", "e2_c_s", "prepass_s", "py_s", "c_s", "handoff_s"):
             assert lvl[k] >= 0.0, k
 

@@ -110,14 +110,6 @@ def test_budgets_and_thresholds_are_u16_ceiling_everywhere():
         assert t[lv] == c
 
 
-def test_measure_one_sizes_match_frame():
-    from kiwiw.mesh import CellGrid as TileGrid, frame_bounds
-    bounds = frame_bounds(0, 0, TileGrid.from_reference(0))
-    frame, sizes = build_alldata._measure_one(0, 0, 0, bounds, {})
-    assert frame == build_alldata._encode_one(0, 0, 0, bounds, {})
-    assert sizes["road"] == 0 and sizes["name"] == 0 and sizes["background"] >= 2
-
-
 def _make_multirow_spool(spool_dir: Path) -> None:
     with SpoolWriter(str(spool_dir)) as w:
         for i, (ix, iy) in enumerate([(9, 0), (20, 0), (12, 3), (30, 3), (10, 9),

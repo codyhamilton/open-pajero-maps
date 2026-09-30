@@ -59,7 +59,8 @@ def test_bench_output_byte_identical_to_unbenched(tmp_path):
                 "workers", "calls"):
         assert key in lvl, key
     assert lvl["calls"]["e1"] == lvl["calls"]["e2"] == lvl["ranges"]
-    for key in ("e1", "e2", "e3", "kw_measure_cell", "kw_bg_shape"):
+    assert "e3" not in lvl["calls"]   # 3C-09: E3 and the per-cell probes are gone
+    for key in ("e1", "e2"):
         assert key in lvl["calls"], key
         assert lvl["calls"][key] > 0
 

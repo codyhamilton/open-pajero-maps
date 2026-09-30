@@ -1,5 +1,6 @@
-"""C per-cell encoders (plan 03; E3 probe and background shapes): byte-identical
-to the Python oracle."""
+"""C background-shape encoder (plan 03): byte-identical to the Python oracle
+(`synth`, which 3C-12 retires with it). The build-path encoders are covered by
+`test_e2.py`'s goldens."""
 from __future__ import annotations
 
 import random
@@ -10,64 +11,11 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import build_alldata as B
 from kiwiw import cenc, spool, synth
-from kiwiw.model import BackgroundShape, BoundingBox, NameRecord, RoadLink, RoadNode
-from kiwiw.mesh import CellGrid as TileGrid
-from kiwiw.mesh import frame_bounds as parcel_bounds  # ranged G frame
+from kiwiw.model import BackgroundShape, BoundingBox
 
 pytestmark = pytest.mark.skipif(cenc._load_lib() is None, reason="no C compiler")
 
-
-
-def _cell_latlon(level, ix, iy, g):
-    b = parcel_bounds(ix, iy, g)
-    return b, random.Random(level * 1000 + ix * 31 + iy)
-
-
-def _content(rng, b, n_roads, n_bgs, n_names, bg_margin=0.0):
-    def pt(m=0.0):
-        mla, mlo = (b.lat_hi - b.lat_lo) * m, (b.lon_hi - b.lon_lo) * m
-        return (rng.uniform(b.lat_lo - mla, b.lat_hi + mla),
-                rng.uniform(b.lon_lo - mlo, b.lon_hi + mlo))
-    roads = []
-    for i in range(n_roads):
-        nodes = [RoadNode(x=rng.choice([0, 0, 5, 300, 1000]), y=rng.choice([0, 7, 900]),
-                          lat=pt()[0], lon=pt()[1], oneway=rng.randint(0, 2),
-                          planned=rng.randint(0, 1), tunnel=bool(rng.getrandbits(1)),
-                          bridge=bool(rng.getrandbits(1)))
-                 for _ in range(rng.randint(2, 6))]
-        roads.append(RoadLink(
-            display_class=rng.randint(0, 4), road_type=rng.randint(0, 8),
-            altitude_flag=False, route_type_guidance_flag=bool(rng.getrandbits(1)),
-            pseudo3d_updown=rng.randint(0, 2), route_planning_tag=False,
-            link_id_flag=False, selected_link_flag=False, toll_flag=bool(rng.getrandbits(1)),
-            route_number_flag=False, infra_link_flag=False, link_id_number_flag=False,
-            n_nodes=len(nodes), nodes=nodes, points=[pt() for _ in range(rng.randint(0, 3))],
-            link_id=i, osm_way_id=None, ordinal=i))
-    bgs = []
-    for i in range(n_bgs):
-        k = rng.choice([1, 2, 3, 6, 40])
-        bgs.append(BackgroundShape(
-            shape_class=rng.randint(0, 2), type_code=rng.randint(0, 30),
-            type_label="bg", n_coords=k, mult_const=rng.choice([0, 1, 2]),
-            underground=bool(rng.getrandbits(1)), pen_up=bool(rng.getrandbits(1)),
-            coords=[pt(bg_margin) for _ in range(k)]))
-    names = []
-    for i in range(n_names):
-        names.append(NameRecord(
-            string_type=rng.choice([1, 2, 5, 6]), type_code=rng.randint(0, 20),
-            type_label="l", priority=rng.randint(0, 8), vertical=bool(rng.getrandbits(1)),
-            display_scale_flag=rng.randint(0, 2),
-            text=rng.choice(["Main St", "Émile Rd", "東京", "a", "ab", "x" * 33]),
-            lat=pt()[0], lon=pt()[1],
-            angle_deg=rng.choice([None, 12.5, 359.9]), angle_flags=rng.randint(0, 3)))
-    return {"roads": roads, "backgrounds": bgs, "names": names}
-
-
-@pytest.fixture()
-def no_c_bg(monkeypatch):
-    monkeypatch.setattr(cenc, "bg_shape_records", lambda *a: None)
 
 
 def test_column_table_matches_spool():
@@ -96,51 +44,10 @@ def test_bg_shape_matches_scalar():
                 assert got == synth.encode_background_shape_records_scalar(s, b), (k, mult)
 
 
-def test_measure_content_matches_python(no_c_bg, monkeypatch):
-    """The C probe (used on the divide path) equals the Python encoders, incl. sizes."""
-    g = TileGrid.from_reference(0)
-    checked = 0
-    for n, (nr, nb, nn) in enumerate([(0, 0, 0), (3, 2, 4), (12, 8, 9)]):
-        ix, iy = 5 + n, 9 + n
-        b = parcel_bounds(ix, iy, g)
-        c = _content(random.Random(n), b, nr, nb, nn)
-        got = cenc.measure_content(0, ix, iy, b, c)
-        if got is None:  # ceiling / unmodelled input: caller uses the Python path
-            continue
-        with monkeypatch.context() as m:
-            m.setattr(cenc, "measure_content", lambda *a: None)
-            assert got == B._measure_one(0, ix, iy, b, c)
-        checked += 1
-    assert checked
-
-
 # ---------------------------------------------------------------- 3-02: the
 # coordinate range is a parameter of both encoders, not a constant either owns.
 
 RANGES = (16384, 4096)  # every real frame range (range_for); 32768 is not one
-_C_BG = cenc.bg_shape_records
-_C_MEASURE = cenc.measure_content
-
-
-@pytest.fixture()
-def pure_py(monkeypatch):
-    """The Python encoders alone (no C probe, no C background shapes)."""
-    monkeypatch.setattr(cenc, "bg_shape_records", lambda *a: None)
-    monkeypatch.setattr(cenc, "measure_content", lambda *a, **k: None)
-
-
-def _encodable(c):
-    """`_content` draws oneway=2, which overflows the node word and makes
-    both encoders decline the cell; keep these cells encodable."""
-    for lk in c["roads"]:
-        for nd in lk.nodes:
-            nd.oneway &= 1
-    return c
-
-
-def _ranged(b, r):
-    import dataclasses
-    return dataclasses.replace(b, coord_range=r)
 
 
 @pytest.mark.parametrize("coord_range", RANGES)
@@ -162,114 +69,6 @@ def test_bg_shape_matches_scalar_at_range(coord_range, monkeypatch):
                 assert got == want, (k, mult)
             assert synth.encode_background_shape_records(s, b) == want, (k, mult)
     assert got_any
-
-
-@pytest.mark.parametrize("coord_range", RANGES)
-def test_measure_content_matches_python_at_range(coord_range, no_c_bg, monkeypatch):
-    g = TileGrid.from_reference(0)
-    checked = 0
-    for n, (nr, nb, nn) in enumerate([(3, 2, 4), (12, 8, 9)]):
-        ix, iy = 5 + n, 9 + n
-        b = _ranged(parcel_bounds(ix, iy, g), coord_range)
-        c = _encodable(_content(random.Random(n), b, nr, nb, nn))
-        got = cenc.measure_content(0, ix, iy, b, c)
-        if got is None:
-            continue
-        with monkeypatch.context() as m:
-            m.setattr(cenc, "measure_content", lambda *a, **k: None)
-            assert got == B._measure_one(0, ix, iy, b, c)
-        checked += 1
-    assert checked
-
-
-def _nd(x, y, lat, lon):
-    return RoadNode(x=x, y=y, lat=lat, lon=lon, oneway=0, planned=0, tunnel=False, bridge=False)
-
-
-def _one_link(nodes):
-    return RoadLink(
-        display_class=0, road_type=1, altitude_flag=False, route_type_guidance_flag=False,
-        pseudo3d_updown=0, route_planning_tag=False, link_id_flag=False,
-        selected_link_flag=False, toll_flag=False, route_number_flag=False,
-        infra_link_flag=False, link_id_number_flag=False, n_nodes=len(nodes), nodes=nodes,
-        points=[(nd.lat, nd.lon) for nd in nodes], link_id=0, osm_way_id=None, ordinal=0)
-
-
-def _node_words(link_bytes):
-    """(sx, sy) raw words of each node record of a single encoded link."""
-    return [((link_bytes[16 + 6 * j + 2] << 8) | link_bytes[16 + 6 * j + 3],
-             (link_bytes[16 + 6 * j + 4] << 8) | link_bytes[16 + 6 * j + 5])
-            for j in range((len(link_bytes) - 16) // 6)]
-
-
-def _c_cell(level, ix, iy, content, b, tmp_path):
-    """The spool record of `content` and its frame from the C probe (E3)."""
-    w = spool.SpoolWriter(tmp_path / "sp1")
-    w.add(level, ix, iy, **content)
-    w.close()
-    (_, _, raw), = spool.SpoolReader(tmp_path / "sp1").iter_cell_raw(level)
-    got = _C_MEASURE(level, ix, iy, b, spool.columns_to_content(spool.decode_columns(raw)))
-    return raw, None if got is None else got[0]
-
-
-@pytest.mark.parametrize("coord_range", RANGES)
-def test_stored_pixels_ignored_latlon_wins(coord_range, tmp_path, pure_py):
-    """A node whose stored x/y disagree with its lat/lon encodes from the
-    lat/lon, in both encoders (the spool's n_x/n_y were written at 32768)."""
-    level = 8
-    g = TileGrid.from_reference(level)
-    ix, iy = 5, 5
-    b = _ranged(parcel_bounds(ix, iy, g), coord_range)
-    lat = b.lat_lo + 0.25 * (b.lat_hi - b.lat_lo)
-    lon = b.lon_lo + 0.75 * (b.lon_hi - b.lon_lo)
-    lied = [_nd(1234, 4321, lat, lon), _nd(7, 9, lat, lon)]
-    honest = [_nd(0, 0, lat, lon), _nd(0, 0, lat, lon)]
-    py = synth.encode_road_link_bytes(_one_link(lied), b)
-    assert py == synth.encode_road_link_bytes(_one_link(honest), b)
-    q = coord_range // 4
-    want = ((3 * q) % 4096) | ((3 * q // 4096) << 13), (q % 4096) | ((q // 4096) << 13)
-    assert _node_words(py) == [want, want]
-    content = {"roads": [_one_link(lied)], "backgrounds": [], "names": []}
-    raw, got = _c_cell(level, ix, iy, content, b, tmp_path)
-    rc = spool.columns_to_content(spool.decode_columns(raw))
-    assert rc["roads"][0].nodes[0].x == 1234  # the spool really carries the lie
-    assert got is not None and got == B._measure_one(level, ix, iy, b, rc)[0]
-    assert py in got
-
-
-@pytest.mark.parametrize("coord_range", RANGES)
-def test_frame_edge_is_inclusive(coord_range, tmp_path, pure_py):
-    """A coordinate of exactly `coord_range` survives the clamp and encodes as
-    the next region's value 0; beyond it, road/name vertices clamp to
-    `coord_range` and background geometry is clipped at it."""
-    level = 8
-    g = TileGrid.from_reference(level)
-    ix, iy = 5, 5
-    b = _ranged(parcel_bounds(ix, iy, g), coord_range)
-    edge = (coord_range % 4096) | ((coord_range // 4096) << 13)
-    assert edge & 0x1FFF == 0 and edge >> 13 == coord_range // 4096
-    ne = _nd(0, 0, b.lat_hi, b.lon_hi)
-    beyond = _nd(0, 0, b.lat_hi + 1.0, b.lon_hi + 1.0)
-    py = synth.encode_road_link_bytes(_one_link([ne, beyond]), b)
-    assert _node_words(py) == [(edge, edge), (edge, edge)]
-    # background geometry is clipped, not clamped (3-07): a line from beyond
-    # the NE corner to the centre starts exactly on the corner
-    mid = ((b.lat_lo + b.lat_hi) / 2, (b.lon_lo + b.lon_hi) / 2)
-    far = (b.lat_hi + (b.lat_hi - mid[0]), b.lon_hi + (b.lon_hi - mid[1]))
-    s = BackgroundShape(shape_class=1, type_code=5, type_label="", n_coords=2, mult_const=1,
-                        underground=False, pen_up=False, coords=[far, mid])
-    (bg,) = synth.encode_background_shape_records_scalar(s, b)
-    assert (bg[8] << 8 | bg[9], bg[10] << 8 | bg[11]) == (edge, edge)
-    assert _C_BG(s, b, coord_range) == [bg]
-    nm = NameRecord(string_type=1, type_code=1, type_label="", priority=0, vertical=False,
-                    display_scale_flag=0, text="Edge", lat=b.lat_hi, lon=b.lon_hi)
-    nb = synth.encode_name_record_bytes(nm, b)
-    assert (nb[8] << 8 | nb[9], nb[10] << 8 | nb[11]) == (edge, edge)
-    content = {"roads": [_one_link([ne, beyond])], "backgrounds": [s], "names": [nm]}
-    raw, got = _c_cell(level, ix, iy, content, b, tmp_path)
-    rc = spool.columns_to_content(spool.decode_columns(raw))
-    assert got is not None and got == B._measure_one(level, ix, iy, b, rc)[0]
-    assert py in got and bg in got and nb in got
 
 
 # ---------------------------------------------------------------- 3-07: the
@@ -362,23 +161,3 @@ def test_bg_clip_fuzz_c_equals_python():
         assert got == want, i
         checked += bool(want)
     assert checked > 500
-
-
-def test_measure_content_sub_parcel_rect(no_c_bg, monkeypatch):
-    """The C probe honours a divided sub-parcel's clip rectangle."""
-    from kiwiw import clip
-    g = TileGrid.from_reference(0)
-    checked = 0
-    for n in range(4):
-        ix, iy = 5 + n, 9 + n
-        pb = parcel_bounds(ix, iy, g)
-        b = clip.SubParcelBounds(**vars(pb), clip_rect=clip.sub_rect(4096, 2, 2, n & 1, n >> 1))
-        c = _encodable(_content(random.Random(n), pb, 3, 12, 4))
-        got = cenc.measure_content(0, ix, iy, b, c)
-        if got is None:
-            continue
-        with monkeypatch.context() as m:
-            m.setattr(cenc, "measure_content", lambda *a, **k: None)
-            assert got == B._measure_one(0, ix, iy, b, c)
-        checked += 1
-    assert checked

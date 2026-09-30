@@ -141,3 +141,21 @@ Over budget: stop, commit what passes, and put the handoff (done, not done, what
 A non-trivial bug outside your done evidence: report symptom, location, and root cause if found. Do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendment 2026-09-30 (worker)
+
+Contradictions and deviations found while executing this brief. Each is reported, none resolved silently.
+
+1. **`kw_bg_shape` / `bg_shape_records` are kept, not deleted.** The brief says `bg_shape_records` is no longer needed once division is in E2. It is off the build path (E2 uses the internal `kw__bg_shape`), but `parser/kiwiw/synth.py:315` and two `parser/tests/test_cenc.py` cases (`bg_shape` byte parity, which the brief says to keep) still call it, and `synth.py` and those cases are outside the owned paths. 3C-12 removes it together with `synth`.
+2. **The declined channel changes meaning.** `cenc.e2()` now returns `(index, declined, counters)`. Declined rows are reason 2 only ("cannot be encoded even after division", off = len = 0) and `build_alldata._e2_job` treats any as a build error naming the cells. Reason 1 no longer exists.
+3. **Two extra `test_cenc.py` cases removed** (`test_stored_pixels_ignored_latlon_wins`, `test_frame_edge_is_inclusive`): they exercised the removed `measure_content` path and `B._measure_one`. `parser/tests/test_build_alldata.py::test_measure_one_sizes_match_frame` (tests the deleted `_measure_one`/`_encode_one`) and one line of `test_bench_record.py` (no `e3` call counter any more) were edited for the same reason.
+4. **Descriptor**: `KWLDESC1` carries a new 128-byte `KWLDIV01` division block (pardiv ranges, road and name rank tables, halo flag, pin mask). The header version stays 1; `_e1.c` is unchanged.
+5. **C ports that are not identical to the old Python, by design:**
+   - Lowercasing of name text for the halo is ASCII only (Python `str.lower` is full Unicode). No AU name differs; the goldens and the full-AU sha agree.
+   - The trim and shrink stderr warnings are not reproduced; the manifest counters are.
+   - The manifest `trimmed_items` kind keys are emitted in the order road, background, name (json-equal to the old output).
+   - A `bg_shape` failure for a background is treated conservatively (the parent declines).
+   - The no-limits shrink-to-fit path (`use_kinds` false) is not ported; such a parent declines with reason 2. The build always supplies limits.
+   - A missing sub-parcel range (<= 0) declines the parent with reason 2.
+   - Probe records omit the point and label columns the encoder never reads.
+6. **Stale prose left in files this unit does not own**: `alldata_writer.py`, `frame_table.py`, `clip.py`, `boundary.py` and `quantisation_roundtrip.py` still mention `plan_divisions()` / `divide` in comments and docstrings. They are descriptive of history and touch no code; a later unit that owns those files should reword them.

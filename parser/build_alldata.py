@@ -6,9 +6,9 @@ End-to-end pipeline:
      `osm_to_parcel_geometry.py`'s extraction pass -- never reads a PBF or
      touches OSM data itself.
   2. For each requested level, encodes every spooled parcel's road/
-     background/name content into a Map Frame (`kiwiw.synth`), passing
-     `level=` explicitly to `build_name_frame_bytes()` (unit 11's amendment:
-     omitting it silently reverts to the legacy type-1-only string path).
+     background/name content into Map Frames in C (`kiwiw.cenc`: E1, the level
+     pre-pass, then E2, the range encode, which also divides, retiles, trims
+     and adds the name halo; Contract B in docs/plans/03-map-layer-parity-remediation).
   3. Calls `kiwiw.alldata_writer.build_alldata_kwi()` to assemble the whole
      container: the reference's per-level LMR/BSMR/BMT shape
      (`kiwiw.grid.ReferenceGrid`), the record-29 copy-through frame, and
@@ -39,12 +39,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kiwiw import alldata_writer as aw
 from kiwiw import cenc
 from kiwiw import descriptor
-from kiwiw import divide
 from kiwiw import frame_table as ft
 from kiwiw import mesh
-from kiwiw import synth
 from kiwiw.grid import ReferenceGrid
-from kiwiw.spool import SpoolReader, columns_to_content, decode_columns
+from kiwiw.spool import SpoolReader
 
 DEFAULT_SPOOL = str(Path(__file__).resolve().parent.parent / "output" / "spool")
 DEFAULT_OUT = str(Path(__file__).resolve().parent.parent / "output" / "ALLDATA.KWI")
@@ -53,7 +51,7 @@ DEFAULT_LEVELS = [12, 10, 8, 6, 4, 2, 0]
 # `synth.build_map_frame_bytes()`'s hard format ceiling (Map Frame header's
 # size field is a 16-bit word count: `total_size // 2` must fit in u16) --
 # see synth.py:851 and unit 12's done evidence (IMPLEMENTATION.md, "Unit
-# 12"). Unit 13's Amendment: the threshold `plan_divisions()` divides
+# 12"). Unit 13's Amendment: the threshold E2 divides
 # against is `min(profile's per-level mapframe_size.max, this ceiling)`,
 # not the profile max alone -- some of R's own level-0 parcels the profile
 # measured are themselves already divided sub-frames, not whole-cell
@@ -84,7 +82,7 @@ def _load_level_kind_budgets() -> dict[int, dict[str, int]]:
 
 
 def _load_level_thresholds() -> dict[int, int]:
-    """Per-level `plan_divisions()` threshold. Brief 34: the u16 ceiling for
+    """Per-level division threshold. Brief 34: the u16 ceiling for
     every level (R's `mapframe_size.max` is an observation, not a limit)."""
     with open(_PROFILE_MAP_PATH) as fh:
         profile = json.load(fh)
@@ -103,64 +101,6 @@ def _level_dims(grid: ReferenceGrid, level: int) -> dict:
         npc_lat=1 + lvl["n_parcels_lat"][0],
         npc_lng=1 + lvl["n_parcels_lng"][0],
     )
-
-
-def _encode_one(level: int, ix: int, iy: int, bounds, content: dict) -> bytes:
-    """`plan_divisions()`'s `encode` callback (bytes only)."""
-    return _measure_one(level, ix, iy, bounds, content)[0]
-
-
-def _measure_one(level: int, ix: int, iy: int, bounds, content: dict):
-    """Like `_encode_one` but also returns per-kind (even-padded) sub-frame
-    byte lengths `{road, background, name}` (0 when absent)."""
-    """`divide.plan_divisions()`'s `encode` callback: build one Map Frame
-    (whole-cell or divided sub-cell -- this function doesn't know or care
-    which) from a content dict shaped like `SpoolReader.iter_level()`
-    yields. `ix`/`iy` only feed `llcode`, a Map Frame header field with no
-    established on-disc semantics anywhere in this codebase (confirmed by
-    grep across kiwiw/ -- nothing decodes or checks its value; see
-    parser/kiwiw/parcel.py's decode docstring) -- used here as a generic
-    position marker, valid for both a parent cell's own (ix, iy) and a
-    divided sub-cell's (sub_ix, sub_iy).
-
-    `bounds` carries the frame's coordinate range (`bounds.coord_range`, from
-    `mesh.g_frame_range` via `divide.plan_divisions`): the
-    parcel's own frame, or a divided parent's frame for a sub-cell. Both
-    the C probe and the Python encoders read it there; none is a default."""
-    # C probe first (byte-identical; declines on anything it does not model,
-    # incl. the hard ceiling); the Python encoders below are the oracle.
-    fast = cenc.measure_content(level, ix, iy, bounds, content)
-    if fast is not None:
-        return fast
-    roads = content.get("roads") or []
-    bgs = content.get("backgrounds") or []
-    names = content.get("names") or []
-
-    road_bytes = synth.build_road_frame_bytes(roads, bounds) if roads else None
-    # DESIGN.md section 4 / mfde index 1: `R` carries a background sub-frame
-    # (in_buffer) at 100% of parcels, every level -- never absent, even for
-    # a parcel with zero background shapes (`build_background_frame_bytes`
-    # returns a 2-byte minimal-empty frame for `shapes=[]`, matching
-    # `test_synth_map_frame.py`'s `_fixture_bg_bytes()`/
-    # `test_absent_slot_sentinel_when_no_content`). Unlike road/name (which
-    # really are legitimately absent on `R` when a parcel has no such
-    # content -- DESIGN.md indices 0/2), background must always be called
-    # unconditionally here, not gated behind `if bgs`.
-    bg_bytes = synth.build_background_frame_bytes(bgs, bounds)
-    # Amendment (post-11, orchestrator): `level=` must be passed
-    # explicitly -- omitting it silently reverts to the legacy
-    # type-1-only string path instead of unit 11's type-5/6 encoding.
-    name_bytes = synth.build_name_frame_bytes(names, bounds, level=level) if names else None
-
-    llpid = (bounds.lat_lo, bounds.lon_lo)
-    llcode = (ix % 256, iy % 256)
-
-    frame = synth.build_map_frame_bytes(
-        level, llpid, llcode, road_bytes, bg_bytes, name_bytes)
-    sizes = {"road": len(synth._pad_even(road_bytes) or b""),
-             "background": len(synth._pad_even(bg_bytes) or b""),
-             "name": len(synth._pad_even(name_bytes) or b"")}
-    return frame, sizes
 
 
 _PARCEL_MASK_PATH = Path(__file__).resolve().parent / "refdata" / "parcel_mask.json"
@@ -187,6 +127,38 @@ def _merge_stats(dst: dict, src: dict) -> None:
                 d[kk] = d.get(kk, 0) + vv
         else:
             dst[k] = dst.get(k, 0) + v
+
+
+_KIND_KEYS = (("road", "road"), ("background", "bg"), ("name", "name"))
+
+
+def _e2_trim_stats(cnt: dict) -> dict:
+    """E2's counters as the additive stats dict `_merge_stats` sums:
+    `total` (every cell's encoded items per kind), `dropped` / `cells`
+    (kinds that lost items to trimming, in road, background, name order)
+    and `halo_names`."""
+    st: dict = {"total": {k: cnt[f"total_{c}"] for k, c in _KIND_KEYS}}
+    for k, c in _KIND_KEYS:
+        if cnt[f"dropped_{c}"]:
+            st.setdefault("dropped", {})[k] = cnt[f"dropped_{c}"]
+            st.setdefault("cells", {})[k] = cnt[f"trimmed_cells_{c}"]
+    if cnt["halo_names"]:
+        st["halo_names"] = cnt["halo_names"]
+    return st
+
+
+def _trim_manifest_blocks(level: int, st: dict) -> tuple[dict, dict]:
+    """`(trimmed_items, halo_names)` manifest blocks for one level's merged
+    stats (each `{}` when the level trimmed nothing / added no halo)."""
+    trimmed: dict = {}
+    dropped = st.get("dropped", {})
+    if dropped:
+        total = st.get("total", {})
+        trimmed[str(level)] = {
+            k: {"dropped": n, "total": total.get(k, 0), "cells": st.get("cells", {}).get(k, 0)}
+            for k, n in dropped.items()}
+    halo = {str(level): st["halo_names"]} if st.get("halo_names") else {}
+    return trimmed, halo
 
 
 def _combined_cell_range(level, fixture, window_rect):
@@ -276,51 +248,37 @@ def _e1_job(job):
 
 def _e2_job(job):
     """Pool entry, stage 2: E2 over target rows `[lo, hi)` into this
-    process's spill file, then the transitional divide on the range's
-    declined cells (E2's merged record -> content -> `plan_divisions`,
-    measuring through E3).
+    process's spill file. E2 divides, retiles, trims and adds the name halo
+    itself (C); every frame, whole or divided, is written by it.
 
     Returns `(spill_path, rec, stats, digest_lines, bench, dump_recs)`: `rec`
-    is a `frame_table.FRAME_DTYPE` array in canonical order (E2's frames and
-    the divided frames, stably sorted on the cell key), so no frame bytes are
-    pickled back unless `want_dump` (small windowed captures only)."""
-    (spool_dir, level, desc, (lo, hi), rows, spill_dir, threshold_bytes, kind_limits,
-     name_halo, want_digest, want_bench, want_dump) = job
+    is a `frame_table.FRAME_DTYPE` array in canonical order (stable on the
+    cell key, so a divided parent's sub-frames keep their order), so no frame
+    bytes are pickled back unless `want_dump` (small windowed captures only).
+    A declined row is an error: E2 declines nothing that a build needs."""
+    (spool_dir, level, desc, (lo, hi), rows, spill_dir, want_digest, want_bench,
+     want_dump) = job
     t0 = time.perf_counter()
     sp = _SPILL.get(spill_dir)
     if sp is None or sp[0] != os.getpid():
         sp = _SPILL[spill_dir] = (os.getpid(), ft.ChunkSpill(spill_dir))
     spill = sp[1]
-    cenc.set_bench(want_bench)
-    if want_bench:
-        cenc.reset_worker_stats()
     s0 = cenc.e2_stats()
-    index, declined, blob, cnt = cenc.e2(desc, _e1spool(spool_dir, level), rows, lo, hi,
-                                         spill._fd, spill.end)
+    index, declined, cnt = cenc.e2(desc, _e1spool(spool_dir, level), rows, lo, hi,
+                                   spill._fd, spill.end)
     spill.end += cnt["frame_bytes"]
     s1 = cenc.e2_stats()
-    stats: dict = {"total": {"road": cnt["total_road"], "background": cnt["total_bg"],
-                             "name": cnt["total_name"]}}
-    div: list[tuple] = []
-    for r in declined:
-        o = int(r["off"])
-        content = columns_to_content(decode_columns(blob[o:o + int(r["len"])].tobytes()))
-        div.extend(divide.plan_divisions(
-            level, iter(((int(r["ix"]), int(r["iy"]), content),)), threshold_bytes,
-            _encode_one, kind_limits=kind_limits, measure=_measure_one,
-            trim_stats=stats, name_halo=name_halo))
-    ne, nd = len(index), len(div)
-    rec = np.zeros(ne + nd, ft.FRAME_DTYPE)
+    if len(declined):
+        cells = ", ".join(f"(level {level}, ix {int(r['ix'])}, iy {int(r['iy'])})"
+                          for r in declined[:8])
+        more = f" (+{len(declined) - 8} more)" if len(declined) > 8 else ""
+        raise RuntimeError(
+            f"E2 declined {len(declined)} cell(s) it could not encode even after "
+            f"division: {cells}{more}")
+    stats = _e2_trim_stats(cnt)
+    rec = np.zeros(len(index), ft.FRAME_DTYPE)
     for k in ("ix", "iy", "pt", "sx", "sy", "len", "off"):
-        rec[k][:ne] = index[k]
-    if nd:
-        cols = list(zip(*div))
-        for k, v in zip(("ix", "iy", "pt", "sx", "sy"), cols[:5]):
-            rec[k][ne:] = v
-        rec["len"][ne:] = [len(fb) for fb in cols[5]]
-        base = spill.append(b"".join(cols[5]))
-        dl = rec["len"][ne:].astype(np.uint64)
-        rec["off"][ne:] = base + np.cumsum(dl, dtype=np.uint64) - dl
+        rec[k] = index[k]
     rec = rec[np.lexsort((rec["ix"], rec["iy"]))]   # stable: sub-frames keep their order
     lines: list[str] | None = [] if want_digest else None
     dump_recs: list[tuple] | None = [] if want_dump else None
@@ -340,13 +298,9 @@ def _e2_job(job):
             os.close(rfd)
     bench = None
     if want_bench:
-        ws = cenc.worker_stats()
         e2c, e2h = s1["c_s"] - s0["c_s"], s1["handoff_s"] - s0["handoff_s"]
-        c_s, h_s = e2c + ws["c_s"], e2h + ws["handoff_s"]
-        e3 = sum(ws["calls"].values())
-        bench = {"py_s": max(0.0, time.perf_counter() - t0 - c_s - h_s), "c_s": c_s,
-                 "handoff_s": h_s, "e2_c_s": e2c, "e3_c_s": ws["c_s"],
-                 "calls": {"e2": s1["ranges"] - s0["ranges"], "e3": e3, **ws["calls"]}}
+        bench = {"py_s": max(0.0, time.perf_counter() - t0 - e2c - e2h), "c_s": e2c,
+                 "handoff_s": e2h, "e2_c_s": e2c, "calls": {"e2": s1["ranges"] - s0["ranges"]}}
     return spill.path, rec, stats, lines, bench, dump_recs
 
 
@@ -388,7 +342,7 @@ def _encode_level(level: int, reader: SpoolReader, fixture, threshold_bytes: int
         spool_dir, level, mask_rect=(mask or {}).get(level),
         window=_combined_cell_range(level, fixture, window_rect), threshold=threshold_bytes,
         kind_limits={"road": kl.get("road"), "bg": kl.get("background"),
-                     "name": kl.get("name")})
+                     "name": kl.get("name")}, name_halo=name_halo)
     chunks = _plan_chunks(reader, level, mask, jobs * 64 if pool is not None else 1)
     weights = _chunk_weights(reader, level, chunks)
 
@@ -407,17 +361,17 @@ def _encode_level(level: int, reader: SpoolReader, fixture, threshold_bytes: int
     ov = {k: sum(c[k] for _r, c, _d in e1_out) for k in cenc.E1_COUNTERS}
     prepass_s = time.monotonic() - t_e1
 
-    # Stage 2: E2 (+ the transitional divide of its declined cells) per range.
+    # Stage 2: E2 per range.
     e2_out = _run_ranges(pool, _e2_job, [
-        (spool_dir, level, desc, c, parts[i], spill_dir, threshold_bytes, kind_limits,
-         name_halo, digest_fh is not None, bench, dump is not None)
+        (spool_dir, level, desc, c, parts[i], spill_dir, digest_fh is not None, bench,
+         dump is not None)
         for i, c in enumerate(chunks)], weights)
 
     tables = []
     level_bench = None
     if bench:
         level_bench = {"prepass_s": prepass_s, "py_s": 0.0, "c_s": 0.0, "handoff_s": 0.0,
-                       "e1_c_s": 0.0, "e2_c_s": 0.0, "e3_c_s": 0.0,
+                       "e1_c_s": 0.0, "e2_c_s": 0.0,
                        "calls": {"e1": 0, "e1_ctypes": 0}}
         for _r, _c, d in e1_out:
             _merge_bench(level_bench, {"py_s": d["py_s"], "c_s": d["c_s"],
@@ -570,19 +524,16 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         if level_bench is not None:
             level_bench["wall_s"] = time.monotonic() - t_level
             bench_levels[str(level)] = level_bench
-        if trim_stats.get("halo_names"):
+        trimmed, halo = _trim_manifest_blocks(level, trim_stats)
+        if halo:
             print(f"level {level}: name halo added {trim_stats['halo_names']:,} "
                   f"neighbouring road-name records to divided sub-cells",
                   flush=True)
-            halo_names[str(level)] = trim_stats["halo_names"]
-        dropped = trim_stats.get("dropped", {})
-        if dropped:
+            halo_names.update(halo)
+        if trimmed:
+            trimmed_items.update(trimmed)
             total = trim_stats.get("total", {})
-            trimmed_items[str(level)] = {
-                k: {"dropped": n, "total": total.get(k, 0),
-                    "cells": trim_stats.get("cells", {}).get(k, 0)}
-                for k, n in dropped.items()}
-            for k, n in dropped.items():
+            for k, n in trim_stats["dropped"].items():
                 pct = 100.0 * n / max(1, total.get(k, 0))
                 print(f"level {level}: TRIM {k}: dropped {n:,}/{total.get(k, 0):,} "
                       f"({pct:.3f}%) in {trim_stats.get('cells', {}).get(k, 0)} sub-cells"

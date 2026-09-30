@@ -122,6 +122,130 @@ static void e2t_case_merge(void) {
     e2t_report("e2_merge", ok, "merged record differs from own + cover(0) + edge(1)");
 }
 
+
+/* ---- 3C-09: division (assign, split chains, keep-order, halo text order,
+ * column names). Values are hand-derived from the inputs. ---- */
+
+const char *kw_col_name(int i);
+
+/* Sub-grid over lat 10..12, lon 100..104, 2 x 2: cells are 1 deg of latitude
+ * by 2 deg of longitude; cell = row * 2 + col. */
+static void e2t_grid(dv_state *X) {
+    memset(X, 0, sizeof *X);
+    X->b4[0] = 10.0; X->b4[1] = 12.0; X->b4[2] = 100.0; X->b4[3] = 104.0;
+    X->nx = 2; X->ncell = 4;
+    X->lat_span = 2.0; X->lon_span = 4.0; X->cell_lat = 1.0; X->cell_lon = 2.0;
+}
+
+static void e2t_free_chains(dv_state *X) {
+    free(X->rr); free(X->cpl); free(X->cpo); free(X->fc[0]); free(X->fi[0]);
+}
+
+static void e2t_case_div_assign(void) {
+    dv_state X;
+    e2t_grid(&X);
+    int ok = dv_assign(&X, 10.5, 101.0) == 0 && dv_assign(&X, 10.5, 103.0) == 1 &&
+             dv_assign(&X, 11.5, 101.0) == 2 && dv_assign(&X, 11.5, 103.0) == 3 &&
+             dv_assign(&X, 10.0, 100.0) == 0 &&   /* the lower edge belongs to the cell */
+             dv_assign(&X, 12.0, 101.0) == -1 &&  /* dlat == span: outside */
+             dv_assign(&X, 9.9, 101.0) == -1 &&
+             dv_assign(&X, 11.5, 104.0) == 3 &&   /* delta == span is not wrapped; clamped */
+             dv_assign(&X, 10.5, 460.0) == 0 &&   /* delta 360 wraps to 0 */
+             dv_assign(&X, 10.5, 99.0) == 0;      /* delta -1 -> 359 -> -1, clamped to 0 */
+    e2t_report("e2_div_assign", ok, "assign_to_parcel cell index differs");
+}
+
+/* Lat 10.5, lon 101 -> 103 crosses from cell 0 into cell 1 at lon 102. The
+ * bisection stops at depth 18: the first half [101,102] keeps halving its
+ * right child, which is a leaf at depths 2..17 (16 leaves) and two leaves at
+ * depth 18; the last of them is assigned to cell 0 by its start and so ends
+ * exactly at 102. Chain 0 is 101, 101.5, 101.75, ... , 102 (19 points);
+ * chain 1 is the single leaf [102,103], 2 points. */
+static void e2t_case_div_split(void) {
+    dv_state X;
+    e2t_grid(&X);
+    dv_sp S = {&X, 7, -1, 0, 0};
+    int rc = dv_split(&S, 10.5, 101.0, 10.5, 103.0, 0) || dv_finish(&S);
+    int ok = rc == 0 && X.nrr == 2 && X.ncp == 21 && X.rr[0].cell == 0 && X.rr[1].cell == 1 &&
+             X.rr[0].par == 7 && X.rr[1].par == 7 && X.rr[0].len == 19 && X.rr[1].len == 2;
+    if (ok) {
+        const double *o0 = X.cpo + X.rr[0].start, *o1 = X.cpo + X.rr[1].start;
+        ok = o0[0] == 101.0 && o0[1] == 101.5 && o0[2] == 101.75 && o0[3] == 101.875 &&
+             o0[18] == 102.0 && o1[0] == 102.0 && o1[1] == 103.0 &&
+             X.cpl[X.rr[0].start] == 10.5 && X.cpl[X.rr[1].start + 1] == 10.5;
+    }
+    e2t_free_chains(&X);
+    /* a chain wholly outside the parent is dropped: nothing linked, points released */
+    dv_state Y;
+    e2t_grid(&Y);
+    dv_sp T = {&Y, 3, -1, 0, 0};
+    rc = dv_split(&T, 20.0, 101.0, 20.5, 101.5, 0) || dv_finish(&T);
+    ok = ok && rc == 0 && Y.nrr == 0 && Y.ncp == 0;
+    e2t_free_chains(&Y);
+    e2t_report("e2_div_split", ok, "split chains differ from the bisection at lon 102");
+}
+
+static void e2t_sorted(int (*cmp)(const void *, const void *), dv_key *K, int n, const char *want,
+                       int *ok) {
+    qsort(K, (size_t)n, sizeof *K, cmp);
+    for (int i = 0; i < n; i++)
+        if ((char)('A' + K[i].item) != want[i]) *ok = 0;
+}
+
+static void e2t_case_div_order(void) {
+    int ok = 1;
+    /* road key (k1 type rank, k2 -length, k3 way, k4 ordinal, then position):
+     * A worst rank; B shorter than C/D/E; C, D, E tie on k1..k3 and split on k4
+     * (C = 0 first), D before E by position */
+    dv_key R[5] = {{.k1 = 2, .k2 = -5, .item = 0, .pos = 0}, {.k1 = 1, .k2 = -3, .k3 = 7, .item = 1, .pos = 1},
+                   {.k1 = 1, .k2 = -9, .k3 = 8, .k4 = 0, .item = 2, .pos = 2},
+                   {.k1 = 1, .k2 = -9, .k3 = 8, .k4 = 1, .item = 3, .pos = 3},
+                   {.k1 = 1, .k2 = -9, .k3 = 8, .k4 = 1, .item = 4, .pos = 4}};
+    e2t_sorted(dv_cmp_road, R, 5, "CDEBA", &ok);
+    /* background key (f = -area, k2 = -vertex count, position): B largest area;
+     * C more vertices than A and D; A before D by position */
+    dv_key B[4] = {{.f = -4.0, .k2 = -3, .item = 0, .pos = 0}, {.f = -9.0, .k2 = -2, .item = 1, .pos = 1},
+                   {.f = -4.0, .k2 = -7, .item = 2, .pos = 2}, {.f = -4.0, .k2 = -3, .item = 3, .pos = 3}};
+    e2t_sorted(dv_cmp_bg, B, 4, "BCAD", &ok);
+    /* name key (k1 rank, position) */
+    dv_key N[4] = {{.k1 = 1, .item = 0, .pos = 0}, {.k1 = 0, .item = 1, .pos = 1},
+                   {.k1 = 1, .item = 2, .pos = 2}, {.k1 = 0, .item = 3, .pos = 3}};
+    e2t_sorted(dv_cmp_name, N, 4, "BDAC", &ok);
+    e2t_report("e2_div_order", ok, "keep-order comparators sort differently");
+}
+
+/* Halo texts compare like Python strings (a proper prefix sorts first) and
+ * the slot table finds a repeated text. Blob "abcababd" = "abc" "ab" "abd". */
+static void e2t_case_div_text(void) {
+    dv_state X;
+    memset(&X, 0, sizeof X);
+    static uint8_t txt[] = "abcababd";
+    int64_t toff[4] = {0, 3, 5, 8};
+    X.toff = toff; X.ltxt = txt;
+    int ok = dv_text_cmp(&X, 1, 0) < 0 && dv_text_cmp(&X, 0, 2) < 0 &&
+             dv_text_cmp(&X, 2, 1) > 0 && dv_text_cmp(&X, 0, 0) == 0;
+    int64_t tab[16];
+    for (int i = 0; i < 16; i++) tab[i] = -1;
+    int found = 1;
+    int64_t sl = dv_tfind(&X, tab, 16, 0, &found);
+    ok = ok && !found;
+    tab[sl] = 0;
+    ok = ok && dv_tfind(&X, tab, 16, 0, &found) == sl && found;
+    dv_tfind(&X, tab, 16, 1, &found);
+    ok = ok && !found;  /* "ab" is not "abc" */
+    e2t_report("e2_div_text", ok, "halo text comparison / table lookup differs");
+}
+
+/* E2 addresses spool columns by enum and checks the names against `_cenc.c`'s
+ * table: every name maps back to its own index; an unknown name is refused. */
+static void e2t_case_col_names(void) {
+    int ok = kw_ncols() == 43 && kw__col_named("r_display_class") == 0 &&
+             kw__col_named("r_road_type") == 1 && kw__col_named("no_such_column") == -1 &&
+             kw_col_name(kw_ncols()) == NULL;
+    for (int i = 0; ok && i < kw_ncols(); i++) ok = kw__col_named(kw_col_name(i)) == i;
+    e2t_report("e2_col_names", ok, "column name table is not a bijection");
+}
+
 static void e2t_exit(void) {
     fflush(stdout);
     if (e2t_fail) _exit(1);
@@ -130,5 +254,10 @@ static void e2t_exit(void) {
 __attribute__((constructor)) static void e2t_run(void) {
     e2t_case_cover_ring();
     e2t_case_merge();
+    e2t_case_div_assign();
+    e2t_case_div_split();
+    e2t_case_div_order();
+    e2t_case_div_text();
+    e2t_case_col_names();
     atexit(e2t_exit);
 }

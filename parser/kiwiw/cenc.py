@@ -3,9 +3,11 @@
 `cbuild.build_ext()` compiles the sources on demand (gcc, `-ffp-contract=off`)
 into `_cenc.so` beside this file; a failed build raises (no Python fallback).
 Entry points: E1 (`e1`) and E2 (`e2`), each called once per row range
-(DESIGN.md Contract B); the transitional E3 probes `measure_content`
-(`kw_measure_cell`) and `bg_shape_records` (`kw_bg_shape`), used only inside
-the divide path; and the assembly copy helpers (`lib()`).
+(DESIGN.md Contract B); E2 also divides, retiles, trims and adds the name halo
+(3C-09), so nothing per (sub-)cell crosses this boundary any more. What is
+left besides is `bg_shape_records` (`kw_bg_shape`, used by `synth` and its
+tests only, off the build path; 3C-12 deletes it with `synth`), the
+column-name accessor and the assembly copy helpers (`lib()`).
 """
 from __future__ import annotations
 
@@ -17,58 +19,9 @@ from pathlib import Path
 
 from . import cbuild
 
-_SRC = Path(__file__).with_name("_cenc.c")
 _SO = Path(__file__).with_name("_cenc.so")
-_OUT_CAP = 0x20000
-_NO_LIMIT = (1 << 62)
 _lib = None
 _tried = False
-
-# 3C-01 bench instrumentation: process-local call counters and wrapper (ctypes
-# marshalling) wall time for the E3 per-(sub-)cell entry points (E1/E2 keep
-# their own totals: `e1_stats()` / `e2_stats()`). Off by default -- only
-# `build_alldata.py --bench` pays the per-call timing overhead (set_bench()).
-_CALL_NAMES = ("kw_measure_cell", "kw_bg_shape")
-_BENCH = False
-_calls: dict[str, int] = {n: 0 for n in _CALL_NAMES}
-_wrap_ns: dict[str, float] = {n: 0.0 for n in _CALL_NAMES}
-
-
-def set_bench(on: bool) -> None:
-    """Enable/disable per-call wrapper timing (`--bench`). With `on=False`
-    neither the counters nor the timers move, so an un-benched build pays no
-    extra cost."""
-    global _BENCH
-    _BENCH = on
-
-
-def reset_worker_stats() -> None:
-    """Zero this process's call counters and the C-side time accumulators
-    (3C-01). Called once per chunk so `worker_stats()` reports that chunk's
-    share only."""
-    global _calls, _wrap_ns
-    _calls = {n: 0 for n in _CALL_NAMES}
-    _wrap_ns = {n: 0.0 for n in _CALL_NAMES}
-    lib = _load_lib()
-    if lib is not None:
-        buf = (ctypes.c_double * 2)()
-        lib.kw_get_reset_c_times(buf)  # discard: reset only
-
-
-def worker_stats() -> dict:
-    """This process's `kw_measure_cell`/`kw_bg_shape` (E3) call
-    counts and C/handoff time split since the last `reset_worker_stats()`
-    (Contract H: C time is the C-side entry-point timer; handoff is wrapper
-    time outside C). Python time is the caller's to compute (chunk wall minus
-    `c_s` minus `handoff_s`)."""
-    lib = _load_lib()
-    c = {n: 0.0 for n in _CALL_NAMES}
-    if lib is not None:
-        buf = (ctypes.c_double * 2)()
-        lib.kw_get_reset_c_times(buf)
-        c = {"kw_measure_cell": buf[0], "kw_bg_shape": buf[1]}
-    handoff = {n: max(0.0, _wrap_ns[n] / 1e9 - c[n]) for n in _CALL_NAMES}
-    return {"calls": dict(_calls), "c_s": sum(c.values()), "handoff_s": sum(handoff.values())}
 
 
 def _load_lib():
@@ -83,10 +36,8 @@ def _load_lib():
             ctypes.c_void_p, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
             ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int64,
             ctypes.c_double, ctypes.c_void_p]
-        lib.kw_measure_cell.restype = ctypes.c_int64
-        lib.kw_measure_cell.argtypes = [
-            ctypes.c_char_p, ctypes.c_int64, ctypes.c_int, ctypes.c_int64, ctypes.c_int64,
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_double]
+        lib.kw_col_name.restype = ctypes.c_char_p
+        lib.kw_col_name.argtypes = [ctypes.c_int]
         lib.kw_copy_frames.restype = ctypes.c_int64
         lib.kw_copy_frames.argtypes = [
             ctypes.c_int, ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
@@ -95,8 +46,6 @@ def _load_lib():
         lib.kw_write_rows.argtypes = [
             ctypes.c_int, ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p,
             ctypes.c_int64, ctypes.c_int64]
-        lib.kw_get_reset_c_times.restype = None
-        lib.kw_get_reset_c_times.argtypes = [ctypes.POINTER(ctypes.c_double)]
         _lib = lib
     except OSError:
         _lib = None
@@ -134,7 +83,6 @@ def bg_shape_records(shape, bounds, coord_range: int) -> list[bytes] | None:
     b4 = array("d", (bounds.lat_lo, bounds.lat_hi, bounds.lon_lo, bounds.lon_hi))
     rect = _rect4(bounds)
     flags = (1 if shape.underground else 0) | (2 if shape.pen_up else 0)
-    t0 = time.perf_counter_ns() if _BENCH else 0
     while True:
         n = _bg_fn(flat.buffer_info()[0], len(coords), shape.mult_const, shape.type_code,
                    flags, 1 if shape.shape_class == 2 else 0, b4.buffer_info()[0],
@@ -144,9 +92,6 @@ def bg_shape_records(shape, bounds, coord_range: int) -> list[bytes] | None:
             break
         _bg_room <<= 2
         _bg_out = ctypes.create_string_buffer(_bg_room)
-    if _BENCH:
-        _wrap_ns["kw_bg_shape"] += time.perf_counter_ns() - t0
-        _calls["kw_bg_shape"] += 1
     if n < 0:
         return None
     raw = ctypes.string_at(ctypes.addressof(_bg_out), n)
@@ -163,53 +108,6 @@ def bg_shape_records(shape, bounds, coord_range: int) -> list[bytes] | None:
 def lib():
     """The loaded C library (or None) -- for the assembly copy helpers."""
     return _load_lib()
-
-
-_m_out = ctypes.create_string_buffer(_OUT_CAP)
-_m_addr = ctypes.addressof(_m_out)
-_m_sizes = (ctypes.c_int64 * 3)()
-_m_fn = None
-
-
-def measure_content(level: int, ix: int, iy: int, bounds, content: dict, *,
-                    coord_range: int | None = None):
-    """C probe of one (sub-)cell content dict: `(frame, {road,background,name})`
-    exactly as `build_alldata._measure_one`, or None when the kernel declines
-    (over the ceiling, unmodelled input) -- the caller then runs the Python path.
-    `coord_range` resolves as in `synth.frame_range` (explicit, else
-    `bounds.coord_range`, else `ValueError`), so it matches the Python
-    encoders handed the same `bounds`."""
-    global _m_fn
-    if _m_fn is None:
-        lib = _load_lib()
-        _m_fn = lib.kw_measure_cell if lib is not None else False
-    if _m_fn is False:
-        return None
-    from .spool import content_to_columns, encode_columns
-    from .synth import frame_range
-    cr = frame_range(bounds, coord_range)
-    try:
-        raw = encode_columns(content_to_columns(content))
-    except (AttributeError, TypeError, ValueError, UnicodeError):
-        return None
-    b4 = (ctypes.c_double * 4)(bounds.lat_lo, bounds.lat_hi, bounds.lon_lo, bounds.lon_hi)
-    if _BENCH:
-        t0 = time.perf_counter_ns()
-        n = _m_fn(raw, len(raw), level, ix, iy, ctypes.addressof(b4), _rect4(bounds),
-                  _m_addr_sizes(), _m_addr, float(cr))
-        _wrap_ns["kw_measure_cell"] += time.perf_counter_ns() - t0
-        _calls["kw_measure_cell"] += 1
-    else:
-        n = _m_fn(raw, len(raw), level, ix, iy, ctypes.addressof(b4), _rect4(bounds),
-                  _m_addr_sizes(), _m_addr, float(cr))
-    if n < 0:
-        return None
-    return (ctypes.string_at(_m_addr, n),
-            {"road": _m_sizes[0], "background": _m_sizes[1], "name": _m_sizes[2]})
-
-
-def _m_addr_sizes() -> int:
-    return ctypes.addressof(_m_sizes)
 
 
 # ---------------------------------------------------------------- E1 (3C-06)
@@ -325,9 +223,11 @@ def e1_stats() -> dict:
 # call per target row range; C grows its own output buffers and hands back
 # their addresses, which are copied out here. No Python fallback.
 
-E2_COUNTERS = ("cells", "frames", "declined", "frame_bytes", "blob_bytes",
-               "total_road", "total_bg", "total_name", "borrowed_shapes", "cover_rings")
-_E2_NSLOTS = 11         # counters above, then 10 = C ns
+E2_COUNTERS = ("cells", "frames", "declined", "frame_bytes", "total_road", "total_bg",
+               "total_name", "borrowed_shapes", "cover_rings", "dropped_road", "dropped_bg",
+               "dropped_name", "trimmed_cells_road", "trimmed_cells_bg", "trimmed_cells_name",
+               "halo_names")
+_E2_NSLOTS = 17         # counters above, then 16 = C ns
 _E2_ERRORS = {-1: "bad descriptor", -2: "bad spool index", -3: "bad spool record",
               -4: "out of memory", -5: "bad rows (order, or target not a receiving cell "
               "of the range)", -6: "frame write failed",
@@ -360,10 +260,13 @@ def e2(desc: bytes, spool: E1Spool, rows, row_lo: int | None, row_hi: int | None
     """Run E2 over target rows `[row_lo, row_hi)` (`None` = unbounded) of the
     descriptor's window. `rows` are the E1 rows targeting that range, routed
     (target (iy, ix), then source (iy, ix), then shape). Frames are written
-    to `fd` from byte `off` on. Returns `(index, declined, blob, counters)`:
-    `descriptor.E2_INDEX_DTYPE` / `E2_DECLINED_DTYPE` arrays, the declined
-    cells' merged records (uint8 array) and `{name: int}` over
-    `E2_COUNTERS`."""
+    to `fd` from byte `off` on; a cell too big for one frame is divided, retiled,
+    trimmed and given its name halo in C, and its sub-frames are indexed
+    (`pt` 1/2, `sx`, `sy`). Returns `(index, declined, counters)`:
+    `descriptor.E2_INDEX_DTYPE` / `E2_DECLINED_DTYPE` arrays and `{name: int}`
+    over `E2_COUNTERS`. A declined row (reason 2: cannot be encoded even after
+    division; `off` = `len` = 0) is transitional -- the build treats it as an
+    error."""
     import numpy as np
     from .descriptor import (E1_ROW_DTYPE, E2_DECLINED_DTYPE, E2_INDEX_DTYPE, MAGIC,
                              parse_level)
@@ -379,7 +282,7 @@ def e2(desc: bytes, spool: E1Spool, rows, row_lo: int | None, row_hi: int | None
     dbuf = np.frombuffer(desc, np.uint8)
     idx, data = spool.idx, spool.data
     cnt = np.zeros(_E2_NSLOTS, np.int64)
-    bufs = (ctypes.c_void_p * 3)()
+    bufs = (ctypes.c_void_p * 2)()
     tc = time.perf_counter()
     rc = lib.kw_e2(dbuf.ctypes.data, len(dbuf), idx.ctypes.data, len(idx),
                    data.ctypes.data, len(data), rows.ctypes.data if len(rows) else None,
@@ -395,15 +298,14 @@ def e2(desc: bytes, spool: E1Spool, rows, row_lo: int | None, row_hi: int | None
 
     index = take(0, int(cnt[1]) * E2_INDEX_DTYPE.itemsize, E2_INDEX_DTYPE)
     declined = take(1, int(cnt[2]) * E2_DECLINED_DTYPE.itemsize, E2_DECLINED_DTYPE)
-    blob = take(2, int(cnt[4]), np.uint8)
-    c_s = float(cnt[10]) / 1e9
+    c_s = float(cnt[16]) / 1e9
     s = _e2_stats
     s["ranges"] += 1
     s["cells"] += int(cnt[0]); s["frames"] += int(cnt[1]); s["declined"] += int(cnt[2])
     s["c_s"] += c_s
     s["handoff_s"] += max(0.0, wall - c_s)
     s["py_s"] += max(0.0, (time.perf_counter() - t0) - wall)
-    return index, declined, blob, {k: int(cnt[i]) for i, k in enumerate(E2_COUNTERS)}
+    return index, declined, {k: int(cnt[i]) for i, k in enumerate(E2_COUNTERS)}
 
 
 def e2_stats() -> dict:

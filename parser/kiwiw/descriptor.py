@@ -30,6 +30,19 @@ Layout (the C reader, `_e1.c`, documents the same table):
          mask        existence bitmap: bit iy*nx + ix, LSB-first per byte;
                      set for every spool cell and every cell of the mask
                      rect; zero-padded to 8
+  total-128 division block (3C-09; E2 reads it, E1 ignores it; the
+                     header version stays 1 because `_e1.c` is not changed):
+      +0  u8[8]      magic b"KWLDIV01"
+      +8  i32 x 4    pardiv1 sub-parcel ranges (sub 0..3; -1 = none)
+     +24  i32 x 16   pardiv2 sub-parcel ranges (sub 0..15; -1 = none)
+     +88  u8 x 16    road keep rank by road type (0..15)
+    +104  u8         road keep rank of any other type
+    +105  u8         name halo on this level (0/1)
+    +106  u8         name keep rank of a repeated (text, type)
+    +107  u8         name keep rank of any other type
+    +108  u8 x 8     name keep rank by name type (0..7)
+    +116  u32        pinned road types (bit t = type t always kept first)
+    +120  u8 x 8     zero
 
 E1 row layout (`E1_ROW_DTYPE`, 32 bytes): tix i32, tiy i32, six i32,
 siy i32, cell_off u64 (source record's .data offset), shape u32 (index
@@ -41,7 +54,8 @@ ix i32, iy i32, level u8, pt u8, sx u8, sy u8, off u64 (absolute offset of
 the frame in E2's output fd), len u32, road u32, bg u32, name u32 (the
 frame's section sizes). Declined row (`E2_DECLINED_DTYPE`, 28 bytes
 packed): ix i32, iy i32, reason u32 (1 = needs division), off u64, len u64
-(the cell's merged record, `spool.encode_columns` form, in E2's blob).
+(unused since 3C-09: 0), len u64 (0). E2 divides every parent itself, so a
+declined row is a build error.
 """
 from __future__ import annotations
 
@@ -83,6 +97,48 @@ E2_DECLINED_DTYPE = np.dtype({
     "itemsize": 28})
 
 
+DIV_MAGIC = b"KWLDIV01"
+DIV_BYTES = 128
+_DIV = struct.Struct("<8s4i16i16sBBBB8sI8x")
+assert _DIV.size == DIV_BYTES
+
+# Keep-order data for over-limit trimming (was `divide.py`'s tables): road
+# rank by type (lower = kept first; type 10 ranks 7 on level 0, else 5),
+# name rank by type, the rank of a repeated (text, type), and the road types
+# pinned ahead of every other road from level 2 up.
+ROAD_RANK = {12: 0, 0: 1, 4: 2, 3: 3, 9: 4, 10: 5, 7: 6}
+ROAD_RANK_L0 = {10: 7}
+ROAD_RANK_DEFAULT = 8
+NAME_RANK = {5: 0, 6: 2}
+NAME_RANK_DEFAULT = 1
+NAME_RANK_DUP = 3
+PINNED_ROAD_TYPES = (12, 0)
+PIN_FROM_LEVEL = 2
+
+
+def _div_block(level: int, name_halo: bool) -> bytes:
+    def rng(pt, n):
+        out = []
+        for sub in range(n):
+            try:
+                out.append(mesh.g_frame_range(level, pt, sub))
+            except KeyError:
+                out.append(-1)
+        return out
+    rr = bytearray([ROAD_RANK_DEFAULT] * 16)
+    for t, r in ROAD_RANK.items():
+        rr[t] = ROAD_RANK_L0.get(t, r) if level == 0 else r
+    nr = bytearray([NAME_RANK_DEFAULT] * 8)
+    for t, r in NAME_RANK.items():
+        nr[t] = r
+    pin = 0
+    if level >= PIN_FROM_LEVEL:
+        for t in PINNED_ROAD_TYPES:
+            pin |= 1 << t
+    return _DIV.pack(DIV_MAGIC, *rng(1, 4), *rng(2, 16), bytes(rr), ROAD_RANK_DEFAULT,
+                     1 if name_halo else 0, NAME_RANK_DUP, NAME_RANK_DEFAULT, bytes(nr), pin)
+
+
 def _pad8(n: int) -> int:
     return (n + 7) & ~7
 
@@ -98,7 +154,8 @@ def _range_table(level: int) -> list[int]:
 
 
 def build(level: int, ix, iy, *, mask_rect=None, window=None, threshold: int = 0,
-          kind_limits: dict | None = None, grid: mesh.CellGrid | None = None) -> bytes:
+          kind_limits: dict | None = None, grid: mesh.CellGrid | None = None,
+          name_halo: bool = False) -> bytes:
     """The descriptor for `level`, whose existing cells are the spool cells
     `(ix, iy)` plus `mask_rect` (inclusive `(ix_lo, ix_hi, iy_lo, iy_hi)`).
     `window` (inclusive rect) limits receiving cells; default the whole level."""
@@ -123,7 +180,8 @@ def build(level: int, ix, iy, *, mask_rect=None, window=None, threshold: int = 0
     names = [n for n, _dt, _k in _COLUMNS]
     cols_off = HEADER_BYTES
     mask_off = cols_off + _pad8(len(cols))
-    total = mask_off + _pad8(len(mask))
+    div_off = mask_off + _pad8(len(mask))
+    total = div_off + DIV_BYTES
     hdr = _HDR.pack(MAGIC, VERSION, HEADER_BYTES, total,
                     level, nx, ny, FRAME_CLASS_CODES[mesh.g_frame_class(level)],
                     g.disc_lat_lo, g.disc_lon_lo, g.cell_lat, g.cell_lon,
@@ -134,6 +192,7 @@ def build(level: int, ix, iy, *, mask_rect=None, window=None, threshold: int = 0
     buf[:HEADER_BYTES] = hdr
     buf[cols_off:cols_off + len(cols)] = cols
     buf[mask_off:mask_off + len(mask)] = mask
+    buf[div_off:total] = _div_block(level, name_halo)
     return bytes(buf)
 
 
@@ -179,4 +238,10 @@ def parse(buf: bytes) -> dict:
     nx, ny = d["nx"], d["ny"]
     bits = np.unpackbits(np.frombuffer(buf, np.uint8, mask_len, mask_off), bitorder="little")
     d["mask"] = bits[:nx * ny].reshape(ny, nx).astype(bool)
+    v = _DIV.unpack_from(buf, len(buf) - DIV_BYTES)
+    if v[0] != DIV_MAGIC:
+        raise ValueError("descriptor has no division block")
+    d["div"] = {"range1": tuple(v[1:5]), "range2": tuple(v[5:21]), "road_rank": tuple(v[21]),
+                "road_rank_default": v[22], "name_halo": v[23], "name_rank_dup": v[24],
+                "name_rank_default": v[25], "name_rank": tuple(v[26]), "pin_mask": v[27]}
     return d

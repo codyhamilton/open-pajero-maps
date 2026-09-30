@@ -9,10 +9,13 @@
  * Contract: the whole-cell encoder (reached through E2, `_e2.c`, via
  * kw__encode_rec) returns the frame length when the cell fits the frame
  * threshold and the per-kind byte budgets; -1 for *anything else* (oversize,
- * kind breach, any input the Python encoders would raise on or that this
- * port does not model, malformed record). E2 then declines the cell to the
- * divide path, so this file only ever has to be exactly right on the common
- * path, and refuses everything it is unsure of.
+ * kind breach, any input this port does not model, malformed record). E2
+ * then divides the cell (3C-09), so this file only ever has to be exactly
+ * right and refuses everything it is unsure of. kw__probe is the same
+ * encoder with no fit/budget checks (E2's division probes); kw__bg_shape is
+ * the background clipper E2's retile uses to decide which sub-cells a shape
+ * reaches. Everything E2 calls is hidden (kw__*): the exported ABI is the
+ * column-schema queries and the assembly helpers.
  *
  * Float exactness: build with -ffp-contract=off (no FMA), and keep the same
  * operation order as the Python expressions; rint() == Python's half-even
@@ -22,31 +25,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #define SUB_CAP 0x20000 /* sub-frame scratch capacity (> 131070 ceiling) */
 #define MAX_FRAME 131070
-
-/* 3C-01: per-entry-point C-time accumulators (process-static; a fork worker
- * gets its own copy). Read and zeroed by kw_get_reset_c_times(). Never
- * exported to the manifest -- bench record only. */
-static double g_c_ns_measure = 0.0, g_c_ns_bg = 0.0;
-
-static inline double now_ns(void) {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (double)ts.tv_sec * 1e9 + (double)ts.tv_nsec;
-}
-
-/* out2[0]=kw_measure_cell seconds, out2[1]=kw_bg_shape seconds (E3),
- * accumulated since the previous call (or process start); each accumulator
- * is reset to 0 after reading. */
-void kw_get_reset_c_times(double *out2) {
-    out2[0] = g_c_ns_measure / 1e9;
-    out2[1] = g_c_ns_bg / 1e9;
-    g_c_ns_measure = g_c_ns_bg = 0.0;
-}
 
 enum { K_NR, K_NN, K_NP, K_NB, K_NC, K_NS, K_BL, K_NL, K_NT, N_KEYS };
 
@@ -82,7 +64,29 @@ enum {
     N_COLS
 };
 
+/* spool.py `_COLUMNS` names, in order. E2 addresses columns by its own
+ * enum and checks every name against this table (kw__col_named) at
+ * descriptor parse; the tests check this table against `_COLUMNS`. */
+static const char *const COL_NAMES[] = {
+    "r_display_class", "r_road_type", "r_pseudo3d", "r_n_nodes", "r_link_id",
+    "r_ordinal", "r_way_id", "r_flags", "r_nstored", "r_npts",
+    "n_x", "n_y", "n_lat", "n_lon", "n_oneway", "n_planned", "n_flags",
+    "p_lat", "p_lon",
+    "b_class", "b_type", "b_ncoords", "b_mult", "b_flags", "b_nstored", "b_label_len",
+    "c_lat", "c_lon",
+    "s_type", "s_code", "s_prio", "s_dsf", "s_angflags", "s_vertical", "s_present",
+    "s_label_len", "s_text_len", "s_lat", "s_lon", "s_angle",
+    "blob_bg_label", "blob_name_label", "blob_name_text",
+};
+
 int kw_ncols(void) { return N_COLS; }
+const char *kw_col_name(int i) { return i >= 0 && i < N_COLS ? COL_NAMES[i] : NULL; }
+__attribute__((visibility("hidden")))
+int kw__col_named(const char *name) {
+    for (int i = 0; i < N_COLS; i++)
+        if (strcmp(COL_NAMES[i], name) == 0) return i;
+    return -1;
+}
 int kw_col_size(int i) { return COLS[i].size; }
 int kw_col_key(int i) { return COLS[i].key; }
 
@@ -709,23 +713,6 @@ static int64_t bg_shape(const uint8_t *lat, const uint8_t *lon, int64_t o, int64
     return e.len;
 }
 
-/* Python entry: interleaved (lat, lon) doubles, b4 = lat_lo,lat_hi,lon_lo,lon_hi,
- * rect4 = clip rectangle (x0,y0,x1,y1) or NULL for [0, range]^2. Writes the
- * shape's records back to back; returns their total length (*nrec records),
- * -2 when `room` is too small, -1 otherwise (the caller uses the oracle). */
-int64_t kw_bg_shape(const double *latlon, int64_t n, int64_t mult, int64_t type_code,
-                    int64_t flags, int closed, const double *b4, const double *rect4,
-                    uint8_t *out, int64_t room, double coord_range, int64_t *nrec) {
-    double t0 = now_ns();
-    Bounds bd = {b4[0], b4[1], b4[2], b4[3], coord_range, coord_range,
-                 {0.0, 0.0, coord_range, coord_range}};
-    if (rect4) memcpy(bd.rect, rect4, sizeof bd.rect);
-    int64_t r = bg_shape((const uint8_t *)latlon, (const uint8_t *)(latlon + 1), 0, 2, n,
-                         closed, mult, type_code, flags, &bd, out, room, nrec);
-    g_c_ns_bg += now_ns() - t0;
-    return r < 0 && g_full ? -2 : r;
-}
-
 static int64_t enc_bg(const Rec *r, const Bounds *bd, uint8_t *out) {
     int64_t nb = r->cnt[K_NB];
     const uint8_t *cls = r->col[C_B_CLASS], *typ = r->col[C_B_TYPE], *mult = r->col[C_B_MULT];
@@ -1072,16 +1059,52 @@ int kw__col_index(int which) {
     }
 }
 
-/* Probe: frame + per-kind (even-padded) sizes, no fit/budget checks. -1 = ask Python. */
-int64_t kw_measure_cell(const uint8_t *rec, int64_t rec_len, int level, int64_t ix,
-                        int64_t iy, const double *bounds4, const double *rect4,
-                        int64_t *sizes, uint8_t *out, double coord_range) {
-    double t0 = now_ns();
-    int64_t r = encode_common(rec, rec_len, level, ix, iy, NULL, 0, NULL, out, sizes, bounds4,
-                              rect4, coord_range);
-    g_c_ns_measure += now_ns() - t0;
-    return r;
+/* Probe (E2's division tiers): frame + per-kind (even-padded) sizes against
+ * the bounds `b4` and clip rect `rect4`, no fit/budget checks (only the
+ * format's hard ceiling). -1 = not representable. */
+__attribute__((visibility("hidden")))
+int64_t kw__probe(const uint8_t *rec, int64_t rec_len, int level, int64_t ix, int64_t iy,
+                  const double *b4, const double *rect4, int64_t *sizes, uint8_t *out,
+                  double coord_range) {
+    return encode_common(rec, rec_len, level, ix, iy, NULL, 0, NULL, out, sizes, b4, rect4,
+                         coord_range);
 }
+
+/* The background clipper for one shape: `nc` coordinates from the
+ * contiguous lat / lon double arrays, against b4 and rect4 at range `cr`.
+ * Writes the shape's records to `out` and returns their length (*nrec
+ * records); -2 when `room` is too small, -1 for anything unmodelled. */
+__attribute__((visibility("hidden")))
+int64_t kw__bg_shape(const double *lat, const double *lon, int64_t nc, int closed, int64_t mc,
+                     int64_t tc, int64_t fl, const double *b4, const double *rect4, double cr,
+                     uint8_t *out, int64_t room, int64_t *nrec) {
+    Bounds bd = {b4[0], b4[1], b4[2], b4[3], cr, cr, {0.0, 0.0, cr, cr}};
+    if (rect4) memcpy(bd.rect, rect4, sizeof bd.rect);
+    int64_t r = bg_shape((const uint8_t *)lat, (const uint8_t *)lon, 0, 1, nc, closed, mc, tc,
+                         fl, &bd, out, room, nrec);
+    return r < 0 && g_full ? -2 : r;
+}
+
+/* Python entry for `synth` / `cenc.bg_shape_records` (no longer on the build
+ * path; 3C-12 deletes it with synth): interleaved (lat, lon) doubles, b4 =
+ * lat_lo,lat_hi,lon_lo,lon_hi, rect4 = clip rectangle (x0,y0,x1,y1) or NULL
+ * for [0, range]^2. Writes the shape's records back to back and returns
+ * their total length (*nrec records), -2 when `room` is too small, -1
+ * otherwise (the caller uses the oracle). */
+int64_t kw_bg_shape(const double *latlon, int64_t n, int64_t mult, int64_t type_code,
+                    int64_t flags, int closed, const double *b4, const double *rect4,
+                    uint8_t *out, int64_t room, double coord_range, int64_t *nrec) {
+    Bounds bd = {b4[0], b4[1], b4[2], b4[3], coord_range, coord_range,
+                 {0.0, 0.0, coord_range, coord_range}};
+    if (rect4) memcpy(bd.rect, rect4, sizeof bd.rect);
+    int64_t r = bg_shape((const uint8_t *)latlon, (const uint8_t *)(latlon + 1), 0, 2, n,
+                         closed, mult, type_code, flags, &bd, out, room, nrec);
+    return r < 0 && g_full ? -2 : r;
+}
+
+/* parcel_bounds' longitude normalisation, for E2's retile. */
+__attribute__((visibility("hidden")))
+double kw__norm_lon(double v) { return norm_lon(v); }
 
 /*
  * Assembly helpers (plan 02 step 3): GIL-free bulk file copy.
