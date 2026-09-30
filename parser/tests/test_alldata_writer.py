@@ -13,27 +13,28 @@ Covers exactly the brief's ("12-assembler-all-levels.md") required cases:
 """
 from __future__ import annotations
 
+import functools
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from kiwiw import alldata_writer as aw
-from kiwiw import synth
 from kiwiw.disc import AllData
 from kiwiw.grid import ReferenceGrid
-from kiwiw.model import BoundingBox
 
-_SMALL_BOUNDS = BoundingBox(lat_lo=-1.0, lat_hi=1.0, lon_lo=-1.0, lon_hi=1.0, coord_range=4096)
+sys.path.insert(0, str(Path(__file__).resolve().parent / "fixtures" / "harness"))
+import e2_fixture  # noqa: E402  (fixture frames through E2, 3C-10)
 
 
+@functools.lru_cache(maxsize=None)
 def _make_frame(level: int, ix: int, iy: int) -> bytes:
-    """A minimal (no roads/backgrounds/names) Map Frame for cell (ix, iy)."""
-    road = synth.build_road_frame_bytes([], _SMALL_BOUNDS)
-    bg = synth.build_background_frame_bytes([], _SMALL_BOUNDS)
-    name = synth.build_name_frame_bytes([], _SMALL_BOUNDS, level=level)
-    return synth.build_map_frame_bytes(level, (0, 0), (ix % 256, iy % 256),
-                                        road, bg, name)
+    """A Map Frame for cell (ix, iy) as E2 emits it for a cell with no
+    content (the mask-filled empty frame; on a one-cell level, a frame
+    holding the fixture's anchor name -- see `e2_fixture.e2_frames`)."""
+    with tempfile.TemporaryDirectory() as d:
+        return e2_fixture.e2_frames(d, level, empty=[(ix, iy)])[(ix, iy)]
 
 
 def _level_build(level: int, coords: list[tuple[int, int]]) -> aw.LevelBuild:

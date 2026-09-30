@@ -3,8 +3,8 @@ profile-based checks (`vocab`/`envelope`/`mfde`) it feeds -- unit 03 of
 `docs/plans/01-eval-harness-and-map-layer.md`.
 
 All fixtures are synthetic, built in-test with
-`kiwiw.alldata_writer.build_alldata_kwi` (per this unit's brief, "Tests"
-section); judging the profile/checks against the real reference disc is
+`kiwiw.alldata_writer.build_alldata_kwi`, their Map Frames produced by E2 from
+a fixture spool (`fixtures/harness/e2_fixture.py`, plan 03 3C-10); judging the profile/checks against the real reference disc is
 unit 03b's job, not this unit's.
 
 - `test_build_profile_structure`: build a tiny profile from a synthetic
@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import copy
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -32,13 +33,9 @@ sys.path.insert(0, str(_PARSER_DIR))
 
 from kiwiw.alldata_writer import SynthParcel, build_alldata_kwi
 from kiwiw.model import BackgroundShape, BoundingBox, NameRecord, RoadLink, RoadNode
-from osm_to_parcel_geometry import g_frame_range  # noqa: E402
-from kiwiw.synth import (
-    build_background_frame_bytes,
-    build_map_frame_bytes,
-    build_name_frame_bytes,
-    build_road_frame_bytes,
-)
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "fixtures" / "harness"))
+import e2_fixture  # noqa: E402  (fixture frames through E2, 3C-10)
 
 from harness import profile as profile_mod
 from harness import walk as walk_mod
@@ -47,21 +44,19 @@ from harness.checks import mfde as mfde_checks
 from harness.checks import vocab as vocab_checks
 from harness.context import Context
 
-_BOUNDS = BoundingBox(lat_lo=-32.0, lat_hi=-31.5, lon_lo=115.75, lon_hi=116.25)
+# A 2x2 block of real level-0 grid cells in Perth: E2 emits each cell's frame
+# for the real grid, and the fixture's coverage is that block's union.
 NX, NY = 2, 2
 LEVEL = 0
+IX0, IY0 = 1780, 814
+_B00 = e2_fixture.cell_bounds(LEVEL, IX0, IY0)
+_B11 = e2_fixture.cell_bounds(LEVEL, IX0 + NX - 1, IY0 + NY - 1)
+_BOUNDS = BoundingBox(lat_lo=_B00.lat_lo, lat_hi=_B11.lat_hi,
+                      lon_lo=_B00.lon_lo, lon_hi=_B11.lon_hi)
 
 
 def _cell_bounds(ix: int, iy: int) -> BoundingBox:
-    cell_lat = (_BOUNDS.lat_hi - _BOUNDS.lat_lo) / NY
-    cell_lon = (_BOUNDS.lon_hi - _BOUNDS.lon_lo) / NX
-    return BoundingBox(
-        lat_lo=_BOUNDS.lat_lo + iy * cell_lat,
-        lat_hi=_BOUNDS.lat_lo + (iy + 1) * cell_lat,
-        lon_lo=_BOUNDS.lon_lo + ix * cell_lon,
-        lon_hi=_BOUNDS.lon_lo + (ix + 1) * cell_lon,
-        coord_range=g_frame_range(LEVEL),  # G's frame range (Plan 03 3-03)
-    )
+    return e2_fixture.cell_bounds(LEVEL, IX0 + ix, IY0 + iy)
 
 
 def _make_link(bounds: BoundingBox, display_class: int = 0, road_type: int = 0) -> RoadLink:
@@ -86,18 +81,22 @@ def _make_link(bounds: BoundingBox, display_class: int = 0, road_type: int = 0) 
     )
 
 
-def _make_background_shape(type_code: int = 5) -> BackgroundShape:
-    # shape_class=0 (point): no coords needed, simplest encodable shape.
-    return BackgroundShape(shape_class=0, type_code=type_code, type_label="",
-                            n_coords=0, mult_const=1, underground=False, pen_up=False,
-                            coords=[])
+def _make_background_shape(bounds: BoundingBox, type_code: int = 5) -> BackgroundShape:
+    # shape_class=0 (point) at the cell centre: the simplest shape E2 keeps.
+    return BackgroundShape(
+        shape_class=0, type_code=type_code, type_label="", n_coords=1, mult_const=1,
+        underground=False, pen_up=False,
+        coords=[((bounds.lat_lo + bounds.lat_hi) / 2, (bounds.lon_lo + bounds.lon_hi) / 2)])
 
 
 def _make_name_record(bounds: BoundingBox, text: str = "TEST ST") -> NameRecord:
+    # string_type 5 (a road name): E2 emits only the types the reference has
+    # at level 0 (the legacy synthetic encoder emitted type 1).
     return NameRecord(
-        string_type=1, type_code=3, type_label="", priority=2, vertical=False,
+        string_type=5, type_code=0x210, type_label="", priority=2, vertical=False,
         display_scale_flag=0, text=text,
         lat=(bounds.lat_lo + bounds.lat_hi) / 2, lon=(bounds.lon_lo + bounds.lon_hi) / 2,
+        angle_deg=0, angle_flags=0,
     )
 
 
@@ -108,21 +107,21 @@ def _build_fixture_bytes(display_classes=None) -> bytes:
     class per parcel; defaults to all-zero."""
     if display_classes is None:
         display_classes = [0] * (NX * NY)
-    synth_parcels = []
+    cells = {}
     idx = 0
     for iy in range(NY):
         for ix in range(NX):
             bounds = _cell_bounds(ix, iy)
-            link = _make_link(bounds, display_class=display_classes[idx])
+            cells[(IX0 + ix, IY0 + iy)] = {
+                "roads": [_make_link(bounds, display_class=display_classes[idx])],
+                "backgrounds": [_make_background_shape(bounds)],
+                "names": [_make_name_record(bounds)]}
             idx += 1
-            road_bytes = build_road_frame_bytes([link], bounds)
-            bg_bytes = build_background_frame_bytes([_make_background_shape()], bounds)
-            name_bytes = build_name_frame_bytes([_make_name_record(bounds)], bounds)
-            frame_bytes = build_map_frame_bytes(
-                LEVEL, (bounds.lat_lo, bounds.lon_lo), (0, 0),
-                road_bytes, bg_bytes, name_bytes)
-            synth_parcels.append(SynthParcel(ix=ix, iy=iy, bounds=bounds,
-                                              map_frame_bytes=frame_bytes))
+    with tempfile.TemporaryDirectory() as d:
+        frames = e2_fixture.e2_frames(d, LEVEL, cells)
+    synth_parcels = [SynthParcel(ix=ix, iy=iy, bounds=_cell_bounds(ix, iy),
+                                 map_frame_bytes=frames[(IX0 + ix, IY0 + iy)])
+                     for iy in range(NY) for ix in range(NX)]
     return build_alldata_kwi(parcels=synth_parcels, coverage=_BOUNDS, level=LEVEL,
                               grid_nx=NX, grid_ny=NY)
 
@@ -173,7 +172,7 @@ def test_build_profile_structure(tmp_path):
     assert lvl0["background"]["shape_class_hist"] == {"0": n_parcels}
 
     assert lvl0["name"]["record_count"] == n_parcels
-    assert lvl0["name"]["string_type_hist"] == {"1": n_parcels}
+    assert lvl0["name"]["string_type_hist"] == {"5": n_parcels}
     assert lvl0["name"]["max_text_length"] == len("TEST ST")
 
     assert lvl0["mfde"]["entry_count_hist"] == {"20": n_parcels}

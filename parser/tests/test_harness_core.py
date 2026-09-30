@@ -1,9 +1,10 @@
 """Tests for the comparison harness core (`parser/harness/`):
 
 - `decode`/`pointers`/`shape` against a small synthetic `ALLDATA.KWI` built
-  in-test with `kiwiw.alldata_writer.build_alldata_kwi` (tests may import
-  encoders; the harness package itself must not -- see
-  `test_no_forbidden_imports`).
+  in-test with `kiwiw.alldata_writer.build_alldata_kwi`, its Map Frames
+  produced by E2 from a fixture spool (`fixtures/harness/e2_fixture.py`,
+  plan 03 3C-10); the harness package itself must not import a writer -- see
+  `test_no_forbidden_imports`.
 - `decode` PASS, `shape` FAIL against that single-level flat fixture (an
   expected negative control: it does not match the reference LMR shape
   until unit 12's all-levels assembler lands).
@@ -16,6 +17,7 @@ from __future__ import annotations
 import copy
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -29,29 +31,29 @@ from kiwiw.alldata_writer import SynthParcel, build_alldata_kwi
 from kiwiw.bitutils import sws, u16, u32
 from kiwiw.model import BoundingBox, MeshLocation, RoadLink, RoadNode
 from kiwiw.parcel import decode_parcel
-from osm_to_parcel_geometry import g_frame_range  # noqa: E402
-from kiwiw.synth import build_map_frame_bytes, build_road_frame_bytes
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "fixtures" / "harness"))
+import e2_fixture  # noqa: E402  (fixture frames through E2, 3C-10)
 
 from harness.checks import decode as decode_checks
 from harness.checks import shape as shape_checks
 from harness.context import Context
 
 
-_BOUNDS = BoundingBox(lat_lo=-32.0, lat_hi=-31.5, lon_lo=115.75, lon_hi=116.25)
+# A 2x2 block of real level-0 grid cells in Perth: E2 emits each cell's frame
+# for the real grid, and the fixture's coverage is that block's union, so a
+# decoder recovers the same cell bounds the frames were encoded against.
 NX, NY = 2, 2
 LEVEL = 0
+IX0, IY0 = 1780, 814
+_B00 = e2_fixture.cell_bounds(LEVEL, IX0, IY0)
+_B11 = e2_fixture.cell_bounds(LEVEL, IX0 + NX - 1, IY0 + NY - 1)
+_BOUNDS = BoundingBox(lat_lo=_B00.lat_lo, lat_hi=_B11.lat_hi,
+                      lon_lo=_B00.lon_lo, lon_hi=_B11.lon_hi)
 
 
 def _cell_bounds(ix: int, iy: int) -> BoundingBox:
-    cell_lat = (_BOUNDS.lat_hi - _BOUNDS.lat_lo) / NY
-    cell_lon = (_BOUNDS.lon_hi - _BOUNDS.lon_lo) / NX
-    return BoundingBox(
-        lat_lo=_BOUNDS.lat_lo + iy * cell_lat,
-        lat_hi=_BOUNDS.lat_lo + (iy + 1) * cell_lat,
-        lon_lo=_BOUNDS.lon_lo + ix * cell_lon,
-        lon_hi=_BOUNDS.lon_lo + (ix + 1) * cell_lon,
-        coord_range=g_frame_range(LEVEL),  # G's frame range (Plan 03 3-03)
-    )
+    return e2_fixture.cell_bounds(LEVEL, IX0 + ix, IY0 + iy)
 
 
 def _make_link(bounds: BoundingBox) -> RoadLink:
@@ -77,18 +79,15 @@ def _make_link(bounds: BoundingBox) -> RoadLink:
 
 
 def _build_fixture_bytes() -> bytes:
-    """A tiny 2x2, single-level (0) ALLDATA.KWI: one road link per parcel."""
-    synth_parcels = []
-    for iy in range(NY):
-        for ix in range(NX):
-            bounds = _cell_bounds(ix, iy)
-            links = [_make_link(bounds)]
-            road_bytes = build_road_frame_bytes(links, bounds)
-            frame_bytes = build_map_frame_bytes(
-                LEVEL, (bounds.lat_lo, bounds.lon_lo), (0, 0),
-                road_bytes, None, None)
-            synth_parcels.append(SynthParcel(ix=ix, iy=iy, bounds=bounds,
-                                              map_frame_bytes=frame_bytes))
+    """A tiny 2x2, single-level (0) ALLDATA.KWI: one road link per parcel,
+    the frames produced by E2 from a fixture spool."""
+    cells = {(IX0 + ix, IY0 + iy): {"roads": [_make_link(_cell_bounds(ix, iy))]}
+             for iy in range(NY) for ix in range(NX)}
+    with tempfile.TemporaryDirectory() as d:
+        frames = e2_fixture.e2_frames(d, LEVEL, cells)
+    synth_parcels = [SynthParcel(ix=ix, iy=iy, bounds=_cell_bounds(ix, iy),
+                                 map_frame_bytes=frames[(IX0 + ix, IY0 + iy)])
+                     for iy in range(NY) for ix in range(NX)]
     return build_alldata_kwi(parcels=synth_parcels, coverage=_BOUNDS, level=LEVEL,
                               grid_nx=NX, grid_ny=NY)
 

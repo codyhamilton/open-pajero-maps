@@ -7,36 +7,49 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from kiwiw.alldata_writer import SynthParcel, build_alldata_kwi
-from kiwiw.model import BoundingBox, NameRecord
-from kiwiw.synth import build_map_frame_bytes, build_name_frame_bytes
+from kiwiw.model import NameRecord
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "fixtures" / "harness"))
+import e2_fixture  # noqa: E402  (fixture frames through E2, 3C-10)
 
 from harness.checks.spotcheck import _run_spotcheck
 from harness.context import Context
 
-_BOUNDS = BoundingBox(lat_lo=-32.0, lat_hi=-31.5, lon_lo=115.75, lon_hi=116.25, coord_range=4096)
 LEVEL = 0
+# One real level-0 grid cell in Perth: E2 encodes the fixture's frame against
+# the real grid, and the 1x1 fixture's coverage is that cell.
+_IX, _IY = 1780, 814
+_BOUNDS = e2_fixture.cell_bounds(LEVEL, _IX, _IY)
 # Centre of the single 1x1 grid cell -- well inside its bounds either way.
 _CENTRE_LAT = (_BOUNDS.lat_lo + _BOUNDS.lat_hi) / 2
 _CENTRE_LON = (_BOUNDS.lon_lo + _BOUNDS.lon_hi) / 2
 
 
-def _build_fixture_bytes() -> bytes:
+def _fixture_bytes_with_name(text: str) -> bytes:
+    """A 1x1 ALLDATA.KWI whose one parcel holds one name record `text`. The
+    frame comes from E2 (a fixture spool with that record); E2 emits only the
+    string types the reference has at level 0, so the record is type 5, a
+    road name (the legacy synthetic encoder emitted type 1)."""
     name_record = NameRecord(
-        string_type=1, type_code=0, type_label="", priority=0, vertical=False,
-        display_scale_flag=0, text="Queen Street",
-        lat=_CENTRE_LAT, lon=_CENTRE_LON,
+        string_type=5, type_code=0x210, type_label="", priority=0, vertical=False,
+        display_scale_flag=0, text=text, lat=_CENTRE_LAT, lon=_CENTRE_LON,
+        angle_deg=0, angle_flags=0,
     )
-    name_bytes = build_name_frame_bytes([name_record], _BOUNDS)
-    frame_bytes = build_map_frame_bytes(
-        LEVEL, (_BOUNDS.lat_lo, _BOUNDS.lon_lo), (0, 0), None, None, name_bytes)
-    parcel = SynthParcel(ix=0, iy=0, bounds=_BOUNDS, map_frame_bytes=frame_bytes)
+    with tempfile.TemporaryDirectory() as d:
+        frames = e2_fixture.e2_frames(d, LEVEL, {(_IX, _IY): {"names": [name_record]}})
+    parcel = SynthParcel(ix=0, iy=0, bounds=_BOUNDS, map_frame_bytes=frames[(_IX, _IY)])
     return build_alldata_kwi(parcels=[parcel], coverage=_BOUNDS, level=LEVEL,
                               grid_nx=1, grid_ny=1)
+
+
+def _build_fixture_bytes() -> bytes:
+    return _fixture_bytes_with_name("Queen Street")
 
 
 def _write_table(tmp_path, rows) -> str:
@@ -89,17 +102,8 @@ def test_spotcheck_na_when_table_absent(tmp_path):
 
 
 def _run_expecting(tmp_path, text, expected):
-    name_record = NameRecord(
-        string_type=1, type_code=0, type_label="", priority=0, vertical=False,
-        display_scale_flag=0, text=text, lat=_CENTRE_LAT, lon=_CENTRE_LON,
-    )
-    name_bytes = build_name_frame_bytes([name_record], _BOUNDS)
-    frame_bytes = build_map_frame_bytes(
-        LEVEL, (_BOUNDS.lat_lo, _BOUNDS.lon_lo), (0, 0), None, None, name_bytes)
-    parcel = SynthParcel(ix=0, iy=0, bounds=_BOUNDS, map_frame_bytes=frame_bytes)
     p = tmp_path / "ALLDATA.KWI"
-    p.write_bytes(build_alldata_kwi(parcels=[parcel], coverage=_BOUNDS, level=LEVEL,
-                                    grid_nx=1, grid_ny=1))
+    p.write_bytes(_fixture_bytes_with_name(text))
     table = _write_table(tmp_path, [{
         "city": "T", "lat": _CENTRE_LAT, "lon": _CENTRE_LON, "levels": [0],
         "expect_road_names": [expected], "expect_place_names": [],
