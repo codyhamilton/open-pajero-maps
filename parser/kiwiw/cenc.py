@@ -581,3 +581,238 @@ def d1_stats() -> dict:
     """Process-local D1 totals: ranges, ctypes calls (ranges + retries),
     frames, rows, failed frames, and the Python / C / handoff time split."""
     return dict(_d1_stats)
+
+
+# ---------------------------------------------------------------- K1 (2-03)
+# The C checker core (`_k1.c`; layouts and contract in `_k1.h`). One ctypes call
+# per (block, row band) -- `k1_check_band` -- decodes through D1 in C and checks the
+# point kinds against the spool; the accumulator `K1Acc` is passed across calls
+# and merges by sums, max and "first N of the union" (a total sample order).
+
+K1_SAMPLE = 10
+_K1_LAYOUT = {
+    "kind": [("checked", "u64"), ("failing", "u64"), ("worst", "f64"), ("nsamples", "u32")],
+    "sample": [("lat", "f64"), ("lon", "f64"), ("err", "f64"), ("ix", "i32"), ("iy", "i32"),
+               ("vx", "i32"), ("vy", "i32"), ("reason", "i32"), ("code", "i32"),
+               ("p0", "u16"), ("p1", "u16"), ("p2", "u16"), ("p3", "u16"), ("p4", "u16"),
+               ("p5", "u16"), ("p6", "u16"), ("depth", "u8")],
+}
+_K1_TABLES = tuple(_K1_LAYOUT)
+_K1_STATS = ("calls", "leaves", "failed_frames", "d1_retries", "cells", "items", "rescues",
+             "ns", "d1_ns")
+_K1_REASONS = {0: "range", 1: "no spool record within half a raw unit", 2: "step not representable",
+               3: "leaf did not decode", 4: "background", 5: "background boundary", 6: "cover"}
+_k1_lib = None
+_k1_cols = None
+_k1_stats = {"calls": 0}
+
+
+class K1Error(RuntimeError):
+    """K1 failed, or the Python layout disagrees with `_k1.h`."""
+
+
+def _k1_dtype(table: str):
+    import numpy as np
+    return np.dtype([(n, _D1_NP[k]) for n, k in _K1_LAYOUT[table]], align=True)
+
+
+def _load_k1():
+    global _k1_lib, _k1_cols
+    if _k1_lib is None:
+        cbuild.build_ext()
+        lib = ctypes.CDLL(str(_SO))
+        for f, args, res in (
+                ("kw_k1_ntables", [], ctypes.c_int),
+                ("kw_k1_table_name", [ctypes.c_int], ctypes.c_char_p),
+                ("kw_k1_row_size", [ctypes.c_int], ctypes.c_int),
+                ("kw_k1_nfields", [ctypes.c_int], ctypes.c_int),
+                ("kw_k1_field_name", [ctypes.c_int, ctypes.c_int], ctypes.c_char_p),
+                ("kw_k1_field_kind", [ctypes.c_int, ctypes.c_int], ctypes.c_char_p),
+                ("kw_k1_field_off", [ctypes.c_int, ctypes.c_int], ctypes.c_int),
+                ("kw_k1_sample_n", [], ctypes.c_int),
+                ("kw_k1_count", [ctypes.c_int], ctypes.c_int),
+                ("kw_k1_name", [ctypes.c_int, ctypes.c_int], ctypes.c_char_p)):
+            fn = getattr(lib, f)
+            fn.argtypes, fn.restype = args, res
+        lib.kw_k1_band.restype = ctypes.c_int64
+        lib.kw_k1_band.argtypes = ([ctypes.c_void_p, ctypes.c_int64, ctypes.c_void_p,
+                                    ctypes.c_int64, ctypes.c_int64, ctypes.c_void_p,
+                                    ctypes.c_int64, ctypes.c_void_p, ctypes.c_int64,
+                                    ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+                                    ctypes.c_int64] + [ctypes.c_void_p] * 4)
+        lib.kw_k1_tall.restype = ctypes.c_int64
+        lib.kw_k1_tall.argtypes = ([ctypes.c_void_p, ctypes.c_int64, ctypes.c_void_p,
+                                    ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p,
+                                    ctypes.c_void_p, ctypes.c_int64, ctypes.c_void_p,
+                                    ctypes.c_int64, ctypes.c_int64, ctypes.c_void_p,
+                                    ctypes.c_int64, ctypes.c_void_p, ctypes.c_int64,
+                                    ctypes.c_void_p])
+        _k1_check_layout(lib)
+        _k1_lib = lib
+        names = lambda w: [lib.kw_k1_name(w, i).decode() for i in range(lib.kw_k1_count(w))]
+        _k1_cols = {"kinds": names(0), "explained": names(1), "cols": names(2), "stats": names(3)}
+        if _k1_cols["stats"] != list(_K1_STATS):
+            raise K1Error(f"K1 layout: stats {_k1_cols['stats']} != {list(_K1_STATS)}")
+    return _k1_lib
+
+
+def _k1_check_layout(lib) -> None:
+    if lib.kw_k1_ntables() != len(_K1_TABLES):
+        raise K1Error(f"K1 layout: C has {lib.kw_k1_ntables()} tables, Python {len(_K1_TABLES)}")
+    if lib.kw_k1_sample_n() != K1_SAMPLE:
+        raise K1Error("K1 layout: sample count differs")
+    for t, name in enumerate(_K1_TABLES):
+        dt, spec = _k1_dtype(name), _K1_LAYOUT[name]
+        if lib.kw_k1_table_name(t).decode() != name or lib.kw_k1_nfields(t) != len(spec):
+            raise K1Error(f"K1 layout: table {t} differs")
+        for i, (fname, kind) in enumerate(spec):
+            got = (lib.kw_k1_field_name(t, i).decode(), lib.kw_k1_field_kind(t, i).decode(),
+                   lib.kw_k1_field_off(t, i))
+            if got != (fname, kind, dt.fields[fname][1]):
+                raise K1Error(f"K1 layout: table {name} field {i}: C {got}, Python "
+                              f"{(fname, kind, dt.fields[fname][1])}")
+        if lib.kw_k1_row_size(t) != dt.itemsize:
+            raise K1Error(f"K1 layout: table {name}: row size differs")
+
+
+def k1_sample_key(r: dict):
+    """The total sample order of `k1_sample_cmp` (`_k1.c`), for sample dicts."""
+    def f(v):
+        return float("inf") if v != v else v
+    return (r["iy"], r["ix"], tuple(r["path"]), r["vx"], r["vy"], r["reason"], r["code"],
+            r["lat"], r["lon"], f(r["err"]))
+
+
+class K1Acc:
+    """The K1 accumulator: per-kind counts and worst passing error, up to
+    `K1_SAMPLE` samples per kind (sorted by `k1_sample_key`), explained counters
+    and C-side stats. `merge` is a sum / max / first-N-of-union, so any partition
+    and order of bands gives identical bytes."""
+
+    def __init__(self):
+        import numpy as np
+        lib = _load_k1()
+        self.names = list(_k1_cols["kinds"])
+        self.expl_names = list(_k1_cols["explained"])
+        self.kinds = np.zeros(len(self.names), _k1_dtype("kind"))
+        self.smp = np.zeros(len(self.names) * K1_SAMPLE, _k1_dtype("sample"))
+        self.expl = np.zeros(len(self.expl_names), np.int64)
+        self.stats = np.zeros(len(_K1_STATS), np.int64)
+
+    def _rows(self, ki):
+        n = int(self.kinds["nsamples"][ki])
+        out = []
+        for r in self.smp[ki * K1_SAMPLE: ki * K1_SAMPLE + n]:
+            d = {k: (float(r[k]) if r[k].dtype.kind == "f" else int(r[k]))
+                 for k in ("lat", "lon", "err", "ix", "iy", "vx", "vy", "reason", "code")}
+            d["path"] = [int(r[f"p{i}"]) for i in range(int(r["depth"]))]
+            out.append(d)
+        return out
+
+    def result(self) -> dict:
+        kinds = {n: {"checked": int(self.kinds["checked"][i]), "failing": int(self.kinds["failing"][i]),
+                     "worst": float(self.kinds["worst"][i])} for i, n in enumerate(self.names)}
+        return {"kinds": kinds,
+                "explained": {n: int(self.expl[i]) for i, n in enumerate(self.expl_names)},
+                "samples": {n: self._rows(i) for i, n in enumerate(self.names)},
+                "stats": dict(zip(_K1_STATS, (int(v) for v in self.stats)))}
+
+    def merge(self, other: "K1Acc") -> None:
+        import numpy as np
+        for i in range(len(self.names)):
+            rows = self._rows(i) + other._rows(i)
+            self.kinds["checked"][i] += other.kinds["checked"][i]
+            self.kinds["failing"][i] += other.kinds["failing"][i]
+            self.kinds["worst"][i] = max(self.kinds["worst"][i], other.kinds["worst"][i])
+            rows.sort(key=k1_sample_key)
+            rows = rows[:K1_SAMPLE]
+            self.kinds["nsamples"][i] = len(rows)
+            blk = self.smp[i * K1_SAMPLE:(i + 1) * K1_SAMPLE]
+            blk[:] = np.zeros(1, blk.dtype)
+            for j, d in enumerate(rows):
+                for k in ("lat", "lon", "err", "ix", "iy", "vx", "vy", "reason", "code"):
+                    blk[j][k] = d[k]
+                blk[j]["depth"] = len(d["path"])
+                for q, v in enumerate(d["path"]):
+                    blk[j][f"p{q}"] = v
+        self.expl += other.expl
+        self.stats += other.stats
+
+    def to_bytes(self) -> bytes:
+        """Canonical bytes of the counts, samples and explained counters (not the stats)."""
+        parts = []
+        for arr in (self.kinds, self.smp):
+            parts += [arr[n].tobytes() for n in arr.dtype.names]
+        parts.append(self.expl.tobytes())
+        return b"".join(parts)
+
+
+def _k1_colspec():
+    import numpy as np
+    from . import spool as _spool
+    lib = _load_k1()
+    names = [c[0] for c in _spool._COLUMNS]
+    colmap = np.array([names.index(n) for n in _k1_cols["cols"]], np.int32)
+    esz = np.array([np.dtype(c[1]).itemsize for c in _spool._COLUMNS], np.int32)
+    ckey = np.array([_spool._COUNT_KEYS.index(c[2]) for c in _spool._COLUMNS], np.int32)
+    return colmap, esz, ckey
+
+
+_k1_spec = None
+_K1_ERRORS = {-1: "bad arguments", -2: "D1 failed (a Map Frame lies outside the region)",
+              -3: "bad spool index or record", -4: "out of memory"}
+
+
+def k1_check_band(region, block_row, rlo, rhi, spool: "E1Spool", acc: K1Acc) -> None:
+    """Check one (block, row band) in ONE C call, adding into `acc`: `block_row` is a
+    one-row `D1_BLOCK_DTYPE` array, `[rlo, rhi]` the band (None: all)."""
+    import numpy as np
+    global _k1_spec
+    lib = _load_k1()
+    if _k1_spec is None:
+        _k1_spec = _k1_colspec()
+    colmap, esz, ckey = _k1_spec
+    if block_row.dtype != D1_BLOCK_DTYPE or len(block_row) != 1:
+        raise K1Error("k1_check_band takes one D1_BLOCK_DTYPE row")
+    block_row = np.ascontiguousarray(block_row)
+    region = np.ascontiguousarray(region, dtype=np.uint8)
+    lo = -(1 << 62) if rlo is None else int(rlo)
+    hi = (1 << 62) if rhi is None else int(rhi)
+    rc = lib.kw_k1_band(region.ctypes.data, len(region), block_row.ctypes.data, lo, hi,
+                        spool.idx.ctypes.data, len(spool.idx), spool.data.ctypes.data,
+                        len(spool.data), colmap.ctypes.data, esz.ctypes.data, ckey.ctypes.data,
+                        len(esz), acc.kinds.ctypes.data, acc.smp.ctypes.data,
+                        acc.expl.ctypes.data, acc.stats.ctypes.data)
+    _k1_stats["calls"] += 1
+    if rc < 0:
+        raise K1Error(_K1_ERRORS.get(rc, f"error {rc}"))
+
+
+def k1_tall(spool: "E1Spool", lat5, a: int, b: int):
+    """Tall spool shapes of index rows [a, b): (rows, xy) -- structured rows
+    (type, cls, n, hx, hy) and their global raw coordinates (n x 2 float64)."""
+    import numpy as np
+    global _k1_spec
+    lib = _load_k1()
+    if _k1_spec is None:
+        _k1_spec = _k1_colspec()
+    colmap, esz, ckey = _k1_spec
+    lat5 = np.ascontiguousarray(lat5, np.float64)
+    dt = np.dtype([(n, "<i4") for n in ("type", "cls", "n", "hx", "hy")])
+    rcap, xcap = 1024, 1 << 14
+    while True:
+        rows, xy, need = np.zeros(rcap, dt), np.zeros(xcap * 2), np.zeros(2, np.int64)
+        rc = lib.kw_k1_tall(spool.idx.ctypes.data, len(spool.idx), spool.data.ctypes.data,
+                            len(spool.data), colmap.ctypes.data, esz.ctypes.data,
+                            ckey.ctypes.data, len(esz), lat5.ctypes.data, a, b,
+                            rows.ctypes.data, rcap, xy.ctypes.data, xcap, need.ctypes.data)
+        if rc < 0:
+            raise K1Error(_K1_ERRORS.get(rc, f"error {rc}"))
+        if rc == 0:
+            return rows[:need[0]].copy(), xy[:need[1] * 2].reshape(-1, 2).copy()
+        rcap, xcap = max(rcap, int(need[0])), max(xcap, int(need[1]))
+
+
+def k1_stats() -> dict:
+    """Process-local K1 totals (`calls`: ctypes band calls)."""
+    return dict(_k1_stats)
