@@ -1,5 +1,14 @@
 # Map-layer parity remediation
 
+> **Superseded in part by plan 04 (`docs/plans/04-c-core-orchestration/DESIGN.md`).** Contract B's
+> sentence that Python owns "all verification and analysis tools including the decoders", its
+> "nothing else crosses from Python to C on the build path" sentence (still true for the build;
+> superseded for verification only), and Contract T layer (a) "decode with the Python decoder"
+> are replaced by plan 04's rule: C for every full-AU per-vertex/shape/parcel/frame/cell loop,
+> Python orchestration only. Phase 3's remaining units (3-10, 3-13, 3-05, 3-06) and Phases 4-10
+> are **frozen** until plan 04 Phase 6's successor design replaces their Surfaces and
+> verification. No contract text below is edited.
+
 ## Intent
 
 User request, verbatim:

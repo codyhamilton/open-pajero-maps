@@ -1,0 +1,563 @@
+{
+ "_doc": "Plan 04 Phase 1 perf inventory. Enforced by parser/tests/test_perf_inventory.py. Perf-sensitive means any loop whose trip count scales with the vertices, shapes, parcels, frames or cells of a full-AU disc or spool (plan 04 DESIGN.md).",
+ "modules": [
+  {
+   "path": "parser/analyze_alldata_allocation.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Research script walking R frames via Python decoders/AllData (full-disc per-frame loops); not on build or gate path; retired or re-pointed in Phase 5 (Assumption 3)"
+  },
+  {
+   "path": "parser/analyze_ext_frame_shape.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Research script walking R frames via Python decoders/AllData (full-disc per-frame loops); not on build or gate path; retired or re-pointed in Phase 5 (Assumption 3)"
+  },
+  {
+   "path": "parser/analyze_ext_frames.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Research script walking R frames via Python decoders/AllData (full-disc per-frame loops); not on build or gate path; retired or re-pointed in Phase 5 (Assumption 3)"
+  },
+  {
+   "path": "parser/analyze_leaf_zorder.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Research script walking R frames via Python decoders/AllData (full-disc per-frame loops); not on build or gate path; retired or re-pointed in Phase 5 (Assumption 3)"
+  },
+  {
+   "path": "parser/build_alldata.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/build_route_graph.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Extraction / route-graph side: per-feature loops over full-AU OSM, but extraction stays Python and out of the C boundary (Decision 9)"
+  },
+  {
+   "path": "parser/build_route_hierarchy.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Extraction / route-graph side: per-feature loops over full-AU OSM, but extraction stays Python and out of the C boundary (Decision 9)"
+  },
+  {
+   "path": "parser/compare_disc.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/demo_address_search.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Header-level read/write whose trip count is bounded by file or level count; or a bounded demo"
+  },
+  {
+   "path": "parser/dump_parcel.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Research script walking R frames via Python decoders/AllData (full-disc per-frame loops); not on build or gate path; retired or re-pointed in Phase 5 (Assumption 3)"
+  },
+  {
+   "path": "parser/estimate_address_density.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Extraction / route-graph side: per-feature loops over full-AU OSM, but extraction stays Python and out of the C boundary (Decision 9)"
+  },
+  {
+   "path": "parser/estimate_density.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Research script walking R frames via Python decoders/AllData (full-disc per-frame loops); not on build or gate path; retired or re-pointed in Phase 5 (Assumption 3)"
+  },
+  {
+   "path": "parser/estimate_overhead_scaling.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Research script walking R frames via Python decoders/AllData (full-disc per-frame loops); not on build or gate path; retired or re-pointed in Phase 5 (Assumption 3)"
+  },
+  {
+   "path": "parser/estimate_route_planning_scaling.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Research script walking R frames via Python decoders/AllData (full-disc per-frame loops); not on build or gate path; retired or re-pointed in Phase 5 (Assumption 3)"
+  },
+  {
+   "path": "parser/extract_reference_data.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Header-level read/write whose trip count is bounded by file or level count; or a bounded demo"
+  },
+  {
+   "path": "parser/harness/__init__.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/harness/bytediff.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
+  },
+  {
+   "path": "parser/harness/checks/__init__.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/harness/checks/container.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
+  },
+  {
+   "path": "parser/harness/checks/coord_scale.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
+  },
+  {
+   "path": "parser/harness/checks/decode.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
+  },
+  {
+   "path": "parser/harness/checks/envelope.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
+  },
+  {
+   "path": "parser/harness/checks/mfde.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
+  },
+  {
+   "path": "parser/harness/checks/shape.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
+  },
+  {
+   "path": "parser/harness/checks/spotcheck.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
+  },
+  {
+   "path": "parser/harness/checks/vocab.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
+  },
+  {
+   "path": "parser/harness/context.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/harness/profile.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
+  },
+  {
+   "path": "parser/harness/registry.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/harness/report.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/harness/walk.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
+  },
+  {
+   "path": "parser/kiwiw/__init__.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/kiwiw/alldata_writer.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Mixed: layout/assembly part is orchestration, but the R-replicate load path calls decode_parcel and the parcel-layer writers (per-frame loop); classified by the part that moves, re-pointed or retired in Phase 5 with build bytes unchanged"
+  },
+  {
+   "path": "parser/kiwiw/background.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Python decoder for a parcel sub-layer: per-vertex/shape decode of full-AU frames (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); deleted once D1 matches goldens/R"
+  },
+  {
+   "path": "parser/kiwiw/background_writer.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "R-replicate sub-layer writer, inverse of a Python decoder deleted in Phase 5; per-shape loop; retired with its tests (Assumption 3)"
+  },
+  {
+   "path": "parser/kiwiw/bitutils.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Shared types, tables and scalar helpers; no loop over full-AU data of its own (per-vertex callers are the retired decoders). Low confidence for coordconv"
+  },
+  {
+   "path": "parser/kiwiw/cbuild.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/kiwiw/cenc.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/kiwiw/contraction.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Route-planning graph/frame code: loops scale with full-AU nodes/links, but off plan 04's scope (extraction/route-planning side, Decision 9); for the successor design"
+  },
+  {
+   "path": "parser/kiwiw/coordconv.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Shared types, tables and scalar helpers; no loop over full-AU data of its own (per-vertex callers are the retired decoders). Low confidence for coordconv"
+  },
+  {
+   "path": "parser/kiwiw/descriptor.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/kiwiw/disc.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "imports decode_parcel; AllData opener used by R-replicate path and research scripts; re-pointed at D1 or retired in Phase 5"
+  },
+  {
+   "path": "parser/kiwiw/frame_table.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/kiwiw/grid.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Shared types, tables and scalar helpers; no loop over full-AU data of its own (per-vertex callers are the retired decoders). Low confidence for coordconv"
+  },
+  {
+   "path": "parser/kiwiw/index_data.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "IDX search-index read/write: loops scale with address entries; not in plan 04's scope, revisit in the successor design"
+  },
+  {
+   "path": "parser/kiwiw/index_writer.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "IDX search-index read/write: loops scale with address entries; not in plan 04's scope, revisit in the successor design"
+  },
+  {
+   "path": "parser/kiwiw/link_id_registry.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Route-planning graph/frame code: loops scale with full-AU nodes/links, but off plan 04's scope (extraction/route-planning side, Decision 9); for the successor design"
+  },
+  {
+   "path": "parser/kiwiw/mesh.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Shared types, tables and scalar helpers; no loop over full-AU data of its own (per-vertex callers are the retired decoders). Low confidence for coordconv"
+  },
+  {
+   "path": "parser/kiwiw/misc.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Header-level read/write whose trip count is bounded by file or level count; or a bounded demo"
+  },
+  {
+   "path": "parser/kiwiw/misc_writer.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Header-level read/write whose trip count is bounded by file or level count; or a bounded demo"
+  },
+  {
+   "path": "parser/kiwiw/model.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Shared types, tables and scalar helpers; no loop over full-AU data of its own (per-vertex callers are the retired decoders). Low confidence for coordconv"
+  },
+  {
+   "path": "parser/kiwiw/name.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Python decoder for a parcel sub-layer: per-vertex/shape decode of full-AU frames (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); deleted once D1 matches goldens/R"
+  },
+  {
+   "path": "parser/kiwiw/name_writer.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "R-replicate sub-layer writer, inverse of a Python decoder deleted in Phase 5; per-shape loop; retired with its tests (Assumption 3)"
+  },
+  {
+   "path": "parser/kiwiw/parcel.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Python decoder for a parcel sub-layer: per-vertex/shape decode of full-AU frames (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); deleted once D1 matches goldens/R"
+  },
+  {
+   "path": "parser/kiwiw/parcel_mgmt.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Header-level read/write whose trip count is bounded by file or level count; or a bounded demo"
+  },
+  {
+   "path": "parser/kiwiw/parcel_writer.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "R-replicate sub-layer writer, inverse of a Python decoder deleted in Phase 5; per-shape loop; retired with its tests (Assumption 3)"
+  },
+  {
+   "path": "parser/kiwiw/road.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Python decoder for a parcel sub-layer: per-vertex/shape decode of full-AU frames (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); deleted once D1 matches goldens/R"
+  },
+  {
+   "path": "parser/kiwiw/road_writer.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "R-replicate sub-layer writer, inverse of a Python decoder deleted in Phase 5; per-shape loop; retired with its tests (Assumption 3)"
+  },
+  {
+   "path": "parser/kiwiw/roadtypes.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Shared types, tables and scalar helpers; no loop over full-AU data of its own (per-vertex callers are the retired decoders). Low confidence for coordconv"
+  },
+  {
+   "path": "parser/kiwiw/route_planning.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Route-planning graph/frame code: loops scale with full-AU nodes/links, but off plan 04's scope (extraction/route-planning side, Decision 9); for the successor design"
+  },
+  {
+   "path": "parser/kiwiw/route_planning_writer.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Route-planning graph/frame code: loops scale with full-AU nodes/links, but off plan 04's scope (extraction/route-planning side, Decision 9); for the successor design"
+  },
+  {
+   "path": "parser/kiwiw/search_frame.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "IDX search-index read/write: loops scale with address entries; not in plan 04's scope, revisit in the successor design"
+  },
+  {
+   "path": "parser/kiwiw/selection.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Extraction / route-graph side: per-feature loops over full-AU OSM, but extraction stays Python and out of the C boundary (Decision 9)"
+  },
+  {
+   "path": "parser/kiwiw/spool.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/kiwiw/spool_legacy.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Legacy pickle spool and its one-time converter: per-cell loop over full spool, but not on build or gate path; low confidence (delete vs port is a later call)"
+  },
+  {
+   "path": "parser/kiwiw/vocab.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Shared types, tables and scalar helpers; no loop over full-AU data of its own (per-vertex callers are the retired decoders). Low confidence for coordconv"
+  },
+  {
+   "path": "parser/kiwiw/volume.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Header-level read/write whose trip count is bounded by file or level count; or a bounded demo"
+  },
+  {
+   "path": "parser/kiwiw/volume_writer.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Header-level read/write whose trip count is bounded by file or level count; or a bounded demo"
+  },
+  {
+   "path": "parser/osm_to_address_index.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Extraction / route-graph side: per-feature loops over full-AU OSM, but extraction stays Python and out of the C boundary (Decision 9)"
+  },
+  {
+   "path": "parser/osm_to_parcel_geometry.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Extraction / route-graph side: per-feature loops over full-AU OSM, but extraction stays Python and out of the C boundary (Decision 9)"
+  },
+  {
+   "path": "parser/osm_to_route_planning.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Extraction / route-graph side: per-feature loops over full-AU OSM, but extraction stays Python and out of the C boundary (Decision 9)"
+  },
+  {
+   "path": "parser/roundtrip_alldata_full.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "R round-trip proof harness (verification-only, not on build path); round-trips R through Python decoders/replicate writers, whole-disc loops; retired with them (Assumption 3). Low confidence for idx/misc variants, which touch no parcel decoder"
+  },
+  {
+   "path": "parser/roundtrip_alldata_header.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "R round-trip proof harness (verification-only, not on build path); round-trips R through Python decoders/replicate writers, whole-disc loops; retired with them (Assumption 3). Low confidence for idx/misc variants, which touch no parcel decoder"
+  },
+  {
+   "path": "parser/roundtrip_idx.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "R round-trip proof harness (verification-only, not on build path); round-trips R through Python decoders/replicate writers, whole-disc loops; retired with them (Assumption 3). Low confidence for idx/misc variants, which touch no parcel decoder"
+  },
+  {
+   "path": "parser/roundtrip_idx_full.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "R round-trip proof harness (verification-only, not on build path); round-trips R through Python decoders/replicate writers, whole-disc loops; retired with them (Assumption 3). Low confidence for idx/misc variants, which touch no parcel decoder"
+  },
+  {
+   "path": "parser/roundtrip_misc.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "R round-trip proof harness (verification-only, not on build path); round-trips R through Python decoders/replicate writers, whole-disc loops; retired with them (Assumption 3). Low confidence for idx/misc variants, which touch no parcel decoder"
+  },
+  {
+   "path": "parser/roundtrip_parcel_content.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "R round-trip proof harness (verification-only, not on build path); round-trips R through Python decoders/replicate writers, whole-disc loops; retired with them (Assumption 3). Low confidence for idx/misc variants, which touch no parcel decoder"
+  },
+  {
+   "path": "parser/study_region_hierarchy.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Research script walking R frames via Python decoders/AllData (full-disc per-frame loops); not on build or gate path; retired or re-pointed in Phase 5 (Assumption 3)"
+  },
+  {
+   "path": "parser/survey_road_reference_table.py",
+   "class": "retired",
+   "phase": 5,
+   "reason": "Research script walking R frames via Python decoders/AllData (full-disc per-frame loops); not on build or gate path; retired or re-pointed in Phase 5 (Assumption 3)"
+  },
+  {
+   "path": "parser/tools/bench_build.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/tools/boundary_mirror_census.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
+  },
+  {
+   "path": "parser/tools/continuity_census.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
+  },
+  {
+   "path": "parser/tools/convert_spool.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Legacy pickle spool and its one-time converter: per-cell loop over full spool, but not on build or gate path; low confidence (delete vs port is a later call)"
+  },
+  {
+   "path": "parser/tools/coord_scale_census.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
+  },
+  {
+   "path": "parser/tools/golden_capture.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/tools/header_word_census.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
+  },
+  {
+   "path": "parser/tools/lint_schema.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
+  },
+  {
+   "path": "parser/tools/overlay_test.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
+  },
+  {
+   "path": "parser/tools/parcel_occupancy.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
+  },
+  {
+   "path": "parser/tools/quantisation_roundtrip.py",
+   "class": "c-now",
+   "phase": 2,
+   "reason": "Per-vertex/shape/cell round-trip check of a built disc against its spool (991.6 s); becomes thin driver over D1/K1 in Phase 2, Python checking kept only as count oracle until Phase 5"
+  },
+  {
+   "path": "parser/tools/r_neighbours.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
+  },
+  {
+   "path": "parser/tools/road_density_census.py",
+   "class": "c-now",
+   "phase": 4,
+   "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
+  },
+  {
+   "path": "parser/tests/**/*.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Tests are not production paths; deliberate narrowing of 'every module', the only glob"
+  }
+ ]
+}
