@@ -153,6 +153,24 @@ The count and order are fixed at sign-off.
 - Surfaces: `_k1.c` rules and tolerances, `_e2.c`/`_cenc.c` only if a build defect is confirmed, `parser/tools/quantisation_roundtrip.py`, the cause table in the phase record.
 - Approach: open
 - Depends on: Phase 2
+- Units (briefs under `docs/plans/04-c-core-orchestration/briefs/`; heavy runs serialise on `output/.heavy.lock`; the C library is touched by one unit at a time, so only 3-06 runs alongside anything):
+
+  | Unit | Brief | Depends on | May run alongside |
+  |---|---|---|---|
+  | 3-01 cbuild header hash | `3-01-cbuild-header-hash.md` | Phase 2 | 3-06 |
+  | 3-02 K1 failure dump | `3-02-k1-failure-dump.md` | 3-01 | 3-06 |
+  | 3-03 dump diagnostic columns | `3-03-k1-dump-diagnostics.md` | 3-02 | 3-06 |
+  | 3-04 inside-side tolerance fixture | `3-04-inside-tolerance-fixture.md` | 3-03 | 3-06 |
+  | 3-05 triage tool | `3-05-k1-triage-tool.md` | 3-03 | 3-06 (not 3-04: both run K1 tests) |
+  | 3-06 spool forensics dossier | `3-06-spool-forensics-dossier.md` | Phase 2 | 3-01 to 3-05 |
+  | 3-07 cause table: background kinds | `3-07-cause-table-background.md` | 3-04, 3-05, 3-06 | none |
+  | 3-08 cause table: remainder and consolidated | `3-08-cause-table-remainder.md` | 3-07 | none |
+  | 3-10 to 3-89 fix units | authored inline by the orchestrator from `3-fix-template.md` after `triage/cause_table.md` lands | 3-08 | none |
+  | 3-90 fresh verify and record | `3-90-fresh-verify.md` | 3-08 and all fix units | none |
+
+  Fix units are not briefed now because `Approach: open`: their number and content depend on the cause table. 3-01 to 3-08 are the tooling that makes the cause table; the fix units follow it; 3-90 closes. If 3-07 or 3-08 report `blocked: unattributed`, bounce to Cody before any fix.
+
+  Carried-item placement (from Phase 2): cbuild header-staleness hazard, absorbed in 3-01. Uncovered inside-side TOL mutation, absorbed in 3-04. D1 `*_first` quirk, float-key tie (hypothesis H2) and `container`/`shape` early-exit question: float-key tie absorbed in 3-07; the D1 quirk is checked only if the dossier (3-06) or cause table shows it causing a failure, otherwise goes to Phase 4; the early-exit question goes to Phase 4 (harness checks). Explained counters unexercised: goes to Phase 4/5 (counter gates there). rc=1 harness FAILs: goes to Phase 4 (harness), not scoped here.
 
 ### Phase 4 — Harness and census hot checks in C
 
