@@ -71,8 +71,8 @@ Run header: Claude Code, orchestrator Sonnet 5.5, same session as above; Phase 2
 **Gates:** full-AU sha `87a01b14…2797862` matches; Perth `-j 1` == `-j 4` == `da13a775…` matches; goldens 9 passed; H budget 3 passed.
 **Deviations:** H-budget tests chosen by worker (`test_build_alldata.py::test_budgets_and_thresholds_are_u16_ceiling_everywhere`, `test_bench_record.py`); `run.sh` deletes the rebuilt full-AU `ALLDATA.KWI` after recording its sha; K1 driver exits 1 on a failing report so rc 0|1 with a report counts OK; ranges planned via the driver's `_block_tasks`. **Contradictions:** brief pointed at 1-01 for gate commands (taken from 3C-01); "one Monitor" cannot cover a multi-hour run (30-minute cap), so a single until-loop on `status.txt` was used.
 
-### Phase 2 verification — reviewed (open; 2-08 Flash draft, Sonnet 5.5 review passed with fixes; not closed, awaits Cody sign-off)
-Source: `output/scratch-2-07/` read only (no K1, `compare_disc`, or build re-run). Judged against DESIGN.md Phase 2, Gates and Assumption 2. Not a sign-off.
+### Phase 2 verification — closed
+Source: `output/scratch-2-07/` read only (no K1, `compare_disc`, or build re-run). Judged against DESIGN.md Phase 2, Gates and Assumption 2. Closed after Cody signatures (below).
 
 **K1 counts vs 3C-04** (`k1_a/b/c.json` `totals`; identical across the three runs and `k1_j1.json`). All cells exact, no deviations:
 
@@ -132,6 +132,17 @@ Verdict: sha `87a01b14…2797862` matches; Perth `-j 1` == `-j 4` == `da13a775�
 4. `output/scratch-2-07/` is uncommitted; a provenance entry was added in this commit. Phase 3 depends on it — do not delete.
 5. H-budget tests were chosen by 2-07 by name (`test_budgets_and_thresholds_are_u16_ceiling_everywhere`, `test_bench_record.py`); not re-run in 2-08.
 
-**Open (not signed off):** the re-signed PSS ceiling (peak 9,726,501 kB, Cody to set) and the Phase 4 per-check budgets (20 s `coord_scale` / 60 s others, Cody to confirm). Phase 2 awaits the mandatory Sonnet 5.5 review and Claude/Grok sign-off.
+**Signed (Cody via Bot Team Manager, 2026-10-02):** re-signed PSS ceiling = measured peak **9,726,501 kB** (no margin). Phase 4 budgets: `coord_scale` ≤ **20 s**; each other harness check ≤ **60 s**. Phase 2 close authorized.
 
-**Review (Sonnet 5.5, draft → reviewed):** every figure re-read from `output/scratch-2-07/` and matched: the eight K1 `totals` (checked/failing) equal the 3C-04 table to the integer in `k1_a`, `k1_b`, `k1_c` and `k1_j1`; total failing 17,989,704 = 1,438,558 + 16,549,569 + 824 + 752 + 1; explained `name_anchor_halo` 311,347 and `road_node_subcell_on_polyline` 551,530 (547,622 + 840 + 2,882 + 175 + 11) in all four reports, other explained counters 0; walls 71.183 / 68.408 / 66.006 s (median 68.408), `-j 1` 426.189 s; PSS peaks 8,736,916 / 8,982,284 / 9,726,501 kB (9.276 GiB), `-j 1` 6,646,774 kB; determinism three IDENTICAL lines; D1 decode 4.787 s / 7.962 s, 2,165 ranges, 2,315 calls, 150 retries, 3,954,156 frames, 460,018,916 rows, 0 failed; gates verbatim; `py_checks.tsv` walls. Fixes: removed the unsupported "not an early exit" claim for `container`/`shape`; filled the failure messages for `envelope`, `mfde`, `vocab`. DESIGN names no PSS margin (lines 49, 91: re-signed from the measured peak); none was invented. Phase 2 is not closed: the PSS ceiling and Phase 4 budgets await Cody, then phase sign-off and the `Workflow-Phase: 04-c-core-orchestration:2` commit.
+**Review (Sonnet 5.5, draft → reviewed):** every figure re-read from `output/scratch-2-07/` and matched: the eight K1 `totals` (checked/failing) equal the 3C-04 table to the integer in `k1_a`, `k1_b`, `k1_c` and `k1_j1`; total failing 17,989,704 = 1,438,558 + 16,549,569 + 824 + 752 + 1; explained `name_anchor_halo` 311,347 and `road_node_subcell_on_polyline` 551,530 (547,622 + 840 + 2,882 + 175 + 11) in all four reports, other explained counters 0; walls 71.183 / 68.408 / 66.006 s (median 68.408), `-j 1` 426.189 s; PSS peaks 8,736,916 / 8,982,284 / 9,726,501 kB (9.276 GiB), `-j 1` 6,646,774 kB; determinism three IDENTICAL lines; D1 decode 4.787 s / 7.962 s, 2,165 ranges, 2,315 calls, 150 retries, 3,954,156 frames, 460,018,916 rows, 0 failed; gates verbatim; `py_checks.tsv` walls. Fixes: removed the unsupported "not an early exit" claim for `container`/`shape`; filled the failure messages for `envelope`, `mfde`, `vocab`. DESIGN names no PSS margin (lines 49, 91: re-signed from the measured peak); none was invented. At review time Phase 2 was still open for Cody's PSS/budget signatures; those are now recorded above and closed in this commit with the Workflow-Phase trailer.
+
+
+### Phase 2 close — Grok (Build Orchestrator)
+Outcome verified against DESIGN Phase 2 and the Sonnet-reviewed 2-08 record (`6a00f2e`): K1 median wall 68.408 s ≤ 120 s; PSS peak 9,726,501 kB under the signed ceiling (equals the ceiling); all eight 3C-04 kinds and explained counters exact; determinism and build gates met; D1 equivalence per 2-02; Phase 4 budget table recorded. Flash draft `c1b0424` → Sonnet review `6a00f2e` → Cody signatures → this trailer.
+
+**Carried** (into Phase 3; ordered):
+1. Triage inputs in `output/scratch-2-07/` (esp. `k1_a.json` failures[] samples): background 1,438,558; background_boundary 16,549,569; interior_cover 824; completeness 752; name_anchor 1.
+2. `name_anchor` L0 (0,541) leaf 928 is the known spool/extractor item (Assumption 4 carry).
+3. Harness rc=1 rows (`container`, `envelope`, `mfde`, `shape`, `vocab`) pre-existing; Phase 4 baselines before change.
+4. Do not delete `output/scratch-2-07/` (provenance entry stands).
+5. Signed PSS ceiling 9,726,501 kB and Phase 4 budgets (20 s / 60 s) apply from here.
