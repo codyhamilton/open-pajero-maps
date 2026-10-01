@@ -304,3 +304,6 @@ same commit.
 - **Why not committed**: regenerable, large run output (`output/` is gitignored).
 - **Reproduce**: `bash output/scratch-2-07/run.sh` (needs G, `output/spool`, and
   the reference disc mounted; the K1/PSS walls are machine-dependent).
+
+### output/scratch-3-06/ (Phase 3 forensics, not committed)
+Python-only forensic dossier for plan 04 Phase 3 unit 3-06: `dossier.md`, scripts (`common.py`, `build_tall.py`, `d1_d3.py`, `d456.py`, `d7.py`, `d8.py`), tall-shape caches (`tall_{0,2,6}.npz`) and logs. Inputs: `output/scratch-3-11/G/ALLDATA.KWI`, `output/extract_timing/spool`, `output/scratch-2-07/k1_a.json`. Reproduce: `.venv-rp/bin/python output/scratch-3-06/build_tall.py` then `d1_d3.py`, `d456.py`, `d7.py`, and `d8.py` under `flock output/.heavy.lock`. Consumed by 3-07/3-08.

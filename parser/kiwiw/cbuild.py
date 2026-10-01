@@ -63,6 +63,11 @@ def _find_cc() -> str:
 def _hash_path(product: Path) -> Path:
     return product.with_name(product.name + ".hash")
 
+def _ext_headers() -> tuple[Path, ...]:
+    """Every `*.h` beside the extension sources, evaluated per call so a new
+    header is picked up without editing a list."""
+    return tuple(sorted(_HERE.glob("*.h")))
+
 
 def _content_hash(sources: tuple[Path, ...], flags: tuple[str, ...]) -> str:
     h = hashlib.sha256()
@@ -106,21 +111,30 @@ def _compile(args: list[str], product: Path, sources: tuple[Path, ...],
 
 
 def build_ext(sources: tuple[Path, ...] = EXT_SOURCES, out: Path = EXT_SO,
-              flags: tuple[str, ...] = CFLAGS, force: bool = False) -> Path:
+              flags: tuple[str, ...] = CFLAGS, force: bool = False,
+              headers: tuple[Path, ...] | None = None) -> Path:
     """Build (or reuse) the shared object at `out` from `sources`. Raises
     `BuildError` on a missing compiler or a compile failure; never falls
-    back silently -- that is the caller's choice (`cenc.py` today)."""
-    if not force and not is_stale(out, sources, flags):
+    back silently -- that is the caller's choice (`cenc.py` today).
+
+    `headers` are hashed (so a header-only edit invalidates the product) but
+    are not passed to the compiler; `None` means every `*.h` beside the
+    extension sources (`_ext_headers()`)."""
+    if headers is None:
+        headers = _ext_headers()
+    hashed = tuple(sources) + tuple(headers)
+    if not force and not is_stale(out, hashed, flags):
         return out
     cc = _find_cc()
     _compile([cc, *flags, "-shared", *(str(s) for s in sources), "-lm"],
-              out, sources, flags)
+              out, hashed, flags)
     return out
 
 
 def build_test_bin(ctest_dir: Path = CTEST_DIR, out: Path = CTEST_BIN,
                     ext_sources: tuple[Path, ...] = EXT_SOURCES,
-                    flags: tuple[str, ...] = CFLAGS, force: bool = False) -> Path:
+                    flags: tuple[str, ...] = CFLAGS, force: bool = False,
+                    headers: tuple[Path, ...] | None = None) -> Path:
     """Build (or reuse) the layer-(b) test executable from every
     `ctest_dir/*.c` file (each pulls in the extension source(s) it tests via
     `#include`, so nothing here is compiled twice). Raises `BuildError` --
@@ -134,7 +148,9 @@ def build_test_bin(ctest_dir: Path = CTEST_DIR, out: Path = CTEST_BIN,
     compiled = tuple(sorted(ctest_dir.glob("*.c")))
     if not compiled:
         raise BuildError(f"no C test sources found in {ctest_dir}")
-    hashed = compiled + tuple(ext_sources)
+    if headers is None:
+        headers = _ext_headers()
+    hashed = compiled + tuple(ext_sources) + tuple(headers)
     if not force and not is_stale(out, hashed, flags):
         return out
     cc = _find_cc()
