@@ -126,6 +126,7 @@ The count and order are fixed at sign-off.
 - Surfaces: `docs/ARCHITECTURE.md`, `docs/plans/03-map-layer-parity-remediation/DESIGN.md` (pointer only), the inventory file and its test under `parser/tests/`.
 - Approach: known
 - Depends on: nothing
+- Refine: skipped. One worker carries it (92 non-test `parser/` modules to classify, one ARCHITECTURE edit, one pointer, one test); `execute` briefs it inline.
 
 ### Phase 2 — C decoder and C checker, within budget
 
