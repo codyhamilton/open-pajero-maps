@@ -313,10 +313,32 @@ _D1_LAYOUT = {
              ("angle_deg", "i32"), ("type_code", "u16"), ("string_type", "u8"),
              ("priority", "u8"), ("vertical", "u8"), ("display_scale_flag", "u8"),
              ("angle_flags", "u8"), ("has_latlon", "u8"), ("has_angle", "u8")],
+    # 2-02: the block walker's output table, then its input table (last: no output buffer)
+    "walk": [("lat_lo", "f64"), ("lat_hi", "f64"), ("lon_lo", "f64"), ("lon_hi", "f64"),
+             ("flat_lo", "f64"), ("flat_hi", "f64"), ("flon_lo", "f64"), ("flon_hi", "f64"),
+             ("off", "u64"), ("len", "u32"), ("dsa", "u32"), ("level", "i32"),
+             ("blockset_index", "i32"), ("block_index", "i32"), ("block", "i32"), ("frame", "i32"), ("ix", "i32"),
+             ("iy", "i32"), ("frame_range", "i32"), ("status", "i32"), ("err", "i32"),
+             ("p0", "u16"), ("p1", "u16"), ("p2", "u16"), ("p3", "u16"), ("p4", "u16"),
+             ("p5", "u16"), ("p6", "u16"), ("size", "u16"), ("depth", "u8"), ("parcel_type", "u8"),
+             ("frame_class", "u8")],
+    "block": [("cov_lat_lo", "f64"), ("cov_lat_hi", "f64"), ("cov_lon_lo", "f64"),
+              ("cov_lon_hi", "f64"), ("lat0", "f64"), ("lon0", "f64"), ("cell_lat", "f64"),
+              ("cell_lon", "f64"), ("wlo", "f64"), ("off", "u64"), ("len", "u32"),
+              ("sector_sz", "u32"), ("logical_sz", "u32"), ("grid_nx", "u32"),
+              ("grid_ny", "u32"), ("level", "i32"), ("blockset_index", "i32"),
+              ("block_index", "i32"), ("bsx", "i32"), ("bsy", "i32"), ("blx", "i32"),
+              ("bly", "i32"), ("n_blocks_lat", "i32"), ("n_blocks_lng", "i32"),
+              ("rng_normal", "i32"), ("rng_sparse", "i32"), ("rng_divided", "i32"),
+              ("npl0", "u16"), ("npl1", "u16"), ("npl2", "u16"), ("npl3", "u16"),
+              ("npg0", "u16"), ("npg1", "u16"), ("npg2", "u16"), ("npg3", "u16"),
+              ("n_basic_map", "u16"), ("n_ext_map", "u16")],
 }
 _D1_TABLES = tuple(_D1_LAYOUT)                      # C table index == position
 _D1_NP = {"u8": "<u1", "u16": "<u2", "u32": "<u4", "u64": "<u8", "i32": "<i4", "f64": "<f8"}
-_D1_NSTATS = 16
+_D1_NOUT = _D1_TABLES.index("walk") + 1             # output tables 1..walk; "block" is input only
+_D1_NSTATS = 18
+_D1_S_FAILED, _D1_S_NS = 15, 16                      # stats slots after the row counts
 _D1_ERRORS = {-1: "bad arguments", -2: "a leaf row lies outside the region",
               -3: "out of memory"}
 
@@ -327,9 +349,10 @@ def _d1_dtype(table: str):
 
 
 D1_LEAF_DTYPE = _d1_dtype("leaf")
+D1_BLOCK_DTYPE = _d1_dtype("block")
 _D1_DTYPES = {t: _d1_dtype(t) for t in _D1_TABLES}
 _d1_lib = None
-_d1_stats = {"ranges": 0, "calls": 0, "frames": 0, "rows": 0, "failed": 0,
+_d1_stats = {"ranges": 0, "calls": 0, "retries": 0, "frames": 0, "rows": 0, "failed": 0,
              "py_s": 0.0, "c_s": 0.0, "handoff_s": 0.0}
 
 
@@ -356,6 +379,10 @@ def _load_d1():
         lib.kw_d1_frames.argtypes = [ctypes.c_void_p, ctypes.c_int64, ctypes.c_void_p,
                                      ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p,
                                      ctypes.c_void_p]
+        lib.kw_d1_blocks.restype = ctypes.c_int64
+        lib.kw_d1_blocks.argtypes = [ctypes.c_void_p, ctypes.c_int64, ctypes.c_void_p,
+                                     ctypes.c_int64, ctypes.c_int64, ctypes.c_int64,
+                                     ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
         _d1_check_layout(lib)
         _d1_lib = lib
     return _d1_lib
@@ -414,6 +441,53 @@ class D1Result:
         self.name_labels = _Labels(_name_label)
 
 
+def _d1_run(call, region, rows, nin, cap_hint):
+    """The grow-and-repeat driver shared by `d1_frames` / `d1_blocks`: `call(ptrs,
+    caps, stats)` runs one C call; returns (rc-0 stats, buffers, wall seconds)."""
+    import numpy as np
+    nt = _D1_NOUT
+    base = max(1, cap_hint) if cap_hint is not None else max(1 << 16, 2048 * nin)
+    caps = np.full(nt, base, np.int64)
+    if cap_hint is None:                  # vertex tables dominate: ~9k per real frame
+        for tn in ("node", "point", "bgcoord"):
+            caps[_D1_TABLES.index(tn)] = base * 8
+    caps[1] = max(rows, 1) if cap_hint is not None else max(rows, base)
+    caps[_D1_TABLES.index("walk")] = max(rows, 1) if cap_hint is not None else max(rows, base)
+    caps[0] = 0
+    wall = c_ns = 0.0
+    while True:
+        bufs = [None] + [np.zeros(int(caps[i]) * _D1_DTYPES[_D1_TABLES[i]].itemsize or 1, np.uint8)
+                         for i in range(1, nt)]
+        ptrs = np.array([0] + [b.ctypes.data for b in bufs[1:]], np.uint64)
+        stats = np.zeros(_D1_NSTATS, np.int64)
+        tc = time.perf_counter()
+        rc = call(ptrs.ctypes.data, caps.ctypes.data, stats.ctypes.data)
+        wall += time.perf_counter() - tc
+        c_ns += float(stats[_D1_S_NS])
+        _d1_stats["calls"] += 1
+        if rc < 0:
+            raise D1Error(_D1_ERRORS.get(rc, f"error {rc}"))
+        if rc == 0:
+            break
+        _d1_stats["retries"] += 1
+        for i in range(1, nt):
+            if stats[i] > caps[i]:
+                caps[i] = int(stats[i] + stats[i] // 4)
+    t = {}
+    for i in range(1, nt):
+        name = _D1_TABLES[i]
+        dt = _D1_DTYPES[name]
+        t[name] = bufs[i][:int(stats[i]) * dt.itemsize].copy().view(dt)
+    s = _d1_stats
+    s["ranges"] += 1
+    s["frames"] += int(stats[1])
+    s["rows"] += int(stats[1:_D1_NOUT].sum())
+    s["failed"] += int(stats[_D1_S_FAILED])
+    s["c_s"] += c_ns / 1e9
+    s["handoff_s"] += max(0.0, wall - c_ns / 1e9)
+    return t, wall
+
+
 def d1_frames(region, leaf, cap_hint: int | None = None) -> D1Result:
     """Decode every leaf frame in `leaf` (a `D1_LEAF_DTYPE` array of frame
     positions in the uint8 array `region`) in one C call; grow the output
@@ -427,47 +501,80 @@ def d1_frames(region, leaf, cap_hint: int | None = None) -> D1Result:
     leaf = np.ascontiguousarray(leaf)
     region = np.ascontiguousarray(region, dtype=np.uint8)
     nf = len(leaf)
-    nt = len(_D1_TABLES)
-    base = max(1, cap_hint) if cap_hint is not None else max(1 << 16, 2048 * nf)
-    caps = np.full(nt, base, np.int64)
-    if cap_hint is None:                  # vertex tables dominate: ~9k per real frame
-        for tn in ("node", "point", "bgcoord"):
-            caps[_D1_TABLES.index(tn)] = base * 8
-    caps[1] = max(nf, 1) if cap_hint is not None else max(nf, base)
-    caps[0] = 0
-    wall = c_ns = 0.0
-    while True:
-        bufs = [None] + [np.zeros(int(caps[i]) * _D1_DTYPES[_D1_TABLES[i]].itemsize or 1, np.uint8)
-                         for i in range(1, nt)]
-        ptrs = np.array([0] + [b.ctypes.data for b in bufs[1:]], np.uint64)
-        stats = np.zeros(_D1_NSTATS, np.int64)
-        tc = time.perf_counter()
-        rc = lib.kw_d1_frames(region.ctypes.data, len(region), leaf.ctypes.data, nf,
-                              ptrs.ctypes.data, caps.ctypes.data, stats.ctypes.data)
-        wall += time.perf_counter() - tc
-        c_ns += float(stats[15])
-        _d1_stats["calls"] += 1
-        if rc < 0:
-            raise D1Error(_D1_ERRORS.get(rc, f"error {rc}"))
-        if rc == 0:
-            break
-        for i in range(1, nt):
-            if stats[i] > caps[i]:
-                caps[i] = int(stats[i] + stats[i] // 4)
-    t = {}
-    for i in range(1, nt):
-        name = _D1_TABLES[i]
-        dt = _D1_DTYPES[name]
-        t[name] = bufs[i][:int(stats[i]) * dt.itemsize].copy().view(dt)
-    s = _d1_stats
-    s["ranges"] += 1
-    s["frames"] += nf
-    s["rows"] += int(stats[1:14].sum())
-    s["failed"] += int(stats[14])
-    s["c_s"] += c_ns / 1e9
-    s["handoff_s"] += max(0.0, wall - c_ns / 1e9)
-    s["py_s"] += max(0.0, (time.perf_counter() - t0) - wall)
+    t, wall = _d1_run(lambda p, c, s: lib.kw_d1_frames(
+        region.ctypes.data, len(region), leaf.ctypes.data, nf, p, c, s),
+        region, nf, nf, cap_hint)
+    _d1_stats["py_s"] += max(0.0, (time.perf_counter() - t0) - wall)
     return D1Result(t)
+
+
+def d1_blocks(region, blocks, rlo: int | None = None, rhi: int | None = None,
+              cap_hint: int | None = None) -> D1Result:
+    """Walk and decode every leaf of the block rows `blocks` (a `D1_BLOCK_DTYPE`
+    array, see `d1_block_rows`) whose slot-midpoint lattice row lies in
+    `[rlo, rhi]` (default: all) in ONE C call (a range = one band of blocks;
+    repeated only to grow buffers, `d1_stats()["retries"]`). `t["walk"]` has a row
+    per leaf (or per unparsable block, status 1) and `t["frame"][walk.frame]` is
+    its decoded frame, exactly `harness.walk` + `parcel.decode_parcel`."""
+    import numpy as np
+    t0 = time.perf_counter()
+    lib = _load_d1()
+    if blocks.dtype != D1_BLOCK_DTYPE:
+        raise D1Error("block table has the wrong dtype")
+    blocks = np.ascontiguousarray(blocks)
+    region = np.ascontiguousarray(region, dtype=np.uint8)
+    lo = -(1 << 62) if rlo is None else int(rlo)
+    hi = (1 << 62) if rhi is None else int(rhi)
+    nb = len(blocks)
+    t, wall = _d1_run(lambda p, c, s: lib.kw_d1_blocks(
+        region.ctypes.data, len(region), blocks.ctypes.data, nb, lo, hi, p, c, s),
+        region, nb, nb, cap_hint)
+    _d1_stats["py_s"] += max(0.0, (time.perf_counter() - t0) - wall)
+    return D1Result(t)
+
+
+def d1_block_rows(keys, container, lattice_cache: dict | None = None):
+    """The `D1_BLOCK_DTYPE` rows for block keys `(level, blockset_index,
+    block_index, bsx, bsy, blx, bly, file_offset, length)` of a disc whose
+    `harness.walk.read_container` result is `container`: one row per BLOCK
+    (callers enumerate blocks, never leaves). The per-level fields (LMR,
+    coverage, raw lattice, the three `coordconv.range_for` answers) are looked up
+    once per level."""
+    import numpy as np
+    from . import coordconv
+    from .mesh import CellGrid
+    pd, hdr = container.pdmdh, container.hdr
+    lmrs = {m.level: m for m in pd.levels}
+    per: dict = {} if lattice_cache is None else lattice_cache
+
+    def rng(level, cls, state="normal"):
+        try:
+            return coordconv.range_for(level, cls, state)
+        except KeyError:
+            return 0
+
+    def level_fields(level):
+        if level not in per:
+            m, cg = lmrs[level], CellGrid.from_reference(level)
+            cv = pd.coverage
+            per[level] = (
+                cv.lat_lo, cv.lat_hi, cv.lon_lo, cv.lon_hi, cg.disc_lat_lo, cg.disc_lon_lo,
+                cg.cell_lat, cg.cell_lon, cg.disc_lon_span / 2.0 - 180.0,
+                hdr.sector_size, hdr.logical_sector_size, m.grid_nx, m.grid_ny,
+                m.n_blocks_lat, m.n_blocks_lng,
+                rng(level, "urban" if level == 0 else "full"),
+                rng(level, "sparse") if level == 0 else 0,
+                rng(level, "divided", "pardiv1_sub0"),
+                *m.n_parcels_lat, *m.n_parcels_lng, m.n_basic_map, m.n_ext_map)
+        return per[level]
+
+    rows = np.zeros(len(keys), D1_BLOCK_DTYPE)
+    for i, (level, bsi, bidx, bsx, bsy, blx, bly, boff, blen) in enumerate(keys):
+        (cla, cha, clo, chi, lat0, lon0, clat, clon, wlo, ssz, lsz, gnx, gny, nbla, nblg,
+         rn, rs, rd, *tail) = level_fields(level)
+        rows[i] = (cla, cha, clo, chi, lat0, lon0, clat, clon, wlo, boff, blen, ssz, lsz, gnx,
+                   gny, level, bsi, bidx, bsx, bsy, blx, bly, nbla, nblg, rn, rs, rd, *tail)
+    return rows
 
 
 def d1_stats() -> dict:

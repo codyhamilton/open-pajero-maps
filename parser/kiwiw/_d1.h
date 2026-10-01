@@ -49,13 +49,17 @@ enum {
     D1_T_LEAF = 0,   /* input */
     D1_T_FRAME, D1_T_MFDE, D1_T_DCLASS, D1_T_ADDL, D1_T_LINK, D1_T_NODE, D1_T_POINT,
     D1_T_BGELEM, D1_T_BGUNIT, D1_T_BGSHAPE, D1_T_BGCOORD, D1_T_NLIST, D1_T_NREC,
+    D1_T_WALK,       /* 2-02: one row per walked leaf / unparsable block (kw_d1_blocks) */
+    D1_T_BLOCK,      /* input of kw_d1_blocks (never an output table) */
     D1_NTABLES
 };
-/* stats slots: [0] leaf frames in, [t] rows needed for table t (1..13),
- * [14] failed frames, [15] C nanoseconds */
-#define D1_NSTATS 16
-#define D1_S_FAILED 14
-#define D1_S_NS 15
+/* output tables are 1..D1_T_WALK; D1_T_BLOCK only has a layout. stats slots:
+ * [0] leaf frames in (kw_d1_blocks: leaf frames decoded), [t] rows needed for
+ * table t (1..D1_T_WALK), then failed frames, C nanoseconds, blocks walked */
+#define D1_NSTATS 18
+#define D1_S_FAILED 15
+#define D1_S_NS 16
+#define D1_S_BLOCKS 17
 
 #define D1_ST_SHORT 1
 #define D1_ST_BG 2
@@ -147,6 +151,48 @@ enum {
     X(S, u8, string_type) X(S, u8, priority) X(S, u8, vertical) \
     X(S, u8, display_scale_flag) X(S, u8, angle_flags) X(S, u8, has_latlon) X(S, u8, has_angle)
 
+/* 2-02 walker input: one row per block (the tuple `harness.walk.iter_blocks` /
+ * `coord_scale._block_keys` produce, plus the level's LMR fields, the disc
+ * coverage, the level's raw lattice and the three coordinate ranges
+ * `kiwiw.mesh.leaf_frame_range` can return for the level; a range <= 0 is
+ * "none"). `off`/`len` address the block's Parcel Management Record in the
+ * region; `len` is clipped to the region like a short file read. */
+#define D1_F_BLOCK(X, S) \
+    X(S, f64, cov_lat_lo) X(S, f64, cov_lat_hi) X(S, f64, cov_lon_lo) X(S, f64, cov_lon_hi) \
+    X(S, f64, lat0) X(S, f64, lon0) X(S, f64, cell_lat) X(S, f64, cell_lon) X(S, f64, wlo) \
+    X(S, u64, off) \
+    X(S, u32, len) X(S, u32, sector_sz) X(S, u32, logical_sz) X(S, u32, grid_nx) \
+    X(S, u32, grid_ny) \
+    X(S, i32, level) X(S, i32, blockset_index) X(S, i32, block_index) X(S, i32, bsx) \
+    X(S, i32, bsy) X(S, i32, blx) X(S, i32, bly) X(S, i32, n_blocks_lat) \
+    X(S, i32, n_blocks_lng) X(S, i32, rng_normal) X(S, i32, rng_sparse) X(S, i32, rng_divided) \
+    X(S, u16, npl0) X(S, u16, npl1) X(S, u16, npl2) X(S, u16, npl3) \
+    X(S, u16, npg0) X(S, u16, npg1) X(S, u16, npg2) X(S, u16, npg3) \
+    X(S, u16, n_basic_map) X(S, u16, n_ext_map)
+
+/* 2-02 walker output: one row per leaf in tree order (`walk._iter_tree_leaves`,
+ * rows outside the band dropped), or one marker row (depth 0) for a block whose
+ * record does not parse. lat_/lon_ fields = leaf slot bounds (the marker: the block's);
+ * flat_/flon_ = frame bounds; `frame` = the leaf's row in the frame table (-1: marker);
+ * ix/iy = the checker's lattice cell of the slot midpoint; frame_range 0 = none;
+ * path = the p0..p6 slot indices from the block root (depth of them);
+ * frame_class 0 leaf, 1 l0_sparse_tile, 2 divided_parent; status 0 ok, 1 record
+ * did not parse (err: 1 list_type != 0, 2 recursion > 6, 3 short buffer),
+ * 2 frame decode failed (the frame row's status says why); off/len = the Map
+ * Frame (the marker: the block record); dsa/size = its mapinfo slot words (the
+ * `MeshLocation.sector_addr` / `size_logical_sectors`). */
+#define D1_F_WALK(X, S) \
+    X(S, f64, lat_lo) X(S, f64, lat_hi) X(S, f64, lon_lo) X(S, f64, lon_hi) \
+    X(S, f64, flat_lo) X(S, f64, flat_hi) X(S, f64, flon_lo) X(S, f64, flon_hi) \
+    X(S, u64, off) \
+    X(S, u32, len) X(S, u32, dsa) \
+    X(S, i32, level) X(S, i32, blockset_index) X(S, i32, block_index) X(S, i32, block) \
+    X(S, i32, frame) X(S, i32, ix) X(S, i32, iy) X(S, i32, frame_range) X(S, i32, status) \
+    X(S, i32, err) \
+    X(S, u16, p0) X(S, u16, p1) X(S, u16, p2) X(S, u16, p3) X(S, u16, p4) X(S, u16, p5) \
+    X(S, u16, p6) X(S, u16, size) \
+    X(S, u8, depth) X(S, u8, parcel_type) X(S, u8, frame_class)
+
 #define D1_FIELD(S, T, N) d1_##T N;
 #define D1_STRUCT(NAME, S) typedef struct { D1_F_##NAME(D1_FIELD, S) } S;
 D1_STRUCT(LEAF, d1_leaf)
@@ -163,6 +209,8 @@ D1_STRUCT(BGSHAPE, d1_bgshape)
 D1_STRUCT(BGCOORD, d1_bgcoord)
 D1_STRUCT(NLIST, d1_nlist)
 D1_STRUCT(NREC, d1_nrec)
+D1_STRUCT(WALK, d1_walk)
+D1_STRUCT(BLOCK, d1_block)
 
 /* layout accessors (exported from _d1.c, for the Python descriptor check) */
 int kw_d1_ntables(void);
@@ -176,5 +224,15 @@ int kw_d1_field_off(int t, int i);
 int64_t kw_d1_frames(const uint8_t *region, int64_t region_len, const void *leaf,
                      int64_t nframes, void *const *bufs, const int64_t *caps,
                      int64_t *stats);
+
+/* The block walker (2-02): one call decodes every leaf of `nblocks` block rows
+ * whose slot-midpoint lattice row iy lies in [rlo, rhi] -- the tree walk,
+ * `narrow_bounds` arithmetic, sparse-tile / frame rules and the frame decode
+ * above, all in C -- into the same tables plus `walk`. Return codes as
+ * kw_d1_frames (1: grow `bufs[t]` to stats[t] rows and call again; -2: a Map
+ * Frame lies outside the region). Rows: frame table index == leaf order. */
+int64_t kw_d1_blocks(const uint8_t *region, int64_t region_len, const void *blocks,
+                     int64_t nblocks, int64_t rlo, int64_t rhi, void *const *bufs,
+                     const int64_t *caps, int64_t *stats);
 
 #endif

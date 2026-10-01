@@ -274,3 +274,17 @@ same commit.
   with `golden_capture.py prove --golden output/goldens-3C/l0_divided_trim_halo
   --digest <full-AU --frame-digest listing> --work <dir> -j 12` (under
   `flock output/.heavy.lock`).
+
+## D1 equivalence sample (G and R discs)
+
+- **What**: `parser/tests/fixtures/d1_sample.json` (committed, ~6 KB) lists the
+  leaves and whole blocks `parser/tests/test_d1_equivalence.py` compares D1
+  (`kw_d1_blocks`) against `harness.walk` + `decode_parcel`. The discs it indexes
+  are NOT committed: G at `output/scratch-3-11/G/ALLDATA.KWI` (the 3-11 reference
+  build, size recorded in the file) and R at `/run/media/codyh/464210-8480/ALLDATA.KWI`
+  (the reference disc). The test skips a disc that is absent.
+- **Rule**: recorded verbatim in the file (`rule`, `seed` 20260930, `constants`),
+  re-derived by `test_sample_rule_reproduces`.
+- **Reproduce**: `D1_SAMPLE_WRITE=1 .venv-rp/bin/python -m pytest
+  parser/tests/test_d1_equivalence.py -k rule` (both discs present), then rerun
+  without the variable.

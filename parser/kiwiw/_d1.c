@@ -14,6 +14,7 @@
  * second, so the set of frames this fails on is exactly the set Python raises
  * on. lat/lon use `coordconv.xy_to_latlon`'s operation order (built with
  * -ffp-contract=off) and are bit-identical to it. */
+#include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +31,8 @@ D1_SPECS(LEAF, d1_leaf) D1_SPECS(FRAME, d1_frame) D1_SPECS(MFDE, d1_mfde)
 D1_SPECS(DCLASS, d1_dclass) D1_SPECS(ADDL, d1_addl) D1_SPECS(LINK, d1_link)
 D1_SPECS(NODE, d1_node) D1_SPECS(POINT, d1_point) D1_SPECS(BGELEM, d1_bgelem)
 D1_SPECS(BGUNIT, d1_bgunit) D1_SPECS(BGSHAPE, d1_bgshape) D1_SPECS(BGCOORD, d1_bgcoord)
-D1_SPECS(NLIST, d1_nlist) D1_SPECS(NREC, d1_nrec)
+D1_SPECS(NLIST, d1_nlist) D1_SPECS(NREC, d1_nrec) D1_SPECS(WALK, d1_walk)
+D1_SPECS(BLOCK, d1_block)
 
 #define D1_TAB(NAME, S, STR) {STR, sizeof(S), sizeof(spec_##NAME) / sizeof(spec_##NAME[0]), spec_##NAME}
 static const struct { const char *name; int size, nf; const d1_fspec *f; } TABS[D1_NTABLES] = {
@@ -41,7 +43,9 @@ static const struct { const char *name; int size, nf; const d1_fspec *f; } TABS[
     D1_TAB(BGELEM, d1_bgelem, "bgelem"), D1_TAB(BGUNIT, d1_bgunit, "bgunit"),
     D1_TAB(BGSHAPE, d1_bgshape, "bgshape"), D1_TAB(BGCOORD, d1_bgcoord, "bgcoord"),
     D1_TAB(NLIST, d1_nlist, "nlist"), D1_TAB(NREC, d1_nrec, "nrec"),
+    D1_TAB(WALK, d1_walk, "walk"), D1_TAB(BLOCK, d1_block, "block"),
 };
+#define D1_NOUT (D1_T_WALK + 1)           /* output tables 1..D1_T_WALK; slot 0 unused */
 
 int kw_d1_ntables(void) { return D1_NTABLES; }
 const char *kw_d1_table_name(int t) { return t >= 0 && t < D1_NTABLES ? TABS[t].name : NULL; }
@@ -436,54 +440,295 @@ static int64_t now_ns(void) {
     return (int64_t)ts.tv_sec * 1000000000LL + ts.tv_nsec;
 }
 
-int64_t kw_d1_frames(const uint8_t *region, int64_t region_len, const void *leaf,
-                     int64_t nframes, void *const *bufs, const int64_t *caps, int64_t *stats) {
-    int64_t t0 = now_ns();
-    if (!region || region_len < 0 || nframes < 0 || (nframes && !leaf) || !bufs || !caps ||
-        !stats)
-        return -1;
+static d1_ctx *ctx_new(void *const *bufs, const int64_t *caps) {
     d1_ctx *c = (d1_ctx *)calloc(1, sizeof *c);
-    if (!c) return -1;
-    for (int t = 1; t < D1_NTABLES; t++) { c->base[t] = (uint8_t *)bufs[t]; c->cap[t] = caps[t]; }
-    int64_t failed = 0;
-    for (int64_t i = 0; i < nframes; i++) {
-        d1_leaf L;
-        memcpy(&L, (const uint8_t *)leaf + (size_t)i * sizeof L, sizeof L);
-        if (L.off > (uint64_t)region_len || (uint64_t)region_len - L.off < L.len) { free(c); return -2; }
-        int64_t start[D1_NTABLES];
-        memcpy(start, c->n, sizeof start);
-        d1_frame fr; ZERO(fr);
-        fr.off = L.off;
-        int st = frame(c, region + L.off, &L, (int32_t)i, &fr);
-        if (st) {                                   /* all-or-nothing, like the Python raise */
-            memcpy(c->n, start, sizeof start);
-            d1_frame bad; ZERO(bad);
-            bad.off = L.off; bad.frame_size = L.len; bad.status = st;
-            fr = bad; failed++;
-        } else {
-            fr.mfde_n = (d1_u32)(c->n[D1_T_MFDE] - fr.mfde_first);
-            fr.dclass_n = (d1_u32)(c->n[D1_T_DCLASS] - fr.dclass_first);
-            fr.link_n = (d1_u32)(c->n[D1_T_LINK] - fr.link_first);
-            fr.node_n = (d1_u32)(c->n[D1_T_NODE] - fr.node_first);
-            fr.point_n = (d1_u32)(c->n[D1_T_POINT] - fr.point_first);
-            fr.addl_n = (d1_u32)(c->n[D1_T_ADDL] - fr.addl_first);
-            fr.bgelem_n = (d1_u32)(c->n[D1_T_BGELEM] - fr.bgelem_first);
-            fr.bgunit_n = (d1_u32)(c->n[D1_T_BGUNIT] - fr.bgunit_first);
-            fr.bgshape_n = (d1_u32)(c->n[D1_T_BGSHAPE] - fr.bgshape_first);
-            fr.bgcoord_n = (d1_u32)(c->n[D1_T_BGCOORD] - fr.bgcoord_first);
-            fr.nlist_n = (d1_u32)(c->n[D1_T_NLIST] - fr.nlist_first);
-            fr.nrec_n = (d1_u32)(c->n[D1_T_NREC] - fr.nrec_first);
-        }
-        put(c, D1_T_FRAME, &fr);
+    if (!c) return NULL;
+    for (int t = 1; t < D1_NOUT; t++) { c->base[t] = (uint8_t *)bufs[t]; c->cap[t] = caps[t]; }
+    return c;
+}
+
+/* Decode one Map Frame (all-or-nothing, like the Python raise) and append its
+ * `frame` row; returns the frame status. */
+static int decode_leaf(d1_ctx *c, const uint8_t *region, const d1_leaf *L, int32_t fi,
+                       int64_t *failed) {
+    int64_t start[D1_NOUT];
+    memcpy(start, c->n, sizeof start);
+    d1_frame fr; ZERO(fr);
+    fr.off = L->off;
+    int st = frame(c, region + L->off, L, fi, &fr);
+    if (st) {
+        memcpy(c->n, start, sizeof start);
+        d1_frame bad; ZERO(bad);
+        bad.off = L->off; bad.frame_size = L->len; bad.status = st;
+        fr = bad; (*failed)++;
+    } else {
+        fr.mfde_n = (d1_u32)(c->n[D1_T_MFDE] - fr.mfde_first);
+        fr.dclass_n = (d1_u32)(c->n[D1_T_DCLASS] - fr.dclass_first);
+        fr.link_n = (d1_u32)(c->n[D1_T_LINK] - fr.link_first);
+        fr.node_n = (d1_u32)(c->n[D1_T_NODE] - fr.node_first);
+        fr.point_n = (d1_u32)(c->n[D1_T_POINT] - fr.point_first);
+        fr.addl_n = (d1_u32)(c->n[D1_T_ADDL] - fr.addl_first);
+        fr.bgelem_n = (d1_u32)(c->n[D1_T_BGELEM] - fr.bgelem_first);
+        fr.bgunit_n = (d1_u32)(c->n[D1_T_BGUNIT] - fr.bgunit_first);
+        fr.bgshape_n = (d1_u32)(c->n[D1_T_BGSHAPE] - fr.bgshape_first);
+        fr.bgcoord_n = (d1_u32)(c->n[D1_T_BGCOORD] - fr.bgcoord_first);
+        fr.nlist_n = (d1_u32)(c->n[D1_T_NLIST] - fr.nlist_first);
+        fr.nrec_n = (d1_u32)(c->n[D1_T_NREC] - fr.nrec_first);
     }
+    put(c, D1_T_FRAME, &fr);
+    return st;
+}
+
+static int64_t finish(d1_ctx *c, int64_t *stats, int64_t nin, int64_t failed, int64_t t0) {
     int64_t rc = 0;
-    stats[0] = nframes;
-    for (int t = 1; t < D1_NTABLES; t++) {
+    stats[0] = nin;
+    for (int t = 1; t < D1_NOUT; t++) {
         stats[t] = c->n[t];
         if (c->n[t] > c->cap[t]) rc = 1;
     }
     stats[D1_S_FAILED] = failed;
     free(c);
     stats[D1_S_NS] = now_ns() - t0;
+    return rc;
+}
+
+int64_t kw_d1_frames(const uint8_t *region, int64_t region_len, const void *leaf,
+                     int64_t nframes, void *const *bufs, const int64_t *caps, int64_t *stats) {
+    int64_t t0 = now_ns();
+    if (!region || region_len < 0 || nframes < 0 || (nframes && !leaf) || !bufs || !caps ||
+        !stats)
+        return -1;
+    d1_ctx *c = ctx_new(bufs, caps);
+    if (!c) return -1;
+    int64_t failed = 0;
+    for (int64_t i = 0; i < nframes; i++) {
+        d1_leaf L;
+        memcpy(&L, (const uint8_t *)leaf + (size_t)i * sizeof L, sizeof L);
+        if (L.off > (uint64_t)region_len || (uint64_t)region_len - L.off < L.len) { free(c); return -2; }
+        decode_leaf(c, region, &L, (int32_t)i, &failed);
+    }
+    return finish(c, stats, nframes, failed, t0);
+}
+
+/* ------------------------------------------------------------ block walker */
+
+#define NO_DATA_DSA 0xFFFFFFFFu
+#define MAX_DEPTH 6                   /* parcel_mgmt.MAX_SUBPARCEL_DEPTH */
+#define L0_TILE 4                     /* mesh.L0_TILE */
+#define BAND_NONE (-1)
+
+typedef struct { double lat_lo, lat_hi, lon_lo, lon_hi; } bnds;
+
+/* walk.py _lon_span / _block_base_bounds (same operation order) */
+static bnds block_bounds(const d1_block *B) {
+    double lon_span = B->cov_lon_hi - B->cov_lon_lo;
+    if (lon_span < 0) lon_span = lon_span + 360.0;
+    double lat_span = B->cov_lat_hi - B->cov_lat_lo;
+    double mx = lon_span / (double)B->grid_nx;
+    double my = lat_span / (double)B->grid_ny;
+    int64_t npc_lng = 1 + B->npg0, npc_lat = 1 + B->npl0;
+    int64_t nbl_lng = 1 + B->n_blocks_lng, nbl_lat = 1 + B->n_blocks_lat;
+    int64_t base_ix = ((int64_t)B->bsx * nbl_lng + B->blx) * npc_lng;
+    int64_t base_iy = ((int64_t)B->bsy * nbl_lat + B->bly) * npc_lat;
+    double base_lon = B->cov_lon_lo + (double)base_ix * mx;
+    double base_lat = B->cov_lat_lo + (double)base_iy * my;
+    bnds r = {base_lat, base_lat + (double)npc_lat * my, base_lon, base_lon + (double)npc_lng * mx};
+    return r;
+}
+
+/* mesh.narrow_bounds */
+static bnds narrow(bnds b, int64_t gn_lat, int64_t gn_lng, int64_t idx) {
+    int64_t lpy = idx / gn_lng, lpx = idx % gn_lng;
+    double lon_step = (b.lon_hi - b.lon_lo) / (double)gn_lng;
+    double lat_step = (b.lat_hi - b.lat_lo) / (double)gn_lat;
+    double lon_lo = b.lon_lo + (double)lpx * lon_step;
+    double lat_lo = b.lat_lo + (double)lpy * lat_step;
+    bnds r = {lat_lo, lat_lo + lat_step, lon_lo, lon_lo + lon_step};
+    return r;
+}
+
+/* mesh.tile_bounds */
+static bnds tile(bnds b, int64_t gn_lat, int64_t gn_lng, int64_t idx) {
+    int64_t ly = idx / gn_lng, lx = idx % gn_lng;
+    int64_t ty = ly / L0_TILE * L0_TILE, tx = lx / L0_TILE * L0_TILE;
+    double lon_step = (b.lon_hi - b.lon_lo) / (double)gn_lng;
+    double lat_step = (b.lat_hi - b.lat_lo) / (double)gn_lat;
+    double lat_lo = b.lat_lo + (double)ty * lat_step;
+    double lon_lo = b.lon_lo + (double)tx * lon_step;
+    bnds r = {lat_lo, lat_lo + (double)L0_TILE * lat_step, lon_lo, lon_lo + (double)L0_TILE * lon_step};
+    return r;
+}
+
+static int64_t npl(const d1_block *B, int pt) {
+    return 1 + (pt == 0 ? B->npl0 : pt == 1 ? B->npl1 : pt == 2 ? B->npl2 : B->npl3);
+}
+static int64_t npg(const d1_block *B, int pt) {
+    return 1 + (pt == 0 ? B->npg0 : pt == 1 ? B->npg1 : pt == 2 ? B->npg2 : B->npg3);
+}
+
+typedef struct {
+    const uint8_t *b;                 /* the block's record buffer */
+    uint64_t len;
+    const d1_block *B;
+    int64_t root_k;                   /* entries of the root record */
+    uint64_t root_eoff;               /* offset of the root record's first entry */
+    int path_n;
+    uint16_t path[MAX_DEPTH + 2];
+} walkc;
+
+/* parcel_mgmt.parse_parcel_mgmt_record's whole-tree check: 0 ok, else the err code */
+static int validate(const uint8_t *b, uint64_t len, const d1_block *B, uint64_t off, int depth) {
+    if (depth > MAX_DEPTH) return 2;
+    if (off + 2 > len) return 3;
+    uint32_t raw = U16(off);
+    if (raw & 0xFFu) return 1;
+    int pt = (int)((raw >> 8) & 3u);
+    int64_t k = npl(B, pt) * npg(B, pt);
+    for (int64_t idx = 0; idx < k; idx++) {
+        uint64_t e = off + 4 + (uint64_t)idx * 6;
+        if (e + 4 > len) return 3;
+        uint32_t dsa = U32(e);
+        if (e + 6 > len) return 3;
+        uint32_t size = U16(e + 4);
+        if (size == 0 && dsa != NO_DATA_DSA) {
+            int r = validate(b, len, B, sws(dsa), depth + 1);
+            if (r) return r;
+        }
+    }
+    return 0;
+}
+
+/* mesh.is_sparse_tile on the root record */
+static int sparse_tile(const walkc *w, int64_t idx) {
+    const uint8_t *b = w->b;
+    int64_t gn_lng = npg(w->B, 0);
+    int64_t ly = idx / gn_lng, lx = idx % gn_lng;
+    int64_t ty = ly / L0_TILE * L0_TILE, tx = lx / L0_TILE * L0_TILE;
+    uint32_t d0 = 0, s0 = 0;
+    for (int dy = 0; dy < L0_TILE; dy++)
+        for (int dx = 0; dx < L0_TILE; dx++) {
+            int64_t j = (ty + dy) * gn_lng + tx + dx;
+            if (j >= w->root_k) return 0;
+            uint64_t e = w->root_eoff + (uint64_t)j * 6;
+            uint32_t dsa = U32(e), size = U16(e + 4);
+            if (dsa == NO_DATA_DSA || !size) return 0;
+            if (dy == 0 && dx == 0) { d0 = dsa; s0 = size; }
+            else if (dsa != d0 || size != s0) return 0;
+        }
+    return 1;
+}
+
+typedef struct { int64_t rlo, rhi, bidx; bnds bb; const uint8_t *region; int64_t region_len;
+                 int64_t *failed; int rc; } walkr;
+
+static double fl(double x) { return floor(x); }
+
+/* One leaf: frame rule, band filter, decode, walk row. */
+static void emit_leaf(d1_ctx *c, walkr *R, walkc *w, int ptype, uint32_t dsa, uint32_t size,
+                      bnds lb) {
+    const d1_block *B = w->B;
+    /* checker cell of the slot midpoint (quantisation_roundtrip.Lattice.gy / gx) */
+    double mlat = (lb.lat_lo + lb.lat_hi) / 2, mlon = (lb.lon_lo + lb.lon_hi) / 2;
+    double gy = (mlat - B->lat0) / B->cell_lat * 4096.0;
+    int64_t iy = (int64_t)fl(gy / 4096.0);
+    if (!(R->rlo <= iy && iy <= R->rhi)) return;
+    double d = mlon - B->lon0;
+    double m = fmod(d - B->wlo, 360.0);
+    if (m != 0.0) { if (m < 0.0) m += 360.0; } else m = copysign(0.0, 360.0);
+    double gx = (m + B->wlo) / B->cell_lon * 4096.0;
+    int64_t ix = (int64_t)fl(gx / 4096.0);
+
+    int depth = w->path_n;
+    bnds fb = lb; int fcls = 0;
+    int64_t gl0 = npl(B, 0), gg0 = npg(B, 0);
+    if (ptype && depth > 1) { fb = narrow(R->bb, gl0, gg0, w->path[0]); fcls = 2; }
+    else if (B->level == 0 && ptype == 0 && depth == 1 && sparse_tile(w, w->path[0])) {
+        fb = tile(R->bb, gl0, gg0, w->path[0]); fcls = 1;
+    }
+    int32_t rng;
+    if (ptype) rng = B->rng_divided;
+    else if (fcls == 1) rng = B->rng_sparse;
+    else rng = B->rng_normal;
+
+    uint64_t moff = (uint64_t)(dsa >> 8) * B->sector_sz + (uint64_t)(dsa & 0x3Fu) * B->logical_sz;
+    uint64_t mlen = (uint64_t)size * B->logical_sz;
+    if (moff > (uint64_t)R->region_len) moff = (uint64_t)R->region_len;
+    if (mlen > (uint64_t)R->region_len - moff) mlen = (uint64_t)R->region_len - moff;
+
+    d1_leaf L; ZERO(L);
+    L.off = moff; L.len = (d1_u32)mlen;
+    L.lat_lo = fb.lat_lo; L.lat_hi = fb.lat_hi; L.lon_lo = fb.lon_lo; L.lon_hi = fb.lon_hi;
+    L.coord_range = rng; L.n_basic_map = B->n_basic_map; L.n_ext_map = B->n_ext_map;
+    int32_t fi = (int32_t)c->n[D1_T_FRAME];
+    int st = decode_leaf(c, R->region, &L, fi, R->failed);
+
+    d1_walk r; ZERO(r);
+    r.lat_lo = lb.lat_lo; r.lat_hi = lb.lat_hi; r.lon_lo = lb.lon_lo; r.lon_hi = lb.lon_hi;
+    r.flat_lo = fb.lat_lo; r.flat_hi = fb.lat_hi; r.flon_lo = fb.lon_lo; r.flon_hi = fb.lon_hi;
+    r.off = moff; r.len = (d1_u32)mlen; r.dsa = dsa; r.size = (d1_u16)size;
+    r.level = B->level; r.blockset_index = B->blockset_index; r.block_index = B->block_index;
+    r.block = (int32_t)R->bidx; r.frame = fi; r.ix = (int32_t)ix; r.iy = (int32_t)iy;
+    r.frame_range = rng > 0 ? rng : 0; r.status = st ? 2 : 0; r.err = 0;
+    r.p0 = w->path[0]; r.p1 = w->path[1]; r.p2 = w->path[2]; r.p3 = w->path[3];
+    r.p4 = w->path[4]; r.p5 = w->path[5]; r.p6 = w->path[6];
+    r.depth = (d1_u8)depth; r.parcel_type = (d1_u8)ptype; r.frame_class = (d1_u8)fcls;
+    put(c, D1_T_WALK, &r);
+}
+
+/* walk._iter_tree_leaves (the record is already validated) */
+static void walk_rec(d1_ctx *c, walkr *R, walkc *w, uint64_t off, bnds bounds) {
+    const uint8_t *b = w->b;
+    int pt = (int)((U16(off) >> 8) & 3u);
+    int64_t gn_lat = npl(w->B, pt), gn_lng = npg(w->B, pt), k = gn_lat * gn_lng;
+    for (int64_t idx = 0; idx < k; idx++) {
+        uint64_t e = off + 4 + (uint64_t)idx * 6;
+        uint32_t dsa = U32(e), size = U16(e + 4);
+        if (dsa == NO_DATA_DSA) continue;
+        bnds cb = narrow(bounds, gn_lat, gn_lng, idx);
+        w->path[w->path_n++] = (uint16_t)idx;
+        if (size == 0) walk_rec(c, R, w, sws(dsa), cb);
+        else emit_leaf(c, R, w, pt, dsa, size, cb);
+        w->path_n--;
+    }
+}
+
+int64_t kw_d1_blocks(const uint8_t *region, int64_t region_len, const void *blocks,
+                     int64_t nblocks, int64_t rlo, int64_t rhi, void *const *bufs,
+                     const int64_t *caps, int64_t *stats) {
+    int64_t t0 = now_ns();
+    if (!region || region_len < 0 || nblocks < 0 || (nblocks && !blocks) || !bufs || !caps ||
+        !stats)
+        return -1;
+    d1_ctx *c = ctx_new(bufs, caps);
+    if (!c) return -1;
+    int64_t failed = 0;
+    for (int64_t bi = 0; bi < nblocks; bi++) {
+        d1_block B;
+        memcpy(&B, (const uint8_t *)blocks + (size_t)bi * sizeof B, sizeof B);
+        uint64_t boff = B.off > (uint64_t)region_len ? (uint64_t)region_len : B.off;
+        uint64_t blen = B.len < (uint64_t)region_len - boff ? B.len : (uint64_t)region_len - boff;
+        walkc w; memset(&w, 0, sizeof w);
+        w.b = region + boff; w.len = blen; w.B = &B;
+        walkr R = {rlo, rhi, bi, block_bounds(&B), region, region_len, &failed, 0};
+        const uint8_t *b = w.b;
+        int err = validate(b, blen, &B, 0, 0);
+        if (err) {
+            d1_walk r; ZERO(r);
+            r.lat_lo = r.flat_lo = R.bb.lat_lo; r.lat_hi = r.flat_hi = R.bb.lat_hi;
+            r.lon_lo = r.flon_lo = R.bb.lon_lo; r.lon_hi = r.flon_hi = R.bb.lon_hi;
+            r.off = B.off; r.len = B.len;
+            r.level = B.level; r.blockset_index = B.blockset_index; r.block_index = B.block_index;
+            r.block = (int32_t)bi; r.frame = -1; r.status = 1; r.err = err;
+            put(c, D1_T_WALK, &r);
+            continue;
+        }
+        w.root_k = npl(&B, (int)((U16(0) >> 8) & 3u)) * npg(&B, (int)((U16(0) >> 8) & 3u));
+        w.root_eoff = 4;
+        walk_rec(c, &R, &w, 0, R.bb);
+    }
+    int64_t nframes = c->n[D1_T_FRAME];
+    c->n[0] = 0;
+    int64_t rc = finish(c, stats, nframes, failed, t0);
+    stats[D1_S_BLOCKS] = nblocks;
     return rc;
 }
