@@ -288,3 +288,19 @@ same commit.
 - **Reproduce**: `D1_SAMPLE_WRITE=1 .venv-rp/bin/python -m pytest
   parser/tests/test_d1_equivalence.py -k rule` (both discs present), then rerun
   without the variable.
+
+## `output/scratch-2-07/` (Phase 2 full-disc evidence, 2-07)
+
+- **What**: uncommitted evidence of the one full-disc Phase 2 run: K1 reports
+  `k1_{a,b,c,j1}.json` (+ `.log`), `determinism.txt`, `d1_decode.json/.log`,
+  `py_checks.tsv` with `py_<check>.json/.log`, `gates.txt`, `goldens.log`,
+  `hbudget.log`, `status.txt` (ends `ALLDONE`) and `run.sh`. The bounded failing
+  samples that Phase 3 triage starts from live in each `k1_*.json` level's
+  `failures[]`; the 2-08 verify record in
+  `docs/plans/04-c-core-orchestration/IMPLEMENTATION.md` cites the counts and walls.
+- **Source**: `output/scratch-2-07/run.sh`, executed once under
+  `output/.heavy.lock` against the 3-11 reference disc G
+  (`output/scratch-3-11/G/ALLDATA.KWI`, see above) and `output/spool`.
+- **Why not committed**: regenerable, large run output (`output/` is gitignored).
+- **Reproduce**: `bash output/scratch-2-07/run.sh` (needs G, `output/spool`, and
+  the reference disc mounted; the K1/PSS walls are machine-dependent).

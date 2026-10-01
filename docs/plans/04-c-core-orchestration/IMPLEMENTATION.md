@@ -70,3 +70,66 @@ Run header: Claude Code, orchestrator Sonnet 5.5, same session as above; Phase 2
 **Python per-check wall (`--workers 12`):** decode 464.3, container 1.3, envelope 618.7, mfde 636.5, shape 1.3, vocab 612.7, spotcheck 1.7, coord_scale 112.9 s. rc 1 rows are reference-vs-itself FAILs, recorded not triaged; `container`/`shape` ~1.3 s look like early exits (2-08 to confirm).
 **Gates:** full-AU sha `87a01b14…2797862` matches; Perth `-j 1` == `-j 4` == `da13a775…` matches; goldens 9 passed; H budget 3 passed.
 **Deviations:** H-budget tests chosen by worker (`test_build_alldata.py::test_budgets_and_thresholds_are_u16_ceiling_everywhere`, `test_bench_record.py`); `run.sh` deletes the rebuilt full-AU `ALLDATA.KWI` after recording its sha; K1 driver exits 1 on a failing report so rc 0|1 with a report counts OK; ranges planned via the driver's `_block_tasks`. **Contradictions:** brief pointed at 1-01 for gate commands (taken from 3C-01); "one Monitor" cannot cover a multi-hour run (30-minute cap), so a single until-loop on `status.txt` was used.
+
+### Phase 2 verification — draft (open; 2-08 Flash draft, pending Sonnet 5.5 review)
+Source: `output/scratch-2-07/` read only (no K1, `compare_disc`, or build re-run). Judged against DESIGN.md Phase 2, Gates and Assumption 2. Not a sign-off.
+
+**K1 counts vs 3C-04** (`k1_a/b/c.json` `totals`; identical across the three runs and `k1_j1.json`). All cells exact, no deviations:
+
+| kind | K1 checked | K1 failing | 3C-04 checked | 3C-04 failing | verdict |
+|---|---|---|---|---|---|
+| range | 309,192,246 | 0 | 309,192,246 | 0 | equal |
+| step | 252,444,802 | 0 | 252,444,802 | 0 | equal |
+| road_node | 42,995,770 | 0 | 42,995,770 | 0 | equal |
+| name_anchor | 2,317,983 | 1 | 2,317,983 | 1 | equal |
+| background | 174,332,105 | 1,438,558 | 174,332,105 | 1,438,558 | equal |
+| background_boundary | 89,546,388 | 16,549,569 | 89,546,388 | 16,549,569 | equal |
+| completeness | 1,800,514 | 752 | 1,800,514 | 752 | equal |
+| interior_cover | 1,592,016 | 824 | 1,592,016 | 824 | equal |
+
+Explained counters equal: `name_anchor_halo` 311,347 (L0 only); `road_node_subcell_on_polyline` 551,530 = 547,622 (L0) + 840 (L2) + 2,882 (L4) + 175 (L6) + 11 (L8), summed across levels from `k1_*.json`. `road_point` is a K1 kind absent from the 3C-04 table (0/0); no other differences. Report `pass` false on all runs (the old failures are reproduced, not fixed).
+
+**Wall vs 120 s bar** (`timing.wall_s`, `-j 12`): 71.183 / 68.408 / 66.006 s; **median 68.408 s ≤ 120 s → met** (the 120 s is on the 3-11 disc against its spool).
+**Peak PSS** (`timing.pss_peak_kb`): 8,736,916 / 8,982,284 / 9,726,501 kB; **peak 9,726,501 kB ≈ 9.28 GiB (9.73 GB decimal)** vs the provisional 22 GB ceiling → **met** (well under). DESIGN names no margin ("re-signed at the Phase 2 close from the measured peak"; Assumption 2). Proposed re-signed ceiling: the measured peak **9,726,501 kB**, for **Cody to sign** — no margin invented.
+
+**Determinism** (`determinism.txt`): `k1_a` vs `k1_j1`, vs `k1_b`, vs `k1_c` all `IDENTICAL (timing and wall_s excluded)`, rc=0 → **met** (the `-j 1` run took 426.189 s; `-j 12` 71.183).
+
+**D1 equivalence:** met, per 2-02 (`1300a2b`): frame+equivalence 17 passed on G and R (not skipped); goldens+inventory 13 passed; `parser/tests/fixtures/d1_sample.json` (seed 20260930) forces road-link, background-polygon and name-record coverage in both discs and compares whole blocks field-for-field. Full-disc D1 decode of G (`d1_decode.json`): `decode_wall_s` **4.787 s**, 7.962 s with planning; 2,165 ranges, 2,315 C calls, 150 retries, 3,954,156 frames, 460,018,916 rows, 0 failed.
+
+**Per-check wall for the Phase 4 budgets** (`py_checks.tsv`, Python baseline, `--workers 12`; D1 full-disc decode wall from `d1_decode.json`):
+| check | Python wall_s | rc | note |
+|---|---|---|---|
+| decode | 464.3 | 0 | PASS (3,954,156 leaves, 0 errors) |
+| container | 1.3 | 1 | FAIL 6 unallowlisted byte differences (real check, not an early exit) |
+| envelope | 618.7 | 1 | FAIL | 
+| mfde | 636.5 | 1 | FAIL |
+| shape | 1.3 | 1 | FAIL 19 shape differences (real check, not an early exit) |
+| vocab | 612.7 | 1 | FAIL |
+| spotcheck | 1.7 | 0 | PASS (15 checks) |
+| coord_scale | 112.9 | 0 | PASS |
+| **D1 full-disc decode** | **4.787** | 0 | new C path |
+
+Provisional Phase 4 budgets to sign: `coord_scale` ≤ 20 s; each other harness check ≤ 60 s (Assumption 2). `container`/`shape` are not early exits: their logs show genuine FAILs (6 byte diffs; 19 shape diffs) returned in ~1.3 s; the rc=1 rows are pre-existing reference-comparison failures, not triaged here.
+
+**Gates** (`gates.txt` verbatim):
+```
+fullAU rc=0 wall=18s sha256=87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862
+expect fullAU 87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862
+perth_j1 rc=0 wall=3s sha256=da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc
+perth_j4 rc=0 wall=1s sha256=da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc
+expect perth da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc
+goldens pytest rc=0: 9 passed in 2.89s
+hbudget pytest rc=0: 3 passed in 3.82s
+```
+Verdict: sha `87a01b14…2797862` matches; Perth `-j 1` == `-j 4` == `da13a775…`; goldens pass; H budget passes → build gates unchanged, **met**.
+
+**Outcome clause verdicts:** ≤120 s median of three — met (68.408 s). Peak PSS recorded and under ceiling — met (9,726,501 kB < 22 GB). Exact `checked`/`failing` and bounded failing samples for every 3C-04 kind — met. K1 counts equal 3C-04 exactly (8 kinds) — met. Explained categories (311,347 / 551,530) equal — met. Reproduces old answers, does not fix — met. D1 gates K1 (D1 equivalence first) — met. D1 field equality on goldens and the R/G sample, and G/R decode — met (per 2-02). Per-check D1 wall for Phase 4 budgets — met (above). Build gates (sha, Perth, goldens, H) unchanged — met.
+
+**Carried for Phase 3:**
+1. Triage inputs: `output/scratch-2-07/k1_a.json` (identical to `k1_b/c/j1` modulo `timing`/`wall_s`); each level's `failures[]` holds the first-N bounded samples per kind. Failing kinds and counts: `background` 1,438,558; `background_boundary` 16,549,569; `interior_cover` 824; `completeness` 752; `name_anchor` 1.
+2. `name_anchor` single failure is L0 cell (0,541), leaf 928 (`reason: no spool record within half a raw unit`) — the known spool/extractor item.
+3. The rc=1 harness checks (`container`, `envelope`, `mfde`, `shape`, `vocab`) are pre-existing Python reference-comparison FAILs, recorded not triaged; Phase 4 must baseline them before changing them.
+4. `output/scratch-2-07/` is uncommitted; a provenance entry was added in this commit. Phase 3 depends on it — do not delete.
+5. H-budget tests were chosen by 2-07 by name (`test_budgets_and_thresholds_are_u16_ceiling_everywhere`, `test_bench_record.py`); not re-run in 2-08.
+
+**Open (not signed off):** the re-signed PSS ceiling (peak 9,726,501 kB, Cody to set) and the Phase 4 per-check budgets (20 s `coord_scale` / 60 s others, Cody to confirm). Phase 2 awaits the mandatory Sonnet 5.5 review and Claude/Grok sign-off.
