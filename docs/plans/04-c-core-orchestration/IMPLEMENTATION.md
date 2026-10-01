@@ -71,7 +71,7 @@ Run header: Claude Code, orchestrator Sonnet 5.5, same session as above; Phase 2
 **Gates:** full-AU sha `87a01b14…2797862` matches; Perth `-j 1` == `-j 4` == `da13a775…` matches; goldens 9 passed; H budget 3 passed.
 **Deviations:** H-budget tests chosen by worker (`test_build_alldata.py::test_budgets_and_thresholds_are_u16_ceiling_everywhere`, `test_bench_record.py`); `run.sh` deletes the rebuilt full-AU `ALLDATA.KWI` after recording its sha; K1 driver exits 1 on a failing report so rc 0|1 with a report counts OK; ranges planned via the driver's `_block_tasks`. **Contradictions:** brief pointed at 1-01 for gate commands (taken from 3C-01); "one Monitor" cannot cover a multi-hour run (30-minute cap), so a single until-loop on `status.txt` was used.
 
-### Phase 2 verification — draft (open; 2-08 Flash draft, pending Sonnet 5.5 review)
+### Phase 2 verification — reviewed (open; 2-08 Flash draft, Sonnet 5.5 review passed with fixes; not closed, awaits Cody sign-off)
 Source: `output/scratch-2-07/` read only (no K1, `compare_disc`, or build re-run). Judged against DESIGN.md Phase 2, Gates and Assumption 2. Not a sign-off.
 
 **K1 counts vs 3C-04** (`k1_a/b/c.json` `totals`; identical across the three runs and `k1_j1.json`). All cells exact, no deviations:
@@ -100,16 +100,16 @@ Explained counters equal: `name_anchor_halo` 311,347 (L0 only); `road_node_subce
 | check | Python wall_s | rc | note |
 |---|---|---|---|
 | decode | 464.3 | 0 | PASS (3,954,156 leaves, 0 errors) |
-| container | 1.3 | 1 | FAIL 6 unallowlisted byte differences (real check, not an early exit) |
-| envelope | 618.7 | 1 | FAIL | 
-| mfde | 636.5 | 1 | FAIL |
-| shape | 1.3 | 1 | FAIL 19 shape differences (real check, not an early exit) |
-| vocab | 612.7 | 1 | FAIL |
+| container | 1.3 | 1 | FAIL 6 unallowlisted byte differences |
+| envelope | 618.7 | 1 | FAIL 2 envelope failures |
+| mfde | 636.5 | 1 | FAIL 0 subset failures, 50 coverage failures |
+| shape | 1.3 | 1 | FAIL 19 shape differences |
+| vocab | 612.7 | 1 | FAIL coverage below 0.95 at 5 levels |
 | spotcheck | 1.7 | 0 | PASS (15 checks) |
 | coord_scale | 112.9 | 0 | PASS |
 | **D1 full-disc decode** | **4.787** | 0 | new C path |
 
-Provisional Phase 4 budgets to sign: `coord_scale` ≤ 20 s; each other harness check ≤ 60 s (Assumption 2). `container`/`shape` are not early exits: their logs show genuine FAILs (6 byte diffs; 19 shape diffs) returned in ~1.3 s; the rc=1 rows are pre-existing reference-comparison failures, not triaged here.
+Provisional Phase 4 budgets to sign: `coord_scale` ≤ 20 s; each other harness check ≤ 60 s (Assumption 2). `container`/`shape` return genuine FAILs (6 byte diffs; 19 shape diffs) in ~1.3 s; whether they scan the whole disc or exit early at the first failures is unconfirmed (logs do not say), so their 1.3 s is a lower bound for budgeting, not a proven full-scan cost. All rc=1 rows ran with reference = generated = G (`py_checks.tsv` note), are pre-existing, and are not triaged here.
 
 **Gates** (`gates.txt` verbatim):
 ```
@@ -133,3 +133,5 @@ Verdict: sha `87a01b14…2797862` matches; Perth `-j 1` == `-j 4` == `da13a775�
 5. H-budget tests were chosen by 2-07 by name (`test_budgets_and_thresholds_are_u16_ceiling_everywhere`, `test_bench_record.py`); not re-run in 2-08.
 
 **Open (not signed off):** the re-signed PSS ceiling (peak 9,726,501 kB, Cody to set) and the Phase 4 per-check budgets (20 s `coord_scale` / 60 s others, Cody to confirm). Phase 2 awaits the mandatory Sonnet 5.5 review and Claude/Grok sign-off.
+
+**Review (Sonnet 5.5, draft → reviewed):** every figure re-read from `output/scratch-2-07/` and matched: the eight K1 `totals` (checked/failing) equal the 3C-04 table to the integer in `k1_a`, `k1_b`, `k1_c` and `k1_j1`; total failing 17,989,704 = 1,438,558 + 16,549,569 + 824 + 752 + 1; explained `name_anchor_halo` 311,347 and `road_node_subcell_on_polyline` 551,530 (547,622 + 840 + 2,882 + 175 + 11) in all four reports, other explained counters 0; walls 71.183 / 68.408 / 66.006 s (median 68.408), `-j 1` 426.189 s; PSS peaks 8,736,916 / 8,982,284 / 9,726,501 kB (9.276 GiB), `-j 1` 6,646,774 kB; determinism three IDENTICAL lines; D1 decode 4.787 s / 7.962 s, 2,165 ranges, 2,315 calls, 150 retries, 3,954,156 frames, 460,018,916 rows, 0 failed; gates verbatim; `py_checks.tsv` walls. Fixes: removed the unsupported "not an early exit" claim for `container`/`shape`; filled the failure messages for `envelope`, `mfde`, `vocab`. DESIGN names no PSS margin (lines 49, 91: re-signed from the measured peak); none was invented. Phase 2 is not closed: the PSS ceiling and Phase 4 budgets await Cody, then phase sign-off and the `Workflow-Phase: 04-c-core-orchestration:2` commit.
