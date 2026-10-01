@@ -146,3 +146,7 @@ Outcome verified against DESIGN Phase 2 and the Sonnet-reviewed 2-08 record (`6a
 3. Harness rc=1 rows (`container`, `envelope`, `mfde`, `shape`, `vocab`) pre-existing; Phase 4 baselines before change.
 4. Do not delete `output/scratch-2-07/` (provenance entry stands).
 5. Signed PSS ceiling 9,726,501 kB and Phase 4 budgets (20 s / 60 s) apply from here.
+
+## Phase 3
+
+Run header: Claude Code, orchestrator Sonnet 5.5, same session as above; Phase 3 execute started 2026-10-02 after refine (`ac758cd`, briefs 3-01..3-08, 3-fix-template, 3-90). Credit-burn standing (Cody via parent): execution units run on OpenCode Flash (`deepseek/deepseek-flash`); every Flash unit gets a mandatory Sonnet 5.5 review before it is committed/pushed and recorded as done; Sol/Claude only at the 3-07/3-08 cause-table decision moments (checker vs build vs spool). The phase is not auto-closed after Flash. Bounce to parent/BTM if 3-07/3-08 report `blocked: unattributed` or spool groups exceed 10,000. `output/scratch-2-07/` stays untouched; heavy runs under `flock output/.heavy.lock`. Flash units leave changes uncommitted; the orchestrator commits after review.
