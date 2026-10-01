@@ -82,12 +82,14 @@ void k1_push_sample(k1_acc *a, int kind, const k1_sample *s) {
 
 /* One dump row per failing item (brief 3-02). `K1_F_DUMP` begins with the exact
  * `K1_F_SAMPLE` fields in the same order, so the sample copies in directly; the
- * sink keeps counting past `cap` so the caller learns the rows it needs. */
-void k1_emit_dump(k1_acc *a, int kind, int level, const k1_sample *s, int32_t shape,
-                  int32_t vert) {
+ * sink keeps counting past `cap` so the caller learns the rows it needs. The 3-03
+ * diagnostic columns are set to their sentinels here; `k1_diag_fill` overwrites them
+ * for the three background-family kinds. Returns the row, or NULL when not written. */
+k1_dump *k1_emit_dump(k1_acc *a, int kind, int level, const k1_sample *s, int32_t shape,
+                      int32_t vert) {
     k1_dumpsink *d = a->dump;
     int64_t i = d->n++;
-    if (i >= d->cap) { d->overflow = 1; return; }
+    if (i >= d->cap) { d->overflow = 1; return NULL; }
     k1_dump *r = &d->rows[i];
     memset(r, 0, sizeof *r);              /* zero the struct padding too: files must cmp */
     memcpy(r, s, sizeof(k1_sample));
@@ -95,6 +97,14 @@ void k1_emit_dump(k1_acc *a, int kind, int level, const k1_sample *s, int32_t sh
     r->level = (k1_u8)level;
     r->shape = shape;
     r->vert = vert;
+    r->onb = 0;
+    r->d_any = NAN;
+    r->any_type = -1;
+    r->in_eo_same = r->in_wn_same = r->in_eo_any = 0;
+    r->src_ix = INT32_MIN; r->src_iy = INT32_MIN; r->src_rec = -1; r->src_tall = 0;
+    r->src_nv = -1; r->src_maxseg = NAN; r->d_src = NAN;
+    r->dcls = -1; r->dnv = -1;
+    return r;
 }
 
 /* ----------------------------------------------------------------- numerics */
@@ -361,6 +371,7 @@ static void region_free(struct k1_region *R) {
     free(R->nodes.p); free(R->rpts.p); free(R->names.p); free(R->names_y.p);
     free(R->seg); free(R->sk);
     free(R->shp.type); free(R->shp.cls); free(R->shp.tall); free(R->shp.off);
+    free(R->shp.hx); free(R->shp.hy); free(R->shp.rec);
     free(R->shp.x); free(R->shp.y); free(R->oix); free(R->oiy);
 }
 
@@ -371,7 +382,8 @@ int64_t k1_region_cells(const struct k1_region *R, const int32_t **ix, const int
 
 /* ---- the band's background shapes */
 
-static int shp_begin(k1_shapes *h, int32_t type, int32_t cls, int tall) {
+static int shp_begin(k1_shapes *h, int32_t type, int32_t cls, int tall, int32_t hx, int32_t hy,
+                     int32_t rec) {
     if (h->n + 1 >= h->ncap || !h->off) {
         int64_t nc = h->ncap ? h->ncap * 2 : 64;
         int32_t *t = (int32_t *)realloc(h->type, (size_t)nc * 4);
@@ -383,6 +395,15 @@ static int shp_begin(k1_shapes *h, int32_t type, int32_t cls, int tall) {
         uint8_t *tl = (uint8_t *)realloc(h->tall, (size_t)nc);
         if (!tl) return -4;
         h->tall = tl;
+        int32_t *ax = (int32_t *)realloc(h->hx, (size_t)nc * 4);
+        if (!ax) return -4;
+        h->hx = ax;
+        int32_t *ay = (int32_t *)realloc(h->hy, (size_t)nc * 4);
+        if (!ay) return -4;
+        h->hy = ay;
+        int32_t *ar = (int32_t *)realloc(h->rec, (size_t)nc * 4);
+        if (!ar) return -4;
+        h->rec = ar;
         int64_t *o = (int64_t *)realloc(h->off, (size_t)(nc + 1) * 8);
         if (!o) return -4;
         h->off = o;
@@ -390,6 +411,7 @@ static int shp_begin(k1_shapes *h, int32_t type, int32_t cls, int tall) {
         if (h->n == 0) h->off[0] = 0;
     }
     h->type[h->n] = type; h->cls[h->n] = cls; h->tall[h->n] = (uint8_t)tall;
+    h->hx[h->n] = hx; h->hy[h->n] = hy; h->rec[h->n] = rec;
     h->n++;
     h->off[h->n] = h->off[h->n - 1];
     return 0;
@@ -428,6 +450,7 @@ static int shp_add_tall(k1_shapes *h, const k1_tallset *T, int64_t c0, int64_t c
         if (h->tall[s]) continue;
         int64_t a = h->off[s], n = h->off[s + 1] - a;
         h->type[m] = h->type[s]; h->cls[m] = h->cls[s]; h->tall[m] = 0;
+        h->hx[m] = h->hx[s]; h->hy[m] = h->hy[s]; h->rec[m] = h->rec[s];
         if (mc != a) { memmove(h->x + mc, h->x + a, (size_t)n * 8); memmove(h->y + mc, h->y + a, (size_t)n * 8); }
         h->off[m] = mc;
         mc += n; m++;
@@ -437,7 +460,8 @@ static int shp_add_tall(k1_shapes *h, const k1_tallset *T, int64_t c0, int64_t c
     for (int64_t t = 0; t < T->n; t++) {
         const double *b = T->bb + 4 * t;
         if (!(b[1] >= bx0 && b[0] <= bx1 && b[3] >= by0 && b[2] <= by1)) continue;
-        int rc = shp_begin(h, T->rows[t].type, T->rows[t].cls, 0);
+        int rc = shp_begin(h, T->rows[t].type, T->rows[t].cls, 1, T->rows[t].hx, T->rows[t].hy,
+                           T->rows[t].rec);
         for (int64_t j = T->off[t]; rc == 0 && j < T->off[t + 1]; j++) rc = shp_xy(h, T->xy[2 * j], T->xy[2 * j + 1]);
         if (rc) return rc;
     }
@@ -494,7 +518,8 @@ static int region_build(struct k1_region *R, const k1_spool *S, const k1_lat *L,
             }
             int local = mnx >= (double)((hx - 1) * K1_RAW + 1) && mxx <= (double)((hx + 2) * K1_RAW - 1) &&
                         mny >= (double)((hy - 1) * K1_RAW + 1) && mxy <= (double)((hy + 2) * K1_RAW - 1);
-            rc = shp_begin(&R->shp, rd_i32(C.c[K1_b_type], j), rd_i32(C.c[K1_b_class], j), !local);
+            rc = shp_begin(&R->shp, rd_i32(C.c[K1_b_type], j), rd_i32(C.c[K1_b_class], j), !local,
+                           hx, hy, (int32_t)j);
             for (int64_t v = 0; v < n && rc == 0; v++)
                 rc = shp_xy(&R->shp, gx(L, rd_f64(C.c[K1_c_lon], co + v)), gy(L, rd_f64(C.c[K1_c_lat], co + v)));
             co += n;
@@ -850,7 +875,8 @@ int64_t kw_k1_tall(const uint8_t *idx, int64_t idx_len, const uint8_t *data, int
                             xy[2 * (nxy + j) + 1] = gy(&L, rd_f64(C.c[K1_c_lat], co + j));
                         }
                         k1_tallrow t = {rd_i32(C.c[K1_b_type], s),
-                                        rd_i32(C.c[K1_b_class], s), (int32_t)n, (int32_t)hx, (int32_t)hy};
+                                        rd_i32(C.c[K1_b_class], s), (int32_t)n, (int32_t)hx,
+                                        (int32_t)hy, (int32_t)s};
                         rows[nrow] = t;
                     }
                     nrow++; nxy += n;

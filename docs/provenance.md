@@ -325,3 +325,22 @@ parser/tools/quantisation_roundtrip.py --disc output/scratch-3-11/G/ALLDATA.KWI
 --spool output/extract_timing/spool -j 12 --dump-failures output/scratch-3-02/dump
 --out output/scratch-3-02/k1_dump.json`. Rows are canonically ordered, so the
 bytes are independent of `-j` and of the band split.
+
+### output/scratch-3-03/dump/ (K1 diagnostic dump, Phase 3 unit 3-03, not committed)
+The same five failing kinds with the brief-3-03 diagnostic columns appended
+(`onb`, `d_any`/`any_type`, `in_eo_same`/`in_wn_same`/`in_eo_any`, the nearest
+same-type source `src_*`/`d_src`, and the DISC shape's `dcls`/`dnv`), so rows are
+144 bytes (`K1_F_DUMP` in `parser/kiwiw/_k1.h`, mirrored by `cenc.K1_DUMP_DTYPE`).
+Counts are unchanged (`background` 1,438,558, `background_boundary` 16,549,569,
+`interior_cover` 824, `completeness` 752, `name_anchor` 1) and the first 21
+(3-02) columns are byte-identical to `output/scratch-3-02/dump/`; `dump_manifest.json`
+carries the field list. **Source**: the same full-disc dump run as 3-02 under
+`flock output/.heavy.lock` against G and `output/extract_timing/spool`, but with
+`--dump-failures output/scratch-3-03/dump --out output/scratch-3-03/k1_dump.json`
+(wall 221.8 s on a quiet machine, peak PSS ~7.9 GiB). `output/scratch-3-03/head_nodump.json`,
+`wt_nodump.json` and `head_nodump.log`/`wt_nodump.log` are the dump-off A/B against
+a `8d96e3a` git worktree (checked out under `output/scratch-3-03/headwt`, removed
+after the run): both reports are identical
+to `output/scratch-2-07/k1_a.json` excluding timing, walls 67.4 s (HEAD) and 62.8 s
+(working tree). The `dump_l6_j1/`, `dump_l6_j12/` trees are the `--levels 6`
+byte-equality pair. Regenerable, so not committed.

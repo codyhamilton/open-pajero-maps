@@ -131,3 +131,172 @@ def test_dump_is_off_by_default(tmp_path):
     res = json.loads(report.read_text())
     assert "dump" not in res
     assert not (tmp_path / "dump").exists()
+
+
+# ---------------------------------------------------------------- 3-03 diagnostics
+# The diagnostic columns are computed only for the three background-family kinds and
+# only with the dump on; every other row keeps the stated sentinel. `onb` is the
+# frame-boundary mask of the row's frame-raw `vx`/`vy`.
+
+_SENT = np.iinfo(np.int32).min
+
+
+def _raw_at(ix, iy, rx, ry):
+    clat, clon = fx._centre(ix, iy)
+    return clat + ry * fx.CELL_LAT / 4096, clon + rx * fx.CELL_LON / 4096
+
+
+def _build_bowtie(parent):
+    """A self-overlapping pentagram spool (a figure-eight ring) with a tiny disc ring
+    at its centre: the centre has winding 2 but is even-odd outside, so `in_wn_same`
+    and `in_eo_same` differ there."""
+    import math
+    r = 1600
+    th = [math.radians(90 + 144 * k) for k in range(5)]
+    star = [_raw_at(512, 0, r * math.cos(t), r * math.sin(t)) for t in th]
+    star.append(star[0])
+    spool_cells = fx._poly_cells(star, (512, 0), [512], [0], 2)
+    tri = [_raw_at(512, 0, 0, 0), _raw_at(512, 0, 100, 0), _raw_at(512, 0, 0, 100),
+           _raw_at(512, 0, 0, 0)]
+    disc_cells = fx._poly_cells(tri, (512, 0), [512], [0], 2)
+    disc, _ = fx._build(parent, "bg_bowtie_d", disc_cells)
+    _, spool = fx._build(parent, "bg_bowtie_s", spool_cells)
+    return disc, spool
+
+
+def _dump(disc, spool, tmp_path):
+    d = tmp_path / "dump"
+    r = tmp_path / "report.json"
+    assert _run(disc, spool, d, r, workers=1) in (0, 1)
+    return {k: _rows(d, k) for k in DUMP_KINDS}
+
+
+def _eo_wn(xs, ys, px, py):
+    """Even-odd (checker pairing, no tolerance) and non-zero winding at (px, py) for one
+    closed ring, horizontal ray, half-open edge rule -- the numpy double of `diag_inside`."""
+    xs, ys = list(xs), list(ys)
+    n = len(xs)
+    pairs, wn = [], 0
+    for i in range(n):
+        j = (i + 1) % n
+        x1, y1, x2, y2 = xs[i], ys[i], xs[j], ys[j]
+        vlo, vhi = (y1, y2) if y1 < y2 else (y2, y1)
+        if not (vlo <= py < vhi):
+            continue
+        pairs.append(x1 + (py - y1) * (x2 - x1) / (y2 - y1))
+        cross = (x2 - x1) * (py - y1) - (px - x1) * (y2 - y1)
+        if y1 <= py:
+            wn += 1 if cross > 0 else 0
+        else:
+            wn -= 1 if cross < 0 else 0
+    pairs.sort()
+    eo = any(pairs[k] <= px <= pairs[k + 1] for k in range(0, len(pairs) - 1, 2))
+    return int(eo), int(wn != 0)
+
+
+def _sentinels(r):
+    return (np.isnan(r["d_any"]) and r["any_type"] == -1 and r["in_eo_same"] == 0
+            and r["in_wn_same"] == 0 and r["in_eo_any"] == 0 and r["src_ix"] == _SENT
+            and r["src_iy"] == _SENT and r["src_rec"] == -1 and r["src_tall"] == 0
+            and r["src_nv"] == -1 and np.isnan(r["src_maxseg"]) and np.isnan(r["d_src"])
+            and r["dcls"] == -1 and r["dnv"] == -1)
+
+
+@pytest.mark.parametrize("name", ["bg_boundary_displaced", "bg_wrong_type", "many_failures"])
+def test_onb_is_the_frame_raw_boundary_mask(tmp_path, name):
+    disc, spool = fx.build_fixture(tmp_path, name)
+    rows = _dump(disc, spool, tmp_path)
+    seen = 0
+    for arr in rows.values():
+        for r in arr:
+            vx, vy = int(r["vx"]), int(r["vy"])
+            want = (int(vx == 0) | (int(vx == 4096) << 1) | (int(vy == 0) << 2)
+                    | (int(vy == 4096) << 3))
+            assert int(r["onb"]) == want, (name, r)
+            seen += 1
+    assert seen
+
+
+def test_diag_sentinels_for_kinds_without_diagnostics(tmp_path):
+    disc, spool = fx.build_fixture(tmp_path, "name_node_moved")
+    na = _dump(disc, spool, tmp_path)["name_anchor"]
+    assert len(na)
+    assert all(_sentinels(r) for r in na)
+    disc, spool = fx.build_fixture(tmp_path, "cmp_tall_removed")
+    comp = _dump(disc, spool, tmp_path)["completeness"]
+    assert len(comp)
+    assert all(_sentinels(r) for r in comp)
+
+
+def test_bg_wrong_type_any_columns_and_src_sentinel(tmp_path):
+    disc, spool = fx.build_fixture(tmp_path, "bg_wrong_type")
+    bg = _dump(disc, spool, tmp_path)["background"]
+    assert len(bg)
+    assert np.all(bg["code"] == 1)
+    assert np.all(bg["any_type"] == 2)                  # the spool's type
+    assert np.all(bg["d_any"] < 1.0)                    # coincident square, quantisation noise
+    assert np.all(bg["in_eo_same"] == 0)                # no type-1 spool shape
+    assert np.any(bg["in_eo_any"] == 1)                 # inside the type-2 square
+    assert np.all(bg["src_ix"] == _SENT)                # no type-1 source within 64 raw
+    assert np.all(bg["dcls"] == 2) and np.all(bg["dnv"] == 25)
+
+
+def test_bg_boundary_displaced_source_and_maxseg(tmp_path):
+    disc, spool = fx.build_fixture(tmp_path, "bg_boundary_displaced")
+    bb = _dump(disc, spool, tmp_path)["background_boundary"]
+    assert len(bb)
+    assert np.all(bb["onb"] != 0)                       # every row is a boundary vertex
+    assert np.allclose(bb["d_src"], 8.0)                # the spool is 8 raw east
+    assert np.all(bb["src_ix"] == 514) and np.all(bb["src_iy"] == 3)
+    assert np.all(bb["src_rec"] == 0) and np.all(bb["src_tall"] == 0)
+    assert np.all(bb["src_nv"] == 5)                    # a closed square
+    side = 2.5 * 4096                                   # 2.5 cells of raw, computed here
+    assert np.allclose(bb["src_maxseg"], side)
+    assert np.all(bb["dcls"] == 2)
+
+
+def test_bg_tall_displaced_source_is_tall(tmp_path):
+    disc, spool = fx.build_fixture(tmp_path, "bg_tall_displaced")
+    rows = _dump(disc, spool, tmp_path)
+    for kind in ("background", "background_boundary"):
+        arr = rows[kind]
+        assert len(arr)
+        assert np.all(arr["src_tall"] == 1)
+        assert np.allclose(arr["src_maxseg"], 4.5 * 4096)
+        assert np.all(arr["src_ix"] == 514) and np.all(arr["src_iy"] == 3)
+
+
+def test_bg_outside_inside_flags_and_source(tmp_path):
+    disc, spool = fx.build_fixture(tmp_path, "bg_outside")
+    bg = _dump(disc, spool, tmp_path)["background"]
+    assert len(bg)
+    assert np.all(bg["in_eo_same"] == 0)
+    # the moved vertex is 30 raw outside the source square: within K1_DIAG_SAME (64),
+    # so the source IS found (the brief's "src_* sentinel" here is contradicted).
+    assert np.all(np.isfinite(bg["d_src"]))
+    assert np.all(bg["d_src"] <= 64.0)
+    assert np.all(bg["src_ix"] == 512) and np.all(bg["src_iy"] == 0) and np.all(bg["src_rec"] == 0)
+
+
+def test_bg_bowtie_winding_differs_from_parity(tmp_path):
+    disc, spool = _build_bowtie(tmp_path)
+    bg = _dump(disc, spool, tmp_path)["background"]
+    assert len(bg)
+    import math
+    r = 1600
+    th = [math.radians(90 + 144 * k) for k in range(5)]
+    star = [_raw_at(512, 0, r * math.cos(t), r * math.sin(t)) for t in th]
+    star.append(star[0])
+    lat = qr.Lattice(0)
+    sx = [int(np.rint(lat.gx(lo))) for _la, lo in star]
+    sy = [int(np.rint(lat.gy(la))) for la, _lo in star]
+    diff = 0
+    for row in bg:
+        px = int(np.rint(lat.gx(float(row["lon"]))))
+        py = int(np.rint(lat.gy(float(row["lat"]))))
+        eo, wn = _eo_wn(sx, sy, px, py)
+        assert int(row["in_eo_same"]) == eo, row
+        assert int(row["in_wn_same"]) == wn, row
+        diff += int(eo != wn)
+    assert diff
+

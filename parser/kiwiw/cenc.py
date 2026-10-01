@@ -596,12 +596,17 @@ _K1_LAYOUT = {
                ("vx", "i32"), ("vy", "i32"), ("reason", "i32"), ("code", "i32"),
                ("p0", "u16"), ("p1", "u16"), ("p2", "u16"), ("p3", "u16"), ("p4", "u16"),
                ("p5", "u16"), ("p6", "u16"), ("depth", "u8")],
-    # brief 3-02: the dump row, `K1_F_DUMP` in `_k1.h` (sample fields, then identity)
+    # brief 3-02: the dump row, `K1_F_DUMP` in `_k1.h` (sample fields, then identity);
+    # brief 3-03 appends the diagnostic columns (sentinels: 0, NaN, -1, INT32_MIN)
     "dump": [("lat", "f64"), ("lon", "f64"), ("err", "f64"), ("ix", "i32"), ("iy", "i32"),
              ("vx", "i32"), ("vy", "i32"), ("reason", "i32"), ("code", "i32"),
              ("p0", "u16"), ("p1", "u16"), ("p2", "u16"), ("p3", "u16"), ("p4", "u16"),
              ("p5", "u16"), ("p6", "u16"), ("depth", "u8"), ("kind", "u8"), ("level", "u8"),
-             ("shape", "i32"), ("vert", "i32")],
+             ("shape", "i32"), ("vert", "i32"), ("onb", "u8"), ("d_any", "f64"),
+             ("any_type", "i32"), ("in_eo_same", "u8"), ("in_wn_same", "u8"),
+             ("in_eo_any", "u8"), ("src_ix", "i32"), ("src_iy", "i32"), ("src_rec", "i32"),
+             ("src_tall", "u8"), ("src_nv", "i32"), ("src_maxseg", "f64"), ("d_src", "f64"),
+             ("dcls", "i32"), ("dnv", "i32")],
 }
 _K1_TABLES = tuple(_K1_LAYOUT)
 K1_DUMP_FIELDS = list(_K1_LAYOUT["dump"])
@@ -897,7 +902,7 @@ def k1_tall(spool: "E1Spool", lat5, a: int, b: int):
         _k1_spec = _k1_colspec()
     colmap, esz, ckey = _k1_spec
     lat5 = np.ascontiguousarray(lat5, np.float64)
-    dt = np.dtype([(n, "<i4") for n in ("type", "cls", "n", "hx", "hy")])
+    dt = np.dtype([(n, "<i4") for n in ("type", "cls", "n", "hx", "hy", "rec")])
     rcap, xcap = 1024, 1 << 14
     while True:
         rows, xy, need = np.zeros(rcap, dt), np.zeros(xcap * 2), np.zeros(2, np.int64)

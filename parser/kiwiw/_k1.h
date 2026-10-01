@@ -37,6 +37,9 @@
 #define K1_INT_EPS 1e-3
 #define K1_SEARCH 2.0
 #define K1_SEG_BUCKET 64
+/* brief 3-03 diagnostics: the radii (raw) of the source-shape and any-shape searches */
+#define K1_DIAG_SAME 64.0
+#define K1_DIAG_ANY 2.0
 
 #define K1_KINDS(X) X(range) X(step) X(road_node) X(road_point) X(name_anchor) \
     X(background) X(background_boundary) X(interior_cover) X(completeness)
@@ -78,9 +81,22 @@ typedef double k1_f64;
  * `level`, `shape` (ordinal of the decoded background shape inside its leaf,
  * -1 when the kind has none) and `vert` (vertex index inside that shape, -1 when
  * none; `completeness` and `interior_cover` have no vertex). Declared once here;
- * `kiwiw/cenc.py` mirrors it with a checked descriptor. */
+ * `kiwiw/cenc.py` mirrors it with a checked descriptor.
+ *
+ * Brief 3-03 appends diagnostic columns (after `vert`) for the three
+ * background-family kinds: `onb` (frame-boundary mask of the sample's frame-raw
+ * vertex: bit0 vx==0, bit1 vx==4096, bit2 vy==0, bit3 vy==4096), the any-type
+ * outline distance `d_any`/`any_type` within `K1_DIAG_ANY`, the even-odd/winding
+ * inside flags, and the nearest same-type source shape `src_*` within
+ * `K1_DIAG_SAME`, plus the DISC shape's class/vertex count `dcls`/`dnv`.
+ * `k1_emit_dump` writes the non-applicable sentinels for every row; `k1_diag_fill`
+ * overwrites them for the three kinds. */
 #define K1_F_DUMP(X, S) K1_F_SAMPLE(X, S) \
-    X(S, u8, kind) X(S, u8, level) X(S, i32, shape) X(S, i32, vert)
+    X(S, u8, kind) X(S, u8, level) X(S, i32, shape) X(S, i32, vert) \
+    X(S, u8, onb) X(S, f64, d_any) X(S, i32, any_type) \
+    X(S, u8, in_eo_same) X(S, u8, in_wn_same) X(S, u8, in_eo_any) \
+    X(S, i32, src_ix) X(S, i32, src_iy) X(S, i32, src_rec) X(S, u8, src_tall) \
+    X(S, i32, src_nv) X(S, f64, src_maxseg) X(S, f64, d_src) X(S, i32, dcls) X(S, i32, dnv)
 
 #define K1_FIELD(S, T, N) k1_##T N;
 #define K1_STRUCT(NAME, S) typedef struct { K1_F_##NAME(K1_FIELD, S) } S;
@@ -98,11 +114,13 @@ typedef struct { k1_kind *kind; k1_sample *smp; int64_t *expl; int64_t *stats;
 
 void k1_add(k1_acc *a, int kind, int64_t checked, int64_t failing, double worst);
 void k1_push_sample(k1_acc *a, int kind, const k1_sample *s);
-/* append one dump row when the sink is on; no-op when `a->dump` is NULL */
-void k1_emit_dump(k1_acc *a, int kind, int level, const k1_sample *s, int32_t shape,
-                  int32_t vert);
+/* append one dump row when the sink is on; no-op when `a->dump` is NULL. Returns the
+ * written row (sentinels pre-set), or NULL when the buffer overflowed (the row was not
+ * written). */
+k1_dump *k1_emit_dump(k1_acc *a, int kind, int level, const k1_sample *s, int32_t shape,
+                      int32_t vert);
 #define K1_EMIT_DUMP(a, kind, level, s, shape, vert) \
-    do { if ((a)->dump) k1_emit_dump((a), (kind), (level), (s), (shape), (vert)); } while (0)
+    do { if ((a)->dump) (void)k1_emit_dump((a), (kind), (level), (s), (shape), (vert)); } while (0)
 int k1_sample_cmp(const k1_sample *a, const k1_sample *b);
 
 /* a decoded leaf in the checker's lattice (`Decoded` in the oracle) */
@@ -125,14 +143,15 @@ struct k1_region;
 typedef struct {
     int64_t n, ncoord, ncap, ccap;
     int32_t *type, *cls;
-    uint8_t *tall;                /* local shape is tall (builder scratch) */
+    uint8_t *tall;                /* came from the tall set (1) rather than the local ring (0) */
+    int32_t *hx, *hy, *rec;       /* home cell and record ordinal in its spool background column */
     int64_t *off;
     double *x, *y;
 } k1_shapes;
 
 /* the level's tall shapes (`kw_k1_tall` output) and their per-shape coordinate offsets
  * (`n + 1`) and bounding boxes (x0, x1, y0, y1 per shape), cached by Python per spool */
-typedef struct { int32_t type, cls, n, hx, hy; } k1_tallrow;
+typedef struct { int32_t type, cls, n, hx, hy, rec; } k1_tallrow;
 typedef struct {
     const k1_tallrow *rows; const double *xy; const int64_t *off; const double *bb; int64_t n;
 } k1_tallset;
@@ -162,6 +181,16 @@ typedef struct { int orient; int32_t type; double c, a; int ok; } k1_qin;
 int k1_bg_inside(k1_ctx *c, k1_qin *q, int64_t n);
 /* free the band's shape index (call once, after the last kind group) */
 void k1_bg_release(k1_ctx *c);
+/* brief 3-03: fill the diagnostic columns of an already-emitted dump row. `sx`/`sy` are the
+ * lattice search point (the decoded vertex, or the interior-cover centre); `dcls`/`dnv` the
+ * DISC shape's class and vertex count. Only called with the dump on, for the three kinds. */
+void k1_diag_fill(k1_ctx *c, k1_dump *r, int kind, double sx, double sy, int32_t dcls,
+                  int32_t dnv);
+#define K1_EMIT_DIAG(c, kind, level, s, shape, vert, sx, sy, dcls, dnv) \
+    do { if ((c)->acc->dump) { \
+        k1_dump *_dp = k1_emit_dump((c)->acc, (kind), (level), (s), (shape), (vert)); \
+        if (_dp) k1_diag_fill((c), _dp, (kind), (sx), (sy), (dcls), (dnv)); \
+    } } while (0)
 /* the spool cells inside the block rectangle (`Region.spool_cells`): count and arrays */
 int64_t k1_region_cells(const struct k1_region *R, const int32_t **ix, const int32_t **iy);
 

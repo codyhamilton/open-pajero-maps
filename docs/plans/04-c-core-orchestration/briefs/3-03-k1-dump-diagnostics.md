@@ -71,3 +71,10 @@ Extend `parser/tests/test_k1_dump.py` first (fails before: missing columns).
 Under 1,500 tokens. Status: `done` | `done with concerns` | `blocked` | `needs context` | `over budget`. What changed, the check output before and after, any deviation and why, any contradiction with the cited contracts. Never resolve a contradiction silently. A non-trivial bug outside your evidence: symptom, location, root cause if found; do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendments (orchestrator, 2026-10-02, after Flash run)
+
+- `bg_outside`: its moved vertex is 30 raw out, inside `K1_DIAG_SAME` = 64, so a same-type source exists; `src_*` is the sentinel only beyond 64. The test asserts that.
+- `bg_long_edge` is a clean fixture (no dump rows); the `src_maxseg` assertions moved to `bg_boundary_displaced` (10240) and `bg_tall_displaced` (18432).
+- `bg_bowtie`: a symmetric figure-eight cancels (wn = 0), so a self-overlapping pentagram (centre wn = 2, eo = 0) is used; defined in `test_k1_dump.py` because `k1_fixtures.py` is not owned.
+- `k1_diag_fill` takes the lattice search point (not frame-raw `vx/vy`), and inside tests use a horizontal ray with the checker's even-odd pairing and no TOL.

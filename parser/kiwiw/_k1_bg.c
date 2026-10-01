@@ -26,7 +26,7 @@
 
 typedef struct { int64_t key; int32_t id; } ki;
 typedef struct { int64_t key; double x, y; } vert;
-typedef struct { int32_t shape; double au; } cross_t;
+typedef struct { int32_t shape; double au; int8_t sign; } cross_t;
 typedef struct { double ia, ib; } intv;
 
 static int in_range(int64_t x, int64_t y) {
@@ -60,6 +60,11 @@ typedef struct {
     int64_t ns;
     ki *sk; int64_t nsk; int sk_built;         /* 2-D bucket index of all edges */
     ki *ek[2]; int64_t nek[2]; int ek_built[2];/* 1-D v-bucket index of class-2 edges */
+    const k1_shapes *H;                        /* the shapes (for diag home cell/record) */
+    ki *dk; int64_t ndk; int dk_built;         /* untyped 2-D bucket index of all edges (3-03) */
+    double *maxseg; int maxseg_built;          /* longest edge per shape (3-03) */
+    cross_t *dcr; int64_t dcr_cap;             /* diag inside scratch: crossings (3-03) */
+    int32_t *types; int64_t ntypes; int types_built;   /* distinct shape types (3-03) */
 } bgx;
 
 static int ki_push(ki **v, int64_t *n, int64_t *cap, int64_t key, int32_t id) {
@@ -77,6 +82,7 @@ static int ki_push(ki **v, int64_t *n, int64_t *cap, int64_t key, int32_t id) {
  * from a vertex to itself is dropped) */
 static int bgx_build(bgx *G, const k1_shapes *H) {
     memset(G, 0, sizeof *G);
+    G->H = H;
     G->v = (vert *)malloc((size_t)(H->ncoord + 1) * sizeof(vert));
     int64_t ne = H->ncoord + 1;
     G->x1 = (double *)malloc((size_t)ne * 8); G->y1 = (double *)malloc((size_t)ne * 8);
@@ -110,6 +116,7 @@ static int bgx_build(bgx *G, const k1_shapes *H) {
 static void bgx_free(bgx *G) {
     free(G->v); free(G->x1); free(G->y1); free(G->x2); free(G->y2); free(G->st); free(G->ss);
     free(G->sc); free(G->sk); free(G->ek[0]); free(G->ek[1]);
+    free(G->dk); free(G->maxseg); free(G->dcr); free(G->types);
 }
 
 /* nearest same-type vertex, Chebyshev, over the floor buckets (X-1..X, Y-1..Y) */
@@ -268,6 +275,7 @@ static int inside_batch(bgx *G, q_t *q, int64_t nq) {
                 }
                 cr[ncr].shape = G->ss[s];
                 cr[ncr].au = u1 + (c - v1) * (u2 - u1) / (v2 - v1);
+                cr[ncr].sign = 0;
                 ncr++;
             }
         }
@@ -309,10 +317,10 @@ static int inside_batch(bgx *G, q_t *q, int64_t nq) {
 
 /* ------------------------------------------------------------------ the kinds */
 
-typedef struct { q_t *q; k1_sample *m; int32_t *shape, *vert; int64_t n, cap; int dump; } qs_t;
+typedef struct { q_t *q; k1_sample *m; int32_t *shape, *vert, *dcls, *dnv; int64_t n, cap; int dump; } qs_t;
 
 static int qs_push(qs_t *s, int orient, int32_t type, double c, double a, const k1_sample *m,
-                   int32_t shape, int32_t vert) {
+                   int32_t shape, int32_t vert, int32_t dcls, int32_t dnv) {
     if (s->n == s->cap) {
         int64_t nc = s->cap ? s->cap * 2 : 1024;
         q_t *q = (q_t *)realloc(s->q, (size_t)nc * sizeof(q_t));
@@ -328,6 +336,12 @@ static int qs_push(qs_t *s, int orient, int32_t type, double c, double a, const 
             int32_t *vt = (int32_t *)realloc(s->vert, (size_t)nc * sizeof(int32_t));
             if (!vt) return -4;
             s->vert = vt;
+            int32_t *dc = (int32_t *)realloc(s->dcls, (size_t)nc * sizeof(int32_t));
+            if (!dc) return -4;
+            s->dcls = dc;
+            int32_t *dn = (int32_t *)realloc(s->dnv, (size_t)nc * sizeof(int32_t));
+            if (!dn) return -4;
+            s->dnv = dn;
         }
         s->cap = nc;
     }
@@ -337,6 +351,8 @@ static int qs_push(qs_t *s, int orient, int32_t type, double c, double a, const 
     if (s->dump) {
         s->shape[s->n] = shape;
         s->vert[s->n] = vert;
+        s->dcls[s->n] = dcls;
+        s->dnv[s->n] = dnv;
     }
     s->n++;
     return 0;
@@ -375,6 +391,209 @@ int k1_bg_inside(k1_ctx *c, k1_qin *q, int64_t n) {
     if (!c->shapes) { for (int64_t i = 0; i < n; i++) q[i].ok = 0; return 0; }
     int rc = bgx_get(c, &G);
     return rc < 0 ? rc : inside_batch(G, q, n);
+}
+
+/* ------------------------------------------------------------ diagnostics (3-03) */
+
+/* The untyped 2-D bucket index of every edge: same listing rule as `seg_index` but keyed
+ * by the bucket alone, so one bucket lookup yields the edges of every type whose bounding
+ * box grown by `BUCKET_MARGIN` reaches that bucket. The nearest-shape search scans a small
+ * bucket neighbourhood of the query and takes the minimum over the candidates. */
+static int diag_index(bgx *G) {
+    if (G->dk_built) return 0;
+    G->dk_built = 1;
+    int64_t cap = 0, n = 0;
+    ki *v = NULL;
+    const double P = K1_SEG_BUCKET, M = BUCKET_MARGIN;
+    for (int64_t s = 0; s < G->ns; s++) {
+        double x1 = G->x1[s], y1 = G->y1[s], x2 = G->x2[s], y2 = G->y2[s];
+        if (!isfinite(x1 + y1 + x2 + y2) || fabs(x1) > 1e9 || fabs(y1) > 1e9 ||
+            fabs(x2) > 1e9 || fabs(y2) > 1e9) continue;
+        double sx0 = x1 < x2 ? x1 : x2, sx1 = x1 < x2 ? x2 : x1;
+        double sy0 = y1 < y2 ? y1 : y2, sy1 = y1 < y2 ? y2 : y1;
+        int64_t b0 = (int64_t)floor((sx0 - M) / P), b1 = (int64_t)floor((sx1 + M) / P);
+        for (int64_t bx = b0; bx <= b1; bx++) {
+            double xa = sx0 > (double)bx * P - M ? sx0 : (double)bx * P - M;
+            double xb = sx1 < (double)(bx + 1) * P + M ? sx1 : (double)(bx + 1) * P + M;
+            double ya = sy0, yb = sy1;
+            if (x1 != x2) {
+                double k = (y2 - y1) / (x2 - x1);
+                ya = y1 + (xa - x1) * k; yb = y1 + (xb - x1) * k;
+                if (ya > yb) { double t = ya; ya = yb; yb = t; }
+                ya -= 0.01; yb += 0.01;
+            }
+            int64_t c0 = (int64_t)floor((ya - M) / P), c1 = (int64_t)floor((yb + M) / P);
+            for (int64_t by = c0; by <= c1; by++) {
+                if (!in_range(bx, by)) continue;
+                if (ki_push(&v, &n, &cap, pack2(bx, by), (int32_t)s) < 0) { free(v); return -4; }
+            }
+        }
+    }
+    qsort(v, (size_t)n, sizeof(ki), cmp_ki);
+    G->dk = v; G->ndk = n;
+    return 0;
+}
+
+/* longest edge of every shape, closing edge included for class 2 (already in the table) */
+static int diag_maxseg(bgx *G) {
+    if (G->maxseg_built) return 0;
+    G->maxseg_built = 1;
+    int64_t n = G->H ? G->H->n : 0;
+    G->maxseg = (double *)malloc((size_t)(n > 0 ? n : 1) * sizeof(double));
+    if (!G->maxseg) return -4;
+    for (int64_t i = 0; i < n; i++) G->maxseg[i] = -1.0;
+    for (int64_t s = 0; s < G->ns; s++) {
+        int32_t shp = G->ss[s];
+        if (shp < 0 || shp >= n) continue;
+        double len = hypot(G->x2[s] - G->x1[s], G->y2[s] - G->y1[s]);
+        if (len > G->maxseg[shp]) G->maxseg[shp] = len;
+    }
+    return 0;
+}
+
+/* the distinct shape types, so an any-type inside test can walk them */
+static int diag_types(bgx *G) {
+    if (G->types_built) return 0;
+    G->types_built = 1;
+    int64_t n = G->H ? G->H->n : 0;
+    int32_t *v = (int32_t *)malloc((size_t)(n > 0 ? n : 1) * 4);
+    if (!v) return -4;
+    int64_t m = 0;
+    for (int64_t i = 0; i < n; i++) v[m++] = G->H->type[i];
+    for (int64_t i = 1; i < m; i++) {                     /* insertion sort (tiny, mostly sorted) */
+        int32_t x = v[i]; int64_t j = i - 1;
+        while (j >= 0 && v[j] > x) { v[j + 1] = v[j]; j--; }
+        v[j + 1] = x;
+    }
+    int64_t u = 0;
+    for (int64_t i = 0; i < m; i++) if (i == 0 || v[i] != v[i - 1]) v[u++] = v[i];
+    G->types = v; G->ntypes = u;
+    return 0;
+}
+
+typedef struct { int32_t shape; double d; } diag_near;
+
+/* is candidate `cand` (distance `cd`) a better same-type source than `cur` (`curd`)?
+ * smaller (distance, home iy, home ix, record), the brief's tie-break */
+static int diag_better(bgx *G, int32_t cand, double cd, int32_t cur, double curd) {
+    if (cur < 0 || cd < curd) return 1;
+    if (cd > curd) return 0;
+    const k1_shapes *H = G->H;
+    if (cand == cur) return 0;
+    if (H->hy[cand] != H->hy[cur]) return H->hy[cand] < H->hy[cur];
+    if (H->hx[cand] != H->hx[cur]) return H->hx[cand] < H->hx[cur];
+    return H->rec[cand] < H->rec[cur];
+}
+
+/* nearest same-type source shape within K1_DIAG_SAME, and the nearest any-type outline
+ * within K1_DIAG_ANY. Scans a 5x5 bucket neighbourhood (>= the 64-raw max radius). */
+static int diag_nearest(bgx *G, double qx, double qy, int32_t same_type, diag_near *o,
+                        int32_t *any_type, double *d_any) {
+    o->shape = -1; o->d = NAN;
+    *any_type = -1; *d_any = NAN;
+    if (diag_index(G) < 0) return -4;
+    int64_t bx = fl_div((int64_t)floor(qx), K1_SEG_BUCKET);
+    int64_t by = fl_div((int64_t)floor(qy), K1_SEG_BUCKET);
+    int32_t best = -1; double bd = INFINITY;
+    int32_t best_a = INT32_MAX; double bad = INFINITY;
+    for (int dx = -2; dx <= 2; dx++)
+        for (int dy = -2; dy <= 2; dy++) {
+            int64_t bxx = bx + dx, byy = by + dy;
+            if (!in_range(bxx, byy)) continue;
+            int64_t key = pack2(bxx, byy);
+            for (int64_t i = ki_lower(G->dk, G->ndk, key); i < G->ndk && G->dk[i].key == key; i++) {
+                int32_t s = G->dk[i].id;
+                double d = k1_cheb_pt_seg(qx, qy, G->x1[s], G->y1[s], G->x2[s], G->y2[s]);
+                if (d <= K1_DIAG_ANY && (d < bad || (d == bad && G->st[s] < best_a))) {
+                    bad = d; best_a = G->st[s];
+                }
+                if (G->st[s] == same_type && d <= K1_DIAG_SAME &&
+                    diag_better(G, G->ss[s], d, best, bd)) {
+                    best = G->ss[s]; bd = d;
+                }
+            }
+        }
+    if (best >= 0) { o->shape = best; o->d = bd; }
+    if (best_a != INT32_MAX) { *any_type = best_a; *d_any = bad; }
+    return 0;
+}
+
+/* even-odd (checker pairing, no tolerance) and winding, horizontal ray, over the class-2
+ * shapes of one type. `*eo`/`*wn` are OR-ed in. */
+static int diag_inside_type(bgx *G, double px, double py, int32_t t, int *eo, int *wn) {
+    if (edge_index(G, 0) < 0) return -4;
+    double c = py;
+    int64_t ncr = 0;
+    if (fabs(c) < 1e9) {
+        int64_t key = tkey(t) | (fl_div((int64_t)floor(c), K1_SEG_BUCKET) + OFF24);
+        for (int64_t i = ki_lower(G->ek[0], G->nek[0], key);
+             i < G->nek[0] && G->ek[0][i].key == key; i++) {
+            int32_t s = G->ek[0][i].id;
+            double u1 = G->x1[s], v1 = G->y1[s], u2 = G->x2[s], v2 = G->y2[s];
+            double vlo = v1 < v2 ? v1 : v2, vhi = v1 < v2 ? v2 : v1;
+            if (!(vlo <= c && c < vhi)) continue;
+            if (ncr == G->dcr_cap) {
+                int64_t nc = G->dcr_cap ? G->dcr_cap * 2 : 64;
+                cross_t *q = (cross_t *)realloc(G->dcr, (size_t)nc * sizeof(cross_t));
+                if (!q) return -4;
+                G->dcr = q; G->dcr_cap = nc;
+            }
+            double cross = (u2 - u1) * (c - v1) - (px - u1) * (v2 - v1);
+            G->dcr[ncr].shape = G->ss[s];
+            G->dcr[ncr].au = u1 + (c - v1) * (u2 - u1) / (v2 - v1);
+            G->dcr[ncr].sign = (int8_t)(v1 <= c ? (cross > 0 ? 1 : 0) : (cross < 0 ? -1 : 0));
+            ncr++;
+        }
+    }
+    qsort(G->dcr, (size_t)ncr, sizeof(cross_t), cmp_cross);
+    for (int64_t i = 0; i < ncr;) {
+        int32_t sh = G->dcr[i].shape;
+        int64_t j = i;
+        int w = 0;
+        while (j < ncr && G->dcr[j].shape == sh) { w += G->dcr[j].sign; j++; }
+        if (w != 0) *wn = 1;
+        for (int64_t k = i; k + 1 < j; k += 2)
+            if (G->dcr[k].au <= px && px <= G->dcr[k + 1].au) { *eo = 1; break; }
+        i = j;
+    }
+    return 0;
+}
+
+void k1_diag_fill(k1_ctx *c, k1_dump *r, int kind, double sx, double sy, int32_t dcls,
+                  int32_t dnv) {
+    (void)kind;
+    r->dcls = dcls; r->dnv = dnv;
+    int32_t vx = r->vx, vy = r->vy;
+    r->onb = (uint8_t)((vx == 0 ? 1 : 0) | (vx == K1_RAW ? 2 : 0) |
+                       (vy == 0 ? 4 : 0) | (vy == K1_RAW ? 8 : 0));
+    bgx *G = NULL;
+    if (bgx_get(c, &G) < 0 || !G) return;
+    int32_t t = r->code;
+    diag_near o;
+    if (diag_nearest(G, sx, sy, t, &o, &r->any_type, &r->d_any) == 0 && o.shape >= 0) {
+        const k1_shapes *H = G->H;
+        r->src_ix = H->hx[o.shape];
+        r->src_iy = H->hy[o.shape];
+        r->src_rec = H->rec[o.shape];
+        r->src_tall = H->tall[o.shape];
+        r->src_nv = (int32_t)(H->off[o.shape + 1] - H->off[o.shape]);
+        r->d_src = o.d;
+        if (diag_maxseg(G) == 0 && G->maxseg[o.shape] >= 0.0) r->src_maxseg = G->maxseg[o.shape];
+    }
+    int eo = 0, wn = 0;
+    if (diag_inside_type(G, sx, sy, t, &eo, &wn) == 0) {
+        r->in_eo_same = (uint8_t)(eo != 0);
+        r->in_wn_same = (uint8_t)(wn != 0);
+    }
+    if (diag_types(G) == 0) {
+        int eoany = 0;
+        for (int64_t i = 0; i < G->ntypes; i++) {
+            int e2 = 0, w2 = 0;
+            if (diag_inside_type(G, sx, sy, G->types[i], &e2, &w2) < 0) break;
+            if (e2) { eoany = 1; break; }
+        }
+        r->in_eo_any = (uint8_t)eoany;
+    }
 }
 
 int k1_bg_kinds(k1_ctx *c) {
@@ -425,14 +644,16 @@ int k1_bg_kinds(k1_ctx *c) {
                     if (!near) {
                         nb_bad++;
                         k1_push_sample(c->acc, K1_background, &m);
-                        K1_EMIT_DUMP(c->acc, K1_background, c->block->level, &m,
-                                     (int32_t)k, (int32_t)v);
+                        K1_EMIT_DIAG(c, K1_background, c->block->level, &m, (int32_t)k,
+                                     (int32_t)v, (double)X, (double)Y, sh->shape_class,
+                                     (int32_t)sh->coord_n);
                     } else if (d > nb_worst) nb_worst = d;
                 } else {
                     onb_n++;
                     if (near) { if (d > onb_worst) onb_worst = d; }
                     else rc = qs_push(&Q, onh ? 0 : 1, sh->type_code, onh ? (double)Y : (double)X,
-                                      onh ? (double)X : (double)Y, &m, (int32_t)k, (int32_t)v);
+                                      onh ? (double)X : (double)Y, &m, (int32_t)k, (int32_t)v,
+                                      sh->shape_class, (int32_t)sh->coord_n);
                 }
             }
             if (sh->shape_class == 2 && allb) {
@@ -443,7 +664,8 @@ int k1_bg_kinds(k1_ctx *c) {
                                                  K1_R_COVER, sh->type_code, NAN);
                     ncov++;
                     rc = qs_push(&Q, 0, sh->type_code, ((double)lf->y0 + (double)lf->y1) / 2.0,
-                                 ((double)lf->x0 + (double)lf->x1) / 2.0, &m, (int32_t)k, -1);
+                                 ((double)lf->x0 + (double)lf->x1) / 2.0, &m, (int32_t)k, -1,
+                                 sh->shape_class, (int32_t)sh->coord_n);
                     Q.m[Q.n - 1].reason = K1_R_COVER;
                 }
             }
@@ -454,22 +676,26 @@ int k1_bg_kinds(k1_ctx *c) {
         for (int64_t i = 0; i < Q.n; i++) {
             int cover = Q.m[i].reason == K1_R_COVER;
             if (Q.q[i].ok) continue;
+            /* the diag search point: the cover centre (a, c) or the boundary vertex,
+             * (orient 0: c=Y, a=X; orient 1: c=X, a=Y). Both stored as doubles. */
+            double sx = cover || Q.q[i].orient == 0 ? Q.q[i].a : Q.q[i].c;
+            double sy = cover || Q.q[i].orient == 0 ? Q.q[i].c : Q.q[i].a;
             if (cover) {
                 cov_bad++;
                 k1_push_sample(c->acc, K1_interior_cover, &Q.m[i]);
-                K1_EMIT_DUMP(c->acc, K1_interior_cover, c->block->level, &Q.m[i],
-                             Q.shape[i], Q.vert[i]);
+                K1_EMIT_DIAG(c, K1_interior_cover, c->block->level, &Q.m[i], Q.shape[i],
+                             Q.vert[i], sx, sy, Q.dcls[i], Q.dnv[i]);
             } else {
                 onb_bad++;
                 k1_push_sample(c->acc, K1_background_boundary, &Q.m[i]);
-                K1_EMIT_DUMP(c->acc, K1_background_boundary, c->block->level, &Q.m[i],
-                             Q.shape[i], Q.vert[i]);
+                K1_EMIT_DIAG(c, K1_background_boundary, c->block->level, &Q.m[i], Q.shape[i],
+                             Q.vert[i], sx, sy, Q.dcls[i], Q.dnv[i]);
             }
         }
         k1_add(c->acc, K1_background, nb, nb_bad, nb_worst);
         k1_add(c->acc, K1_background_boundary, onb_n, onb_bad, onb_worst);
         k1_add(c->acc, K1_interior_cover, ncov, cov_bad, 0.0);
     }
-    free(Q.q); free(Q.m); free(Q.shape); free(Q.vert);
+    free(Q.q); free(Q.m); free(Q.shape); free(Q.vert); free(Q.dcls); free(Q.dnv);
     return rc;
 }
