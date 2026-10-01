@@ -134,6 +134,18 @@ The count and order are fixed at sign-off.
 - Surfaces: new `kiwiw/_d1.c`, `_k1.c` (names indicative) joined into the single library via `cbuild`, the binding module (`cenc.py` or its successor, the one door), `parser/kiwiw/ctest/`, `parser/tools/quantisation_roundtrip.py` (becomes a thin driver; its Python checking stays only as the count oracle until Phase 5), tests.
 - Approach: known
 - Depends on: Phase 1
+- Units (briefs under `docs/plans/04-c-core-orchestration/briefs/`; heavy runs serialise on `output/.heavy.lock`):
+
+  | Unit | Brief | Depends on | May run alongside |
+  |---|---|---|---|
+  | 2-01 D1 frame decoders (C) | `2-01-d1-frame-decoders.md` | Phase 1 | none (owns `_d1.c`, `_d1.h`, `cenc.py` D1 section) |
+  | 2-02 D1 block walker and equivalence | `2-02-d1-block-walker-equivalence.md` | 2-01 | none |
+  | 2-03 K1 point kinds (range, step, road_node, road_point, name_anchor) | `2-03-k1-core-point-kinds.md` | 2-02 | none |
+  | 2-04 K1 background kinds | `2-04-k1-background-kinds.md` | 2-03 | none |
+  | 2-05 K1 completeness | `2-05-k1-completeness.md` | 2-04 | none |
+  | 2-06 round-trip thin driver | `2-06-roundtrip-thin-driver.md` | 2-05 | none |
+  | 2-07 full-disc run kickoff | `2-07-full-disc-run-kickoff.md` | 2-06 | none |
+  | 2-08 full-disc verify and record | `2-08-full-disc-verify-and-record.md` | 2-07 | none |
 
 ### Phase 3 — Triage the 3C-04 debt
 
