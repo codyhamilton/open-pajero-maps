@@ -86,6 +86,12 @@ SEG_BUCKET = 64     # raw units per segment-index bucket
 SAMPLE = 10         # failure sample size per (level, kind)
 KINDS = ("range", "step", "road_node", "road_point", "name_anchor", "background",
          "background_boundary", "interior_cover", "completeness")
+# the kinds `--dump-failures` can write (brief 3-02: the five that fail on the 3-11 disc)
+DUMP_KINDS = ("name_anchor", "background", "background_boundary", "interior_cover",
+              "completeness")
+# the canonical file order of a dump: identity first, then the total sample order
+DUMP_ORDER = ("level", "iy", "ix", "p0", "p1", "p2", "p3", "p4", "p5", "p6", "depth",
+              "vx", "vy", "reason", "code", "lat", "lon", "err", "shape", "vert")
 # failures of a point kind that a documented build rule explains; counted
 # (and reported per level) rather than failed
 EXPLAINED = ("road_node_subcell_on_polyline", "road_node_on_leaf_edge",
@@ -1316,13 +1322,60 @@ def _k1_spool(cenc, st, level):
 
 
 def _k1_band(task):
-    """One range: ONE binding call; returns the level and its accumulator."""
-    key, rlo, rhi = task
+    """One range: ONE binding call; returns the level and its accumulator. `task` is
+    `(task index, key, rlo, rhi)`; with the dump on, this worker writes its own part
+    file per kind (`part_<index>_<kind>.bin`) -- row buffers never cross the pool."""
+    idx, key, rlo, rhi = task
     cenc, st = _k1_state()
     acc = cenc.K1Acc()
     row = cenc.d1_block_rows([key], st["container"], st["cache"])[0:1]
-    cenc.k1_check_band(st["region"], row, rlo, rhi, _k1_spool(cenc, st, key[0]), acc)
+    dinfo = _G.get("dump")
+    dump = cenc.K1Dump() if dinfo is not None else None
+    cenc.k1_check_band(st["region"], row, rlo, rhi, _k1_spool(cenc, st, key[0]), acc,
+                       dump=dump)
+    if dump is not None and len(dump.rows):
+        _write_dump_parts(dinfo["dir"], dinfo["index"], idx, dump.rows, dinfo["kinds"])
     return key[0], acc
+
+
+def _write_dump_parts(dump_dir, kind_index, tidx, rows, kinds):
+    """One file per kind with rows in this band (`DIR/part_<tidx:05d>_<kind>.bin`)."""
+    kk = rows["kind"]
+    for name in kinds:
+        sel = rows[kk == kind_index[name]]
+        if len(sel):
+            sel.tofile(Path(dump_dir) / f"part_{tidx:05d}_{name}.bin")
+
+
+def _finalize_dump(dump_dir, kinds, ntasks, log):
+    """Concatenate the per-task parts per kind, order them canonically (independent of
+    the band split), write `DIR/<kind>.bin`, delete the parts and write the manifest;
+    return `{kind: rows}` for the report."""
+    from kiwiw import cenc
+    dump_dir = Path(dump_dir)
+    fields = [{"name": n, "type": t} for n, t in cenc.K1_DUMP_FIELDS]
+    row_size = cenc.K1_DUMP_DTYPE.itemsize
+    counts = {}
+    for name in kinds:
+        parts = []
+        for i in range(ntasks):
+            p = dump_dir / f"part_{i:05d}_{name}.bin"
+            if p.exists():
+                parts.append(np.fromfile(p, dtype=cenc.K1_DUMP_DTYPE))
+                p.unlink()
+        arr = np.concatenate(parts) if parts else np.zeros(0, cenc.K1_DUMP_DTYPE)
+        if len(arr) > 1:
+            arr = arr[np.argsort(arr, order=DUMP_ORDER, kind="stable")]
+        (dump_dir / f"{name}.bin").write_bytes(arr.tobytes())
+        counts[name] = int(len(arr))
+    manifest = {"tool": "quantisation_roundtrip", "engine": "c", "row_size": row_size,
+                "fields": fields,
+                "kinds": {n: {"rows": counts[n], "row_size": row_size,
+                              "file": f"{n}.bin", "fields": fields} for n in kinds}}
+    (dump_dir / "dump_manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    log("dump: " + ", ".join(f"{n} {counts[n]:,}" for n in kinds))
+    return counts
 
 
 def _k1_rows(res, kind):
@@ -1346,7 +1399,8 @@ def _k1_rows(res, kind):
     return out
 
 
-def _k1_report(disc, spool, accs, nblocks, tall_n, wall, pss_peak_kb, workers, nranges):
+def _k1_report(disc, spool, accs, nblocks, tall_n, wall, pss_peak_kb, workers, nranges,
+               dump=None):
     levels, totals = {}, {k: {"checked": 0, "failing": 0, "worst_error_raw": 0.0} for k in KINDS}
     stats = {}
     for lv in sorted(accs):
@@ -1366,24 +1420,46 @@ def _k1_report(disc, spool, accs, nblocks, tall_n, wall, pss_peak_kb, workers, n
         for k, v in r["stats"].items():
             stats[k] = stats.get(k, 0) + v
     failing = sum(t["failing"] for t in totals.values())
-    return {"tool": "quantisation_roundtrip", "engine": "c", "disc": Path(disc).name,
-            "spool": Path(spool).name, "tolerance_raw": TOL, "pass": failing == 0,
-            "failing": failing, "totals": totals, "levels": levels, "wall_s": round(wall, 1),
-            "compare_excludes": COMPARE_EXCLUDES,
-            "timing": {"wall_s": round(wall, 3), "workers": workers, "ranges": nranges,
-                       "pss_peak_kb": pss_peak_kb, "pss_interval_s": PSS_INTERVAL,
-                       "c_ns": stats.get("ns", 0), "d1_ns": stats.get("d1_ns", 0),
-                       "c_check_s": round(stats.get("ns", 0) / 1e9, 3),
-                       "d1_decode_s": round(stats.get("d1_ns", 0) / 1e9, 3),
-                       "c_stats": stats}}
+    res = {"tool": "quantisation_roundtrip", "engine": "c", "disc": Path(disc).name,
+           "spool": Path(spool).name, "tolerance_raw": TOL, "pass": failing == 0,
+           "failing": failing, "totals": totals, "levels": levels, "wall_s": round(wall, 1),
+           "compare_excludes": COMPARE_EXCLUDES,
+           "timing": {"wall_s": round(wall, 3), "workers": workers, "ranges": nranges,
+                      "pss_peak_kb": pss_peak_kb, "pss_interval_s": PSS_INTERVAL,
+                      "c_ns": stats.get("ns", 0), "d1_ns": stats.get("d1_ns", 0),
+                      "c_check_s": round(stats.get("ns", 0) / 1e9, 3),
+                      "d1_decode_s": round(stats.get("d1_ns", 0) / 1e9, 3),
+                      "c_stats": stats}}
+    if dump is not None:
+        res["dump"] = dump
+    return res
 
 
-def roundtrip_c(disc: str, spool: str, workers: int = 12, levels=None, log=None) -> dict:
-    """Run every check in C (K1); return the report dict."""
+def roundtrip_c(disc: str, spool: str, workers: int = 12, levels=None, log=None,
+                dump_dir=None, dump_kinds=None) -> dict:
+    """Run every check in C (K1); return the report dict. With `dump_dir`, also write
+    every failing item of `dump_kinds` to `DIR/<kind>.bin` plus `DIR/dump_manifest.json`
+    (brief 3-02), and add `"dump": {kind: rows}` to the report."""
     from kiwiw import cenc
     if cenc._load_lib() is None:
         raise RuntimeError("--engine c needs a C compiler (kiwiw.cbuild); use --engine python")
     log = log or (lambda *a: None)
+    kind_index = None
+    if dump_dir is not None:
+        cenc._load_k1()
+        names = list(cenc._k1_cols["kinds"])
+        want = set(dump_kinds) if dump_kinds else set(DUMP_KINDS)
+        bad = sorted(want - set(DUMP_KINDS))
+        if bad:
+            raise ValueError(f"--dump-kinds must be among {DUMP_KINDS}: {bad}")
+        dump_kinds = tuple(k for k in DUMP_KINDS if k in want)
+        kind_index = {k: names.index(k) for k in dump_kinds}
+        d = Path(dump_dir)
+        d.mkdir(parents=True, exist_ok=True)
+        for p in list(d.glob("part_*.bin")) + [d / f"{k}.bin" for k in dump_kinds] \
+                + [d / "dump_manifest.json"]:
+            if p.exists():
+                p.unlink()
     t0 = time.time()
     sampler = PssSampler()   # its thread starts after the pool forks (no fork of a threaded parent)
     sampler.sample()
@@ -1400,8 +1476,11 @@ def roundtrip_c(disc: str, spool: str, workers: int = 12, levels=None, log=None)
     for k in keys:
         nblocks[k[0]] = nblocks.get(k[0], 0) + 1
     log(f"{len(keys)} blocks over levels {lvls}, {len(tasks)} ranges ({time.time() - t0:.1f}s)")
+    plan = [(i, k, rlo, rhi) for i, (k, rlo, rhi) in enumerate(tasks)]
     _G.clear()
     _G.update({"spool": spool, "disc": disc})
+    if kind_index is not None:
+        _G["dump"] = {"dir": str(dump_dir), "kinds": dump_kinds, "index": kind_index}
     cenc_, st = _k1_state()
     tall_n = {}
     for lv in lvls:   # the level's tall shapes, once, before the fork
@@ -1417,11 +1496,11 @@ def roundtrip_c(disc: str, spool: str, workers: int = 12, levels=None, log=None)
     sampler.start()
     done = 0
     try:
-        for lv, acc in _imap(pool, _k1_band, tasks):
+        for lv, acc in _imap(pool, _k1_band, plan):
             accs[lv].merge(acc)
             done += 1
-            if done % 500 == 0 or done == len(tasks):
-                log(f"{done}/{len(tasks)} ranges ({time.time() - t0:.1f}s)")
+            if done % 500 == 0 or done == len(plan):
+                log(f"{done}/{len(plan)} ranges ({time.time() - t0:.1f}s)")
     finally:
         if pool is not None:
             pool.close()
@@ -1429,17 +1508,23 @@ def roundtrip_c(disc: str, spool: str, workers: int = 12, levels=None, log=None)
         gc.unfreeze()
         _G.clear()
     peak = sampler.stop()
+    dump_counts = None
+    if kind_index is not None:
+        dump_counts = _finalize_dump(dump_dir, dump_kinds, len(tasks), log)
     return _k1_report(disc, spool, accs, nblocks, tall_n, time.time() - t0, peak, workers,
-                      len(tasks))
+                      len(tasks), dump=dump_counts)
 
 
 def roundtrip(disc: str, spool: str, workers: int = 12, levels=None, log=None,
-              engine: str = "python") -> dict:
+              engine: str = "python", dump_dir=None, dump_kinds=None) -> dict:
     """Run every check; return the report dict. `engine`: `c` (K1, the CLI default) or
-    `python` (the oracle; the library default so Python-oracle callers are unchanged)."""
+    `python` (the oracle; the library default so Python-oracle callers are unchanged).
+    `dump_dir`/`dump_kinds` are the `--dump-failures`/`--dump-kinds` options (C only)."""
     if engine == "c":
-        return roundtrip_c(disc, spool, workers, levels, log)
+        return roundtrip_c(disc, spool, workers, levels, log, dump_dir, dump_kinds)
     if engine == "python":
+        if dump_dir is not None:
+            raise ValueError("--dump-failures needs --engine c")
         return roundtrip_python(disc, spool, workers, levels, log)
     raise ValueError(f"unknown engine {engine!r}")
 
@@ -1479,13 +1564,19 @@ def main(argv=None) -> int:
     ap.add_argument("--engine", choices=("c", "python"), default="c",
                     help="c: K1 through libkiwiw (default); python: the count oracle")
     ap.add_argument("--levels", help="comma-separated levels to check (default: every level)")
+    ap.add_argument("--dump-failures", metavar="DIR",
+                    help="write every failing item of the dump kinds to DIR (<kind>.bin "
+                         "plus dump_manifest.json); needs --engine c")
+    ap.add_argument("--dump-kinds", default=",".join(DUMP_KINDS),
+                    help=f"comma list of kinds to dump (default: {','.join(DUMP_KINDS)})")
     args = ap.parse_args(argv)
     levels = {int(x) for x in args.levels.split(",")} if args.levels else None
+    dump_kinds = [x for x in args.dump_kinds.split(",") if x]
 
     def log(msg):
         print(f"[quantisation_roundtrip] {msg}", file=sys.stderr, flush=True)
     res = roundtrip(args.disc, args.spool, workers=args.workers, levels=levels, log=log,
-                    engine=args.engine)
+                    engine=args.engine, dump_dir=args.dump_failures, dump_kinds=dump_kinds)
     text = json.dumps(res, indent=2, sort_keys=True)
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)

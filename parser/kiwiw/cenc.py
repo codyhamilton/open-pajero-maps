@@ -596,8 +596,15 @@ _K1_LAYOUT = {
                ("vx", "i32"), ("vy", "i32"), ("reason", "i32"), ("code", "i32"),
                ("p0", "u16"), ("p1", "u16"), ("p2", "u16"), ("p3", "u16"), ("p4", "u16"),
                ("p5", "u16"), ("p6", "u16"), ("depth", "u8")],
+    # brief 3-02: the dump row, `K1_F_DUMP` in `_k1.h` (sample fields, then identity)
+    "dump": [("lat", "f64"), ("lon", "f64"), ("err", "f64"), ("ix", "i32"), ("iy", "i32"),
+             ("vx", "i32"), ("vy", "i32"), ("reason", "i32"), ("code", "i32"),
+             ("p0", "u16"), ("p1", "u16"), ("p2", "u16"), ("p3", "u16"), ("p4", "u16"),
+             ("p5", "u16"), ("p6", "u16"), ("depth", "u8"), ("kind", "u8"), ("level", "u8"),
+             ("shape", "i32"), ("vert", "i32")],
 }
 _K1_TABLES = tuple(_K1_LAYOUT)
+K1_DUMP_FIELDS = list(_K1_LAYOUT["dump"])
 _K1_STATS = ("calls", "leaves", "failed_frames", "d1_retries", "cells", "items", "rescues",
              "ns", "d1_ns")
 _K1_REASONS = {0: "range", 1: "no spool record within half a raw unit", 2: "step not representable",
@@ -615,6 +622,9 @@ class K1Error(RuntimeError):
 def _k1_dtype(table: str):
     import numpy as np
     return np.dtype([(n, _D1_NP[k]) for n, k in _K1_LAYOUT[table]], align=True)
+
+
+K1_DUMP_DTYPE = _k1_dtype("dump")
 
 
 def _load_k1():
@@ -641,7 +651,8 @@ def _load_k1():
                                     ctypes.c_int64, ctypes.c_void_p, ctypes.c_int64,
                                     ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
                                     ctypes.c_int64] + [ctypes.c_void_p] * 4
-                                   + [ctypes.c_void_p] * 4 + [ctypes.c_int64])
+                                   + [ctypes.c_void_p] * 4 + [ctypes.c_int64]
+                                   + [ctypes.c_void_p, ctypes.c_int64, ctypes.c_void_p])
         lib.kw_k1_tall.restype = ctypes.c_int64
         lib.kw_k1_tall.argtypes = ([ctypes.c_void_p, ctypes.c_int64, ctypes.c_void_p,
                                     ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p,
@@ -800,9 +811,33 @@ def _k1_tallset(spool: "E1Spool", block_row):
     return hit
 
 
-def k1_check_band(region, block_row, rlo, rhi, spool: "E1Spool", acc: K1Acc) -> None:
+class K1Dump:
+    """A per-band dump row buffer with the D1-style grow-and-retry (brief 3-02):
+    C fills rows in emission order and, when the buffer is full, returns 1 with the
+    count it needs; Python grows and calls again. `rows` holds the (trimmed, a
+    copy) `K1_DUMP_DTYPE` rows after a successful `k1_check_band`."""
+
+    def __init__(self, cap: int = 1 << 16):
+        import numpy as np
+        self.dtype = K1_DUMP_DTYPE
+        self.rb = self.dtype.itemsize
+        self.cap = max(1, int(cap))
+        self.buf = np.empty(self.cap * self.rb, np.uint8)
+        self.need = np.zeros(1, np.int64)
+        self.rows = np.zeros(0, self.dtype)
+
+    def grow(self, n: int) -> None:
+        import numpy as np
+        self.cap = max(self.cap * 2, int(n) + max(1, int(n) // 4))
+        self.buf = np.empty(self.cap * self.rb, np.uint8)
+
+
+def k1_check_band(region, block_row, rlo, rhi, spool: "E1Spool", acc: K1Acc,
+                  dump: "K1Dump | None" = None) -> None:
     """Check one (block, row band) in ONE C call, adding into `acc`: `block_row` is a
-    one-row `D1_BLOCK_DTYPE` array, `[rlo, rhi]` the band (None: all)."""
+    one-row `D1_BLOCK_DTYPE` array, `[rlo, rhi]` the band (None: all). When `dump` is
+    given, every failing item of the five kinds is also written into it (grow and
+    retry if C reports the buffer too small); `dump.rows` then holds them."""
     import numpy as np
     global _k1_spec
     lib = _load_k1()
@@ -816,13 +851,37 @@ def k1_check_band(region, block_row, rlo, rhi, spool: "E1Spool", acc: K1Acc) -> 
     lo = -(1 << 62) if rlo is None else int(rlo)
     hi = (1 << 62) if rhi is None else int(rhi)
     tall = _k1_tallset(spool, block_row)
-    rc = lib.kw_k1_band(region.ctypes.data, len(region), block_row.ctypes.data, lo, hi,
-                        spool.idx.ctypes.data, len(spool.idx), spool.data.ctypes.data,
-                        len(spool.data), colmap.ctypes.data, esz.ctypes.data, ckey.ctypes.data,
-                        len(esz), acc.kinds.ctypes.data, acc.smp.ctypes.data,
-                        acc.expl.ctypes.data, acc.stats.ctypes.data,
-                        tall[0].ctypes.data, tall[1].ctypes.data, tall[2].ctypes.data,
-                        tall[3].ctypes.data, len(tall[0]) if tall[4] else 0)
+    if dump is None:
+        rc = lib.kw_k1_band(region.ctypes.data, len(region), block_row.ctypes.data, lo, hi,
+                            spool.idx.ctypes.data, len(spool.idx), spool.data.ctypes.data,
+                            len(spool.data), colmap.ctypes.data, esz.ctypes.data,
+                            ckey.ctypes.data, len(esz), acc.kinds.ctypes.data,
+                            acc.smp.ctypes.data, acc.expl.ctypes.data, acc.stats.ctypes.data,
+                            tall[0].ctypes.data, tall[1].ctypes.data, tall[2].ctypes.data,
+                            tall[3].ctypes.data, len(tall[0]) if tall[4] else 0,
+                            None, 0, None)
+    else:
+        snap = (acc.kinds.copy(), acc.smp.copy(), acc.expl.copy(), acc.stats.copy())
+        while True:
+            dump.need[0] = 0
+            rc = lib.kw_k1_band(region.ctypes.data, len(region), block_row.ctypes.data, lo, hi,
+                                spool.idx.ctypes.data, len(spool.idx), spool.data.ctypes.data,
+                                len(spool.data), colmap.ctypes.data, esz.ctypes.data,
+                                ckey.ctypes.data, len(esz), acc.kinds.ctypes.data,
+                                acc.smp.ctypes.data, acc.expl.ctypes.data, acc.stats.ctypes.data,
+                                tall[0].ctypes.data, tall[1].ctypes.data, tall[2].ctypes.data,
+                                tall[3].ctypes.data, len(tall[0]) if tall[4] else 0,
+                                dump.buf.ctypes.data, dump.cap, dump.need.ctypes.data)
+            if rc != 1:
+                break
+            # C mutated the accumulator before it reported "need more": roll it back
+            acc.kinds[...] = snap[0]
+            acc.smp[...] = snap[1]
+            acc.expl[...] = snap[2]
+            acc.stats[...] = snap[3]
+            dump.grow(int(dump.need[0]))
+        n = int(dump.need[0])
+        dump.rows = dump.buf[:n * dump.rb].copy().view(dump.dtype)
     _k1_stats["calls"] += 1
     if rc < 0:
         raise K1Error(_K1_ERRORS.get(rc, f"error {rc}"))

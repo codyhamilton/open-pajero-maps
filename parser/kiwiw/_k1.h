@@ -22,8 +22,10 @@
  * position in `kiwiw.spool._COLUMNS` and passes element sizes and count-key
  * indices for the whole column table (`kw_k1_band`'s `colmap`/`esz`/`ckey`).
  *
- * `kw_k1_band` returns 0, or < 0: -1 bad arguments, -2 D1 failed (a Map Frame
- * outside the region), -3 bad spool index/record, -4 out of memory. */
+ * `kw_k1_band` returns 0, 1 (the dump buffer was too small: grow to `*dump_need`
+ * and call again; only when `dump_rows` is non-NULL), or < 0: -1 bad arguments,
+ * -2 D1 failed (a Map Frame outside the region), -3 bad spool index/record, -4
+ * out of memory. */
 #ifndef KW_K1_H
 #define KW_K1_H
 #include "_d1.h"
@@ -71,18 +73,36 @@ typedef double k1_f64;
     X(S, u16, p0) X(S, u16, p1) X(S, u16, p2) X(S, u16, p3) X(S, u16, p4) X(S, u16, p5) \
     X(S, u16, p6) X(S, u8, depth)
 
+/* the opt-in dump row (brief 3-02): every `k1_sample` field, then the identity a
+ * triage needs but the bounded sample drops -- `kind` (index in K1_KINDS),
+ * `level`, `shape` (ordinal of the decoded background shape inside its leaf,
+ * -1 when the kind has none) and `vert` (vertex index inside that shape, -1 when
+ * none; `completeness` and `interior_cover` have no vertex). Declared once here;
+ * `kiwiw/cenc.py` mirrors it with a checked descriptor. */
+#define K1_F_DUMP(X, S) K1_F_SAMPLE(X, S) \
+    X(S, u8, kind) X(S, u8, level) X(S, i32, shape) X(S, i32, vert)
+
 #define K1_FIELD(S, T, N) k1_##T N;
 #define K1_STRUCT(NAME, S) typedef struct { K1_F_##NAME(K1_FIELD, S) } S;
 K1_STRUCT(KIND, k1_kind)
 K1_STRUCT(SAMPLE, k1_sample)
-enum { K1_T_KIND = 0, K1_T_SAMPLE, K1_NTABLES };
+K1_STRUCT(DUMP, k1_dump)
+enum { K1_T_KIND = 0, K1_T_SAMPLE, K1_T_DUMP, K1_NTABLES };
 
 /* the accumulator a band adds into: K1_NKINDS kind rows, K1_NKINDS * K1_SAMPLE
- * sample rows, K1_NEXPLAINED counters, K1_NSTATS stats */
-typedef struct { k1_kind *kind; k1_sample *smp; int64_t *expl; int64_t *stats; } k1_acc;
+ * sample rows, K1_NEXPLAINED counters, K1_NSTATS stats, and an optional dump sink
+ * (NULL when the dump is off -- the emit sites then take one branch, no work) */
+typedef struct { k1_dump *rows; int64_t cap, n; int overflow; } k1_dumpsink;
+typedef struct { k1_kind *kind; k1_sample *smp; int64_t *expl; int64_t *stats;
+                 k1_dumpsink *dump; } k1_acc;
 
 void k1_add(k1_acc *a, int kind, int64_t checked, int64_t failing, double worst);
 void k1_push_sample(k1_acc *a, int kind, const k1_sample *s);
+/* append one dump row when the sink is on; no-op when `a->dump` is NULL */
+void k1_emit_dump(k1_acc *a, int kind, int level, const k1_sample *s, int32_t shape,
+                  int32_t vert);
+#define K1_EMIT_DUMP(a, kind, level, s, shape, vert) \
+    do { if ((a)->dump) k1_emit_dump((a), (kind), (level), (s), (shape), (vert)); } while (0)
 int k1_sample_cmp(const k1_sample *a, const k1_sample *b);
 
 /* a decoded leaf in the checker's lattice (`Decoded` in the oracle) */
@@ -178,7 +198,8 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
                    const int32_t *esz, const int32_t *ckey, int64_t ncols,
                    void *kinds, void *samples, int64_t *expl, int64_t *stats,
                    const k1_tallrow *trows, const double *txy, const int64_t *toff,
-                   const double *tbb, int64_t ntall);
+                   const double *tbb, int64_t ntall,
+                   k1_dump *dump_rows, int64_t dump_cap, int64_t *dump_need);
 
 /* The tall-shape pass: spool shapes whose bounding box leaves their home cell grown
  * by one cell, for spool index rows [a, b) of one level. Output: shape rows

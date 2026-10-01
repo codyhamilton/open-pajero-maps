@@ -309,9 +309,10 @@ static int inside_batch(bgx *G, q_t *q, int64_t nq) {
 
 /* ------------------------------------------------------------------ the kinds */
 
-typedef struct { q_t *q; k1_sample *m; int64_t n, cap; } qs_t;
+typedef struct { q_t *q; k1_sample *m; int32_t *shape, *vert; int64_t n, cap; int dump; } qs_t;
 
-static int qs_push(qs_t *s, int orient, int32_t type, double c, double a, const k1_sample *m) {
+static int qs_push(qs_t *s, int orient, int32_t type, double c, double a, const k1_sample *m,
+                   int32_t shape, int32_t vert) {
     if (s->n == s->cap) {
         int64_t nc = s->cap ? s->cap * 2 : 1024;
         q_t *q = (q_t *)realloc(s->q, (size_t)nc * sizeof(q_t));
@@ -319,11 +320,24 @@ static int qs_push(qs_t *s, int orient, int32_t type, double c, double a, const 
         s->q = q;
         k1_sample *mm = (k1_sample *)realloc(s->m, (size_t)nc * sizeof(k1_sample));
         if (!mm) return -4;
-        s->m = mm; s->cap = nc;
+        s->m = mm;
+        if (s->dump) {                       /* identity side arrays exist only when dumping */
+            int32_t *sh = (int32_t *)realloc(s->shape, (size_t)nc * sizeof(int32_t));
+            if (!sh) return -4;
+            s->shape = sh;
+            int32_t *vt = (int32_t *)realloc(s->vert, (size_t)nc * sizeof(int32_t));
+            if (!vt) return -4;
+            s->vert = vt;
+        }
+        s->cap = nc;
     }
     s->q[s->n].orient = orient; s->q[s->n].type = type; s->q[s->n].c = c; s->q[s->n].a = a;
     s->q[s->n].ok = 0;
     s->m[s->n] = *m;
+    if (s->dump) {
+        s->shape[s->n] = shape;
+        s->vert[s->n] = vert;
+    }
     s->n++;
     return 0;
 }
@@ -374,6 +388,7 @@ int k1_bg_kinds(k1_ctx *c) {
     if (nv == 0 || !H) return 0;                       /* nothing decoded to check */
     bgx *G = NULL;
     qs_t Q = {0};
+    Q.dump = c->acc->dump != NULL;
     int rc = bgx_get(c, &G);
     int64_t nb = 0, nb_bad = 0, onb_n = 0, onb_bad = 0, ncov = 0, cov_bad = 0;
     double nb_worst = 0.0, onb_worst = 0.0;
@@ -407,13 +422,17 @@ int k1_bg_kinds(k1_ctx *c) {
                                              sh->type_code, d);
                 if (!onb) {
                     nb++;
-                    if (!near) { nb_bad++; k1_push_sample(c->acc, K1_background, &m); }
-                    else if (d > nb_worst) nb_worst = d;
+                    if (!near) {
+                        nb_bad++;
+                        k1_push_sample(c->acc, K1_background, &m);
+                        K1_EMIT_DUMP(c->acc, K1_background, c->block->level, &m,
+                                     (int32_t)k, (int32_t)v);
+                    } else if (d > nb_worst) nb_worst = d;
                 } else {
                     onb_n++;
                     if (near) { if (d > onb_worst) onb_worst = d; }
                     else rc = qs_push(&Q, onh ? 0 : 1, sh->type_code, onh ? (double)Y : (double)X,
-                                      onh ? (double)X : (double)Y, &m);
+                                      onh ? (double)X : (double)Y, &m, (int32_t)k, (int32_t)v);
                 }
             }
             if (sh->shape_class == 2 && allb) {
@@ -424,7 +443,7 @@ int k1_bg_kinds(k1_ctx *c) {
                                                  K1_R_COVER, sh->type_code, NAN);
                     ncov++;
                     rc = qs_push(&Q, 0, sh->type_code, ((double)lf->y0 + (double)lf->y1) / 2.0,
-                                 ((double)lf->x0 + (double)lf->x1) / 2.0, &m);
+                                 ((double)lf->x0 + (double)lf->x1) / 2.0, &m, (int32_t)k, -1);
                     Q.m[Q.n - 1].reason = K1_R_COVER;
                 }
             }
@@ -435,13 +454,22 @@ int k1_bg_kinds(k1_ctx *c) {
         for (int64_t i = 0; i < Q.n; i++) {
             int cover = Q.m[i].reason == K1_R_COVER;
             if (Q.q[i].ok) continue;
-            if (cover) { cov_bad++; k1_push_sample(c->acc, K1_interior_cover, &Q.m[i]); }
-            else { onb_bad++; k1_push_sample(c->acc, K1_background_boundary, &Q.m[i]); }
+            if (cover) {
+                cov_bad++;
+                k1_push_sample(c->acc, K1_interior_cover, &Q.m[i]);
+                K1_EMIT_DUMP(c->acc, K1_interior_cover, c->block->level, &Q.m[i],
+                             Q.shape[i], Q.vert[i]);
+            } else {
+                onb_bad++;
+                k1_push_sample(c->acc, K1_background_boundary, &Q.m[i]);
+                K1_EMIT_DUMP(c->acc, K1_background_boundary, c->block->level, &Q.m[i],
+                             Q.shape[i], Q.vert[i]);
+            }
         }
         k1_add(c->acc, K1_background, nb, nb_bad, nb_worst);
         k1_add(c->acc, K1_background_boundary, onb_n, onb_bad, onb_worst);
         k1_add(c->acc, K1_interior_cover, ncov, cov_bad, 0.0);
     }
-    free(Q.q); free(Q.m);
+    free(Q.q); free(Q.m); free(Q.shape); free(Q.vert);
     return rc;
 }

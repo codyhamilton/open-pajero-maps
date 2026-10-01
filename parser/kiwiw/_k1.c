@@ -13,10 +13,11 @@
 typedef struct { const char *name, *kind; int off; } k1_fspec;
 #define K1_SPEC(S, T, N) {#N, #T, (int)offsetof(S, N)},
 #define K1_SPECS(NAME, S) static const k1_fspec kspec_##NAME[] = { K1_F_##NAME(K1_SPEC, S) };
-K1_SPECS(KIND, k1_kind) K1_SPECS(SAMPLE, k1_sample)
+K1_SPECS(KIND, k1_kind) K1_SPECS(SAMPLE, k1_sample) K1_SPECS(DUMP, k1_dump)
 static const struct { const char *name; int size, nf; const k1_fspec *f; } KT[K1_NTABLES] = {
     {"kind", sizeof(k1_kind), sizeof(kspec_KIND) / sizeof(kspec_KIND[0]), kspec_KIND},
     {"sample", sizeof(k1_sample), sizeof(kspec_SAMPLE) / sizeof(kspec_SAMPLE[0]), kspec_SAMPLE},
+    {"dump", sizeof(k1_dump), sizeof(kspec_DUMP) / sizeof(kspec_DUMP[0]), kspec_DUMP},
 };
 int kw_k1_ntables(void) { return K1_NTABLES; }
 const char *kw_k1_table_name(int t) { return t >= 0 && t < K1_NTABLES ? KT[t].name : NULL; }
@@ -77,6 +78,23 @@ void k1_push_sample(k1_acc *a, int kind, const k1_sample *s) {
     if (n < K1_SAMPLE) k->nsamples = (k1_u32)++n; else i = n - 1;
     while (i > 0 && k1_sample_cmp(s, &v[i - 1]) < 0) { v[i] = v[i - 1]; i--; }
     v[i] = *s;
+}
+
+/* One dump row per failing item (brief 3-02). `K1_F_DUMP` begins with the exact
+ * `K1_F_SAMPLE` fields in the same order, so the sample copies in directly; the
+ * sink keeps counting past `cap` so the caller learns the rows it needs. */
+void k1_emit_dump(k1_acc *a, int kind, int level, const k1_sample *s, int32_t shape,
+                  int32_t vert) {
+    k1_dumpsink *d = a->dump;
+    int64_t i = d->n++;
+    if (i >= d->cap) { d->overflow = 1; return; }
+    k1_dump *r = &d->rows[i];
+    memset(r, 0, sizeof *r);              /* zero the struct padding too: files must cmp */
+    memcpy(r, s, sizeof(k1_sample));
+    r->kind = (k1_u8)kind;
+    r->level = (k1_u8)level;
+    r->shape = shape;
+    r->vert = vert;
 }
 
 /* ----------------------------------------------------------------- numerics */
@@ -518,6 +536,7 @@ typedef struct {
     struct k1_region *R;
     const d1_walk *w;
     const k1_leaf *lf;
+    int level;
     int64_t rescues;
     k1_agg range, step;
 } k1_run;
@@ -602,6 +621,8 @@ static void point_item(k1_run *u, int which, k1_agg *g, const k1_pts *set, doubl
         k1_sample s = k1_make_sample(u->w, lf, lat, lon, sat32(rnd(fx)), sat32(rnd(fy)),
                                   K1_R_NO_SPOOL, 0, d);
         k1_push_sample(u->acc, K1_road_node + which, &s);
+        if (which == 2 && u->acc->dump)
+            k1_emit_dump(u->acc, K1_name_anchor, u->level, &s, -1, -1);
     } else if (d > g->worst) g->worst = d;     /* rescued items carry d = inf, as in the oracle */
 }
 
@@ -634,12 +655,15 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
                    const int32_t *esz, const int32_t *ckey, int64_t ncols,
                    void *kinds, void *samples, int64_t *expl, int64_t *stats,
                    const k1_tallrow *trows, const double *txy, const int64_t *toff,
-                   const double *tbb, int64_t ntall) {
+                   const double *tbb, int64_t ntall,
+                   k1_dump *dump_rows, int64_t dump_cap, int64_t *dump_need) {
     struct timespec t0, t1;
     clock_gettime(CLOCK_MONOTONIC, &t0);
     if (!region || !block || !kinds || !samples || !expl || !stats) return -1;
     const d1_block *B = (const d1_block *)block;
-    k1_acc acc = {(k1_kind *)kinds, (k1_sample *)samples, expl, stats};
+    k1_dumpsink ds = {dump_rows, dump_cap, 0, 0};
+    k1_acc acc = {(k1_kind *)kinds, (k1_sample *)samples, expl, stats,
+                  dump_rows ? &ds : NULL};
     k1_spool S;
     int64_t rc = spool_open(&S, idx, idx_len, data, data_len, colmap, esz, ckey, ncols);
     if (rc < 0) return rc;
@@ -683,7 +707,7 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
         if (!leaf) { rc = -4; goto done; }
         k1_run u;
         memset(&u, 0, sizeof u);
-        u.acc = &acc; u.lat = &lat; u.R = &R;
+        u.acc = &acc; u.lat = &lat; u.R = &R; u.level = B->level;
         k1_agg ag[3] = {{0}};
         int64_t items = 0;
         for (int64_t i = 0; i < nw; i++) {
@@ -777,6 +801,8 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
         rc = 0;
     }
 done:
+    if (dump_need) *dump_need = ds.n;
+    if (rc == 0 && acc.dump && acc.dump->overflow) rc = 1;
     if (ctxp) k1_bg_release(ctxp);
     stats[K1_calls]++;
     stats[K1_d1_retries] += retries;

@@ -307,3 +307,21 @@ same commit.
 
 ### output/scratch-3-06/ (Phase 3 forensics, not committed)
 Python-only forensic dossier for plan 04 Phase 3 unit 3-06: `dossier.md`, scripts (`common.py`, `build_tall.py`, `d1_d3.py`, `d456.py`, `d7.py`, `d8.py`), tall-shape caches (`tall_{0,2,6}.npz`) and logs. Inputs: `output/scratch-3-11/G/ALLDATA.KWI`, `output/extract_timing/spool`, `output/scratch-2-07/k1_a.json`. Reproduce: `.venv-rp/bin/python output/scratch-3-06/build_tall.py` then `d1_d3.py`, `d456.py`, `d7.py`, and `d8.py` under `flock output/.heavy.lock`. Consumed by 3-07/3-08.
+
+### output/scratch-3-02/dump/ (K1 failure dump, Phase 3 unit 3-02, not committed)
+Every failing item of the five failing kinds on G, as fixed-width 80-byte rows
+(`K1_F_DUMP` in `parser/kiwiw/_k1.h`, mirrored by `cenc.K1_DUMP_DTYPE`), one
+`<kind>.bin` per kind plus `dump_manifest.json` (per kind: rows, row size, field
+list). Rows: `background` 1,438,558, `background_boundary` 16,549,569,
+`interior_cover` 824, `completeness` 752, `name_anchor` 1 (17,989,704 rows,
+1,439,176,320 bytes; `du` 1.4 GB). The `background.bin` 115,084,640 B,
+`background_boundary.bin` 1,323,965,520 B, `interior_cover.bin` 65,920 B,
+`completeness.bin` 60,160 B, `name_anchor.bin` 80 B. This is the triage input
+for 3-03/3-05..3-08. **Source**: the brief-3-02 full-disc dump run under
+`flock output/.heavy.lock` against G (`output/scratch-3-11/G/ALLDATA.KWI`) and
+`output/extract_timing/spool`. **Reproduce** (opt-in dump mode; wall ~2.6 min on
+an idle machine, peak RSS ~4.3 GB): `flock output/.heavy.lock .venv-rp/bin/python
+parser/tools/quantisation_roundtrip.py --disc output/scratch-3-11/G/ALLDATA.KWI
+--spool output/extract_timing/spool -j 12 --dump-failures output/scratch-3-02/dump
+--out output/scratch-3-02/k1_dump.json`. Rows are canonically ordered, so the
+bytes are independent of `-j` and of the band split.

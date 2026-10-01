@@ -179,6 +179,7 @@ int k1_cmp_kinds(k1_ctx *c) {
             m.ix = req.v[i].ix; m.iy = req.v[i].iy; m.vx = INT32_MIN; m.vy = INT32_MIN;
             m.reason = K1_R_COMPLETE; m.code = req.v[i].t;
             k1_push_sample(c->acc, K1_completeness, &m);
+            K1_EMIT_DUMP(c->acc, K1_completeness, c->block->level, &m, -1, -1);
         }
         k1_add(c->acc, K1_completeness, nreq, nbad, 0.0);
     }

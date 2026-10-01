@@ -64,3 +64,10 @@ Write `parser/tests/test_k1_dump.py` first (fails before: no `--dump-failures`).
 Under 1,500 tokens. Status: `done` | `done with concerns` | `blocked` | `needs context` | `over budget`. What changed, the check output before and after, any deviation and why, any contradiction with the cited contracts. Never resolve a contradiction silently. A non-trivial bug outside your evidence: symptom, location, root cause if found; do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendments (orchestrator, 2026-10-02, after Flash run 1)
+
+- "Three new fields" lists four (`kind`, `level`, `shape`, `vert`); four is correct.
+- Decision bullet 2 (task-order concatenation) conflicts with the byte-equality done evidence under a different band split. Resolution accepted: the driver sorts each kind canonically before writing `<kind>.bin`; the `k1_dump` padding is zeroed so files `cmp`.
+- Dump-off must add NO per-queued-item work: the `shape`/`vert` side arrays in `_k1_bg.c` `qs_t` must be allocated, grown and written only when the dump sink is on. (Run 1 maintained them unconditionally; dump-off wall measured 84–91 s against the 72 s bar.)
+- Dump-off timing proof is an A/B on a quiet machine: build HEAD (`git stash` is NOT allowed; use `git worktree` at HEAD into `output/scratch-3-02/headwt` or the saved `output/scratch-2-07` k1_a walls as reference only) and the working tree, run each dump-off full-disc `-j 12` under the heavy lock back to back, report both walls plus `uptime` load before each.
