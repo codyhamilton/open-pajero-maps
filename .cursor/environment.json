@@ -1,0 +1,3 @@
+{
+  "install": "export WORKFLOW_WORKSPACE=\"${WORKFLOW_WORKSPACE:-$(pwd)}\" && curl -fsSL https://raw.githubusercontent.com/codyhamilton/workflow-plugin/master/tools/cloud-env/bootstrap-workflow-skills.sh | bash && python3 \"$HOME/.cache/workflow-plugin/tools/driver/check_skills.py\""
+}
