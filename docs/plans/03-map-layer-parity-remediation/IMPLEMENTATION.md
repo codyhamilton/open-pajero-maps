@@ -681,12 +681,19 @@ The first dispatch (opus-medium) died on an API usage limit early in its work; i
 **Measure-and-report (brief amendment):** `coord_scale` PASS, 0 of 1,461,347 parcels, 73 classes, 111 s (≤ 120). `quantisation_roundtrip` **unmet**: 991.6 s vs 120 s; failures background 1,438,558 / 174,332,105; background_boundary 16,549,569 / 89,546,388; interior_cover 824; completeness 752; name_anchor 1; range/step/road_node 0.
 **Outcome greps:** files absent and no test imports a deleted module; the literal grep wording is not clean in spirit-neutral places: `KIWIW_NO_C` appears once in the negative guard `test_build_wiring.py:65`, and `osm_to_parcel_geometry` appears in `build_alldata.py` docstrings/`--help` (lines 2, 6, 611) with no import. Judged met in intent (no import, no env var, no code path); wording to be tightened.
 
-### Phase 3C record — INCOMPLETE (no closing trailer written)
-Verification against the Outcome, bullet by bullet: E1/E2 once per range with equal calls, E3 gone — met; deleted modules/names absent (see grep note) — met in intent; full-AU sha and manifest — met; declined list empty — met; Perth `-j 1`/`-j 4` — met; every Contract H budget — met (build wall 12.16 s, down from 100.35 s at 3-11); pytest incl. goldens, boundary tests, C unit binary — met; no test imports a deleted module nor compares C with Python — met; `coord_scale` — met; **`quantisation_roundtrip` (0 background failures, exactly 1 name-anchor failure, ≤ 120 s) — NOT met**; `ARCHITECTURE.md` — met.
-The phase therefore cannot honestly carry `Workflow-Phase`. Per the standing human instruction, 3C-04's evidence stays open, no C-checker unit was created, and no escalation was required to get here; sign-off on closing the phase with this bullet carried, or a decision to fix the checker/disc, is the human's.
+### Phase 3C record — CLOSED WITH CARRIED DEBT (human sign-off)
+Cody signed off closing Phase 3C as debt. Binding locks: C for all perf-sensitive work, Python orchestration only; no C-checker unit is created inside plan 03 and no new units are invented.
+
+**Build Outcome — met:** E1/E2 once per range with equal calls, E3 gone; deleted modules/names absent (grep wording in carried item 5); full-AU sha `87a01b14…` and manifest equal to 3-11's; declined list empty; Perth `-j 1` == `-j 4` (`da13a775…`); every Contract H budget (build wall 12.16 s, down from 100.35 s at 3-11); pytest incl. goldens, boundary tests and the C unit binary; no test imports a deleted module or compares C with Python; `coord_scale` PASS (111 s ≤ 120); `ARCHITECTURE.md` describes Contract B.
+
+**`quantisation_roundtrip` Outcome — unmet, carried (3C-04 debt):** 991.6 s vs 120 s; failures `background` 1,438,558 / 174,332,105; `background_boundary` 16,549,569 / 89,546,388; `interior_cover` 824; `completeness` 752; `name_anchor` 1 (outcome wants exactly 1, so this part holds); range/step/road_node 0. One confirmed disc defect: fill pieces 4–6 cells outside spool polygon 65623 (bogus ~1.9M-raw edge). Some failures may be checker false positives (untriaged). Reaching the budget needs a C decoder and checker; it is not a Python fix and is not attempted in plan 03.
+
+**Debt named for plan 04 / Phase 3D:** 3C-04 round-trip evidence (carried item 1). Plan 04 / Phase 3D supersedes the remaining Python-verification work under the orchestration-only rule (C for perf-sensitive paths). No brief or unit for it is created here.
+
+Closing trailer `Workflow-Phase: 03-map-layer-parity-remediation:3C` is applied on the close-out commit. Phases 4–10 keep their numbers.
 
 **Carried** (ordered):
-1. 3C-04 round-trip evidence: 991.6 s vs 120 s; 1.44M `background` and 16.5M `background_boundary` failures, 752 completeness, 824 interior-cover (some may be checker false positives, untriaged); one confirmed disc defect (fill pieces 4–6 cells outside spool polygon 65623 with a bogus ~1.9M-raw edge); peak memory unmeasured.
+1. **3C-04 → plan 04 / Phase 3D (C decoder + checker):** round-trip evidence: 991.6 s vs 120 s; 1.44M `background` and 16.5M `background_boundary` failures, 752 completeness, 824 interior-cover (some may be checker false positives, untriaged); one confirmed disc defect (fill pieces 4–6 cells outside spool polygon 65623 with a bogus ~1.9M-raw edge); peak memory unmeasured.
 2. 3C-05 "raw coordinates" half unmet.
 3. `test_bench_record::test_bench_output_byte_identical_to_unbenched` flake seen once at 3C-07 (vanished temp file), cause unknown, not seen since.
 4. Stale `cbuild.py` docstring describing a Python fallback that no longer exists; `cenc._load_lib` catches only `OSError`, so a bad `.so` surfaces as `AttributeError` rather than `BuildError`.
