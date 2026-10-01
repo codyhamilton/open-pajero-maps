@@ -32,3 +32,6 @@ parser/kiwiw/_cenc.so
 parser/kiwiw/_cenc.so.hash
 parser/kiwiw/ctest/_ctest_bin
 parser/kiwiw/ctest/_ctest_bin.hash
+
+# workflow-plugin Cursor cloud skills (bootstrapped; not committed)
+.cursor/skills/workflow/

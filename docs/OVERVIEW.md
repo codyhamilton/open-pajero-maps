@@ -54,6 +54,7 @@ Build time for the map layer is about 32 s at `-j 12` (plan 02).
 | What is the format, and how sure are we? | `docs/schema/README.md`, then the layer files; `docs/schema/UNKNOWNS.md` for everything not yet verified |
 | How is the code organised? | `docs/ARCHITECTURE.md` |
 | What are we building and how is it judged? | `docs/design/target-disc.md` |
+| How do we run the workflow plugin (design → execute → close)? | `docs/WORKFLOW.md` |
 | What is being changed now? | `docs/plans/03-map-layer-parity-remediation/` |
 | What was built before? | `docs/plans/01-…md`, `docs/plans/02-…md` |
 | Where did each non-committed file come from? | `docs/provenance.md` |
