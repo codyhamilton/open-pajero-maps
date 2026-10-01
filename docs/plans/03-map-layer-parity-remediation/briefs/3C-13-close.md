@@ -128,3 +128,10 @@ Over budget: stop, commit what passes, and put the handoff (done, not done, what
 A non-trivial bug outside your done evidence: report symptom, location, and root cause if found. Do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendment 2026-10-01 (orchestrator)
+
+- Done-evidence steps 4 (quantisation round-trip) and 5 (`compare_disc` coord_scale) are **measure-and-report**: 3C-04's evidence is known unmet (round-trip 918 s vs 120 s; ~1.4M background failures, 752 completeness and 824 interior-cover failures, some possibly checker false positives; one confirmed disc defect near spool polygon 65623). Run them, report the counts and wall times as found, and record `STEP … OK` when the tool completes with those counts; do not fix, tune, triage, or add a checker unit. Their results go to the report's Carried list, not into a softened Outcome.
+- Steps 1–3 and the Outcome greps are hard gates. `quantisation_roundtrip.py` may be run with `--workers 12` under the heavy lock; use PSS/MemAvailable, not summed RSS, for any memory watchdog.
+- 3C-12 is merged: `synth.py`, `clip.py`, `spill.py`, the object-path assembler are gone; ARCHITECTURE.md's "Spill and indexed assembly" and module map must reflect that (no `spill`, no `LevelBuild.parcels`).
+- Do not edit IMPLEMENTATION.md; the orchestrator closes the phase from your report. Commit and push `docs/ARCHITECTURE.md` and the brief only.
