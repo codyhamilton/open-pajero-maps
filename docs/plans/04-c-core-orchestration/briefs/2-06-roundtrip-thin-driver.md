@@ -76,3 +76,29 @@ Do not spawn agents beyond read-only research helpers. If this unit needs one, i
 - Scratch for your own files: `output/scratch-<brief number>/` with `TMPDIR` exported there; pytest `--basetemp=output/scratch-<brief number>/pytest`.
 - Reference discs: R `/run/media/codyh/464210-8480/ALLDATA.KWI` (tests using it skip when absent); G `output/scratch-3-11/G/ALLDATA.KWI` (sha256 `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862`); spool `output/extract_timing/spool` (build_alldata's default spool is not it).
 - One heavy job at a time: any full-AU build or `-j 12` run takes `flock /home/codyh/workspace/open-pajero-maps/output/.heavy.lock`. Pytest and small builds do not.
+
+## Amendment (2026-10-01, 2-06 worker)
+
+Contradictions and deviations, recorded rather than resolved silently:
+
+1. **"Report records the engine" vs "`--engine python` produces exactly the HEAD report".**
+   Both cannot hold byte-for-byte. The Python path adds one key, `"engine": "python"`; with
+   that key (and `wall_s`) removed the report equals HEAD's on every fixture at `-j 1` and
+   `-j 3` (checked against `git show HEAD:` loaded from scratch).
+2. **Library default.** The CLI default is `--engine c`. The library function
+   `roundtrip(..., engine="python")` keeps the Python default, because `test_k1_points.py`,
+   `test_k1_completeness.py` (not owned here) call it as the oracle.
+3. **Sample sets above N.** For `road_node`/`road_point`/`name_anchor`/`background`/
+   `background_boundary` the Python tool keeps the first N by `(Y, X)` per band before its
+   `_sample_key` sort, while K1 keeps the contract's first N in `(iy, ix, path, vx, vy)` order.
+   Counts, worst error and explained counters are equal on every fixture and on the real
+   levels; the sample SETS are identical when `failing <= N` and are both N-sized samples of
+   the same failing set otherwise (G level 6 `background_boundary`: 4,004 failing). Phase 5
+   deleting the Python path removes the difference; the K1 order is the contract's.
+4. **Band plan independent of `-j`.** The planner is called with a fixed `PLAN_WORKERS = 12`
+   so the byte-equality gate holds across `-j`; `-j` only sets the pool size. A Python
+   `-j N` run plans with N, so compare engines at `-j 12` on a real disc.
+5. **Extra flags.** `--levels` (needed to pick the real-disc level) and `-j` (alias).
+6. **Real-disc finding (not fixed here).** G level 6 fails identically in both engines:
+   `background_boundary` 4,004/4,921 and `interior_cover` 1/1 (a build-side or tolerance
+   matter for Phase 3 triage); level 8 passes.

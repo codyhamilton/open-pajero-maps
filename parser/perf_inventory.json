@@ -537,9 +537,8 @@
   },
   {
    "path": "parser/tools/quantisation_roundtrip.py",
-   "class": "c-now",
-   "phase": 2,
-   "reason": "Per-vertex/shape/cell round-trip check of a built disc against its spool (991.6 s); becomes thin driver over D1/K1 in Phase 2, Python checking kept only as count oracle until Phase 5"
+   "class": "orchestration",
+   "reason": "Thin driver over K1 since Plan 04 2-06 (default --engine c: range planning, one kiwiw.cenc.k1_check_band call per range, deterministic merge, report, PSS sampler). Python per-vertex loops reachable ONLY behind --engine python (count oracle; Phase 5 deletes them): oracle set PointSet, _cheb_seg, Shapes, _road_segments, _cells_to_shapes, _tall_mask, _read_cells, _pass1, _pass1_tasks, _seg_distance, Region, Decoded, Acc, _fail_rows, _frame_raw, _check_points, _road_rescue, _halo_name_rescue, _range_check, _iter_leaves, _check_block, _required_cells, _pack, _in_key_range, _pairs, _report, roundtrip_python"
   },
   {
    "path": "parser/tools/r_neighbours.py",

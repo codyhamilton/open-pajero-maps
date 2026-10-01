@@ -44,6 +44,11 @@ table, all vectorised.
 
 Usage:
     quantisation_roundtrip.py --disc ALLDATA.KWI --spool SPOOL [--out J] [--workers N]
+                              [--engine c|python]
+`--engine c` (default) is a thin driver over K1 (`kiwiw.cenc.k1_check_band`, one call per
+planned range, see "K1 driver" below); `--engine python` is the checking path described
+above, kept as the count oracle until Phase 5. The report records its `engine`; its
+`timing` section and `wall_s` are the only non-deterministic bytes (`compare_excludes`).
 Exit code 1 on any failing check; the report is written either way.
 """
 from __future__ import annotations
@@ -1162,8 +1167,8 @@ def _imap(pool, fn, tasks):
     return pool.imap_unordered(fn, tasks, chunksize=1)
 
 
-def roundtrip(disc: str, spool: str, workers: int = 12, levels=None, log=None) -> dict:
-    """Run every check; return the report dict."""
+def roundtrip_python(disc: str, spool: str, workers: int = 12, levels=None, log=None) -> dict:
+    """The Python checking path (`--engine python`): the count oracle until Phase 5."""
     log = log or (lambda *a: None)
     t0 = time.time()
     disc, spool = str(disc), str(spool)
@@ -1217,8 +1222,226 @@ def roundtrip(disc: str, spool: str, workers: int = 12, levels=None, log=None) -
             pool.join()
         gc.unfreeze()
         _G.clear()
-    return _report(disc, spool, accs, leaves, {k[0]: 0 for k in keys}, keys, tall,
-                   time.time() - t0)
+    res = _report(disc, spool, accs, leaves, {k[0]: 0 for k in keys}, keys, tall,
+                  time.time() - t0)
+    res["engine"] = "python"
+    return res
+
+
+# ------------------------------------------------------------------ K1 driver (Plan 04, 2-06)
+# The default engine: a thin driver. It plans (block, row band) ranges with the same
+# planner as the Python path (with a FIXED worker count, so the plan -- and with it every
+# byte of the report -- does not depend on `-j`), makes ONE binding call per range
+# (`kiwiw.cenc.k1_check_band`: D1 decode + all nine kinds in C), merges the per-range
+# accumulators (sums, max, first-N-of-union: order and partition invariant) and writes the
+# report schema of the Python path. Wall, PSS and C-side timers go in `timing`, which
+# (with `wall_s`) is the only part that varies between runs.
+
+PLAN_WORKERS = 12          # the band plan is made for this many workers whatever `-j` is
+PSS_INTERVAL = 0.25
+COMPARE_EXCLUDES = ["timing", "wall_s"]
+_REASON_TEXT = {
+    0: "outside [0, range] or non-integral",
+    1: "no spool record within half a raw unit",
+    2: "step not representable",
+    3: "leaf did not decode",
+    4: "not within half a raw unit of a same-type spool outline",
+    5: "boundary vertex outside every same-type spool polygon",
+    6: "interior-cover centre outside every same-type spool polygon",
+    7: "a spool polygon of this type meets the cell but no decoded piece of it does",
+}
+
+
+def _pss_kb(pid):
+    try:
+        with open(f"/proc/{pid}/smaps_rollup") as f:
+            for line in f:
+                if line.startswith("Pss:"):
+                    return int(line.split()[1])
+    except (OSError, ValueError):
+        pass
+    return 0
+
+
+class PssSampler:
+    """Samples the summed `Pss:` (kB, `/proc/<pid>/smaps_rollup`) of this process and its
+    live multiprocessing children every `interval` seconds; `peak_kb` is the maximum."""
+
+    def __init__(self, interval=PSS_INTERVAL):
+        import os
+        import threading
+        self.interval, self.peak_kb, self.samples = interval, 0, 0
+        self._pid, self._stop = os.getpid(), threading.Event()
+        self._t = threading.Thread(target=self._run, daemon=True)
+
+    def sample(self):
+        pids = [self._pid] + [c.pid for c in mp.active_children() if c.pid]
+        total = sum(_pss_kb(p) for p in pids)
+        self.samples += 1
+        self.peak_kb = max(self.peak_kb, total)
+
+    def _run(self):
+        while not self._stop.is_set():
+            self.sample()
+            self._stop.wait(self.interval)
+
+    def start(self):
+        self.sample()
+        self._t.start()
+        return self
+
+    def stop(self):
+        self._stop.set()
+        self._t.join()
+        self.sample()
+        return self.peak_kb
+
+
+def _k1_state():
+    from kiwiw import cenc
+    st = _G.get("k1")
+    if st is None:
+        import numpy as np
+        st = _G["k1"] = {"container": walk.read_container(_G["disc"]),
+                         "region": np.memmap(_G["disc"], dtype=np.uint8, mode="r"),
+                         "cache": {}, "spools": {}}
+    return cenc, st
+
+
+def _k1_spool(cenc, st, level):
+    sp = st["spools"].get(level)
+    if sp is None:
+        sp = st["spools"][level] = cenc.E1Spool(_G["spool"], level)
+    return sp
+
+
+def _k1_band(task):
+    """One range: ONE binding call; returns the level and its accumulator."""
+    key, rlo, rhi = task
+    cenc, st = _k1_state()
+    acc = cenc.K1Acc()
+    row = cenc.d1_block_rows([key], st["container"], st["cache"])[0:1]
+    cenc.k1_check_band(st["region"], row, rlo, rhi, _k1_spool(cenc, st, key[0]), acc)
+    return key[0], acc
+
+
+def _k1_rows(res, kind):
+    out = []
+    for r in res["samples"][kind]:
+        cell, rsn = [r["ix"], r["iy"]], r["reason"]
+        if rsn == 7:
+            row = {"cell": cell, "kind": kind, "type": r["code"], "reason": _REASON_TEXT[7]}
+        elif rsn == 3:
+            row = {"cell": cell, "leaf_path": r["path"], "kind": kind,
+                   "reason": f"{_REASON_TEXT[3]} (K1 status {r['code']})"}
+        elif rsn == 6:
+            row = {"cell": cell, "leaf_path": r["path"], "kind": kind, "type": r["code"],
+                   "reason": _REASON_TEXT[6]}
+        else:
+            row = {"cell": cell, "leaf_path": r["path"], "kind": kind,
+                   "vertex": {"lat": round(r["lat"], 9), "lon": round(r["lon"], 9),
+                              "raw": [r["vx"], r["vy"]]},
+                   "reason": _REASON_TEXT[rsn], "error_raw": _fmt(r["err"])}
+        out.append(row)
+    return out
+
+
+def _k1_report(disc, spool, accs, nblocks, tall_n, wall, pss_peak_kb, workers, nranges):
+    levels, totals = {}, {k: {"checked": 0, "failing": 0, "worst_error_raw": 0.0} for k in KINDS}
+    stats = {}
+    for lv in sorted(accs):
+        r = accs[lv].result()
+        kinds = {}
+        for k in KINDS:
+            c, w = r["kinds"][k], round(r["kinds"][k]["worst"], 6)
+            kinds[k] = {"checked": c["checked"], "failing": c["failing"], "worst_error_raw": w}
+            t = totals[k]
+            t["checked"] += c["checked"]
+            t["failing"] += c["failing"]
+            t["worst_error_raw"] = max(t["worst_error_raw"], w)
+        levels[str(lv)] = {"blocks": nblocks.get(lv, 0), "leaves": r["stats"]["leaves"],
+                           "tall_shapes": tall_n[lv], "kinds": kinds,
+                           "explained": dict(r["explained"]),
+                           "failures": [x for k in KINDS for x in _k1_rows(r, k)]}
+        for k, v in r["stats"].items():
+            stats[k] = stats.get(k, 0) + v
+    failing = sum(t["failing"] for t in totals.values())
+    return {"tool": "quantisation_roundtrip", "engine": "c", "disc": Path(disc).name,
+            "spool": Path(spool).name, "tolerance_raw": TOL, "pass": failing == 0,
+            "failing": failing, "totals": totals, "levels": levels, "wall_s": round(wall, 1),
+            "compare_excludes": COMPARE_EXCLUDES,
+            "timing": {"wall_s": round(wall, 3), "workers": workers, "ranges": nranges,
+                       "pss_peak_kb": pss_peak_kb, "pss_interval_s": PSS_INTERVAL,
+                       "c_ns": stats.get("ns", 0), "d1_ns": stats.get("d1_ns", 0),
+                       "c_check_s": round(stats.get("ns", 0) / 1e9, 3),
+                       "d1_decode_s": round(stats.get("d1_ns", 0) / 1e9, 3),
+                       "c_stats": stats}}
+
+
+def roundtrip_c(disc: str, spool: str, workers: int = 12, levels=None, log=None) -> dict:
+    """Run every check in C (K1); return the report dict."""
+    from kiwiw import cenc
+    if cenc._load_lib() is None:
+        raise RuntimeError("--engine c needs a C compiler (kiwiw.cbuild); use --engine python")
+    log = log or (lambda *a: None)
+    t0 = time.time()
+    sampler = PssSampler()   # its thread starts after the pool forks (no fork of a threaded parent)
+    sampler.sample()
+    disc, spool = str(disc), str(spool)
+    container = walk.read_container(disc)
+    keys = _block_keys(disc)
+    if levels is not None:
+        keys = [k for k in keys if k[0] in levels]
+    lvls = sorted({k[0] for k in keys})
+    reader = SpoolReader(spool)
+    lat = {lv: Lattice(lv) for lv in lvls}
+    tasks = _block_tasks(reader, container, keys, lat, PLAN_WORKERS)
+    nblocks = {}
+    for k in keys:
+        nblocks[k[0]] = nblocks.get(k[0], 0) + 1
+    log(f"{len(keys)} blocks over levels {lvls}, {len(tasks)} ranges ({time.time() - t0:.1f}s)")
+    _G.clear()
+    _G.update({"spool": spool, "disc": disc})
+    cenc_, st = _k1_state()
+    tall_n = {}
+    for lv in lvls:   # the level's tall shapes, once, before the fork
+        k0 = next(k for k in keys if k[0] == lv)
+        hit = cenc._k1_tallset(_k1_spool(cenc_, st, lv),
+                               cenc.d1_block_rows([k0], st["container"], st["cache"])[0:1])
+        tall_n[lv] = len(hit[0]) if hit[4] else 0
+    gc.collect()
+    gc.freeze()
+    accs = {lv: cenc.K1Acc() for lv in lvls}
+    sampler.sample()
+    pool = _pool(workers)
+    sampler.start()
+    done = 0
+    try:
+        for lv, acc in _imap(pool, _k1_band, tasks):
+            accs[lv].merge(acc)
+            done += 1
+            if done % 500 == 0 or done == len(tasks):
+                log(f"{done}/{len(tasks)} ranges ({time.time() - t0:.1f}s)")
+    finally:
+        if pool is not None:
+            pool.close()
+            pool.join()
+        gc.unfreeze()
+        _G.clear()
+    peak = sampler.stop()
+    return _k1_report(disc, spool, accs, nblocks, tall_n, time.time() - t0, peak, workers,
+                      len(tasks))
+
+
+def roundtrip(disc: str, spool: str, workers: int = 12, levels=None, log=None,
+              engine: str = "python") -> dict:
+    """Run every check; return the report dict. `engine`: `c` (K1, the CLI default) or
+    `python` (the oracle; the library default so Python-oracle callers are unchanged)."""
+    if engine == "c":
+        return roundtrip_c(disc, spool, workers, levels, log)
+    if engine == "python":
+        return roundtrip_python(disc, spool, workers, levels, log)
+    raise ValueError(f"unknown engine {engine!r}")
 
 
 def _report(disc, spool, accs, leaves, _unused, keys, tall, wall):
@@ -1252,12 +1475,17 @@ def main(argv=None) -> int:
     ap.add_argument("--disc", required=True, help="built ALLDATA.KWI")
     ap.add_argument("--spool", required=True, help="spool directory it was built from")
     ap.add_argument("--out", help="write the JSON report here")
-    ap.add_argument("--workers", type=int, default=12)
+    ap.add_argument("--workers", "-j", type=int, default=12)
+    ap.add_argument("--engine", choices=("c", "python"), default="c",
+                    help="c: K1 through libkiwiw (default); python: the count oracle")
+    ap.add_argument("--levels", help="comma-separated levels to check (default: every level)")
     args = ap.parse_args(argv)
+    levels = {int(x) for x in args.levels.split(",")} if args.levels else None
 
     def log(msg):
         print(f"[quantisation_roundtrip] {msg}", file=sys.stderr, flush=True)
-    res = roundtrip(args.disc, args.spool, workers=args.workers, log=log)
+    res = roundtrip(args.disc, args.spool, workers=args.workers, levels=levels, log=log,
+                    engine=args.engine)
     text = json.dumps(res, indent=2, sort_keys=True)
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
@@ -1265,6 +1493,10 @@ def main(argv=None) -> int:
     for k, v in res["totals"].items():
         log(f"{k}: checked {v['checked']:,} failing {v['failing']:,} "
             f"worst {v['worst_error_raw']}")
+    if "timing" in res:
+        tm = res["timing"]
+        log(f"engine c: {tm['ranges']} ranges, PSS peak {tm['pss_peak_kb'] / 1024:.0f} MiB, "
+            f"C check {tm['c_check_s']}s (D1 {tm['d1_decode_s']}s, summed over workers)")
     log(f"{'PASS' if res['pass'] else 'FAIL'} in {res['wall_s']}s")
     return 0 if res["pass"] else 1
 

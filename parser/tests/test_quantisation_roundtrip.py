@@ -19,6 +19,10 @@ import build_alldata  # noqa: E402
 from kiwiw.model import BackgroundShape, NameRecord, RoadLink, RoadNode  # noqa: E402
 from kiwiw.spool import SpoolWriter  # noqa: E402
 from tools import quantisation_roundtrip as qr  # noqa: E402
+from kiwiw import cenc  # noqa: E402
+
+ENGINES = pytest.mark.parametrize("engine", ["python", pytest.param(
+    "c", marks=pytest.mark.skipif(cenc._load_lib() is None, reason="no C compiler"))])
 
 # Level-0 cell (512, 0) is lat -50..-49.97917, lon 106..106.03125.
 CELL_LAT, CELL_LON = 1 / 48, 1 / 32
@@ -121,10 +125,11 @@ def test_cheb_seg_distance():
 
 # ------------------------------------------------------------------ end to end
 
-def test_passes_against_its_own_spool(tmp_path):
+@ENGINES
+def test_passes_against_its_own_spool(tmp_path, engine):
     cells = {**_base_cells(), **_big_cells()}
     disc, spool = _build(tmp_path, "full", cells)
-    res = qr.roundtrip(str(disc), str(spool), workers=1)
+    res = qr.roundtrip(str(disc), str(spool), workers=1, engine=engine)
     assert res["pass"] is True, (_failing(res), res["levels"]["0"]["failures"])
     t = res["totals"]
     for kind in ("road_node", "name_anchor", "background", "background_boundary",
@@ -132,30 +137,34 @@ def test_passes_against_its_own_spool(tmp_path):
         assert t[kind]["checked"] > 0, kind
     text = json.dumps(res, sort_keys=True)
     assert str(tmp_path) not in text
-    res2 = qr.roundtrip(str(disc), str(spool), workers=1)
-    res.pop("wall_s")
-    res2.pop("wall_s")
+    res2 = qr.roundtrip(str(disc), str(spool), workers=1, engine=engine)
+    for r in (res, res2):
+        r.pop("wall_s")
+        r.pop("timing", None)
     assert res2 == res
+    assert res["engine"] == engine
 
 
-def test_cli_exit_code_and_report(tmp_path):
+@ENGINES
+def test_cli_exit_code_and_report(tmp_path, engine):
     disc, spool = _build(tmp_path, "full", _base_cells())
     out = tmp_path / "rt.json"
     assert qr.main(["--disc", str(disc), "--spool", str(spool), "--out", str(out),
-                    "--workers", "1"]) == 0
+                    "--workers", "1", "--engine", engine]) == 0
     assert json.loads(out.read_text())["pass"] is True
     _, other = _build(tmp_path, "nobg", _base_cells(bg=False))
     assert qr.main(["--disc", str(disc), "--spool", str(other), "--out", str(out),
-                    "--workers", "1"]) == 1
+                    "--workers", "1", "--engine", engine]) == 1
 
 
-def test_vertex_outside_every_source_polygon_is_caught(tmp_path):
+@ENGINES
+def test_vertex_outside_every_source_polygon_is_caught(tmp_path, engine):
     """Check a disc against a spool whose same-type polygon sits 8 raw units
     east: every decoded vertex is then outside every source polygon's
     half-unit neighbourhood."""
     disc, _ = _build(tmp_path, "full", _base_cells())
     _, moved = _build(tmp_path, "moved", _base_cells(bg_shift_lon=8 * RAW_LON))
-    res = qr.roundtrip(str(disc), str(moved), workers=1)
+    res = qr.roundtrip(str(disc), str(moved), workers=1, engine=engine)
     assert res["pass"] is False
     assert _failing(res) == {"background": res["totals"]["background"]["failing"]}
     fails = [f for f in res["levels"]["0"]["failures"] if f["kind"] == "background"]
@@ -163,43 +172,133 @@ def test_vertex_outside_every_source_polygon_is_caught(tmp_path):
     assert all(f["cell"] == [512, 0] for f in fails)
 
 
-def test_boundary_vertex_outside_every_source_polygon_is_caught(tmp_path):
+@ENGINES
+def test_boundary_vertex_outside_every_source_polygon_is_caught(tmp_path, engine):
     """The large polygon moved 8 raw units east: boundary vertices on its
     west side then lie outside it, and interior vertices off its outline."""
     disc, _ = _build(tmp_path, "full", _big_cells())
     _, moved = _build(tmp_path, "moved", _big_cells(shift_lon=8 * RAW_LON))
-    res = qr.roundtrip(str(disc), str(moved), workers=1)
+    res = qr.roundtrip(str(disc), str(moved), workers=1, engine=engine)
     assert res["pass"] is False
     assert res["totals"]["background_boundary"]["failing"] > 0
 
 
-def test_removed_piece_is_caught(tmp_path):
+@ENGINES
+def test_removed_piece_is_caught(tmp_path, engine):
     """A disc built without the polygon, checked against the spool that has
     it: the (cell, type) has no decoded piece."""
     disc, _ = _build(tmp_path, "nobg", _base_cells(bg=False))
     _, spool = _build(tmp_path, "full", _base_cells())
-    res = qr.roundtrip(str(disc), str(spool), workers=1)
+    res = qr.roundtrip(str(disc), str(spool), workers=1, engine=engine)
     assert res["pass"] is False
     assert _failing(res) == {"completeness": 1}
     (f,) = [f for f in res["levels"]["0"]["failures"] if f["kind"] == "completeness"]
     assert f["cell"] == [512, 0] and f["type"] == 1
 
 
-def test_removed_cover_piece_is_caught(tmp_path):
+@ENGINES
+def test_removed_cover_piece_is_caught(tmp_path, engine):
     """Removing the large polygon loses its pieces in all nine cells."""
     cells = _big_cells()
     disc, _ = _build(tmp_path, "full", cells)
     stripped = {k: {**v, "backgrounds": []} for k, v in cells.items()}
     disc2, _ = _build(tmp_path, "stripped", stripped)
     _, spool = _build(tmp_path, "spool", cells)
-    res = qr.roundtrip(str(disc2), str(spool), workers=1)
+    res = qr.roundtrip(str(disc2), str(spool), workers=1, engine=engine)
     assert _failing(res) == {"completeness": 9}
 
 
-def test_moved_road_node_and_name_are_caught(tmp_path):
+@ENGINES
+def test_moved_road_node_and_name_are_caught(tmp_path, engine):
     disc, _ = _build(tmp_path, "full", _base_cells(bg=False))
     a, b = (LAT0, LON0 + 3 * RAW_LON), (LAT0 + 0.0005, LON0 + 0.0005)
     moved = {(512, 0): {"roads": [_link([a, b])], "backgrounds": [], "names": [_name(*a)]}}
     _, spool = _build(tmp_path, "moved", moved)
-    res = qr.roundtrip(str(disc), str(spool), workers=1)
+    res = qr.roundtrip(str(disc), str(spool), workers=1, engine=engine)
     assert _failing(res) == {"road_node": 1, "name_anchor": 1}
+
+
+# ------------------------------------------------------------------ Plan 04 2-06: the K1 driver
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import k1_fixtures as fx  # noqa: E402
+
+needs_c = pytest.mark.skipif(cenc._load_lib() is None, reason="no C compiler")
+ALL = {**fx.FIXTURES, **fx.BG_FIXTURES, **fx.CMP_FIXTURES}
+
+
+@pytest.fixture(scope="module", params=list(ALL))
+def fixture(request, tmp_path_factory):
+    disc, spool = fx.build_fixture(tmp_path_factory.mktemp(request.param), request.param)
+    return request.param, disc, spool
+
+
+def _canon(res):
+    """The compared bytes: everything but the timing section and wall."""
+    res = {k: v for k, v in res.items() if k not in qr.COMPARE_EXCLUDES}
+    return json.dumps(res, indent=2, sort_keys=True).encode()
+
+
+@needs_c
+def test_c_equals_python_on_every_fixture(fixture):
+    name, disc, spool = fixture
+    py = qr.roundtrip(str(disc), str(spool), workers=1, engine="python")
+    c = qr.roundtrip(str(disc), str(spool), workers=1, engine="c")
+    assert (py["engine"], c["engine"]) == ("python", "c")
+    assert (c["pass"], c["failing"]) == (py["pass"], py["failing"]), name
+    for lv, a in py["levels"].items():
+        b = c["levels"][lv]
+        assert (b["blocks"], b["leaves"], b["tall_shapes"]) == (a["blocks"], a["leaves"], a["tall_shapes"])
+        assert b["explained"] == a["explained"], name
+        for kind, ak in a["kinds"].items():
+            bk = b["kinds"][kind]
+            assert (bk["checked"], bk["failing"]) == (ak["checked"], ak["failing"]), (name, kind)
+            assert bk["worst_error_raw"] == pytest.approx(ak["worst_error_raw"], abs=2e-6), (name, kind)
+            pf = [f for f in a["failures"] if f["kind"] == kind]
+            cf = [f for f in b["failures"] if f["kind"] == kind]
+            assert len(cf) == min(ak["failing"], qr.SAMPLE) == min(len(pf), qr.SAMPLE), (name, kind)
+            if ak["failing"] <= qr.SAMPLE:
+                # the whole failing set is sampled: identical sets
+                dump = lambda rows: sorted(json.dumps(r, sort_keys=True) for r in rows)
+                assert dump(cf) == dump(pf), (name, kind)
+            # else: the Python tool keeps a (Y, X)-ordered first N per band for the point
+            # and background kinds, K1 the contract's (iy, ix, path, vx, vy) first N
+            # (DESIGN.md Determinism): both N-sized samples of the same failing set
+
+
+@needs_c
+def test_j1_and_j4_are_byte_equal(fixture, tmp_path):
+    name, disc, spool = fixture
+    outs = []
+    for j in (1, 4):
+        out = tmp_path / f"j{j}.json"
+        qr.main(["--disc", str(disc), "--spool", str(spool), "--out", str(out),
+                 "--workers", str(j), "--engine", "c"])
+        res = json.loads(out.read_text())
+        assert res["timing"]["workers"] == j and res["compare_excludes"] == ["timing", "wall_s"]
+        outs.append(_canon(res))
+    assert outs[0] == outs[1], name
+
+
+@needs_c
+def test_one_binding_call_per_range(fixture):
+    name, disc, spool = fixture
+    res = qr.roundtrip(str(disc), str(spool), workers=1, engine="c")
+    container = qr.walk.read_container(str(disc))
+    keys = qr._block_keys(str(disc))
+    lats = {lv: qr.Lattice(lv) for lv in {k[0] for k in keys}}
+    planned = len(qr._block_tasks(qr.SpoolReader(str(spool)), container, keys, lats,
+                                  qr.PLAN_WORKERS))
+    tm = res["timing"]
+    assert tm["ranges"] == planned == tm["c_stats"]["calls"], name
+    if name == "dense":
+        assert tm["c_stats"]["calls"] * 10 < res["totals"]["range"]["checked"]
+    assert tm["c_ns"] > 0 and tm["pss_peak_kb"] > 0
+
+
+def test_pss_sampler_returns_a_positive_peak():
+    import time
+    s = qr.PssSampler(interval=0.05).start()
+    time.sleep(0.2)
+    peak = s.stop()
+    assert peak > 0 and s.samples >= 3
