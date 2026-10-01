@@ -3,7 +3,7 @@
 - Tool: Claude Code, orchestrator Sonnet 5.5
 - Session: https://claude.ai/code/session_01KFbprktJzdCyubbCXezU5h
 - Started: 2026-10-01T10:18Z
-- Scope: Phase 1 only. Workers Sonnet by default; Opus only as the one-tier retry after a Sonnet failure (user instruction). Phase 1 skipped refine (one unit); brief authored inline.
+- Scope: Phase 1 (closed) then Phase 2 only. Workers Sonnet by default; Opus only as the one-tier retry after a Sonnet failure (user instruction). Phase 1 skipped refine (one unit); brief authored inline.
 
 ## Phase 1
 
@@ -24,3 +24,9 @@ Outcome checked directly: ARCHITECTURE states the rule and D1/K1/H5–H6 (greps 
 2. Re-check the low-confidence classes at the phase that moves them (Phase 2 for `quantisation_roundtrip`, Phase 4 for the harness checks/profile, Phase 5 for the retired scripts that import `AllData`); the inventory test only checks completeness, not correctness.
 3. `spool_legacy.py`, `convert_spool.py` sit in `c-later` because no phase names them; decide at Phase 5 refine.
 4. Tests are covered by one glob entry, not per module.
+
+## Phase 2
+
+Run header: Claude Code, orchestrator Sonnet 5.5, same session as above; Phase 2 execute started 2026-10-01 after refine (`d455dd2`, units 2-01..2-08, serial). Workers Sonnet; Opus only as one-tier retry after a Sonnet failure.
+
+**Orchestrator decision (ledgered, refine asked for confirmation):** the parcel-tree walker is in C (2-02), per the standing intent "C for all perf-sensitive work" and the one-call-per-range rule. Refine's reading of "per-check D1 wall" (D1 full-disc decode wall plus Python per-check baselines) and the first-N=10 merged sample rule stand. Real-disc skips report `blocked`, not pass. Cody signs the Phase 4 budgets and the re-signed PSS ceiling from 2-08's numbers.
