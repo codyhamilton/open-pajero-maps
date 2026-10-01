@@ -184,6 +184,7 @@ typedef struct { int64_t key; int32_t seg; } k1_sk;
 
 struct k1_region {
     k1_pts nodes, rpts, names, names_y;
+    k1_shapes shp;
     k1_seg *seg; int64_t nseg, segcap;
     k1_sk *sk; int64_t nsk; int sk_built;
     int64_t ncells;
@@ -263,6 +264,11 @@ static double cheb_seg(double px, double py, const k1_seg *g) {
     return best;
 }
 
+double k1_cheb_pt_seg(double px, double py, double x1, double y1, double x2, double y2) {
+    k1_seg g = {x1, y1, x2, y2};
+    return cheb_seg(px, py, &g);
+}
+
 static int seg_push(struct k1_region *R, double x1, double y1, double x2, double y2) {
     if (R->nseg == R->segcap) {
         int64_t nc = R->segcap ? R->segcap * 2 : 1024;
@@ -335,6 +341,83 @@ static int road_hit(struct k1_region *R, int64_t X, int64_t Y) {
 static void region_free(struct k1_region *R) {
     free(R->nodes.p); free(R->rpts.p); free(R->names.p); free(R->names_y.p);
     free(R->seg); free(R->sk);
+    free(R->shp.type); free(R->shp.cls); free(R->shp.tall); free(R->shp.off);
+    free(R->shp.x); free(R->shp.y);
+}
+
+/* ---- the band's background shapes */
+
+static int shp_begin(k1_shapes *h, int32_t type, int32_t cls, int tall) {
+    if (h->n + 1 >= h->ncap || !h->off) {
+        int64_t nc = h->ncap ? h->ncap * 2 : 64;
+        int32_t *t = (int32_t *)realloc(h->type, (size_t)nc * 4);
+        if (!t) return -4;
+        h->type = t;
+        int32_t *c = (int32_t *)realloc(h->cls, (size_t)nc * 4);
+        if (!c) return -4;
+        h->cls = c;
+        uint8_t *tl = (uint8_t *)realloc(h->tall, (size_t)nc);
+        if (!tl) return -4;
+        h->tall = tl;
+        int64_t *o = (int64_t *)realloc(h->off, (size_t)(nc + 1) * 8);
+        if (!o) return -4;
+        h->off = o;
+        h->ncap = nc;
+        if (h->n == 0) h->off[0] = 0;
+    }
+    h->type[h->n] = type; h->cls[h->n] = cls; h->tall[h->n] = (uint8_t)tall;
+    h->n++;
+    h->off[h->n] = h->off[h->n - 1];
+    return 0;
+}
+static int shp_xy(k1_shapes *h, double x, double y) {
+    if (h->ncoord == h->ccap) {
+        int64_t nc = h->ccap ? h->ccap * 2 : 1024;
+        double *a = (double *)realloc(h->x, (size_t)nc * 8);
+        if (!a) return -4;
+        h->x = a;
+        double *b = (double *)realloc(h->y, (size_t)nc * 8);
+        if (!b) return -4;
+        h->y = b;
+        h->ccap = nc;
+    }
+    h->x[h->ncoord] = x; h->y[h->ncoord] = y; h->ncoord++;
+    h->off[h->n] = h->ncoord;
+    return 0;
+}
+
+/* Region(...): the tall shapes meeting the block rectangle grown by SEARCH + 1 join the local
+ * ones, and (only then) the local shapes that are tall themselves are dropped. */
+static int shp_add_tall(k1_shapes *h, const k1_tallset *T, int64_t c0, int64_t c1, int64_t r0,
+                        int64_t r1) {
+    if (!T || T->n <= 0) return 0;
+    double bx0 = (double)c0 * K1_RAW - K1_SEARCH - 1, bx1 = (double)(c1 + 1) * K1_RAW + K1_SEARCH + 1;
+    double by0 = (double)r0 * K1_RAW - K1_SEARCH - 1, by1 = (double)(r1 + 1) * K1_RAW + K1_SEARCH + 1;
+    int any = 0;
+    for (int64_t t = 0; t < T->n && !any; t++) {
+        const double *b = T->bb + 4 * t;
+        any = b[1] >= bx0 && b[0] <= bx1 && b[3] >= by0 && b[2] <= by1;
+    }
+    if (!any) return 0;
+    int64_t m = 0, mc = 0;
+    for (int64_t s = 0; s < h->n; s++) {
+        if (h->tall[s]) continue;
+        int64_t a = h->off[s], n = h->off[s + 1] - a;
+        h->type[m] = h->type[s]; h->cls[m] = h->cls[s]; h->tall[m] = 0;
+        if (mc != a) { memmove(h->x + mc, h->x + a, (size_t)n * 8); memmove(h->y + mc, h->y + a, (size_t)n * 8); }
+        h->off[m] = mc;
+        mc += n; m++;
+    }
+    h->n = m; h->ncoord = mc;
+    if (h->off) h->off[m] = mc;
+    for (int64_t t = 0; t < T->n; t++) {
+        const double *b = T->bb + 4 * t;
+        if (!(b[1] >= bx0 && b[0] <= bx1 && b[3] >= by0 && b[2] <= by1)) continue;
+        int rc = shp_begin(h, T->rows[t].type, T->rows[t].cls, 0);
+        for (int64_t j = T->off[t]; rc == 0 && j < T->off[t + 1]; j++) rc = shp_xy(h, T->xy[2 * j], T->xy[2 * j + 1]);
+        if (rc) return rc;
+    }
+    return 0;
 }
 
 /* the spool content of a block band: cells iy in [r0-1, r1+1], ix in [c0-1, c1+1] */
@@ -359,6 +442,27 @@ static int region_build(struct k1_region *R, const k1_spool *S, const k1_lat *L,
         for (int64_t j = 0; j < nm && rc == 0; j++)
             if ((C.c[K1_s_present][j] & 3) == 3)
                 rc = pts_push(&R->names, gx(L, rd_f64(C.c[K1_s_lon], j)), gy(L, rd_f64(C.c[K1_s_lat], j)));
+        /* background shapes (global raw floats); `tall` against the home cell */
+        int64_t co = 0, nb = C.n[3];
+        for (int64_t j = 0; j < nb && rc == 0; j++) {
+            int64_t n = rd_i32(C.c[K1_b_nstored], j);
+            if (n <= 0) continue;
+            int64_t hx = ix, hy = sp_iy(S, i);
+            double mnx = INFINITY, mxx = -INFINITY, mny = INFINITY, mxy = -INFINITY;
+            for (int64_t v = 0; v < n; v++) {
+                double x = gx(L, rd_f64(C.c[K1_c_lon], co + v)), y = gy(L, rd_f64(C.c[K1_c_lat], co + v));
+                if (x < mnx) mnx = x;
+                if (x > mxx) mxx = x;
+                if (y < mny) mny = y;
+                if (y > mxy) mxy = y;
+            }
+            int local = mnx >= (double)((hx - 1) * K1_RAW + 1) && mxx <= (double)((hx + 2) * K1_RAW - 1) &&
+                        mny >= (double)((hy - 1) * K1_RAW + 1) && mxy <= (double)((hy + 2) * K1_RAW - 1);
+            rc = shp_begin(&R->shp, rd_i32(C.c[K1_b_type], j), rd_i32(C.c[K1_b_class], j), !local);
+            for (int64_t v = 0; v < n && rc == 0; v++)
+                rc = shp_xy(&R->shp, gx(L, rd_f64(C.c[K1_c_lon], co + v)), gy(L, rd_f64(C.c[K1_c_lat], co + v)));
+            co += n;
+        }
         /* road polylines: a road's points, else its stored nodes; no segment leaves a road's last point */
         int64_t po = 0, no = 0;
         for (int64_t r = 0; r < nr && rc == 0; r++) {
@@ -400,13 +504,16 @@ typedef struct {
     k1_agg range, step;
 } k1_run;
 
-static void frame_raw(const k1_leaf *lf, double lat, double lon, double *fx, double *fy) {
+double k1_gx(const k1_lat *L, double lon) { return gx(L, lon); }
+double k1_gy(const k1_lat *L, double lat) { return gy(L, lat); }
+
+void k1_frame_raw(const k1_leaf *lf, double lat, double lon, double *fx, double *fy) {
     double dl = np_mod(lon - lf->flo + 180.0, 360.0) - 180.0;
     *fx = dl / lf->fwo * lf->rng;
     *fy = (lat - lf->fla) / lf->fwa * lf->rng;
 }
 
-static k1_sample make_sample(const d1_walk *w, const k1_leaf *lf, double lat, double lon,
+k1_sample k1_make_sample(const d1_walk *w, const k1_leaf *lf, double lat, double lon,
                              int32_t vx, int32_t vy, int reason, int code, double err) {
     k1_sample s;
     memset(&s, 0, sizeof s);
@@ -420,14 +527,14 @@ static k1_sample make_sample(const d1_walk *w, const k1_leaf *lf, double lat, do
 /* one decoded vertex through the range check (nodes, points, names, background vertices) */
 static void range_item(k1_run *u, double lat, double lon) {
     double fx, fy;
-    frame_raw(u->lf, lat, lon, &fx, &fy);
+    k1_frame_raw(u->lf, lat, lon, &fx, &fy);
     double rx = rnd(fx), ry = rnd(fy), rng = u->lf->rng;
     int nonint = fabs(fx - rx) > K1_INT_EPS || fabs(fy - ry) > K1_INT_EPS;
     int out = rx < 0 || ry < 0 || rx > rng || ry > rng || rng <= 0;
     u->range.n++;
     if (nonint || out) {
         u->range.bad++;
-        k1_sample s = make_sample(u->w, u->lf, lat, lon, sat32(rx), sat32(ry), K1_R_RANGE, 0, NAN);
+        k1_sample s = k1_make_sample(u->w, u->lf, lat, lon, sat32(rx), sat32(ry), K1_R_RANGE, 0, NAN);
         k1_push_sample(u->acc, K1_range, &s);
     }
 }
@@ -473,8 +580,8 @@ static void point_item(k1_run *u, int which, k1_agg *g, const k1_pts *set, doubl
     if (bad) {
         double fx, fy;
         g->bad++;
-        frame_raw(lf, lat, lon, &fx, &fy);
-        k1_sample s = make_sample(u->w, lf, lat, lon, sat32(rnd(fx)), sat32(rnd(fy)),
+        k1_frame_raw(lf, lat, lon, &fx, &fy);
+        k1_sample s = k1_make_sample(u->w, lf, lat, lon, sat32(rnd(fx)), sat32(rnd(fy)),
                                   K1_R_NO_SPOOL, 0, d);
         k1_push_sample(u->acc, K1_road_node + which, &s);
     } else if (d > g->worst) g->worst = d;     /* rescued items carry d = inf, as in the oracle */
@@ -507,7 +614,9 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
                    int64_t rlo, int64_t rhi, const uint8_t *idx, int64_t idx_len,
                    const uint8_t *data, int64_t data_len, const int32_t *colmap,
                    const int32_t *esz, const int32_t *ckey, int64_t ncols,
-                   void *kinds, void *samples, int64_t *expl, int64_t *stats) {
+                   void *kinds, void *samples, int64_t *expl, int64_t *stats,
+                   const k1_tallrow *trows, const double *txy, const int64_t *toff,
+                   const double *tbb, int64_t ntall) {
     struct timespec t0, t1;
     clock_gettime(CLOCK_MONOTONIC, &t0);
     if (!region || !block || !kinds || !samples || !expl || !stats) return -1;
@@ -545,6 +654,11 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
         if (r0 < rlo) r0 = rlo;
         if (r1 > rhi) r1 = rhi;
         if ((rc = region_build(&R, &S, &lat, c0, c1, r0, r1)) < 0) goto done;
+        {
+            k1_tallset T = {trows, txy, toff, tbb, ntall};
+            if ((rc = shp_add_tall(&R.shp, ntall > 0 && trows && txy && toff && tbb ? &T : NULL,
+                                   c0, c1, r0, r1)) < 0) goto done;
+        }
 
         leaf = (k1_leaf *)calloc((size_t)(nw > 0 ? nw : 1), sizeof(k1_leaf));
         if (!leaf) { rc = -4; goto done; }
@@ -572,7 +686,7 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
                 acc.kind[K1_range].failing++;
                 int code = f ? f->status : 100 + w->err;
                 if (w->status == 1) code = 100 + w->err;
-                k1_sample s = make_sample(w, lf, 0.0, 0.0, INT32_MIN, INT32_MIN, K1_R_NO_DECODE, code, NAN);
+                k1_sample s = k1_make_sample(w, lf, 0.0, 0.0, INT32_MIN, INT32_MIN, K1_R_NO_DECODE, code, NAN);
                 k1_push_sample(&acc, K1_range, &s);
                 continue;
             }
@@ -609,7 +723,7 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
                     const d1_bgcoord *c = &bgc[sh->coord_first + v];
                     range_item(&u, c->lat, c->lon);
                     double fx, fy;
-                    frame_raw(lf, c->lat, c->lon, &fx, &fy);
+                    k1_frame_raw(lf, c->lat, c->lon, &fx, &fy);
                     int64_t rfx = to_i64(rnd(fx)), rfy = to_i64(rnd(fy));
                     if (v > 0) {
                         int64_t dx = (int64_t)((uint64_t)rfx - (uint64_t)px), dy = (int64_t)((uint64_t)rfy - (uint64_t)py);
@@ -617,7 +731,7 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
                         if (dx % m != 0 || dy % m != 0 || dx > 127 * m || dx < -127 * m ||
                             dy > 127 * m || dy < -127 * m || dx == INT64_MIN || dy == INT64_MIN) {
                             u.step.bad++;
-                            k1_sample s = make_sample(w, lf, c->lat, c->lon, sat32((double)rfx), sat32((double)rfy),
+                            k1_sample s = k1_make_sample(w, lf, c->lat, c->lon, sat32((double)rfx), sat32((double)rfy),
                                                       K1_R_STEP, 0, NAN);
                             k1_push_sample(&acc, K1_step, &s);
                         }
@@ -631,7 +745,7 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
         k1_add(&acc, K1_step, u.step.n, u.step.bad, 0.0);
         for (int k = 0; k < 3; k++) if (ag[k].n) k1_add(&acc, K1_road_node + k, ag[k].n, ag[k].bad, ag[k].worst);
         /* the failed-leaf count was added to `failing` above without a checked count */
-        k1_ctx ctx = {B, lat, nw, walk, leaf, frame, bgs, bgc, &R, &acc};
+        k1_ctx ctx = {B, lat, nw, walk, leaf, frame, bgs, bgc, &R, &acc, &R.shp};
         if ((rc = k1_bg_kinds(&ctx)) < 0) goto done;
         if ((rc = k1_cmp_kinds(&ctx)) < 0) goto done;
         stats[K1_leaves] += nw;

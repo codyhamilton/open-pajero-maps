@@ -639,7 +639,8 @@ def _load_k1():
                                     ctypes.c_int64, ctypes.c_int64, ctypes.c_void_p,
                                     ctypes.c_int64, ctypes.c_void_p, ctypes.c_int64,
                                     ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
-                                    ctypes.c_int64] + [ctypes.c_void_p] * 4)
+                                    ctypes.c_int64] + [ctypes.c_void_p] * 4
+                                   + [ctypes.c_void_p] * 4 + [ctypes.c_int64])
         lib.kw_k1_tall.restype = ctypes.c_int64
         lib.kw_k1_tall.argtypes = ([ctypes.c_void_p, ctypes.c_int64, ctypes.c_void_p,
                                     ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p,
@@ -763,6 +764,41 @@ _K1_ERRORS = {-1: "bad arguments", -2: "D1 failed (a Map Frame lies outside the 
               -3: "bad spool index or record", -4: "out of memory"}
 
 
+_k1_tall_cache: dict = {}
+
+
+def _k1_tallset(spool: "E1Spool", block_row):
+    """The level's tall shapes for the band call (rows, xy, per-shape coordinate offsets,
+    bounding boxes x0 x1 y0 y1), computed once per spool and lattice."""
+    import numpy as np
+    r = block_row[0]
+    lat5 = np.array([r["lat0"], r["lon0"], r["cell_lat"], r["cell_lon"], r["wlo"]], np.float64)
+    key = (id(spool), lat5.tobytes())
+    hit = _k1_tall_cache.get(key)
+    if hit is not None and hit[5] is spool:
+        return hit
+    n = int(np.frombuffer(spool.idx[8:16].tobytes(), "<u8")[0]) if len(spool.idx) >= 16 else 0
+    rows, xy = k1_tall(spool, lat5, 0, n)
+    if len(rows):
+        off = np.zeros(len(rows) + 1, np.int64)
+        np.cumsum(rows["n"], out=off[1:])
+        st = off[:-1]
+        bb = np.empty((len(rows), 4), np.float64)
+        bb[:, 0] = np.minimum.reduceat(xy[:, 0], st)
+        bb[:, 1] = np.maximum.reduceat(xy[:, 0], st)
+        bb[:, 2] = np.minimum.reduceat(xy[:, 1], st)
+        bb[:, 3] = np.maximum.reduceat(xy[:, 1], st)
+    else:
+        off, bb = np.zeros(1, np.int64), np.zeros((1, 4), np.float64)
+    rows = np.ascontiguousarray(rows) if len(rows) else np.zeros(1, rows.dtype)
+    xy = np.ascontiguousarray(xy) if len(xy) else np.zeros((1, 2), np.float64)
+    if len(_k1_tall_cache) > 8:
+        _k1_tall_cache.clear()
+    hit = (rows, xy, off, np.ascontiguousarray(bb), len(off) > 1, spool)
+    _k1_tall_cache[key] = hit
+    return hit
+
+
 def k1_check_band(region, block_row, rlo, rhi, spool: "E1Spool", acc: K1Acc) -> None:
     """Check one (block, row band) in ONE C call, adding into `acc`: `block_row` is a
     one-row `D1_BLOCK_DTYPE` array, `[rlo, rhi]` the band (None: all)."""
@@ -778,11 +814,14 @@ def k1_check_band(region, block_row, rlo, rhi, spool: "E1Spool", acc: K1Acc) -> 
     region = np.ascontiguousarray(region, dtype=np.uint8)
     lo = -(1 << 62) if rlo is None else int(rlo)
     hi = (1 << 62) if rhi is None else int(rhi)
+    tall = _k1_tallset(spool, block_row)
     rc = lib.kw_k1_band(region.ctypes.data, len(region), block_row.ctypes.data, lo, hi,
                         spool.idx.ctypes.data, len(spool.idx), spool.data.ctypes.data,
                         len(spool.data), colmap.ctypes.data, esz.ctypes.data, ckey.ctypes.data,
                         len(esz), acc.kinds.ctypes.data, acc.smp.ctypes.data,
-                        acc.expl.ctypes.data, acc.stats.ctypes.data)
+                        acc.expl.ctypes.data, acc.stats.ctypes.data,
+                        tall[0].ctypes.data, tall[1].ctypes.data, tall[2].ctypes.data,
+                        tall[3].ctypes.data, len(tall[0]) if tall[4] else 0)
     _k1_stats["calls"] += 1
     if rc < 0:
         raise K1Error(_K1_ERRORS.get(rc, f"error {rc}"))

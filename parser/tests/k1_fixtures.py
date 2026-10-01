@@ -180,11 +180,118 @@ FAULTS = tuple(k for k in FIXTURES if k != "clean")
 
 
 def build_fixture(tmp_path: Path, name: str):
-    """(disc path, spool path) of fixture `name`."""
-    disc_cells, spool_cells = FIXTURES[name]()
+    """(disc path, spool path) of fixture `name` (`FIXTURES` or `BG_FIXTURES`)."""
+    disc_cells, spool_cells = {**FIXTURES, **BG_FIXTURES}[name]()
     disc, _ = _build(tmp_path, f"{name}_d", disc_cells)
     _, spool = _build(tmp_path, f"{name}_s", spool_cells)
     return disc, spool
+
+
+# ------------------------------------------------------------------ background fixtures (2-04)
+# Kept apart from FIXTURES: test_k1_points.py parametrises over FIXTURES and expects a
+# point-kind failure from every fault in it. The background kinds read the same
+# (disc_cells, spool_cells) pairs.
+#
+#   bg_coarse            a 12-vertex ring 0.9 cell wide (coarse steps in the disc)
+#   bg_tall              a polygon 4.5 cells wide homed in one cell: its bbox leaves the home
+#                        cell grown by one cell, so it is found only by the tall pass
+#   bg_long_edge         an unclosed triangle 2.5 cells across: the closing edge is long
+#                        and carries disc vertices that are near no spool vertex (65623)
+#   bg_diamond           a diamond whose left/right vertices sit exactly on a cell row line
+#                        (the point-in-polygon half-open edge rule decides its covers)
+#   bg_boundary_displaced  the spool polygon 8 raw east of the disc's (boundary vertices fail)
+#   bg_cover_displaced   the spool polygon 2 cells east (the cover centre is outside it)
+#   bg_tall_displaced    the tall polygon moved 8 raw
+#   bg_outside           one disc vertex 30 raw outside the spool polygon
+#   bg_wrong_type        the disc polygon has type 1, the spool's type 2
+#   bg_shift_04 / _06    the spool polygon 0.4 / 0.6 raw east (the half-unit tolerance)
+
+
+def _poly_cells(coords, home, ixs, iys, type_code=2, shapes=None):
+    """Spool/disc cells: a name in every cell of `ixs` x `iys` (so each is emitted) and
+    the polygon `coords` in cell `home`."""
+    cells = {(ix, iy): {"roads": [], "backgrounds": [], "names": [_name(*_centre(ix, iy))]}
+             for ix in ixs for iy in iys}
+    cells[home]["backgrounds"] = shapes if shapes is not None else [_bg(coords, type_code)]
+    return cells
+
+
+def _ring(clat, clon, n, ry, rx):
+    """A closed n-gon around (clat, clon), `ry` / `rx` in degrees."""
+    import math
+    pts = [(clat + ry * math.sin(2 * math.pi * k / n), clon + rx * math.cos(2 * math.pi * k / n))
+           for k in range(n)]
+    return pts + [pts[0]]
+
+
+def _coarse(shift_lon=0.0):
+    lat, lon = _centre(512, 0)
+    return _poly_cells(_ring(lat, lon + shift_lon, 12, 0.45 * CELL_LAT, 0.45 * CELL_LON),
+                       (512, 0), [512], [0])
+
+
+def _tall(shift_lon=0.0, type_code=2):
+    clat, clon = _centre(514, 3)
+    return _poly_cells(_square(clat, clon + shift_lon, 2.25 * CELL_LAT, 2.25 * CELL_LON),
+                       (514, 3), range(512, 517), range(1, 6), type_code)
+
+
+def _long_edge(shift_lon=0.0):
+    clat, clon = _centre(514, 3)
+    a = (clat - 1.2 * CELL_LAT, clon + shift_lon - 1.2 * CELL_LON)
+    b = (clat - 1.2 * CELL_LAT, clon + shift_lon + 1.3 * CELL_LON)
+    c = (clat + 1.3 * CELL_LAT, clon + shift_lon + 1.3 * CELL_LON + 0.0001)
+    return _poly_cells([a, b, c], (514, 3), range(513, 517), range(1, 6))
+
+
+def _diamond(shift_lon=0.0):
+    """A diamond astride the level's bottom edge (raw row 0 is exactly latitude -50.0, the
+    one row that is exactly representable) with its left/right tips ON that row. The disc
+    side is clipped at the row, so its base vertices are boundary vertices at Y == 0 that lie
+    far from every spool vertex and segment: the verdict comes from `inside()`, where the
+    tips make the half-open edge rule decide (each tip has one edge ending, one starting)."""
+    assert float(qr.Lattice(0).gy(-50.0)) == 0.0
+    clon = 90 + 513 * CELL_LON + shift_lon
+    r = 1.2
+    pts = [(-50.0, clon - r * CELL_LON), (-50.0 + r * CELL_LAT, clon), (-50.0, clon + r * CELL_LON),
+           (-50.0 - r * CELL_LAT, clon), (-50.0, clon - r * CELL_LON)]
+    return _poly_cells(pts, (513, 0), range(511, 515), range(0, 2))
+
+
+def _outside_vertex():
+    sq = _square(LAT0, LON0)
+    moved = list(sq)
+    moved[1] = (sq[1][0] + 30 * CELL_LAT / 4096, sq[1][1])
+    moved[-1] = moved[0]
+    return ({(512, 0): {"roads": [], "backgrounds": [_bg(moved)], "names": [_name(LAT0, LON0)]}},
+            {(512, 0): {"roads": [], "backgrounds": [_bg(sq)], "names": [_name(LAT0, LON0)]}})
+
+
+def _wrong_type():
+    sq = _square(LAT0, LON0)
+    return ({(512, 0): {"roads": [], "backgrounds": [_bg(sq, 1)], "names": [_name(LAT0, LON0)]}},
+            {(512, 0): {"roads": [], "backgrounds": [_bg(sq, 2)], "names": [_name(LAT0, LON0)]}})
+
+
+def _shift(raw):
+    return ({**_base_cells(), **_big_cells()},
+            {**_base_cells(bg_shift_lon=raw * RAW_LON), **_big_cells(shift_lon=raw * RAW_LON)})
+
+
+BG_FIXTURES = {
+    "bg_coarse": lambda: (_coarse(), _coarse()),
+    "bg_tall": lambda: (_tall(), _tall()),
+    "bg_long_edge": lambda: (_long_edge(), _long_edge()),
+    "bg_diamond": lambda: (_diamond(), _diamond()),
+    "bg_boundary_displaced": lambda: (_big_cells(), _big_cells(shift_lon=8 * RAW_LON)),
+    "bg_cover_displaced": lambda: (_big_cells(), _big_cells(shift_lon=2 * CELL_LON)),
+    "bg_tall_displaced": lambda: (_tall(), _tall(shift_lon=8 * RAW_LON)),
+    "bg_outside": _outside_vertex,
+    "bg_wrong_type": _wrong_type,
+    "bg_shift_04": lambda: _shift(0.4),
+    "bg_shift_06": lambda: _shift(0.6),
+    "bg_many_failures": lambda: (_tall(), _tall(shift_lon=40 * RAW_LON)),
+}
 
 
 # ------------------------------------------------------------------ the K1 driver

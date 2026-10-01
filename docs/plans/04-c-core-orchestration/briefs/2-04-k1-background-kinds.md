@@ -77,3 +77,15 @@ Chain every slow step in one background script (`run_in_background`) that append
 - Scratch for your own files: `output/scratch-<brief number>/` with `TMPDIR` exported there; pytest `--basetemp=output/scratch-<brief number>/pytest`.
 - Reference discs: R `/run/media/codyh/464210-8480/ALLDATA.KWI` (tests using it skip when absent); G `output/scratch-3-11/G/ALLDATA.KWI` (sha256 `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862`); spool `output/extract_timing/spool` (build_alldata's default spool is not it).
 - One heavy job at a time: any full-AU build or `-j 12` run takes `flock /home/codyh/workspace/open-pajero-maps/output/.heavy.lock`. Pytest and small builds do not.
+
+## Amendment 2026-10-01 (2-04 worker)
+
+The brief's owned paths omitted `parser/kiwiw/_k1.c`, but the background kinds need spool shapes
+the 2-03 band did not collect and the level's tall shapes (`kw_k1_tall`) as band input. Done
+(additively): `_k1.c` collects each cell's background shapes in `region_build`, merges the tall
+set per band (`shp_add_tall`), exports `k1_frame_raw`, `k1_make_sample`, `k1_cheb_pt_seg`,
+`k1_gx`, `k1_gy`; `kw_k1_band` gained 5 trailing arguments (tall rows, xy, offsets, bboxes,
+count) and `cenc.py` caches a per-spool tall set (`_k1_tallset`). `_k1.h` gained `k1_shapes`,
+`k1_tallset` and `k1_ctx.shapes`. Python's `inside()` float-key trick is replaced by the exact
+comparison it approximates (ia <= a + TOL and running max ib >= a - TOL); no divergence on any
+fixture or on G levels 12/10/8/6.

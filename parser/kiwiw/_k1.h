@@ -96,6 +96,27 @@ typedef struct {
 typedef struct { double lat0, lon0, cell_lat, cell_lon, wlo; } k1_lat;
 struct k1_region;
 
+/* The spool background shapes a block band sees (2-04): the shapes of the cell ring around
+ * the block rectangle plus the "tall" shapes (bounding box leaving their home cell grown by
+ * one cell) that meet the rectangle grown by SEARCH + 1; local shapes that are themselves
+ * tall are dropped when any tall shape is selected (they are in both sets). Coordinates are
+ * global raw floats (`gx` / `gy` of the spool lat/lon), `off` has `n + 1` entries. A shape
+ * with no stored coordinates is absent. */
+typedef struct {
+    int64_t n, ncoord, ncap, ccap;
+    int32_t *type, *cls;
+    uint8_t *tall;                /* local shape is tall (builder scratch) */
+    int64_t *off;
+    double *x, *y;
+} k1_shapes;
+
+/* the level's tall shapes (`kw_k1_tall` output) and their per-shape coordinate offsets
+ * (`n + 1`) and bounding boxes (x0, x1, y0, y1 per shape), cached by Python per spool */
+typedef struct { int32_t type, cls, n, hx, hy; } k1_tallrow;
+typedef struct {
+    const k1_tallrow *rows; const double *xy; const int64_t *off; const double *bb; int64_t n;
+} k1_tallset;
+
 /* the block context a kind group sees: the band's D1 tables (`walk[i]` <->
  * `leaf[i]`), the lattice and the spool region. `k1_region` is opaque here; 2-04
  * and 2-05 extend `_k1.c` with the shape accessors they need. */
@@ -110,7 +131,18 @@ typedef struct {
     const d1_bgcoord *bgcoord;
     const struct k1_region *region;
     k1_acc *acc;
+    const k1_shapes *shapes;      /* the band's spool background shapes (2-04) */
 } k1_ctx;
+
+/* shared by `_k1.c` and the kind groups: the frame-raw position of a lat/lon in a leaf, a
+ * sample row (for the background kinds `code` carries the shape type), and `_cheb_seg` of
+ * one point and one segment */
+double k1_gx(const k1_lat *L, double lon);
+double k1_gy(const k1_lat *L, double lat);
+void k1_frame_raw(const k1_leaf *lf, double lat, double lon, double *fx, double *fy);
+k1_sample k1_make_sample(const d1_walk *w, const k1_leaf *lf, double lat, double lon,
+                         int32_t vx, int32_t vy, int reason, int code, double err);
+double k1_cheb_pt_seg(double px, double py, double x1, double y1, double x2, double y2);
 
 /* kind-group stubs (2-04: background, background_boundary, interior_cover,
  * completeness; 2-05: the comparison kinds). Return 0 or < 0. */
@@ -133,14 +165,15 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
                    int64_t rlo, int64_t rhi, const uint8_t *idx, int64_t idx_len,
                    const uint8_t *data, int64_t data_len, const int32_t *colmap,
                    const int32_t *esz, const int32_t *ckey, int64_t ncols,
-                   void *kinds, void *samples, int64_t *expl, int64_t *stats);
+                   void *kinds, void *samples, int64_t *expl, int64_t *stats,
+                   const k1_tallrow *trows, const double *txy, const int64_t *toff,
+                   const double *tbb, int64_t ntall);
 
 /* The tall-shape pass: spool shapes whose bounding box leaves their home cell grown
  * by one cell, for spool index rows [a, b) of one level. Output: shape rows
  * (type, class, ncoords, home ix, iy) and their coordinates (global raw floats).
  * Returns 0, 1 (a table was too small: need[0], need[1] hold the rows needed; grow,
  * call again) or < 0. */
-typedef struct { int32_t type, cls, n, hx, hy; } k1_tallrow;
 int64_t kw_k1_tall(const uint8_t *idx, int64_t idx_len, const uint8_t *data, int64_t data_len,
                    const int32_t *colmap, const int32_t *esz, const int32_t *ckey, int64_t ncols,
                    const double *lat5, int64_t a, int64_t b, k1_tallrow *rows, int64_t rows_cap,
