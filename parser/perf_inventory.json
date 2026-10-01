@@ -518,6 +518,12 @@
    "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
   },
   {
+   "path": "parser/tools/k1_triage.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "offline triage over dump files; numpy chunks, no per-row Python loop"
+  },
+  {
    "path": "parser/tools/lint_schema.py",
    "class": "orchestration",
    "phase": null,

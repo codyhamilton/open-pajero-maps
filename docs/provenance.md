@@ -344,3 +344,6 @@ after the run): both reports are identical
 to `output/scratch-2-07/k1_a.json` excluding timing, walls 67.4 s (HEAD) and 62.8 s
 (working tree). The `dump_l6_j1/`, `dump_l6_j12/` trees are the `--levels 6`
 byte-equality pair. Regenerable, so not committed.
+
+### output/scratch-3-05/ (K1 triage tool output, Phase 3 unit 3-05, not committed)
+Summaries and assignments written by `parser/tools/k1_triage.py` over a K1 failure dump (`summary` → `totals.tsv`, `by_level_type.tsv`, group tables; `classify` → per-rule assignment files and `rules.json`). Regenerable: `.venv-rp/bin/python parser/tools/k1_triage.py summary --dump output/scratch-3-03/dump --out output/scratch-3-05/summary` (about 2.3 min, ~3.4 GB RSS); the dump itself is the 3-02/3-03 entries above.
