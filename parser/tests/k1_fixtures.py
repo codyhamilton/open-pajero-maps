@@ -392,3 +392,82 @@ def k1_run(disc, spool, plan, acc=None):
             spools[key[0]] = cenc.E1Spool(str(spool), key[0])
         cenc.k1_check_band(region, row, rlo, rhi, spools[key[0]], acc)
     return acc, cenc.k1_stats()["calls"] - before
+
+
+# ------------------------------------------------------------------ inside-side tolerance (3-04)
+#
+# `background_boundary` can not observe the inside interval tolerance: a boundary
+# vertex within K1_TOL of a same-type outline is already `near` (NEAR = K1_TOL +
+# K1_EPS) and passes before `inside_batch` runs, and one beyond it is outside every
+# interval by more than K1_TOL, so both `+ K1_TOL` and `- K1_TOL` are equivalent
+# there. The tolerance is observable only for a leaf-filling `interior_cover`, whose
+# centre `inside_batch` tests without the near gate. `bg_inside_out_03` pins both
+# comparisons: a full-cell disc ring in two cells against a cell-sized C-shaped spool
+# ring whose narrow mouth reaches past the centre, leaving that centre 0.3 raw to the
+# left of one mouth wall (in cell 512) and 0.3 raw to the right of the other (cell
+# 513); either `K1_TOL` term decides its interval. `bg_inside_out_07` repeats the
+# first geometry at 0.7 raw (outside every interval) and shifts the outer ring 0.7
+# raw east, so the left frame vertices are 0.7 raw outside too: the cover fails and
+# 35 frame vertices fail (the vertices the encoder shares into the eight edge cells).
+
+_RAW_LAT = CELL_LAT / 4096
+
+
+def _cell_rect(clat, clon):
+    return _square(clat, clon, 0.5 * CELL_LAT, 0.5 * CELL_LON)
+
+
+def _cshaped_ring(clat, clon, d_lo, d_hi, outer=0.0):
+    """A cell-sized ring with a mouth from the top edge past the centre: the mouth
+    walls sit `d_lo` / `d_hi` raw from the centre, the outer rectangle `outer` raw east."""
+    lat0, lat1 = clat - 0.5 * CELL_LAT, clat + 0.5 * CELL_LAT
+    lon0 = clon + outer * RAW_LON - 0.5 * CELL_LON
+    lon1 = clon + outer * RAW_LON + 0.5 * CELL_LON
+    mlo, mhi = clon + d_lo * RAW_LON, clon + d_hi * RAW_LON
+    mb = clat - 5 * _RAW_LAT
+    return [(lat0, lon0), (lat0, lon1), (lat1, lon1), (lat1, mhi),
+            (mb, mhi), (mb, mlo), (lat1, mlo), (lat1, lon0), (lat0, lon0)]
+
+
+def _cover_cells(ixs, spool=None):
+    """A full-cell disc ring in each cell of `ixs`; `spool` maps a cell to its
+    `(d_lo, d_hi, outer)` ring. With no `spool`, the disc rings are the spool."""
+    disc = {}
+    for ix in ixs:
+        clat, clon = _centre(ix, 0)
+        disc[(ix, 0)] = {"roads": [], "backgrounds": [_bg(_cell_rect(clat, clon), 2)],
+                         "names": [_name(clat, clon)]}
+    if spool is None:
+        return disc, disc
+    s = {}
+    for ix, (d_lo, d_hi, outer) in spool.items():
+        clat, clon = _centre(ix, 0)
+        s[(ix, 0)] = {"roads": [],
+                      "backgrounds": [_bg(_cshaped_ring(clat, clon, d_lo, d_hi, outer), 2)],
+                      "names": [_name(clat, clon)]}
+    return disc, s
+
+
+def bg_inside_out_03():
+    return _cover_cells([512, 513], {512: (-5.0, 0.3, 0.0), 513: (-0.3, 5.0, 0.0)})
+
+
+def bg_inside_out_07():
+    return _cover_cells([512], {512: (-5.0, 0.7, 0.7)})
+
+
+# Kept out of `BG_FIXTURES`: those parametrise the shared tests (point kinds among
+# them) and their vacuity check wants a non-boundary `background` vertex, which a
+# leaf-filling cover has none of. The inside fixtures get their own tests.
+INSIDE_FIXTURES = {
+    "bg_inside_out_03": bg_inside_out_03,
+    "bg_inside_out_07": bg_inside_out_07,
+}
+
+
+def build_inside_fixture(tmp_path: Path, name: str):
+    """(disc path, spool path) of an `INSIDE_FIXTURES` fixture."""
+    disc_cells, spool_cells = INSIDE_FIXTURES[name]()
+    disc, _ = _build(tmp_path, f"{name}_d", disc_cells)
+    _, spool = _build(tmp_path, f"{name}_s", spool_cells)
+    return disc, spool

@@ -107,3 +107,46 @@ def test_first_n_samples(tmp_path):
         assert len(s) == cenc.K1_SAMPLE
         assert s == sorted(s, key=cenc.k1_sample_key)
         assert s == rows.result()["samples"][kind]
+
+
+# ------------------------------------------------------------------ inside-side tolerance (3-04)
+#
+# The `background_boundary` path can not observe the inside interval tolerance (a
+# boundary vertex within K1_TOL of a same-type outline already passes the near gate,
+# one beyond it is outside every interval), so these fixtures observe it through a
+# leaf-filling `interior_cover`, which `inside_batch` tests without the near gate.
+
+
+@pytest.fixture(scope="module", params=sorted(fx.INSIDE_FIXTURES))
+def inside_fixture(request, tmp_path_factory):
+    name = request.param
+    disc, spool = fx.build_inside_fixture(tmp_path_factory.mktemp(name), name)
+    res = qr.roundtrip(str(disc), str(spool), workers=1)
+    return name, disc, spool, res
+
+
+def test_inside_out_verdicts_equal_the_python_tool(inside_fixture):
+    name, disc, spool, res = inside_fixture
+    want = _py(res)
+    acc, _ = fx.k1_run(disc, spool, fx.plan_bands(disc, spool, "tasks"))
+    got = _c(acc)
+    print(f"\n{name}")
+    for n in BG_KINDS:
+        print(f"  {n:22s} python {want[n]}  k1 {got[n]}")
+    assert got == want, name
+
+
+# Failing counts at HEAD. 03: both `K1_TOL` terms decide a cover centre that is 0.3
+# raw outside, so it passes. 07: the centre is 0.7 raw out (outside every interval)
+# and so are the 35 frame vertices the encoder shares into the left edge cells.
+INSIDE_INTENT = {
+    "bg_inside_out_03": {"background": 0, "background_boundary": 0, "interior_cover": 0},
+    "bg_inside_out_07": {"background_boundary": 35, "interior_cover": 1},
+}
+
+
+def test_inside_out_exact_counts(inside_fixture):
+    name, _, _, res = inside_fixture
+    want = _py(res)
+    for kind, n in INSIDE_INTENT[name].items():
+        assert want[kind][1] == n, (name, kind, want)
