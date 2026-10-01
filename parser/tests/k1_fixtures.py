@@ -181,7 +181,7 @@ FAULTS = tuple(k for k in FIXTURES if k != "clean")
 
 def build_fixture(tmp_path: Path, name: str):
     """(disc path, spool path) of fixture `name` (`FIXTURES` or `BG_FIXTURES`)."""
-    disc_cells, spool_cells = {**FIXTURES, **BG_FIXTURES}[name]()
+    disc_cells, spool_cells = {**FIXTURES, **BG_FIXTURES, **CMP_FIXTURES}[name]()
     disc, _ = _build(tmp_path, f"{name}_d", disc_cells)
     _, spool = _build(tmp_path, f"{name}_s", spool_cells)
     return disc, spool
@@ -291,6 +291,64 @@ BG_FIXTURES = {
     "bg_shift_04": lambda: _shift(0.4),
     "bg_shift_06": lambda: _shift(0.6),
     "bg_many_failures": lambda: (_tall(), _tall(shift_lon=40 * RAW_LON)),
+}
+
+
+# ------------------------------------------------------------------ completeness fixtures (2-05)
+#
+#   cmp_tall_removed     the tall polygon is in the spool only: its interior meets cells that
+#                        hold no vertex of it (the cell-centre rule), every one is missing
+#   cmp_cover_removed    the 2.5-cell polygon is in the spool only: the centre cell is wholly
+#                        covered (a cell with no vertex), the ring cells hold vertices
+#   cmp_tall_small       the disc keeps only a one-cell polygon of the spool's tall one
+#   cmp_sliver_removed   a spool polygon about a third of a raw unit wide: rounds to zero area,
+#                        so it is not required (negative case) next to a removed real one
+#   cmp_other_type       two spool polygon types over the same cells, the disc has one of them
+
+
+def _two_types(drop_type=None):
+    clat, clon = _centre(514, 3)
+    shapes = [_bg(_square(clat, clon, 1.25 * CELL_LAT, 1.25 * CELL_LON), t) for t in (1, 2)
+              if t != drop_type]
+    return _poly_cells(None, (514, 3), range(513, 516), range(2, 5), shapes=shapes)
+
+
+def _sliver():
+    d = 0.3 * CELL_LAT / 4096
+    lat, lon = _centre(512, 0)       # away from the cell centre, which a polygon holds by TOL
+    lat, lon = lat - 600 * CELL_LAT / 4096, lon - 600 * RAW_LON
+    return [(lat, lon), (lat + d, lon), (lat, lon + d), (lat, lon)]
+
+
+def _sliver_cells(with_sliver=True, with_square=True):
+    lat, lon = _centre(512, 0)
+    shapes = []
+    if with_sliver:
+        shapes.append(_bg(_sliver(), 1))
+    if with_square:
+        shapes.append(_bg(_square(lat + 0.0005, lon + 0.0005, 0.0003), 2))
+    return _poly_cells(None, (512, 0), [512], [0], shapes=shapes)
+
+
+def _tall_removed(disc_poly=False):
+    clat, clon = _centre(514, 3)
+    spool = _tall()
+    shapes = [_bg(_square(clat, clon, 0.4 * CELL_LAT, 0.4 * CELL_LON), 2)] if disc_poly else []
+    return _poly_cells(None, (514, 3), range(512, 517), range(1, 6), shapes=shapes), spool
+
+
+def _cover_removed():
+    disc = _big_cells()
+    disc[(514, 3)]["backgrounds"] = []
+    return disc, _big_cells()
+
+
+CMP_FIXTURES = {
+    "cmp_tall_removed": lambda: _tall_removed(False),
+    "cmp_cover_removed": _cover_removed,
+    "cmp_tall_small": lambda: _tall_removed(True),
+    "cmp_sliver_removed": lambda: (_sliver_cells(False, False), _sliver_cells(True, True)),
+    "cmp_other_type": lambda: (_two_types(drop_type=2), _two_types()),
 }
 
 

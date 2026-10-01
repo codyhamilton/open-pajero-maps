@@ -63,3 +63,18 @@ Do not spawn agents beyond read-only research helpers. If this unit needs one, i
 - Scratch for your own files: `output/scratch-<brief number>/` with `TMPDIR` exported there; pytest `--basetemp=output/scratch-<brief number>/pytest`.
 - Reference discs: R `/run/media/codyh/464210-8480/ALLDATA.KWI` (tests using it skip when absent); G `output/scratch-3-11/G/ALLDATA.KWI` (sha256 `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862`); spool `output/extract_timing/spool` (build_alldata's default spool is not it).
 - One heavy job at a time: any full-AU build or `-j 12` run takes `flock /home/codyh/workspace/open-pajero-maps/output/.heavy.lock`. Pytest and small builds do not.
+
+## Amendment 2026-10-01 (2-05 worker)
+
+The brief owns `_k1_cmp.c`, `_k1.h` (additive only) and the tests, but completeness needs three
+things 2-03/2-04 kept private. Edited beyond the owned list, additively and behaviour-neutral
+for 2-03/2-04 kinds (their tests pass unchanged):
+
+- `_k1.c`: `k1_region` records the spool cells inside the block rectangle (`Region.spool_cells`)
+  with accessor `k1_region_cells`; the band passes `c0,c1,r0,r1` (rows clipped to the band) to
+  `k1_ctx` and calls `k1_bg_release` at `done:`.
+- `_k1_bg.c`: the shape index (`bgx`) is built once per band and cached in `k1_ctx.bgx`, shared by
+  `k1_bg_kinds` and the new `k1_bg_inside` (the 2-04 `inside_batch`), so there is no second index
+  and no second build. `q_t` is now `k1_qin` from `_k1.h`.
+- `cenc.py`: sample reason 7 label (`K1_R_COMPLETE`), cosmetic.
+- `tests/k1_fixtures.py`: `CMP_FIXTURES` appended, and `build_fixture` also looks them up.

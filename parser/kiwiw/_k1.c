@@ -185,6 +185,7 @@ typedef struct { int64_t key; int32_t seg; } k1_sk;
 struct k1_region {
     k1_pts nodes, rpts, names, names_y;
     k1_shapes shp;
+    int32_t *oix, *oiy; int64_t nown, ownmax;   /* spool cells inside the block rectangle */
     k1_seg *seg; int64_t nseg, segcap;
     k1_sk *sk; int64_t nsk; int sk_built;
     int64_t ncells;
@@ -342,7 +343,12 @@ static void region_free(struct k1_region *R) {
     free(R->nodes.p); free(R->rpts.p); free(R->names.p); free(R->names_y.p);
     free(R->seg); free(R->sk);
     free(R->shp.type); free(R->shp.cls); free(R->shp.tall); free(R->shp.off);
-    free(R->shp.x); free(R->shp.y);
+    free(R->shp.x); free(R->shp.y); free(R->oix); free(R->oiy);
+}
+
+int64_t k1_region_cells(const struct k1_region *R, const int32_t **ix, const int32_t **iy) {
+    *ix = R->oix; *iy = R->oiy;
+    return R->nown;
 }
 
 /* ---- the band's background shapes */
@@ -432,6 +438,18 @@ static int region_build(struct k1_region *R, const k1_spool *S, const k1_lat *L,
         k1_cell C;
         if ((rc = parse_cell(S, i, &C)) < 0) break;
         R->ncells++;
+        if (ix >= c0 && ix <= c1 && sp_iy(S, i) >= r0 && sp_iy(S, i) <= r1) {
+            if (R->nown == R->ownmax) {
+                int64_t nc = R->ownmax ? R->ownmax * 2 : 256;
+                int32_t *a1 = (int32_t *)realloc(R->oix, (size_t)nc * 4);
+                if (!a1) { rc = -4; break; }
+                R->oix = a1;
+                int32_t *a2 = (int32_t *)realloc(R->oiy, (size_t)nc * 4);
+                if (!a2) { rc = -4; break; }
+                R->oiy = a2; R->ownmax = nc;
+            }
+            R->oix[R->nown] = ix; R->oiy[R->nown] = sp_iy(S, i); R->nown++;
+        }
         int64_t nr = C.n[0], nn = C.n[1], np = C.n[2], nm = C.n[5];
         for (int64_t j = 0; j < np && rc == 0; j++)
             rc = pts_push(&R->rpts, gx(L, rd_f64(C.c[K1_p_lon], j)), gy(L, rd_f64(C.c[K1_p_lat], j)));
@@ -630,6 +648,7 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
     int64_t caps[D1_NOUT], dstats[D1_NSTATS], retries = 0;
     k1_leaf *leaf = NULL;
     struct k1_region R;
+    k1_ctx *ctxp = NULL;
     memset(&R, 0, sizeof R);
     rc = d1_decode(region, region_len, B, rlo, rhi, buf, caps, dstats, &retries);
     if (rc < 0) goto done;
@@ -745,7 +764,8 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
         k1_add(&acc, K1_step, u.step.n, u.step.bad, 0.0);
         for (int k = 0; k < 3; k++) if (ag[k].n) k1_add(&acc, K1_road_node + k, ag[k].n, ag[k].bad, ag[k].worst);
         /* the failed-leaf count was added to `failing` above without a checked count */
-        k1_ctx ctx = {B, lat, nw, walk, leaf, frame, bgs, bgc, &R, &acc, &R.shp};
+        k1_ctx ctx = {B, lat, nw, walk, leaf, frame, bgs, bgc, &R, &acc, &R.shp, c0, c1, r0, r1, NULL};
+        ctxp = &ctx;
         if ((rc = k1_bg_kinds(&ctx)) < 0) goto done;
         if ((rc = k1_cmp_kinds(&ctx)) < 0) goto done;
         stats[K1_leaves] += nw;
@@ -757,6 +777,7 @@ int64_t kw_k1_band(const uint8_t *region, int64_t region_len, const void *block,
         rc = 0;
     }
 done:
+    if (ctxp) k1_bg_release(ctxp);
     stats[K1_calls]++;
     stats[K1_d1_retries] += retries;
     for (int t = 1; t < D1_NOUT; t++) free(buf[t]);

@@ -52,7 +52,7 @@ enum { K1_COLS(K1_ENUM) K1_NCOLS };
 enum { K1_STATS(K1_ENUM) K1_NSTATS };
 /* sample reasons */
 enum { K1_R_RANGE = 0, K1_R_NO_SPOOL = 1, K1_R_STEP = 2, K1_R_NO_DECODE = 3,
-       K1_R_BG = 4, K1_R_BG_BOUNDARY = 5, K1_R_COVER = 6 };
+       K1_R_BG = 4, K1_R_BG_BOUNDARY = 5, K1_R_COVER = 6, K1_R_COMPLETE = 7 };
 
 typedef uint8_t k1_u8;
 typedef uint16_t k1_u16;
@@ -132,7 +132,18 @@ typedef struct {
     const struct k1_region *region;
     k1_acc *acc;
     const k1_shapes *shapes;      /* the band's spool background shapes (2-04) */
+    int64_t c0, c1, r0, r1;       /* the block's cell rectangle, rows clipped to the band (2-05) */
+    void *bgx;                    /* the shape index, built on first use by `_k1_bg.c` (2-05) */
 } k1_ctx;
+
+/* a point-in-polygon query (`Region.inside`): see `_k1_bg.c` */
+typedef struct { int orient; int32_t type; double c, a; int ok; } k1_qin;
+/* run `n` queries against the band's shapes through the shared index; 0 or < 0 */
+int k1_bg_inside(k1_ctx *c, k1_qin *q, int64_t n);
+/* free the band's shape index (call once, after the last kind group) */
+void k1_bg_release(k1_ctx *c);
+/* the spool cells inside the block rectangle (`Region.spool_cells`): count and arrays */
+int64_t k1_region_cells(const struct k1_region *R, const int32_t **ix, const int32_t **iy);
 
 /* shared by `_k1.c` and the kind groups: the frame-raw position of a lat/lon in a leaf, a
  * sample row (for the background kinds `code` carries the shape type), and `_cheb_seg` of

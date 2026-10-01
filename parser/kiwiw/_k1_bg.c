@@ -200,7 +200,7 @@ static double outline_distance(bgx *G, int64_t X, int64_t Y, int32_t t) {
 
 /* ------------------------------------------------------------------ inside() */
 
-typedef struct { int orient; int32_t type; double c, a; int ok; } q_t;
+typedef k1_qin q_t;
 
 static int cmp_qi(const void *a, const void *b, void *ctx) {
     const q_t *q = (const q_t *)ctx;
@@ -335,6 +335,34 @@ static int32_t sat32(double v) {
     return v > 2147483647.0 ? INT32_MAX : (int32_t)v;
 }
 
+/* the band's shape index, built once and shared by the kind groups */
+static int bgx_get(k1_ctx *c, bgx **out) {
+    if (!c->bgx) {
+        bgx *G = (bgx *)malloc(sizeof *G);
+        if (!G) return -4;
+        int rc = bgx_build(G, c->shapes);
+        if (rc < 0) { bgx_free(G); free(G); return rc; }
+        c->bgx = G;
+    }
+    *out = (bgx *)c->bgx;
+    return 0;
+}
+
+void k1_bg_release(k1_ctx *c) {
+    if (!c->bgx) return;
+    bgx_free((bgx *)c->bgx);
+    free(c->bgx);
+    c->bgx = NULL;
+}
+
+int k1_bg_inside(k1_ctx *c, k1_qin *q, int64_t n) {
+    bgx *G = NULL;
+    if (n == 0) return 0;
+    if (!c->shapes) { for (int64_t i = 0; i < n; i++) q[i].ok = 0; return 0; }
+    int rc = bgx_get(c, &G);
+    return rc < 0 ? rc : inside_batch(G, q, n);
+}
+
 int k1_bg_kinds(k1_ctx *c) {
     const k1_shapes *H = c->shapes;
     int64_t nv = 0;
@@ -344,9 +372,9 @@ int k1_bg_kinds(k1_ctx *c) {
         if (f && f->has_bg) nv++;
     }
     if (nv == 0 || !H) return 0;                       /* nothing decoded to check */
-    bgx G;
+    bgx *G = NULL;
     qs_t Q = {0};
-    int rc = bgx_build(&G, H);
+    int rc = bgx_get(c, &G);
     int64_t nb = 0, nb_bad = 0, onb_n = 0, onb_bad = 0, ncov = 0, cov_bad = 0;
     double nb_worst = 0.0, onb_worst = 0.0;
     for (int64_t i = 0; i < c->nwalk && rc == 0; i++) {
@@ -372,7 +400,7 @@ int k1_bg_kinds(k1_ctx *c) {
                 int onh = Y == lf->y0 || Y == lf->y1, onv = X == lf->x0 || X == lf->x1, onb = onh || onv;
                 if (!onb) allb = 0;
                 sum += (double)X * (double)YN - (double)XN * (double)Y;
-                double d = outline_distance(&G, X, Y, sh->type_code);
+                double d = outline_distance(G, X, Y, sh->type_code);
                 int near = d <= NEAR;
                 k1_sample m = k1_make_sample(c->walk + i, lf, cd->lat, cd->lon, sat32(nearbyint(fx)),
                                              sat32(nearbyint(fy)), onb ? K1_R_BG_BOUNDARY : K1_R_BG,
@@ -402,7 +430,7 @@ int k1_bg_kinds(k1_ctx *c) {
             }
         }
     }
-    if (rc == 0) rc = inside_batch(&G, Q.q, Q.n);
+    if (rc == 0) rc = inside_batch(G, Q.q, Q.n);
     if (rc == 0) {
         for (int64_t i = 0; i < Q.n; i++) {
             int cover = Q.m[i].reason == K1_R_COVER;
@@ -415,6 +443,5 @@ int k1_bg_kinds(k1_ctx *c) {
         k1_add(c->acc, K1_interior_cover, ncov, cov_bad, 0.0);
     }
     free(Q.q); free(Q.m);
-    bgx_free(&G);
     return rc;
 }

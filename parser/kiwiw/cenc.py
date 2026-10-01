@@ -601,7 +601,8 @@ _K1_TABLES = tuple(_K1_LAYOUT)
 _K1_STATS = ("calls", "leaves", "failed_frames", "d1_retries", "cells", "items", "rescues",
              "ns", "d1_ns")
 _K1_REASONS = {0: "range", 1: "no spool record within half a raw unit", 2: "step not representable",
-               3: "leaf did not decode", 4: "background", 5: "background boundary", 6: "cover"}
+               3: "leaf did not decode", 4: "background", 5: "background boundary", 6: "cover",
+               7: "a spool polygon of this type meets the cell but no decoded piece of it does"}
 _k1_lib = None
 _k1_cols = None
 _k1_stats = {"calls": 0}
