@@ -12,7 +12,7 @@
           1
         ]
       ],
-      "note": "Under 3-07 Amendment 4, a fill vertex is valid inside a same-type level polygon. K1 instead demands proximity to an outline. Independent all-level witness: 200/200 valid; 920773 rows."
+      "note": "Under 3-07 Amendment 4, a fill vertex is valid inside a same-type level polygon. K1 instead demands proximity to an outline. Independent all-level witness: 200/200 valid; 920786 rows on G_new (920773 on the old disc)."
     },
     {
       "id": "S02",
@@ -40,7 +40,46 @@
           1
         ]
       ],
-      "note": "Retains accepted attempt-2 crossing-closing-edge mechanism and 200-group evidence. Attempt 3 limits attribution to uniquely identified actual producers from side_background_boundary.npy, joined as s02_producer_verified in scratch dump_attempt3 (original fields unchanged). At the immediate pin stop: 10001 distinct source rings, 25772 groups, 1939053 rows. Unvisited/no-match groups stay unclassified. Historical broad predicate had 11127845 rows/145960 groups; cf_291 removed 240/829 failures, with 589 residual unexplained; no extension by analogy."
+      "note": "Retains accepted attempt-2 crossing-closing-edge mechanism and 200-group evidence. Attempt 3 limits attribution to uniquely identified actual producers from side_background_boundary.npy, joined as s02_producer_verified in scratch dump_attempt3 (original fields unchanged). At the immediate pin stop: 10001 distinct source rings, 25772 groups, 1939053 rows. Unvisited/no-match groups stay unclassified. Historical broad predicate had 11127845 rows/145960 groups; cf_291 removed 240/829 failures, with 589 residual unexplained; no extension by analogy. Unit 3-12 preserves this scope unchanged; the pin stop is retired. Additional exact producer evidence uses separate S03/S04/S05 rules and scratch-3-12/dump_ext."
+    },
+    {
+      "id": "S03",
+      "cause": "spool",
+      "kind": "background",
+      "where": [
+        [
+          "residual_crossing_verified",
+          "==",
+          1
+        ]
+      ],
+      "note": "Unit 3-12: exact full group join to side_background.npy, status1 only: unique byte-exact original non-cover producer, explicitly closed ring whose longest closing edge has a proper nonadjacent crossing. Entire residual producer census uses unchanged E1, all original sources and exact build kw_bounds operation order with actual leaf integer clip rectangles. Independent rule-stratum witness and fresh G_new-byte-gated crossing-removal controls (serial/j4 equal) in output/scratch-3-12. No inference from nearest sources, sentinel status, or similarity; S02 scope unchanged."
+    },
+    {
+      "id": "S04",
+      "cause": "spool",
+      "kind": "background_boundary",
+      "where": [
+        [
+          "residual_crossing_verified",
+          "==",
+          1
+        ]
+      ],
+      "note": "Unit 3-12: exact full group join to side_background_boundary.npy, status1 only: unique byte-exact original non-cover producer, explicitly closed ring whose longest closing edge has a proper nonadjacent crossing. Entire residual producer census uses unchanged E1, all original sources and exact build kw_bounds operation order with actual leaf integer clip rectangles. Independent rule-stratum witness and fresh G_new-byte-gated crossing-removal controls (serial/j4 equal) in output/scratch-3-12. No inference from nearest sources, sentinel status, or similarity; S02 scope unchanged."
+    },
+    {
+      "id": "S05",
+      "cause": "spool",
+      "kind": "interior_cover",
+      "where": [
+        [
+          "residual_crossing_verified",
+          "==",
+          1
+        ]
+      ],
+      "note": "Unit 3-12: exact full group join to side_interior_cover.npy, status1 only: unique byte-exact original non-cover producer, explicitly closed ring whose longest closing edge has a proper nonadjacent crossing. Entire residual producer census uses unchanged E1, all original sources and exact build kw_bounds operation order with actual leaf integer clip rectangles. Independent rule-stratum witness and fresh G_new-byte-gated crossing-removal controls (serial/j4 equal) in output/scratch-3-12. No inference from nearest sources, sentinel status, or similarity; S02 scope unchanged."
     }
   ]
 }
