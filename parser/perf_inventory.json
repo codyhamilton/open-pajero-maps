@@ -482,6 +482,12 @@
    "reason": "CLI, pool, mmap/binding, descriptor, report or tooling glue; loops bounded by ranges, levels, files, checks or report rows (numpy-vectorised where per-frame)"
   },
   {
+   "path": "parser/tools/bench_dump_memory.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "offline memory harness and fixture generator; subprocess/cgroup glue, numpy bulk fixture generation, no per-row Python loop"
+  },
+  {
    "path": "parser/tools/boundary_mirror_census.py",
    "class": "c-now",
    "phase": 4,
@@ -504,6 +510,12 @@
    "class": "c-now",
    "phase": 4,
    "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
+  },
+  {
+   "path": "parser/tools/dump_join.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "offline tool over dump files; windowed pread/pwrite I/O plus numpy bulk ops, no per-row Python loop"
   },
   {
    "path": "parser/tools/golden_capture.py",

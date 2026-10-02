@@ -441,3 +441,21 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
   model-availability timeout and a 90-second concrete review request timeout
   (`review/request_result.json`); no independent reviewer acceptance is claimed.
   Outputs are regenerable large evidence, gitignored; no commit or code fix.
+
+### output/scratch-5-01/ (plan 05 Phase 1 memory evidence, not committed)
+
+- **What**: git-ignored (under `output/`) scratch for brief 1-01: `bench/fixture-1m/`
+  and `bench/fixture-2m/` (seeded 1,000,013- and 2,000,013-row 152-byte residual
+  fixtures, 216,488 side rows, seed 20260502; replay roots and worker markers are
+  created under `bench/run-*` and removed after each run), `results.json` (paired
+  baseline/candidate max RSS, cgroup `memory.peak`, anon/file/dirty, wall, SHA256s),
+  `bench.log`, `*.EXIT` markers, `tmp/`, `tests-<pid>/` (removed by the tests), and
+  `dump_ext.sha256` (supplementary read-only SHA256 of the existing
+  `output/scratch-3-12/dump_ext/*.bin`, evidence only).
+- **Source**: generated; the baseline replayed there is the vendored
+  `parser/tests/fixtures/dump_join_baseline/` (SHA256SUMS tracked, copies of
+  `output/scratch-3-12/{extend,study}.py` and `output/scratch-3-07/witness.py`).
+- **Reproduce**: `flock output/.heavy.lock .venv-rp/bin/python
+  parser/tools/bench_dump_memory.py --out output/scratch-5-01/results.json`
+  (exit 0 only if every gate passes); `dump_ext.sha256`: `flock output/.heavy.lock
+  sha256sum output/scratch-3-12/dump_ext/*.bin > output/scratch-5-01/dump_ext.sha256`.
