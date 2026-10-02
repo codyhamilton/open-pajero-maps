@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "R01",
+      "cause": "checker",
+      "kind": "background",
+      "where": [
+        [
+          "in_eo_same",
+          "==",
+          1
+        ]
+      ],
+      "note": "Under 3-07 Amendment 4, a fill vertex is valid inside a same-type level polygon. K1 instead demands proximity to an outline. Independent all-level witness: 200/200 valid; 920773 rows."
+    },
+    {
+      "id": "S02",
+      "cause": "spool",
+      "kind": "background_boundary",
+      "where": [
+        [
+          "level",
+          "==",
+          0
+        ],
+        [
+          "code",
+          "==",
+          291
+        ],
+        [
+          "src_ix",
+          "==",
+          -2147483648
+        ]
+      ],
+      "note": "Self-crossing longest closing edge in the spool ring makes the unchanged clipper emit outside pieces. All 200 sampled groups invalid against all-level outlines and match source-produced record bytes; all 200 producer rings have a crossing closing edge. Byte-gated type291 counterfactual removes the crossing and the failing piece. 11127845 rows, 145960 groups: Amendment 1 pinning stop (>10000). Other strata remain unclassified."
+    }
+  ]
+}
