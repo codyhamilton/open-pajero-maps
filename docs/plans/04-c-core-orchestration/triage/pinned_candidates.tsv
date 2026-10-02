@@ -1,5 +1,5 @@
 # dump=output/scratch-3-03/dump; K1 diagnostic commit=1cf40f820df79e51174987f478f2618ec9c597b9 (phase record/history; manifest does not embed a commit); joined dump=output/scratch-3-08/dump_other
-# actual pins are source-ring/source-name level per 3-07 attempt-3 amendment; below is requested native group-granularity candidate view, partial S02 attribution retained
+# actual pins are source-ring/source-name level per 3-07 attempt-3 amendment; below is requested native group-granularity candidate view, partial S02 attribution retained; the 10,000 pin stop is retired (S02 carried as one rule)
 kind	level	ix	iy	type	p0	p1	p2	p3	p4	p5	p6	shape	rows
 background_boundary	0	789	1012	291	1685	0	0	0	0	0	0	4	111
 background_boundary	0	789	1013	291	1717	0	0	0	0	0	0	0	61
@@ -101,4 +101,4 @@ background_boundary	0	806	768	291	6	0	0	0	0	0	0	48	100
 background_boundary	0	806	768	291	6	0	0	0	0	0	0	54	99
 background_boundary	0	806	769	291	38	0	0	0	0	0	0	8	105
 background_boundary	0	806	769	291	38	0	0	0	0	0	0	36	106
-# TOTAL_GROUPS=26650	TOTAL_ROWS=1939931	SHOWN=100	TRUNCATED=yes	CODY_DECISION_REQUIRED=yes
+# TOTAL_GROUPS=26650	TOTAL_ROWS=1939931	SHOWN=100	TRUNCATED=yes	CODY_DECISION_REQUIRED=no; pin stop retired, S02 carried as one rule; this is a candidate view, not an exhaustive pinned list (enumerate on demand)
