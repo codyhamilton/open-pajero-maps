@@ -289,6 +289,21 @@ same commit.
   parser/tests/test_d1_equivalence.py -k rule` (both discs present), then rerun
   without the variable.
 
+## `parser/tests/fixtures/bg_split/under_4096_100.bin` (committed, captured fixture, 3-11)
+
+- **What**: the pre-3-11 (`HEAD`) `enc_bg` frame bytes for a synthetic L0 cell
+  (1780,814) holding 100 class-2/type-288 background shapes — a `<4096` cell, so
+  `enc_bg` must still emit one 12-bit unit and the split path must leave it
+  byte-identical. 1,968 bytes, sha256 `4aa4f054…b750d`. Consumed by
+  `parser/tests/test_bg_count_split.py` (which imports the repo's `parser/` for
+  `kiwiw` via a `sys.path` insert, since the fixture lives beside it).
+- **Source**: `output/scratch-3-11/capture_fixture.py`, run against the
+  pre-3-11 encoder so the fixture records HEAD output, not this unit's
+  (byte-identical for this `<4096` cell, but the record should be HEAD).
+- **Reproduce**: copy `parser/` to a scratch root, overwrite its
+  `parser/kiwiw/_cenc.c` with `git show HEAD:parser/kiwiw/_cenc.c`, build the
+  extension, then run `output/scratch-3-11/capture_fixture.py` from that root.
+
 ## `output/scratch-2-07/` (Phase 2 full-disc evidence, 2-07)
 
 - **What**: uncommitted evidence of the one full-disc Phase 2 run: K1 reports

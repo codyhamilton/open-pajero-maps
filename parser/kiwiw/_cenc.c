@@ -725,7 +725,10 @@ static int64_t enc_bg(const Rec *r, const Bounds *bd, uint8_t *out) {
         class_in[c]++;
     }
     /* records are written after a unit table sized for every input class;
-     * classes clipped away entirely are squeezed out afterwards */
+     * afterwards the table is resized to the real unit count: classes
+     * clipped away entirely are squeezed out, and (3-11) a class with more
+     * than 4095 records is emitted as several same-class units of at most
+     * 4095 records, which widens the table by 4 B per extra unit */
     int64_t n_in = 0;
     for (int c = 0; c < 4; c++) n_in += class_in[c] > 0;
     int64_t unit_off = 6;
@@ -764,17 +767,27 @@ static int64_t enc_bg(const Rec *r, const Bounds *bd, uint8_t *out) {
         }
     }
     free(cstart);
+    /* One unit per non-empty class normally; a class above 4095 records
+     * (the 12-bit count) is split into ceil(class_n / 4095) consecutive
+     * same-class units, all but the last holding 4095 records.  The record
+     * bytes were written once and keep their order -- only the unit table
+     * changes size, so records shift by 4 B per extra unit (or left when
+     * whole classes clipped away, as before). */
     int64_t n_units = 0;
-    for (int c = 0; c < 4; c++) n_units += class_n[c] > 0;
+    for (int c = 0; c < 4; c++) {
+        if (class_n[c] <= 0) continue;
+        n_units += (class_n[c] + 4094) / 4095;
+    }
     if (n_units == 0) {
         out[0] = 0;
         out[1] = 1;
         return 2;
     }
-    if (n_units < n_in) {
-        int64_t shift = (n_in - n_units) * 4;
-        memmove(out + rec0 - shift, out + rec0, (size_t)(p - rec0));
-        p -= shift;
+    int64_t new_rec0 = unit_off + 2 + n_units * 4;
+    if (new_rec0 != rec0) {
+        if (p + (new_rec0 - rec0) > SUB_CAP) return -1;
+        memmove(out + new_rec0, out + rec0, (size_t)(p - rec0));
+        p = new_rec0 + (p - rec0);
     }
     int64_t esz = p - 6;
     out[0] = 0;
@@ -784,10 +797,14 @@ static int64_t enc_bg(const Rec *r, const Bounds *bd, uint8_t *out) {
     put16(out, unit_off, n_units);
     int64_t q = unit_off + 2;
     for (int c = 0; c < 4; c++) {
-        if (!class_n[c]) continue;
-        put16(out, q, 0);
-        put16(out, q + 2, (class_n[c] & 0xFFF) | ((int64_t)c << 14));
-        q += 4;
+        int64_t rem = class_n[c];
+        while (rem > 0) {
+            int64_t u = rem > 4095 ? 4095 : rem;
+            put16(out, q, 0);
+            put16(out, q + 2, (u & 0xFFF) | ((int64_t)c << 14));
+            q += 4;
+            rem -= u;
+        }
     }
     if (p & 1) { if (p + 1 > SUB_CAP) return -1; out[p++] = 0; }
     return p;
