@@ -16,7 +16,7 @@
     },
     {
       "id": "S02",
-      "cause": "spool",
+      "cause": "build",
       "kind": "background_boundary",
       "where": [
         [
@@ -40,11 +40,11 @@
           1
         ]
       ],
-      "note": "Retains accepted attempt-2 crossing-closing-edge mechanism and 200-group evidence. Attempt 3 limits attribution to uniquely identified actual producers from side_background_boundary.npy, joined as s02_producer_verified in scratch dump_attempt3 (original fields unchanged). At the immediate pin stop: 10001 distinct source rings, 25772 groups, 1939053 rows. Unvisited/no-match groups stay unclassified. Historical broad predicate had 11127845 rows/145960 groups; cf_291 removed 240/829 failures, with 589 residual unexplained; no extension by analogy. Unit 3-12 preserves this scope unchanged; the pin stop is retired. Additional exact producer evidence uses separate S03/S04/S05 rules and scratch-3-12/dump_ext."
+      "note": "Retains accepted attempt-2 crossing-closing-edge mechanism and 200-group evidence. Attempt 3 limits attribution to uniquely identified actual producers from side_background_boundary.npy, joined as s02_producer_verified in scratch dump_attempt3 (original fields unchanged). At the immediate pin stop: 10001 distinct source rings, 25772 groups, 1939053 rows. Unvisited/no-match groups stay unclassified. Historical broad predicate had 11127845 rows/145960 groups; cf_291 removed 240/829 failures, with 589 residual unexplained; no extension by analogy. Unit 3-12 preserves this scope unchanged; the pin stop is retired. Additional exact producer evidence uses separate S03/S04/S05 rules and scratch-3-12/dump_ext. Unit 3-13 supersedes the historical spool cause: independent exact EO clip differs; all-P-ring geometry-preserving face decomposition clears every target stratum against ORIGINAL spool. Original closing chord retained, no deletion. See causes_rootcause.md and output/scratch-3-13. Predicate/order/scope unchanged; incomplete local separating hypothesis is explicitly documented, not used as an attribution predicate."
     },
     {
       "id": "S03",
-      "cause": "spool",
+      "cause": "build",
       "kind": "background",
       "where": [
         [
@@ -53,11 +53,11 @@
           1
         ]
       ],
-      "note": "Unit 3-12: exact full group join to side_background.npy, status1 only: unique byte-exact original non-cover producer, explicitly closed ring whose longest closing edge has a proper nonadjacent crossing. Entire residual producer census uses unchanged E1, all original sources and exact build kw_bounds operation order with actual leaf integer clip rectangles. Independent rule-stratum witness and fresh G_new-byte-gated crossing-removal controls (serial/j4 equal) in output/scratch-3-12. No inference from nearest sources, sentinel status, or similarity; S02 scope unchanged."
+      "note": "Unit 3-12: exact full group join to side_background.npy, status1 only: unique byte-exact original non-cover producer, explicitly closed ring whose longest closing edge has a proper nonadjacent crossing. Entire residual producer census uses unchanged E1, all original sources and exact build kw_bounds operation order with actual leaf integer clip rectangles. Independent rule-stratum witness and fresh G_new-byte-gated crossing-removal controls (serial/j4 equal) in output/scratch-3-12. No inference from nearest sources, sentinel status, or similarity; S02 scope unchanged. Unit 3-13 supersedes the historical spool cause: independent exact EO clip differs; all-P-ring geometry-preserving face decomposition clears every target stratum against ORIGINAL spool. Original closing chord retained, no deletion. See causes_rootcause.md and output/scratch-3-13. Predicate/order/scope unchanged; incomplete local separating hypothesis is explicitly documented, not used as an attribution predicate."
     },
     {
       "id": "S04",
-      "cause": "spool",
+      "cause": "build",
       "kind": "background_boundary",
       "where": [
         [
@@ -66,11 +66,11 @@
           1
         ]
       ],
-      "note": "Unit 3-12: exact full group join to side_background_boundary.npy, status1 only: unique byte-exact original non-cover producer, explicitly closed ring whose longest closing edge has a proper nonadjacent crossing. Entire residual producer census uses unchanged E1, all original sources and exact build kw_bounds operation order with actual leaf integer clip rectangles. Independent rule-stratum witness and fresh G_new-byte-gated crossing-removal controls (serial/j4 equal) in output/scratch-3-12. No inference from nearest sources, sentinel status, or similarity; S02 scope unchanged."
+      "note": "Unit 3-12: exact full group join to side_background_boundary.npy, status1 only: unique byte-exact original non-cover producer, explicitly closed ring whose longest closing edge has a proper nonadjacent crossing. Entire residual producer census uses unchanged E1, all original sources and exact build kw_bounds operation order with actual leaf integer clip rectangles. Independent rule-stratum witness and fresh G_new-byte-gated crossing-removal controls (serial/j4 equal) in output/scratch-3-12. No inference from nearest sources, sentinel status, or similarity; S02 scope unchanged. Unit 3-13 supersedes the historical spool cause: independent exact EO clip differs; all-P-ring geometry-preserving face decomposition clears every target stratum against ORIGINAL spool. Original closing chord retained, no deletion. See causes_rootcause.md and output/scratch-3-13. Predicate/order/scope unchanged; incomplete local separating hypothesis is explicitly documented, not used as an attribution predicate."
     },
     {
       "id": "S05",
-      "cause": "spool",
+      "cause": "build",
       "kind": "interior_cover",
       "where": [
         [
@@ -79,7 +79,7 @@
           1
         ]
       ],
-      "note": "Unit 3-12: exact full group join to side_interior_cover.npy, status1 only: unique byte-exact original non-cover producer, explicitly closed ring whose longest closing edge has a proper nonadjacent crossing. Entire residual producer census uses unchanged E1, all original sources and exact build kw_bounds operation order with actual leaf integer clip rectangles. Independent rule-stratum witness and fresh G_new-byte-gated crossing-removal controls (serial/j4 equal) in output/scratch-3-12. No inference from nearest sources, sentinel status, or similarity; S02 scope unchanged."
+      "note": "Unit 3-12: exact full group join to side_interior_cover.npy, status1 only: unique byte-exact original non-cover producer, explicitly closed ring whose longest closing edge has a proper nonadjacent crossing. Entire residual producer census uses unchanged E1, all original sources and exact build kw_bounds operation order with actual leaf integer clip rectangles. Independent rule-stratum witness and fresh G_new-byte-gated crossing-removal controls (serial/j4 equal) in output/scratch-3-12. No inference from nearest sources, sentinel status, or similarity; S02 scope unchanged. Unit 3-13 supersedes the historical spool cause: independent exact EO clip differs; all-P-ring geometry-preserving face decomposition clears every target stratum against ORIGINAL spool. Original closing chord retained, no deletion. See causes_rootcause.md and output/scratch-3-13. Predicate/order/scope unchanged; incomplete local separating hypothesis is explicitly documented, not used as an attribution predicate."
     }
   ]
 }
