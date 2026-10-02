@@ -33,9 +33,14 @@
           "src_ix",
           "==",
           -2147483648
+        ],
+        [
+          "s02_producer_verified",
+          "==",
+          1
         ]
       ],
-      "note": "Self-crossing longest closing edge in the spool ring makes the unchanged clipper emit outside pieces. All 200 sampled groups invalid against all-level outlines and match source-produced record bytes; all 200 producer rings have a crossing closing edge. Byte-gated type291 counterfactual removes the crossing and the failing piece. 11127845 rows, 145960 groups: Amendment 1 pinning stop (>10000). Other strata remain unclassified."
+      "note": "Retains accepted attempt-2 crossing-closing-edge mechanism and 200-group evidence. Attempt 3 limits attribution to uniquely identified actual producers from side_background_boundary.npy, joined as s02_producer_verified in scratch dump_attempt3 (original fields unchanged). At the immediate pin stop: 10001 distinct source rings, 25772 groups, 1939053 rows. Unvisited/no-match groups stay unclassified. Historical broad predicate had 11127845 rows/145960 groups; cf_291 removed 240/829 failures, with 589 residual unexplained; no extension by analogy."
     }
   ]
 }

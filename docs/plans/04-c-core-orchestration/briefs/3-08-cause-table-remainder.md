@@ -48,3 +48,9 @@ Cited from `DESIGN.md` Phase 3 Outcome: "`name_anchor`'s one failure (L0 cell (0
 Under 1,500 tokens. Status: `done` | `done with concerns` | `blocked` | `needs context` | `over budget`. What changed, the check output before and after, any deviation and why, any contradiction with the cited contracts. Never resolve a contradiction silently. A non-trivial bug outside your evidence: symptom, location, root cause if found; do not fix it here.
 
 Do not spawn agents beyond read-only research helpers. If this unit needs one, it was mis-sized: report `blocked` and say so.
+
+## Amendments (orchestrator, after 3-07 attempts 1-3)
+
+1. Budget lifted: no file-read or turn limit; work to completion. Stops only: spool pin stop (distinct source shapes/rings > 10,000 for a rule) or a mechanism no witness explains (`blocked: unattributed`, naming rows). Do not force causes; a `build` guess from witness INVALID alone is not allowed.
+2. Use the 3-07 Amendments verbatim for: witness criterion (items 4), rule schema (5), machine caps (6), side-table route (3), spool pinned at shape/source-ring level (attempt-3). Read `triage/causes_bg.md`/`rules_bg.json` (3-07 state; 3-07 is not closed: `background_boundary` has 14.6 M unattributed rows and S02 hit a pin stop at 10,001 rings) and reuse the witness scripts in `output/scratch-3-07/`.
+3. Do NOT commit or push; leave the three `triage/` files uncommitted. Do not edit 3-07's `rules_bg.json`/`causes_bg.md`. `consolidated cause_table.md` states 3-07's partial state honestly.
