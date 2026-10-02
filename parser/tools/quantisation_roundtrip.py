@@ -1357,17 +1357,37 @@ def _finalize_dump(dump_dir, kinds, ntasks, log):
     row_size = cenc.K1_DUMP_DTYPE.itemsize
     counts = {}
     for name in kinds:
-        parts = []
+        paths, sizes = [], []
         for i in range(ntasks):
             p = dump_dir / f"part_{i:05d}_{name}.bin"
             if p.exists():
-                parts.append(np.fromfile(p, dtype=cenc.K1_DUMP_DTYPE))
-                p.unlink()
-        arr = np.concatenate(parts) if parts else np.zeros(0, cenc.K1_DUMP_DTYPE)
+                paths.append(p)
+                sizes.append(p.stat().st_size // row_size)
+        total = sum(sizes)
+        arr = np.empty(total, dtype=cenc.K1_DUMP_DTYPE) if total else np.zeros(0, cenc.K1_DUMP_DTYPE)
+        off = 0
+        for p, n in zip(paths, sizes):
+            if n:
+                with open(p, "rb") as fh:
+                    if fh.readinto(arr[off:off + n]) != n * row_size:
+                        raise OSError(f"short read of dump part: {p}")
+            p.unlink()
+            off += n
+        del paths, sizes
+        out_path = dump_dir / f"{name}.bin"
         if len(arr) > 1:
-            arr = arr[np.argsort(arr, order=DUMP_ORDER, kind="stable")]
-        (dump_dir / f"{name}.bin").write_bytes(arr.tobytes())
+            order = np.argsort(arr, order=DUMP_ORDER, kind="stable")
+            # Write in sorted order in bounded slices — identical bytes to
+            # `arr[order].tofile`, without materialising a second full copy.
+            _chunk = 65536
+            with open(out_path, "wb") as fh:
+                for start in range(0, len(order), _chunk):
+                    arr[order[start:start + _chunk]].tofile(fh)
+            del order
+        else:
+            arr.tofile(out_path)
         counts[name] = int(len(arr))
+        del arr
     manifest = {"tool": "quantisation_roundtrip", "engine": "c", "row_size": row_size,
                 "fields": fields,
                 "kinds": {n: {"rows": counts[n], "row_size": row_size,

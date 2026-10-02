@@ -7,6 +7,10 @@ Subcommands
                    growth, wall time and output SHA256s, write a results JSON.
     genfix         generate a seeded fixture directory (separate process).
     worker         one measured run, executed inside the scope (never inherits a fixture).
+    finalize-run   Phase-2: three paired baseline/candidate finalize runs on 1,000,013 rows;
+                   gates RSS delta (>=140626 KiB), output SHA256s, counts, part deletion, wall.
+                   CLI: flock output/.heavy.lock .venv-rp/bin/python parser/tools/bench_dump_memory.py
+                        finalize-run --out output/scratch-5-02/results.json
 
 Also provides the fixture writers and the isolated replay-root machinery that the tests
 (`parser/tests/test_dump_join_memory.py`) import.  The frozen baseline (vendored verbatim in
@@ -20,6 +24,7 @@ from __future__ import annotations
 import argparse
 import ast
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -28,6 +33,7 @@ import statistics
 import subprocess
 import sys
 import time
+import traceback
 from pathlib import Path
 
 import numpy as np
@@ -37,7 +43,10 @@ REPO = HERE.parent.parent
 SCRATCH = REPO / 'output' / 'scratch-5-01'
 BASELINE_DIR = REPO / 'parser' / 'tests' / 'fixtures' / 'dump_join_baseline'
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent))
 import dump_join  # noqa: E402
+from tools import quantisation_roundtrip as qr  # noqa: E402
+from kiwiw import cenc  # noqa: E402
 
 GROUP = dump_join.GROUP
 TS = dump_join.TS
@@ -59,6 +68,20 @@ REL_SIDE = Path('output/scratch-3-12')
 REL_WIT = Path('output/scratch-3-07')
 KIB_BOUND = 2 * 65536 * 152 // 1024  # 19,456 KiB, Assumption 2
 SEED = 20260502
+SCRATCH_FIN = REPO / 'output' / 'scratch-5-02'
+FINALIZE_KIND = 'background_boundary'
+FINALIZE_BASELINE_DIR = REPO / 'parser' / 'tests' / 'fixtures' / 'finalize_dump_baseline'
+FINALIZE_KIB_GATE = 1000013 * 144 // 1024          # 140626
+FINALIZE_DEFAULT_ROWS = 1000013
+FINALIZE_DEFAULT_PARTS = 8
+
+
+def _finalize_env() -> dict:
+    env = dict(os.environ)
+    tmp = SCRATCH_FIN / 'tmp'
+    tmp.mkdir(parents=True, exist_ok=True)
+    env['TMPDIR'] = str(tmp)
+    return env
 
 
 # ---------------------------------------------------------------- fixtures
@@ -151,7 +174,41 @@ def gen_bulk(fixdir, rows: int, seed: int = SEED, side_rows: int = 216488, group
     return meta
 
 
-# ---------------------------------------------------------------- replay root
+def finalize_genfix(fixdir, rows: int, seed: int = SEED, parts: int = FINALIZE_DEFAULT_PARTS) -> dict:
+    """Seeded Phase-2 finalize fixture: one kind split into `parts` files.
+
+    Every DUMP_ORDER key is zero so a stable sort must preserve input order.
+    Observability uses unique struct-padding markers at byte offset 65 (not a
+    named field). Named fields outside DUMP_ORDER stay zero — NumPy uses them
+    as tie-breakers, so unique `dcls` alone would make unstable sort match
+    stable and would not prove stability. `seed` is retained for meta only.
+    """
+    fixdir = Path(fixdir)
+    d = fixdir / 'parts'
+    d.mkdir(parents=True, exist_ok=True)
+    arr = np.zeros(rows, dtype=cenc.K1_DUMP_DTYPE)
+    pad = arr.view(np.uint8).reshape(rows, cenc.K1_DUMP_DTYPE.itemsize)
+    pad[:, 65] = (np.arange(rows) % 251) + 1
+    for i, chunk in enumerate(np.array_split(arr, parts)):
+        chunk.tofile(d / f"part_{i:05d}_{FINALIZE_KIND}.bin")
+    paths = sorted(d.glob('part_*.bin'))
+    for p in paths:
+        fd = os.open(p, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    fd = os.open(d, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+    meta = {'rows': rows, 'seed': seed, 'parts': parts, 'kind': FINALIZE_KIND,
+            'parts_sha256': {p.name: sha256_file(p) for p in paths}}
+    (fixdir / 'fixture.json').write_text(json.dumps(meta, indent=2) + '\n')
+    return meta
+
+
 class IsolationError(Exception):
     pass
 
@@ -353,6 +410,144 @@ def run_scoped(mode: str, fixdir: Path, tag: str, unit_seq: int) -> dict:
     return res
 
 
+# ---------------------------------------------------------------- phase 2: finalize
+def finalize_output_hashes(dump_dir) -> dict:
+    d = Path(dump_dir)
+    out = {}
+    for name in (f'{FINALIZE_KIND}.bin', 'dump_manifest.json'):
+        p = d / name
+        if p.exists():
+            out[name] = sha256_file(p)
+    return out
+
+
+def finalize_worker(mode: str, root: str, marker: str, ntasks: int) -> int:
+    t0 = time.perf_counter()
+    logs = []
+    log = logs.append
+    rc, counts = 0, {}
+    try:
+        if mode == 'baseline':
+            spec = importlib.util.spec_from_file_location(
+                'finalize_dump_baseline', FINALIZE_BASELINE_DIR / 'finalize_dump_baseline.py')
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            counts = mod.finalize_dump_baseline(Path(root), [FINALIZE_KIND], ntasks, log)
+        else:
+            counts = qr._finalize_dump(Path(root), [FINALIZE_KIND], ntasks, log)
+    except Exception:
+        log(traceback.format_exc())
+        rc = 1
+    wall = time.perf_counter() - t0
+    snap = _cgroup_snapshot()
+    snap.update(mode=mode, finalize_wall_s=wall, rc=rc)
+    marker = Path(marker)
+    marker.mkdir(parents=True, exist_ok=True)
+    (marker / 'cgroup.json').write_text(json.dumps(snap, indent=2))
+    (marker / 'counts.json').write_text(json.dumps(counts, indent=2))
+    (marker / 'log.txt').write_text('\n'.join(logs))
+    return rc
+
+
+def finalize_controller(out, rows: int, pairs: int, seed: int, parts: int) -> int:
+    SCRATCH_FIN.mkdir(parents=True, exist_ok=True)
+    fixdir = SCRATCH_FIN / 'fixture'
+    meta_p = fixdir / 'fixture.json'
+    meta = json.loads(meta_p.read_text()) if meta_p.exists() else {}
+    if meta.get('rows') != rows or meta.get('seed') != seed or meta.get('parts') != parts:
+        shutil.rmtree(fixdir, ignore_errors=True)
+        subprocess.run([sys.executable, str(Path(__file__).resolve()), 'finalize-genfix', '--dir', str(fixdir),
+                        '--rows', str(rows), '--seed', str(seed), '--parts', str(parts)], check=True, env=_finalize_env())
+    fixture_parts = fixdir / 'parts'
+    fixture_paths = sorted(fixture_parts.glob('part_*.bin'))
+    _preread(fixture_paths)
+    input_sha256 = {Path(k).name: v for k, v in sha256_paths(fixture_paths).items()}
+
+    base, cand = [], []
+    for i in range(pairs):
+        order = ['baseline', 'candidate'] if i % 2 == 0 else ['candidate', 'baseline']
+        for mode in order:
+            rundir = SCRATCH_FIN / 'runs' / f'run-{i}-{mode}'
+            shutil.rmtree(rundir, ignore_errors=True)
+            dumpdir = rundir / 'dump'
+            shutil.copytree(fixture_parts, dumpdir)
+            marker = rundir / 'marker'
+            marker.mkdir(parents=True, exist_ok=True)
+            for fp in sorted(dumpdir.glob('part_*.bin')):
+                fd = os.open(fp, os.O_RDONLY)
+                try:
+                    os.fsync(fd)
+                finally:
+                    os.close(fd)
+            _preread(sorted(dumpdir.glob('part_*.bin')))
+            unit = f'finalize-bench-{os.getpid()}-{i}-{mode}'
+            cmd = ['systemd-run', '--user', '--scope', '--quiet', '-p', 'MemoryAccounting=yes', f'--unit={unit}', '--',
+                   '/usr/bin/time', '-v', '-o', str(marker / 'time.txt'), sys.executable,
+                   str(Path(__file__).resolve()), 'finalize-worker', '--mode', mode, '--root', str(dumpdir),
+                   '--marker', str(marker), '--ntasks', str(parts)]
+            with open(marker / 'stdout.txt', 'w') as so, open(marker / 'stderr.txt', 'w') as se:
+                p = subprocess.run(cmd, stdout=so, stderr=se, env=_finalize_env())
+            rec = {'pair': i, 'mode': mode, 'unit': unit, 'exit': p.returncode}
+            try:
+                rec.update(_parse_time(marker / 'time.txt'))
+                rec['cgroup'] = json.loads((marker / 'cgroup.json').read_text())
+                rec['counts'] = json.loads((marker / 'counts.json').read_text())
+            except Exception as e:
+                rec['marker_error'] = repr(e)
+            rec['output_sha256'] = finalize_output_hashes(dumpdir)
+            rec['parts_left'] = [q.name for q in dumpdir.glob('part_*.bin')]
+            shutil.rmtree(rundir, ignore_errors=True)
+            (base if mode == 'baseline' else cand).append(rec)
+            print(f'pair {i} {mode}: exit={rec["exit"]} rss={rec.get("max_rss_kib")} '
+                  f'wall={rec.get("finalize_wall_s", rec.get("time_v_elapsed_s"))}', flush=True)
+
+    gates, fails = {}, []
+
+    def gate(name, ok, detail):
+        gates[name] = {'pass': bool(ok), 'detail': detail}
+        if not ok:
+            fails.append(name)
+
+    for i in range(pairs):
+        b, c = base[i], cand[i]
+        gate(f'pair{i}_exit0', b['exit'] == 0 and c['exit'] == 0, f'baseline {b["exit"]}, candidate {c["exit"]}')
+        b_rss, c_rss = b.get('max_rss_kib'), c.get('max_rss_kib')
+        ok = b_rss is not None and c_rss is not None and (b_rss - c_rss) >= FINALIZE_KIB_GATE
+        gate(f'pair{i}_rss_delta', ok, f'base {b_rss} KiB - cand {c_rss} KiB (gate {FINALIZE_KIB_GATE} KiB)')
+        gate(f'pair{i}_output_sha_equal', b.get('output_sha256') == c.get('output_sha256'),
+             f'cand {c.get("output_sha256")} vs base {b.get("output_sha256")}')
+        gate(f'pair{i}_counts_equal', b.get('counts') == c.get('counts'),
+             f'cand {c.get("counts")} vs base {b.get("counts")}')
+        gate(f'pair{i}_parts_deleted', b.get('parts_left') == [] and c.get('parts_left') == [],
+             f'baseline left {b.get("parts_left")}, candidate left {c.get("parts_left")}')
+
+    def wall_s(r):
+        return r.get('finalize_wall_s', r.get('time_v_elapsed_s'))
+
+    bw = [wall_s(r) for r in base if wall_s(r) is not None]
+    cw = [wall_s(r) for r in cand if wall_s(r) is not None]
+    if bw and cw:
+        mb, mc = statistics.median(bw), statistics.median(cw)
+        gate('median_wall_le_2x', mc <= 2 * mb, f'cand median {mc:.3f}s vs base median {mb:.3f}s ratio {mc / mb:.3f}')
+    else:
+        gate('median_wall_le_2x', False, 'missing finalize_wall_s')
+
+    results = {
+        'python': sys.version, 'numpy': np.__version__,
+        'baseline_source_sha256': sha256_file(FINALIZE_BASELINE_DIR / 'finalize_dump_baseline.py'),
+        'seed': seed, 'rows': rows, 'parts': parts, 'pairs': pairs,
+        'fixture_input_sha256': input_sha256,
+        'baseline_runs': base, 'candidate_runs': cand,
+        'gates': gates, 'failed': fails,
+        'time_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
+    out = Path(out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(results, indent=2) + '\n')
+    for k, v in gates.items():
+        print(('PASS ' if v['pass'] else 'FAIL ') + k, v['detail'], flush=True)
+    return 1 if fails else 0
+
+
 # ---------------------------------------------------------------- controller
 def _fixture(name: str, rows: int, seed: int) -> tuple[Path, dict]:
     d = SCRATCH / 'bench' / name
@@ -443,12 +638,22 @@ def main(argv=None) -> int:
     g = sub.add_parser('genfix'); g.add_argument('--dir', required=True); g.add_argument('--rows', type=int, required=True); g.add_argument('--seed', type=int, default=SEED)
     w = sub.add_parser('worker'); w.add_argument('--mode', required=True, choices=['baseline', 'candidate', 'candidate-verify']); w.add_argument('--root', required=True); w.add_argument('--marker', required=True)
     c = sub.add_parser('check-root', help='exit non-zero if a replay root would reach the real output/'); c.add_argument('--root', required=True)
+    fg = sub.add_parser('finalize-genfix'); fg.add_argument('--dir', required=True); fg.add_argument('--rows', type=int, required=True); fg.add_argument('--seed', type=int, default=SEED); fg.add_argument('--parts', type=int, default=FINALIZE_DEFAULT_PARTS)
+    fw = sub.add_parser('finalize-worker'); fw.add_argument('--mode', required=True, choices=['baseline', 'candidate']); fw.add_argument('--root', required=True); fw.add_argument('--marker', required=True); fw.add_argument('--ntasks', type=int, required=True)
+    fr = sub.add_parser('finalize-run', help='Phase-2 controller; run under flock output/.heavy.lock'); fr.add_argument('--out', default=str(SCRATCH_FIN / 'finalize_results.json')); fr.add_argument('--rows', type=int, default=FINALIZE_DEFAULT_ROWS); fr.add_argument('--pairs', type=int, default=3); fr.add_argument('--seed', type=int, default=SEED); fr.add_argument('--parts', type=int, default=FINALIZE_DEFAULT_PARTS)
     ap.add_argument('--out', default=str(SCRATCH / 'results.json'))
     ap.add_argument('--rows', type=int, default=1000013)
     ap.add_argument('--rows2', type=int, default=2000013)
     ap.add_argument('--pairs', type=int, default=3)
     ap.add_argument('--seed', type=int, default=SEED)
     a = ap.parse_args(argv)
+    if a.cmd == 'finalize-run':
+        return finalize_controller(Path(a.out), a.rows, a.pairs, a.seed, a.parts)
+    if a.cmd == 'finalize-genfix':
+        print(json.dumps(finalize_genfix(a.dir, a.rows, a.seed, a.parts)))
+        return 0
+    if a.cmd == 'finalize-worker':
+        return finalize_worker(a.mode, a.root, a.marker, a.ntasks)
     if a.cmd == 'genfix':
         print(json.dumps(gen_bulk(a.dir, a.rows, a.seed)))
         return 0

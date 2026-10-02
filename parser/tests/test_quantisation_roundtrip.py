@@ -6,6 +6,9 @@ synthetic spools (`kiwiw.spool.SpoolWriter`) and then check them against the
 same spool or a deliberately mismatched one."""
 from __future__ import annotations
 
+import hashlib
+import importlib.util
+import inspect
 import json
 import sys
 from pathlib import Path
@@ -302,3 +305,128 @@ def test_pss_sampler_returns_a_positive_peak():
     time.sleep(0.2)
     peak = s.stop()
     assert peak > 0 and s.samples >= 3
+
+
+# Phase 2: direct finalizer checks; no sampler or K1 worker is launched.
+FINALIZE_KIND = "background_boundary"
+_FINALIZE_BASELINE = (Path(__file__).resolve().parent / "fixtures" /
+                      "finalize_dump_baseline" / "finalize_dump_baseline.py")
+
+
+def _load_finalize_baseline():
+    spec = importlib.util.spec_from_file_location(
+        "finalize_dump_baseline", _FINALIZE_BASELINE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.finalize_dump_baseline
+
+
+# Struct padding byte (not a named field); used so equal DUMP_ORDER keys stay
+# distinguishable under stable vs unstable argsort. NumPy still uses omitted
+# named fields as tie-breakers, so unique dcls alone does NOT prove stability.
+_FINALIZE_PAD = 65
+
+
+def _finalize_rows(n):
+    arr = np.zeros(n, dtype=cenc.K1_DUMP_DTYPE)
+    raw = arr.view(np.uint8).reshape(n, cenc.K1_DUMP_DTYPE.itemsize)
+    raw[:, _FINALIZE_PAD] = (np.arange(n) % 251) + 1
+    return arr
+
+
+def _finalize_pad_seq(arr):
+    return arr.view(np.uint8).reshape(len(arr), cenc.K1_DUMP_DTYPE.itemsize)[:, _FINALIZE_PAD].copy()
+
+
+def _write_finalize_parts(d, chunks, indices=None):
+    Path(d).mkdir(parents=True, exist_ok=True)
+    for i, chunk in enumerate(chunks):
+        if indices is not None and i not in indices:
+            continue
+        chunk.tofile(Path(d) / f"part_{i:05d}_{FINALIZE_KIND}.bin")
+
+
+def test_finalize_dump_matches_baseline_bytes(tmp_path):
+    n, parts = 5000, 8
+    rows = _finalize_rows(n)
+    # Prove padding markers make unstable sort diverge while DUMP_ORDER keys tie.
+    assert not np.array_equal(
+        np.argsort(rows, order=qr.DUMP_ORDER, kind="stable"),
+        np.argsort(rows, order=qr.DUMP_ORDER, kind="quicksort"))
+    chunks = np.array_split(rows, parts)
+    base, cand = tmp_path / "base", tmp_path / "cand"
+    _write_finalize_parts(base, chunks)
+    _write_finalize_parts(cand, chunks)
+    baseline = _load_finalize_baseline()
+    bc = baseline(base, [FINALIZE_KIND], parts, lambda s: None)
+    cc = qr._finalize_dump(cand, [FINALIZE_KIND], parts, lambda s: None)
+    assert bc == cc
+    base_sha = hashlib.sha256((base / f"{FINALIZE_KIND}.bin").read_bytes()).digest()
+    cand_sha = hashlib.sha256((cand / f"{FINALIZE_KIND}.bin").read_bytes()).digest()
+    expected = rows[np.argsort(rows, order=qr.DUMP_ORDER, kind="stable")]
+    assert base_sha == cand_sha == hashlib.sha256(expected.tobytes()).digest()
+    assert (base / "dump_manifest.json").read_bytes() == (cand / "dump_manifest.json").read_bytes()
+    out = np.fromfile(cand / f"{FINALIZE_KIND}.bin", dtype=cenc.K1_DUMP_DTYPE)
+    # Equal DUMP_ORDER keys: stable sort preserves input (pad) order.
+    assert np.array_equal(_finalize_pad_seq(out), _finalize_pad_seq(rows))
+    assert not list(base.glob("part_*.bin"))
+    assert not list(cand.glob("part_*.bin"))
+
+
+def test_finalize_dump_empty_kinds(tmp_path):
+    base, cand = tmp_path / "base", tmp_path / "cand"
+    _write_finalize_parts(base, [])
+    _write_finalize_parts(cand, [])
+    baseline = _load_finalize_baseline()
+    bc = baseline(base, [FINALIZE_KIND], 4, lambda s: None)
+    cc = qr._finalize_dump(cand, [FINALIZE_KIND], 4, lambda s: None)
+    assert bc == cc == {FINALIZE_KIND: 0}
+    assert (base / f"{FINALIZE_KIND}.bin").read_bytes() == b""
+    assert (cand / f"{FINALIZE_KIND}.bin").read_bytes() == b""
+    assert (base / "dump_manifest.json").read_bytes() == (cand / "dump_manifest.json").read_bytes()
+    assert not list(base.glob("part_*.bin"))
+    assert not list(cand.glob("part_*.bin"))
+
+
+def test_finalize_dump_single_row(tmp_path):
+    rows = _finalize_rows(1)
+    base, cand = tmp_path / "base", tmp_path / "cand"
+    _write_finalize_parts(base, [rows])
+    _write_finalize_parts(cand, [rows])
+    baseline = _load_finalize_baseline()
+    bc = baseline(base, [FINALIZE_KIND], 1, lambda s: None)
+    cc = qr._finalize_dump(cand, [FINALIZE_KIND], 1, lambda s: None)
+    assert bc == cc == {FINALIZE_KIND: 1}
+    base_sha = hashlib.sha256((base / f"{FINALIZE_KIND}.bin").read_bytes()).digest()
+    cand_sha = hashlib.sha256((cand / f"{FINALIZE_KIND}.bin").read_bytes()).digest()
+    assert base_sha == cand_sha
+    assert (base / "dump_manifest.json").read_bytes() == (cand / "dump_manifest.json").read_bytes()
+    assert not list(base.glob("part_*.bin"))
+    assert not list(cand.glob("part_*.bin"))
+
+
+def test_finalize_dump_missing_middle_parts(tmp_path):
+    n, parts = 1001, 10
+    chunks = np.array_split(_finalize_rows(n), parts)
+    base, cand = tmp_path / "base", tmp_path / "cand"
+    _write_finalize_parts(base, chunks, indices={0, 3, 9})
+    _write_finalize_parts(cand, chunks, indices={0, 3, 9})
+    baseline = _load_finalize_baseline()
+    bc = baseline(base, [FINALIZE_KIND], parts, lambda s: None)
+    cc = qr._finalize_dump(cand, [FINALIZE_KIND], parts, lambda s: None)
+    assert bc == cc
+    base_sha = hashlib.sha256((base / f"{FINALIZE_KIND}.bin").read_bytes()).digest()
+    cand_sha = hashlib.sha256((cand / f"{FINALIZE_KIND}.bin").read_bytes()).digest()
+    assert base_sha == cand_sha
+    assert (base / "dump_manifest.json").read_bytes() == (cand / "dump_manifest.json").read_bytes()
+    assert not list(base.glob("part_*.bin"))
+    assert not list(cand.glob("part_*.bin"))
+
+
+def test_finalize_dump_source_has_no_full_copy():
+    src = inspect.getsource(qr._finalize_dump)
+    assert ".tobytes()" not in src
+    assert "write_bytes" not in src
+    assert "tofile" in src
+    assert 'kind="stable"' in src or "kind='stable'" in src
+    assert "argsort" in src
