@@ -30,10 +30,10 @@ Local Claude Code / OpenCode on this host keep using the installed plugin / skil
 
 ## Heavy jobs (memory)
 
-Plan 05 (`docs/plans/05-heavy-job-memory/`) cut peak residency for residual dump
+Plan 05 (`docs/plans/05-heavy-job-memory.md`) cut peak residency for residual dump
 joins, the K1 dump finalizer, the 3-07 extension, and `k1_triage` readers. The
 rules below are the stable operational contract. Measured peaks and fixture
-provenance live in that plan's `IMPLEMENTATION.md` and in the
+provenance live in that plan record and in the
 `output/scratch-5-0{1,2,3}/` entries of `docs/provenance.md`.
 
 ### Lock
@@ -110,7 +110,7 @@ PSS peaks did not include it.
 
 ### Measured Phase 1–3 peaks (summary)
 
-Full pair tables: `docs/plans/05-heavy-job-memory/IMPLEMENTATION.md`. On the
+Full pair tables: `docs/plans/05-heavy-job-memory.md` (What Was Built). On the
 seeded 1,000,013-row fixtures (fresh scoped workers):
 
 - Residual: cand/base max RSS ≈ 0.17, `memory.peak` ≈ 0.20–0.26; wall ≈ 0.31×; growth within 19,456 KiB.
