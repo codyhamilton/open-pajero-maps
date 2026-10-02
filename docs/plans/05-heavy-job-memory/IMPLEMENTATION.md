@@ -36,3 +36,9 @@ Verification: orchestrator independent re-run of the controller (all PASS, above
 1. The scratch entry point `output/scratch-3-12/extend.py` is not switched to `dump_join.py` (Assumption 6 tension): plan04 3-13 reads scratch-3-12. Switch after 3-13 is accepted.
 2. Growth gate references the median 1M candidate, not the worst; passes with large margin either way.
 3. `memory.peak` baseline spread depends on concurrent load; Assumption 8 fallback (anon+dirty+writeback) not exercised.
+
+## Phase 2 — K1 dump finalizer drops redundant full copies
+
+### 2-01-finalize-dump-drop-copies
+
+Brief authored; implementation pending.

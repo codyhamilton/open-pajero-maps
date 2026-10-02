@@ -233,6 +233,8 @@ Rules that apply to every phase's evidence:
 - Approach: known. Read parts into one preallocated array and release them as they are consumed, keep the identical stable `argsort(order=DUMP_ORDER)` permutation, and write the gathered rows without `tobytes()`.
 - Depends on: Phase 1 (harness).
 - Refine: skipped. One worker, one function.
+- Units:
+  - `briefs/2-01-finalize-dump-drop-copies.md` — single unit, no parallel units.
 
 ### Phase 3 — 3-07 extension and triage use the proven storage boundary
 
