@@ -257,3 +257,68 @@ def test_enumerate_row_sum_matches_rule(tmp_path):
 
 if __name__ == "__main__":
     pytest.main([__file__, "-q"])
+
+
+
+def test_window_sizes_identical_artifacts(tmp_path):
+    """Groups straddling windows must not change summary/classify artifacts."""
+    dump, _ = _make_dump(tmp_path)
+    rules = _rules(tmp_path, "rules.json", _complete_rules())
+    arts = []
+    for w in (1, 17, 65536, 997):
+        out = tmp_path / f"out-{w}"
+        assert k1_triage.main(["summary", "--dump", str(dump), "--out", str(out),
+                               "--window-rows", str(w)]) == 0
+        cout = tmp_path / f"cls-{w}"
+        assert k1_triage.main(["classify", "--dump", str(dump), "--rules", str(rules),
+                               "--out", str(cout), "--window-rows", str(w)]) == 0
+        arts.append((_dir_bytes(out), _dir_bytes(cout)))
+    assert arts[0] == arts[1] == arts[2] == arts[3]
+
+
+def test_merge_keys_are_independently_owned():
+    """Retained aggregation keys must not alias unique-array storage."""
+    key_dt = np.dtype([("level", "u1"), ("code", "i4")], align=True)
+    ukey = np.zeros(3, key_dt)
+    ukey["level"] = [0, 1, 2]
+    ukey["code"] = [10, 20, 30]
+    counts = np.array([1, 2, 3])
+    acc = {}
+    k1_triage._merge_rows(acc, ukey, counts)
+    # mutate the unique array after merge — retained keys must be unchanged
+    ukey["code"][:] = -1
+    for e in acc.values():
+        assert int(e[0]["code"]) in (10, 20, 30)
+
+
+
+def test_high_cardinality_late_first_identical(tmp_path):
+    """Late first appearances + window-spanning groups: identical summary across windows."""
+    dump = tmp_path / "dump"
+    dump.mkdir()
+    n = 5003
+    arr = np.zeros(n, DTYPE)
+    # Unique code per row so each group's first appearance is late relative to
+    # small windows; merge must not drop or double-count across boundaries.
+    arr["level"] = 0
+    arr["code"] = np.arange(n, dtype=np.int32)
+    arr["ix"] = np.arange(n, dtype=np.int32) % 97
+    arr["iy"] = np.arange(n, dtype=np.int32) % 89
+    arr["shape"] = np.arange(n, dtype=np.int32)
+    arr["vert"] = 1
+    arr["d_src"] = 0.0
+    arr["src_ix"] = INT32_MIN
+    arr["src_iy"] = INT32_MIN
+    (dump / "background_boundary.bin").write_bytes(arr.tobytes())
+    fields = [{"name": n_, "type": t_} for n_, t_ in FIELDS]
+    kinds = {"background_boundary": {"rows": n, "row_size": DTYPE.itemsize,
+                                     "file": "background_boundary.bin", "fields": fields}}
+    (dump / "dump_manifest.json").write_text(json.dumps(
+        {"fields": fields, "kinds": kinds, "row_size": DTYPE.itemsize}))
+    arts = []
+    for w in (1, 64, 997, 65536):
+        out = tmp_path / f"hc-{w}"
+        assert k1_triage.main(["summary", "--dump", str(dump), "--out", str(out),
+                               "--window-rows", str(w)]) == 0
+        arts.append(_dir_bytes(out))
+    assert arts[0] == arts[1] == arts[2] == arts[3]

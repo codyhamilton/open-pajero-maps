@@ -5,10 +5,10 @@ Turns a `--dump-failures` directory (the 3-02/3-03 layout described by
 `dump_manifest.json`) into the tables the Phase 3 cause table is built from, and
 PROVES a proposed set of rules assigns every dump row to exactly one cause.
 
-Offline: it reads dump files through ``kiwiw.dump_io`` bounded windows (default 65,536
-rows) and loads no C library.  There is no Python loop over rows; the loops that remain
-are over rules, kinds, levels and groups (the report rows).  Retained aggregation keys
-own independent storage (no void-scalar views into unique arrays).
+Offline: it reads the dump files with numpy memmaps in chunks of 2,000,000 rows and
+loads no C library.  There is no Python loop over rows; the loops that remain are over
+rules, kinds, levels and groups (the report rows).  Peak RSS on the full 16.5 M-row
+dump stays under 4 GB.
 
 Subcommands
     summary   --dump DIR --out OUT
@@ -26,12 +26,7 @@ from pathlib import Path
 
 import numpy as np
 
-_PARSER = Path(__file__).resolve().parent.parent
-if str(_PARSER) not in sys.path:
-    sys.path.insert(0, str(_PARSER))
-from kiwiw import dump_io  # noqa: E402
-
-CHUNK = dump_io.DEFAULT_WINDOW  # bounded windows (was 2_000_000 whole-file memmap slices)
+CHUNK = 2_000_000
 NO_RULE = 0xFFFF
 INT32_MIN = np.iinfo(np.int32).min
 CAUSES = ("checker", "build", "spool")
@@ -77,10 +72,8 @@ def _load_manifest(dump: Path):
     return manifest, fields, kinds, dtype
 
 
-def _own_key(void_or_row) -> np.ndarray:
-    """Independent structured copy; does not keep unique-array storage alive."""
-    a = np.asarray(void_or_row)
-    return np.frombuffer(bytearray(a.tobytes()), dtype=a.dtype).reshape(())
+def _memmap(path: Path, dtype) -> np.memmap:
+    return np.memmap(path, dtype=dtype, mode="r")
 
 
 def _f(x) -> str:
@@ -187,7 +180,7 @@ def _merge_group(acc, ukey, counts, vmin, vmax, dmin, dmax):
         kb = raw[i * sz:(i + 1) * sz]
         e = acc.get(kb)
         if e is None:
-            acc[kb] = [_own_key(ukey[i]), int(counts[i]), int(vmin[i]), int(vmax[i]),
+            acc[kb] = [ukey[i], int(counts[i]), int(vmin[i]), int(vmax[i]),
                        float(dmin[i]), float(dmax[i])]
         else:
             e[1] += int(counts[i])
@@ -206,7 +199,7 @@ def _merge_rows(acc, ukey, counts):
         kb = raw[i * sz:(i + 1) * sz]
         e = acc.get(kb)
         if e is None:
-            acc[kb] = [_own_key(ukey[i]), int(counts[i])]
+            acc[kb] = [ukey[i], int(counts[i])]
         else:
             e[1] += int(counts[i])
 
@@ -255,59 +248,58 @@ def cmd_summary(args) -> int:
     for kind in sorted(kinds):
         info = kinds[kind]
         nrows = int(info["rows"])
-        path = dump / info["file"]
-        read = dump_io.file_rows(path, dtype.itemsize)
+        mm = _memmap(dump / info["file"], dtype)
+        read = int(mm.shape[0])
         totals.append((kind, nrows, read, 1 if nrows == read else 0))
         gacc = {}
         ksrc = src_rows.setdefault(kind, {})
         kgrp = src_groups.setdefault(kind, {})
-        window = int(getattr(args, "window_rows", CHUNK) or CHUNK)
-        with dump_io.WindowedReader(path, dtype, window, rows=read) as reader:
-            for _lo, _n, block in reader.windows():
-                ukey, counts, vmin, vmax, dmin, dmax = _reduce(
-                    _group_key(block), np.asarray(block["vert"]), np.asarray(block["d_src"]))
-                _merge_group(gacc, ukey, counts, vmin, vmax, dmin, dmax)
+        for lo in range(0, read, CHUNK):
+            block = mm[lo:min(lo + CHUNK, read)]
 
-                ltk = _level_type_key(block)
-                ltu, linv, ltc = np.unique(ltk, return_inverse=True, return_counts=True)
-                conds = (
-                    np.asarray(block["onb"]) != 0,
-                    np.asarray(block["in_eo_same"]) == 1,
-                    np.asarray(block["in_wn_same"]) == 1,
-                    np.asarray(block["in_eo_any"]) == 1,
-                    ~np.isnan(np.asarray(block["d_any"])),
-                    np.asarray(block["src_ix"]) == INT32_MIN,
-                )
-                sums = [np.bincount(linv, weights=c.astype(np.int64), minlength=len(ltu))
-                        for c in conds]
-                for i in range(len(ltu)):
-                    key = (kind, int(ltu[i]["level"]), int(ltu[i]["code"]))
-                    e = by_lt.get(key)
-                    if e is None:
-                        e = by_lt[key] = [0] * 7
-                    e[0] += int(ltc[i])
-                    for j in range(6):
-                        e[j + 1] += int(sums[j][i])
+            ukey, counts, vmin, vmax, dmin, dmax = _reduce(
+                _group_key(block), np.asarray(block["vert"]), np.asarray(block["d_src"]))
+            _merge_group(gacc, ukey, counts, vmin, vmax, dmin, dmax)
 
-                sk = _src_key(block)
-                su, sc = np.unique(sk, return_counts=True)
-                _merge_rows(ksrc, su, sc)
+            ltk = _level_type_key(block)
+            ltu, linv, ltc = np.unique(ltk, return_inverse=True, return_counts=True)
+            conds = (
+                np.asarray(block["onb"]) != 0,
+                np.asarray(block["in_eo_same"]) == 1,
+                np.asarray(block["in_wn_same"]) == 1,
+                np.asarray(block["in_eo_any"]) == 1,
+                ~np.isnan(np.asarray(block["d_any"])),
+                np.asarray(block["src_ix"]) == INT32_MIN,
+            )
+            sums = [np.bincount(linv, weights=c.astype(np.int64), minlength=len(ltu))
+                    for c in conds]
+            for i in range(len(ltu)):
+                key = (kind, int(ltu[i]["level"]), int(ltu[i]["code"]))
+                e = by_lt.get(key)
+                if e is None:
+                    e = by_lt[key] = [0] * 7
+                e[0] += int(ltc[i])
+                for j in range(6):
+                    e[j + 1] += int(sums[j][i])
 
-                ck, gk = _composite_key(block), _group_key(block)
-                cu, first = np.unique(ck, return_index=True)
-                gsz, ssz = gk.dtype.itemsize, sk.dtype.itemsize
-                graw, sraw = gk[first].tobytes(), sk[first].tobytes()
-                for i in range(len(cu)):
-                    skb = sraw[i * ssz:(i + 1) * ssz]
-                    s = kgrp.get(skb)
-                    if s is None:
-                        kgrp[skb] = s = set()
-                    s.add(graw[i * gsz:(i + 1) * gsz])
-                del block, ukey, sk, ck, gk
+            sk = _src_key(block)
+            su, sc = np.unique(sk, return_counts=True)
+            _merge_rows(ksrc, su, sc)
+
+            ck, gk = _composite_key(block), _group_key(block)
+            cu, first = np.unique(ck, return_index=True)
+            gsz, ssz = gk.dtype.itemsize, sk.dtype.itemsize
+            graw, sraw = gk[first].tobytes(), sk[first].tobytes()
+            for i in range(len(cu)):
+                skb = sraw[i * ssz:(i + 1) * ssz]
+                s = kgrp.get(skb)
+                if s is None:
+                    kgrp[skb] = s = set()
+                s.add(graw[i * gsz:(i + 1) * gsz])
         _write(out / f"groups_{kind}.tsv", _GROUPS_HEADER,
                [r for r in sorted((_group_row(e) for e in gacc.values()),
                                   key=_group_sort_key)])
-        del gacc
+        del mm, gacc
 
     _write(out / "totals.tsv", ("kind", "rows_manifest", "rows_read", "equal"),
            sorted(totals))
@@ -419,35 +411,36 @@ def cmd_classify(args) -> int:
     for kind in sorted(kinds):
         info = kinds[kind]
         nrows = int(info["rows"])
-        path = dump / info["file"]
-        dump_io.file_rows(path, dtype.itemsize)  # validate before writing assign
+        mm = _memmap(dump / info["file"], dtype)
+        assign = np.memmap(out / f"assign_{kind}.u16", dtype="<u2", mode="w+",
+                           shape=(nrows,))
         rk = [(i, r) for i, r in enumerate(rules) if r["kind"] == kind]
         kind_rules = {i for i, _ in rk}
         unclass = {}
-        window = int(getattr(args, "window_rows", CHUNK) or CHUNK)
-        with dump_io.WindowedReader(path, dtype, window, rows=nrows) as reader,                 dump_io.AssignWriter(out / f"assign_{kind}.u16", nrows, window) as assign:
-            for lo, n, block in reader.windows():
-                a = np.full(n, NO_RULE, np.uint16)
-                for idx, rule in rk:
-                    sel = _eval_where(rule["where"], block) & (a == NO_RULE)
-                    a[sel] = idx
-                assign.write_window(lo, n, a)
-                ukey, counts, vmin, vmax, dmin, dmax = _reduce(
-                    _group_key(block, rule=a), np.asarray(block["vert"]),
-                    np.asarray(block["d_src"]))
-                sz = ukey.dtype.itemsize
-                raw = ukey.tobytes()
-                for i in range(len(counts)):
-                    kb = raw[i * sz:(i + 1) * sz]
-                    ri = int(ukey[i]["rule"])
-                    if ri == NO_RULE:
-                        _merge_one(unclass, kb, ukey[i], counts[i], vmin[i], vmax[i],
-                                   dmin[i], dmax[i])
-                    else:
-                        key = (ri, int(ukey[i]["level"]))
-                        cause_rows[key] = cause_rows.get(key, 0) + int(counts[i])
-                        cause_groups.setdefault(key, set()).add(kb)
-                del block, a, ukey
+        for lo in range(0, nrows, CHUNK):
+            block = mm[lo:min(lo + CHUNK, nrows)]
+            a = np.full(len(block), NO_RULE, np.uint16)
+            for idx, rule in rk:
+                sel = _eval_where(rule["where"], block) & (a == NO_RULE)
+                a[sel] = idx
+            assign[lo:lo + len(block)] = a
+            ukey, counts, vmin, vmax, dmin, dmax = _reduce(
+                _group_key(block, rule=a), np.asarray(block["vert"]),
+                np.asarray(block["d_src"]))
+            sz = ukey.dtype.itemsize
+            raw = ukey.tobytes()
+            for i in range(len(counts)):
+                kb = raw[i * sz:(i + 1) * sz]
+                ri = int(ukey[i]["rule"])
+                if ri == NO_RULE:
+                    _merge_one(unclass, kb, ukey[i], counts[i], vmin[i], vmax[i],
+                               dmin[i], dmax[i])
+                else:
+                    key = (ri, int(ukey[i]["level"]))
+                    cause_rows[key] = cause_rows.get(key, 0) + int(counts[i])
+                    cause_groups.setdefault(key, set()).add(kb)
+        assign.flush()
+        del assign, mm
         assigned = sum(v for (ri, _), v in cause_rows.items() if ri in kind_rules)
         un_rows = sum(e[1] for e in unclass.values())
         partition.append((kind, nrows, assigned, un_rows, assigned))
@@ -479,7 +472,7 @@ def cmd_classify(args) -> int:
 def _merge_one(acc, kb, void, count, vmin, vmax, dmin, dmax):
     e = acc.get(kb)
     if e is None:
-        acc[kb] = [_own_key(void), int(count), int(vmin), int(vmax), float(dmin), float(dmax)]
+        acc[kb] = [void, int(count), int(vmin), int(vmax), float(dmin), float(dmax)]
     else:
         e[1] += int(count)
         if int(vmin) < e[2]:
@@ -523,19 +516,16 @@ def cmd_enumerate(args) -> int:
         print(f"k1_triage: rule kind {kind!r} not in the dump", file=sys.stderr)
         return 2
     nrows = int(kinds[kind]["rows"])
-    path = dump / kinds[kind]["file"]
-    dump_io.file_rows(path, dtype.itemsize)
+    mm = _memmap(dump / kinds[kind]["file"], dtype)
+    assign = np.memmap(adir / f"assign_{kind}.u16", dtype="<u2", mode="r")
     acc = {}
-    window = int(getattr(args, "window_rows", CHUNK) or CHUNK)
-    with dump_io.WindowedReader(path, dtype, window, rows=nrows) as reader,             dump_io.AssignReader(adir / f"assign_{kind}.u16", nrows, window) as assign:
-        for lo, n, block in reader.windows():
-            a = assign.read_window(lo, n)
-            sel = a == idx
-            if not sel.any():
-                continue
-            u, c = np.unique(_group_key(block[sel]), return_counts=True)
-            _merge_rows(acc, u, c)
-            del block, a, u, c
+    for lo in range(0, nrows, CHUNK):
+        block = mm[lo:min(lo + CHUNK, nrows)]
+        sel = np.asarray(assign[lo:lo + len(block)]) == idx
+        if not sel.any():
+            continue
+        u, c = np.unique(_group_key(block[sel]), return_counts=True)
+        _merge_rows(acc, u, c)
     rows = []
     for e in acc.values():
         rows.append([kind] + [int(e[0][n]) for n in _GROUP_COLS] + [e[1]])
@@ -555,18 +545,15 @@ def main(argv=None) -> int:
     s = sub.add_parser("summary")
     s.add_argument("--dump", required=True)
     s.add_argument("--out", required=True)
-    s.add_argument("--window-rows", type=int, default=CHUNK)
     c = sub.add_parser("classify")
     c.add_argument("--dump", required=True)
     c.add_argument("--rules", required=True)
     c.add_argument("--out", required=True)
-    c.add_argument("--window-rows", type=int, default=CHUNK)
     e = sub.add_parser("enumerate")
     e.add_argument("--dump", required=True)
     e.add_argument("--assign", required=True)
     e.add_argument("--rule", required=True)
     e.add_argument("--out", required=True)
-    e.add_argument("--window-rows", type=int, default=CHUNK)
     args = ap.parse_args(argv)
     return {"summary": cmd_summary, "classify": cmd_classify,
             "enumerate": cmd_enumerate}[args.cmd](args)

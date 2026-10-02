@@ -1,35 +1,14 @@
 #!/usr/bin/env python3
-"""Residual byte146 extension with bounded windowed I/O (plan 05, Phase 1, brief 1-01).
+"""Residual byte146 and 3-07 s02 extensions with bounded windowed I/O (plan 05).
 
-Replaces the memory behaviour of the scratch-3-12 ``extend.py`` (whole-file
-``copyfile`` + two whole-file memmaps) without changing a single output byte.
-Output contract (DESIGN.md, "Contract (residual)"):
-
-* key: exactly ``GROUP``, side key columns converted by the same NumPy
-  field-assignment cast as the baseline (``sk[f]=side[f]``; ``i32`` wraps into
-  ``u8``/``u16``); the default non-stable structured ``argsort`` is kept;
-* byte146 of every row is 1 iff the first matching sorted side record has
-  ``status == 1`` (0 for a miss, a missing side table or an empty one); it is
-  always written from the flag and never copied from the source;
-* assignments equal to 65535 select accounting rows only;
-* bytes ``[0,146)`` and ``[147,152)`` (NaN payloads, padding) and row order are
-  copied untouched; manifest and ``joined_counts.json`` equal the baseline's.
-
-Memory: one source/destination window (a single reusable buffer) and one
-assignment window at a time, ``window_rows`` rows each (default 65,536).  Each
-completed destination window starts writeback (``sync_file_range``) and the
-previous window is waited on and dropped from the page cache
-(``posix_fadvise(DONTNEED)``); consumed source windows are dropped too.  The
-final ``fsync``/close are unchanged.  Production paths run no byte assertions;
-``--verify`` re-streams source and destination in the same windows and checks
-every byte outside byte146.  Offline tool: NumPy bulk operations only.
+Phase 1 residual contract is unchanged; Phase 3 moves the I/O boundary into
+``kiwiw.dump_io`` and adds the 3-07 adapter (stable side sort, 144→152 rebuild,
+byte144 / s02_producer_verified, boundary-only scope).
 """
 from __future__ import annotations
 
 import argparse
 import collections
-import ctypes
-import errno
 import json
 import os
 import sys
@@ -37,12 +16,18 @@ from pathlib import Path
 
 import numpy as np
 
+_PARSER = Path(__file__).resolve().parent.parent
+if str(_PARSER) not in sys.path:
+    sys.path.insert(0, str(_PARSER))
+from kiwiw import dump_io  # noqa: E402
+
 GROUP = ('level', 'ix', 'iy', 'code', 'p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'shape')
 TS = {'f64': '<f8', 'i32': '<i4', 'u16': '<u2', 'u8': 'u1'}
 ROW_SIZE = 152
 FLAG_OFFSET = 146
 RESIDUAL = 65535
-DEFAULT_WINDOW = 65536
+DEFAULT_WINDOW = dump_io.DEFAULT_WINDOW
+INT32_MIN = np.iinfo(np.int32).min
 
 DEFAULT_SRC = 'output/scratch-3-11/dump_new_ext'
 DEFAULT_SIDE = 'output/scratch-3-12'
@@ -50,54 +35,17 @@ DEFAULT_ASSIGN = 'output/scratch-3-11/classify_new'
 DEFAULT_DST = 'output/scratch-3-12/dump_ext'
 DEFAULT_COUNTS = 'output/scratch-3-12/joined_counts.json'
 
-_SFR_WAIT_BEFORE, _SFR_WRITE, _SFR_WAIT_AFTER = 1, 2, 4
-_libc = None
+# 3-07 defaults (relative paths hard-coded by the frozen baseline)
+S02_DEFAULT_DUMP = 'output/scratch-3-03/dump'
+S02_DEFAULT_ROOT = 'output/scratch-3-07'
+S02_DEFAULT_SIDE = 'output/scratch-3-07/side_background_boundary.npy'
+S02_DEFAULT_DST = 'output/scratch-3-07/dump_attempt3'
+S02_SRC_ROW = 144
+S02_FLAG_OFFSET = 144
 
 
 class VerifyError(Exception):
     pass
-
-
-def _sync_file_range(fd: int, off: int, n: int, flags: int) -> None:
-    """Start/finish writeback of a file range (advisory; durability is the final fsync)."""
-    global _libc
-    fn = getattr(os, 'sync_file_range', None)
-    try:
-        if fn is not None:
-            fn(fd, off, n, flags)
-            return
-        if _libc is None:
-            _libc = ctypes.CDLL(None, use_errno=True)
-            _libc.sync_file_range.argtypes = [ctypes.c_int, ctypes.c_longlong, ctypes.c_longlong, ctypes.c_uint]
-        if _libc.sync_file_range(fd, off, n, flags) != 0:
-            e = ctypes.get_errno()
-            raise OSError(e, os.strerror(e))
-    except (OSError, AttributeError) as e:
-        if isinstance(e, OSError) and e.errno not in (errno.EINVAL, errno.ENOSYS, errno.ESPIPE, errno.EBADF):
-            raise
-
-
-def _drop(fd: int, off: int, n: int) -> None:
-    try:
-        os.posix_fadvise(fd, off, n, os.POSIX_FADV_DONTNEED)
-    except OSError as e:
-        if e.errno not in (errno.EINVAL, errno.ESPIPE):
-            raise
-
-
-def _pread_full(fd: int, mv: memoryview, off: int) -> None:
-    done, want = 0, len(mv)
-    while done < want:
-        got = os.preadv(fd, [mv[done:]], off + done)
-        if got <= 0:
-            raise OSError(f'short read at offset {off + done}')
-        done += got
-
-
-def _pwrite_full(fd: int, mv: memoryview, off: int) -> None:
-    done, want = 0, len(mv)
-    while done < want:
-        done += os.pwritev(fd, [mv[done:]], off + done)
 
 
 def layout_dtype(fields: list[dict]) -> np.dtype:
@@ -130,8 +78,8 @@ def _side_header(path: Path) -> tuple[int, np.dtype]:
     return shape[0], dtype
 
 
-def _side_index(path: Path | None, dt: np.dtype):
-    """Sorted side key array and status flags, built exactly as the baseline."""
+def _side_index(path: Path | None, dt: np.dtype, *, stable: bool = False):
+    """Sorted side key array and status flags."""
     if path is None:
         return None, None
     side = np.load(path)
@@ -139,7 +87,7 @@ def _side_index(path: Path | None, dt: np.dtype):
     sk = np.empty(len(side), kd)
     for f in GROUP:
         sk[f] = side[f]
-    order = np.argsort(sk)
+    order = np.argsort(sk, kind='stable') if stable else np.argsort(sk)
     sk = sk[order]
     sf = (side['status'][order] == 1).astype('u1')
     return sk, sf
@@ -185,12 +133,7 @@ def _plan(man, src_dir: Path, side_dir: Path, assign_dir: Path, dst_dir: Path, d
             raise ValueError(f'{kind}: manifest row_size {info["row_size"]} != {ROW_SIZE}')
         src = src_dir / info['file']
         dest = dst_dir / info['file']
-        size = os.stat(src).st_size
-        if size % ROW_SIZE:
-            raise ValueError(f'{kind}: {size} bytes is not a whole number of {ROW_SIZE}-byte rows')
-        rows = size // ROW_SIZE
-        if rows == 0:
-            raise ValueError(f'{kind}: zero-row kinds are unsupported (as in the baseline)')
+        rows = dump_io.file_rows(src, ROW_SIZE)
         if os.path.lexists(dest) and (os.path.islink(dest) or os.path.samefile(src, dest)):
             raise ValueError(f'{kind}: destination {dest} is a symlink or the source itself')
         side_path = side_dir / f'side_{kind}.npy'
@@ -211,78 +154,43 @@ def _plan(man, src_dir: Path, side_dir: Path, assign_dir: Path, dst_dir: Path, d
 
 
 def _extend_kind(src, dest, assign_path, rows, dt, kd, sk, sf, window_rows, ct) -> None:
-    sfd = os.open(src, os.O_RDONLY)
-    afd = os.open(assign_path, os.O_RDONLY)
-    dfd = os.open(dest, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o666)
-    buf = bytearray(window_rows * ROW_SIZE)
-    abuf = bytearray(window_rows * 2)
-    try:
-        prev = None  # (offset, nbytes) of the previous destination window
-        for lo in range(0, rows, window_rows):
-            n = min(window_rows, rows - lo)
-            off, nb = lo * ROW_SIZE, n * ROW_SIZE
-            mv = memoryview(buf)[:nb]
-            amv = memoryview(abuf)[:n * 2]
-            _pread_full(sfd, mv, off)
-            _drop(sfd, off, nb)
-            _pread_full(afd, amv, lo * 2)
-            _drop(afd, lo * 2, n * 2)
-            win = np.frombuffer(buf, dt, count=n)
+    with dump_io.WindowedReader(src, dt, window_rows, rows=rows) as reader, \
+            dump_io.AssignReader(assign_path, rows, window_rows) as areader, \
+            dump_io.WindowedWriter(dest, ROW_SIZE, rows, window_rows) as writer:
+        for lo, n, win in reader.windows():
+            assign = areader.read_window(lo, n)
             flag = _flags(win, sk, sf, kd)
-            _count_window(win, flag, np.frombuffer(abuf, '<u2', count=n), ct)
-            np.frombuffer(buf, 'u1', count=nb).reshape(n, ROW_SIZE)[:, FLAG_OFFSET] = flag
-            _pwrite_full(dfd, mv, off)
-            _sync_file_range(dfd, off, nb, _SFR_WRITE)
-            if prev is not None:
-                _sync_file_range(dfd, prev[0], prev[1], _SFR_WAIT_BEFORE | _SFR_WRITE | _SFR_WAIT_AFTER)
-                _drop(dfd, prev[0], prev[1])
-            prev = (off, nb)
-            del win, flag
+            _count_window(win, flag, assign, ct)
+            mv = reader.window_bytes(n)
+            np.frombuffer(mv, 'u1', count=n * ROW_SIZE).reshape(n, ROW_SIZE)[:, FLAG_OFFSET] = flag
+            writer.write_window(lo, n, mv)
+            del win, flag, assign
             mv.release()
-            amv.release()
-        if prev is not None:
-            _sync_file_range(dfd, prev[0], prev[1], _SFR_WAIT_BEFORE | _SFR_WRITE | _SFR_WAIT_AFTER)
-            _drop(dfd, prev[0], prev[1])
-        os.fsync(dfd)
-        if os.fstat(dfd).st_size != rows * ROW_SIZE:
-            raise OSError(f'{dest}: destination length differs from source')
-    finally:
-        os.close(dfd)
-        os.close(afd)
-        os.close(sfd)
 
 
 def _verify_kind(kind, src, dest, rows, dt, kd, sk, sf, window_rows) -> None:
-    """Stream source and destination in windows; every byte outside byte146 must match."""
     if os.stat(dest).st_size != rows * ROW_SIZE:
         raise VerifyError(f'{kind}: destination length differs from source')
-    sfd = os.open(src, os.O_RDONLY)
-    dfd = os.open(dest, os.O_RDONLY)
-    sbuf = bytearray(window_rows * ROW_SIZE)
-    dbuf = bytearray(window_rows * ROW_SIZE)
-    try:
-        for w, lo in enumerate(range(0, rows, window_rows)):
-            n = min(window_rows, rows - lo)
-            off, nb = lo * ROW_SIZE, n * ROW_SIZE
-            smv, dmv = memoryview(sbuf)[:nb], memoryview(dbuf)[:nb]
-            _pread_full(sfd, smv, off)
-            _pread_full(dfd, dmv, off)
-            s = np.frombuffer(sbuf, 'u1', count=nb).reshape(n, ROW_SIZE)
-            d = np.frombuffer(dbuf, 'u1', count=nb).reshape(n, ROW_SIZE)
-            flag = _flags(np.frombuffer(sbuf, dt, count=n), sk, sf, kd)
+    with dump_io.WindowedReader(src, dt, window_rows, rows=rows) as sreader, \
+            dump_io.WindowedReader(dest, dt, window_rows, rows=rows) as dreader:
+        # zip windows: both iterate independently with same sizes
+        sit = sreader.windows()
+        dit = dreader.windows()
+        for w, ((lo, n, sarr), (_lo2, n2, darr)) in enumerate(zip(sit, dit)):
+            assert n == n2 and lo == _lo2
+            sb = sreader.window_bytes(n)
+            db = dreader.window_bytes(n)
+            s = np.frombuffer(sb, 'u1', count=n * ROW_SIZE).reshape(n, ROW_SIZE)
+            d = np.frombuffer(db, 'u1', count=n * ROW_SIZE).reshape(n, ROW_SIZE)
+            flag = _flags(sarr, sk, sf, kd)
             ok = (np.array_equal(s[:, :FLAG_OFFSET], d[:, :FLAG_OFFSET])
                   and np.array_equal(s[:, FLAG_OFFSET + 1:], d[:, FLAG_OFFSET + 1:])
                   and np.array_equal(d[:, FLAG_OFFSET], flag))
-            del s, d, flag
-            smv.release()
-            dmv.release()
-            _drop(sfd, off, nb)
-            _drop(dfd, off, nb)
+            del s, d, flag, sarr, darr
+            sb.release()
+            db.release()
             if not ok:
                 raise VerifyError(f'{kind}: mismatch in window {w} (rows {lo}..{lo + n - 1})')
-    finally:
-        os.close(dfd)
-        os.close(sfd)
 
 
 def extend_residual(src_dir, side_dir, assign_dir, dst_dir, counts_path, window_rows: int = DEFAULT_WINDOW,
@@ -331,8 +239,91 @@ def extend_residual(src_dir, side_dir, assign_dir, dst_dir, counts_path, window_
     return total
 
 
+def _s02_side_index(side_path: Path, old_dt: np.dtype):
+    side = np.load(side_path)
+    kd = np.dtype([(k, old_dt[k]) for k in GROUP])
+    skey = np.empty(len(side), kd)
+    for k in GROUP:
+        skey[k] = side[k]
+    order = np.argsort(skey, kind='stable')
+    skey = skey[order]
+    flags = (side['status'][order] == 1).astype('u1')
+    expected = int(side['rows'][side['status'] == 1].sum()) if 'rows' in side.dtype.names else None
+    return skey, flags, expected, kd
+
+
+def extend_s02_producer(dump_dir, side_path, dst_dir, window_rows: int = DEFAULT_WINDOW,
+                        log=lambda s: print(s, flush=True)) -> int:
+    """144→152 extension with s02_producer_verified at byte144 (3-07 contract)."""
+    if window_rows < 1:
+        raise ValueError('window_rows must be >= 1')
+    dump_dir, side_path, dst_dir = Path(dump_dir), Path(side_path), Path(dst_dir)
+    manifest = json.loads((dump_dir / 'dump_manifest.json').read_text())
+    # Source layout = manifest fields before the extension field.
+    src_fields = list(manifest['fields'])
+    old = np.dtype([(f['name'], TS[f['type']]) for f in src_fields], align=True)
+    if old.itemsize != S02_SRC_ROW:
+        raise ValueError(f'source layout row size {old.itemsize} != {S02_SRC_ROW}')
+    man = json.loads(json.dumps(manifest))
+    man['fields'] = list(man['fields']) + [{'name': 's02_producer_verified', 'type': 'u8'}]
+    dt = np.dtype([(f['name'], TS[f['type']]) for f in man['fields']], align=True)
+    if dt.fields['s02_producer_verified'][1] != S02_FLAG_OFFSET:
+        raise ValueError(f's02 field offset {dt.fields["s02_producer_verified"][1]} != {S02_FLAG_OFFSET}')
+    if dt.itemsize != ROW_SIZE:
+        raise ValueError(f'dest layout row size {dt.itemsize} != {ROW_SIZE}')
+    skey, flags, expected, kd = _s02_side_index(side_path, old)
+    dst_dir.mkdir(exist_ok=True)
+    matches = 0
+    out_buf = bytearray(window_rows * ROW_SIZE)
+    for kind, info in man['kinds'].items():
+        src = dump_dir / info['file']
+        dest = dst_dir / info['file']
+        rows = dump_io.file_rows(src, S02_SRC_ROW)
+        count = 0
+        with dump_io.WindowedReader(src, old, window_rows, rows=rows) as reader, \
+                dump_io.WindowedWriter(dest, ROW_SIZE, rows, window_rows) as writer:
+            for lo, n, b in reader.windows():
+                o = np.frombuffer(out_buf, dt, count=n)
+                o[:] = np.zeros(1, dt)
+                for k in old.names:
+                    o[k] = b[k]
+                if kind == 'background_boundary':
+                    keys = np.empty(n, kd)
+                    for k in GROUP:
+                        keys[k] = b[k]
+                    pos = np.searchsorted(skey, keys)
+                    ok = pos < len(skey)
+                    pos = np.minimum(pos, len(skey) - 1)
+                    ok &= skey[pos] == keys
+                    scope = (b['level'] == 0) & (b['code'] == 291) & (b['src_ix'] == INT32_MIN)
+                    o['s02_producer_verified'] = np.where(ok & scope, flags[pos], 0)
+                    count += int(o['s02_producer_verified'].sum())
+                    del keys
+                mv = memoryview(out_buf)[:n * ROW_SIZE]
+                writer.write_window(lo, n, mv)
+                mv.release()
+                del o, b
+        info['row_size'] = dt.itemsize
+        log(f'EXTENDED {kind} {rows} producer_verified {count}')
+        if kind == 'background_boundary':
+            matches = count
+    if expected is not None and matches != expected:
+        raise AssertionError(f'aggregate match assert failed: {matches} != {expected}')
+    man['extension'] = {
+        'original_dump': str(dump_dir),
+        'side_table': str(side_path),
+        'field': 's02_producer_verified',
+        'method': 'exact group key join; unique actual producer with crossing longest closing edge; all unvisited/mixed/other producers zero',
+        'original_fields_unchanged': True}
+    (dst_dir / 'dump_manifest.json').write_text(json.dumps(man, indent=2))
+    log(f'DONE {dt.itemsize} {matches}')
+    return matches
+
+
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description='Residual byte146 extension with bounded windowed I/O.')
+    ap = argparse.ArgumentParser(description='Bounded dump join / extension adapters.')
+    ap.add_argument('--mode', choices=('residual', 's02'), default='residual')
+    # residual
     ap.add_argument('--src', default=DEFAULT_SRC, help='source dump dir (read-only)')
     ap.add_argument('--side-dir', default=DEFAULT_SIDE, help='dir holding side_<kind>.npy')
     ap.add_argument('--assign-dir', default=DEFAULT_ASSIGN, help='dir holding assign_<kind>.u16')
@@ -341,10 +332,17 @@ def main(argv=None) -> int:
     ap.add_argument('--window-rows', type=int, default=DEFAULT_WINDOW)
     ap.add_argument('--verify', action='store_true', help='after writing, stream-check every byte outside byte146')
     ap.add_argument('--verify-only', action='store_true', help='only stream-check an existing destination')
+    # s02
+    ap.add_argument('--dump', default=S02_DEFAULT_DUMP, help='3-07 source dump dir (144-byte)')
+    ap.add_argument('--side', default=S02_DEFAULT_SIDE, help='3-07 side_background_boundary.npy')
+    ap.add_argument('--s02-dst', default=S02_DEFAULT_DST, help='3-07 destination dump dir')
     a = ap.parse_args(argv)
     try:
-        extend_residual(a.src, a.side_dir, a.assign_dir, a.dst, a.counts, a.window_rows,
-                        verify=a.verify, verify_only=a.verify_only)
+        if a.mode == 's02':
+            extend_s02_producer(a.dump, a.side, a.s02_dst, a.window_rows)
+        else:
+            extend_residual(a.src, a.side_dir, a.assign_dir, a.dst, a.counts, a.window_rows,
+                            verify=a.verify, verify_only=a.verify_only)
     except VerifyError as e:
         print('VERIFY FAILED:', e, file=sys.stderr, flush=True)
         return 1

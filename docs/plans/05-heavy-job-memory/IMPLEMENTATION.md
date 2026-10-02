@@ -63,3 +63,48 @@ Verification: orchestrator measurement under heavy.lock (all PASS, above) plus p
 1. Chunked permutation write (64 Ki rows) is an allowed elaboration of DESIGN's "write the gathered rows without tobytes()": same stable `argsort` permutation and identical bytes, without a second full-size gather array. Needed for a reliable ≥140626 KiB RSS delta under host memory noise.
 2. Stable-order observability uses unnamed dtype padding at byte 65, not unique `dcls` (NumPy uses omitted named fields as tie-breakers when `DUMP_ORDER` keys collide).
 3. Flash sandboxed `/proc` intermittently; measurement was run by the orchestrator outside that sandbox (self-measure). Phase 1 residual harness remains the default `bench_dump_memory` entry point.
+
+## Phase 3 — 3-07 extension and triage use the proven storage boundary
+
+### 3-01-dump-io-extract
+
+Flash WIP resumed after infra interrupt on `flash/05-p3-dump-io-window-boundary` @ `37a6b6d`. Finished extraction + consumers + gates; concurrent 3-14 Sol seat shared `output/.heavy.lock` (serial) and did not touch `_cenc.c`.
+
+Built: `parser/kiwiw/dump_io.py` (DEFAULT_WINDOW=65536; sync_file_range/drop/pread/pwrite; `file_rows` rejects zero-row; WindowedReader/Writer; AssignReader/Writer with write-behind); `dump_join.py` residual refactored onto dump_io + `extend_s02_producer` (stable side sort, 144→152 rebuild, scope/cast/aggregate assert); `k1_triage.py` windowed summary/classify/enumerate + `_own_key` for retained aggregation keys; `bench_dump_memory.py` `s07-run` / `triage-run`; vendored `extend_3_07_baseline/` + `k1_triage_baseline/`; tests `test_extend_s02_memory.py` + window/key-ownership/high-card cases in `test_k1_triage.py`; inventory + provenance scratch-5-03. Scratch `output/scratch-3-07/extend_dump_attempt3.py` is a thin wrapper (gitignored under `output/`).
+
+Deviations:
+1. Triage enumerate growth initially reused the 1M classify assign against the 2M fixture (AssignReader length check correctly failed). Fixed by a separate `enum-growth-prep` classify on the growth fixture; re-run PASS.
+2. High-cardinality peak≤baseline gate covered by unit-level late-first / window-straddle identity (`test_high_cardinality_late_first_identical`); full 1M high-card RSS pair not added (disk ~12G free, serial with 3-14). Fixed-cardinality 1M triage RSS gates already hold at ≤0.36 peak.
+
+Tests: `34 passed` (`test_dump_join_memory`, `test_k1_triage`, `test_perf_inventory`, `test_extend_s02_memory`); fixture `sha256sum -c` OK.
+
+Measured 3-07 (`s07-run`, 1,000,013 rows 144→152; results `output/scratch-5-03/s07_results.json`):
+
+| pair | rss cand/base | peak cand/base | SHA |
+|---:|---:|---:|---|
+| 0 | 0.208 | 0.320 | equal |
+| 1 | 0.207 | 0.323 | equal |
+| 2 | 0.208 | 0.322 | equal |
+
+Growth (2M vs median 1M cand): +176 KiB RSS, −172 KiB peak (bound 18,944); wall_ok; controller PASS.
+
+Measured triage (`triage-run` after growth-assign fix; `output/scratch-5-03/triage_results.json`):
+
+| cmd | pair rss ratios | pair peak ratios | growth ΔRSS/Δpeak KiB (bound 9,728) |
+|---|---|---|---|
+| summary | 0.176 / 0.185 / 0.178 | 0.210 / 0.210 / 0.210 | +616 / +784 |
+| classify | 0.192 / 0.191 / 0.192 | 0.283 / 0.287 / 0.285 | +60 / +592 |
+| enumerate | 0.208 / 0.209 / 0.208 | 0.360 / 0.357 / 0.354 | −308 / −952 |
+
+All pairs SHA-equal; wall_ok; controller PASS. Phase-1 residual re-check under heavy.lock (`results_p3_recheck.json`): RSS ratios 0.176/0.175/0.181, peak 0.260/0.260/0.258, SHA equal ×3, growth +8 KiB RSS / +10,192 KiB peak (bound 19,456), wall 0.309; EXIT 0.
+
+### Phase 3 close
+
+Verification: pytest 34 pass + s07_controller PASS + triage_controller PASS + residual re-check. Outcome (dump_io boundary; 3-07 + triage byte identity; ≤50% max RSS and memory.peak on 1M fixtures; growth gates; Phase 1 gates still hold) holds.
+
+**Carried**
+1. High-cardinality triage peak≤baseline at 1M rows not separately measured; unit artifact identity across windows + fixed-cardinality 50% gates stand in. Revisit if a high-card RSS regression is suspected.
+2. Scratch `extend_dump_attempt3.py` wrapper lives under gitignored `output/`; tracked adapter is `dump_join.extend_s02_producer`.
+3. Host disk stayed ~96–98% full; scratch fixtures deleted after measurement; share `output/.heavy.lock` with plan04 3-14.
+
+Workflow-Phase: 05-heavy-job-memory:3

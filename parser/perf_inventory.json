@@ -254,6 +254,12 @@
    "reason": "imports decode_parcel; AllData opener used by R-replicate path and research scripts; re-pointed at D1 or retired in Phase 5"
   },
   {
+   "path": "parser/kiwiw/dump_io.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "offline dump window I/O helper; pread/pwrite write-behind, no per-row Python loop"
+  },
+  {
    "path": "parser/kiwiw/frame_table.py",
    "class": "orchestration",
    "phase": null,
