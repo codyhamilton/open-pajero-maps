@@ -149,6 +149,80 @@ round-trip regression, capacity). Definitions are in `docs/design/target-disc.md
 regenerates `docs/schema/UNKNOWNS.md`. A stage that learns a format fact updates the row it
 touches in the same change.
 
+
+## Bounded dump I/O and heavy-job memory
+
+Offline dump transforms and triage readers that once whole-file `memmap`'d or
+`copyfile`'d multi-GiB kinds now share a storage boundary. This is an analysis /
+scratch-path change; the full-Australia deliverable, schema facts, build oracle,
+C-first kernel boundary, and plan04 PSS gates are unchanged.
+
+### Shared window boundary
+
+`parser/kiwiw/dump_io.py` owns window lifetimes only (no C layout declarations,
+no per-row Python kernels):
+
+- Default window **65,536** rows. Changing the window leaves bytes and aggregates
+  identical.
+- At most one bounded source, destination, and assignment window at a time.
+  Release every derived view before closing or reusing a window. Slicing a
+  whole-file mapping is **not** a window; flushing an entire mapping is **not**
+  a residency bound.
+- Write-behind: on each completed destination window start writeback
+  (`sync_file_range`) and drop windows already written back from the page cache
+  (`posix_fadvise(DONTNEED)`), and drop consumed source windows the same way.
+  Output bytes and final durability (fsync / close) are unchanged; dirty and
+  cached output stay near a few windows instead of the whole file.
+- Validate row size, field offsets, complete-row file length (and assignment
+  length where applicable) before writing. Zero-length mapped kinds remain
+  rejected.
+
+Transformation-specific adapters keep their own join / padding / aggregation
+policy: residual byte146 and 3-07 144→152 rebuild in `parser/tools/dump_join.py`;
+`summary` / `classify` / `enumerate` in `parser/tools/k1_triage.py`. Side indexes
+scale with side-table rows; triage retained aggregation keys must own independent
+storage (no structured scalar into a unique-array buffer). Report group / source /
+pair cardinalities separately — triage RSS is **not** cardinality-independent.
+
+### Why RSS alone was the wrong story (oomd)
+
+Host kills observed in this work were **systemd-oomd** pressure kills on
+`user@*.service` (PSI above threshold with reclaim activity), not always the
+kernel OOM killer selecting the heaviest RSS process. A heavy job hurts the
+session two ways: its own resident set, and file pages it dirties or keeps hot
+even when they are not mapped. Sibling scopes (terminals, browsers) can die
+first.
+
+Whole-file patterns that drove that pressure:
+
+- `shutil.copyfile` of a ~2.34 GiB dump leaves dirty page cache **outside**
+  process RSS.
+- A whole-file read-write `np.memmap` that touches every row keeps touched pages
+  in the process page tables across the scan (RSS grows with the file) and keeps
+  the destination hot.
+- Holding multiple full arrays (K1 `_finalize_dump` concatenating parts, then
+  `tobytes()` of the sorted rows) creates a multi-GiB anonymous spike after the
+  plan04 PSS sampler has already stopped.
+
+Measurement therefore gates **both** max RSS (KiB) and the worker's cgroup v2
+`memory.peak`, records `memory.stat` (`anon`, `file`, `file_dirty`,
+`file_writeback`) and pressure totals, and runs each worker in a fresh
+`systemd-run --user --scope -p MemoryAccounting=yes` process. Operational lock,
+commands, and metric guidance: `docs/WORKFLOW.md` (Heavy jobs).
+
+### Deferred: out-of-core dump finalizer
+
+Phase 2 removed the redundant full-array copies from
+`parser/tools/quantisation_roundtrip.py` `_finalize_dump` (preallocate +
+`readinto`, release parts as consumed, stable `argsort(order=DUMP_ORDER)`,
+chunked write by permutation — no `tobytes()` of the full sorted array). Bytes,
+canonical order, manifest, counts, and part deletion are unchanged.
+
+An **external-sort / out-of-core** rewrite of `_finalize_dump` remains a **known
+limitation**, not live plan work. Peak anonymous memory for finalization still
+scales with one full in-memory kind array. Do not treat Phase 2 as a bound on
+arbitrarily large kinds without further design.
+
 ## Open questions
 
 `docs/schema/UNKNOWNS.md` indexes every row that is not `verified`. Open items are grouped by

@@ -108,3 +108,57 @@ Verification: pytest 34 pass + s07_controller PASS + triage_controller PASS + re
 3. Host disk stayed ~96–98% full; scratch fixtures deleted after measurement; share `output/.heavy.lock` with plan04 3-14.
 
 Workflow-Phase: 05-heavy-job-memory:3
+
+## Phase 4 — Heavy-job commands reproduce the memory proof serially
+
+### 4-01-heavy-job-docs
+
+Docs-only unit (Maps Execute). Brief authored first @ `f040c7f`
+(`Workflow-Phase: 05-heavy-job-memory:4-brief`).
+
+Built:
+
+- `docs/WORKFLOW.md` — "Heavy jobs (memory)": repo-root lock
+  `output/.heavy.lock`, one-worker serial rule, recommended
+  `systemd-run --user --scope -p MemoryAccounting=yes` wrapper (optional
+  `MemoryHigh=`; no machine-wide cap), bounded reproduce commands for residual /
+  `finalize-run` / `s07-run` / `triage-run`, KiB RSS vs `memory.peak`
+  interpretation, fixture SHA pointers, Phase 1–3 peak summary + limitations.
+- `docs/ARCHITECTURE.md` — "Bounded dump I/O and heavy-job memory":
+  `dump_io` window / write-behind / view-lifetime contract; adapter ownership;
+  oomd pressure failure mode vs whole-file mmap/`copyfile`/multi-array
+  finalizer; side/group cardinality accounting; deferred out-of-core
+  `_finalize_dump` as a known limitation. Build, kernel, and plan04 PSS
+  contracts left intact.
+- No harness change (documented command strings already match
+  `bench_dump_memory.py`).
+
+Verification:
+
+| Check | Result |
+|---|---|
+| `pytest` dump_join / extend_s02 / k1_triage / perf_inventory | 34 passed |
+| Vendored `dump_join_baseline` + `finalize_dump_baseline` `sha256sum -c` | OK |
+| `flock -n output/.heavy.lock true` while plan04 3-14 held lock | exit 1 |
+| Self-held lock then non-blocking probe / probe after release | `probe_while_self_held_exit=1`, `probe_after_release_exit=0` (log `output/scratch-5-01/lock_probe.log`, AEST 06:10) |
+| Full residual controller (documented WORKFLOW command) | **PASS** exit 0 under `flock` → `output/scratch-5-01/phase4_residual_results.json` (RSS ratios ≈0.18, peak ≈0.26–0.27, SHA equal ×3, growth/wall/verify PASS). Fixtures deleted after. |
+| Finalize / s07 / triage controller re-run | **skipped** (disk ~96%; Phase 2–3 already PASS'd with the same documented commands). |
+
+### Phase 4 close
+
+Outcome (stable docs: one lock path, recommended scope wrapper, one-worker
+commands, RSS vs `memory.peak`, provenance + measured peaks + limitations,
+lock-probe fail-while-held / succeed-after, oomd/mmap/dirty/view/side/group +
+deferred out-of-core finalizer; build/kernel/PSS intact) holds for the
+documentation surface. Residual documented command re-run under flock PASS'd after 3-14
+released; finalize/s07/triage left to prior Phase 2–3 evidence (disk).
+
+**Carried**
+
+1. Finalize / s07 / triage controllers not re-run in Phase 4 (disk); residual
+   documented command re-verified PASS. Parent may re-run the others serially.
+2. High-cardinality triage 1M RSS pair and out-of-core finalizer remain as in
+   Phase 3 / DESIGN (not Phase 4 scope).
+3. Plan close-out / `Workflow-Phase: …:done` not run here — parent decides.
+
+Workflow-Phase: 05-heavy-job-memory:4
