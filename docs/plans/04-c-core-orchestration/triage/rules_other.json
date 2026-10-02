@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "O01",
+      "cause": "checker",
+      "kind": "completeness",
+      "where": [
+        [
+          "other_mechanism",
+          "==",
+          4
+        ]
+      ],
+      "note": "All meeting sources have zero bbox width/height, zero area, and no interior. K1 completeness(b) demands a polygon solely from a deep vertex; absence is valid. All-level source audit; side_completeness.npy; 363 rows."
+    },
+    {
+      "id": "O02",
+      "cause": "spool",
+      "kind": "interior_cover",
+      "where": [
+        [
+          "other_mechanism",
+          "==",
+          1
+        ]
+      ],
+      "note": "Unique byte-exact original source producer, explicitly closed ring with longest closing edge properly crossing its outline, outside actual leaf centre. Reuses witnessed 3-07 crossing-removal mechanism and G-gated short-ring counterfactual; 821 rows, 758 source rings; side_interior_cover.npy."
+    },
+    {
+      "id": "O03",
+      "cause": "spool",
+      "kind": "name_anchor",
+      "where": [
+        [
+          "other_mechanism",
+          "==",
+          6
+        ]
+      ],
+      "note": "Extractor assigns lon 77.51903576666666 to L0 cell 0,541; documented encoder clamp gives lon 90. Original G frame byte gate passes; remove only that name -> 1 to0 failure. Name source record 0; side_name_anchor.npy."
+    },
+    {
+      "id": "O04",
+      "cause": "spool",
+      "kind": "completeness",
+      "where": [
+        [
+          "other_mechanism",
+          "==",
+          7
+        ]
+      ],
+      "note": "Every meeting source is an identified crossing-closing ring; original direct C clip emits nothing, deleting the penultimate vertex removes crossings and eliminates required-but-missing mismatch. 56 rows,six source rings. Full-window G byte gate 12/12 and counterfactual restores both target cells; side_completeness.npy."
+    },
+    {
+      "id": "O05",
+      "cause": "checker",
+      "kind": "completeness",
+      "where": [
+        [
+          "other_mechanism",
+          "==",
+          5
+        ]
+      ],
+      "note": "Well-formed source rings, independent clip/densify/round produces zero area, unchanged C clip likewise emits nothing. Requirement ignores cell-local quantisation collapse; absent piece is valid under build clip rule. All 132 groups witnessed; side_completeness.npy."
+    },
+    {
+      "id": "O06",
+      "cause": "build",
+      "kind": "completeness",
+      "where": [
+        [
+          "other_mechanism",
+          "==",
+          8
+        ]
+      ],
+      "note": "12-bit background unit count wraps: G physically contains exact original source-produced records beyond declared count, so decoders miss the required type. All 13 rows byte-verified in nine cells. Counterfactual removes 32 unrelated type288 records, preserves all type321 sources, crosses format limit; side_completeness.npy."
+    }
+  ]
+}
