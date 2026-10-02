@@ -220,6 +220,8 @@ Rules that apply to every phase's evidence:
 - Approach: known. Per-window mappings or `pread`/`pwrite`, view lifetime control, write-behind with cache drop, no whole-file copy, and no production assertions. Keep the existing key join and sort call.
 - Depends on: nothing. Baseline vendoring and measurement belong to this phase, not to a preliminary phase that would delay the first cut.
 - Refine: skipped. One worker carries the local transformation and its evidence.
+- Units:
+  - `briefs/1-01-extend-residual-bounded-io.md` — single unit, no parallel units.
 
 ### Phase 2 — K1 dump finalizer drops redundant full copies
 
