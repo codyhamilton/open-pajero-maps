@@ -436,11 +436,7 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
   `geometry_distributions.py`, `audit_assignments.py`, `write_report.py`.
   Script paths here are all under scratch-3-12. Build workers1/4; K1/harness
   never beyond6; one heavy job at a time. All writes stay in the repository.
-- **Consumer/status:** `triage/causes_residual.md`, fix-unit author and
-  mandatory Sonnet 5.5 reviewer. Review is outstanding after a 35-second local
-  model-availability timeout and a 90-second concrete review request timeout
-  (`review/request_result.json`); no independent reviewer acceptance is claimed.
-  Outputs are regenerable large evidence, gitignored; no commit or code fix.
+- **Consumer/status:** `triage/causes_residual.md` (historical), fix-unit authors, and 3-13. Independent review of 3-12 is in `triage/review_3-12.md` (ACCEPT-WITH-CONDITIONS A–D). Follow-up Conditions A–C closed under 3-13 (`causes_rootcause.md` / `review_3-13.md`); Condition D keeps the 9,064 unattributed. Outputs are regenerable large evidence, gitignored; no commit or code fix from 3-12 alone.
 
 ### output/scratch-5-01/ (plan 05 Phase 1 memory evidence, not committed)
 

@@ -39,13 +39,13 @@ are of each fact, is in `docs/schema/`.
 
 | Package | Scope | State |
 |---|---|---|
-| WP1 | Map layer (`ALLDATA.KWI`) and the evaluation harness | Built (plan 01); parity gaps being remediated (plan 03) |
+| WP1 | Map layer (`ALLDATA.KWI`) and the evaluation harness | Built (plan 01); perf (plan 02 done). Live SoT is plan **04** C-core (Phases 1–2 closed: D1/K1 + PSS/budgets; Phase 3 K1 triage / build-fix open — unit 3-14) and plan **05** heavy-job memory (**CLOSED** — record `docs/plans/05-heavy-job-memory.md`). Plan **03** remaining phases are frozen until 04 Phase 6 (C-first successor). |
 | WP2 | Route planning frames and ext frames | Not started; first-pass writer exists |
 | WP3 | Address and POI search | Not started |
 | WP4 | Remaining `IDX/` families, `HWMAP`, `INDEXDAT` | Not started; bodies undecoded |
 | WP5 | Disc stamp, coverage, image authoring, burn | Not started |
 
-Build time for the map layer is about 32 s at `-j 12` (plan 02).
+Full map-layer build is about **12.2 s** median at `-j 12` (3C close / plan 04 evidence; earlier plan-02 ~32 s is historical). Heavy K1/triage jobs use `flock output/.heavy.lock` and are not that wall.
 
 ## Where to read next
 
@@ -55,7 +55,7 @@ Build time for the map layer is about 32 s at `-j 12` (plan 02).
 | How is the code organised? | `docs/ARCHITECTURE.md` |
 | What are we building and how is it judged? | `docs/design/target-disc.md` |
 | How do we run the workflow plugin (design → execute → close)? | `docs/WORKFLOW.md` |
-| What is being changed now? | `docs/plans/03-map-layer-parity-remediation/` |
+| What is being changed now? | `docs/plans/04-c-core-orchestration/` (Phase 3 triage / 3-14) and the closed record `docs/plans/05-heavy-job-memory.md`. Plan 03 folder remains historical / frozen successor work. |
 | What was built before? | `docs/plans/01-…md`, `docs/plans/02-…md` |
 | Where did each non-committed file come from? | `docs/provenance.md` |
 

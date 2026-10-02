@@ -48,7 +48,7 @@ any module missing from it. Extraction stays Python (plan 04 Decision 9).
 | Tools | `tools/lint_schema.py`, `bench_build.py`, `convert_spool.py`, `parcel_occupancy.py` | Schema lint, benchmarking, spool conversion |
 | Tests | `tests/` | Boundary tests (decode what E2 wrote), the C unit-test binary, committed goldens, round-trip and harness tests. No Python encoder exists to compare C against |
 
-The map describes the tree as it is today. Plan 04 Phases 2-5 change it (C decoder and checker, census kernels, Python decoders deleted); Phase 5 makes the map true again.
+Plan 04 Phase 2 landed the C decoder (**D1**) and checker (**K1**); Phases 3–5 still change the tree (triage → census kernels → Python decoder retirement). Phase 5 makes this module map true again for the post-migration layout.
 
 ## Stage contracts
 

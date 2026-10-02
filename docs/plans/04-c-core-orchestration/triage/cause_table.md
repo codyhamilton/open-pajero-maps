@@ -1,3 +1,5 @@
+> **SUPERSEDED for residual / O06 SoT (Quality 2026-10-03).** This file is frozen at **3-08** counts (old disc / pre-`G_new`). For new-disc residual attribution, PARTITION state, and crossing-ring follow-up, use **[`causes_residual.md`](causes_residual.md)** + 3-11 execute record in `IMPLEMENTATION.md` + [`review_3-12.md`](review_3-12.md). For root-cause / S02–S05→build, use **3-13** ([`causes_rootcause.md`](causes_rootcause.md), [`review_3-13.md`](review_3-13.md)) and live [`rules_bg.json`](rules_bg.json). O06 (count-wrap build, 13 rows) still lives in the table below as the 3-08 attribution; do not treat the header totals as live residual SoT.
+
 All five kinds: checker 921,268; build 13; spool 1,939,931; unattributed 15,128,492; total 17,989,704. Pin stop retired; S02 carried as one rule (see Carried). Open: count-wrap build fix unit and re-oracle scope.
 
 # 3-08 — partial consolidated cause table
