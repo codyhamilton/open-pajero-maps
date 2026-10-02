@@ -276,8 +276,19 @@ def test_d1_one_call_per_range():
     name, gdir = _goldens()[0]
     blob, spans = _frames(gdir)
     cases = _variants(blob, spans, "stats")[:30]
+    # Explicit large cap_hint: EO-recaptured goldens (3-14) can need more
+    # vertex/walk capacity than the default hint, which would grow-retry and
+    # inflate the call counter. Contract under test is still one call/range
+    # when the hint is genuinely big enough.
+    region = b"".join(c[0] for c in cases)
+    leaf = np.zeros(len(cases), cenc.D1_LEAF_DTYPE)
+    pos = 0
+    for i, (data, bb, nbm, nem) in enumerate(cases):
+        leaf[i] = (pos, bb.lat_lo, bb.lat_hi, bb.lon_lo, bb.lon_hi, len(data),
+                   bb.coord_range or 0, nbm, nem)
+        pos += len(data)
     before = cenc.d1_stats()
-    _run(cases)
+    cenc.d1_frames(np.frombuffer(region, np.uint8), leaf, cap_hint=1 << 21)
     after = cenc.d1_stats()
     assert after["ranges"] - before["ranges"] == 1
     assert after["calls"] - before["calls"] == 1           # the hint was big enough

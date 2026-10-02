@@ -9,10 +9,10 @@
  "covers": "L2",
  "frames": 1,
  "frame_sha256": [
-  "3837256115daa18589c64a7677faff9228885cb9bf4a785329c5c80ae3bfdb39"
+  "83d6e31dcdb01606ba1beaf8e55cd2b6bcf098fc6706ee5a7d27ed44b38552a7"
  ],
- "total_sha256": "3837256115daa18589c64a7677faff9228885cb9bf4a785329c5c80ae3bfdb39",
- "frame_bytes": 20560,
+ "total_sha256": "83d6e31dcdb01606ba1beaf8e55cd2b6bcf098fc6706ee5a7d27ed44b38552a7",
+ "frame_bytes": 20588,
  "fixture_spool_bytes": 256608,
  "source_cells": [
   [

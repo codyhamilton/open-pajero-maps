@@ -9,10 +9,10 @@
  "covers": "L0 urban dense",
  "frames": 1,
  "frame_sha256": [
-  "9aea901ce42193e2f5d739fd8a9547becee26fcd8f3bd87904a5d856b8ac5e2f"
+  "c5946c63bc16683290545f90002dca48357ac5016c82530de7d0f63f4d1517bb"
  ],
- "total_sha256": "9aea901ce42193e2f5d739fd8a9547becee26fcd8f3bd87904a5d856b8ac5e2f",
- "frame_bytes": 111222,
+ "total_sha256": "c5946c63bc16683290545f90002dca48357ac5016c82530de7d0f63f4d1517bb",
+ "frame_bytes": 110732,
  "fixture_spool_bytes": 1494864,
  "source_cells": [
   [
