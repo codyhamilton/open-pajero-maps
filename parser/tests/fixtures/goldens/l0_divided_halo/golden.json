@@ -9,13 +9,13 @@
  "covers": "divided L0 parent with name halo",
  "frames": 4,
  "frame_sha256": [
-  "ab8f99e8e840fa95c99eb9e63255dd3615db90936c99e3e5005919460ba00e66",
-  "072fa658ab8aba66d3cb5ab34fd40420572e2e1076cbdbcc1c3ddfbb4b3d176c",
-  "88fa6bd32a1e9bc36328c671e445be5661ebbb797d6d610ca3b2f9a8d706bed2",
-  "d102a03d95cd20b4b57cc31edeeefc80ba24ffb5a8bd6d0c40472c6f8c5c4c96"
+  "4a8382b019eb8e4a944c8de10fb8a9d99b1522aebc8518764f24cf8b9be10893",
+  "03d4268dae56afb83f6398203f24366d40f47293b73971d664aba00da33a6175",
+  "4fcac52a949aade6aef59b3eb7eec74407127bbd0d49854c3fecb805ea20d718",
+  "8f428aed02ed319b069286f39bdf3468a32dfaa40e51d170a13121a29ba6fdfb"
  ],
- "total_sha256": "874e20d43c7a0a0c253cdb5b2f00d6fbc150b9b7411516ca25c19a0a52326342",
- "frame_bytes": 160432,
+ "total_sha256": "64bab429468ff06a70f6a94d278dc15185ded90ecee9339c381f795eb7f46497",
+ "frame_bytes": 160268,
  "fixture_spool_bytes": 1880928,
  "source_cells": [
   [

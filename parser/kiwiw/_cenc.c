@@ -21,6 +21,7 @@
  * round().
  */
 #include <math.h>
+#include <float.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -602,6 +603,295 @@ static int emit_piece(Emit *e, const Pt *pts, int64_t n) {
     return write_record(e, qx, qy, q, e->mc, e->mult_exp);
 }
 
+/* 3-14: arrangement of the clipped ORIGINAL per-ring even-odd boundary.
+ * The rectangle closes faces, not source-chain order. Intersections share a
+ * vertex; coincident source edges cancel modulo two. Separate source rings
+ * still emit separately (their regions are ORed by the reader/checker).
+ * Ordinary, locally CCW chains retain the legacy bytes. All scratch is TLS
+ * because E2's division probes and final emission use this same entry point. */
+typedef struct { Pt a, b; int64_t first; int frame; } EoSeg;
+typedef struct { long double t; int64_t v, next; } EoCut;
+typedef struct { int64_t a, b; int parity, frame; } EoEdge;
+typedef struct { int64_t a, b, next; double angle; int used; } EoHalf;
+static __thread EoSeg *g_es;
+static __thread EoCut *g_ec;
+static __thread EoEdge *g_ee;
+static __thread EoHalf *g_eh;
+static __thread Pt *g_ev;
+static __thread int64_t *g_ei, *g_ep;
+static __thread int64_t g_es_cap, g_ec_cap, g_ee_cap, g_eh_cap, g_ev_cap, g_ei_cap, g_ep_cap;
+static __thread int64_t g_es_n, g_ec_n, g_ee_n, g_ev_n;
+
+static long double eo_cross(long double ax, long double ay, long double bx, long double by) {
+    return ax * by - ay * bx;
+}
+static int eo_pip(long double x, long double y, int64_t n) {
+    int odd = 0;
+    for (int64_t i = 0, j = n - 1; i < n; j = i++) {
+        long double ax = g_fx[i], ay = g_fy[i], bx = g_fx[j], by = g_fy[j];
+        if ((ay > y) != (by > y) && x < ax + (y - ay) / (by - ay) * (bx - ax)) odd ^= 1;
+    }
+    return odd;
+}
+/* A side point stays closer to this atomic edge than to any non-coincident
+ * original edge. Long-double queries avoid rounding a narrow face's sample
+ * back onto its edge. No wire/checker tolerance is used for classification. */
+static int eo_left(Pt a, Pt b, int64_t n) {
+    long double x = ((long double)a.x + b.x) / 2, y = ((long double)a.y + b.y) / 2;
+    long double dx = (long double)b.x - a.x, dy = (long double)b.y - a.y;
+    long double length = hypotl(dx, dy), step = fminl(1e-4L, length / 16);
+    if (!length) return 0;
+    for (int64_t i = 0; i < n; i++) {
+        int64_t j = (i + 1) % n;
+        long double ux = (long double)g_fx[j] - g_fx[i], uy = (long double)g_fy[j] - g_fy[i];
+        long double vx = x - g_fx[i], vy = y - g_fy[i], l2 = ux * ux + uy * uy;
+        long double t = l2 ? fmaxl(0, fminl(1, (vx * ux + vy * uy) / l2)) : 0;
+        long double d = hypotl(vx - t * ux, vy - t * uy);
+        /* Atomic endpoints were rounded from long-double intersections.
+         * A short fragment can amplify its direction's relative error even
+         * though it lies on the original edge. Do not let that support edge
+         * shrink the sample to below floating resolution. Use coordinate
+         * evaluation noise, never the wire/checker half-unit tolerance. */
+        long double scale = fmaxl(1,fmaxl(fabsl(x),fabsl(y)));
+        scale = fmaxl(scale,fmaxl(fabsl(g_fx[i]),fabsl(g_fy[i])));
+        scale = fmaxl(scale,fmaxl(fabsl(g_fx[j]),fabsl(g_fy[j])));
+        if (d <= 128 * DBL_EPSILON * scale) continue;
+        if (d > 0) step = fminl(step, d / 4);
+    }
+    return eo_pip(x - dy / length * step, y + dx / length * step, n);
+}
+
+static int eo_seg_cmp(const void *aa, const void *bb) {
+    const EoSeg *a = aa, *b = bb;
+    double ax = fmin(a->a.x, a->b.x), bx = fmin(b->a.x, b->b.x);
+    if (ax != bx) return ax < bx ? -1 : 1;
+    double ay = fmin(a->a.y, a->b.y), by = fmin(b->a.y, b->b.y);
+    return ay < by ? -1 : ay > by;
+}
+static int64_t eo_vertex(Pt p, const double *R) {
+    /* Merge only floating evaluation noise at a shared intersection. This
+     * scale is many orders below half a raw unit and never snaps to lattice. */
+    double eps = 32 * DBL_EPSILON * fmax(1, fmax(fabs(R[2]), fabs(R[3])));
+    for (int64_t i = 0; i < g_ev_n; i++)
+        if (fabs(g_ev[i].x - p.x) <= eps && fabs(g_ev[i].y - p.y) <= eps) return i;
+    if (grow((void **)&g_ev, &g_ev_cap, g_ev_n + 1, sizeof(Pt))) return -1;
+    g_ev[g_ev_n] = p;
+    return g_ev_n++;
+}
+static int eo_cut(int64_t s, long double t, int64_t v) {
+    if (grow((void **)&g_ec, &g_ec_cap, g_ec_n + 1, sizeof(EoCut))) return -1;
+    g_ec[g_ec_n] = (EoCut){t, v, g_es[s].first};
+    g_es[s].first = g_ec_n++;
+    return 0;
+}
+static long double eo_param(Pt p, EoSeg s) {
+    long double dx = (long double)s.b.x - s.a.x, dy = (long double)s.b.y - s.a.y;
+    return fabsl(dx) >= fabsl(dy) ? ((long double)p.x - s.a.x) / dx : ((long double)p.y - s.a.y) / dy;
+}
+/* Returns 1 for a nontrivial intersection/overlap, 0 for disjoint edges or
+ * a shared endpoint. In split mode, insert the SAME vertex in both edges. */
+static int eo_intersect(int64_t i, int64_t j, int split, const double *R) {
+    EoSeg a = g_es[i], b = g_es[j];
+    if (fmax(a.a.x,a.b.x) < fmin(b.a.x,b.b.x) || fmax(b.a.x,b.b.x) < fmin(a.a.x,a.b.x) ||
+        fmax(a.a.y,a.b.y) < fmin(b.a.y,b.b.y) || fmax(b.a.y,b.b.y) < fmin(a.a.y,a.b.y)) return 0;
+    long double ax = (long double)a.b.x - a.a.x, ay = (long double)a.b.y - a.a.y;
+    long double bx = (long double)b.b.x - b.a.x, by = (long double)b.b.y - b.a.y;
+    long double qx = (long double)b.a.x - a.a.x, qy = (long double)b.a.y - a.a.y;
+    long double den = eo_cross(ax, ay, bx, by);
+    if (den) {
+        long double t = eo_cross(qx,qy,bx,by) / den, u = eo_cross(qx,qy,ax,ay) / den;
+        if (t < 0 || t > 1 || u < 0 || u > 1) return 0;
+        int complex = (t > 0 && t < 1) || (u > 0 && u < 1);
+        if (split) {
+            Pt p = t == 0 ? a.a : t == 1 ? a.b : u == 0 ? b.a : u == 1 ? b.b :
+                (Pt){(double)((long double)a.a.x + t * ax), (double)((long double)a.a.y + t * ay), KO};
+            int64_t v = eo_vertex(p, R);
+            if (v < 0 || eo_cut(i,t,v) || eo_cut(j,u,v)) return -1;
+        }
+        return complex;
+    }
+    if (eo_cross(qx,qy,ax,ay)) return 0;
+    long double t0 = eo_param(b.a,a), t1 = eo_param(b.b,a);
+    int overlap = fmaxl(0,fminl(t0,t1)) < fminl(1,fmaxl(t0,t1));
+    Pt pts[4] = {a.a,a.b,b.a,b.b};
+    for (int k = 0; k < 4; k++) {
+        long double t = eo_param(pts[k],a), u = eo_param(pts[k],b);
+        if (t < 0 || t > 1 || u < 0 || u > 1) continue;
+        if (split) {
+            int64_t v = eo_vertex(pts[k],R);
+            if (v < 0 || eo_cut(i,t,v) || eo_cut(j,u,v)) return -1;
+        }
+    }
+    return overlap;
+}
+static int eo_cut_cmp(const void *aa, const void *bb) {
+    const EoCut *a = aa, *b = bb;
+    return a->t < b->t ? -1 : a->t > b->t;
+}
+static int eo_edge(int64_t a, int64_t b, int frame) {
+    if (a == b) return 0;
+    if (a > b) { int64_t t = a; a = b; b = t; }
+    for (int64_t i = 0; i < g_ee_n; i++) if (g_ee[i].a == a && g_ee[i].b == b) {
+        g_ee[i].frame |= frame;
+        if (!frame) g_ee[i].parity ^= 1;
+        return 0;
+    }
+    if (grow((void **)&g_ee, &g_ee_cap, g_ee_n + 1, sizeof(EoEdge))) return -1;
+    g_ee[g_ee_n++] = (EoEdge){a,b,!frame,frame};
+    return 0;
+}
+static int64_t eo_root(int64_t v) {
+    while (g_ep[v] != v) { g_ep[v] = g_ep[g_ep[v]]; v = g_ep[v]; }
+    return v;
+}
+/* Connect disconnected boundary components by planar horizontal bridges.
+ * DCEL faces then include hole cycles as part of the same weakly-simple
+ * contour. A bridge is visited in both directions and has no EO area. */
+static int eo_connect(const double *R) {
+    for (;;) {
+        if (grow((void **)&g_ep, &g_ep_cap, g_ev_n, sizeof(int64_t))) return -1;
+        for (int64_t i = 0; i < g_ev_n; i++) g_ep[i] = i;
+        for (int64_t i = 0; i < g_ee_n; i++) g_ep[eo_root(g_ee[i].a)] = eo_root(g_ee[i].b);
+        int64_t corner = eo_vertex((Pt){R[0],R[1],KCO},R);
+        if (corner < 0) return -1;
+        int64_t base = eo_root(corner), v = -1;
+        for (int64_t i = 0; i < g_ee_n; i++) {
+            int64_t vs[2] = {g_ee[i].a,g_ee[i].b};
+            for (int k = 0; k < 2; k++) if (eo_root(vs[k]) != base &&
+                (v < 0 || pt_lt(g_ev[vs[k]].x,g_ev[vs[k]].y,g_ev[v].x,g_ev[v].y))) v = vs[k];
+        }
+        if (v < 0) return 0;
+        Pt p = g_ev[v], hit = {0,0,KO}; int64_t edge = -1;
+        for (int64_t i = 0; i < g_ee_n; i++) {
+            EoEdge e = g_ee[i];
+            if (eo_root(e.a) == eo_root(v)) continue;
+            Pt a = g_ev[e.a], b = g_ev[e.b];
+            if (p.y < fmin(a.y,b.y) || p.y > fmax(a.y,b.y)) continue;
+            double x;
+            if (a.y == b.y) {
+                if (p.y != a.y || fmin(a.x,b.x) > p.x) continue;
+                x = fmin(p.x,fmax(a.x,b.x));
+            } else x = (double)((long double)a.x + ((long double)p.y-a.y) / ((long double)b.y-a.y) * ((long double)b.x-a.x));
+            if (x <= p.x && (edge < 0 || x > hit.x)) { edge = i; hit = (Pt){x,p.y,KO}; }
+        }
+        if (edge < 0) return -1; /* rectangle surrounds every component */
+        int64_t h = eo_vertex(hit,R);
+        if (h < 0) return -1;
+        EoEdge e = g_ee[edge];
+        if (h != e.a && h != e.b) {
+            g_ee[edge].b = h;
+            if (grow((void **)&g_ee, &g_ee_cap, g_ee_n+1, sizeof(EoEdge))) return -1;
+            g_ee[g_ee_n++] = (EoEdge){h,e.b,1,0};
+        }
+        if (eo_edge(v,h,0)) return -1;
+    }
+}
+
+/* 0 means the legacy path is safe, 1 means EO faces were emitted, -1 error.
+ * g_por has the clipped source segments from chains(), even for whole rings. */
+static int eo_clip(Emit *e, int64_t n, int64_t m, int whole) {
+    const double *R = e->R;
+    g_es_n = g_ec_n = g_ee_n = g_ev_n = 0;
+    if (grow((void **)&g_es, &g_es_cap, n+4, sizeof(EoSeg))) return -1;
+    for (int64_t i = 0; i < n; i++) if (g_por[i].ok &&
+        (g_por[i].a.x != g_por[i].b.x || g_por[i].a.y != g_por[i].b.y))
+        g_es[g_es_n++] = (EoSeg){g_por[i].a,g_por[i].b,-1,0};
+    qsort(g_es,(size_t)g_es_n,sizeof(EoSeg),eo_seg_cmp);
+    int complex = 0;
+    for (int64_t i = 0; i < g_es_n && !complex; i++)
+        for (int64_t j = i+1; j < g_es_n && fmin(g_es[j].a.x,g_es[j].b.x) <= fmax(g_es[i].a.x,g_es[i].b.x); j++)
+            if (eo_intersect(i,j,0,R)) { complex = 1; break; }
+    if (!complex && !whole) for (int64_t c = 0; c < m; c++) {
+        int64_t a = g_cs[c];
+        if (!eo_left(g_ch[a],g_ch[a+1],n) || eo_left(g_ch[a+1],g_ch[a],n)) { complex = 1; break; }
+    }
+    /* Repeated/touching vertices can connect distinct lobes even when pair
+     * intersections occur only at endpoints (no proper crossing). */
+    if (!complex && whole) {
+        for (int64_t i = 0; i < n && !complex; i++) for (int64_t j = i+1; j < n; j++)
+            if (g_fx[i] == g_fx[j] && g_fy[i] == g_fy[j]) { complex = 1; break; }
+    }
+    /* A legacy successor must form disjoint cycles. Reject ties and reused
+     * successors before writing anything; an early break would add a chord. */
+    if (!complex && m > 0) {
+        double per = 2 * ((R[2]-R[0]) + (R[3]-R[1]));
+        for (int64_t c = 0; c < m; c++) {
+            g_sin[c] = sparam(g_ch[g_cs[c]],R);
+            g_sout[c] = sparam(g_ch[g_cs[c+1]-1],R);
+            g_used[c] = 0;
+        }
+        for (int64_t c = 0; c < m && !complex; c++) {
+            double distance = 0; int64_t best = -1; int tie = 0;
+            for (int64_t k = 0; k < m; k++) {
+                double d = g_sin[k]-g_sout[c];
+                if (d < 0) d += per;
+                if (best < 0 || d < distance) { best = k; distance = d; tie = 0; }
+                else if (d == distance) tie = 1;
+            }
+            if (tie || ++g_used[best] != 1) complex = 1;
+        }
+    }
+    if (!complex) return 0;
+    for (int k = 0; k < 4; k++) {
+        Pt c[4] = {{R[0],R[1],KCO},{R[2],R[1],KCO},{R[2],R[3],KCO},{R[0],R[3],KCO}};
+        g_es[g_es_n++] = (EoSeg){c[k],c[(k+1)%4],-1,1};
+    }
+    qsort(g_es,(size_t)g_es_n,sizeof(EoSeg),eo_seg_cmp);
+    for (int64_t i = 0; i < g_es_n; i++) {
+        int64_t a = eo_vertex(g_es[i].a,R), b = eo_vertex(g_es[i].b,R);
+        if (a < 0 || b < 0 || eo_cut(i,0,a) || eo_cut(i,1,b)) return -1;
+    }
+    for (int64_t i = 0; i < g_es_n; i++)
+        for (int64_t j = i+1; j < g_es_n && fmin(g_es[j].a.x,g_es[j].b.x) <= fmax(g_es[i].a.x,g_es[i].b.x); j++)
+            if (eo_intersect(i,j,1,R) < 0) return -1;
+    EoCut *cuts = NULL; int64_t cap = 0;
+    for (int64_t i = 0; i < g_es_n; i++) {
+        int64_t nc = 0;
+        for (int64_t c = g_es[i].first; c >= 0; c = g_ec[c].next) {
+            if (grow((void **)&cuts,&cap,nc+1,sizeof(EoCut))) { free(cuts); return -1; }
+            cuts[nc++] = g_ec[c];
+        }
+        qsort(cuts,(size_t)nc,sizeof(EoCut),eo_cut_cmp);
+        for (int64_t c = 1; c < nc; c++) if (eo_edge(cuts[c-1].v,cuts[c].v,g_es[i].frame)) { free(cuts); return -1; }
+    }
+    free(cuts);
+    int64_t ne = 0;
+    for (int64_t i = 0; i < g_ee_n; i++) if (g_ee[i].parity || g_ee[i].frame) g_ee[ne++] = g_ee[i];
+    g_ee_n = ne;
+    if (eo_connect(R)) return -1;
+    ne = g_ee_n * 2;
+    if (grow((void **)&g_eh,&g_eh_cap,ne,sizeof(EoHalf)) ||
+        grow((void **)&g_ei,&g_ei_cap,g_ev_n,sizeof(int64_t))) return -1;
+    for (int64_t i = 0; i < g_ev_n; i++) g_ei[i] = -1;
+    for (int64_t i = 0; i < ne; i++) {
+        EoEdge e_ = g_ee[i/2]; int64_t a = i%2 ? e_.b : e_.a, b = i%2 ? e_.a : e_.b;
+        g_eh[i] = (EoHalf){a,b,g_ei[a],atan2(g_ev[b].y-g_ev[a].y,g_ev[b].x-g_ev[a].x),0};
+        g_ei[a] = i;
+    }
+    for (int64_t start = 0; start < ne; start++) {
+        if (g_eh[start].used) continue;
+        int64_t h = start, np = 0; long double area = 0;
+        do {
+            if (g_eh[h].used || np >= ne) return -1; /* never close a partial walk with a chord */
+            g_eh[h].used = 1;
+            Pt a = g_ev[g_eh[h].a], b = g_ev[g_eh[h].b];
+            if (grow((void **)&g_pc,&g_cap_pc,np+1,sizeof(Pt))) return -1;
+            g_pc[np++] = a; area += (long double)a.x*b.y-(long double)b.x*a.y;
+            double reverse = g_eh[h^1].angle, best_angle = 0; int64_t best = -1;
+            for (int64_t k = g_ei[g_eh[h].b]; k >= 0; k = g_eh[k].next) {
+                double turn = reverse - g_eh[k].angle;
+                if (turn <= 0) turn += 2 * M_PI;
+                if (best < 0 || turn < best_angle) { best = k; best_angle = turn; }
+            }
+            if (best < 0) return -1;
+            h = best;
+        } while (h != start);
+        if (np >= 3 && area > 0 && eo_left(g_pc[0],g_pc[1],n))
+            if (emit_piece(e,g_pc,np)) return -1;
+    }
+    return 1;
+}
+
 /* Clip one line/polygon (nc coords at lat[o + k*stride], lon[...]) to bd's
  * rectangle and write its records to out. Returns bytes written (>= 0) and
  * *nrec; -1 on anything odd (the caller defers to Python). */
@@ -643,6 +933,14 @@ static int64_t bg_shape(const uint8_t *lat, const uint8_t *lon, int64_t o, int64
     int inside = 1;
     for (int64_t i = 0; i < n && inside; i++)
         inside = R[0] <= g_fx[i] && g_fx[i] <= R[2] && R[1] <= g_fy[i] && g_fy[i] <= R[3];
+    int whole;
+    int64_t m = chains(n, closed, R, &whole);
+    if (m < 0) return -1;
+    if (closed) {
+        int eo = eo_clip(&e,n,m,whole);
+        if (eo < 0) return -1;
+        if (eo) { *nrec = e.nrec; return e.len; }
+    }
     if (inside) {
         if (grow((void **)&g_pc, &g_cap_pc, n, sizeof(Pt))) return -1;
         for (int64_t i = 0; i < n; i++) { g_pc[i].x = g_fx[i]; g_pc[i].y = g_fy[i]; g_pc[i].k = KO; }
@@ -650,9 +948,6 @@ static int64_t bg_shape(const uint8_t *lat, const uint8_t *lon, int64_t o, int64
         *nrec = e.nrec;
         return e.len;
     }
-    int whole;
-    int64_t m = chains(n, closed, R, &whole);
-    if (m < 0) return -1;
     if (!closed) {
         for (int64_t c = 0; c < m; c++)
             if (emit_piece(&e, g_ch + g_cs[c], g_cs[c + 1] - g_cs[c])) return -1;
@@ -703,7 +998,8 @@ static int64_t bg_shape(const uint8_t *lat, const uint8_t *lon, int64_t o, int64
                     }
                 }
                 for (int j = 0; j < ni; j++) g_pc[np++] = corners[idx[j]];
-                if (best == c0 || g_used[best]) break;
+                if (best == c0) break;
+                if (best < 0 || g_used[best]) return -1;
                 c = best;
             }
             if (emit_piece(&e, g_pc, np)) return -1;
