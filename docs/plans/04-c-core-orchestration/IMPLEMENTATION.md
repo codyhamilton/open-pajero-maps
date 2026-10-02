@@ -234,3 +234,17 @@ TRIM / finish_gates (Design ruling 2026-10-03 — measurement story):
 
 Deviations / carry (not land-blockers): completeness **+37** / name_anchor **+1** (Design carry); dump_join isolation false-negative in this worktree only; 7 AU / 3 Perth cells inference-only; classify mmap caveat; CHM adversarial MED items (inference labels, AU∩Perth cell overlap, EO edge residuals) disclosed, not blockers. No tolerance loosened, no spool pin, no live `extend.py` semantics change. Report: `output/CHM-3-14-report.md` (git-ignored). **Landed** `414c5fe` (merge PR #2) after Design TRIM ruling + L8 baseline unchanged.
 
+### 3-15 Completeness remainder: cell-local representability (Science; no land-blocker)
+
+Brief [briefs/3-15-completeness-cell-local.md](briefs/3-15-completeness-cell-local.md), base `adfbdbd` (3-14 `414c5fe`). Scratch `output/scratch-3-15/`; full note [triage/completeness_3-15_cell_local.md](triage/completeness_3-15_cell_local.md). No S02–S05 predicate edited, no tolerance loosened, no L8 expansion, no rule registered.
+
+C1–C4: C1 tip contains 3-14; AU `4ed9cd80…` / Perth `04be2f6e…`. C2 188-key list + both dumps located; **776 and net +37 confirmed, but the key set-diff is 687 shared + 89 added + 52 cleared (739 − 52 + 89 = 776), not a 37-key superset** — corrects the §3-14 carry wording. C3 O01/O04/O05 load; empty-residual-dump mmap caveat unchanged. C4 baseline completeness **776**, name_anchor **1**, S02–S05 **0** (`k1_full`). 9,064 unattributed not re-claimed.
+
+Complete topology repair (3-13 `split.decompose` even-odd faces) over the historic 188: 885 faces / 189 meets, 205 clip into cell, **0 representable** (0 non-zero quantised area2, 0 C records); sub-unit-width slivers. Disposition **`checker:repaired-not-representable` ×188** (supersedes the 3-08 one-coordinate-repair stop).
+
++37 disposition (contract comparison legacy vs 3-14 stitch): **89 added = all legacy-records>0 → stitch-records==0 = EO-stitch side-effect (build regression)**; **52 cleared = stitch-records>0 = EO-stitch side-effect (now satisfied)**; historic 188 unchanged (checker). Not byte-pinned per cell (no window CF); contract-level.
+
+Recount on the 3-14 disc (stitch contract): **776 = O01 363 + O05 132 + O04 7 + unattributed 274**, remainder 0 (shared 687 `{363,132,4,188}` + added 89 `{O04 3, unattributed 86}`). Legacy-contract recomputation reproduces pre 739 `{O01 363, O05 132, O04 56, unattributed 188}`. The 3-14 dump's `other_mechanism` bytes are inherited/forced-zero artifacts (30 O05 + 1 O04 zeroed on changed cells); the recomputed tally is used. No absorption into O01/O04/O05.
+
+Build-fix gate: **not passed** — no original-spool byte-gate/window CF and no Design amendment, so only the honesty packet is delivered. Candidate rule O07 recorded in the triage note, not registered. Deviations: actual 89/52 churn vs documented +37 superset; dump mechanism bytes untrustworthy; no full-AU rebuild (13G disk). Status `done with concerns`.
+
