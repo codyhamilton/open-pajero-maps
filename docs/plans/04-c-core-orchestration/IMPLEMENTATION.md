@@ -248,3 +248,36 @@ Recount on the 3-14 disc (stitch contract): **776 = O01 363 + O05 132 + O04 7 + 
 
 Build-fix gate: **not passed** — no original-spool byte-gate/window CF and no Design amendment, so only the honesty packet is delivered. Candidate rule O07 recorded in the triage note, not registered. Deviations: actual 89/52 churn vs documented +37 superset; dump mechanism bytes untrustworthy; no full-AU rebuild (13G disk). Status `done with concerns`. **Landed** `6b8a68a` (merge PR #3). No follow-on unit until Design names one.
 
+
+### 3-16 Completeness 89-key window counterfactual — done (Science)
+
+Run identity: local Codex Sol, branch `feat/3-16-completeness-89-window-cf`,
+base `9b44b595787656ba0311dd5c1641aa1d588d5310`, started 2026-10-03.
+Only brief `briefs/3-16-completeness-89-window-cf.md`; unit worker, not phase closure.
+C1 PASS: `6b8a68a` is an ancestor. C2 PASS: `7a12618`'s packet points to the
+recoverable `open-pajero-maps-3-15/output/scratch-3-15/contract_comparison.json`
+`added_89` rows; keys and meeting-source identities copied to private
+`output/scratch-3-16/keys89.json`. C3 PASS: the cited arithmetic is quoted once in the
+[3-16 science packet](triage/completeness_3-16_window_cf.md), without a fresh census.
+Workflow-quality execution service is not exposed in this local harness;
+no execution id is available. No phase trailer will be added by this unit.
+Built: [science packet](triage/completeness_3-16_window_cf.md),
+[full-key outcome table](triage/completeness_3-16_outcomes.tsv), this unit record,
+and `docs/provenance.md` for private scratch. No encoder, checker, or rule changes.
+Tally: **0 pass / 89 fail / 0 untested**. All 89 original-spool one-cell windows
+match the stored 3-14 frame bytes; 34 source rings → 156 exact EO faces bypass
+complex-ring stitching in a private spool; every counterfactual frame remains
+byte-identical and every original completeness key persists under original-spool
+K1. Run wall 1,213.8 s. Cold audit PASS: exact full-key coverage/dumps, decoded
+geometry, byte gates/equality, EO interior witnesses, serialization error at most
+1.8617682673836184e-9 raw, original home-record/index hashes unchanged. Legacy
+original-spool-degree probe remains positive 89/89; no counterfactual piece appears.
+Disposition: accept-with-honesty for these 89 only. No gate (b) pass or evidence
+for a later C amendment; Design gate (c) unchanged. Untested list: none.
+Deviation/limit: 3-15 names an EO-stitch contract side-effect but no localized C
+bug; the tested correction is a topology-preserving face bypass, not a C patch.
+No other scope deviation. No full-AU encode, no cache drops, builds/K1 one worker,
+serial compilation, all heavy stages under the main checkout's shared lock.
+No protected oracle overwritten, no O07, no historic cause or 9,064-row ledger
+reopened. Tool-turn budget ≤60; harness cost/token telemetry unavailable.
+Unit stops here; Phase 3 remains open, Execute owns landing.
