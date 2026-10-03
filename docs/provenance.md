@@ -564,3 +564,38 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
   piece appears; no C amendment justified by gate (b). Accept-with-honesty
   for these tested keys, with the face-bypass limitation explicit. No encoder,
   checker, rule or ledger change; Phase 3 remains open.
+
+
+### output/scratch-3-17/ (unit 3-17 ledger re-baseline, not committed)
+
+- **What:** fresh `disc.sha256`, `inputs.json` (read-only input hashes/sizes),
+  original `rules_bg.before.json` / `rules_other.before.json` and concatenated
+  `rules_all.before.json`; `classify.py`, full invocation/exit/stdout/stderr and
+  partial `classify/`; `classify_kinds.py`, scratch `kind_views/<kind>/`
+  single-kind manifest/rule projections with read-only binary symlinks and
+  command/stdout/stderr, and `classify_kinds/<kind>/` outputs; `identity_audit.py`,
+  `identity_summary.json` and `historic_<kind>_rows.tsv` with every historic
+  native row/full key and current match/assignment. `record.py` writes the
+  documentation and checks retained input hashes again before recording.
+- **Source:** existing read-only sibling
+  `open-pajero-maps-3-14/output/scratch-3-14/G_new/ALLDATA.KWI`, SHA256
+  `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`,
+  its `new_sha256.txt`, `k1_full.json` / `.log`, and unchanged `dump_ext/`.
+  Historic identities come from the main checkout's `scratch-3-12/dump_ext/`
+  and `classify/assign_*.u16`; the completeness selection is checked against
+  sibling 3-15 `historic188_status.tsv`. No old disc substituted, missing key
+  reconstructed, existing scratch overwritten or bytecode written.
+- **Reproduce:** retain the pre-note rule snapshots; on a fresh scratch
+  destination at base `ced98f8`, run `classify.py`, `classify_kinds.py`, then
+  `identity_audit.py` with the main checkout's `.venv-rp/bin/python -B`.
+  The first script requires a separately saved fresh `disc.sha256`.
+  The full existing CLI rejects zero-row background; single-kind views retain
+  unchanged binary/schema/predicates. All three empty kinds also reject zero
+  rows; completeness emits `PARTITION FAIL`, name_anchor has a kind-only
+  `PARTITION OK`. Scripts and diagnostic output stay in this worktree's
+  `output/scratch-3-17/`. No K1 run, encode, C build or heavy operation required.
+- **Consumer/status:** [3-17 re-baseline](plans/04-c-core-orchestration/triage/rebaseline_3-17_9064.md),
+  done with concerns. Historic background/boundary rows are absent from the
+  failing set; every historic completeness row matches and stays unattributed.
+  Raw mechanism flags are distinguished from the prior corrected 3-15 tally;
+  no assigned build row, no rule registration and no Phase 3 closure.

@@ -12,7 +12,7 @@
           1
         ]
       ],
-      "note": "Under 3-07 Amendment 4, a fill vertex is valid inside a same-type level polygon. K1 instead demands proximity to an outline. Independent all-level witness: 200/200 valid; 920786 rows on G_new (920773 on the old disc)."
+      "note": "Under 3-07 Amendment 4, a fill vertex is valid inside a same-type level polygon. K1 instead demands proximity to an outline. Independent all-level witness: 200/200 valid; 920786 rows on G_new (920773 on the old disc). R01 exclusivity vs the build defect is unproven (review_3-13 finding 3; causes_rootcause.md): in the L0/291 window, 31 type-291 in_eo_same=1 fills vanish after repair and may overlap build; not tested beyond that window. Unit 3-14 saw R01 checker background 920,786 → 0 and did not reclassify the cause. Note only."
     },
     {
       "id": "S02",

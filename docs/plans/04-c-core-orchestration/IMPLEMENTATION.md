@@ -281,3 +281,52 @@ serial compilation, all heavy stages under the main checkout's shared lock.
 No protected oracle overwritten, no O07, no historic cause or 9,064-row ledger
 reopened. Tool-turn budget ≤60; harness cost/token telemetry unavailable.
 Unit stops here; Phase 3 remains open, Execute owns landing.
+
+
+### 3-17 Historic unattributed ledger re-baseline — done with concerns
+
+Local Codex, 2026-10-04 Australia/Brisbane; branch
+`feat/3-17-9064-rebaseline`, base `ced98f8272fc1e4a34ba0d34b0dbbb1535c5f205`.
+[Brief](briefs/3-17-9064-rebaseline.md),
+[re-baseline and preserved item identities](triage/rebaseline_3-17_9064.md).
+Docs only; Maps Execute owns landing.
+
+C1 PASS: exact base, `e97c968` ancestor, design 170 `PHASE.md` present,
+no 3-17 brief on the base. C2 PASS: existing post-3-14 AU disc SHA256
+`4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`;
+fresh sum saved as `output/scratch-3-17/disc.sha256`.
+C3 PASS: required historic/current counts and the 3-16 tally quoted once in
+the re-baseline; no composition, corrected mechanism or 89-key science re-derived.
+C4 PASS: original R01 checker note read/saved; predicate
+`in_eo_same == 1` unchanged, `rules_other.json` has no R01.
+
+| Historic bucket | Result on disc in force |
+| --- | --- |
+| background 137 | All not in failing set; kind failing 0. |
+| background_boundary 8,739 | All not in failing set; kind failing 0. |
+| completeness 188 | All still failing and still unattributed; exact old→new full-key/native-row matches preserved. |
+
+Complete existing CLI run aborted on empty background; stderr
+`output/scratch-3-17/classify.stderr`. Scratch single-kind manifest/rule
+projections use the unchanged entry point and binary files. Background,
+background_boundary and interior_cover each abort without partition;
+`kind_views/<kind>/stderr` records the errors. Completeness produces
+`classify_kinds/completeness/partition.txt`: 776 manifest, 468 assigned,
+308 unattributed, `PARTITION FAIL`. O01 checker 363, O04 spool 3, O05
+checker 102; no classified build row. Name_anchor's one O03 spool assignment
+has a kind-only `PARTITION OK`. No build fix performed.
+
+R01 diff: append only the exact brief caveat after its existing note, documenting
+unproven exclusivity vs build, the 31 L0/291 fills, the limited window and
+3-14's drop without cause reclassification. R01 stays `cause: checker`;
+all other rule fields/files/order remain untouched.
+
+Deviations/limits: current zero-row rejection is in `dump_io.file_rows`, rather
+than historic `_memmap`; no global partition result. Raw inherited/forced-zero
+mechanism flags give 308 unattributed, distinct from 3-15's quoted corrected
+274; no flag repair or fresh recount. No missing historic identity. No fresh K1
+or heavy work needed; all writes confined to owned docs and private ignored
+scratch. No code/schema/plan-07/3-16/oracle change, no service call/post, no push
+or PR. User's feature-branch commit instruction supersedes brief's master-landing
+line. No contradiction with the Phase 3 outcome: this record does not meet or
+claim phase closure. Phase 3 remains open; Execute owns landing.
