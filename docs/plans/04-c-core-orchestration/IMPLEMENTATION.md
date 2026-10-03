@@ -246,5 +246,5 @@ Complete topology repair (3-13 `split.decompose` even-odd faces) over the histor
 
 Recount on the 3-14 disc (stitch contract): **776 = O01 363 + O05 132 + O04 7 + unattributed 274**, remainder 0 (shared 687 `{363,132,4,188}` + added 89 `{O04 3, unattributed 86}`). Legacy-contract recomputation reproduces pre 739 `{O01 363, O05 132, O04 56, unattributed 188}`. The 3-14 dump's `other_mechanism` bytes are inherited/forced-zero artifacts (30 O05 + 1 O04 zeroed on changed cells); the recomputed tally is used. No absorption into O01/O04/O05.
 
-Build-fix gate: **not passed** — no original-spool byte-gate/window CF and no Design amendment, so only the honesty packet is delivered. Candidate rule O07 recorded in the triage note, not registered. Deviations: actual 89/52 churn vs documented +37 superset; dump mechanism bytes untrustworthy; no full-AU rebuild (13G disk). Status `done with concerns`.
+Build-fix gate: **not passed** — no original-spool byte-gate/window CF and no Design amendment, so only the honesty packet is delivered. Candidate rule O07 recorded in the triage note, not registered. Deviations: actual 89/52 churn vs documented +37 superset; dump mechanism bytes untrustworthy; no full-AU rebuild (13G disk). Status `done with concerns`. **Landed** `6b8a68a` (merge PR #3). No follow-on unit until Design names one.
 
