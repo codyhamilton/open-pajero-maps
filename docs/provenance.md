@@ -521,3 +521,46 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
 - **What:** git-ignored science evidence: `inventory_739_776.py` + `inventory_summary.json` / `+37_census.tsv` / `pre_only_cleared.tsv` / `historic188_status.tsv` (full-key set-diff of the 739 pre-3-14 and 776 post-3-14 completeness dumps); `probe_bg.c` / `probe_bg.so` / `probe_check.py` (hidden `kw__bg_shape` clip probe built from this worktree's `parser/kiwiw/_cenc.c`); `representability_188.py` / `.jsonl` / `_summary.json` / `.md` (complete even-odd topology repair via `scratch-3-13/split.decompose` + independent clip/densify/round over the 188 historic keys); `mechanism_776.py` / `mechanism_776_recomputed.jsonl` / `.json` (from-scratch spool-side O01/O05/O04 reimplementation; pre-739 control passes); `moved_keys.tsv` / `moved_rules.tsv` / `moved_disposition.tsv` / `moved_analysis.py`; `recount_776.json` / `recount_776_final.json` / `recount_776_FINAL.json`; `contract_comparison.json` / `.tsv` / `_summary.json` (legacy pre-3-14 vs 3-14 stitch clip probe); `added89_full_repair.jsonl`.
 - **Source:** unchanged read-only inputs `output/scratch-3-11/dump_new_ext/completeness.bin` (739 rows, sha `01e5f7ba…`), `output/scratch-3-12/small_hypotheses.jsonl`, `output/scratch-3-08/{completeness_repair,completeness_rings}.json`, `output/scratch-3-13/split.py`; 3-14 `source` `open-pajero-maps-3-14/output/scratch-3-14/dump_ext/completeness.bin` (776 rows, sha `78340d3d…`) and `k1_full.json`. No existing scratch or oracle overwritten.
 - **Reproduce:** `.venv-rp/bin/python output/scratch-3-15/<script>.py` from the main checkout under `flock output/.heavy.lock`; the C probe compiles with `gcc -O2 -ffp-contract=off -fPIC -shared probe_bg.c -lm -o probe_bg.so`. `probe_bg.c` includes this worktree's `_cenc.c` (3-14 EO stitch); `scratch-3-08/probe_bg.so` is the legacy pre-stitch contract.
+
+### output/scratch-3-16/ (unit 3-16 89-key window counterfactual, not committed)
+
+- **What:** science evidence for only the 89 `added_89` completeness keys from
+  the 3-15 packet: `keys89.json`, `inputs.json`, `run.py`, copied `split.py`,
+  `libkiwiw.so`/hash, private `spool_faces/`, `source_changes.json`,
+  `home_audit.json`, `results.json`, `tally.json`, and `key_00/` through
+  `key_88/`. Each key retains a one-cell original-spool baseline and EO-face
+  counterfactual disc/frame dump, baseline frame byte gate, C D1 target geometry,
+  C K1 original-spool JSON/completeness dump, and outcome. `audit.py`,
+  `region_audit.json`, `legacy_spool_degree_control.json`, `audit_summary.json`
+  and `SHA256SUMS` retain the cold verification. Discs/dumps are never staged.
+- **Source:** `7a12618`'s science packet, retained under the sibling
+  `open-pajero-maps-3-15/output/scratch-3-15/`: `contract_comparison.json`
+  `added_89` keys (SHA `1fe735cf…`), meeting-source identities from
+  `mechanism_776_recomputed.jsonl` (SHA `bd123cd7…`). Original source is
+  `open-pajero-maps/output/extract_timing/spool`; byte oracle is the existing
+  3-14 `G_new/ALLDATA.KWI` (SHA `4ed9cd80…`). No completeness re-census or
+  disc diff to reconstruct keys. Only their 34 meeting sources are decomposed
+  into 156 exact EO faces in a private L0 copy; other fields/sources are kept.
+  The source helper is the retained 3-13 `split.py` (SHA `3f3d932d…`);
+  decomposition uses original spool degree doubles. Original inputs are read
+  only; bytecode writes are disabled. Original home-record and L0 index hashes
+  are checked after the run. Existing scratch-3-11/14/15 is never overwritten.
+- **Reproduce:** in a fresh sibling worktree at base `9b44b59`, copy the retained
+  `keys89.json`, `run.py`, `split.py` and `audit.py` into its fresh
+  `output/scratch-3-16/`, link the shared heavy lock, and run
+  `flock output/.heavy.lock env PYTHONDONTWRITEBYTECODE=1
+  /home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python
+  output/scratch-3-16/run.py`; the script refuses existing spool/window
+  destinations. Verify retained evidence with the same command ending in
+  `audit.py`. Both use the unchanged production encoder/decoder/checker;
+  cbuild writes only private `scratch-3-16/libkiwiw.so`. The lock is a symlink
+  to the main checkout's `output/.heavy.lock`. Builds/K1 use one worker;
+  compilation is serial, no cache drops, no full-AU encode. The retained
+  legacy probe is read only for the enumerated source-degree control.
+- **Consumer/status:** plan 04 Execute and Design;
+  [science packet](plans/04-c-core-orchestration/triage/completeness_3-16_window_cf.md)
+  and committed full-key TSV. **0 pass / 89 fail / 0 untested**; all baseline
+  byte gates pass and every counterfactual frame is unchanged. No target
+  piece appears; no C amendment justified by gate (b). Accept-with-honesty
+  for these tested keys, with the face-bypass limitation explicit. No encoder,
+  checker, rule or ledger change; Phase 3 remains open.
