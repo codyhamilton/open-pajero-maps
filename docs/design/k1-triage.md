@@ -21,12 +21,10 @@ These partitions do not establish completeness attribution or close plan 04.
 The empty-file opt-in belongs to classify. `dump_io.file_rows` rejects zero rows
 by default, and the shared windowed reader/writers retain their zero-row guards.
 
-## Follow-up: malformed rules JSON
+## Malformed rules JSON
 
-`_load_rules` can raise `JSONDecodeError` for syntactically invalid JSON, while
-`cmd_classify` catches only `BadRules` in that loading path. This pre-existing
-case exits with a traceback rather than the usual input-validation exit 2.
-Normalize that error reporting in a separately scoped change, with a regression
-that checks exit 2 and the absence of a stale success partition. Partition
-cleanup already runs before rules loading; the behavior does not affect valid
-empty-kind classification.
+`cmd_classify` reports syntactically invalid rules JSON through the same input
+validation path as schema-invalid rules: exit 2, no uncaught traceback, and no
+stale success partition. Partition cleanup runs before rules loading. Valid
+rules and empty-kind classification retain their existing behavior. Plan 09
+landed this contract at `07c3918ace0f37b3c1a47c8e069c6e0e1a9cd783`.

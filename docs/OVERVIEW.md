@@ -39,13 +39,23 @@ are of each fact, is in `docs/schema/`.
 
 | Package | Scope | State |
 |---|---|---|
-| WP1 | Map layer (`ALLDATA.KWI`) and the evaluation harness | Built (plan 01); perf (plan 02 done). Live SoT is plan **04** C-core (Phases 1–2 closed: D1/K1 + PSS/budgets; Phase 3 K1 triage / build-fix open — unit 3-14) and plan **05** heavy-job memory (**CLOSED** — record `docs/plans/05-heavy-job-memory.md`). Plan **03** remaining phases are frozen until 04 Phase 6 (C-first successor). |
+| WP1 | Map layer (`ALLDATA.KWI`) and the evaluation harness | Build and harness exist (plans 01–02); map parity is unfinished. Plan **04** C-core Phases 1–2 are closed; Phase 3 is blocked at **3-90** after 3-14–3-17 landed. Phases 4–6 depend on that close. Plan **03** content phases remain frozen until 04 Phase 6. Heavy-job memory (05), padding attribution (07), classify fixes (08–09), and the carried assembly-loader error (10) are finished; records are under `docs/plans/`. |
 | WP2 | Route planning frames and ext frames | Not started; first-pass writer exists |
 | WP3 | Address and POI search | Not started |
 | WP4 | Remaining `IDX/` families, `HWMAP`, `INDEXDAT` | Not started; bodies undecoded |
 | WP5 | Disc stamp, coverage, image authoring, burn | Not started |
 
 Full map-layer build is about **12.2 s** median at `-j 12` (3C close / plan 04 evidence; earlier plan-02 ~32 s is historical). Heavy K1/triage jobs use `flock output/.heavy.lock` and are not that wall.
+
+The latest 3-90 record at `5c5823e` reports repeated PSS failure, a
+determinism comparison that retains varying `wall_s`, native dumps missing
+classification joins, truncated historical pins, unresolved 3-11 versus 3-14
+oracle evidence, and an incomplete independent-review chain. Historic
+completeness attribution is still open. These are blockers to Phase 3 closure,
+not a reason to repeat the same verification unchanged. The signed phase
+outcome and detailed evidence remain in plan 04; no later phase is released.
+The repo contains no plan 06 design: the earlier CI-gate draft is not a work
+unit on master. WP2–WP5 labels below are program scope, not executable briefs.
 
 ## Where to read next
 
@@ -55,7 +65,7 @@ Full map-layer build is about **12.2 s** median at `-j 12` (3C close / plan 04 e
 | How is the code organised? | `docs/ARCHITECTURE.md` |
 | What are we building and how is it judged? | `docs/design/target-disc.md` |
 | How do we run the workflow plugin (design → execute → close)? | `docs/WORKFLOW.md` |
-| What is being changed now? | `docs/plans/04-c-core-orchestration/` (Phase 3 triage / 3-14) and the closed record `docs/plans/05-heavy-job-memory.md`. Plan 03 folder remains historical / frozen successor work. |
+| What remains unfinished? | `docs/plans/04-c-core-orchestration/` (blocked Phase 3 / 3-90; dependent Phases 4–6). Plan 03's remaining content phases stay frozen. The closed records under `docs/plans/` describe completed work. |
 | What was built before? | `docs/plans/01-…md`, `docs/plans/02-…md` |
 | Where did each non-committed file come from? | `docs/provenance.md` |
 

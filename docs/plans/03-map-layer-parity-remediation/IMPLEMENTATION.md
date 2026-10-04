@@ -711,3 +711,12 @@ retry. Seven focused loader cases plus the real column table, tiny build wiring
 and indexed assembly checks pass (13 tests, no skips). No C algorithm changed.
 This resolves item 4 only; the original record above remains historical, and
 the frozen content phases and plan 04 dependency chain remain in force.
+
+### Carried item 5 — grep wording reconciled
+
+The 3C-13 brief's grep result wording now states the already accepted close
+criterion: no executable use of deleted symbols or optional-C switch, and no
+extractor import. Negative test strings and documentation naming the spool
+producer are permitted. This resolves the literal "nothing" discrepancy
+described in that brief's existing amendment without changing source or tests,
+weakening the mandatory-C rule, or rerunning the historical verification.

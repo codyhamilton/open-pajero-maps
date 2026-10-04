@@ -59,7 +59,7 @@ One background script (Waiting rules), heavy steps under the lock, in this order
 
 Then, outside the script:
 
-- The Outcome greps: `test -e` false for `parser/kiwiw/overlap.py`, `clip.py`, `divide.py`; `git grep -nE "build_(road|background|name|map)_frame_bytes|kw_encode_cell|KIWIW_NO_C" -- parser` → nothing; `git grep -n osm_to_parcel_geometry -- parser/build_alldata.py` → nothing; no test imports `overlap`, `clip`, `divide` or `synth`'s encoders.
+- The Outcome greps: `test -e` false for `parser/kiwiw/overlap.py`, `clip.py`, `divide.py`; `git grep -nE "build_(road|background|name|map)_frame_bytes|kw_encode_cell|KIWIW_NO_C" -- parser` → no definitions or executable uses (negative guard strings are permitted); `git grep -n osm_to_parcel_geometry -- parser/build_alldata.py` → no imports (docstrings and CLI help naming the spool producer are permitted); no test imports `overlap`, `clip`, `divide` or `synth`'s encoders.
 - The budget table (median of three) with a met / missed column.
 - `docs/ARCHITECTURE.md` diff summary.
 

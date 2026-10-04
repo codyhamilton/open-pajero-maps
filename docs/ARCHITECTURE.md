@@ -48,7 +48,10 @@ any module missing from it. Extraction stays Python (plan 04 Decision 9).
 | Tools | `tools/lint_schema.py`, `bench_build.py`, `convert_spool.py`, `parcel_occupancy.py` | Schema lint, benchmarking, spool conversion |
 | Tests | `tests/` | Boundary tests (decode what E2 wrote), the C unit-test binary, committed goldens, round-trip and harness tests. No Python encoder exists to compare C against |
 
-Plan 04 Phase 2 landed the C decoder (**D1**) and checker (**K1**); Phases 3–5 still change the tree (triage → census kernels → Python decoder retirement). Phase 5 makes this module map true again for the post-migration layout.
+Plan 04 Phase 2 landed the C decoder (**D1**) and checker (**K1**). Phase 3
+remains blocked at 3-90 after the recorded 3-14–3-17 work; census kernels
+(Phase 4) and Python decoder retirement (Phase 5) depend on its close. The
+Python parcel decoders still exist as migration oracles and harness readers.
 
 ## Stage contracts
 
@@ -85,11 +88,12 @@ output.
 
 - Build path, exists today: E1, E2 and the H4 copy helpers (`kw_copy_frames`, `kw_write_rows`).
   These are the only C entry points on the build path.
-- Verification, planned, off the build path, none of them exist yet: **D1** (decoder: `ALLDATA.KWI`
-  byte region to lossless columnar rows), built in plan 04 Phase 2; **K1** (checker: D1 rows plus
-  the spool to exact `checked`/`failing` counts and capped samples per check kind), Phase 2, with
-  its rules and tolerances triaged in Phase 3; the **census kernels** (continuity, boundary
-  mirror, neighbour lookup, coordinate scale, occupancy, density), Phase 4. Each is one call per
+- Verification, off the build path: **D1** (decoder: `ALLDATA.KWI`
+  byte region to lossless columnar rows) and **K1** (checker: D1 rows plus
+  the spool to exact `checked`/`failing` counts and capped samples per check kind)
+  exist from plan 04 Phase 2. K1 attribution remains open in Phase 3. The
+  **census kernels** (continuity, boundary mirror, neighbour lookup, coordinate
+  scale, occupancy, density) are planned for dependent Phase 4. Each uses one call per
   range of cells or frames, zero-copy in, fixed-width rows out, byte-identical for any worker count.
 - Hot paths H5 (decode) and H6 (check) join Contract H's table, with C-side wall and call
   counters, from Phase 2.
@@ -174,8 +178,9 @@ no per-row Python kernels):
   Output bytes and final durability (fsync / close) are unchanged; dirty and
   cached output stay near a few windows instead of the whole file.
 - Validate row size, field offsets, complete-row file length (and assignment
-  length where applicable) before writing. Zero-length mapped kinds remain
-  rejected.
+  length where applicable) before writing. Shared mapped readers/writers reject
+  zero-length kinds; classify alone accepts manifest-validated zero-row files
+  and emits their zero partitions (see `docs/design/k1-triage.md`).
 
 Transformation-specific adapters keep their own join / padding / aggregation
 policy: residual byte146 and 3-07 144→152 rebuild in `parser/tools/dump_join.py`;
