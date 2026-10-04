@@ -32,11 +32,20 @@ call a workflow service, or commit. The orchestrator records and commits results
 
 ## Implementation context
 
+Required reading, in order: the design contract and phase outcome, `CLAUDE.md`,
+then the classify loop, `file_rows`, and existing triage test helpers. Read only
+relevant ranges. Depends on no other unit; runs alongside no implementation
+agent. Budget: six relevant files, approximately 150 changed lines, 15 tool
+turns. If exceeded, stop and report a handoff; do not expand scope.
+
 `cmd_classify` validates with `file_rows` then constructs a `WindowedReader` and
 `AssignWriter`, both rejecting zero. The non-empty loop and output ordering must
 stay intact. Tests use synthetic aligned rows with all required columns.
 
 ## Done evidence
+
+Demonstrate a failing regression before changing code and report before/after
+results.
 
 - Regression tests exercise each empty background kind through `main(classify)`
   with manifest count zero; exact zero partition line, exit 0, empty assignment,

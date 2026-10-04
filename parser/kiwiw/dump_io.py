@@ -69,8 +69,8 @@ def pwrite_full(fd: int, mv: memoryview, off: int) -> None:
         done += os.pwritev(fd, [mv[done:]], off + done)
 
 
-def file_rows(path, row_size: int) -> int:
-    """Return row count; reject non-multiples and zero-row kinds."""
+def file_rows(path, row_size: int, *, allow_empty: bool = False) -> int:
+    """Return row count; reject non-multiples and, by default, zero-row kinds."""
     if row_size < 1:
         raise ValueError(f'row_size must be >= 1, got {row_size}')
     size = os.stat(path).st_size
@@ -78,7 +78,7 @@ def file_rows(path, row_size: int) -> int:
         raise ValueError(
             f'{path}: {size} bytes is not a whole number of {row_size}-byte rows')
     rows = size // row_size
-    if rows == 0:
+    if rows == 0 and not allow_empty:
         raise ValueError(f'{path}: zero-row kinds are unsupported (as in the baseline)')
     return rows
 

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -412,6 +413,8 @@ def cmd_classify(args) -> int:
 
     out.mkdir(parents=True, exist_ok=True)
     (out / "rules.json").write_bytes(Path(args.rules).read_bytes())
+    # A failed preflight must not leave a prior successful partition looking current.
+    (out / "partition.txt").unlink(missing_ok=True)
 
     cause_rows, cause_groups = {}, {}
     unclassified = {}
@@ -420,11 +423,37 @@ def cmd_classify(args) -> int:
         info = kinds[kind]
         nrows = int(info["rows"])
         path = dump / info["file"]
-        dump_io.file_rows(path, dtype.itemsize)  # validate before writing assign
+        try:
+            read_rows = dump_io.file_rows(path, dtype.itemsize, allow_empty=True)
+            if read_rows != nrows:
+                raise ValueError(
+                    f"{path}: manifest rows {nrows} != file rows {read_rows}")
+            if read_rows == 0:
+                # file_rows stats the path; also open and read it so a claimed empty
+                # kind is accepted only after inspecting the named, readable file.
+                fd = os.open(path, os.O_RDONLY)
+                try:
+                    if os.fstat(fd).st_size != 0 or os.read(fd, 1):
+                        raise ValueError(f"{path}: changed while validating empty dump")
+                finally:
+                    os.close(fd)
+        except Exception as exc:  # noqa: BLE001 - malformed input is a classify error
+            print(f"k1_triage: {exc}", file=sys.stderr)
+            return 2
         rk = [(i, r) for i, r in enumerate(rules) if r["kind"] == kind]
         kind_rules = {i for i, _ in rk}
         unclass = {}
         window = int(getattr(args, "window_rows", CHUNK) or CHUNK)
+        if nrows == 0:
+            # Do not construct a WindowedReader/AssignWriter: their default
+            # contract continues to reject zero-row kinds for other consumers.
+            assign_path = out / f"assign_{kind}.u16"
+            fd = os.open(assign_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW,
+                         0o666)
+            os.close(fd)
+            partition.append((kind, 0, 0, 0, 0))
+            unclassified[kind] = unclass
+            continue
         with dump_io.WindowedReader(path, dtype, window, rows=nrows) as reader,                 dump_io.AssignWriter(out / f"assign_{kind}.u16", nrows, window) as assign:
             for lo, n, block in reader.windows():
                 a = np.full(n, NO_RULE, np.uint16)

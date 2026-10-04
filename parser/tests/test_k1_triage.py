@@ -9,6 +9,7 @@ and byte-identical output; the real full-disc dump is exercised by the brief's r
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -116,6 +117,16 @@ def _complete_rules():
     return out
 
 
+def _set_kind_rows(dump: Path, kind: str, rows: int, file_bytes: bytes | None = None):
+    manifest_path = dump / "dump_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["kinds"][kind]["rows"] = rows
+    if file_bytes is None:
+        file_bytes = (dump / manifest["kinds"][kind]["file"]).read_bytes()
+    (dump / manifest["kinds"][kind]["file"]).write_bytes(file_bytes)
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+
+
 def _expected_groups(data, kind, level=None, dropped=None):
     """Distinct group keys of `kind` (optionally one level) as tuples, from the arrays."""
     a = data[kind]
@@ -163,6 +174,86 @@ def test_classify_complete_partition(tmp_path):
         a = np.fromfile(out / f"assign_{kind}.u16", dtype="<u2")
         assert len(a) == KIND_ROWS[kind]
         assert np.all(a != k1_triage.NO_RULE)
+
+
+@pytest.mark.parametrize("kind", ["background", "background_boundary"])
+def test_classify_empty_background_kind_is_zero_partition(tmp_path, kind):
+    dump, _ = _make_dump(tmp_path)
+    for empty_kind in KIND_ROWS:
+        _set_kind_rows(dump, empty_kind, 0, b"")
+    rules = _rules(tmp_path, "rules.json", _complete_rules())
+    out = tmp_path / "cls"
+    out.mkdir()
+    (out / f"assign_{kind}.u16").write_bytes(b"stale assignments")
+
+    assert k1_triage.main(["classify", "--dump", str(dump), "--rules", str(rules),
+                           "--out", str(out)]) == 0
+    partition = (out / "partition.txt").read_text().splitlines()
+    assert f"{kind}\t0\t0\t0\t0" in partition
+    assert partition[-1] == "PARTITION OK"
+    assert (out / f"assign_{kind}.u16").read_bytes() == b""
+    assert (out / "cause_counts.tsv").read_text().splitlines() == [
+        "rule_id\tcause\tkind\tlevel\trows\tgroups"]
+    assert (out / "unclassified_groups.tsv").read_text().splitlines() == [
+        "\t".join(k1_triage._GROUPS_HEADER)]
+
+
+def test_classify_mixed_empty_and_nonempty_kind_preserves_failure_reporting(tmp_path):
+    dump, _ = _make_dump(tmp_path)
+    _set_kind_rows(dump, "background", 0, b"")
+    rules = [r for r in _complete_rules() if r["kind"] != "interior_cover"]
+    rules = _rules(tmp_path, "partial.json", rules)
+    out = tmp_path / "cls"
+
+    assert k1_triage.main(["classify", "--dump", str(dump), "--rules", str(rules),
+                           "--out", str(out)]) == 1
+    lines = (out / "partition.txt").read_text().splitlines()
+    assert "background\t0\t0\t0\t0" in lines
+    assert "interior_cover\t600\t0\t600\t0" in lines
+    assert lines[-1] == "PARTITION FAIL"
+    assert (out / "assign_background.u16").read_bytes() == b""
+    assert len(np.fromfile(out / "assign_background_boundary.u16", dtype="<u2")) \
+        == KIND_ROWS["background_boundary"]
+    assert sum(int(r["rows"]) for r in _tsv(out / "unclassified_groups.tsv")) == 600
+
+
+@pytest.mark.parametrize("case", ["nonempty", "malformed", "missing", "unreadable"])
+def test_classify_rejects_zero_manifest_unreadable_or_nonempty_dump(tmp_path, case,
+                                                                  monkeypatch):
+    dump, _ = _make_dump(tmp_path)
+    path = dump / "background.bin"
+    if case == "nonempty":
+        content = path.read_bytes()
+    elif case == "malformed":
+        content = b"x"
+    elif case == "unreadable":
+        content = b""
+    else:
+        content = None
+        path.unlink()
+    manifest_path = dump / "dump_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["kinds"]["background"]["rows"] = 0
+    if content is not None:
+        path.write_bytes(content)
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+    if case == "unreadable":
+        real_open = os.open
+
+        def deny_named_dump(target, flags, *args, **kwargs):
+            if Path(target) == path:
+                raise PermissionError("synthetic unreadable dump")
+            return real_open(target, flags, *args, **kwargs)
+
+        monkeypatch.setattr(os, "open", deny_named_dump)
+    rules = _rules(tmp_path, "rules.json", _complete_rules())
+    out = tmp_path / "cls"
+    out.mkdir()
+    (out / "partition.txt").write_text("PARTITION OK\n")
+
+    assert k1_triage.main(["classify", "--dump", str(dump), "--rules", str(rules),
+                           "--out", str(out)]) == 2
+    assert not (out / "partition.txt").exists()
 
 
 def test_classify_dropped_rule_lists_its_groups(tmp_path):

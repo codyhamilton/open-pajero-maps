@@ -566,6 +566,31 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
   checker, rule or ledger change; Phase 3 remains open.
 
 
+### output/scratch-08-zero-row-classify/ (empty-kind CLI verification, not committed)
+
+- **What:** `verify.py`, copied single-kind manifests and rule snapshots in
+  `kind_views/`, read-only symlinks to existing dump binaries, CLI commands and
+  stdout/stderr, `classify/<kind>/` outputs, `inputs.json` and
+  `verification.json`, plus before/after disc SHA256 files. No binary is copied
+  or regenerated.
+- **Source:** sibling `open-pajero-maps-3-17/output/scratch-3-17/kind_views/`
+  for background, background_boundary, and name_anchor; binaries resolve into
+  the unchanged sibling 3-14 `dump_ext/`. The non-empty reference is 3-17's
+  `classify_kinds/name_anchor/`. The read-only disc is 3-14's
+  `G_new/ALLDATA.KWI`, SHA256
+  `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`.
+- **Reproduce:** copy those three kind-view manifests and `rules.before.json`
+  snapshots into a fresh local scratch directory, symlink each source binary,
+  and invoke `.venv-rp/bin/python -B parser/tools/k1_triage.py classify --dump
+  <view> --rules <view>/rules.before.json --out <fresh-kind-output>` for each
+  kind. Use the main checkout's `.venv-rp/bin/python` if the local worktree has
+  no environment. Assert empty kinds exit 0 with zero partition rows and empty
+  assignments; compare all name_anchor output bytes with the retained reference.
+  Hash the disc before and after, and compare input hashes after the replay.
+  Run serially under `flock output/.heavy.lock`, sharing the main checkout's lock.
+- **Consumer:** plan 08's verification. The replay covers exactly these three
+  kind views; it makes no completeness measurement or all-kind success claim.
+
 ### output/scratch-3-17/ (unit 3-17 ledger re-baseline, not committed)
 
 - **What:** fresh `disc.sha256`, `inputs.json` (read-only input hashes/sizes),
