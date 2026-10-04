@@ -590,3 +590,69 @@ Full test command `.venv-rp/bin/python -m pytest parser/tests -q -x` ran under t
 5. Preserve Phase 2 triage/sample inputs and this fresh native dump (manifest SHA256 `a54b07e6bb5706a02ee7174e36754da6b90816ae89310e8d04949a0b8031b996`), logs, reports, rules and build products for later phases. Signed PSS 9,726,501 kB and Phase 4 20 s / 60 s budgets stand.
 
 Deviations are explicit: the run-budget line omits the dump/full-AU runs that steps 4/6 require; those named checks were performed. Required source reading was bounded to ten files, including live rules and the prior command runner; generated current-run products were read to judge results. Apart from the disclosed initial grep interpretation, no added verification, source edits, agents, service post, gh, push or changes outside the owned paths. The record-writing helper initially named manifest.json instead of dump_manifest.json and failed before either document was changed; 08-write-attempt1.log retains that error. Corrected from this fresh dump's generated filenames, with no heavy rerun.
+
+### 3-90 Ledger brief 121 — fresh verification rerun #2, blocked (2026-10-04)
+
+**Five fresh K1 runs, one full-AU build, two Perth builds and the full requested pytest completed. Checks: 1 PASS, 2 FAIL, 3 FAIL, 4 FAIL, 5 FAIL, 6 FAIL, 7 FAIL. Phase 3 remains open.** Fresh agent; this is a new execution of the brief, not the commit `66d17c92` record and not a reuse of any earlier run's JSON as evidence. Worktree `/home/codyh/workspace/open-pajero-maps-3-90`, branch `master`, start HEAD and `origin/master` both `66d17c92a96bfefeac6af5f79eca1dcf26b4ef32`. Initial tracked tree clean; only the permitted untracked `.venv-rp` input symlink. No reset/amend/rebase, no branch switch, no other checkout or worktree touched, no push, no PR/merge, no workflow-service call, no `gh`, no agents.
+
+Parameters: oracle_disc=output/scratch-3-11/G_new/ALLDATA.KWI; spool=output/extract_timing/spool; pinned_list=docs/plans/04-c-core-orchestration/triage/pinned_candidates.tsv; re_oracle_override=none; pinned_override=none; j_timing=12; j_determinism=1; wall_limit_s=120; pss_limit_kB=9726501; start_HEAD=66d17c92a96bfefeac6af5f79eca1dcf26b4ef32
+
+All raw evidence for this execution lives in the new subdirectory `output/scratch-3-90/fresh-66d17c92/`; `fresh-59994c23/` and older scratch are preserved untouched. `run.py` / `run2.py` reproduce the exact sequential commands; every heavy invocation ran serially under `flock output/.heavy.lock`. Symlinked disc, spool and environment inputs were only consumed, never replaced or deleted.
+
+Disc in force SHA256 `013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04` (the recorded 3-11 `G_new` re-oracle). Named pinned list `docs/plans/04-c-core-orchestration/triage/pinned_candidates.tsv`, SHA256 `7dfe6ed7b99e9d234e688d6855a885d3cd1a140db409dc1f726a48bd0948855a`; explicit footer **100 shown / 26,650 historical groups / 1,939,931 historical rows / TRUNCATED=yes**, not an exhaustive post-fix list.
+
+| Check | Verdict | Fresh result | Evidence |
+|---|---|---|---|
+| 1. Disc | PASS | disc `013586b5…`; pinned `7dfe6ed7…`; no override named | `01-report.txt`, `01-disc.log` |
+| 2. Timing/PSS | FAIL | wall_s=[76.548, 74.102, 74.062], median 74.102 ≤ 120 (wall met); pss_peak_kb=[8,886,776, 9,503,495, 10,008,455], max 10,008,455 > 9,726,501 ceiling | `02-report.txt`, `k1_{a,b,c}.json`/`.log` |
+| 3. Determinism | FAIL | only `timing` removed; `cmp` exit 1, first difference byte 40285 line 1738; top-level `wall_s` retained j12=76.5, j1=449.2 | `03-report.txt`, `03-determinism.log` |
+| 4. Dump/classify/pins | FAIL | dump `-j12` external 167.412 s; classify exit 2 `rule S02: unknown column 's02_producer_verified'`; classified spool group set and sorted-set diff unavailable | `04-report.txt`, `04-classify.log`, `04-spool-set.txt` |
+| 5. Counts | FAIL | 5 of 8 checked targets differ; failing-vs-exhaustive-pins equality unproven; name_anchor failing 1 allowed | `05-report.txt` |
+| 6. Build gates | FAIL | AU `4ed9cd80…99d72`; Perth `-j1`=`-j4`=`04be2f6e…fb728`; exact differing-cell identities not quoted; pytest 897 passed, 11 skipped in 419.03 s | `06-report.txt`, `gates_sha.json`, `pytest.log` |
+| 7. grep -c | FAIL | literal `grep -c` exits 2 (usage error; no pattern/target named) | `07-report.txt`, `07-grep.log` |
+
+Check 2 is a **new failure**: the third `-j12` run peaked at **10,008,455 kB**, above the signed 9,726,501 kB ceiling (prior ledger 121 run max 9,690,973 kB was under). The wall bar is met (median 74.102 s). The check is FAIL on PSS.
+
+Check 3 follows 3-90 exactly: `strip_timing.py` is five lines and removes only `timing`; top-level `wall_s` is retained, so `k1_a` and `k1_j1` differ (`cmp` exit 1).
+
+Check 4 dumped `name_anchor` 1, `completeness` 739, `interior_cover` 824, `background` 1,438,571, `background_boundary` 16,550,043; dump manifest SHA256 `a54b07e6bb5706a02ee7174e36754da6b90816ae89310e8d04949a0b8031b996`. The final merged rules are the tracked `rules_bg.json` followed by `rules_other.json`, predicates/order/causes unchanged. The native dump lacks the historical producer/mechanism joins, so classification is rejected before any row is read; no side-table reconstruction was scoped or performed. `pinned-visible.sorted.txt` holds the 100 visible keys; the sorted-list diff is unproven.
+
+**Cause-per-kind table** (historical 3-08 attribution from `cause_table.md`, which marks itself superseded; fresh post-fix causes unproven because native classify is rejected):
+
+| Kind | Historical build | Historical checker | Historical spool | Historical unattributed | Fresh failing total | Fresh causes |
+|---|---:|---:|---:|---:|---:|---|
+| background | 0 | 920,773 | 0 | 517,785 | 1,438,571 | unproven / unproven / unproven / unproven |
+| background_boundary | 0 | 0 | 1,939,053 | 14,610,516 | 16,550,043 | unproven / unproven / unproven / unproven |
+| interior_cover | 0 | 0 | 821 | 3 | 824 | unproven / unproven / unproven / unproven |
+| completeness | 13 | 495 | 56 | 188 | 739 | unproven / unproven / unproven / unproven |
+| name_anchor | 0 | 0 | 1 | 0 | 1 | unproven / unproven / unproven / unproven |
+
+Fresh failing totals for range, step, road_node and road_point are 0. No global `PARTITION OK` or exhaustive spool equality is established.
+
+**Counts, check 5** (fresh checked vs Phase 2 3C-04 target):
+
+| Kind | Fresh checked | Phase 2 checked | Delta | Fresh failing |
+|---|---:|---:|---:|---:|
+| range | 310,053,353 | 309,192,246 | +861,107 | 0 |
+| step | 253,137,973 | 252,444,802 | +693,171 | 0 |
+| road_node | 42,995,770 | 42,995,770 | 0 | 0 |
+| name_anchor | 2,317,983 | 2,317,983 | 0 | 1 |
+| background | 175,171,302 | 174,332,105 | +839,197 | 1,438,571 |
+| background_boundary | 89,568,298 | 89,546,388 | +21,910 | 16,550,043 |
+| completeness | 1,800,514 | 1,800,514 | 0 | 739 |
+| interior_cover | 1,592,045 | 1,592,016 | +29 | 824 |
+
+**Build gates and re-oracle contradiction:** fresh full-AU SHA256 `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`; Perth `-j1` and `-j4` both `04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728` (worker equality holds). These are the later 3-14 recorded re-oracle values, while the K1 inputs remain the explicitly prescribed 3-11 disc. 3-11 produced `013586b5…` from `87a01b14…` with quoted scope "exactly 37 differing cells, all level 0, 37/37 predicted, 0 extras" (`Gnew.diff_cells.txt` SHA256 `9f2b0e554465d030637fa7d19b4ceaf88b6283b1d4d86810de5ccd4dece50e5e`); 3-14 produced AU `4ed9cd80…` / Perth `04be2f6e…` with only aggregate cell counts (AU 246,123; Perth 795), not exact identities. No individual differing-cell identities can be quoted from those records, so the exact changed-cell gate is unproven and no new re-oracle is signed here.
+
+**Check 7:** the brief names only `grep -c` with no pattern or file; the literal command exits 2 and no pattern was invented.
+
+**Carried:**
+
+1. Exhaustive post-fix pins and a valid native classification remain unavailable; do not assert spool item equality from counts. Known spool name `(L0, ix0, iy541, leaf928)` remains.
+2. Resolve the prescribed 3-11 K1 disc versus the later 3-14 build oracle, the exact changed-cell identities and any outstanding fix-review proof. No phase-closing trailer.
+3. The PSS ceiling was exceeded on one of three fresh runs (10,008,455 kB). Re-measure before any phase-close claim that the memory bar holds.
+4. Historic completeness attribution remains open in 3-15–3-17; no historic mechanism flags are copied into this fresh native dump.
+5. Phase 2 D1 `*_first` quirk, `container`/`shape` early-exit question, explained-counter gates and rc=1 harness FAILs move to Phase 4/5 per DESIGN "Carried-item placement"; cbuild header staleness, inside-side TOL coverage and float-key tie stay absorbed in 3-01/3-04/3-07. No new verifier proof of the dependency chain.
+6. Preserve this fresh native dump, logs, reports, rules and build products under `output/scratch-3-90/fresh-66d17c92/`; signed PSS 9,726,501 kB and Phase 4 20 s / 60 s budgets stand.
+
+**Deviations:** the first harness run aborted while writing check 4's report (a list was concatenated into a `str.join`); checks 1–4 had already run once. A continuation script (`run2.py`) completed checks 4–7 and all summaries from this run's existing outputs; checks 1–4 were not re-run. `run.py`'s check-2 report had likewise failed to persist on that same crash and was recomputed from the fresh `k1_{a,b,c}.json`. No product, test, tolerance, rule, pin or input was changed; only the two owned docs and private scratch were written.
