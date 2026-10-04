@@ -700,3 +700,14 @@ Closing trailer `Workflow-Phase: 03-map-layer-parity-remediation:3C` is applied 
 5. Outcome grep wording: reword the `build_alldata.py` docstrings and the `test_build_wiring.py:65` guard, or relax the Outcome text.
 6. Default pytest suite is 174 s because of Perth bench tests (545 tests at 3C-09, 474 now); keep it from growing.
 7. Flash branch/worktree `flash/3c-12-encoder-deletion` (merged by fast-forward) is left in place, `/home/codyh/workspace/open-pajero-maps-flash-3c12`.
+
+### Carried item 4 — resolved by C library load errors
+
+Plan 10 resolves the recorded stale fallback description and assembly loader
+error. `cenc.lib()` now raises `cbuild.BuildError` for load or required assembly
+symbol failure, preserving the original exception and path; compiler errors
+propagate unchanged. A failure leaves no cached partial library and permits
+retry. Seven focused loader cases plus the real column table, tiny build wiring
+and indexed assembly checks pass (13 tests, no skips). No C algorithm changed.
+This resolves item 4 only; the original record above remains historical, and
+the frozen content phases and plan 04 dependency chain remain in force.

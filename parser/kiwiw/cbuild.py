@@ -9,10 +9,10 @@ file -- each one `#include`s the extension source(s) it exercises directly,
 so `static` internals are testable without exporting them, and no source is
 compiled twice.
 
-No Python fallback lives here: a missing compiler or a failed compile raises
-`BuildError`. (`cenc.py`'s own degrade-to-Python-oracle behaviour on a
-missing compiler is unchanged by this unit -- it catches `BuildError` itself;
-that fallback is deleted later, by 3C-08/3C-12, not here.)
+The C library is mandatory: a missing compiler or a failed compile raises
+`BuildError`. The assembly binding in `cenc.py` also raises `BuildError` if
+the library cannot be opened or lacks a required assembly symbol. No Python
+fallback remains.
 
 Staleness: a sha256 over every source's bytes plus the flag list, stored
 beside the product as `<product>.hash`. Content hash, not mtime, because a
@@ -50,7 +50,7 @@ CTEST_BIN = CTEST_DIR / "_ctest_bin"
 
 
 class BuildError(RuntimeError):
-    """No compiler is available, or a source failed to compile."""
+    """C compilation failed, or the assembly library could not be loaded."""
 
 
 def _find_cc() -> str:

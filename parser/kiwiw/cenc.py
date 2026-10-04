@@ -25,8 +25,8 @@ def _load_lib():
     global _lib, _tried
     if _tried:
         return _lib
+    cbuild.build_ext()  # compiles on demand; BuildError propagates unchanged
     try:
-        cbuild.build_ext()  # compiles on demand through cbuild (3C-02); raises on failure
         lib = ctypes.CDLL(str(_SO))
         lib.kw_col_name.restype = ctypes.c_char_p
         lib.kw_col_name.argtypes = [ctypes.c_int]
@@ -38,15 +38,15 @@ def _load_lib():
         lib.kw_write_rows.argtypes = [
             ctypes.c_int, ctypes.c_int64, ctypes.c_void_p, ctypes.c_void_p,
             ctypes.c_int64, ctypes.c_int64]
-        _lib = lib
-    except OSError:
-        _lib = None
+    except (OSError, AttributeError) as exc:
+        raise cbuild.BuildError(f"cannot load C assembly library {_SO}: {exc}") from exc
+    _lib = lib
     _tried = True
     return _lib
 
 
 def lib():
-    """The loaded C library (or None) -- for the assembly copy helpers."""
+    """The C assembly library; build, load or symbol failure raises BuildError."""
     return _load_lib()
 
 
