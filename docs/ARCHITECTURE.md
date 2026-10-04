@@ -128,6 +128,11 @@ checked against the committed goldens and the Python decoders, never against a P
 raises `BuildError`; a build without a compiler fails. The same module builds the C unit-test
 binary from `kiwiw/ctest/*.c`.
 
+The assembly helper binding `cenc.lib()` also raises `BuildError` when its
+shared library cannot be opened or a required assembly symbol is missing,
+with the path and original exception preserved. It caches only a completely
+configured library; failure permits retry after repair.
+
 **Spill and indexed assembly.** Each encode worker owns one spill file (`ChunkSpill`). E2 writes
 frame bytes into it from C at a caller-given offset and returns the frame index; Python keeps
 a numpy `FrameTable` of index rows and no per-frame object, and nothing but the table crosses
