@@ -89,6 +89,6 @@ No encoder, checker, rule cause/predicate, disc, 3-17 record, plan 07 file, or
 
 ## Follow-ups
 
-The existing malformed rules JSON path can raise an uncaught `JSONDecodeError`.
-Its separately scoped input-error follow-up lives in
-[K1 classify partitions](../design/k1-triage.md). No blocking finding remained.
+The separately scoped malformed-rules JSON follow-up was resolved by
+[plan 09](09-malformed-rules-json.md) at `07c3918`. The historic finding above
+is retained; no follow-up remains within the zero-row contract.

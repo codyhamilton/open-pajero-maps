@@ -39,7 +39,7 @@ are of each fact, is in `docs/schema/`.
 
 | Package | Scope | State |
 |---|---|---|
-| WP1 | Map layer (`ALLDATA.KWI`) and the evaluation harness | Build and harness exist (plans 01–02); map parity is unfinished. Plan **04** C-core Phases 1–2 are closed; Phase 3 is blocked at **3-90** after 3-14–3-17 landed. Phases 4–6 depend on that close. Plan **03** content phases remain frozen until 04 Phase 6. Heavy-job memory (05), padding attribution (07), classify fixes (08–09), the carried assembly-loader error (10), and recorded triage summary determinism failures (11) are finished; records are under `docs/plans/`. |
+| WP1 | Map layer (`ALLDATA.KWI`) and the evaluation harness | Build and harness exist (plans 01–02); map parity is unfinished. Plan **04** C-core Phases 1–2 are closed; Phase 3 is blocked at **3-90** after 3-14–3-17 landed. Phases 4–6 depend on that close. Plan **03** content phases remain frozen until 04 Phase 6. Heavy-job memory (05), padding attribution (07), classify fixes (08–09), the carried assembly-loader error (10), recorded triage summary determinism failures (11), carried density wording (12), and the recorded fixture way precheck (13) are finished; records are under `docs/plans/`. |
 | WP2 | Route planning frames and ext frames | Not started; first-pass writer exists |
 | WP3 | Address and POI search | Not started |
 | WP4 | Remaining `IDX/` families, `HWMAP`, `INDEXDAT` | Not started; bodies undecoded |

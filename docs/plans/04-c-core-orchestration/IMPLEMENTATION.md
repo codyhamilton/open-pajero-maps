@@ -724,3 +724,62 @@ Fresh failing totals for range, step, road_node and road_point are 0. No global 
 6. Preserve this fresh native dump, logs, reports, rules and build products under `output/scratch-3-90/fresh-6c3933c2/`; signed PSS 9,726,501 kB and Phase 4 20 s / 60 s budgets stand.
 
 **Deviations:** none beyond the brief. The heavier dump run's `FAIL in 172.4s` is the full dump/classify input, not a timing check. Only the two owned docs and this private scratch subdirectory were written; no product, test, tolerance, rule, pin or input was changed.
+
+### Repository review through f5a2162 — independent carried work landed
+
+Codex, one worker, 2026-10-05 Australia/Brisbane; worktree
+`open-pajero-maps-status-continue-3`. Fetched `origin/master` before review and
+again before landing: `f5a2162d38afb5e1c6165ce29ea29dac9f00d99a` both times.
+This is a repository audit and carried-work log, not a new plan 04 unit or
+3-90 execution. Existing blocked checks were not rerun.
+
+History and plan records establish that 05 and 07–11 are finished. In
+particular, `db75ce2` fixes the triage summary byte-key defect and `f5a2162`
+closes it; the 3-90 report determinism failure about retained `wall_s` is
+different and remains open. Plan 08's stale malformed-JSON follow-up pointer
+was reconciled to the already-landed `07c3918`; no implementation was repeated.
+
+Two explicitly recorded independent carried items were still actionable:
+
+| Recorded item | Design | Implementation | Close record |
+| --- | --- | --- | --- |
+| Plan 03 Phase 2 final Carried item 3, cosmetic density basis label | `77e7592` | `0e66f5d` | `5742465`, plan 12 |
+| Plan 01 Follow-ups, fixture way-bbox precheck | `a0d75e6` | `8355950` | `678021b`, plan 13 |
+
+Density verification: 4 existing tests passed, emitted label inspected.
+Fixture verification: 84 affected tests passed, no skips, including three
+enabled/bypassed synthetic PBF fixture runs with identical spool index/data
+bytes. The original unnecessary-split regression failed before the fix.
+No fresh full-disc, memory or country-scale performance claim. Both designs
+and reports received workflow feedback `not delivered`, nothing queued;
+one-worker self-review was disclosed. No PR or additional worker was used.
+
+Other carried items were classified against their current owners:
+
+- Plan 01 spool totals already landed at `6a6c986`; no new unit. Duplicated
+  harness presence checks belong with the gated plan 04 Phase 4 harness work.
+- Plan 03 raw-coordinate evidence, census example instability and continuity
+  cleanup need the future C census surfaces. Its `rg_size` and enumeration-cap
+  design questions remain for the frozen content's successor; no criterion
+  was silently changed. Bands acceptance needs the owner's judgment. The old
+  vanished-temp-file bench flake has no recurring failure recorded to repair.
+  Suite-growth guidance is ongoing, not an unfinished implementation. The
+  stale stash and Flash worktree are retained.
+- Plan 05's live scratch adapter switch still waits on plan 04 coordination
+  and accepted review. Its high-cardinality measurement and serial reruns are
+  optional, and out-of-core finalization is explicitly deferred, not live work.
+- No plan 06 design exists. WP2–WP5 scope labels do not provide executable units.
+
+**Remaining blockers:** native classification lacks the required joins and
+attribution, the historical 188 completeness rows remain unattributed,
+exhaustive post-fix pins are unavailable, 3-11 versus 3-14 oracle/exact-cell
+proof is unresolved, and the independent fix-review chain is incomplete.
+The signed PSS ceiling failed repeatedly (latest 10,020,516 kB versus
+9,726,501 kB) and the signed report normalization retains varying `wall_s`.
+Replaying 3-90 unchanged cannot satisfy these dependencies. Its existing brief
+requires reporting blocked when fix-review proof is missing. No new signed
+remediation/review proof, mechanism attribution or phase-close result was
+invented. Plan 04 Phase 3 stays open; Phases 4–6 stay dependent, and plan 03
+content stays frozen. Stop at that dependency boundary after landing the
+finished carried work. All scratch, symlink targets, disc, spool and .venv-rp
+were preserved.
