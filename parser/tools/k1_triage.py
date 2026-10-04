@@ -110,8 +110,8 @@ def _max2(a: float, b: float) -> float:
 
 
 def _empty_like(dtype, n):
-    # zeroed, so the padding bytes of the aligned key are deterministic: np.unique
-    # dedups records by their bytes, and uninitialised padding makes it non-deterministic
+    # Internal keys are packed: NumPy record copies need not preserve padding.
+    # Zeroing an aligned input would not keep unique/indexed-copy bytes stable.
     return np.zeros(n, dtype)
 
 
@@ -125,7 +125,7 @@ def _group_key(block, rule=None) -> np.ndarray:
                                     "u2", "u2", "u2", "u2", "u2", "u2", "u2", "i4")))
     if rule is not None:
         fields = [("rule", "u2")] + fields
-    dt = np.dtype(fields, align=True)
+    dt = np.dtype(fields)
     k = _empty_like(dt, len(block))
     if rule is not None:
         k["rule"] = rule
@@ -134,7 +134,7 @@ def _group_key(block, rule=None) -> np.ndarray:
 
 
 def _level_type_key(block) -> np.ndarray:
-    dt = np.dtype([("level", "u1"), ("code", "i4")], align=True)
+    dt = np.dtype([("level", "u1"), ("code", "i4")])
     k = _empty_like(dt, len(block))
     _fill(k, block, dt.names)
     return k
@@ -142,7 +142,7 @@ def _level_type_key(block) -> np.ndarray:
 
 def _src_key(block) -> np.ndarray:
     dt = np.dtype(list(zip(_SRC_COLS,
-                           ("u1", "i4", "i4", "i4", "u1", "i4", "f8", "i4"))), align=True)
+                           ("u1", "i4", "i4", "i4", "u1", "i4", "f8", "i4"))))
     k = _empty_like(dt, len(block))
     _fill(k, block, ("level", "src_ix", "src_iy", "src_rec", "src_tall", "src_nv",
                      "code"))
@@ -155,7 +155,7 @@ def _composite_key(block) -> np.ndarray:
                                    "shape"),
                       ("u1", "i4", "i4", "i4", "u1", "i4", "f8", "i4",
                        "i4", "i4", "u2", "u2", "u2", "u2", "u2", "u2", "u2", "i4")))
-    dt = np.dtype(fields, align=True)
+    dt = np.dtype(fields)
     k = _empty_like(dt, len(block))
     _fill(k, block, [n for n in dt.names if n != "src_maxseg"])
     k["src_maxseg"] = _canon_f(np.asarray(block["src_maxseg"]))

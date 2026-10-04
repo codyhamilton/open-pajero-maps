@@ -193,6 +193,10 @@ policy: residual byte146 and 3-07 144→152 rebuild in `parser/tools/dump_join.p
 scale with side-table rows; triage retained aggregation keys must own independent
 storage (no structured scalar into a unique-array buffer). Report group / source /
 pair cardinalities separately — triage RSS is **not** cardinality-independent.
+Triage's internal structured keys are packed, so NumPy unique/indexed copies
+cannot introduce allocator-dependent padding into byte-key identity. The
+aligned on-disk dump layout stays separate and unchanged; grouping contracts
+are in `docs/design/k1-triage.md`.
 
 ### Why RSS alone was the wrong story (oomd)
 

@@ -422,6 +422,92 @@ def test_merge_keys_are_independently_owned():
         assert int(e[0]["code"]) in (10, 20, 30)
 
 
+@pytest.mark.parametrize("window", [1, 17, 997])
+def test_summary_source_counts_ignore_copy_padding(tmp_path, monkeypatch, window):
+    """Allocator padding must not change field-value source/group identity."""
+    dump, data = _make_dump(tmp_path)
+    for kind, arr in data.items():
+        # Repeated groups cross windows, with both finite and NaN source keys.
+        base = arr[:29].copy()
+        # Two distinct groups share each of a finite and a sentinel source.
+        for col in ("src_ix", "src_iy", "src_rec", "src_tall", "src_nv",
+                    "src_maxseg", "code"):
+            base[col][2] = base[col][0]
+            base[col][5] = base[col][1]
+        arr = np.repeat(base, 5)
+        data[kind] = arr
+        _set_kind_rows(dump, kind, len(arr), arr.tobytes())
+
+    original_unique = np.unique
+    calls = 0
+
+    def unique_with_dirty_padding(*args, **kwargs):
+        nonlocal calls
+        result = original_unique(*args, **kwargs)
+        unique = result[0] if isinstance(result, tuple) else result
+        if unique.dtype.names:
+            used = np.zeros(unique.dtype.itemsize, dtype=bool)
+            for field_dtype, offset in unique.dtype.fields.values():
+                used[offset:offset + field_dtype.itemsize] = True
+            # Change only unnamed bytes, simulating a legal NumPy record copy.
+            calls += 1
+            unique.view(np.uint8).reshape(-1, unique.dtype.itemsize)[:, ~used] = (
+                1 + calls % 254)
+        return result
+
+    monkeypatch.setattr(np, "unique", unique_with_dirty_padding)
+    out = tmp_path / "summary"
+    assert k1_triage.main(["summary", "--dump", str(dump), "--out", str(out),
+                           "--window-rows", str(window)]) == 0
+
+    def source_key(row):
+        maxseg = float(row["src_maxseg"])
+        return (int(row["level"]), int(row["src_ix"]), int(row["src_iy"]),
+                int(row["src_rec"]), int(row["src_tall"]), int(row["src_nv"]),
+                None if np.isnan(maxseg) else maxseg, int(row["code"]))
+
+    expected = {}
+    for kind, arr in data.items():
+        for row in arr:
+            key = (kind, source_key(row))
+            count, groups = expected.setdefault(key, [0, set()])
+            group = tuple(int(row[col]) for col in
+                          ("level", "ix", "iy", "code", "p0", "p1", "p2",
+                           "p3", "p4", "p5", "p6", "shape"))
+            groups.add(group)
+            expected[key][0] = count + 1
+    actual = {}
+    for row in _tsv(out / "by_src.tsv"):
+        if row["kind"].startswith("#"):
+            continue
+        row["code"] = row["type"]
+        key = (row["kind"], source_key(row))
+        assert key not in actual, "one report row per logical source"
+        actual[key] = (int(row["rows"]), int(row["groups"]))
+    assert actual == {key: (count, len(groups))
+                      for key, (count, groups) in expected.items()}
+    for kind in data:
+        rows = _tsv(out / f"groups_{kind}.tsv")
+        assert len(rows) == len(_expected_groups(data, kind))
+        assert {int(row["rows"]) for row in rows} == {5}
+
+    rules = _rules(tmp_path, "rules.json", _complete_rules())
+    classified = tmp_path / "classified"
+    assert k1_triage.main(["classify", "--dump", str(dump), "--rules", str(rules),
+                           "--out", str(classified), "--window-rows", str(window)]) == 0
+    for row in _tsv(classified / "cause_counts.tsv"):
+        kind, level = row["kind"], int(row["level"])
+        assert int(row["groups"]) == len(_expected_groups(data, kind, level))
+        assert int(row["rows"]) == int((data[kind]["level"] == level).sum())
+    enum = tmp_path / "enumerated.tsv"
+    assert k1_triage.main(["enumerate", "--dump", str(dump), "--assign", str(classified),
+                           "--rule", "R_bg0", "--out", str(enum),
+                           "--window-rows", str(window)]) == 0
+    rows = _tsv(enum)
+    assert len(rows) == len(_expected_groups(data, "background", 0))
+    assert {int(row["rows"]) for row in rows} == {5}
+
+
 
 def test_high_cardinality_late_first_identical(tmp_path):
     """Late first appearances + window-spanning groups: identical summary across windows."""

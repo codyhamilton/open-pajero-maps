@@ -55,6 +55,8 @@ The disc was absent at implementation time and not freshly rehashed; no disc
 was accessed or modified. Current documentary review makes no new disc hash
 or completeness attribution claim. Plan 04 Phase 3 remains independently
 blocked. The recorded baseline summary failures are outside this contract.
+Their internal-key padding cause was subsequently resolved by
+[plan 11](11-triage-key-determinism.md); the historical QA above is retained.
 
 ## Follow-ups
 

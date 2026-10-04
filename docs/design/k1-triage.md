@@ -28,3 +28,17 @@ validation path as schema-invalid rules: exit 2, no uncaught traceback, and no
 stale success partition. Partition cleanup runs before rules loading. Valid
 rules and empty-kind classification retain their existing behavior. Plan 09
 landed this contract at `07c3918ace0f37b3c1a47c8e069c6e0e1a9cd783`.
+
+## Triage report grouping
+
+Summary, classify and enumerate group by declared field values. Their internal
+structured keys are packed, with no unnamed padding bytes: uniqueness,
+indexed copies and retained keys must preserve the same byte identity.
+Retained keys own their storage. The aligned on-disk dump layout is separate
+from these internal report keys and retains its manifest-defined offsets.
+
+Summary group/source counts and TSV bytes are invariant across repeated runs
+and window sizes. Source NaN sentinels retain their canonical key and print as
+`nan`; formatting, ordering and the source-table cap remain unchanged.
+Classify rule assignments and enumerate row totals use the same group identity.
+This report contract does not establish cause attribution or close plan 04.
