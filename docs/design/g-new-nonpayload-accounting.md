@@ -2,23 +2,29 @@
 design_id: 170
 ---
 
-# Phase 1 — Named: Map Frame allocation padding (+60 bytes)
+# Map Frame allocation padding accounting
 
 The non-payload structure is the zero-filled padding between each encoded Map
 Frame's end and the end of its allocated buffer. On the existing 3-11 pair its
 size is 21,570,746 → 21,570,806 bytes, a net **+60 bytes**. The disjoint changed
 spans below account for it exactly: **34 × (−4) + 7 × (+28) = +60**.
 
-## Preconditions and fixed contract
+This is the detailed accounting landed at `ced98f8272fc1e4a34ba0d34b0dbbb1535c5f205`
+from `90b05b69331e49e098367022bfa04f7ba9154a95`. The original byte-level
+checks below are historical evidence. Later independent documentary review
+confirmed the 41-row arithmetic, disjoint spans and code/schema mechanism;
+it did not reopen raw discs or scratch.
 
-- C1 passed: `DESIGN.md` has `design_id: 170` in its frontmatter and its body
+## Historical preconditions and fixed contract
+
+- C1 passed: The archived design at `ced98f8` has `design_id: 170` in its frontmatter and its body
   describes this residual, not design id 2.
 - C2 passed: both existing files and their adjacent manifests are present:
   `/home/codyh/workspace/open-pajero-maps/output/scratch-3-11/G/ALLDATA.KWI` and
   `/home/codyh/workspace/open-pajero-maps/output/scratch-3-11/G_new/ALLDATA.KWI`.
   They were opened read-only in place.
 - C3: the recorded figures in
-  `../04-c-core-orchestration/triage/review_3-11.md`, findings 2–3, are
+  `../plans/04-c-core-orchestration/triage/review_3-11.md`, findings 2–3, are
   “1,597,341,290 -> 1,597,341,454” (**+164 payload**) and **+224 total_size**;
   the adjacent manifests record total_size 1,731,021,568 → 1,731,021,792.
   These are the cited 3-11 figures, not a new payload measurement.
@@ -118,9 +124,9 @@ label. This is distinct from the rejected 512/2048-byte rounding hypotheses.
 
 ## Verification and deviations
 
-Read-only evidence and the diff script are in this worktree's ignored
+The original execution recorded read-only evidence and its diff script in its ignored
 `output/scratch-07/evidence.json` and `output/scratch-07/diff_container.py`.
-The script compares container fields and padding only. It reads each frame's
+These inputs were not reopened during status reconciliation. The script compares container fields and padding only. It reads each frame's
 two-byte extent marker solely to locate its padding, without comparing those
 markers, frame content, frame hashes or payload-length deltas. It verifies
 all allocation padding bytes are zero, identical container topology, and

@@ -23,7 +23,7 @@ One unit, not a kickoff/verify split. Unit 3-12 produced this ledger in one clas
 3. `docs/plans/04-c-core-orchestration/briefs/3-14-bg-shape-eo-stitch.md`, `briefs/3-15-completeness-cell-local.md`, `briefs/3-16-completeness-89-window-cf.md` — the sentences quoted under Cited facts.
 4. `docs/plans/04-c-core-orchestration/triage/review_3-13.md` finding 3 and the 9,064 paragraph; `triage/causes_rootcause.md` opening status and the "Classification and honest remainder" table.
 5. `docs/plans/04-c-core-orchestration/triage/rules_bg.json` — rule `R01` `note` (the checker-facing note). `rules_other.json` has no R01.
-6. `docs/plans/07-g-new-nonpayload/DESIGN.md` Decisions 1–2 and the Phase 1 non-goal; `PHASE.md` "Verification and deviations". Do not edit that plan.
+6. `docs/plans/07-g-new-nonpayload.md` scope and deviations, and `docs/design/g-new-nonpayload-accounting.md` historical verification. These preserve the landed design 170 attribution. Do not edit that record.
 
 Read those ranges. Do not re-derive the 9,064 composition, the 776 arithmetic, or the 89 tally.
 
@@ -52,12 +52,12 @@ Also cited from that same outcome, not as this unit's exit: "background, backgro
 
 This unit does not close Phase 3, does not write that enumerated list, and does not treat a failing count of 0 as that list. It records, per kind, whether the historic 9,064 rows are still failing and still unattributed on the disc in force, at item identity where the old keys are still on disk, and as "identity not recoverable" where they are not. Rows that stay unattributed stay unattributed. Do not name a new cause for them.
 
-From `docs/plans/07-g-new-nonpayload/DESIGN.md` Decisions:
+From the archived design 170 decisions, preserved in `docs/plans/07-g-new-nonpayload.md`:
 
 > 1. This is the item after 3-16. The 9,064 re-baseline and the R01 exclusivity note wait behind it.
 > 2. One phase. The outcome is attribute-or-accept. A code fix is a later amendment, not a second phase guessed now.
 
-That plan's own non-goal still holds for its folder: "Completeness, the 9,064 re-baseline, and R01 exclusivity stay outside this plan." Do the work in plan 04. Do not edit plan 07.
+That attribution's non-goal still holds for its closed record: "Completeness, the 9,064 re-baseline, and R01 exclusivity stay outside this plan." Do the work in plan 04. Do not edit plan 07.
 
 Settled: R01 stays `cause: checker`. The caveat is a note. A `build` row found by this re-classify is reported, not fixed.
 
@@ -70,7 +70,7 @@ Settled: R01 stays `cause: checker`. The caveat is a note. A `build` row found b
 
 ## Pre-edit checks (any fail → `blocked`)
 
-C1. `git rev-parse HEAD` is `ced98f8272fc1e4a34ba0d34b0dbbb1535c5f205` or a descendant that still contains `e97c968` and `docs/plans/07-g-new-nonpayload/PHASE.md`. No `briefs/3-17*.md` exists on the base. There is no 3-17 brief at this SHA (confirmed before this brief was written).
+C1. `git rev-parse HEAD` is `ced98f8272fc1e4a34ba0d34b0dbbb1535c5f205` or a descendant that still contains `e97c968` and the design 170 attribution now preserved in `docs/plans/07-g-new-nonpayload.md` and `docs/design/g-new-nonpayload-accounting.md` (the phase record existed on the original base). No `briefs/3-17*.md` exists on the base. There is no 3-17 brief at this SHA (confirmed before this brief was written).
 C2. `sha256sum` of the on-disk post-3-14 AU `ALLDATA.KWI` equals `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`. If the file is absent, **blocked**. Do not encode or copy a replacement. Do not open `output/scratch-3-11/G_new` as a substitute (that image is `013586b5…`, the pre-3-14 ledger disc).
 C3. Quote once, without recomputing: 9,064 = 137 + 8,739 + 188; 3-14 kind failing background 0, background_boundary 0, interior_cover 0, completeness 776, name_anchor 1; 776 = 363 + 132 + 7 + 274; 3-16 is 0 pass / 89 fail / 0 untested.
 C4. `rules_bg.json` R01 `cause` is `checker` and `rules_other.json` has no R01. Read the current R01 `note` before appending.
@@ -96,7 +96,7 @@ C4. `rules_bg.json` R01 `cause` is `checker` and `rules_other.json` has no R01. 
 - `sha256sum` of the disc equals `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`, saved under `output/scratch-3-17/`.
 - Classify stdout, or the empty-dump abort stderr, is saved there. The 3-17 note quotes it and states, per the three historic buckets (137 / 8,739 / 188), still-live-unattributed, not in the failing set, or identity not recoverable. Unattributed rows are still labelled unattributed.
 - `git diff -- docs/plans/04-c-core-orchestration/triage/rules_bg.json` changes only the R01 `note` string. A one-line check prints R01 `cause` still `checker` and the `where` clause still `in_eo_same == 1`.
-- `git diff --stat` shows no path under `parser/`, no `docs/schema/`, no `docs/plans/07-g-new-nonpayload/`, no `briefs/3-90-fresh-verify.md`, and no 3-16 file.
+- `git diff --stat` shows no path under `parser/`, no `docs/schema/`, no change to the design 170 closed record or accounting note, no `briefs/3-90-fresh-verify.md`, and no 3-16 file.
 - If a build-caused defect was found: the note names it and the worktree has no encoder, checker, rule-predicate, or disc diff. Status for that path is `blocked`, not `done`.
 
 ## Report back

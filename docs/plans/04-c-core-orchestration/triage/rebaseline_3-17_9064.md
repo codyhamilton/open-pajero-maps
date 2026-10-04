@@ -14,10 +14,11 @@ appeared. Phase 3 remains open.
 ## Preconditions and cited facts
 
 - **C1 PASS:** HEAD is exactly the requested base; `e97c968` is an ancestor;
-  `docs/plans/07-g-new-nonpayload/PHASE.md` is present on that base; the base
+  the design 170 phase record is present on that base (now retained in
+  `docs/design/g-new-nonpayload-accounting.md`); the base
   contains no `briefs/3-17*.md`. The supplied untracked brief is included in
   this documentation commit. Design 170 already records Map Frame allocation
-  padding; its folder is unchanged.
+  padding; that attribution was unchanged by this re-baseline.
 - **C2 PASS:** the existing read-only AU disc is
   `/home/codyh/workspace/open-pajero-maps-3-14/output/scratch-3-14/G_new/ALLDATA.KWI`.
   Fresh `sha256sum`, saved as `output/scratch-3-17/disc.sha256`, equals
