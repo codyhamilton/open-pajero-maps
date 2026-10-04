@@ -783,3 +783,50 @@ invented. Plan 04 Phase 3 stays open; Phases 4–6 stay dependent, and plan 03
 content stays frozen. Stop at that dependency boundary after landing the
 finished carried work. All scratch, symlink targets, disc, spool and .venv-rp
 were preserved.
+
+### Repository review through 3b716a2 — no further finishable unit
+
+Codex, one worker, 2026-10-05 Australia/Brisbane; worktree
+`open-pajero-maps-status-continue-4`. Fetched `origin/master` and confirmed
+`3b716a21483fd4260ccd2f38d1b619f499dd97fe`, also the initial local master
+and worktree HEAD. Read the stable architecture/design docs, plan records,
+Phase 3 briefs and triage evidence, and checked their claims against master
+history, phase trailers and the landed source changes. This entry records
+the audit requested by the user; it is not a new executable unit or phase close.
+
+**Already landed result SHAs:**
+
+| Finished work | Implementation | Close record |
+| --- | --- | --- |
+| Assembly library load errors, plan 10 | `68aa329556ac2b585dc8165b8bd4d1c8ad6d3263` | `7c4b78f57248224a8dba4b674c5cd77386e7030f` |
+| Triage summary key determinism, plan 11 | `db75ce2b7f80294b94240fe1e85bec7395200dfc` | `f5a2162d38afb5e1c6165ce29ea29dac9f00d99a` |
+| Density basis wording, plan 12 | `0e66f5d164864c0b9246c81b528fffa6ba787ce8` | `5742465c2f7750a8975541393ae91c28948782e7` |
+| Fixture way precheck, plan 13 | `8355950e3d29dcb33169a376b22d5a0f1c08809e` | `678021b9ef1fd145466618a857873a2ba2594763` |
+
+Plans 05 and 07–09 are also closed on master. The preceding audit's carried
+item placements still hold; none of those completed changes needs repeating.
+Plan 04 has Phase 1/2 closing trailers and no Phase 3 closing trailer.
+
+**Blocking evidence:** 3-90's brief explicitly requires `blocked` when a fix
+unit is unreviewed. The latest record at `5c5823e` still lacks the required
+independent review chain, native mechanism joins, exhaustive post-fix pins
+and exact changed-cell proof for the prescribed 3-11 versus later 3-14 oracle.
+Its recurring PSS failure and retained `wall_s` comparison remain unresolved.
+The completed 3-16 science packet is 0 pass / 89 fail / 0 untested and supplies
+no evidence for a C amendment. The completed 3-17 re-baseline leaves all 188
+historic completeness items unattributed. Neither is an unfinished rerun or
+a signed checker/encoder fix. Self-review by this seat cannot supply the
+missing independent review proof under the user's one-worker constraint.
+
+Phases 4–6 remain dependent on Phase 3; plan 03 content remains frozen.
+The scratch-3-12 adapter switch still has its recorded coordination/review
+dependency; optional measurements and the deferred out-of-core finalizer
+are not unfinished signed work. No plan 06 or other executable unit appeared
+on master. No additional design was drawn: the review found no remaining
+unit this seat could finish within the current contracts and evidence.
+
+**Outcome:** stop at the existing dependency boundary and land this audit
+record on master. No tests, blocked checks, builds, dump scans or measurements
+were rerun. No new attribution, review acceptance, oracle or phase-close
+claim was made. No additional worker, Claude, PR or workflow-service call
+was used. All scratch, symlink targets, disc, spool and .venv-rp were preserved.
