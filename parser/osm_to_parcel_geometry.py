@@ -800,8 +800,52 @@ class _GeomHandler:
         self.target_cells: dict[int, set] = {
             level: set(grid.target_cells()) for level, grid in grids.items()
         }
+        self._target_bounds = {}
+        for level, grid in grids.items():
+            cells = grid._target_cell_range()
+            if cells is None:
+                self._target_bounds[level] = None
+                continue
+            ix0, ix1, iy0, iy1 = cells
+            if cells == (0, grid.nx - 1, 0, grid.ny - 1):
+                continue  # Full-grid extraction keeps its existing path.
+            # Admission is by whole cells, including their fixture margins.
+            # Edge columns also accept clamped out-of-coverage longitudes;
+            # retain those rather than alter assign_to_parcel's semantics.
+            lon_bounds = None if ix0 == 0 or ix1 == grid.nx - 1 else (
+                grid.disc_lon_lo + ix0 * grid.cell_lon,
+                grid.disc_lon_lo + (ix1 + 1) * grid.cell_lon,
+            )
+            self._target_bounds[level] = (
+                grid.disc_lat_lo + iy0 * grid.cell_lat,
+                grid.disc_lat_lo + (iy1 + 1) * grid.cell_lat,
+                lon_bounds,
+            )
         self.n_ways = 0
         self.n_nodes = 0
+
+    def _way_intersects_target(self, level: int, bounds: tuple) -> bool:
+        """Conservative rejection only; splitting and centroids still admit.
+
+        Raw longitude bounds cover interpolation as well as centroids. Test
+        every periodic image of the target interval so wrapped ways survive.
+        A wide antimeridian bbox can yield a false positive, which is safe.
+        """
+        if level not in self._target_bounds:
+            return True
+        target = self._target_bounds[level]
+        if target is None:
+            return False
+        lat_lo, lat_hi, lon_lo, lon_hi = bounds
+        target_lo, target_hi, lon_bounds = target
+        guard = 1e-9  # Keep floating-point boundary ambiguities.
+        if lat_hi < target_lo - guard or lat_lo > target_hi + guard:
+            return False
+        if lon_bounds is None:
+            return True
+        lo, hi = lon_bounds
+        return math.ceil((lon_lo - hi - guard) / 360.0) <= math.floor(
+            (lon_hi - lo + guard) / 360.0)
 
     def apply(self, pbf_path: str) -> None:
         import osmium
@@ -887,6 +931,11 @@ class _GeomHandler:
         if len(coords) < 2:
             return
 
+        way_bounds = None
+        if self._target_bounds:
+            lats, lons = zip(*coords)
+            way_bounds = (min(lats), max(lats), min(lons), max(lons))
+
         tags = dict(w.tags)
         hw = tags.get("highway")
         is_road = hw in ROADS
@@ -905,6 +954,8 @@ class _GeomHandler:
 
         for level, grid in self.grids.items():
             if not self.level_filter(level, tags):
+                continue
+            if way_bounds is not None and not self._way_intersects_target(level, way_bounds):
                 continue
             tcells = self.target_cells[level]
 

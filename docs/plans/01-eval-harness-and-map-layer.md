@@ -65,7 +65,7 @@ Verification was the harness itself. The final rebuild's report shows container 
 ## Follow-ups
 
 - Regenerate the deviation ledger from one final build and get user acceptance: parity remediation plan, `docs/plans/03-map-layer-parity-remediation/`, and the ledger in `docs/design/target-disc.md`.
-- Low, from the review: collapse the duplicated layer-presence check in `checks/decode.py` and `checks/shape.py` into the CLI gate; add a cheap way-level bbox pre-check so `--fixture` runs on the full PBF are fast; fold the spool's content-type totals into its first index pass. No tracker exists; these are recorded here only.
+- Low, from the review: collapse the duplicated layer-presence check in `checks/decode.py` and `checks/shape.py` into the CLI gate (harness changes wait for plan 04 Phase 4). The fixture way-bounds precheck is resolved by plan 13; it avoids disjoint-way splitting with synthetic spool-byte equivalence, without claiming a full-PBF timing. Spool content-type totals already landed in the binary index pass at `6a6c986`. No tracker exists; these are recorded here only.
 - Open format questions carried to `docs/schema/UNKNOWNS.md`: the mfde 12-19 mechanism and its stride, the header census beyond a 49-read sample, and the level-0 residual idx10 variant.
 - Route planning, search indexes, metadata regeneration and image authoring remain WP2-WP5 in `docs/design/target-disc.md`.
 

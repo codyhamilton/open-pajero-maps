@@ -19,6 +19,14 @@ Evaluation, offline: compare_disc.py + harness/  →  G vs R report
 
 Stages communicate through files, not in-process state, so each can be rerun alone.
 
+Fixture extraction applies a conservative way-bounds precheck per level before
+splitting roads. Its admission extent covers whole target cells, including their
+margin beyond the requested bbox. Crossing ways, floating-point boundaries,
+longitude wrapping and existing edge-column clamping are retained. The check
+changes neither the splitting/centroid rules nor chain identities and skips
+only ways that cannot produce output in those cells. Full-grid extraction keeps
+its existing path; place nodes retain their existing admission.
+
 ## Rule: C for perf-sensitive work, Python orchestration only
 
 Any loop whose trip count scales with the vertices, shapes, parcels, frames or cells of a
