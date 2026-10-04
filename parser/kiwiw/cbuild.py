@@ -114,8 +114,8 @@ def build_ext(sources: tuple[Path, ...] = EXT_SOURCES, out: Path = EXT_SO,
               flags: tuple[str, ...] = CFLAGS, force: bool = False,
               headers: tuple[Path, ...] | None = None) -> Path:
     """Build (or reuse) the shared object at `out` from `sources`. Raises
-    `BuildError` on a missing compiler or a compile failure; never falls
-    back silently -- that is the caller's choice (`cenc.py` today).
+    `BuildError` on a missing compiler or a compile failure. The C library
+    is mandatory; no Python fallback remains.
 
     `headers` are hashed (so a header-only edit invalidates the product) but
     are not passed to the compiler; `None` means every `*.h` beside the
