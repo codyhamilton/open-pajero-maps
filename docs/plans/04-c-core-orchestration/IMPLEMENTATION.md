@@ -330,3 +330,119 @@ scratch. No code/schema/plan-07/3-16/oracle change, no service call/post, no pus
 or PR. User's feature-branch commit instruction supersedes brief's master-landing
 line. No contradiction with the Phase 3 outcome: this record does not meet or
 claim phase closure. Phase 3 remains open; Execute owns landing.
+
+### 3-90 Fresh verification attempt — blocked (2026-10-04)
+
+**0 heavy runs completed; 0 of checks 1–6 proven. Phase 3 remains open.**
+Fresh Codex agent; no prior 3-xx authorship in this session. Initial checkout:
+`/home/codyh/workspace/open-pajero-maps-3-90`, branch `master`, HEAD
+`07c3918ace0f37b3c1a47c8e069c6e0e1a9cd783`, upstream `origin/master`;
+`git status --porcelain=v1` empty before recording. The run message prohibits
+push, merge, PR, other checkouts/worktrees and workflow-service use; commit only.
+The brief is unchanged. No code or other plan was edited.
+
+Parameters: oracle_disc=output/scratch-3-11/G_new/ALLDATA.KWI; spool=output/extract_timing/spool; pinned_list=docs/plans/04-c-core-orchestration/triage/pinned_candidates.tsv; re_oracle_override=none; pinned_override=none; j_timing=12; j_determinism=1; wall_limit_s=120; pss_limit_kB=9726501; start_HEAD=07c3918ace0f37b3c1a47c8e069c6e0e1a9cd783
+
+No disc or pinned-list override was named. The prescribed 3-11 disc is the
+`G_new/ALLDATA.KWI` identified in the 3-11 record, not a substitution of the
+later 3-14 disc. This checkout initially had **no `output/` and no `.venv-rp/`**.
+The required disc, original spool, run conventions in `scratch-2-07/run.sh`,
+external enumerations and exact differing-cell evidence are consequently absent.
+No inputs were linked/copied from another checkout and no alternative environment
+was installed. Only `output/scratch-3-90/` and a local `output/.heavy.lock` were
+created for diagnostic evidence; no heavy process started.
+
+**Dependency and contract findings:** the 3-08 record documents independent
+review ACCEPT, but also an incomplete partition; 3-10/3-11 document review ACCEPT,
+and 3-12 documents ACCEPT-WITH-CONDITIONS. The 3-14 record documents an adversarial
+BOUNCE followed by Design rulings and landing; these are not independently
+re-established here as a completed fix-review chain. Later 3-15–3-17 records keep
+Phase 3 open. `cause_table.md` explicitly freezes the 3-08 attribution and points
+to later residual/root-cause records; it cannot be represented as post-fix counts.
+The default pinned candidate file explicitly says it is not exhaustive:
+**100 displayed groups / 26,650 historical total groups / 1,939,931 historical
+rows**, `TRUNCATED=yes`. Its SHA256 is
+`7dfe6ed7b99e9d234e688d6855a885d3cd1a140db409dc1f726a48bd0948855a`.
+Neither missing identities nor post-fix causes were inferred from those totals.
+
+**Cause-per-kind table:** copied as aggregates from the required 3-08
+`cause_table.md`, **historical only**, with the fresh post-fix verdict explicit.
+
+| Kind | Historical build | Historical checker | Historical spool | Historical unattributed | Fresh post-fix counts |
+| --- | ---: | ---: | ---: | ---: | --- |
+| background | 0 | 920,773 | 0 | 517,785 | unproven |
+| background_boundary | 0 | 0 | 1,939,053 | 14,610,516 | unproven |
+| interior_cover | 0 | 0 | 821 | 3 | unproven |
+| completeness | 13 | 495 | 56 | 188 | unproven |
+| name_anchor | 0 | 0 | 1 | 0 | unproven |
+
+Range, step and road_node have no entries in that historical cause table;
+their fresh checked/failing/cause counts are also unproven. No zero counts,
+exhaustive classification or `PARTITION OK` are asserted for this attempt.
+
+**Checks, in order:** raw commands, stdout/stderr and exits are retained in
+`output/scratch-3-90/`; each numbered evidence file starts `FAIL <number>` and
+distinguishes blocked execution from an observed checker failure.
+
+| Check | Verdict and numbers | Raw evidence |
+| --- | --- | --- |
+| Initial checkout | PASS; required HEAD/branch/upstream; clean tree except output | `00-checkout.txt` |
+| 1. Disc | FAIL / blocked; `sha256sum` exits 1 because prescribed disc is absent; measured disc SHA unavailable | `01-disc.txt` |
+| 2. K1 timing/PSS | FAIL / blocked; 0/3 dump-off `-j12` runs; median wall and max summed-PSS unproven against 120 s / 9,726,501 kB | `02-timing.txt` |
+| 3. Determinism | FAIL / blocked; 0/1 `-j1` runs; no reports to strip or `cmp` | `03-determinism.txt` |
+| 4. Dump/classify/pins | FAIL / blocked; 0 dump runs, no classify or sorted-set diff; truncated default pins cannot prove equality | `04-partition.txt` |
+| 5. Counts | FAIL / blocked; no fresh checked/failing report or exhaustive pinned counts; name_anchor allowance remains 1 | `05-counts.txt` |
+| 6. Build gates/tests | FAIL / blocked; no AU/Perth builds. Exact full pytest command under local `flock output/.heavy.lock` exits 69: `.venv-rp/bin/python` absent; no pytest summary | `06-gates.txt` |
+
+Check 5 retains the 3C-04 checked targets: range 309,192,246; step 252,444,802;
+road_node 42,995,770; name_anchor 2,317,983; background 174,332,105;
+background_boundary 89,546,388; completeness 1,800,514; interior_cover 1,592,016.
+None was compared to a fresh result. Goldens, H-budget, perf-inventory and cbuild
+staleness tests in the requested full suite remain unproven (step 7 included).
+Step 7 names no grep pattern/input; no arbitrary `grep -c` was invented.
+
+**Re-oracle disclosure, not a new re-oracle:** the 3-11 fix-unit record identifies
+AU SHA256 `013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04`
+instead of original `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862`.
+Its exact quoted scope is "exactly 37 differing cells, all level 0, 37/37 predicted,
+0 extras", pointing to `output/scratch-3-11/Gnew.diff_cells.txt`, SHA256
+`9f2b0e554465d030637fa7d19b4ceaf88b6283b1d4d86810de5ccd4dece50e5e`.
+That list is absent here, so the individual cells cannot be quoted/verified.
+The 3-11 Perth record keeps
+`da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc`.
+The later 3-14 record instead names AU `4ed9cd80…` / Perth `04be2f6e…`
+and 246,123 / 795 differing cells. This conflicts with treating the brief's
+default 3-11 disc as the latest phase-close oracle; no switch or sign-off is
+made silently. Fresh build SHA equality and exact differing-cell gates are unproven.
+Likewise, Phase 2 excluded both `timing` and `wall_s` for determinism whereas
+this brief specifies only `timing`; no extra field was silently excluded.
+The required 2-08 brief contains no actual K1/build invocation, referring instead
+to absent scratch run evidence; no replacement heavy-run conventions were assumed.
+
+**Carried:**
+
+1. Restore the prescribed disc, spool, Python environment, run conventions and
+   exact differing-cell evidence within this authorized checkout before rerunning
+   3-90. Resolve the oracle/version and review-chain contradictions explicitly.
+2. Exhaustive spool identities remain required. The historical 3-08 candidate
+   view covers S02/O02/O03/O04; its external `enumerate_*.tsv` / `pins_*.tsv` are
+   absent. The known name_anchor spool item is L0 `(0,541)`, leaf 928, source
+   longitude 77.519 versus encoded 90.0. No new spool item is assigned here.
+3. Phase 3's unresolved completeness attribution from 3-15–3-17 remains open;
+   the 3-17 record's historic raw tally is 776 = 468 assigned + 308 unattributed,
+   distinct from 3-15's corrected tally with 274 unattributed. Those are earlier
+   measurements, not a fresh classification or forced-zero post-fix ledger.
+4. Phase 2 carried items not absorbed, per DESIGN "Carried-item placement":
+   D1 `*_first` quirk to Phase 4 unless a demonstrated failure requires it;
+   container/shape early-exit question to Phase 4; explained counters to Phase 4/5;
+   rc=1 harness FAILs to Phase 4. cbuild header staleness, inside-side TOL coverage
+   and float-key tie are recorded as absorbed in 3-01, 3-04 and 3-07 respectively,
+   without claiming their tests passed in this attempt. Preserve the Phase 2
+   scratch evidence and the signed 9,726,501 kB / 20 s / 60 s ceilings.
+
+No final dump or non-git pinned list was produced, so there are no corresponding
+new `docs/provenance.md` entries. Diagnostics: `preflight.py`, `parameters.txt`,
+`00-checkout.txt`–`06-gates.txt`, `summary.json`, `report.txt`, all under private
+`output/scratch-3-90/`. Required source reading: six files; within the 10-file /
+40-tool-turn budget. This is a committed **blocked-attempt record**, not the
+brief's completed verification or Phase 3 close sign-off; no phase trailer.
