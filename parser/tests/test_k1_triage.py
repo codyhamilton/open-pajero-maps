@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -270,6 +271,28 @@ def test_classify_rejected_manifest_or_rules_clears_stale_partition(tmp_path, in
 
     assert k1_triage.main(["classify", "--dump", str(dump), "--rules", str(rules),
                            "--out", str(out)]) == 2
+    assert not (out / "partition.txt").exists()
+
+
+@pytest.mark.parametrize("stale_partition", [False, True])
+def test_classify_invalid_rules_json_exits_2(tmp_path, stale_partition):
+    dump, _ = _make_dump(tmp_path)
+    rules = tmp_path / "malformed.json"
+    rules.write_text('{"version": 1, "rules": [}')
+    out = tmp_path / "cls"
+    if stale_partition:
+        out.mkdir()
+        (out / "partition.txt").write_text("PARTITION OK\n")
+
+    result = subprocess.run(
+        [sys.executable, str(Path(k1_triage.__file__)), "classify", "--dump", str(dump),
+         "--rules", str(rules), "--out", str(out)],
+        capture_output=True, text=True, check=False)
+
+    assert result.returncode == 2
+    assert result.stderr.startswith("k1_triage: ")
+    assert "JSONDecodeError" not in result.stderr
+    assert "Traceback" not in result.stderr
     assert not (out / "partition.txt").exists()
 
 

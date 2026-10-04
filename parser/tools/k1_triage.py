@@ -411,7 +411,7 @@ def cmd_classify(args) -> int:
         for r in rules:
             if r["kind"] not in kinds:
                 raise BadRules(f"rule {r['id']}: unknown kind {r['kind']!r}")
-    except BadRules as exc:
+    except (BadRules, json.JSONDecodeError) as exc:
         print(f"k1_triage: {exc}", file=sys.stderr)
         return 2
 
