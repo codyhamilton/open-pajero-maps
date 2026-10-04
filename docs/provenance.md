@@ -8,6 +8,17 @@ traceable from this doc, not just from memory or shell history.
 When you add a new `.gitignore` rule for a class of file, add an entry here in the
 same commit.
 
+## `.venv-rp/` — local Python test environment
+
+- **What:** an isolated environment created in the status-continue worktree;
+  it is not a symlink to another checkout. System numpy is available through
+  system site packages; pytest 9.1.1, pluggy 1.6.0 and iniconfig 2.3.0 were
+  installed from the configured Python package index.
+- **Why not committed:** regenerable third-party dependencies.
+- **Reproduce:** `python3 -m venv --system-site-packages .venv-rp`, then
+  `.venv-rp/bin/python -m pip install pytest==9.1.1 pluggy==1.6.0 iniconfig==2.3.0`.
+- Existing environments, scratch, disc and spool inputs are preserved.
+
 ## `original-disc/pajero-whereis-2007.iso`
 
 - **What**: raw ISO image of the user's physical reference disc (Mitsubishi Pajero

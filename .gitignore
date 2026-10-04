@@ -12,6 +12,7 @@ tools/kiwiread/
 *.iso
 __pycache__/
 *.pyc
+.venv-rp/
 
 # OSM source extracts (large, re-downloadable, not our content)
 *.osm.pbf
