@@ -256,6 +256,23 @@ def test_classify_rejects_zero_manifest_unreadable_or_nonempty_dump(tmp_path, ca
     assert not (out / "partition.txt").exists()
 
 
+@pytest.mark.parametrize("invalid", ["manifest", "rules"])
+def test_classify_rejected_manifest_or_rules_clears_stale_partition(tmp_path, invalid):
+    dump, _ = _make_dump(tmp_path)
+    rules = _rules(tmp_path, "rules.json", _complete_rules())
+    if invalid == "manifest":
+        (dump / "dump_manifest.json").write_text("not json")
+    else:
+        rules.write_text(json.dumps({"version": 2, "rules": []}))
+    out = tmp_path / "cls"
+    out.mkdir()
+    (out / "partition.txt").write_text("PARTITION OK\n")
+
+    assert k1_triage.main(["classify", "--dump", str(dump), "--rules", str(rules),
+                           "--out", str(out)]) == 2
+    assert not (out / "partition.txt").exists()
+
+
 def test_classify_dropped_rule_lists_its_groups(tmp_path):
     dump, data = _make_dump(tmp_path)
     rules = [r for r in _complete_rules() if r["id"] != "R_bg0"]

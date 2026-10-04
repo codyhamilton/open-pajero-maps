@@ -35,3 +35,11 @@ heavy lock; both equal
 No encode, checker, full dump, completeness recount, or rule edit was performed.
 The changed-path audit excludes plan 07, the 3-17 record, and the 3-16 packet.
 This replay proves the selected kind views; it makes no all-kind partition claim.
+
+Independent review resolved stale-success output on early manifest/rules-schema
+rejection. Its focused guard checks passed six tests. The orchestrator reran the
+same suite and real replay after that fix; final results are recorded in the
+close-out record. The malformed rules JSON exception path was observed during
+review and retained as a separately scoped input-error follow-up. Final suite:
+**43 passed in 11.74s**. Final real replay: exit 0, the same zero partitions and
+byte-identical name_anchor outputs, with matching input hashes.

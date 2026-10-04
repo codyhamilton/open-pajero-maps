@@ -396,6 +396,10 @@ def _eval_where(where, block) -> np.ndarray:
 def cmd_classify(args) -> int:
     dump = Path(args.dump)
     out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    # Any rejected invocation must not leave a prior successful partition
+    # looking current, including failures while loading the manifest or rules.
+    (out / "partition.txt").unlink(missing_ok=True)
     try:
         manifest, fields, kinds, dtype = _load_manifest(dump)
     except Exception as exc:  # noqa: BLE001 - report the manifest problem, exit 2
@@ -411,10 +415,7 @@ def cmd_classify(args) -> int:
         print(f"k1_triage: {exc}", file=sys.stderr)
         return 2
 
-    out.mkdir(parents=True, exist_ok=True)
     (out / "rules.json").write_bytes(Path(args.rules).read_bytes())
-    # A failed preflight must not leave a prior successful partition looking current.
-    (out / "partition.txt").unlink(missing_ok=True)
 
     cause_rows, cause_groups = {}, {}
     unclassified = {}

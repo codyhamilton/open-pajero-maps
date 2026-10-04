@@ -68,6 +68,24 @@ independently reran the real CLI verifier (exit 0), compared the disc SHA files,
 and checked the changed paths against `ac1a64d`. Verdict: phase outcome **met**;
 no partial outcomes. The phase is closed by its `Workflow-Phase` commit trailer.
 
+Terminal review: the independent verifier also served as the independent
+comprehensive reviewer against `8b6eb55`. Verdict: PASS after one mechanical
+medium-severity fix. Stale partition cleanup now precedes manifest and rules
+loading; two new regressions cover early rejected invocations. The review's
+focused guard set passed six tests. A final full relevant suite and replay were
+rerun because this fix changed code.
+
+Final verification: 43 tests passed in 11.74s, real CLI replay exited 0 with
+both zero partitions and unchanged name_anchor output bytes, and input hashes
+still matched. Close-out retains the design intent and promotes the lasting
+contract and the non-blocking input-error follow-up to `docs/design/k1-triage.md`.
+
+The reviewer also observed the pre-existing malformed-rules-JSON path raising
+an uncaught JSONDecodeError. This does not block the empty-kind contract; it is
+recorded as a small input-error follow-up in the durable triage design doc at
+close-out. No further attribution or scientific work was added.
+
 ## Carried
 
-None.
+1. Normalize malformed rules JSON into a clean classify input-error exit in a
+separately scoped follow-up. Existing behavior is outside this phase.
