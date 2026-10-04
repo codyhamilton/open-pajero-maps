@@ -624,3 +624,12 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
   failing set; every historic completeness row matches and stays unattributed.
   Raw mechanism flags are distinguished from the prior corrected 3-15 tally;
   no assigned build row, no rule registration and no Phase 3 closure.
+
+
+## `output/scratch-3-90/` — fresh verification rerun, 2026-10-04
+
+- **What:** private verification evidence at worktree `/home/codyh/workspace/open-pajero-maps-3-90`; final native failure dump `dump/`, K1 reports `k1_{a,b,c,j1,dump}.json`, timing-only-normalized reports, raw logs, derived `rules_merged.json`, fresh AU and two Perth build outputs, and numbered PASS/FAIL reports. This is a blocked attempt, not a closed Phase 3 partition.
+- **Source:** HEAD `4182996d37f9419e4fe6368c6a2a1a924f783f0f`, prescribed symlinked 3-11 `G_new/ALLDATA.KWI` SHA256 `013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04`, symlinked original spool and Python environment. Inputs preserved in place; no main-checkout output deleted. Dump manifest SHA256 `a54b07e6bb5706a02ee7174e36754da6b90816ae89310e8d04949a0b8031b996`.
+- **Reproduce:** `run.py` records exact sequential invocations recovered from 2-07 conventions; every heavy invocation uses `flock output/.heavy.lock`. Three dump-off K1 runs at -j12, one -j1, one -j12 dump run, final tracked background-then-other rules classify, full AU build, Perth -j1/-j4, exact full pytest -q -x. `strip_timing.py` removes only timing. Do not substitute this dump's missing historical side columns; native classify failure is retained.
+- **Pins:** existing committed `triage/pinned_candidates.tsv` SHA256 `7dfe6ed7b99e9d234e688d6855a885d3cd1a140db409dc1f726a48bd0948855a` is a truncated historical candidate view; no new non-git final pinned list produced.
+- **Why not committed:** regenerable multi-GB dump/build/test artifacts. Preserve the final dump and logs for later phases to resolve oracle, attribution, pin and determinism gates.

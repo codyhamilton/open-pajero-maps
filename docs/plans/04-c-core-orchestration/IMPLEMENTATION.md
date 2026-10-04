@@ -446,3 +446,80 @@ new `docs/provenance.md` entries. Diagnostics: `preflight.py`, `parameters.txt`,
 `output/scratch-3-90/`. Required source reading: six files; within the 10-file /
 40-tool-turn budget. This is a committed **blocked-attempt record**, not the
 brief's completed verification or Phase 3 close sign-off; no phase trailer.
+
+
+### 3-90 Fresh verification rerun — blocked (2026-10-04)
+
+**Three timing runs, one single-worker run, one dump run, one AU build and two Perth builds completed. Phase 3 remains open.** Fresh Codex agent, no earlier 3-xx authorship in this session; worktree `/home/codyh/workspace/open-pajero-maps-3-90`, branch `master`, start HEAD `4182996d37f9419e4fe6368c6a2a1a924f783f0f`. The earlier blocked attempt above remains historical. This rerun uses the now-provided symlinks for `.venv-rp`, the spool and the 3-11 disc; none was copied, replaced or deleted. Initial tracked tree clean; untracked `.venv-rp` is a user-provided input symlink, so the literal clean-except-output precondition is recorded FAIL/deviation in `00-checkout.txt`. User permits local master commits and prohibits push/workflow-service posts; no such operations performed.
+
+Parameters: oracle_disc=output/scratch-3-11/G_new/ALLDATA.KWI; spool=output/extract_timing/spool; pinned_list=docs/plans/04-c-core-orchestration/triage/pinned_candidates.tsv; re_oracle_override=none; pinned_override=none; j_timing=12; j_determinism=1; wall_limit_s=120; pss_limit_kB=9726501; start_HEAD=4182996d37f9419e4fe6368c6a2a1a924f783f0f
+
+Disc SHA256 `013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04`, the recorded 3-11 `G_new` re-oracle. Default pinned path `docs/plans/04-c-core-orchestration/triage/pinned_candidates.tsv`, SHA256 `7dfe6ed7b99e9d234e688d6855a885d3cd1a140db409dc1f726a48bd0948855a`: explicitly **100 shown / 26,650 historical groups / 1,939,931 historical rows**, `TRUNCATED=yes`, not an exhaustive post-fix pinned list. No final-list or disc override was named.
+
+**Checks 1–6:** all heavy commands ran serially under `flock output/.heavy.lock`. Command, stdout/stderr and exit are retained in each run log. Numbered report files begin PASS or FAIL. The commands/conventions were recovered read-only from the main checkout's `output/scratch-2-07/run.sh`, referenced by 2-08; that script itself was not run or copied. Its extra decode/harness runs and cleanup were not performed.
+
+| Check | Verdict | Evidence |
+| --- | --- | --- |
+| 1 | PASS: 3-11 disc hash verified; no override | `output/scratch-3-90/01-report.txt` |
+| 2 | PASS: wall_s=[77.534, 74.732, 74.515]; median=74.732; pss_peak_kb=[9388509, 9496922, 9490767]; max=9496922 | `output/scratch-3-90/02-report.txt` |
+| 3 | FAIL: cmp after removing only timing; see raw diff | `output/scratch-3-90/03-report.txt` |
+| 4 | FAIL: final tracked rules reject native dump; exhaustive final pins unavailable | `output/scratch-3-90/04-report.txt` |
+| 5 | FAIL: fresh counts below; exhaustive pin counts unavailable | `output/scratch-3-90/05-report.txt` |
+| 6 | FAIL / unproven: shared oracle and exact differing-cell identities; AU/Perth match recorded 3-14 hashes, full pytest PASS | `output/scratch-3-90/06-report.txt` |
+
+K1 report walls `77.534 / 74.732 / 74.515 s`, median **74.732 s ≤120**; PSS `9,388,509 / 9,496,922 / 9,490,767 kB`, max **9,496,922 ≤9,726,501**. Single-worker report wall `448.525` s. K1 exit 1 denotes known failing items with a complete report, following 2-07 conventions; it does not invalidate timing evidence.
+
+**Determinism:** `strip_timing.py` is five lines; only `timing` is removed before canonical JSON output and `cmp`. Phase 2 excluded both `timing` and `wall_s`; this rerun follows 3-90 exactly. `03-determinism.log` records the actual byte-equality verdict; the sole differing field is top-level `wall_s` (77.5 versus 448.5); it is not silently excluded.
+
+**Dump run:** -j12 external wall 173.216 s; dump-off timing is the 120 s gate.
+
+**Classification and causes:** `rules_merged.json` is derived from the final tracked `triage/rules_bg.json` followed by `rules_other.json`, with no rule/predicate/order changes. Fresh native dumps do not carry historical `s02_producer_verified`, `residual_crossing_verified` or `other_mechanism` joins. The unchanged classify command's rejection is in `04-classify.log`; no historical dump or invented side-table flags substitute for this fresh dump. Native classify reports `rule S02: unknown column 's02_producer_verified'`, exit 2. No fresh per-cause zero, unclassified count or PARTITION OK is proven. Spool group count and sorted-set diff are unavailable without valid classification and a complete final pinned list; both counts/diff are explicitly unproven.
+
+Required cause-per-kind table from `cause_table.md`, **historical 3-08 attribution only** (that file explicitly says superseded), alongside the measured fresh failing counts:
+
+| Kind | Historical build | Historical checker | Historical spool | Historical unattributed | Fresh failing | Fresh causes |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| background | 0 | 920773 | 0 | 517785 | 1438571 | unproven: classify rejected missing side columns |
+| background_boundary | 0 | 0 | 1939053 | 14610516 | 16550043 | unproven: classify rejected missing side columns |
+| interior_cover | 0 | 0 | 821 | 3 | 824 | unproven: classify rejected missing side columns |
+| completeness | 13 | 495 | 56 | 188 | 739 | unproven: classify rejected missing side columns |
+| name_anchor | 0 | 0 | 1 | 0 | 1 | unproven: classify rejected missing side columns |
+
+The live rules attribute S02–S05 to build, superseding that historical spool attribution. The 3-08/3-10/3-11 records cite review ACCEPT, 3-12 ACCEPT-WITH-CONDITIONS; 3-14 documents adversarial BOUNCE followed by Design rulings and landing. Those records do not establish a closed post-fix attribution/review chain. No new review or sign-off is invented.
+
+**Checked/failing counts:**
+
+| Kind | Fresh checked | 3C-04 checked | Equal | Fresh failing |
+| --- | ---: | ---: | --- | ---: |
+| range | 310053353 | 309192246 | False | 0 |
+| step | 253137973 | 252444802 | False | 0 |
+| road_node | 42995770 | 42995770 | True | 0 |
+| name_anchor | 2317983 | 2317983 | True | 1 |
+| background | 175171302 | 174332105 | False | 1438571 |
+| background_boundary | 89568298 | 89546388 | False | 16550043 |
+| completeness | 1800514 | 1800514 | True | 739 |
+| interior_cover | 1592045 | 1592016 | False | 824 |
+
+Failing equality with exhaustive pins remains unproven; the name_anchor allowance is one. Five checked targets differ (range +861,107; step +693,171; background +839,197; background_boundary +21,910; interior_cover +29). The 3-11 record documents newly visible records after its count fix; exact per-cell checked-count deltas are unproven here. The original targets are not silently changed.
+
+**Build gates and re-oracle disclosure:** fresh full-AU SHA256 `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`; Perth `-j1` `04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728` and `-j4` `04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728`. They must be judged against the recorded oracle history; the K1 inputs remain the prescribed 3-11 disc. 3-11 produced `013586b5…` from `87a01b14…`; its exact quoted scope is “exactly 37 differing cells, all level 0, 37/37 predicted, 0 extras”, with `Gnew.diff_cells.txt` SHA256 `9f2b0e554465d030637fa7d19b4ceaf88b6283b1d4d86810de5ccd4dece50e5e`. 3-14 produced AU `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72` and Perth `04be2f6e…`; record quotes: “differing cells AU 246,123 (L0 244,060 / L2 1,944 / L6 118 / L8 1) and Perth 795 (L0 784 / L2 11), added 0 / removed 0”; “AU 246,116 background-payload-only + 4 division-topology + 3 frame-ceiling, Perth 792 + 3”. Those are aggregate quotations, **not exact cell identities**. Individual differing-cell gate remains unproven: the fix-unit record does not quote the full identities, and no replacement census is authorized. No new re-oracle is signed here.
+
+External build walls: full AU 55.697 s; Perth -j1 7.227 s, -j4 2.659 s. The AU result is slower than the historic 3-11 20.7 s; mechanism is unproven in this verification-only unit and no extra perf check is added.
+
+Full-suite command exactly `.venv-rp/bin/python -m pytest parser/tests -q -x`, under the lock and scratch TMPDIR. Raw result (`pytest.log`):
+
+```
+897 passed, 11 skipped in 415.09s (0:06:55)
+```
+
+**Full suite PASS: 897 passed, 11 skipped in 415.09 s.** Skip reasons are not expanded with a separate check. Goldens/H budgets, perf inventory and cbuild-staleness are included through this suite; no separate tests were added. The overall gate remains unproven because current build oracle differs from the K1 disc and exact differing-cell identities are not verified. The literal additionally named `grep -c`, with no invented pattern or file, exits 2 (usage error); raw output is `07-grep.log`. This does not supply a meaningful grep count. No code, test, tolerance or input fix performed.
+
+**Carried:**
+
+1. Resolve prescribed 3-11 K1 disc versus later 3-14 build oracle, exact differing-cell identities and any outstanding independent fix review; this is a blocked verification record, no phase trailer.
+2. Supply an exhaustive final pinned list and valid producer/mechanism joins for the fresh dump. Historical spool items are not treated as current pins. Known name_anchor spool item L0 `(0,541)`, leaf 928, source longitude 77.519 versus encoded 90.0 remains.
+3. Completeness attribution from 3-15–3-17 remains open: historical raw 776=468 assigned+308 unattributed differs from corrected 274 unattributed; neither historic flag tally is transplanted into this dump.
+4. Phase 2 carried items not absorbed: D1 `*_first` quirk to Phase 4 absent a demonstrated failure; container/shape early-exit question and rc=1 harness failures to Phase 4; explained-counter gates to Phase 4/5. cbuild header staleness, inside-side TOL coverage and float-key tie recorded absorbed in 3-01/3-04/3-07; the fresh full-suite result is stated above. Preserve Phase 2 scratch; signed memory/budget ceilings stand.
+5. Retain this final dump, run logs and derived rule snapshot under `output/scratch-3-90/`; provenance entry added. All outputs remain private to this worktree.
+
+Budget: 10 source files read (brief, DESIGN, IMPLEMENTATION, cause table, pinned candidates, 2-08, 2-07 run script, both live rule files, provenance); no extra verification checks, no agents. The run-count budget line names three K1 timing runs plus -j1 and Perth, while steps 4 and 6 also explicitly require a dump and full-AU build; those two explicitly named runs were performed. This run-count ambiguity is disclosed, not treated as authorization for any further run. Raw generated reports/logs read for required verdicts.
