@@ -523,3 +523,70 @@ Full-suite command exactly `.venv-rp/bin/python -m pytest parser/tests -q -x`, u
 5. Retain this final dump, run logs and derived rule snapshot under `output/scratch-3-90/`; provenance entry added. All outputs remain private to this worktree.
 
 Budget: 10 source files read (brief, DESIGN, IMPLEMENTATION, cause table, pinned candidates, 2-08, 2-07 run script, both live rule files, provenance); no extra verification checks, no agents. The run-count budget line names three K1 timing runs plus -j1 and Perth, while steps 4 and 6 also explicitly require a dump and full-AU build; those two explicitly named runs were performed. This run-count ambiguity is disclosed, not treated as authorization for any further run. Raw generated reports/logs read for required verdicts.
+
+
+### 3-90 Ledger brief 121 — new fresh verification, blocked (2026-10-04)
+
+**Five fresh K1 runs, one full-AU build, two Perth builds and the full requested pytest completed. Checks 1–6: 1 PASS, 2 PASS, 3 FAIL, 4 FAIL, 5 FAIL, 6 FAIL. Phase 3 remains open.** Parent HEAD `59994c23d8a924f1dd035646e44febdaa60ee09c`, subject `docs: record fresh 3-90 verification results and blockers`; `master`, initial `origin/master` identical. Initial tracked tree clean, only the explicitly permitted untracked `.venv-rp` symlink. Check 0 PASS. No branch/checkout change, no push, no other checkout touched. This is a new execution, not the earlier report or its JSON reused as evidence.
+
+Parameters: oracle_disc=output/scratch-3-11/G_new/ALLDATA.KWI; spool=output/extract_timing/spool; pinned_list=docs/plans/04-c-core-orchestration/triage/pinned_candidates.tsv; re_oracle_override=none; pinned_override=none; j_timing=12; j_determinism=1; wall_limit_s=120; pss_limit_kB=9726501; start_HEAD=59994c23d8a924f1dd035646e44febdaa60ee09c
+
+All raw evidence for this execution lives in `output/scratch-3-90/fresh-59994c23/`, a new subdirectory; previous scratch evidence remains preserved. The new `run.py` reuses the previous command conventions only; every JSON used here was newly produced in this subdirectory. Required 2-08 reading specifies Phase 2 conventions but contains no complete CLI invocations; invocations use the specified entry point and flags and the recorded build recipes. Heavy invocations are serial under `flock output/.heavy.lock`. Symlinked disc, spool and environment inputs were only consumed, not replaced or deleted.
+
+Disc SHA256 `013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04`. Named tracked pinned list `docs/plans/04-c-core-orchestration/triage/pinned_candidates.tsv`, SHA256 `7dfe6ed7b99e9d234e688d6855a885d3cd1a140db409dc1f726a48bd0948855a`. Its explicit footer is **100 shown / 26,650 historical groups / 1,939,931 historical rows / TRUNCATED=yes**; no alternative final pinned list was named or used.
+
+| Check | Verdict | Fresh result | Raw/numbered evidence |
+|---|---|---|---|
+| 1 | PASS | Disc SHA256 matches recorded 3-11 G_new. | `output/scratch-3-90/fresh-59994c23/01-report.txt` |
+| 2 | PASS | wall_s=[76.081, 73.455, 71.701]; median=73.455 pss_peak_kb=[7090137, 9084434, 9690973]; max=9690973 | `output/scratch-3-90/fresh-59994c23/02-report.txt` |
+| 3 | FAIL | Only timing removed, per 3-90. cmp exit=1 See 03-determinism.log. Top-level wall_s, if present, retained. | `output/scratch-3-90/fresh-59994c23/03-report.txt` |
+| 4 | FAIL | Native classify exit 2; no fresh per-cause partition or spool set equality. | `output/scratch-3-90/fresh-59994c23/04-report.txt` |
+| 5 | FAIL | Five checked targets differ; final pinned failing equality fails/unproven. | `output/scratch-3-90/fresh-59994c23/05-report.txt` |
+| 6 | FAIL | AU/Perth match later 3-14 recorded values; exact changed-cell gate unproven. Full pytest: 897 passed, 11 skipped in 416.30s (0:06:56) | `output/scratch-3-90/fresh-59994c23/06-report.txt` |
+
+Check 3 uses the required five-line script and `cmp`, removing only `timing`. Top-level `wall_s` remains: j12 `76.1`, j1 `446.9`. No silent extra exclusion. Check 4's raw classifier output is `output/scratch-3-90/fresh-59994c23/04-classify.log`; it rejects `s02_producer_verified`, exit 2. Final merged rules are the tracked `rules_bg.json` followed by `rules_other.json`, with predicates/order/causes unchanged. Native dump lacks the historical producer/mechanism joins. No side-table reconstruction is scoped or performed. Classified spool group count and sorted-set diff are unproven; named pins have 100 visible groups. The visible sorted keys and explicit unavailable-diff result are retained in `pinned-visible.sorted.txt` and `04-spool-set.txt`.
+
+**Cause-per-kind table:** `cause_table.md` explicitly freezes the 3-08 attribution and directs residual/root-cause readers elsewhere; its counts below are historical context, not transplanted evidence. S02–S05 live rules now say build. Native fresh classification failed, so post-fix causes cannot honestly be given zero counts. The post-fix totals are measured on the mandated 3-11 disc; post-fix cause cells remain unproven.
+
+| Kind | Historical checker | Historical build | Historical spool | Historical unattributed | Fresh failing total | Fresh checker / build / spool / unattributed |
+|---|---:|---:|---:|---:|---:|---|
+| background | 920,773 | 0 | 0 | 517,785 | 1,438,571 | unproven / unproven / unproven / unproven |
+| background_boundary | 0 | 0 | 1,939,053 | 14,610,516 | 16,550,043 | unproven / unproven / unproven / unproven |
+| interior_cover | 0 | 0 | 821 | 3 | 824 | unproven / unproven / unproven / unproven |
+| completeness | 495 | 13 | 56 | 188 | 739 | unproven / unproven / unproven / unproven |
+| name_anchor | 0 | 0 | 1 | 0 | 1 | unproven / unproven / unproven / unproven |
+
+Fresh range, step, road_node and road_point failing totals are 0; no failed rows exist there. No global PARTITION OK, exhaustive spool equality or Phase 3 cause gate is established. Dependency gate also remains blocked: 3-08/3-10/3-11 cite ACCEPT, 3-12 cites ACCEPT-WITH-CONDITIONS; 3-14 records adversarial BOUNCE followed by Design rulings and landing. The named fix/science sequence includes 3-13 and 3-15–3-17, but the required IMPLEMENTATION records do not establish every unit's completed independent fix-review chain. Absence of proof is not silently called review acceptance; no new review/sign-off is invented.
+
+**Counts, check 5:** exact Phase 2 checked targets are unchanged. Visible pinned row sums below come directly from the named truncated file; zero visible rows for a kind does not establish an exhaustive zero spool list. name_anchor failing 1 is allowed.
+
+| Kind | Fresh checked | Phase 2 checked | Delta | Fresh failing | Visible pinned rows |
+|---|---:|---:|---:|---:|---:|
+| range | 310,053,353 | 309,192,246 | +861,107 | 0 | 0 |
+| step | 253,137,973 | 252,444,802 | +693,171 | 0 | 0 |
+| road_node | 42,995,770 | 42,995,770 | +0 | 0 | 0 |
+| name_anchor | 2,317,983 | 2,317,983 | +0 | 1 | 0 |
+| background | 175,171,302 | 174,332,105 | +839,197 | 1,438,571 | 0 |
+| background_boundary | 89,568,298 | 89,546,388 | +21,910 | 16,550,043 | 8,907 |
+| completeness | 1,800,514 | 1,800,514 | +0 | 739 | 0 |
+| interior_cover | 1,592,045 | 1,592,016 | +29 | 824 | 0 |
+
+Five checked targets differ. No unrequested per-cell census is performed; exact per-cell checked deltas remain unproven. The 3-11 record explains newly visible records after its count fix, but this does not authorize changing the targets or pins.
+
+**Build gates and oracle contradiction:** fresh AU SHA256 `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`; Perth -j1 `04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728` and -j4 `04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728`. Perth worker equality holds. These are the later 3-14 recorded re-oracle values, while K1 still uses the explicitly prescribed 3-11 disc. The initial oracle `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862` and Perth `da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc` are not the fresh build outputs. No new re-oracle is signed here.
+
+Fix-unit record quotations: 3-11 produced `013586b5…95f04` and quotes “exactly 37 differing cells, all level 0, 37/37 predicted, 0 extras” (`output/scratch-3-11/Gnew.diff_cells.txt`, recorded SHA256 `9f2b0e554465d030637fa7d19b4ceaf88b6283b1d4d86810de5ccd4dece50e5e`). 3-14 produced AU `4ed9cd80…99d72` / Perth `04be2f6e…fb728` and quotes “differing cells AU 246,123 (L0 244,060 / L2 1,944 / L6 118 / L8 1) and Perth 795 (L0 784 / L2 11), added 0 / removed 0”; “AU 246,116 background-payload-only + 4 division-topology + 3 frame-ceiling, Perth 792 + 3”. These are aggregate scope quotations, not exact differing-cell identities. The required exact identities cannot be quoted from those unit records; that gate is unproven, and no extra census or external-checkout read is authorized.
+
+Fresh external run walls (seconds): **{'k1_j1': '447.359', 'k1_dump': '171.558', 'fullAU': '56.379', 'perth_j1': '7.217', 'perth_j4': '2.665', 'pytest': '418.351'}**.
+
+Full test command `.venv-rp/bin/python -m pytest parser/tests -q -x` ran under the heavy lock. Fresh summary: **897 passed, 11 skipped in 416.30s (0:06:56)**. Goldens, H-budget, perf inventory and cbuild staleness tests are included in this invocation. Check 7 FAIL: literal `grep -c` exits 2 (usage error), since no pattern/target is named. `output/scratch-3-90/fresh-59994c23/07-grep.log` retains raw output. An initial `grep -c passed pytest.log` supplied a pattern/target by interpretation; it is an extra invocation/deviation, retained in `07-grep-initial.log` and superseded by the literal command. No code edit or additional test invocation.
+
+**Carried** (Phase 3 Units, Carried-item placement):
+
+1. Exhaustive post-fix pins and valid native classification remain unavailable. The named truncated candidate view preserves item keys and historical source-ring evidence; it is not an exhaustive final spool list. Known spool name `(L0,ix0,iy541,leaf928)` remains; historical O02 cover and O04 completeness candidates remain subject to final attribution, and S02–S05 now carry build causes. Do not assert spool item equality from counts.
+2. Resolve prescribed 3-11 K1 oracle versus later 3-14 build oracle, exact changed-cell identities and outstanding fix-review proof. No phase-closing trailer.
+3. Historic completeness attribution remains open in 3-15–3-17 (raw 308 unattributed versus corrected 274). No historic mechanism flags are copied into this fresh native dump.
+4. Phase 2 D1 `*_first` quirk moves to Phase 4 unless dossier/cause evidence establishes causality; `container`/`shape` early-exit question and pre-existing harness rc=1 results move to Phase 4. Explained counters unexercised in fixtures move to Phase 4/5. Header staleness was absorbed by 3-01, inside-side TOL mutation by 3-04, and float-key tie H2 by 3-07.
+5. Preserve Phase 2 triage/sample inputs and this fresh native dump (manifest SHA256 `a54b07e6bb5706a02ee7174e36754da6b90816ae89310e8d04949a0b8031b996`), logs, reports, rules and build products for later phases. Signed PSS 9,726,501 kB and Phase 4 20 s / 60 s budgets stand.
+
+Deviations are explicit: the run-budget line omits the dump/full-AU runs that steps 4/6 require; those named checks were performed. Required source reading was bounded to ten files, including live rules and the prior command runner; generated current-run products were read to judge results. Apart from the disclosed initial grep interpretation, no added verification, source edits, agents, service post, gh, push or changes outside the owned paths. The record-writing helper initially named manifest.json instead of dump_manifest.json and failed before either document was changed; 08-write-attempt1.log retains that error. Corrected from this fresh dump's generated filenames, with no heavy rerun.
