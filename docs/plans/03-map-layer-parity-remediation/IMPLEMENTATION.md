@@ -718,5 +718,12 @@ The 3C-13 brief's grep result wording now states the already accepted close
 criterion: no executable use of deleted symbols or optional-C switch, and no
 extractor import. Negative test strings and documentation naming the spool
 producer are permitted. This resolves the literal "nothing" discrepancy
-described in that brief's existing amendment without changing source or tests,
-weakening the mandatory-C rule, or rerunning the historical verification.
+ described in that brief's existing amendment without changing source or tests,
+ weakening the mandatory-C rule, or rerunning the historical verification.
+
+### Phase 2 carried item 3 — density wording resolved
+
+Plan 12 corrected `road_density_census.LENGTH_BASIS` to say frame bounds,
+matching the calculation already landed at `2f874e3`. Only the report label
+changed; the four existing density tests pass. Historical density profiles
+were preserved and no census or blocked verification was rerun.

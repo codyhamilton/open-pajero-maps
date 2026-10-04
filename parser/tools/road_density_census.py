@@ -24,7 +24,7 @@ from harness import walk  # noqa: E402
 from kiwiw import coordconv  # noqa: E402
 
 KM_PER_DEG = 111.32
-LENGTH_BASIS = ("leaf bounds extent / coord_max; coord_max from coordconv.range_for "
+LENGTH_BASIS = ("frame bounds extent / coord_max; coord_max from coordconv.range_for "
                 "(refdata/profile/coord_scale.json, content-independent class rule): "
                 "4096 (L2-L12 full, urban L0, every divided sub incl. sub0 -- range_for "
                 "returns the parent frame's range 4096, never coord_scale.json's smaller "
