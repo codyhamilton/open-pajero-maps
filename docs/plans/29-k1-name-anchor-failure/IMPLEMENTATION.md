@@ -126,3 +126,24 @@ Both branches:
 2. G frames at L0 (0,562) / (0,563), and the now-nameless (0,541) frame, exist where R has empty slots. This structural difference goes to Design, not absorbed.
 3. The probe-and-pad design keeps frame extents by zero-padding the shrunk leaf. That keeps the diff confined, but it is not R parity of frame layout.
 4. The coupling of range checked to name anchors (−drops) is documented in `compare_k1.py`.
+
+## Terminal review and remediation
+
+Review 1 (Codex, independent, `c2cab9c`): **REMEDIATE**. R1 (medium) was briefed as `briefs/remediation-01.md`: the R absence witness kept no index bytes and folded lookup failure into `empty_slot`. R2 was resolved in review; R3 and R4 are follow-ups. See `REVIEW.md`.
+
+### remediation-01 — R absence index proof
+
+- **Worker:** a fresh Codex `gpt-6.1-sol` (high) fixer, sandboxed, 06:33–06:43 AEST. Report: `reports/remediation-01-r-absence-index-proof.md`.
+- **What changed:**
+  - `witness_p1.py` keeps absolute offsets, lengths, hex and sha256 for every index structure on each cell's lookup path (volume header, management entry, PDMDH, LMR/BSMR, BMT entry, parcel slots), with the decoded DSA/size.
+  - A lookup failure now gets its own `lookup_failed` status with a reason. `empty_slot` requires a positive sentinel: either an absent BMT (raw BSMR offset `FFFFFFFF` with size 0), a BMT or slot DSA of `FFFFFFFF`, or every terminal slot being a sentinel.
+  - `verdict()` replays this evidence and refuses A on any lookup failure.
+  - `r_reader_control.py` gained `--out` and keeps Perth frame/index identity and name-record bytes.
+  - New synthetic test `parser/tests/test_r_absence_witness.py` covers a real sentinel, a populated slot, a missing lookup, an invalid offset and a malformed slot. Together with `test_successor_oracle_tools.py`: 21 passed.
+- **Runs (Execute, guarded, `output/scratch-29/rem01/run.{sh,log}`):** r-witness, r_reader_control and verdict all exited 0.
+  - The six in-coverage cells (0..1 × 540..542) are `empty_slot` with reason `absent_BMT_sentinel`. L0 blockset 32's BSMR entry at index offset 11,134 is `0020ffffffff00000000`: raw offset `FFFFFFFF`, size 0. So R has no block-management table for the 32×64 block, and every cell in it is absent.
+  - The three ix −1 cells are `outside_coverage` (`cell_outside_L0_grid`), recomputed from the LMR bytes.
+  - Block census: 2,048/2,048 `empty_slot`, 0 lookup failures, 0 frames.
+  - The Perth (827,866) control resolves: 4 frames / 739 names, with the name-directory bytes hashed.
+  - **Verdict A**, with no drift, no concerns and no position matches.
+- The committed `witnesses/r.json`, `r_successor.json`, `r_reader_control.json`, `verdict.json` and `phase1_witness.md` were replaced with these measured outputs. None was hand-edited.

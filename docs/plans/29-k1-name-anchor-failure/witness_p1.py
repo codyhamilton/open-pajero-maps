@@ -86,113 +86,332 @@ def pread(fh, length, offset):
     return buf
 
 
-def disc_cells(path, cells):
-    """Read only requested blocks/leaves, keeping at most one block in memory.
+def byte_evidence(data, offset):
+    return {"offset": offset, "length": len(data), "hex": data.hex(), "sha256": sha(data)}
 
-    Reuses walk's divided/sparse frame geometry, including every divided leaf
-    in a requested top-level slot. Aliased R frames retain each covering slot.
+
+def evidence_bytes(proof):
+    raw = bytes.fromhex(proof["hex"])
+    if (proof["offset"] < 0 or len(raw) != proof["length"]
+            or not raw or sha(raw) != proof["sha256"]):
+        raise ValueError("invalid byte evidence")
+    return raw
+
+
+def index_lookup(read, cell):
+    """Resolve one cell, retaining the exact bounded reads for offline replay.
+
+    Only NO_DATA_DSA (FFFFFFFF) proves an absent block/parcel. A zero-size
+    non-sentinel BMT entry is unresolved; a zero-size non-sentinel mapinfo
+    entry is a subrecord pointer, never absence. An absent BMT requires the
+    documented raw FFFFFFFF offset AND zero size (volume.py's full reader).
     """
-    walk, mesh, spool, volume, u16, u32, sws, decode_xy, decode_names, Lattice, PointSet = libs()
-    lattice = Lattice(0)
-    with Path(path).open("rb") as fh:
-        raw = pread(fh, volume.DATAVOL_SIZE, 0)
-        hdr = volume.parse_volume_header(raw)
-        mht = volume.parse_management_header_table(pread(fh, volume.MHT_SIZE, volume.DATAVOL_SIZE))
-        prdm = mht.entries[0]
-        if prdm.name:
-            raise ValueError("file-based PDMDH unsupported")
+    walk, _, _, volume, u16, u32, sws, _, _, Lattice, _ = libs()
+    from kiwiw.parcel_mgmt import parse_parcel_mgmt_record
+    result = {"cell": list(cell), "status": "lookup_failed", "frames": [],
+              "index_evidence": {"reads": []}}
+    evidence = result["index_evidence"]
+
+    def capture(length, offset):
+        raw = read(length, offset)
+        if len(raw) != length:
+            raise ValueError(f"short index read at {offset}")
+        evidence["reads"].append(byte_evidence(raw, offset))
+        return raw
+
+    try:
+        hdr = volume.parse_volume_header(capture(volume.DATAVOL_SIZE, 0))
         ss, ls = hdr.sector_size, hdr.logical_sector_size
-        pmoff = volume.getsector(prdm.dsa, ss, ls)
-        pmraw = pread(fh, prdm.size * ls, pmoff)
-        pd = volume.parse_pdmdh_full(pmraw)
-        lmr = next(m for m in pd.levels if m.level == 0)
-        if (lmr.grid_nx, lmr.grid_ny) != (lattice.nx, lattice.ny):
-            raise ValueError("disc/reference grid mismatch")
+        if ss <= 0 or ls <= 0:
+            raise ValueError("invalid sector sizes")
+        mhr = capture(volume.MHR_SIZE, volume.DATAVOL_SIZE)
+        prdm = volume.MhrEntry(0, u32(mhr, 0), u16(mhr, 4),
+                               mhr[6:18].split(b"\0", 1)[0].decode("latin-1"))
+        if prdm.name or prdm.dsa == 0xFFFFFFFF or not prdm.size:
+            raise ValueError("missing/invalid embedded PDMDH lookup")
+        pmoff, pmlen = volume.getsector(prdm.dsa, ss, ls), prdm.size * ls
+        if pmlen < 30 or pmlen > MAX_READ:
+            raise ValueError("invalid PDMDH buffer extent")
+        head = capture(30, pmoff)
+        lmr_size, n_lmr, n_bsmr = sws(u16(head, 20)), u16(head, 26), u16(head, 28)
+        if (lmr_size < volume.LMR_BASE_SIZE or u16(head, 22) * 2 != volume.BSMR_SIZE
+                or u16(head, 24) * 2 != volume.BMT_SIZE):
+            raise ValueError("invalid LMR/BSMR/BMT record sizes")
+        directory_size = 30 + lmr_size * n_lmr + volume.BSMR_SIZE * n_bsmr
+        if directory_size > pmlen:
+            raise ValueError("LMR/BSMR directory outside PDMDH buffer")
+        directory = capture(directory_size, pmoff)
+        pd = volume.parse_pdmdh(directory)
+        levels = [(i, m) for i, m in enumerate(pd.levels) if m.level == 0]
+        if len(levels) != 1:
+            raise ValueError("missing/ambiguous L0 lookup")
+        li, lmr = levels[0]
+        lattice = Lattice(0)
         span = walk._lon_span(pd.coverage.lon_lo, pd.coverage.lon_hi)
-        if (abs(pd.coverage.lon_lo - lattice.lon0) > 1e-9
+        if ((lmr.grid_nx, lmr.grid_ny) != (lattice.nx, lattice.ny)
+                or abs(pd.coverage.lon_lo - lattice.lon0) > 1e-9
                 or abs(pd.coverage.lat_lo - lattice.lat0) > 1e-9
                 or abs(span / lmr.grid_nx - lattice.cell_lon) > 1e-9
                 or abs((pd.coverage.lat_hi - pd.coverage.lat_lo) / lmr.grid_ny - lattice.cell_lat) > 1e-9):
-            raise ValueError("disc/reference coverage mismatch")
+            raise ValueError("disc/reference coverage or grid mismatch")
+        evidence["pdmdh"] = {"offset": pmoff, "length": pmlen, "dsa": prdm.dsa,
+                               "size": prdm.size, "sector_size": ss, "logical_sector_size": ls}
+        evidence["lmr"] = byte_evidence(directory[30 + li * lmr_size:30 + (li + 1) * lmr_size],
+                                        pmoff + 30 + li * lmr_size)
+        ix, iy = cell
+        result["geometry"] = {"level": 0, "grid": [lmr.grid_nx, lmr.grid_ny],
+                              "coverage": vars(pd.coverage),
+                              "in_coverage": 0 <= ix < lmr.grid_nx and 0 <= iy < lmr.grid_ny}
+        if not result["geometry"]["in_coverage"]:
+            result.update(status="outside_coverage", reason="cell_outside_L0_grid")
+            return result, None
         npc_x, npc_y = 1 + lmr.n_parcels_lng[0], 1 + lmr.n_parcels_lat[0]
         nbx, nby = 1 + lmr.n_blocks_lng, 1 + lmr.n_blocks_lat
-        nbsx = 1 + lmr.n_blocksets_lng
-        cached = None
-        for ix, iy in cells:
-            result = {"cell": [ix, iy], "status": "outside_coverage", "frames": []}
-            if not (0 <= ix < lmr.grid_nx and 0 <= iy < lmr.grid_ny):
-                yield result
-                continue
-            bx, lx = divmod(ix, npc_x)
-            by, ly = divmod(iy, npc_y)
-            bsx, blx = divmod(bx, nbx)
-            bsy, bly = divmod(by, nby)
-            bsi, bi = bsy * nbsx + bsx, bly * nbx + blx
-            slot = ly * npc_x + lx
-            result.update(status="empty_slot", blockset=bsi, block=bi,
-                          block_cells=[bx * npc_x, (bx + 1) * npc_x - 1,
-                                       by * npc_y, (by + 1) * npc_y - 1])
-            ordinal = next((i for i, bs in enumerate(pd.blocksets)
-                            if bs.level == 0 and bs.blockset_index == bsi), None)
-            table = next((t for t in pd.bmt_tables if t.blockset_ordinal == ordinal), None)
-            if table is None:
-                yield result
-                continue
-            entry = table.entries[bi]
-            if entry.dsa == 0xFFFFFFFF or not entry.size:
-                yield result
-                continue
-            if cached != (bsi, bi):
-                from kiwiw.parcel_mgmt import parse_parcel_mgmt_record
-                root = parse_parcel_mgmt_record(pread(fh, entry.size * ls,
-                                                     volume.getsector(entry.dsa, ss, ls)), lmr)
-                bb = walk._block_base_bounds(pd, lmr, bsx, bsy, blx, bly)
-                cached = (bsi, bi)
+        bx, lx = divmod(ix, npc_x)
+        by, ly = divmod(iy, npc_y)
+        bsx, blx = divmod(bx, nbx)
+        bsy, bly = divmod(by, nby)
+        bsi, bi = bsy * (1 + lmr.n_blocksets_lng) + bsx, bly * nbx + blx
+        slot = ly * npc_x + lx
+        result.update(blockset=bsi, block=bi, slot=slot,
+                      block_cells=[bx * npc_x, (bx + 1) * npc_x - 1,
+                                   by * npc_y, (by + 1) * npc_y - 1])
+        selected = [(i, bs) for i, bs in enumerate(pd.blocksets)
+                    if bs.level == 0 and bs.blockset_index == bsi]
+        if len(selected) != 1:
+            raise ValueError("missing/ambiguous blockset lookup")
+        ordinal, bs = selected[0]
+        bs_at = pd.bsmr_table_offset + ordinal * volume.BSMR_SIZE
+        bsraw = directory[bs_at:bs_at + volume.BSMR_SIZE]
+        evidence["blockset"] = {**byte_evidence(bsraw, pmoff + bs_at), "ordinal": ordinal,
+                                  "level": bs.level, "blockset_index": bs.blockset_index,
+                                  "bmt_offset": bs.bmt_offset, "bmt_size": bs.bmt_size}
+        if u32(bsraw, 2) == 0xFFFFFFFF and bs.bmt_size == 0:
+            result.update(status="empty_slot", reason="absent_BMT_sentinel")
+            return result, None
+        if (bs.bmt_offset < directory_size or bs.bmt_size != nbx * nby * volume.BMT_SIZE
+                or bs.bmt_offset + bs.bmt_size > pmlen):
+            raise ValueError("invalid BMT table offset/extent")
+        eraw = capture(volume.BMT_SIZE, pmoff + bs.bmt_offset + bi * volume.BMT_SIZE)
+        dsa, size = u32(eraw, 0), u16(eraw, 4)
+        evidence["bmt_entry"] = {**byte_evidence(eraw, pmoff + bs.bmt_offset + bi * volume.BMT_SIZE),
+                                 "dsa": dsa, "size": size}
+        if dsa == 0xFFFFFFFF:
+            result.update(status="empty_slot", reason="absent_block_DSA_sentinel")
+            return result, None
+        if not size:
+            raise ValueError("non-sentinel block DSA has zero size")
+        blockoff = volume.getsector(dsa, ss, ls)
+        blockraw = capture(size * ls, blockoff)
+        evidence["slot_table"] = byte_evidence(blockraw, blockoff)
+        slot_at = 4 + slot * 6
+        if slot_at + 6 <= len(blockraw):
+            slotraw = blockraw[slot_at:slot_at + 6]
+            evidence["requested_slot"] = {**byte_evidence(slotraw, blockoff + slot_at),
+                                          "path": [slot], "dsa": u32(slotraw, 0),
+                                          "size": u16(slotraw, 4)}
+        root = parse_parcel_mgmt_record(blockraw, lmr)
+        if root.parcel_type != 0:
+            raise ValueError("top-level slot table is not normal parcel type")
+        evidence["slots"] = []
+
+        def retain(rec, indices, path):
+            for i in indices:
+                entry = rec.entries[i]
+                at = rec.offset + 4 + i * 6
+                evidence["slots"].append({**byte_evidence(blockraw[at:at + 6], blockoff + at),
+                                          "path": list(path + (i,)), "dsa": entry.dsa,
+                                          "size": entry.size, "record_offset": blockoff + rec.offset,
+                                          "parcel_type": rec.parcel_type})
+                if entry.subrecord is not None:
+                    retain(entry.subrecord, range(len(entry.subrecord.entries)), path + (i,))
+        retain(root, [slot], ())
+        bb = walk._block_base_bounds(pd, lmr, bsx, bsy, blx, bly)
+        leaves = [item for item in walk._iter_tree_leaves(root, bb, lmr, ()) if item[0][0] == slot]
+        if not leaves:
+            # Every terminal must positively carry NO_DATA_DSA, including
+            # divided trees. A parser omission is not an absence proof.
+            parents = {tuple(s["path"][:-1]) for s in evidence["slots"]}
+            terminals = [s for s in evidence["slots"] if tuple(s["path"]) not in parents]
+            if not terminals or any(s["dsa"] != 0xFFFFFFFF for s in terminals):
+                raise ValueError("no leaf without terminal sentinel proof")
+            result.update(status="empty_slot", reason="parcel_tree_DSA_sentinels")
+            return result, None
+        result.update(status="resolved", reason="indexed_leaf_frames")
+        return result, (root, bb, lmr, leaves, ss, ls)
+    except (ValueError, IndexError, KeyError, TypeError, OSError, struct.error, AssertionError) as exc:
+        result.update(status="lookup_failed", reason=f"{type(exc).__name__}: {exc}")
+        return result, None
+
+
+def validate_cell_evidence(row):
+    """Replay a cell's index lookup using only its retained bytes, never a disc."""
+    try:
+        reads = row["index_evidence"]["reads"]
+        by_extent = {}
+        for proof in reads:
+            key = (proof["length"], proof["offset"])
+            raw = evidence_bytes(proof)
+            if key in by_extent and by_extent[key] != raw:
+                raise ValueError("conflicting index bytes")
+            by_extent[key] = raw
+        replay, context = index_lookup(lambda n, at: by_extent[(n, at)], row["cell"])
+        if replay["status"] == "lookup_failed":
+            raise ValueError(replay["reason"])
+        for key in ("status", "reason", "geometry", "blockset", "block", "slot", "block_cells", "index_evidence"):
+            if replay.get(key) != row.get(key):
+                raise ValueError(f"index proof differs at {key}")
+        if context is None:
+            if row["frames"]:
+                raise ValueError("absent/outside cell contains frames")
+        else:
+            root, bb, lmr, leaves, ss, ls = context
+            walk, mesh, _, volume, u16, u32, sws, _, decode_names, *_ = libs()
+            if len(row["frames"]) != len(leaves):
+                raise ValueError("indexed leaves missing from resolved frames")
             cache = {}
-            for leaf_path, leaf, lb, ptype in walk._iter_tree_leaves(root, bb, lmr, ()):
-                if leaf_path[0] != slot:
-                    continue
-                fb, fc = walk._leaf_frame(root, 0, ptype, leaf_path, lb, bb, lmr, cache)
-                rng = mesh.leaf_frame_range(0, ptype, leaf_path, fc)
-                bounds = walk.with_range(fb, rng)
+            for frame, (path, leaf, lb, ptype) in zip(row["frames"], leaves):
+                fb, fc = walk._leaf_frame(root, 0, ptype, path, lb, bb, lmr, cache)
+                rng = mesh.leaf_frame_range(0, ptype, path, fc)
                 off, length = volume.getsector(leaf.dsa, ss, ls), leaf.size * ls
-                frame = pread(fh, length, off)
-                # Only name subframe is relevant; do not decode roads/backgrounds.
-                de = 36 + u16(frame, 34) * 4 + 12
-                no, nl = u32(frame, de), u16(frame, de + 4)
-                names = []
-                if no != 0xFFFFFFFF and nl:
+                if (frame["leaf_path"] != list(path) or frame["offset"] != off
+                        or frame["length"] != length or frame["bounds"] != vars(fb)
+                        or frame["range"] != rng or frame["frame_class"] != fc
+                        or len(bytes.fromhex(frame["sha256"])) != 32):
+                    raise ValueError("resolved frame identity differs from index")
+                directory = evidence_bytes(frame["name_directory"])
+                if (not 54 <= len(directory) <= length or frame["name_directory"]["offset"] != off
+                        or len(directory) != 54 + u16(directory, 34) * 4):
+                    raise ValueError("invalid name directory proof")
+                de = 36 + u16(directory, 34) * 4 + 12
+                no, nl = u32(directory, de), u16(directory, de + 4)
+                if no == 0xFFFFFFFF:
+                    records = []
+                elif not nl:
+                    raise ValueError("non-sentinel name directory has zero size")
+                else:
                     no, nl = sws(no), sws(nl)
-                    if no + nl > len(frame):
-                        raise ValueError("name subframe extends past map frame")
-                    for rec in decode_names(frame[no:no + nl], bounds).records:
-                        rb = rec.raw_bytes
-                        st = rec.string_type
-                        if st in (1, 5, 6):
-                            tlen_at, text_at = (12, 14) if st == 1 else (14, 16)
-                        elif st == 4:
-                            tlen_at = 10 + (u16(rb, 6) & 15) * 2
-                            text_at = tlen_at + 2
-                        else:
-                            raise ValueError(f"unhandled string bytes for type {st}")
-                        text = rb[text_at:text_at + u16(rb, tlen_at) * 2]
-                        if text_at + u16(rb, tlen_at) * 2 > len(rb):
-                            raise ValueError("name text extends past record")
-                        rawxy = None if st == 4 else [decode_xy(u16(rb, 8)), decode_xy(u16(rb, 10))]
-                        globalxy = None if rec.lat is None else [float(lattice.gx(rec.lon)), float(lattice.gy(rec.lat))]
-                        names.append({"string_type": st, "class": rec.type_code,
-                                      "type_code": rec.type_code, "text": rec.text,
-                                      "string_hex": text.split(b"\0", 1)[0].hex(),
-                                      "stored_string_hex": text.hex(), "string_encoding": "latin-1",
-                                      "raw": rawxy, "global_raw": globalxy,
-                                      "lat": rec.lat, "lon": rec.lon,
-                                      "record_offset": off + no + rec.raw_offset,
-                                      "record_length": len(rb), "record_hex": rb.hex(), "record_sha256": sha(rb)})
-                result["frames"].append({"leaf_path": list(leaf_path), "offset": off,
-                                         "length": length, "sha256": sha(frame),
-                                         "frame_class": fc, "range": rng,
-                                         "bounds": vars(fb), "names": names})
-            result["status"] = "resolved" if result["frames"] else "empty_slot"
+                    sub = frame["name_subframe"]
+                    if sub["offset"] != off + no or sub["length"] != nl or no < len(directory) or no + nl > length:
+                        raise ValueError("invalid name subframe extent")
+                    records = decode_proven_names(evidence_bytes(sub), walk.with_range(fb, rng)).records
+                strings = [name_record_string(rec.raw_bytes, rec.string_type).hex() for rec in records]
+                if strings != frame["name_string_hex"] or len(strings) != frame["name_count"]:
+                    raise ValueError("decoded name census differs from byte proof")
+        return None
+    except (ValueError, IndexError, KeyError, TypeError, struct.error, AssertionError) as exc:
+        return f"{type(exc).__name__}: {exc}"
+
+
+def decode_proven_names(raw, bounds):
+    """Reject truncated/invalid lists before trusting the permissive decoder."""
+    _, _, _, _, u16, _, sws, _, decode_names, *_ = libs()
+    header_size = sws(u16(raw, 0))
+    if header_size < 2 or header_size > len(raw) or (header_size - 2) % 4:
+        raise ValueError("invalid name list directory extent")
+    for at in range(2, header_size, 4):
+        start, count = sws(u16(raw, at)), u16(raw, at + 2)
+        if start == 0xFFFF:
+            continue
+        if start < header_size or start > len(raw):
+            raise ValueError("name list offset outside subframe")
+        for _ in range(count):
+            length = sws(u16(raw, start) & 0xFFF)
+            if length < 6 or start + length > len(raw):
+                raise ValueError("name record extent outside subframe")
+            start += length
+    decoded = decode_names(raw, bounds)
+    for rec in decoded.records:
+        name_record_string(rec.raw_bytes, rec.string_type)
+    return decoded
+
+
+def name_record_string(rb, st):
+    u16 = libs()[4]
+    if st in (1, 5, 6):
+        tlen_at, text_at = (12, 14) if st == 1 else (14, 16)
+    elif st == 4:
+        tlen_at = 10 + (u16(rb, 6) & 15) * 2
+        text_at = tlen_at + 2
+    else:
+        raise ValueError(f"unhandled string bytes for type {st}")
+    end = text_at + u16(rb, tlen_at) * 2
+    if end > len(rb):
+        raise ValueError("name text extends past record")
+    return rb[text_at:end].split(b"\0", 1)[0]
+
+
+def disc_cells(path, cells):
+    """Bounded index/frame reads; failed lookups are never absence."""
+    walk, mesh, spool, volume, u16, u32, sws, decode_xy, decode_names, Lattice, PointSet = libs()
+    lattice = Lattice(0)
+    with Path(path).open("rb") as fh:
+        @lru_cache(maxsize=16)
+        def read(length, offset):
+            return pread(fh, length, offset)
+
+        for cell in cells:
+            result, context = index_lookup(read, cell)
+            if context is None:
+                yield result
+                continue
+            root, bb, lmr, leaves, ss, ls = context
+            try:
+                cache = {}
+                for leaf_path, leaf, lb, ptype in leaves:
+                    fb, fc = walk._leaf_frame(root, 0, ptype, leaf_path, lb, bb, lmr, cache)
+                    rng = mesh.leaf_frame_range(0, ptype, leaf_path, fc)
+                    bounds = walk.with_range(fb, rng)
+                    off, length = volume.getsector(leaf.dsa, ss, ls), leaf.size * ls
+                    frame = pread(fh, length, off)
+                    # Only name subframe is relevant; do not decode roads/backgrounds.
+                    de = 36 + u16(frame, 34) * 4 + 12
+                    no, nl = u32(frame, de), u16(frame, de + 4)
+                    if de + 6 > len(frame):
+                        raise ValueError("name directory extends past map frame")
+                    directory_proof = byte_evidence(frame[:de + 6], off)
+                    subframe_proof = None
+                    names = []
+                    if no != 0xFFFFFFFF and not nl:
+                        raise ValueError("non-sentinel name directory has zero size")
+                    if no != 0xFFFFFFFF and nl:
+                        no, nl = sws(no), sws(nl)
+                        if no < de + 6 or no + nl > len(frame):
+                            raise ValueError("name subframe extends past map frame")
+                        subframe_proof = byte_evidence(frame[no:no + nl], off + no)
+                        for rec in decode_proven_names(frame[no:no + nl], bounds).records:
+                            rb = rec.raw_bytes
+                            st = rec.string_type
+                            if st in (1, 5, 6):
+                                tlen_at, text_at = (12, 14) if st == 1 else (14, 16)
+                            elif st == 4:
+                                tlen_at = 10 + (u16(rb, 6) & 15) * 2
+                                text_at = tlen_at + 2
+                            else:
+                                raise ValueError(f"unhandled string bytes for type {st}")
+                            text = rb[text_at:text_at + u16(rb, tlen_at) * 2]
+                            if text_at + u16(rb, tlen_at) * 2 > len(rb):
+                                raise ValueError("name text extends past record")
+                            rawxy = None if st == 4 else [decode_xy(u16(rb, 8)), decode_xy(u16(rb, 10))]
+                            globalxy = None if rec.lat is None else [float(lattice.gx(rec.lon)), float(lattice.gy(rec.lat))]
+                            names.append({"string_type": st, "class": rec.type_code,
+                                          "type_code": rec.type_code, "text": rec.text,
+                                          "string_hex": text.split(b"\0", 1)[0].hex(),
+                                          "stored_string_hex": text.hex(), "string_encoding": "latin-1",
+                                          "raw": rawxy, "global_raw": globalxy,
+                                          "lat": rec.lat, "lon": rec.lon,
+                                          "record_offset": off + no + rec.raw_offset,
+                                          "record_length": len(rb), "record_hex": rb.hex(), "record_sha256": sha(rb)})
+                    result["frames"].append({"leaf_path": list(leaf_path), "offset": off,
+                                             "length": length, "sha256": sha(frame),
+                                             "frame_class": fc, "range": rng,
+                                             "bounds": vars(fb), "names": names,
+                                             "name_count": len(names),
+                                             "name_string_hex": [n["string_hex"] for n in names],
+                                             "name_directory": directory_proof,
+                                             "name_subframe": subframe_proof})
+            except (ValueError, IndexError, KeyError, TypeError, OSError, struct.error, AssertionError) as exc:
+                result.update(status="lookup_failed", reason=f"frame decode {type(exc).__name__}: {exc}")
             yield result
 
 
@@ -374,9 +593,11 @@ def r_witness(args):
             if not args.keep_names:
                 del f["names"]
         cells.append(row)
-    write_json(args.out, {"schema": 1, "disc": str(args.disc), "historical_disc_sha256": R_PIN,
+    failed = any(c["status"] == "lookup_failed" for c in cells)
+    write_json(args.out, {"schema": 2, "disc": str(args.disc), "historical_disc_sha256": R_PIN,
                           "full_pin_remeasured": False, "string_hex": want, "cells": cells,
-                          "matches": matches, "match_result": "matches" if matches else "none"})
+                          "matches": matches, "match_result": "unresolved" if failed else "matches" if matches else "none"})
+    return 2 if failed else 0
 
 
 def spool_scan(args):
@@ -427,17 +648,26 @@ def verdict(args):
     if r["string_hex"] != (g["target"]["name"]["string_hex"] if g["target"] else None):
         drift.append("R search string differs from G")
     expected_cells = {(x, y) for y in range(540, 543) for x in (-1, 0, 1)}
-    if {tuple(c["cell"]) for c in r["cells"]} != expected_cells:
+    if len(r["cells"]) != 9 or {tuple(c["cell"]) for c in r["cells"]} != expected_cells:
         drift.append("R did not cover the nine required cells")
-    if any(c["status"] not in ("resolved", "empty_slot", "outside_coverage")
-           or (c["status"] == "outside_coverage" and c["cell"][0] != -1) for c in r["cells"]):
-        drift.append("R coverage status unresolved")
+    if r.get("historical_disc_sha256") != R_PIN:
+        drift.append("R historical pin differs from DESIGN")
+    for cell in r["cells"]:
+        error = validate_cell_evidence(cell)
+        if error:
+            drift.append(f"R cell {cell['cell']} unresolved index/frame proof: {error}")
     hits = []
     if not drift:
         n = g["target"]["name"]
         hits = [m for m in r["matches"] if m["name"]["string_hex"] == n["string_hex"]
                 and m["name"]["global_raw"] is not None
                 and max(abs(a - b) for a, b in zip(m["name"]["global_raw"], n["global_raw"])) <= 0.5]
+    # A requires every decoded frame to exclude the searched name. A
+    # string present without a proven matching position needs investigation.
+    if not drift and not hits and any(
+            r["string_hex"] in f.get("name_string_hex", [])
+            for c in r["cells"] for f in c["frames"]):
+        drift.append("R searched name present without a proven position match")
     result = "drift" if drift else "B" if hits else "A"
     concerns = []
     if scan["rejected"] != 1:
@@ -470,10 +700,10 @@ def verdict(args):
                   f"G name `{n['text']}`; string hex `{n['string_hex']}` (latin-1), stored hex `{n['stored_string_hex']}`; string_type {n['string_type']}, class {n['class']}, raw {n['raw']}, lat/lon {n['lat']}/{n['lon']}. Record offset {n['record_offset']}, length {n['record_length']}, sha256 `{n['record_sha256']}`.", "",
                   f"Spool L0 {sn['cell']} record {sn['record']}: lat/lon {sn['lat']}/{sn['lon']}, UTF-8 string hex `{sn['string_hex']}`. Record-column bytes sha256 `{sn['record_sha256']}`; exact offsets/hex are in spool.json. Its columnar layout has no single contiguous name-record extent. Cell offset {sn['cell_offset']}, length {sn['cell_length']}, sha256 `{sn['cell_sha256']}`.", "",
                   f"Source-anchor distance {sn['source_distance_raw']} raw. Region nearest distance {s['nearest_distance_raw']}; K1 bucket result {s['k1_bucket_result']}, tolerance 0.5 raw; halo eligible {s['halo_eligible']}. The saved live report has name_anchor totals {g['live_total']} and failure samples {g['failures']}.", ""]
-    lines += [f"R historical disc pin `{r['historical_disc_sha256']}`. Full disc pins are cited from prior evidence, not re-hashed by this bounded witness. All nine requested cells follow; ix=-1 is outside coverage.", "", "| Cell | Status | Covering frames (offset / length / sha256) |", "| --- | --- | --- |"]
+    lines += [f"R historical disc pin `{r['historical_disc_sha256']}`. Index offsets/hex/SHA-256, decoded DSA/size and outside-coverage geometry are retained in the R JSON and replayed by this verdict. Full disc pins are cited from prior evidence, not re-hashed by this bounded witness. All nine requested cells follow; ix=-1 is outside coverage.", "", "| Cell | Status / reason | Covering frames (offset / length / sha256) |", "| --- | --- | --- |"]
     for c in r["cells"]:
         frames = "; ".join(f"{f['leaf_path']}: {f['offset']} / {f['length']} / `{f['sha256']}`" for f in c["frames"]) or "none"
-        lines.append(f"| {c['cell']} | {c['status']} | {frames} |")
+        lines.append(f"| {c['cell']} | {c['status']} / {c.get('reason', 'unproven')} | {frames} |")
     lines += ["", f"R byte-equal names: {r['match_result']} ({len(r['matches'])} covering-slot observations, including aliases). Full name-record byte equality at the matching position: {full_record_equal}."]
     for m in r["matches"]:
         lines.append(f"- Cell {m['cell']} leaf {m['leaf_path']}: frame raw {m['name']['raw']}, global raw {m['name']['global_raw']}; record sha256 `{m['name']['record_sha256']}`.")

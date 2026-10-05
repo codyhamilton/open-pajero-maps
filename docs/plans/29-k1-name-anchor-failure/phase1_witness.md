@@ -12,19 +12,19 @@ Spool L0 [0, 541] record 0: lat/lon -38.727285888405795/77.51903576666666, UTF-8
 
 Source-anchor distance 1635904.9439914674 raw. Region nearest distance 1635904.9439914674; K1 bucket result inf (saved K1 error_raw null), tolerance 0.5 raw; halo eligible False. The saved live report has name_anchor totals {'checked': 2317056, 'failing': 1, 'worst_error_raw': 0.499999} and failure samples [{'cell': [0, 541], 'error_raw': None, 'kind': 'name_anchor', 'leaf_path': [928], 'reason': 'no spool record within half a raw unit', 'vertex': {'lat': -38.727284749, 'lon': 90.0, 'raw': [0, 370]}}].
 
-R historical disc pin `8c2d20275227b9d2abb0f1802d4e0cbb6697f46545794d19e1a2024b6f169275`. Full disc pins are cited from prior evidence, not re-hashed by this bounded witness. All nine requested cells follow; ix=-1 is outside coverage.
+R historical disc pin `8c2d20275227b9d2abb0f1802d4e0cbb6697f46545794d19e1a2024b6f169275`. Index offsets/hex/SHA-256, decoded DSA/size and outside-coverage geometry are retained in the R JSON and replayed by this verdict. Full disc pins are cited from prior evidence, not re-hashed by this bounded witness. All nine requested cells follow; ix=-1 is outside coverage.
 
-| Cell | Status | Covering frames (offset / length / sha256) |
+| Cell | Status / reason | Covering frames (offset / length / sha256) |
 | --- | --- | --- |
-| [-1, 540] | outside_coverage | none |
-| [0, 540] | empty_slot | none |
-| [1, 540] | empty_slot | none |
-| [-1, 541] | outside_coverage | none |
-| [0, 541] | empty_slot | none |
-| [1, 541] | empty_slot | none |
-| [-1, 542] | outside_coverage | none |
-| [0, 542] | empty_slot | none |
-| [1, 542] | empty_slot | none |
+| [-1, 540] | outside_coverage / cell_outside_L0_grid | none |
+| [0, 540] | empty_slot / absent_BMT_sentinel | none |
+| [1, 540] | empty_slot / absent_BMT_sentinel | none |
+| [-1, 541] | outside_coverage / cell_outside_L0_grid | none |
+| [0, 541] | empty_slot / absent_BMT_sentinel | none |
+| [1, 541] | empty_slot / absent_BMT_sentinel | none |
+| [-1, 542] | outside_coverage / cell_outside_L0_grid | none |
+| [0, 542] | empty_slot / absent_BMT_sentinel | none |
+| [1, 542] | empty_slot / absent_BMT_sentinel | none |
 
 R byte-equal names: none (0 covering-slot observations, including aliases). Full name-record byte equality at the matching position: False.
 
