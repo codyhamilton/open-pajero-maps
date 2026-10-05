@@ -750,14 +750,14 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
 
 ### output/scratch-28/ (plan-14 completeness per-rule recovery)
 
-Tracked producer: `docs/plans/28-phase1-per-rule-classify-recovery/triage/completeness_mechanism.py`.
+Tracked producer: `docs/plans/04-c-core-orchestration/triage/per_rule_completeness_mechanism.py`.
 Inputs are the pinned 776 × 144-byte `scratch-14/dump_raw/completeness.bin`
 (SHA256 `1a91b1c26e474b2c689fef9811b73878a4ead144db97eea3aaf6f442ed30d323`),
 committed plan-04/14 TSVs, and saved `scratch-14/attribution/proofs/` JSONs.
 No spool or disc open; current production C probes run on saved in-memory
 rings. Each side row records predicate inputs and its light path. Optional
 legacy control skipped. This is a fresh measurement, not historical-byte
-restoration; see `phase1_note.md` and the unit report in the plan folder.
+restoration; see `docs/plans/04-c-core-orchestration/triage/per_rule_phase1_note.md` and the plan 28 record `docs/plans/28-phase1-per-rule-classify-recovery.md`.
 
 Worker verification: `scratch-28/window25/` contains 25 side rows, the byte-145
 dump, real classifier outputs, assignment TSV and generated controls; O01 2,
@@ -773,23 +773,23 @@ complete tracked TSVs, projection/hashes, controls and run metadata, plus
 `scratch-28/dump_mech/` and `scratch-28/classify/`:
 
 ```sh
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/produce.json -- .venv-rp/bin/python -B docs/plans/28-phase1-per-rule-classify-recovery/triage/completeness_mechanism.py produce --all-rows
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/produce.json -- .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/per_rule_completeness_mechanism.py produce --all-rows
 ```
 
 ```sh
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/projection.json -- .venv-rp/bin/python -B docs/plans/28-phase1-per-rule-classify-recovery/triage/completeness_mechanism.py projection
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/projection.json -- .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/per_rule_completeness_mechanism.py projection
 ```
 
 ```sh
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/dump-join.json -- .venv-rp/bin/python -B parser/tools/dump_join.py --mode other_mechanism --src output/scratch-14/dump_raw --side docs/plans/28-phase1-per-rule-classify-recovery/triage/completeness_mechanism.tsv --dst output/scratch-28/dump_mech --window-rows 25
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/dump-join.json -- .venv-rp/bin/python -B parser/tools/dump_join.py --mode other_mechanism --src output/scratch-14/dump_raw --side docs/plans/04-c-core-orchestration/triage/per_rule_completeness_mechanism.tsv --dst output/scratch-28/dump_mech --window-rows 25
 ```
 
 ```sh
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/classify.json -- .venv-rp/bin/python -B parser/tools/k1_triage.py classify --dump output/scratch-28/dump_mech --rules docs/plans/28-phase1-per-rule-classify-recovery/triage/rules_completeness_projection.json --out output/scratch-28/classify --window-rows 25
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/classify.json -- .venv-rp/bin/python -B parser/tools/k1_triage.py classify --dump output/scratch-28/dump_mech --rules docs/plans/04-c-core-orchestration/triage/per_rule_rules_completeness_projection.json --out output/scratch-28/classify --window-rows 25
 ```
 
 ```sh
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/publish.json -- .venv-rp/bin/python -B docs/plans/28-phase1-per-rule-classify-recovery/triage/completeness_mechanism.py publish
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/publish.json -- .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/per_rule_completeness_mechanism.py publish
 ```
 
 Expected exits: 0, 0, 0, 1 (valid NO_RULE partition; 0 also valid if measured

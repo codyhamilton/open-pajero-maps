@@ -6,7 +6,7 @@ The original mechanism bytes cannot be restored. On the recorded host search,
 dangling. `scratch-3-11/` had no `dump_new_ext/` or `classify_new/`, and 3-12
 retained only plan 17's `extend.py`. Plan 14's
 `output/scratch-14/mechanism_recovery_search.txt` was empty. These are the
-read-only Ground findings recorded in [DESIGN.md](DESIGN.md); this worker did
+read-only Ground findings recorded in the plan 28 record ([28-phase1-per-rule-classify-recovery.md](../../28-phase1-per-rule-classify-recovery.md)); this worker did
 not repeat a host-wide search.
 
 The producer and side tables had lived only in ignored scratch. No tracked
@@ -14,7 +14,7 @@ code produced `other_mechanism`, so the old provenance instructions depended
 on deleted scripts. Plan 14 unit 1-01 selected brief fallback (c), recording
 `evidence-gap:other_mechanism` for every row instead of recomputing (b). Phase
 2 rejected recovery as its gate, without subsequently scheduling it. This is
-[plan 14's F3 follow-up](../14-completeness-root-cause.md).
+[plan 14's F3 follow-up](../../14-completeness-root-cause.md).
 
 There were two classifier gates: the 144-byte dump lacked `other_mechanism`
 (exit 2, unknown column), and its completeness-only manifest cannot accept
@@ -23,7 +23,7 @@ projection of O01/O04/O05/O06, preserving every rule object's literal JSON
 bytes and order and recording the source and projection hashes. The classifier
 code remains unchanged; exit 1 / NO_RULE is a valid measurement.
 
-The new [producer](triage/completeness_mechanism.py) recomputes against the
+The new [producer](per_rule_completeness_mechanism.py) recomputes against the
 current contract. It checks the baseline hash before use, checks each native
 key and every 3-01 demander against the saved proof, imports the plan-04
 clip/densify and production-C probe helpers, and uses exact rational topology
@@ -66,8 +66,8 @@ The 25-row window is under `output/scratch-28/window25/`: O01 2, O04 6,
 O05 3, NO_RULE 14, no evidence-gap; classifier exit 1 / PARTITION FAIL.
 Historic selected rows are all NO_RULE. Full 776-row side/assignment TSVs and
 controls are deliberately pending the guarded commands in
-[the unit report](reports/1-01-mechanism-producer-classify.md) and
-[provenance](../../provenance.md). This note does not claim Phase 1 closed.
+[the plan 28 record](../../28-phase1-per-rule-classify-recovery.md) and
+[provenance](../../../provenance.md). This note does not claim Phase 1 closed.
 
 The new fixture first failed because the mode/function did not exist; its
 byte preservation, full item key, noncontiguous mapping, pre-write rejection,

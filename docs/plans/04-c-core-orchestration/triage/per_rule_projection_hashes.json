@@ -1,5 +1,5 @@
 {
-  "projection": "/home/codyh/workspace/open-pajero-maps-14-completeness/docs/plans/28-phase1-per-rule-classify-recovery/triage/rules_completeness_projection.json",
+  "projection": "/home/codyh/workspace/open-pajero-maps-14-completeness/docs/plans/04-c-core-orchestration/triage/per_rule_rules_completeness_projection.json",
   "projection_sha256": "66fd269a2955acb89108a7b180e686d3f116f43d85272e35b831153069b69d23",
   "raw_rule_objects_preserved": true,
   "rule_object_sha256": {
@@ -15,5 +15,5 @@
     "O06"
   ],
   "source": "docs/plans/04-c-core-orchestration/triage/rules_other.json",
-  "source_sha256": "a67da9629755a3e2dfac41e172fe459a0bcaedcfb694ea82082d7fd75289426f"
+  "source_sha256": "c9154451d5679b6a5ff366fcd195e2b20807cb094a088cae2376cdbd3f1c0a5f"
 }

@@ -137,7 +137,7 @@ def test_refuses_hardlinked_inputs_before_writing(source, tmp_path, target, inpu
 @pytest.fixture(scope='module')
 def producer():
     import importlib.util
-    path = ROOT / 'docs/plans/28-phase1-per-rule-classify-recovery/triage/completeness_mechanism.py'
+    path = ROOT / 'docs/plans/04-c-core-orchestration/triage/per_rule_completeness_mechanism.py'
     spec = importlib.util.spec_from_file_location('p28_fixture', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -178,8 +178,8 @@ def test_degenerate_and_collapsing_predicates(producer):
 
 def test_projection_keeps_exact_rule_objects(producer, tmp_path):
     producer.project(tmp_path)
-    hashes = json.loads((tmp_path / 'projection_hashes.json').read_text())
-    target = (tmp_path / 'rules_completeness_projection.json').read_text()
+    hashes = json.loads((tmp_path / 'per_rule_projection_hashes.json').read_text())
+    target = (tmp_path / 'per_rule_rules_completeness_projection.json').read_text()
     source = (producer.OLD / 'rules_other.json').read_text()
     decoder = json.JSONDecoder()
     for document in (source, target):

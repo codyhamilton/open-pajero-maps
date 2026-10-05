@@ -13,7 +13,7 @@ From the repository root, Execute re-runs the light join under the guard:
 ```sh
 .venv-rp/bin/python -B parser/tools/run_heavy_python.py \
   --log output/scratch-28/runs/p2_join_reconcile.json -- \
-  .venv-rp/bin/python -B docs/plans/28-phase1-per-rule-classify-recovery/triage/join_reconcile.py
+  .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/per_rule_join_reconcile.py
 ```
 
 The worker ran `python3 -B` on that join script, exit **0**; Execute re-ran it under the guard (exit 0, outputs byte-identical). It reads only
@@ -24,11 +24,11 @@ overwriting the published outputs. The script has an argparse entry point.
 
 Outputs under `triage/`:
 
-- `phase2_join.tsv`: full key `(level, ix, iy, code, p0..p6, shape, vert)`,
+- `per_rule_phase2_join.tsv`: full key `(level, ix, iy, code, p0..p6, shape, vert)`,
   original rule/cause, final plan-14 group/disposition, 3-01 demander verdicts,
   proof references, R polygon presence, cell-local R verdict and reconciliation verdict.
-- `phase2_crosstab.tsv`: rule × final group × verdict counts.
-- `phase2_discriminators.tsv`: all seven O04 rows, including the saved per-demander
+- `per_rule_phase2_crosstab.tsv`: rule × final group × verdict counts.
+- `per_rule_phase2_discriminators.tsv`: all seven O04 rows, including the saved per-demander
   counterfactual, current-contract pin, original and repaired C counts, R presence,
   verdict, explanation and successor flag. There are **0 O06** assignments.
 
@@ -95,7 +95,7 @@ penultimate-repair `missing_mismatch` is **false**. Thus:
   demand, rather than producing a piece.
 
 The exact inputs are the seven `penultimate_repair_probe` records in
-`triage/completeness_mechanism.tsv`; original-ring EO counts and proof paths
+`triage/per_rule_completeness_mechanism.tsv`; original-ring EO counts and proof paths
 are in plan 04's `2-02_r-absent-complete-repair-zero_members.tsv`; R-zero
 contribution is proven in `r_contribution_3-02.tsv`. These settle why the spool
 cause and checker disposition coexist. **All seven named rows are carried to

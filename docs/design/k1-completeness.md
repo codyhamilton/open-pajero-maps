@@ -40,3 +40,13 @@ The test is an independent implementation of the wire contract, in C (`_k1_cmp.c
   - a ring that survives only with multiplier 2;
   - any representable second demander.
 - Real-data control: on the pre-3-14 disc `scratch-3-11/G_new` (`013586b5…`), the checker fails exactly the 52 keys that the later build fix repaired.
+
+## Per-rule assignment of completeness rows
+
+Promoted from plan 28 ([record](../plans/28-phase1-per-rule-classify-recovery.md)).
+
+- Each completeness failure row gets its per-rule assignment from the classifier, run over a dump extended with the byte-145 `other_mechanism` column. The column is produced by `parser/tools/dump_join.py --mode other_mechanism`. That mode is read-only on its inputs: it refuses path, symlink and hard-link aliases of the source binary, manifest and side table. The side table comes from `docs/plans/04-c-core-orchestration/triage/per_rule_completeness_mechanism.py`.
+- The classifier runs on the completeness projection of `rules_other.json`. The projection holds rules O01, O04, O05 and O06, with their raw rule objects byte-preserved and their order fixed (`per_rule_rules_completeness_projection.json`, with hashes in `per_rule_projection_hashes.json`). O06 is excluded from completeness because a contract proof holds against `_cenc.c`.
+- `NO_RULE` is a valid recorded outcome. The classifier's `PARTITION FAIL` exit 1 on this projection is expected and is not an evidence gap. Every row has a recorded assignment even when no rule fires.
+- Current contract (plan 28, 776 rows): O01 363, O05 132, O04 7, O06 0, NO_RULE 274. These join one-to-one onto the 342 + 434 proven plan-14 causes as 769 consistent and 7 conflict-proven (the O04 spool rows). Pins and joins: `per_rule_classify_assignment.tsv`, `per_rule_phase2_join.tsv`.
+- Regression tests: `parser/tests/test_dump_join_other_mechanism.py` and `parser/tests/test_dump_join_memory.py`.

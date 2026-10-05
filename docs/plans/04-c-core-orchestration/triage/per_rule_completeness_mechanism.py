@@ -121,9 +121,9 @@ def project(out):
     if json.loads(projected)['rules'] != rules:
         raise ValueError('projection differs from source rules')
     out.mkdir(parents=True, exist_ok=True)
-    target = out / 'rules_completeness_projection.json'
+    target = out / 'per_rule_rules_completeness_projection.json'
     target.write_text(projected)
-    write_json(out / 'projection_hashes.json', {
+    write_json(out / 'per_rule_projection_hashes.json', {
         'source': str(source.relative_to(ROOT)), 'source_sha256': digest(source),
         'projection': str(target), 'projection_sha256': digest(target),
         'rule_order': [r['id'] for r in rules], 'raw_rule_objects_preserved': True,
@@ -336,8 +336,8 @@ def produce(args):
             # Keep memory bounded by one proof + source audits in this small window.
             audit_cache.clear()
     args.out.mkdir(parents=True, exist_ok=True)
-    write_tsv(args.out / 'completeness_mechanism.tsv', SIDE_FIELDS, rows)
-    write_json(args.out / 'mechanism_run.json', {
+    write_tsv(args.out / 'per_rule_completeness_mechanism.tsv', SIDE_FIELDS, rows)
+    write_json(args.out / 'per_rule_mechanism_run.json', {
         'source_sha256': join.BASELINE_SHA256, 'rows': len(rows), 'source_dump_rows': selected,
         'paths': dict(Counter(r['path'] for r in rows)), 'codes': dict(Counter(r['other_mechanism'] for r in rows)),
         'positive_control': control, 'cenc_sha256': probe.cenc_sha, 'compile': probe.cmd,
@@ -353,16 +353,16 @@ def produce(args):
 def publish(args):
     """Join actual classifier array to source identities and generate controls."""
     verify_baseline()
-    side = read_tsv(args.triage / 'completeness_mechanism.tsv')
+    side = read_tsv(args.triage / 'per_rule_completeness_mechanism.tsv')
     man = json.loads((args.dump / 'dump_manifest.json').read_text())
     ext = man['extension_other_mechanism']
     if (ext['source_sha256'] != join.BASELINE_SHA256
             or not ext['original_144_bytes_verified'] or not ext['byte144_zero']
-            or ext['side_sha256'] != digest(args.triage / 'completeness_mechanism.tsv')
+            or ext['side_sha256'] != digest(args.triage / 'per_rule_completeness_mechanism.tsv')
             or ext['destination_sha256'] != digest(args.dump / 'completeness.bin')):
         raise ValueError('extended dump provenance does not match')
-    projection = args.triage / 'rules_completeness_projection.json'
-    hashes = json.loads((args.triage / 'projection_hashes.json').read_text())
+    projection = args.triage / 'per_rule_rules_completeness_projection.json'
+    hashes = json.loads((args.triage / 'per_rule_projection_hashes.json').read_text())
     source, source_rules = rule_source()
     rules = json.loads(projection.read_text())['rules']
     if (hashes['source_sha256'] != digest(source) or hashes['projection_sha256'] != digest(projection)
@@ -405,7 +405,7 @@ def publish(args):
         classifier_counts[r['rule_id']] += int(r['rows'])
     if classifier_counts != Counter({k: v for k, v in counts.items() if k != 'NO_RULE'}):
         raise ValueError('cause_counts does not match native assignment array')
-    write_tsv(args.triage / 'classify_assignment.tsv', fields, rows)
+    write_tsv(args.triage / 'per_rule_classify_assignment.tsv', fields, rows)
     full = ids == list(range(776))
     lines = ['# Plan 28 Phase 1 controls', '',
              f'Generated from {n} real classify assignments; scope: {"full baseline" if full else "window only"}.',
@@ -462,8 +462,8 @@ def publish(args):
         lines += ['None.']
     for s in multi:
         lines += [f'- dump_row {s["dump_row"]}: `{s["matching_rules"]}`; inputs `{s["predicate_inputs"]}`']
-    (args.triage / 'phase1_controls.md').write_text('\n'.join(lines) + '\n')
-    write_json(args.triage / 'classify_run.json', {
+    (args.triage / 'per_rule_phase1_controls.md').write_text('\n'.join(lines) + '\n')
+    write_json(args.triage / 'per_rule_classify_run.json', {
         'rows': n, 'full_baseline': full, 'rule_counts': dict(counts),
         'classifier_exit_expected': 1 if counts['NO_RULE'] else 0,
         'assignment_sha256': digest(assignment), 'projection_sha256': digest(projection),

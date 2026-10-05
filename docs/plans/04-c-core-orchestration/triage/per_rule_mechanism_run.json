@@ -25,7 +25,7 @@
     "docs/plans/04-c-core-orchestration/triage/completeness_evidence.tsv": "e77e2c324ed8ec1f6a82af5b87f296f9be0ba21a3a3d60a2a821f40666d73bbf",
     "docs/plans/04-c-core-orchestration/triage/demand_attribution_3-01.tsv": "c35ad5008bc0b410d8deb70d94eb86b36822a105bc3f62d5516a00e0d648b186",
     "docs/plans/04-c-core-orchestration/triage/phase3_membership.tsv": "f1d2e5dd1c9701bceb467ceeefbc3ce5f2d0b33d8e2a5ded0660d6aab06ca395",
-    "docs/plans/04-c-core-orchestration/triage/rules_other.json": "a67da9629755a3e2dfac41e172fe459a0bcaedcfb694ea82082d7fd75289426f",
+    "docs/plans/04-c-core-orchestration/triage/rules_other.json": "c9154451d5679b6a5ff366fcd195e2b20807cb094a088cae2376cdbd3f1c0a5f",
     "parser/tools/k1_representable.py": "e25f899ecc4707f012e2ca443e28e57920771c3fd5c8cd1a1afcd84d18bea95a",
     "parser/tools/quantisation_roundtrip.py": "c288eec8376430e8b7bf4da7dc55d073a0c01297a5598d5b4ca7e566f62f1293"
   },

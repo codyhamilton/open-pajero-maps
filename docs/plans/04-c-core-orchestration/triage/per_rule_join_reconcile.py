@@ -127,8 +127,8 @@ def discriminate(base, mechanism, inputs, member):
 
 
 def reconcile(output_dir):
-    assignments = index(read_tsv(HERE / 'classify_assignment.tsv'), 'assignments')
-    mechanisms = index(read_tsv(HERE / 'completeness_mechanism.tsv'), 'mechanisms')
+    assignments = index(read_tsv(HERE / 'per_rule_classify_assignment.tsv'), 'assignments')
+    mechanisms = index(read_tsv(HERE / 'per_rule_completeness_mechanism.tsv'), 'mechanisms')
     membership = index(read_tsv(OLD / 'phase3_membership.tsv'), 'membership')
     evidence = index(read_tsv(OLD / 'completeness_evidence.tsv'), 'evidence')
     m1 = index(read_tsv(OLD / MEMBERS1), '2-01')
@@ -186,8 +186,8 @@ def reconcile(output_dir):
         ev = evidence[key]
         refs = [reference('phase3_membership.tsv', row_id),
                 reference('demand_attribution_3-01.tsv', row_id), inputs['proof'],
-                f'docs/plans/28-phase1-per-rule-classify-recovery/triage/classify_assignment.tsv#dump_row={row_id}',
-                f'docs/plans/28-phase1-per-rule-classify-recovery/triage/completeness_mechanism.tsv#dump_row={row_id}',
+                f'docs/plans/04-c-core-orchestration/triage/per_rule_classify_assignment.tsv#dump_row={row_id}',
+                f'docs/plans/04-c-core-orchestration/triage/per_rule_completeness_mechanism.tsv#dump_row={row_id}',
                 ev['R_witness'], ev['G_witness'], ev['spool_K1_requirement_witness'],
                 'docs/design/k1-completeness.md', 'docs/plans/14-completeness-root-cause.md']
         member = m1.get(key, m2.get(key, {}))
@@ -241,11 +241,11 @@ def reconcile(output_dir):
         'NO_RULE_subset_2_02': all(r['plan14_group'] == G2 for r in joined if r['rule_id'] == 'NO_RULE'),
     }
     output_dir.mkdir(parents=True, exist_ok=True)
-    write_tsv(output_dir / 'phase2_join.tsv', BASE_FIELDS, joined)
-    write_tsv(output_dir / 'phase2_crosstab.tsv', ['rule_id', 'plan14_group', 'verdict', 'count'],
+    write_tsv(output_dir / 'per_rule_phase2_join.tsv', BASE_FIELDS, joined)
+    write_tsv(output_dir / 'per_rule_phase2_crosstab.tsv', ['rule_id', 'plan14_group', 'verdict', 'count'],
               [dict(zip(['rule_id', 'plan14_group', 'verdict', 'count'], (*key, n)))
                for key, n in sorted(counts.items())])
-    write_tsv(output_dir / 'phase2_discriminators.tsv', DISC_FIELDS, discriminators)
+    write_tsv(output_dir / 'per_rule_phase2_discriminators.tsv', DISC_FIELDS, discriminators)
     print(compact({'rows': len(joined), 'unique_keys': len(assignments),
                    'membership_key_set_equal': True, 'crosstab_sum': sum(counts.values()),
                    'discriminator_rows': len(discriminators),
