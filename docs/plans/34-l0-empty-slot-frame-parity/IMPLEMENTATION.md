@@ -33,3 +33,9 @@ Refine skipped. Unit `briefs/1-01-frame-witness.md`.
 ## Phase 2 — Root cause proven; fix-landed or proven-non-deviation for each cell
 
 Approach open; refine skipped. Unit `briefs/2-01-root-cause-and-verdict.md`. Execute runs any encode, diff, K1 and Perth steps under the wrapper, one at a time.
+
+### 2-01 — root cause (worker output held, not landed as is)
+
+- **Worker:** Codex `gpt-6.1-sol` (high), sandboxed, 08:07–~08:20 AEST, 168,419 tokens. Report: `reports/2-01-root-cause-and-verdict.md`.
+- **Cause (accepted):** each of (0,541), (0,562), (0,563) is outside the L0 parcel mask; its only input is an own spool record whose class-2 polygon lies wholly west of the cell; clipping emits nothing; `kw_e2` indexes the 158-byte empty shell unconditionally; the writer then allocates a block/BMT where R writes the absent sentinel. (0,541) also carries plan 29's probe-and-pad.
+- **Fix (not accepted as is):** `_omit_witnessed_l0_shells` hard-codes the three cells. Execute will not land a coordinate whitelist in the production builder. Fixer brief `briefs/2-02-general-outside-mask-shell-rule.md` replaces it with a general outside-mask empty-shell rule, a classified all-cell diff gate, and an R empty-slot check over every removed cell.
