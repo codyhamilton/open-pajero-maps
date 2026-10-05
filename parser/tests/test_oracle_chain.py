@@ -15,7 +15,7 @@ chain = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(chain)
 
 
-def image(path, frames, relocation=0, divided=False):
+def image(path, frames, relocation=0, divided=False, children=(b'childA', b'childB')):
     """Handwritten minimal volume, independent of the production assembler."""
     data = bytearray(6144 + relocation)
 
@@ -53,7 +53,7 @@ def image(path, frames, relocation=0, divided=False):
             pos = 5568 + i * 32 + relocation
             put(5140 + i * 6, 'IH', dsa(pos), 1)
             put(pos, 'H', 4)
-            data[pos + 2:pos + 8] = b'child' + bytes([65+i])
+            data[pos + 2:pos + 8] = children[i]
     path.write_bytes(data)
     return path
 
@@ -240,3 +240,63 @@ def test_successor_confinement_negatives(tmp_path,mutation):
     chain.write_json(path,w)
     with pytest.raises(ValueError):
         chain.successor_witness(path)
+
+
+def routed(tmp_path, old, new, stem='routed'):
+    base = measure(tmp_path, old, new, stem + '-base')
+    return chain.routed_diff(old, new, chain.sha(old), chain.sha(new), tmp_path / (stem + '-base.json'),
+                             tmp_path / (stem + '.json'), tmp_path / (stem + '.tsv'), tmp_path / (stem + '-work')), base
+
+
+def test_routed_diff_detects_divided_payload_swap_missed_by_multiset(tmp_path):
+    old = image(tmp_path / 'old.kwi', [b'rootAA', b'rootBB'], divided=True)
+    new = image(tmp_path / 'new.kwi', [b'rootAA', b'rootBB'], divided=True, children=(b'childB', b'childA'))
+    result, base = routed(tmp_path, old, new)
+    assert base['unexplained_count'] == 0
+    assert result['routed_only_count'] == 1 and result['routed_only_cells'] == [[0, 0, 0]]
+    assert result['baseline_cells_missing_from_routed'] == 0
+    assert result['multiset_list_complete_under_routing'] is False
+
+
+def test_routed_diff_invariant_under_relocation_and_padding(tmp_path):
+    old = image(tmp_path / 'old.kwi', [b'rootAA', b'rootBB'], divided=True)
+    new = image(tmp_path / 'new.kwi', [b'rootAA', b'rootBB'], relocation=2048, divided=True)
+    raw = bytearray(new.read_bytes())
+    raw[5568 + 2048 + 8:5568 + 2048 + 16] = b'padding!'  # beyond the 8-byte frame
+    new.write_bytes(raw)
+    result, base = routed(tmp_path, old, new)
+    assert base['unexplained_count'] == 0 and result['routed_changed_total'] == 0
+    assert result['multiset_list_complete_under_routing'] is True
+
+
+def test_routed_diff_contains_every_multiset_change(tmp_path):
+    old = image(tmp_path / 'old.kwi', [b'rootAA', b'rootBB'], divided=True)
+    new = image(tmp_path / 'new.kwi', [b'rootAA', b'rootCC'], divided=True)
+    result, base = routed(tmp_path, old, new)
+    assert base['unexplained_count'] == 1
+    assert result['routed_changed_total'] == 1 and result['routed_only_count'] == 0
+    assert result['multiset_list_complete_under_routing'] is True
+
+
+def test_routed_signature_detects_changed_footprint():
+    with sqlite3.connect(':memory:') as db:
+        db.execute('CREATE TABLE frames(side TEXT, level INTEGER, ix INTEGER, iy INTEGER, '
+                   'footprint TEXT, length INTEGER, hash TEXT)')
+        db.executemany('INSERT INTO frames VALUES (?,?,?,?,?,?,?)', [
+            ('old', 0, 0, 0, '0:0:1/2:1', 8, 'a'), ('old', 0, 0, 0, '1/2:0:1/2:1', 8, 'b'),
+            ('new', 0, 0, 0, '0:0:1/4:1', 8, 'a'), ('new', 0, 0, 0, '1/2:0:1/2:1', 8, 'b')])
+        assert list(chain.routed_signatures(db, 'old')) != list(chain.routed_signatures(db, 'new'))
+
+
+def test_routed_diff_rejects_wrong_or_tampered_baseline(tmp_path):
+    old = image(tmp_path / 'old.kwi', [b'rootAA', b'rootBB'], divided=True)
+    new = image(tmp_path / 'new.kwi', [b'rootAA', b'rootCC'], divided=True)
+    measure(tmp_path, old, new, 'b')
+    with (tmp_path / 'b.tsv').open('a') as f:
+        f.write('0\t9\t9\tchanged\t\t\t\t\t0\t0\n')
+    with pytest.raises(ValueError, match='hash mismatch'):
+        chain.routed_diff(old, new, chain.sha(old), chain.sha(new), tmp_path / 'b.json',
+                          tmp_path / 'r.json', tmp_path / 'r.tsv', tmp_path / 'r-work')
+    with pytest.raises(ValueError, match='different hop'):
+        chain.routed_diff(old, new, chain.sha(new), chain.sha(old), tmp_path / 'b.json',
+                          tmp_path / 'r2.json', tmp_path / 'r2.tsv', tmp_path / 'r2-work')

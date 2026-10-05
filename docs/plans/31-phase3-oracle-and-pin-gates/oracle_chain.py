@@ -85,7 +85,7 @@ def read_exact(f, offset, size):
 
 
 def tree_leaves(rec, lmr, x=Fraction(0), y=Fraction(0),
-                width=None, height=None, path=()):
+                width=None, height=None, path=(), footprint=False):
     """Exact cell arithmetic, including divided/integrated root layouts.
 
     Sub-leaves belong to their containing base cell, as in cells.py. Sparse
@@ -105,13 +105,21 @@ def tree_leaves(rec, lmr, x=Fraction(0), y=Fraction(0),
         leaf = path + (i,)
         if entry.subrecord is not None:
             yield from tree_leaves(entry.subrecord, lmr, cx, cy,
-                                   width / nx, height / ny, leaf)
+                                   width / nx, height / ny, leaf, footprint)
         elif entry.size:
-            yield int(cx), int(cy), leaf, entry
+            if footprint:
+                # Exact block-relative rectangle in base-cell units; stable
+                # under relocation and independent of leaf ordinals.
+                yield int(cx), int(cy), leaf, entry, (cx, cy, width / nx, height / ny)
+            else:
+                yield int(cx), int(cy), leaf, entry
 
 
-def iter_frames(path):
-    """Read one bounded metadata block/frame at a time, with no decoding."""
+def iter_frames(path, routed=False):
+    """Read one bounded metadata block/frame at a time, with no decoding.
+
+    With routed=True each row also carries the leaf's exact absolute
+    geographic footprint (x:y:w:h in base-cell units, rational strings)."""
     from kiwiw import volume
     from kiwiw.bitutils import u16
     from kiwiw.parcel_mgmt import parse_parcel_mgmt_record
@@ -144,7 +152,8 @@ def iter_frames(path):
                 by = (bsy * nby + bi // nbx) * ny
                 # One block's cache avoids repeatedly hashing sparse aliases.
                 cache = {}
-                for x, y, leaf, entry in tree_leaves(root, lm):
+                for item in tree_leaves(root, lm, footprint=routed):
+                    x, y, leaf, entry = item[:4]
                     pos = volume.getsector(entry.dsa, ss, ls)
                     key = (pos, entry.size)
                     if key not in cache:
@@ -156,8 +165,12 @@ def iter_frames(path):
                             length = len(buf)
                         cache[key] = (length, hashlib.sha256(buf[:length]).hexdigest(), fallback)
                     length, digest, fallback = cache[key]
-                    yield (lm.level, bx + x, by + y, length, digest,
+                    row = (lm.level, bx + x, by + y, length, digest,
                            '.'.join(map(str, leaf)), pos, fallback)
+                    if routed:
+                        fx, fy, fw, fh = item[4]
+                        row += (f'{bx + fx}:{by + fy}:{fw}:{fh}',)
+                    yield row
 
 
 def cell_signatures(db, side):
@@ -167,6 +180,23 @@ def cell_signatures(db, side):
         h, total, leaves = hashlib.sha256(), 0, 0
         for _, _, _, length, digest in group:
             h.update(f'{length}\t{digest}\n'.encode())
+            total += length
+            leaves += 1
+        yield key, (total, h.hexdigest(), leaves)
+
+
+def routed_signatures(db, side):
+    """Per base cell: sorted (footprint, length, hash) triples.
+
+    Unlike cell_signatures this keeps which exact footprint routes to which
+    whole frame, so swapped divided payloads or changed subdivision geometry
+    change the signature. Offsets and sector padding never enter it."""
+    rows = db.execute('SELECT level,ix,iy,footprint,length,hash FROM frames WHERE side=? '
+                      'ORDER BY level,ix,iy,footprint,length,hash', (side,))
+    for key, group in itertools.groupby(rows, lambda r: r[:3]):
+        h, total, leaves = hashlib.sha256(), 0, 0
+        for _, _, _, fp, length, digest in group:
+            h.update(f'{fp}\t{length}\t{digest}\n'.encode())
             total += length
             leaves += 1
         yield key, (total, h.hexdigest(), leaves)
@@ -252,6 +282,109 @@ def diff(old, new, old_sha, new_sha, out, cells, work_dir):
               'residuals': ['Payload causes not measured; all listed cells are unexplained.',
                             'Container/index/padding relocation is outside this cell-identity measurement.']}
     write_json(out, result, exclusive=True)
+    return result
+
+
+def read_cell_list(path):
+    with Path(path).open(newline='') as f:
+        r = csv.reader(f, delimiter='\t')
+        next(r)
+        return {(int(a), int(b), int(c)) for a, b, c, *_ in r}
+
+
+def routed_diff(old, new, old_sha, new_sha, baseline, out, cells, work_dir):
+    """Execute-only supplement to `diff` (REVIEW R1).
+
+    Compares routed cell contents (exact footprint -> whole frame) on both
+    layouts and reconciles them with the retained multiset diff `baseline`.
+    Every multiset change is necessarily a routed change; the gate is that the
+    routed list contains every baseline cell. Routed-only cells are the cells
+    whose routing/footprints changed while their frame multiset did not."""
+    old, new, baseline, out, cells, work_dir = map(Path, (old, new, baseline, out, cells, work_dir))
+    inputs = {old.resolve(), new.resolve()}
+    for p in (out, cells, work_dir):
+        if (p.resolve() in inputs or any(p.resolve() in src.parents for src in inputs)
+                or p.name == 'ALLDATA.KWI' or 'spool' in str(p).lower()):
+            raise ValueError(f'unsafe output path: {p}')
+        if p.exists():
+            raise ValueError(f'output already exists; choose a new scratch path: {p}')
+    if len({out.resolve(), cells.resolve(), work_dir.resolve()}) != 3:
+        raise ValueError('outputs must be distinct')
+    base = json.loads(small_bytes(baseline))
+    if [base.get('old_sha256'), base.get('new_sha256')] != [old_sha, new_sha]:
+        raise ValueError('baseline diff is for a different hop')
+    base_cells = Path(base['cells']['path'])
+    if not base_cells.is_absolute():
+        base_cells = ROOT / base_cells
+    if sha(base_cells) != base['cells']['sha256']:
+        raise ValueError('baseline cell list hash mismatch')
+    multiset = read_cell_list(base_cells)
+    if len(multiset) != base['unexplained_count']:
+        raise ValueError('baseline cell list count mismatch')
+    before = [sha(old), sha(new)]
+    if before != [old_sha, new_sha]:
+        raise ValueError(f'input SHA mismatch: {before}')
+    work_dir.mkdir(parents=True, exist_ok=False)
+    counts, fallback = {}, {}
+    totals, by_level = Counter(), {}
+    routed_only, missing = [], []
+    with sqlite3.connect(work_dir / 'frames.sqlite') as db:
+        db.execute('PRAGMA cache_size=-8192')
+        db.execute('PRAGMA temp_store=FILE')
+        db.execute('CREATE TABLE frames (side TEXT, level INTEGER, ix INTEGER, iy INTEGER, '
+                   'footprint TEXT, length INTEGER, hash TEXT)')
+        for side, path in (('old', old), ('new', new)):
+            counts[side], fallback[side] = 0, 0
+            for frame in iter_frames(path, routed=True):
+                db.execute('INSERT INTO frames VALUES (?,?,?,?,?,?,?)',
+                           (side, *frame[:3], frame[8], frame[3], frame[4]))
+                counts[side] += 1
+                fallback[side] += int(frame[7])
+                if counts[side] % 100000 == 0:
+                    db.commit()
+                    print(f'{side}: {counts[side]} leaves', flush=True)
+            db.commit()
+        db.execute('CREATE INDEX route_order ON frames(side,level,ix,iy,footprint,length,hash)')
+        routed = set()
+        cells.parent.mkdir(parents=True, exist_ok=True)
+        with cells.open('x') as f:
+            w = csv.writer(f, delimiter='\t', lineterminator='\n')
+            w.writerow(('level', 'ix', 'iy', 'status', 'in_multiset_list',
+                        'old_routed_sha256', 'new_routed_sha256', 'old_leaves', 'new_leaves'))
+            for key, status, a, b in changed_cells(routed_signatures(db, 'old'),
+                                                   routed_signatures(db, 'new')):
+                routed.add(key)
+                totals[status] += 1
+                by_level.setdefault(str(key[0]), Counter())[status] += 1
+                listed = key in multiset
+                if not listed:
+                    routed_only.append(list(key))
+                w.writerow((*key, status, int(listed), a[1] if a else '', b[1] if b else '',
+                            a[2] if a else 0, b[2] if b else 0))
+        missing = sorted(multiset - routed)
+    after = [sha(old), sha(new)]
+    if after != before:
+        raise ValueError('protected input changed during measurement')
+    result = {'schema': 1, 'kind': 'routed_cell_diff', 'old': str(old), 'new': str(new),
+              'old_sha256': before[0], 'new_sha256': before[1],
+              'protected_after_sha256': after, 'protected_unchanged': True,
+              'baseline': evidence(baseline), 'baseline_cells': {'path': str(base_cells), 'sha256': base['cells']['sha256'],
+                                                                 'count': len(multiset)},
+              'cells': {'path': str(cells), 'sha256': sha(cells)},
+              'routed_counts': {s: totals[s] for s in ('changed', 'added', 'removed')},
+              'routed_counts_by_level': by_level, 'routed_changed_total': len(routed),
+              'leaf_counts': counts, 'frame_length_fallbacks': fallback,
+              'baseline_cells_missing_from_routed': len(missing),
+              'routed_only_count': len(routed_only), 'routed_only_cells': routed_only[:1000],
+              'routed_only_cells_truncated': len(routed_only) > 1000,
+              'multiset_list_complete_under_routing': not routed_only and not missing,
+              'identity': 'per base cell: sorted (exact absolute footprint x:y:w:h in base-cell units, '
+                          'whole-frame length, SHA-256); offsets and sector padding excluded',
+              'residuals': ['Payload causes not measured; all changed cells remain unexplained.',
+                            'Container/index/padding bytes are outside this cell-identity measurement.']}
+    write_json(out, result, exclusive=True)
+    if missing:
+        raise ValueError(f'{len(missing)} baseline cells absent from the routed list')
     return result
 
 
@@ -438,6 +571,11 @@ def main():
         d.add_argument('--'+flag, type=Path, required=True)
     d.add_argument('--old-sha', required=True)
     d.add_argument('--new-sha', required=True)
+    r = sub.add_parser('routed-diff', help='Execute-only routed/footprint supplement to diff (R1)')
+    for flag in ('old','new','baseline','out','cells','work-dir'):
+        r.add_argument('--'+flag, type=Path, required=True)
+    r.add_argument('--old-sha', required=True)
+    r.add_argument('--new-sha', required=True)
     c = sub.add_parser('check-census', help='Execute-only audit of retained large census')
     c.add_argument('--path', type=Path, required=True)
     c.add_argument('--expected', type=Path, required=True)
@@ -456,12 +594,14 @@ def main():
             result = publish(**args)
         elif command == 'diff':
             result = diff(**args)
+        elif command == 'routed-diff':
+            result = routed_diff(**args)
         else:
             result = check_census(**args)
     except (ValueError, OSError, KeyError) as e:
         ap.exit(1, f'oracle_chain: {e}\n')
     print(json.dumps({'command':command, 'hops':len(result.get('hops',[])),
-                      'counts':result.get('counts')}, sort_keys=True))
+                      'counts':result.get('counts') or result.get('routed_counts')}, sort_keys=True))
 
 
 if __name__ == '__main__':
