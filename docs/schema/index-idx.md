@@ -16,7 +16,7 @@ disc placement by `disc-layout.md`.
 
 | Field | Meaning | Status | Evidence | Code |
 |---|---|---|---|---|
-| Suffix 201..207 | State partition: 201 WA, 202 NT, 203 SA, 204 QLD, 205 NSW, 206 VIC, 207 TAS | observed | ZONEZSRC.IDX SRZN records SZCD 0x03000001..07 name `IDX/SADSR201..207.IDX`; ZSEL state names (WA = ...01). Older notebook "suffix = zoom level" is wrong; the ZONE table and state names win | `parser/kiwiw/search_frame.py` |
+| Suffix 201..207 | State partition: 201 WA, 202 NT, 203 SA, 204 QLD, 205 NSW, 206 VIC, 207 TAS | observed | ZONEZSRC.IDX SRZN records SZCD 0x03000001..07 name `IDX/SADSR201..207.IDX`; ZSEL state names (WA = ...01). Older notebook "suffix = zoom level" is wrong; the ZONE table and state names win. Offline fixture/test source of truth: `parser/refdata/state_partitions.json` (`kiwiw.state_partitions`; plan 26). Offline seven-state fixtures ≠ WP3 complete ≠ Australia-wide MMCS proof | `parser/kiwiw/state_partitions.py` |
 | Families with suffix | SADSR, POISR, ITSSR, FWYSR (201,203,204,205,206 only), ARSNC, POIAS | observed | listing of R `IDX/`. Only SADSR has an on-disc table naming its per-state file; suffix of the others is by convention | - |
 | Families without suffix | POIDT001-013, FMCDT001, ZONE*SRC/ZSEL*, AGMSR/ARGSR/EMGSR, ARSSR, EM2SR, EM3SR, HWMAP.KWI | observed | listing of R | - |
 | POIDT001-007 | Intersection info (PKIS), paired with ITSSR201-207 | assumed | inferred from ordering and file sizes; INDEXDAT filenames read directly, pairing not | - |

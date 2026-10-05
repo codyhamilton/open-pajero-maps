@@ -257,10 +257,25 @@ def test_address_range_from_housenumber_range(idx: OsmAddressIndex) -> None:
 # ---------------------------------------------------------------------------
 
 def test_address_range_coordinates_in_wa_bbox(idx: OsmAddressIndex) -> None:
-    """All synthetic coordinates are within the WA bounding box."""
+    """Module SYNTHETIC_POINTS are WA-shaped; assert they stay in the WA box.
+
+    Non-WA synthetic fixtures live in ``test_search_fixtures_seven_state.py``
+    and must not be forced into this WA box (plan 26).
+    """
     for ar in idx.address_ranges:
         assert -35.5 <= ar.lat <= -13.5, f"lat {ar.lat} out of WA bbox"
         assert 112.0 <= ar.lon <= 130.0, f"lon {ar.lon} out of WA bbox"
+
+
+def test_module_synthetic_points_tagged_wa_only() -> None:
+    """This module's offline oracle is WA-only; seven-state coverage is plan 26."""
+    # Explicit state-code tag check so non-WA fixtures are not falsely forced here.
+    for pt in SYNTHETIC_POINTS:
+        assert 112.0 <= pt.lon <= 130.0 and -35.5 <= pt.lat <= -13.5, (
+            f"test_address_extractor SYNTHETIC_POINTS must stay WA-shaped; "
+            f"got lat={pt.lat} lon={pt.lon}. Use test_search_fixtures_seven_state "
+            f"for other suffixes."
+        )
 
 
 def test_city_representative_coordinate_is_mean(idx: OsmAddressIndex) -> None:

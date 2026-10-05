@@ -29,6 +29,7 @@ the mounted disc (see `docs/design/target-disc.md`, "Grid contract").
   allowlist and the path of the spot-check table. Loaded by `harness/`.
 - `selection.json` — per-level OSM feature selection, calibrated to `profile/map.json` so
   build counts land inside the `harness.json` envelopes. Loaded by `kiwiw/selection.py`.
+- `state_partitions.json` — seven-row IDX state/territory ↔ suffix table (201 WA … 207 TAS). Offline fixture/test source of truth; loaded by `kiwiw.state_partitions`. Not WP3 generation completeness.
 - `spot_checks.json` — city coordinates with expected street and place names, checked by
   `harness/checks/spotcheck.py`.
 - `vocab/*.json` — OSM tag to code tables; see `docs/design/osm-vocabulary-mapping.md`.

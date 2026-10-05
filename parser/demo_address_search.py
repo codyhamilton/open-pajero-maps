@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 """End-to-end demo of the KIWI-W address/POI search chain: a typed street
-name in, a real Western Australian latitude/longitude out.
+name in, a real latitude/longitude out.
 
     python3 parser/demo_address_search.py [DISC_ROOT] [--street "HAY STREET"]
+    python3 parser/demo_address_search.py [DISC_ROOT] --state NSW
+    python3 parser/demo_address_search.py [DISC_ROOT] --suffix 205
+
+Default state/suffix is **201 WA** for back-compat. A successful default-WA
+run is **not** Australia-wide MMCS / seven-state UX proof — prefer an
+explicit ``--state`` / ``--suffix`` (see ``parser/refdata/state_partitions.json``
+and plan 26). Offline seven-state fixtures prove partition coverage of the
+search test surface, not WP3 generation completeness.
 
 This is the piece that was blocked for three investigation passes. The
 chain, all of it now decoded (see parser/kiwiw/search_frame.py):
 
-    IDX/SADSR201.IDX
+    IDX/SADSR{suffix}.IDX  (default 201 = WA)
       DFSR management frame
        -> SRMX detailed search info record ("STREET ADDRESS")
           -> matching data frame: 38,120 street names, alphabetical
@@ -43,6 +51,7 @@ from kiwiw.search_frame import (  # noqa: E402
     StreetAddressIndex,
     iter_matching_records,
 )
+from kiwiw.state_partitions import resolve_suffix, suffix_to_code  # noqa: E402
 
 DEFAULT_DISC = "/run/media/codyh/464210-8480"
 
@@ -67,23 +76,58 @@ def banner(text: str) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(
+        description=(
+            "Demo address/POI search. Default --state WA / --suffix 201 is "
+            "back-compat only — not Australia-wide UX proof. Prefer an "
+            "explicit state/suffix (plan 26)."
+        ),
+    )
     ap.add_argument("disc", nargs="?", default=DEFAULT_DISC)
     ap.add_argument("--street", action="append", default=None,
                     help="look up an extra street name (repeatable)")
     ap.add_argument("--poi", default="BURSWOOD CAR RENTALS",
                     help="POI name substring to search for")
+    ap.add_argument(
+        "--state",
+        default=None,
+        help="state/territory code (WA, NT, SA, QLD, NSW, VIC, TAS); "
+             "default WA. Prefer explicit value — default-WA ≠ all-state proof.",
+    )
+    ap.add_argument(
+        "--suffix",
+        type=int,
+        default=None,
+        help="IDX suffix 201..207 (overrides --state when both given)",
+    )
     ap.add_argument("--full-scan", action="store_true", default=True)
     ap.add_argument("--no-full-scan", dest="full_scan", action="store_false")
     args = ap.parse_args()
 
-    sadsr = os.path.join(args.disc, "IDX", "SADSR201.IDX")
-    poisr = os.path.join(args.disc, "IDX", "POISR201.IDX")
+    try:
+        if args.suffix is not None:
+            suffix = resolve_suffix(args.suffix)
+        else:
+            suffix = resolve_suffix(args.state)  # None → 201 WA
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    state_code = suffix_to_code()[suffix]
+    if suffix == 201 and args.state is None and args.suffix is None:
+        print(
+            "note: using default suffix 201 (WA). This is not Australia-wide "
+            "search proof — pass --state / --suffix for other partitions "
+            "(parser/refdata/state_partitions.json; plan 26).",
+            file=sys.stderr,
+        )
+
+    sadsr = os.path.join(args.disc, "IDX", f"SADSR{suffix}.IDX")
+    poisr = os.path.join(args.disc, "IDX", f"POISR{suffix}.IDX")
     if not os.path.exists(sadsr):
         print(f"error: {sadsr} not found -- pass the disc root as argv[1]", file=sys.stderr)
         return 2
 
-    banner("1. Resolving the search frame chain in SADSR201.IDX")
+    banner(f"1. Resolving the search frame chain in SADSR{suffix}.IDX ({state_code})")
     t0 = time.time()
     idx = StreetAddressIndex(sadsr)
     print(f"  loaded in {time.time() - t0:.1f}s")
@@ -140,22 +184,26 @@ def main() -> int:
             n += 1
             latmin, latmax = min(latmin, lat), max(latmax, lat)
             lonmin, lonmax = min(lonmin, lon), max(lonmax, lon)
-            # Generous box around Western Australia.
-            if not (-36.0 < lat < -13.0 and 112.0 < lon < 130.0):
+            # Soft geographic sanity. WA (201) uses the historical WA box;
+            # other suffixes use an Australia-wide box (not bbox-as-state law).
+            if suffix == 201:
+                in_box = (-36.0 < lat < -13.0 and 112.0 < lon < 130.0)
+            else:
+                in_box = (-44.0 < lat < -10.0 and 112.0 < lon < 154.0)
+            if not in_box:
                 outside += 1
         print(f"  decoded {n} records in {time.time() - t0:.1f}s "
               f"(frame declares {rf.matching_record_count})")
-        print(f"  latitude  {latmin:.4f} .. {latmax:.4f}   "
-              f"(WA runs -35.13 at West Cape Howe to -13.69 at Cape Londonderry)")
-        print(f"  longitude {lonmin:.4f} .. {lonmax:.4f}   "
-              f"(WA runs 112.92 at Steep Point to 129.00 at the NT/SA border)")
-        print(f"  records outside Western Australia: {outside}")
+        print(f"  latitude  {latmin:.4f} .. {latmax:.4f}")
+        print(f"  longitude {lonmin:.4f} .. {lonmax:.4f}")
+        box_label = "Western Australia" if suffix == 201 else f"Australia ({state_code})"
+        print(f"  records outside {box_label}: {outside}")
         assert n == rf.matching_record_count, "record count mismatch"
-        assert outside == 0, "coordinates escaped Western Australia"
-        print("  OK -- every coordinate on the disc lands inside WA.")
+        assert outside == 0, f"coordinates escaped {box_label}"
+        print(f"  OK -- every coordinate lands inside {box_label}.")
 
     if os.path.exists(poisr):
-        banner("4. Same decoder, POI search file (POISR201.IDX)")
+        banner(f"4. Same decoder, POI search file (POISR{suffix}.IDX) ({state_code})")
         poi_idx = PoiSearchIndex(poisr)
         print(f"  POI matching frame @{poi_idx.base}, "
               f"{poi_idx.info.matching_record_count} records")

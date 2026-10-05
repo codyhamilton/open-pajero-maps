@@ -1,0 +1,12 @@
+{
+  "description": "Canonical IDX state/territory partition (SADSR/POISR suffix). Offline source of truth for fixture naming and tests. Matches docs/schema/index-idx.md and docs/design/target-disc.md. Does not prove WP3 generation completeness or Australia-wide MMCS search.",
+  "partitions": [
+    {"suffix": 201, "code": "WA",  "name": "Western Australia"},
+    {"suffix": 202, "code": "NT",  "name": "Northern Territory"},
+    {"suffix": 203, "code": "SA",  "name": "South Australia"},
+    {"suffix": 204, "code": "QLD", "name": "Queensland"},
+    {"suffix": 205, "code": "NSW", "name": "New South Wales"},
+    {"suffix": 206, "code": "VIC", "name": "Victoria"},
+    {"suffix": 207, "code": "TAS", "name": "Tasmania"}
+  ]
+}
