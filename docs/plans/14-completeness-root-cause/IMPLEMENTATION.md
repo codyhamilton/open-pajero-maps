@@ -120,3 +120,10 @@ Refine: **Proceed.** Units 3-01 (demand attribution / 335), 3-02 (765 R zero con
 - Accounting is now **776 = 342 (2-01) + 433 (2-02 amended) + 1 (Q-source-335)** (`triage/phase3_membership.tsv`, exhaustive and disjoint).
 - Surfaces: `triage/r_contribution_3-02.{py,tsv}`, `triage/phase3_{groups.md,membership.tsv}`, `reports/3-02-765-r-zero-contribution.md`.
 - Deviation: rubric read from the installed plugin. Protected shas unchanged.
+
+
+### 3-03 — checker-representable-demand: over budget
+
+Research only; no implementation or regression added. Required reading and multiplier investigation consumed 15 files including the brief (14 excluding it), crossing the 14-file budget. Stopped as directed. Both protected disc SHAs match the brief. Demand attribution predicts all 776 keys removed and no exceptions. C `k1_shapes` and Python `Shapes` lack per-shape multiplier carriage; tall-shape C ABI needs an owned-path solution, such as recovering spool attributes by existing home/ordinal identity. Independent C/Python EO representability, regression before/after, live K1, identity diff, and fresh re-encode remain undone. Full handoff: `reports/3-03-checker-representable-demand.md`. Existing-suite validation will be recorded in that report before any commit.
+
+Validation: all four existing suites passed, 259 tests in 22.39s, via the heavy runner (child exit 0). No expectation edits. Budget-fallback handoff eligible for commit; implementation remains unfinished.
