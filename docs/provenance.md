@@ -696,7 +696,7 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
 - **Reproduce:** [plan-14 evidence note](plans/04-c-core-orchestration/triage/completeness_evidence.md)
   and its committed build/audit helpers; heavy work uses
   `flock output/.heavy.lock`, K1 `-j 6`, existing main-checkout `.venv-rp`.
-  [Handoff](plans/14-completeness-root-cause/reports/1-01-evidence-table.md)
+  [Plan 14 record](plans/14-completeness-root-cause.md)
   records the assignment-evidence fallback. Scratch bytes remain outside git;
   the complete native-key TSV and evidence interpretation are committed.
   Protected scratch-3-11 and historical science inputs remain unchanged.

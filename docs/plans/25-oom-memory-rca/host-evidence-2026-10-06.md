@@ -159,7 +159,7 @@ Inputs (from script + `summary.json`):
 |----------|------|
 | Kernel slice | host `~/workspace/oom-kernel-2026-10-06.txt` (from `journalctl -k --since '2026-10-05 14:19:10 UTC' --until '…14:19:12'`) |
 | Flash 2-01/2-02 | `output/scratch-14/CHM-14-p2-flash-2-0{1,2,2b}.log` (+ `.prompt.md`, `.pid`) |
-| cell_local script | `…/14-completeness-root-cause/triage/cell_local_2-01.py` |
+| cell_local script | `…/04-c-core-orchestration/triage/cell_local_2-01.py` |
 | cell_local summary | `output/scratch-14/cell_local/summary.json` |
 | OpenCode sessions | `ses_ef39991ccffe…` (2-01), `ses_ef3938c55ffe…` (2-02) in `~/.local/share/opencode/opencode.db` |
 | Caps doc | `docs/plans/05-heavy-job-memory.md` |
