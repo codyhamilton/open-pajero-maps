@@ -46,6 +46,13 @@ def write_json(path, value):
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 
 
+def run_summary_name(keys, count):
+    label = keys.replace(",", "_")
+    if len(label) > 120:
+        label = "keys_" + hashlib.sha256(keys.encode()).hexdigest()[:16]
+    return f"run_{label}_{count}.json"
+
+
 def tall_set(reader, level, lat):
     """Same chunk conversion and tall selection as _pass1, retaining identities."""
     idx = reader._load_idx(level)
@@ -345,9 +352,9 @@ def main():
         print(f"dump_row {number}: demanders={len(proof['demanders'])} error={proof.get('error')}", flush=True)
     summary = publish(universe)
     wall = time.perf_counter() - started
-    result = {"selected_keys": len(selected), "wall_s": wall,
+    result = {"selected_keys": len(selected), "requested_keys": args.keys, "wall_s": wall,
               "projected_776_s": wall * 776 / len(selected), "run_errors": run_errors, **summary}
-    write_json(SCRATCH / f"run_{args.keys.replace(',', '_')}_{args.max_keys or len(selected)}.json", result)
+    write_json(SCRATCH / run_summary_name(args.keys, args.max_keys or len(selected)), result)
     print(json.dumps(result, sort_keys=True), flush=True)
     return int(bool(run_errors))
 

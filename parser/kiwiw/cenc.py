@@ -898,7 +898,7 @@ def k1_check_band(region, block_row, rlo, rhi, spool: "E1Spool", acc: K1Acc,
 
 def k1_tall(spool: "E1Spool", lat5, a: int, b: int):
     """Tall spool shapes of index rows [a, b): (rows, xy) -- structured rows
-    (type, cls, n, hx, hy) and their global raw coordinates (n x 2 float64)."""
+    (type, cls, n, hx, hy, rec, mult) and their global raw coordinates (n x 2 float64)."""
     import numpy as np
     global _k1_spec
     lib = _load_k1()
