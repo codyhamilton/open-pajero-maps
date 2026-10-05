@@ -188,3 +188,127 @@ heavy-run conclusions rely on saved measurements within this review's
 binding limits. The verdict does not authorize a 3-90 run, plan close-out
 or a claim that Maps is complete. All changes remain uncommitted for the
 orchestrator.
+
+## Re-review (remediation-01)
+
+Reviewed SHA: `8798302de5ea5467ebdec4bd3995aa1b8a957b9a` (detached HEAD).
+Review date: 2026-10-06. This is a clean independent reviewer, neither the
+builder/remediator nor the author of the preceding review. Scope is the
+ten specified plan-29 commits: `e6436a2`, `12a7c74`, `f1fc191`, `a08d342`,
+`19a82dd`, `b6f9595`, `ecfae1c`, `25f6a54`, `c2cab9c`, `8798302`.
+Interleaved plan-28/30/31 commits are excluded.
+
+**R1 — medium — closed by remediation commit `8798302`.** Both committed
+`witnesses/r.json` and `r_successor.json` carry the same nine-cell evidence.
+Independent decoding of the retained hex and recomputation of its SHA-256
+confirm the volume sector sizes (2,048 physical / 32 logical), embedded
+management DSA 768 / size 659, PDMDH offset 6,144 / length 21,088, and the
+7,230-byte LMR/BSMR directory. The selected L0 LMR reproduces the 4,096 ×
+4,096 grid and the cell-to-blockset/block/slot mapping. Each of the six
+in-coverage cells selects blockset 32, BSMR ordinal 377, at absolute offset
+11,134. Its ten bytes are `0020ffffffff00000000`, SHA-256
+`4cbaf49a6952d117e9a318a07af020f26641f0d4c47b14fb897bfc9a6ed41f55`:
+level 0, blockset index 32, raw BMT offset `FFFFFFFF`, raw size zero.
+The decoded offset is 8,589,934,590 (`0x1fffffffe`), not a real table
+address. The reason is explicitly `absent_BMT_sentinel`; no frames exist
+below that sentinel. The three ix −1 cells are outside coverage as
+recomputed from the retained index geometry.
+
+The reader's absence rules agree with `volume.parse_pdmdh_full`'s
+documented BSMR pair and `alldata_writer.EMPTY_BMT_OFFSET/EMPTY_BMT_SIZE`.
+It strengthens the full reader's permissive skipped-table behavior by
+requiring that exact pair before declaring an absent BMT. A BMT or parcel
+DSA of `FFFFFFFF` is the separate no-data contract; a non-sentinel BMT DSA
+with zero size fails, while a non-sentinel parcel DSA with zero size must
+resolve a nested record under `parcel_mgmt.py`. Missing/ambiguous lookups,
+invalid extents and decode failures remain `lookup_failed`. Index replay in
+`validate_cell_evidence` rejects them before verdict A can be emitted.
+The permitted synthetic tests cover these distinctions. Four additional
+negative controls against copies of committed JSON reject a lookup-failed
+label, changed sentinel bytes with a recomputed read hash, a forged decoded
+offset, and a missing directory read; all produce drift/exit 2.
+
+**Reader control and verdict.** The committed Perth control resolves
+cell (827,866), reproducing four indexed frame paths, offsets and lengths:
+`[1115,0]` at 353,864,224 / 55,552; `[1115,1]` at 353,978,720 / 45,632;
+`[1115,2]` at 353,930,112 / 41,600; `[1115,3]` at 354,033,056 / 32,608.
+Rehashed name-directory/subframe bytes decode to 241 + 174 + 170 + 154 =
+739 names. The name-record control at 353,910,168 is present in the first
+subframe; its 16-byte record hash, type/class, coordinates and string agree
+with decoding. The target cell's retained index proof agrees exactly with
+`r.json`. The census records **2,048 `empty_slot`, zero lookup failures,
+zero frames and zero names**, with no concerns. The selected sentinel also
+proves absence for the entire requested 32 × 64 block.
+
+Running the JSON-only verdict function reproduces committed `verdict.json`
+exactly: **A**, `phase1_ready=true`, no drift, no concerns and no position
+matches. The committed R witnesses, control and verdict also agree with
+the permitted measured `output/scratch-29/rem01/*.json`; the saved
+`run.log` records exit 0 for all three guarded invocations. These are saved
+measurements, not new disc reads by this reviewer.
+
+**Regression and overall outcome assessment.** The remediation changes
+the plan-local witness/control tools, evidence, documentation and synthetic
+tests; it does not alter the production drop guard, assembly, shared
+parsers, checker or tolerance. Importing the tools opens no disc, and the
+control now requires an explicit output path. No remediation regression
+was found in the reviewed paths or permitted checks. Phase 1 outcomes 4–5
+are now **met**, closing the negative-evidence gap; outcomes 1–3 and 6–8
+retain the preceding review's met assessments. Phase 2 A4 is now **met**:
+the successor carries no O03 name, R has no covering frames, and the
+retained nameless G frame remains an explicitly named layout residual.
+The other Phase 2 assessments stand, including the documented range-count
+amendment, explained Perth baseline, and pre-existing suite exception.
+Branch B remains unselected.
+
+Rechecking committed `successor_diff.json` confirms equal sizes
+1,692,105,152, nine ranges totaling 146 changed bytes, all within the old
+and new L0 (0,541), leaf [928] extent [197,597,600, 197,597,920). Successor
+pin `2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae`
+agrees with the successor G witness, which records O03 absent and zero
+names. The prior review's confinement analysis remains sound. The scoped
+`ecfae1c` production diff confirms an assembly-only, private-mapping guard
+that filters anchored names outside the level's coverage under the
+plan-18 admission contract, preserves unanchored names and other columns,
+and counts disjoint source ranges once with window restriction. It does
+not reject merely being outside a home cell. `scan.json` predicts exactly
+one O03 drop, L0=1 and all other levels=0; the saved K1 comparison records
+the same counts. All per-kind/per-level comparisons reproduce: only
+name-anchor checked/failing and range checked decrease by that one drop;
+range failures/error and collateral kinds stay equal. These confinement
+and full-disc oracle conclusions remain assessments of committed evidence
+and the prior review, within the binding light-check limits.
+
+Verification command:
+
+```sh
+.venv-rp/bin/python -B -m pytest -q -p no:cacheprovider parser/tests/test_r_absence_witness.py parser/tests/test_successor_oracle_tools.py --basetemp output/scratch-29/rereview/tests
+```
+
+**25 passed**, 1.66 s; log: `output/scratch-29/rereview/pytest.log`.
+The independent JSON audit and its results are
+`output/scratch-29/rereview/{audit_witnesses.py,witness_audit.json,witness_audit.log}`.
+All scratch writes stay in that directory; bytecode and pytest cache
+writes are disabled. No R disc, any ALLDATA.KWI or spool was opened;
+no encode, live K1 or broader test suite was run. `git diff --check` passes.
+
+**Findings and plan sufficiency.** No new structural or blocking finding;
+no `briefs/remediation-02.md` is needed. **R5 — low — resolved in review:**
+the remediation entry in `IMPLEMENTATION.md` said 21 focused tests passed;
+corrected mechanically to 25, matching the worker's final report and this
+re-review. R2 stays resolved. **R3 — medium — follow-up** remains at
+`IMPLEMENTATION.md` (carried frame-layout differences at (0,562), (0,563)
+and the nameless (0,541) frame). **R4 — low — follow-up** remains at
+`parser/tests/test_perf_inventory.py` (the documented baseline inventory
+failure). Neither is introduced by remediation. Intent and assumptions
+remain consistent with the scoped one-name repair and the preceding ledger
+assessment. The design plus its recorded range amendment and remediation
+brief provide sufficient acceptance evidence; the originally underspecified
+negative proof is now durable. Historical whole-frame/full-disc hashes and
+heavy-run protection claims remain saved evidence; this review recomputes
+retained index/name bytes, not those protected inputs. Complete DVD layout
+parity and overall Maps completeness remain unproven because of the carried
+residuals. Prior review text is preserved; all re-review changes are
+uncommitted.
+
+Verdict: **PASS_WITH_FOLLOWUPS** (R1 closed; R3 and R4 remain non-blocking).
