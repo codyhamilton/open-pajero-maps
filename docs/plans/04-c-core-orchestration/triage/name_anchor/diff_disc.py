@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import sys
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[5]
 sys.path[:0] = [str(ROOT / 'parser'), str(ROOT / 'parser/tools')]
 CHUNK = 8 * 1024 * 1024
 RULE = ('Equal file sizes; at least one changed byte; every differing byte is '

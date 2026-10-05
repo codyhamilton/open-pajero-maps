@@ -84,6 +84,15 @@ Independent terminal review (Codex). Initial verdict REMEDIATE; final **PASS_WIT
 
 **F3 resolution (plan 28).** Fresh current-contract classify assignments cover all 776 baseline native keys: O01 363, O05 132, O04 7, O06 0, NO_RULE 274; their full-key join to 342 (2-01) + 434 (amended 2-02) gives 769 consistent, 7 conflict-proven and 0 conflict-open verdicts, with both cross-tab predictions passing. Each O04 spool cause is retained for plan 04's successor spool list: penultimate deletion produces a representable piece for 138, 284 and 496, and removes demand without a piece for 236, 282, 317 and 563; all seven have zero R presence. The historical Phase 1 record stays partial as written; its assignment gap is resolved by the new evidence. Evidence: `docs/plans/04-c-core-orchestration/triage/per_rule_phase2_join.tsv`, `docs/plans/04-c-core-orchestration/triage/per_rule_phase2_crosstab.tsv`, `docs/plans/04-c-core-orchestration/triage/per_rule_phase2_discriminators.tsv` and `docs/plans/04-c-core-orchestration/triage/per_rule_phase2_reconciliation.md`. The 2-01 source-data parity observation and Phase 1's 3-17 arithmetic/identity limits remain carried; other kinds' joins and plan 04 Phase 3 remain open.
 
+**K1 name_anchor resolution (plan 29, append-only).** The historical follow-up
+above was resolved by [plan 29](29-k1-name-anchor-failure.md): byte-backed R
+absence established verdict A, and a counted assembly guard removed the single
+out-of-span O03 name. Live K1 exits 0 on successor
+`2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae`, with
+name_anchor 2,317,055 checked / 0 failing and completeness 1,800,514 / 0.
+The historical `4ed9cd80…` observations above remain as measured; plan 04
+Phase 3 remains open.
+
 ## Decisions Worth Keeping
 
 - Locus for unrepresentable demand: the checker, not the build. When the production encoder emits nothing because the source footprint cannot survive clip/densify/round, a build change would have to invent geometry.

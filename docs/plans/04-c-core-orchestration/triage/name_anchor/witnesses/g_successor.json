@@ -36,7 +36,7 @@
   },
   "disc": "output/scratch-29/G_new/ALLDATA.KWI",
   "disc_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
-  "historical_g": "/home/codyh/workspace/open-pajero-maps-14-completeness/docs/plans/29-k1-name-anchor-failure/witnesses/g.json",
+  "historical_g": "/home/codyh/workspace/open-pajero-maps-14-completeness/docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/g.json",
   "o03_absent": true,
   "r_parity": "R has no covering frames: names equal",
   "residual_names": [],

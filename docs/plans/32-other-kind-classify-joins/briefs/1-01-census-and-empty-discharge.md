@@ -17,7 +17,7 @@ Also:
 - The four in-scope kinds: interior_cover, name_anchor, background, background_boundary.
 - Exclude completeness, with a pointer to plan 28. List point kinds as `out_of_scope` with their K1 failing counts.
 - Branch flag: `all_live_empty` or `nonempty_kinds=[...]`.
-- Plan-29 control: compare against `successor_k1_compare.json`. It is at `docs/plans/29-k1-name-anchor-failure/witnesses/` or, after plan 29's close-out, at `docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/`; read whichever exists. Record pass/fail on the failing counts.
+- Plan-29 control: compare against `successor_k1_compare.json`. It is at `docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/`. Record pass/fail on the failing counts.
 
 ## Phase 2 outcome (empty branch)
 

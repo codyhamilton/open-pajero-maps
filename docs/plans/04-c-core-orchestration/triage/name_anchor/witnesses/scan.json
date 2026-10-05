@@ -40,7 +40,7 @@
     }
   },
   "rejected": 1,
-  "rejects_tsv": "/home/codyh/workspace/open-pajero-maps-14-completeness/docs/plans/29-k1-name-anchor-failure/witnesses/scan_rejects.tsv",
+  "rejects_tsv": "/home/codyh/workspace/open-pajero-maps-14-completeness/docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/scan_rejects.tsv",
   "rejects_tsv_sha256": "47521830a4a4abaec1a54852984ed636ef26e1ad1bc94548487c7e019fe20089",
   "schema": 1,
   "spool": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/extract_timing/spool",

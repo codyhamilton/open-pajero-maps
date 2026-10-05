@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[5]
 BASELINE = ROOT / 'output/scratch-14/runs/rem01_k1_live.json'
 
 

@@ -294,7 +294,7 @@ Proof tip at ledger write: `aaba108e8ab9de5f673158a201c22528142e0f40` (post Phas
 
 | truncated | full | proof |
 | --- | --- | --- |
-| `4ed9cd80…` | `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72` | `docs/provenance.md:601`; plan 14 / 3-17 records; historical since plan 29. Successor `2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae` (`docs/plans/29-k1-name-anchor-failure.md`), no 3-90 run |
+| `4ed9cd80…` | `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72` | `docs/provenance.md:601`; plan 14 / 3-17 records; historical since plan 29. Successor `2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae` (`docs/plans/29-k1-name-anchor-failure.md`); confined-diff evidence: `docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_diff.json`; no 3-90 run |
 | `013586b5…` | `013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04` | `docs/provenance.md:388`; triage `causes_residual.md:7` |
 | `04be2f6e…` | `04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728` | `IMPLEMENTATION.md:505` (full form adjacent to truncated quotes) |
 

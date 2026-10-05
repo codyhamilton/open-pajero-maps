@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-PLAN = Path(__file__).resolve().parents[2] / "docs/plans/29-k1-name-anchor-failure"
+PLAN = Path(__file__).resolve().parents[2] / "docs/plans/04-c-core-orchestration/triage/name_anchor"
 spec = importlib.util.spec_from_file_location("r_absence_witness", PLAN / "witness_p1.py")
 w = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(w)

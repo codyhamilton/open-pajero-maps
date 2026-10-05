@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-PLAN = Path(__file__).resolve().parents[2] / 'docs/plans/29-k1-name-anchor-failure'
+PLAN = Path(__file__).resolve().parents[2] / 'docs/plans/04-c-core-orchestration/triage/name_anchor'
 
 
 def module(name):

@@ -66,7 +66,7 @@ def test_build_drops_without_relocating_neighbour(tmp_path, monkeypatch, capsys)
     assert 'out-of-span names dropped: 1' in capsys.readouterr().out
     a, b = old.read_bytes(), new.read_bytes()
     assert len(a) == len(b)
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'docs/plans/29-k1-name-anchor-failure'))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'docs/plans/04-c-core-orchestration/triage/name_anchor'))
     from witness_p1 import disc_cells
     oldcells = list(disc_cells(old, [(0, 541), (1, 541)]))
     newcells = list(disc_cells(new, [(0, 541), (1, 541)]))

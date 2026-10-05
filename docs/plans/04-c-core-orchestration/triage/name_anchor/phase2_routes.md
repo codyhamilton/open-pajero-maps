@@ -16,7 +16,7 @@ are against Phase 2's fixed outcome; 2 = direct fit, 1 = extra proof needed,
 
 Reject (b): it adds hybrid-spool provenance and a regenerated-cell equivalence
 obligation without improving the measured one-name outcome. Full re-extraction
-(c) remains rejected under DESIGN Assumption 2.
+(c) remains rejected for the reasons recorded in the [plan 29 record](../../../29-k1-name-anchor-failure.md).
 
 The chosen guard uses `E1Spool(..., guard_names=True)` only from assembly.
 All other readers, including K1, use the original read-only mapping. Anchored
@@ -40,6 +40,8 @@ tolerance change. Historical discs and spool are never opened writable.
 `diff_disc.py` proves byte confinement in both layouts; `compare_k1.py` enforces
 Phase 1's exact per-level drops and per-kind/per-level successor totals.
 
-Synthetic checks passed; measured AU, R parity, Perth and golden gates belong
-to Execute under the heavy-run rule. The successor pin token in O03's note is
-`see plan 29 record`; Execute replaces it with the measured record reference.
+Synthetic checks passed. Execute's guarded measurements produced successor
+`2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae`,
+with AU L0 drops 1 and all other levels 0. R name parity, Perth equality and
+golden results are recorded in the plan 29 record and the retained witnesses.
+The O03 note carries the measured successor pin.

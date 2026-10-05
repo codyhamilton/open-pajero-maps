@@ -8,6 +8,7 @@ import importlib.util
 from pathlib import Path
 
 PLAN = Path(__file__).resolve().parent
+ROOT = PLAN.parents[4]
 spec = importlib.util.spec_from_file_location("witness_p1_control", PLAN / "witness_p1.py")
 w = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(w)
@@ -57,6 +58,11 @@ def main(argv=None):
     parser.add_argument("--disc", type=Path, default=w.R_DISC)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
+    # Repository-relative CLI paths work from any invocation directory.
+    if not args.disc.is_absolute():
+        args.disc = ROOT / args.disc
+    if not args.out.is_absolute():
+        args.out = ROOT / args.out
     record = control(args.disc)
     w.write_json(args.out, {"schema": 2, "R": record})
     return 2 if record["concerns"] else 0

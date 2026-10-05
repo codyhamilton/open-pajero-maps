@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 PLAN = Path(__file__).resolve().parent
-ROOT = PLAN.parents[2]
+ROOT = PLAN.parents[4]
 OUT = PLAN / "witnesses"
 G_DISC = ROOT / "output/scratch-14/G_new/ALLDATA.KWI"
 R_DISC = Path("/run/media/codyh/464210-8480/ALLDATA.KWI")
