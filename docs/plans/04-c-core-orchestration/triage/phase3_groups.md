@@ -15,6 +15,8 @@ Re-check: 432/432 from actual covering-slot decodes; zero polygons and zero cont
 
 Carried Design observation: R emits 288 in the 342 2-01 cells while the spool has no representable 288 source: a source-data parity difference outside this unit.
 
+Census correction (plan 30, append-only): 341 of the 342 2-01 rows are type 288 and one (dump_row 246) is type 321; see `docs/plans/30-2-01-source-data-parity/fingerprint.tsv`.
+
 ## Design ruling on dump_row 335 (2026-10-06)
 
 dump_row 335, key `(0, 1379, 1138, 288)`, is **folded into amended 2-02** on the evidence:

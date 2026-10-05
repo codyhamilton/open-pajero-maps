@@ -136,6 +136,7 @@ trigger is retained; the join uses final `phase3_group`, not the historical
    actually has **341 type-288 rows and one type-321 row (246, cell (834,886))**.
    That wording discrepancy is recorded here without rewriting the closed
    record or re-deriving the group science.
+   Plan 30 confirmed the member-TSV census (341 × 288 + 1 × 321) from the R proofs: `docs/plans/30-2-01-source-data-parity/fingerprint.tsv`.
 
 F3's assignment gap is resolved by the new artefacts. Other kinds' native
 classify joins stay open. Plan 04 Phase 3 stays open; no 3-90 re-run, plan 04
