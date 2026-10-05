@@ -698,3 +698,10 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
   records the assignment-evidence fallback. Scratch bytes remain outside git;
   the complete native-key TSV and evidence interpretation are committed.
   Protected scratch-3-11 and historical science inputs remain unchanged.
+- **Phase 2 unit 2-01 (added 2026-10-06):** `cell_local/` holds the committed
+  reproducer's outputs -- `proofs/<dump_row>.json` (per-seed R cell-local
+  decode, G cell decode, and clipped-source round/drop test) and `summary.json`.
+  Produced by committed
+  `plans/14-completeness-root-cause/triage/cell_local_2-01.py` under
+  `flock output/.heavy.lock`; reads only R, G (`G_new/`), and the spool. No
+  re-encode.
