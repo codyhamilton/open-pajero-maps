@@ -237,9 +237,8 @@ def fixture(request, tmp_path_factory):
 
 
 def _canon(res):
-    """The compared bytes: everything but the timing section and wall."""
-    res = {k: v for k, v in res.items() if k not in qr.COMPARE_EXCLUDES}
-    return json.dumps(res, indent=2, sort_keys=True).encode()
+    """The compared bytes: everything but `COMPARE_EXCLUDES` (`timing`, `wall_s`)."""
+    return qr.normalise_k1_report_for_compare(res).encode()
 
 
 @needs_c
@@ -430,3 +429,73 @@ def test_finalize_dump_source_has_no_full_copy():
     assert "tofile" in src
     assert 'kind="stable"' in src or "kind='stable'" in src
     assert "argsort" in src
+
+
+# ------------------------------------------- Plan 16 Phase 1: determinism strip
+# Pure fixture JSON / dicts: no disc, no spool, no encode, no C. These lock the
+# contract that the determinism strip removes every key in COMPARE_EXCLUDES
+# (`timing` and `wall_s`), not `timing` alone.
+
+def _k1_report(**over):
+    r = {
+        "tool": "quantisation_roundtrip",
+        "disc": "ALLDATA.KWI",
+        "spool": "spool",
+        "tolerance_raw": 0.5,
+        "pass": True,
+        "failing": 0,
+        "totals": {"range": {"checked": 10, "failing": 0, "worst_error_raw": 0.0}},
+        "levels": {"0": {"blocks": 1, "leaves": 2, "failures": []}},
+        "wall_s": 447.0,
+        "compare_excludes": list(qr.COMPARE_EXCLUDES),
+        "timing": {"wall_s": 446.912, "workers": 1, "ranges": 3, "pss_peak_kb": 1000},
+    }
+    r.update(over)
+    return r
+
+
+def test_strip_compare_excludes_removes_every_excluded_key():
+    report = _k1_report()
+    stripped = qr.strip_compare_excludes(report)
+    assert set(report) - set(stripped) == set(qr.COMPARE_EXCLUDES)
+    assert "timing" not in stripped and "wall_s" not in stripped
+    assert stripped["compare_excludes"] == list(qr.COMPARE_EXCLUDES)
+    assert stripped["totals"] == report["totals"] and stripped["levels"] == report["levels"]
+    # the input dict is untouched
+    assert report["wall_s"] == 447.0 and report["timing"]["wall_s"] == 446.912
+
+
+def test_reports_differing_only_in_excludes_compare_equal():
+    timing_only = _k1_report(wall_s=447.0, timing={"wall_s": 1.0, "workers": 1})
+    timing_only_12 = _k1_report(wall_s=74.4, timing={"wall_s": 1.0, "workers": 1})
+    assert qr.normalise_k1_report_for_compare(timing_only) == \
+        qr.normalise_k1_report_for_compare(timing_only_12)
+    both = _k1_report(wall_s=447.0, timing={"wall_s": 446.912, "workers": 1, "ranges": 3})
+    both_12 = _k1_report(wall_s=74.4, timing={"wall_s": 74.101, "workers": 12, "ranges": 3})
+    assert qr.normalise_k1_report_for_compare(both) == \
+        qr.normalise_k1_report_for_compare(both_12)
+
+
+def test_non_excluded_field_difference_still_unequal():
+    base = _k1_report()
+    assert qr.normalise_k1_report_for_compare(base) != \
+        qr.normalise_k1_report_for_compare(_k1_report(failing=1))
+    assert qr.normalise_k1_report_for_compare(base) != \
+        qr.normalise_k1_report_for_compare(_k1_report(levels={"0": {"blocks": 2}}))
+
+
+def test_locked_strip_is_not_timing_only(tmp_path):
+    j1 = _k1_report(wall_s=447.0, timing={"wall_s": 446.912, "workers": 1})
+    j12 = _k1_report(wall_s=74.4, timing={"wall_s": 74.101, "workers": 12})
+
+    def timing_only(r):
+        return json.dumps({k: v for k, v in r.items() if k != "timing"},
+                          indent=2, sort_keys=True)
+
+    assert timing_only(j1) != timing_only(j12)
+    assert qr.strip_compare_excludes(j1) == qr.strip_compare_excludes(j12)
+
+    a, b = tmp_path / "k1_j1.json", tmp_path / "k1_j12.json"
+    a.write_text(json.dumps(j1))
+    b.write_text(json.dumps(j12))
+    assert qr.normalise_k1_report_for_compare(a) == qr.normalise_k1_report_for_compare(b)

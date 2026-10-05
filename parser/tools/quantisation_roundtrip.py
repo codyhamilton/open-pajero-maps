@@ -1246,6 +1246,25 @@ def roundtrip_python(disc: str, spool: str, workers: int = 12, levels=None, log=
 PLAN_WORKERS = 12          # the band plan is made for this many workers whatever `-j` is
 PSS_INTERVAL = 0.25
 COMPARE_EXCLUDES = ["timing", "wall_s"]
+
+
+def strip_compare_excludes(report: dict) -> dict:
+    """A copy of a K1 report dict with every top-level key in
+    `COMPARE_EXCLUDES` (`timing` and `wall_s`) removed; every other top-level
+    key and all nested content is unchanged. One source of truth for the
+    determinism strip shared by the 3-90 check and the fixture tests."""
+    return {k: v for k, v in report.items() if k not in COMPARE_EXCLUDES}
+
+
+def normalise_k1_report_for_compare(report) -> str:
+    """Canonical JSON text of a K1 report with `COMPARE_EXCLUDES` stripped,
+    suitable for `cmp` between two `-j` runs. `report` is a report dict or a
+    path to a report JSON file."""
+    if not isinstance(report, dict):
+        report = json.loads(Path(report).read_text())
+    return json.dumps(strip_compare_excludes(report), indent=2, sort_keys=True)
+
+
 _REASON_TEXT = {
     0: "outside [0, range] or non-integral",
     1: "no spool record within half a raw unit",
