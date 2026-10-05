@@ -29,3 +29,7 @@ Refine skipped. Unit `briefs/1-01-frame-witness.md`.
 `artifact_feedback` was not called (workflow-service calls excluded).
 
 **Phase 1 outcome verified.**
+
+## Phase 2 — Root cause proven; fix-landed or proven-non-deviation for each cell
+
+Approach open; refine skipped. Unit `briefs/2-01-root-cause-and-verdict.md`. Execute runs any encode, diff, K1 and Perth steps under the wrapper, one at a time.

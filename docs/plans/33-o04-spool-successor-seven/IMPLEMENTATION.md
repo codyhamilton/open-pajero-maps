@@ -25,3 +25,7 @@ Refine skipped. Unit `briefs/1-01-presence-witness.md`.
 `artifact_feedback` was not called (workflow-service calls excluded).
 
 **Phase 1 outcome verified.**
+
+## Phase 2 — Each row closed as proven-non-deviation or fix-landed
+
+Refine skipped. Unit `briefs/2-01-disposition.md`. Execute owns the OVERVIEW and plan-28 follow-up narrowing.
