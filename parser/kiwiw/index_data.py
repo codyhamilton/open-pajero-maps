@@ -293,7 +293,7 @@ class AlphabeticalMatchingRecord:
     - ``fuzzy_flag`` [0]: FGFZ, always 0 on this disc.
     - ``stored_data_flag`` [1:3]: STFG, the presence bitmap for the fields
       that follow it. Always `7f 00` here (7 fields present: STID, NXKD,
-      NXFN, NXST, NXCT, KYCH -- NAME absent), which is why every record in
+      NXFN, NXST, NXCT, KYCH, NAME), which is why every record in
       this frame has the same fixed shape.
     - ``street_id`` [3:7]: STID. (The previous pass read bytes [4:8) and
       called [0:4) an "Area Code"; that was a mis-alignment -- the real
