@@ -669,3 +669,25 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
 - **Reproduce:** this subdirectory's `run.py` records the exact sequential commands; three `-j12` dump-off K1 runs, one `-j1`, one `-j12` dump, unchanged final-rule classify, AU `-j12` and Perth `-j1`/`-j4` builds, full `.venv-rp/bin/python -m pytest parser/tests -q -x`. Heavy invocations use `flock output/.heavy.lock`. `strip_timing.py` removes only `timing`.
 - **Pins:** named committed `docs/plans/04-c-core-orchestration/triage/pinned_candidates.tsv`, SHA256 `7dfe6ed7b99e9d234e688d6855a885d3cd1a140db409dc1f726a48bd0948855a`; explicit 100-row truncated historical view, not a final exhaustive list. No new non-git final pinned list was created.
 - **Why outside git:** regenerable multi-GB dump/build artifacts and raw test/run evidence; later phases need these to resolve the oracle, attribution, pin, determinism and recurring memory-ceiling blockers. Preserve this subdirectory and its inputs.
+
+
+## `output/scratch-14/` — plan 14 Phase 1 completeness evidence, 2026-10-05
+
+- **Disc:** Execute restored the existing oracle under flock; SHA256
+  `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`
+  matched. This evidence pass reads that restored `G_new/ALLDATA.KWI`; no
+  re-encode or new oracle. R is `/run/media/codyh/464210-8480/ALLDATA.KWI`;
+  spool is `output/extract_timing/spool`.
+- **What:** fresh `k1_full.json` / `.log`, completeness-only `dump_raw/`
+  (776 unique native rows), gap-annotated `dump_ext/`, classify invocation and
+  rejection logs, per-row R/G byte/decode and spool/K1 requirement `witnesses/`,
+  input pins, summary and byte-range audit. `classify_completeness/` is the
+  requested destination; classify exits 2 before emitting partition outputs
+  because `other_mechanism` evidence is absent. No fabricated mechanism bytes.
+- **Reproduce:** [plan-14 evidence note](plans/14-completeness-root-cause/triage/completeness_evidence.md)
+  and its committed build/audit helpers; heavy work uses
+  `flock output/.heavy.lock`, K1 `-j 6`, existing main-checkout `.venv-rp`.
+  [Handoff](plans/14-completeness-root-cause/reports/1-01-evidence-table.md)
+  records the assignment-evidence fallback. Scratch bytes remain outside git;
+  the complete native-key TSV and evidence interpretation are committed.
+  Protected scratch-3-11 and historical science inputs remain unchanged.
