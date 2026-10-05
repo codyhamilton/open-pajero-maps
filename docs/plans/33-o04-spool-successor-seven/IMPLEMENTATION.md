@@ -8,3 +8,20 @@
 ## Phase 1 — Presence parity and O04 identity confirmed for all seven
 
 Refine skipped. Unit `briefs/1-01-presence-witness.md`.
+
+### 1-01 — per-row G/R presence witness
+
+- **Worker:** Codex `gpt-6.1-sol` (high), sandboxed, 07:16–~07:23 AEST, 104,400 tokens. Report: `reports/1-01-presence-witness.md`.
+- **Built:** `presence_witness.py` (`--disc g_successor|g_historical|r` probes, `publish`), `presence_witness.tsv`/`.json`, `phase1_note.md`, and `parser/tests/test_o04_presence_witness.py` (synthetic, 31 passed; Execute re-ran it, 31 passed). It reuses plan 29's hardened reader (`triage/name_anchor/witness_p1.py`).
+- **Runs (Execute, guarded, `output/scratch-33/run_p1.{sh,log}`):** three disc probes and publish, all exit 0.
+- **Result:** 7/7 rows `absence-proven` (demanded type count 0 on G successor, G historical and R; every slot resolved with frame bytes and decoded type counts); 0 exceptions. O04/spool identity reaffirmed from the plan-28 TSVs with hashes.
+
+### Phase 1 verification (Execute, cheap tier)
+
+1. `presence_witness.tsv` has seven rows (138, 236, 282, 284, 317, 496, 563) with native key, dump_row, demander id, O04 proof refs and hashes, stratum (emit-piece 138/284/496; demand-removed 236/282/317/563), R presence and G type counts on both discs.
+2. All seven reaffirm R absent and O04/spool; exceptions: none.
+3. No spool edit, no disposition verdicts, no Phase 3 close.
+
+`artifact_feedback` was not called (workflow-service calls excluded).
+
+**Phase 1 outcome verified.**
