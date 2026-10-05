@@ -54,3 +54,37 @@ Refine skipped. One unit: `briefs/2-01-live-pin-contract.md`.
 `artifact_feedback` was not called (workflow-service calls excluded).
 
 **Phase 2 outcome verified.**
+
+## Remediation 01 — routed changed-cell completeness (REVIEW R1)
+
+- **Worker:** brief `briefs/remediation-01.md`. Codex was at its usage limit
+  (from ~08:23 until 11:19 AEST), so Execute (Grok Bot) implemented the fix
+  and discloses that here. Re-review is a separate step.
+- **Built:** `oracle_chain.py`:
+  - `tree_leaves(..., footprint=True)` and `iter_frames(..., routed=True)`
+    carry each leaf's exact absolute footprint;
+  - `routed_signatures` signs, per base cell, the sorted (footprint,
+    length, SHA-256) triples;
+  - `routed-diff` reconciles the routed list with the retained multiset
+    baseline. It verifies the baseline hop pins, the list hash and the
+    count, and requires that no baseline cell is missing.
+
+  `parser/tests/test_oracle_chain.py` adds the swap, footprint,
+  relocation-plus-padding, superset and tamper tests (49 passed with
+  `test_pin_contract.py`). Code commit: `c2cc6dc`.
+- **Runs (guarded):** `output/scratch-31/rem01/run_rem01.{sh,log}`. AU
+  finished in 226 s (RSS 140 MiB) and Perth in 0.4 s. Both exited 0, and
+  the protected discs re-hashed unchanged.
+- **Result:**
+  - AU: 246,123 routed changed cells, Perth: 795.
+  - Routed-only cells: **0** on both hops; baseline cells missing: 0.
+  - Under routed footprint identity, the multiset lists are complete.
+  - Evidence: `evidence/routed-3-14-{au,perth}.json` and `phase1_note.md`
+    § Remediation 01.
+- **OVERVIEW (R2):** the plan-31 sentence now names the evidence types:
+  - the retained AU 3-11 list;
+  - the measured AU and Perth 3-14 multiset and routed lists;
+  - the reused plan-29 leaf proof.
+
+  It carries AU 3-11's +60 B non-payload gap and the unmeasured 3-14
+  container, index and padding scope as residuals.

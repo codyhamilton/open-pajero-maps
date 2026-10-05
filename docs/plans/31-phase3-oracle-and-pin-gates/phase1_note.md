@@ -121,3 +121,54 @@ Run chain `output/scratch-31/run_p1.{sh,log}`, serialised behind plan 30's PBF p
 Both diff probes re-hashed their discs after reading: `protected_unchanged: true` for `013586b5…`, `4ed9cd80…`, `da13a775…` and `04be2f6e…`.
 
 The 3-14 hop now has **exact changed-cell identities** (whole-frame multiset by cell; container, index and padding excluded). Per-cell payload **causes** are not measured; every 3-14 cell is listed as unexplained, with that reason. The 3-14 brief's stated mechanism (EO-stitch rewrite of background boundaries; see plan 04 IMPLEMENTATION §3-14/3-15) is consistent with an L0-dominated change but is not a per-cell proof.
+
+## Remediation 01 — routed changed-cell completeness (Execute, guarded)
+
+REVIEW R1 found a gap. The multiset diff above compares unordered
+whole-frame multisets per base cell. That cannot see a swap of payloads
+between divided leaves, or a change of subdivision footprint inside one
+base cell.
+
+`oracle_chain.py routed-diff` closes that gap with a finer identity. For
+each base cell it records the sorted triples (exact absolute footprint
+`x:y:w:h` in base-cell units as rational strings, whole-frame length,
+SHA-256).
+
+- Offsets and sector padding never enter the identity, so it is invariant
+  under pure relocation and padding.
+- Any change in which footprint routes to which frame changes the cell's
+  signature. Synthetic tests in `parser/tests/test_oracle_chain.py` cover a
+  divided-payload swap, a changed footprint, relocation plus padding, and
+  baseline tampering.
+- Every multiset change is necessarily a routed change. The gate is
+  therefore that the routed list contains every baseline cell. Routed-only
+  cells would be exactly the changes the multiset metric missed.
+
+Run chain: `output/scratch-31/rem01/run_rem01.{sh,log}`. Both steps exited
+0 under `run_heavy_python.py`.
+
+| Hop | wall s | Routed changed | Baseline (multiset) | Missing from routed | Routed-only | Protected re-hash |
+|---|---|---|---|---|---|---|
+| AU `013586b5…`→`4ed9cd80…` | 226.1 | 246,123 (L0 244,060 / L2 1,944 / L6 118 / L8 1) | 246,123 | 0 | **0** | unchanged |
+| Perth `da13a775…`→`04be2f6e…` | 0.4 | 795 (L0 784 / L2 11) | 795 | 0 | **0** | unchanged |
+
+Routed lists:
+
+- AU: `output/scratch-31/rem01/routed-3-14-au.cells.tsv`, sha256
+  `9910056fe2853eb506f8d7bc85cf74e188e9161ca935213d827de69d13e7a2a0`.
+- Perth: `output/scratch-31/rem01/routed-3-14-perth.cells.tsv`, sha256
+  `6fab097549fffe677cde2c1346b2804e1f7f1396e7c0a0ba4705c28599d28516`.
+
+The summary JSONs are committed at `evidence/routed-3-14-{au,perth}.json`.
+Both have `multiset_list_complete_under_routing: true` and zero
+frame-length fallbacks.
+
+**Result.** Under the routed identity, the retained 246,123 AU and 795
+Perth multiset lists are complete; no routed-only cell exists. The lists,
+their hashes and their counts are unchanged. Payload causes remain
+unmeasured, and container, index and padding bytes remain outside this
+cell measurement. R2's other residuals stand: AU 3-11's +60 B non-payload
+growth, the AU 3-11 retained list rather than a fresh measurement, and the
+reused plan-29 leaf proof.
+
+Execute (Grok Bot) implemented remediation 01 after the Codex usage limit.

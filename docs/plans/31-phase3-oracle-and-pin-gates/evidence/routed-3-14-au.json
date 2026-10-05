@@ -1,0 +1,64 @@
+{
+  "baseline": {
+    "path": "output/scratch-31/diff-3-14-au.json",
+    "sha256": "4e5f1b31e180f2551202029d88c1ef928ee46c946e9a0305411f67b29136fe04"
+  },
+  "baseline_cells": {
+    "count": 246123,
+    "path": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-31/diff-3-14-au.cells.tsv",
+    "sha256": "77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f"
+  },
+  "baseline_cells_missing_from_routed": 0,
+  "cells": {
+    "path": "output/scratch-31/rem01/routed-3-14-au.cells.tsv",
+    "sha256": "9910056fe2853eb506f8d7bc85cf74e188e9161ca935213d827de69d13e7a2a0"
+  },
+  "frame_length_fallbacks": {
+    "new": 0,
+    "old": 0
+  },
+  "identity": "per base cell: sorted (exact absolute footprint x:y:w:h in base-cell units, whole-frame length, SHA-256); offsets and sector padding excluded",
+  "kind": "routed_cell_diff",
+  "leaf_counts": {
+    "new": 3954159,
+    "old": 3954156
+  },
+  "multiset_list_complete_under_routing": true,
+  "new": "output/scratch-14/G_new/ALLDATA.KWI",
+  "new_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+  "old": "output/scratch-3-11/G_new/ALLDATA.KWI",
+  "old_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+  "protected_after_sha256": [
+    "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+    "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72"
+  ],
+  "protected_unchanged": true,
+  "residuals": [
+    "Payload causes not measured; all changed cells remain unexplained.",
+    "Container/index/padding bytes are outside this cell-identity measurement."
+  ],
+  "routed_changed_total": 246123,
+  "routed_counts": {
+    "added": 0,
+    "changed": 246123,
+    "removed": 0
+  },
+  "routed_counts_by_level": {
+    "0": {
+      "changed": 244060
+    },
+    "2": {
+      "changed": 1944
+    },
+    "6": {
+      "changed": 118
+    },
+    "8": {
+      "changed": 1
+    }
+  },
+  "routed_only_cells": [],
+  "routed_only_cells_truncated": false,
+  "routed_only_count": 0,
+  "schema": 1
+}
