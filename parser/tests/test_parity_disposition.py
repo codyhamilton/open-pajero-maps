@@ -373,7 +373,7 @@ def test_synthetic_pbf_stream_relation_tags_and_missing_members(dataset, product
     writer.add_way(osmium.osm.mutable.Way(id=10, nodes=[1, 2, 3], tags={"highway": "service"}))
     writer.add_way(osmium.osm.mutable.Way(id=11, nodes=[3, 4, 1], tags={"highway": "service"}))
     writer.add_way(osmium.osm.mutable.Way(id=12, nodes=[20, 22, 21, 23, 20], tags={"highway": "service"}))
-    writer.add_relation(osmium.osm.mutable.Relation(id=20, members=[("w", 10, "outer"), ("w", 11, "outer")],
+    writer.add_relation(osmium.osm.mutable.Relation(id=20, members=[("w", 10, "outer"), ("w", 11, "outer"), ("n", 1, "admin_centre")],
                                                    tags={"type": "multipolygon", "natural": "wood"}))
     writer.add_relation(osmium.osm.mutable.Relation(id=21, members=[("w", 999, "outer")],
                                                    tags={"type": "multipolygon", "natural": "wood"}))
@@ -390,7 +390,10 @@ def test_synthetic_pbf_stream_relation_tags_and_missing_members(dataset, product
     measured = dp.keyed(result["rows"])[dp.key(rows[246])]
     assert measured["supply"]["source"]["kind"] == "relation"
     assert measured["supply"]["source"]["id"] == 20 and measured["supply"]["production_C"]["records"] > 0
-    assert result["gap_counts"] == {"missing/nested relation member": 1}
+    # Unit 2-02: a node member (admin_centre/label) carries no area geometry and
+    # is recorded as ignored; only the genuinely absent way 999 is a gap.
+    assert result["gap_counts"] == {"missing relation member way": 1}
+    assert result["ignored_member_counts"] == {"n:admin_centre": 1}
     assert result["memory"]["max_rss_kib"] > 0
     with pytest.raises(ValueError, match="cache already exists"):
         dp.disk_db(args.cache / "geometry.sqlite")
@@ -460,3 +463,37 @@ def test_cli_paths_and_explicit_heavy_inputs():
         dp.cli(["spool", "--spool", "/never-open", "--output", "/tmp/out.json"])
     with pytest.raises(SystemExit):
         dp.cli(["pbf", "--output", "output/scratch-30/pbf.json", "--cache", "output/scratch-30/cache"])
+
+
+def test_area_members_ignore_nodes_and_non_area_roles():
+    members = [{"type": "w", "ref": 1, "role": "outer"}, {"type": "w", "ref": 2, "role": ""},
+               {"type": "w", "ref": 3, "role": "inner"}, {"type": "n", "ref": 4, "role": "label"},
+               {"type": "n", "ref": 5, "role": "admin_centre"}, {"type": "r", "ref": 6, "role": "subarea"},
+               {"type": "r", "ref": 7, "role": "outer"}]
+    area, ignored, nested = dp.area_members(members)
+    assert [m["ref"] for m in area] == [1, 2, 3]
+    assert [m["ref"] for m in ignored] == [4, 5, 6]
+    assert [m["ref"] for m in nested] == [7]
+
+
+def test_readonly_cache_refuses_missing_or_journaled(tmp_path):
+    import sqlite3
+    with pytest.raises(ValueError, match="missing retained cache"):
+        dp.readonly_cache(tmp_path / "absent.sqlite")
+    db_path = tmp_path / "geometry.sqlite"
+    sqlite3.connect(db_path).execute("CREATE TABLE t(x)").connection.commit()
+    (tmp_path / "geometry.sqlite-journal").write_bytes(b"")
+    with pytest.raises(ValueError, match="pending journal"):
+        dp.readonly_cache(db_path)
+
+
+def test_cache_provenance_refuses_mismatched_pin(tmp_path):
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir()
+    (cache_dir / "geometry.sqlite").write_bytes(b"x")
+    pin_path = tmp_path / "pin.json"
+    pin_path.write_text(json.dumps({"schema": "wrong"}))
+    args = argparse.Namespace(cache_provenance=pin_path, cache=cache_dir,
+                              source_json=pin_path, source_run=pin_path)
+    with pytest.raises(ValueError, match="cache provenance schema mismatch"):
+        dp.verify_cache_provenance(args, dp.Inputs(), {"heavy_inputs": [], "inputs_sha256": {}})

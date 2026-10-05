@@ -20,6 +20,7 @@ import resource
 import sqlite3
 import struct
 import sys
+from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parents[3]
 PLAN = Path(__file__).resolve().parent
@@ -36,6 +37,13 @@ MAX_C_VERTICES = 2048
 MAX_MEMBERS = 2000
 MAX_DENSIFIED = 200000
 MAX_TOPOLOGY_EDGES = 2048
+# Replay may hold one larger relation; native C remains capped at 2048 vertices.
+MAX_RELATION_VERTICES = 250000
+MAX_RELATION_MEMBERS = 12000
+MAX_TOPOLOGY_CHECKS = 5000000
+MAX_JSON_BYTES = 64 << 20
+LEGACY_SCRIPT_SHA256 = "e54ea773c826874abad8c7d8a81ea940296a177d4edf9cc7b937ee812cdcf3bb"
+AREA_ROLES = ("", "outer", "inner")
 HALO = 1
 sys.path[:0] = [str(ROOT / "parser"), str(ROOT / "parser/tools")]
 
@@ -283,6 +291,8 @@ def successor(source, variant):
         action = "admit the identified OSM way with its existing background tags and retile into the target cell"
     else:
         action = "assemble the identified OSM relation from member node IDs, inherit relation tags, preserve even-odd holes, and retile"
+    if source.get("boundary_clip_target"):
+        action += "; clip the original boundary at the target cell before encoding"
     if variant == "clipped":
         action += "; clip the original source boundary at the target cell before encoding"
     if variant == "unit-mult":
@@ -333,16 +343,18 @@ class ProbeWriter:
         path.parent.mkdir(parents=True, exist_ok=True)
         self.fh = path.open("w")
         self.gaps = Counter()
+        self.ignored = Counter()
         self.gap_samples = []
 
-    def gap(self, reason, source, box=None):
+    def gap(self, reason, source, box=None, details=None):
         # An unknown bbox can hide an enclosing polygon: it affects all negatives.
         affected = [int(r["dump_row"]) for r, w in self.windows if box is None or intersects(box, w)]
         if affected:
             self.gaps[reason] += 1
             if len(self.gap_samples) < 20:
                 self.gap_samples.append({"reason": reason, "source": source, "affected_dump_rows": affected})
-            self.fh.write(packed({"gap": reason, "source": source, "affected_dump_rows": affected}) + "\n")
+            self.fh.write(packed({"gap": reason, "source": source, "affected_dump_rows": affected,
+                                  **({"details": details} if details else {})}) + "\n")
 
     def geometry(self, coords, source):
         if len(coords) < 3:
@@ -373,7 +385,7 @@ class ProbeWriter:
     def finish(self):
         self.fh.close()
         return {"rows": list(self.acc.rows.values()), "proof_log": label(self.path), "proof_log_sha256": digest(self.path),
-                "gap_counts": dict(self.gaps), "gap_samples": self.gap_samples}
+                "gap_counts": dict(self.gaps), "gap_samples": self.gap_samples, "ignored_member_counts": dict(self.ignored)}
 
 
 def stamp(path):
@@ -520,8 +532,23 @@ def disk_db(path):
     return db
 
 
-def join_rings(members, ways):
+def area_members(members):
+    """Only area-role ways form rings. Nested area relations stay unresolved."""
+    area, ignored, nested = [], [], []
+    for member in members:
+        if member["type"] == "w" and member["role"] in AREA_ROLES:
+            area.append(member)
+        elif member["type"] == "r" and member["role"] in AREA_ROLES:
+            nested.append(member)
+        else:
+            ignored.append(member)
+    return area, ignored, nested
+
+
+def join_rings(members, ways, vertex_limit=MAX_VERTICES):
     """Join by OSM node IDs only. Reject branches, missing members and open rings."""
+    members, _, nested = area_members(members)
+    require(not nested, "nested area relation member")
     rings = []
     for role in ("outer", "inner"):
         remaining = []
@@ -545,14 +572,14 @@ def join_rings(members, ways):
                 require(coords[-1] == more_coords[0], "inconsistent shared-node coordinates")
                 ids.extend(more_ids[1:])
                 coords.extend(more_coords[1:])
-                require(len(ids) <= MAX_VERTICES, "relation vertex limit")
+                require(len(ids) <= vertex_limit, "relation vertex limit")
             require(len(set(ids)) >= 3, "degenerate relation ring")
             rings.append((role, coords))
     require(any(role == "outer" for role, _ in rings), "relation has no outer ring")
     return rings
 
 
-def stitch_rings(rings):
+def stitch_rings(rings, vertex_limit=MAX_VERTICES):
     """Even-odd compound ring with doubled bridges between existing vertices.
 
     Bridges cancel as even-odd edges. Neither bridge changes polygon area;
@@ -566,11 +593,11 @@ def stitch_rings(rings):
             skipped = True
             continue
         result.extend([ring[0], *ring[1:], anchor])
-    require(len(result) <= MAX_VERTICES, "compound relation vertex limit")
+    require(len(result) <= vertex_limit, "compound relation vertex limit")
     return result
 
 
-def validate_rings(rings):
+def validate_rings(rings, edge_limit=MAX_TOPOLOGY_EDGES):
     """OSM relation roles must describe a valid polygon, before EO stitching."""
     from fractions import Fraction
 
@@ -599,17 +626,19 @@ def validate_rings(rings):
                 yes = not yes
         return yes
 
-    require(sum(len(r)-1 for _, r in rings) <= MAX_TOPOLOGY_EDGES, "relation topology edge limit")
+    require(sum(len(r)-1 for _, r in rings) <= edge_limit, "relation topology edge limit")
     segments = []
     for rid, (_, ring) in enumerate(rings):
         require(ring[0] == ring[-1] and len(set(tuple(p) for p in ring[:-1])) == len(ring)-1,
                 "repeated relation ring vertex")
         for i, (a,b) in enumerate(zip(ring, ring[1:])):
             segments.append((min(a[0],b[0]), max(a[0],b[0]), min(a[1],b[1]), max(a[1],b[1]), rid, i, a, b))
-    active = []
+    active, checks = [], 0
     for s in sorted(segments, key=lambda s: (s[0], s[4], s[5])):
         active = [p for p in active if p[1] >= s[0]]
         for p in active:
+            checks += 1
+            require(checks <= MAX_TOPOLOGY_CHECKS, "relation topology work limit")
             if p[3] < s[2] or s[3] < p[2]:
                 continue
             adjacent = p[4] == s[4] and ((p[5]-s[5]) % (len(rings[s[4]][1])-1) in (1, len(rings[s[4]][1])-2))
@@ -630,6 +659,274 @@ def validate_rings(rings):
     for i, hole in enumerate(holes):
         require(sum(inside(hole[0], r) for r in outers) == 1, "relation hole outside outer ring")
         require(not any(inside(hole[0], r) or inside(r[0], hole) for r in holes[i+1:]), "nested relation inner rings")
+
+
+def relation_rows(db):
+    """Keyset pages keep queries and Python residency bounded."""
+    last = -1
+    while True:
+        page = db.execute("SELECT id,length(tags),length(members) FROM relations WHERE id>? ORDER BY id LIMIT 64", (last,)).fetchall()
+        if not page:
+            return
+        for rid, nt, nm in page:
+            require(max(nt, nm) <= MAX_JSON_BYTES, "relation JSON byte limit")
+            yield (rid, *db.execute("SELECT tags,members FROM relations WHERE id=?", (rid,)).fetchone())
+        last = page[-1][0]
+
+
+def assemble_relations(db, writer, vocab, level_filter, input_name, counts, full=None):
+    """Complete-area-member bounds only; missing parts always have unknown bounds."""
+    seen = set()
+    for rid, raw_tags, raw_members in relation_rows(db):
+        seen.add(rid)
+        replacement = full.get(rid) if full else None
+        if replacement:
+            raw_tags, raw_members, ways = replacement
+        else:
+            ways = None
+        assemble_relation(rid, raw_tags, raw_members, db, writer, vocab, level_filter, input_name, counts, ways)
+    for rid, (raw_tags, raw_members, ways) in (full or {}).items():
+        if rid not in seen:
+            assemble_relation(rid, raw_tags, raw_members, db, writer, vocab, level_filter, input_name, counts, ways)
+    return seen
+
+
+def assemble_relation(rid, raw_tags, raw_members, db, writer, vocab, level_filter, input_name, counts, supplied_ways=None):
+    tags, members = json.loads(raw_tags), json.loads(raw_members)
+    source = {"kind": "relation", "id": rid, "tags": tags, "input": input_name, "mult": 1, "flags": 0,
+              "code": vocab.lookup(0, tags), "members_sha256": hashlib.sha256(raw_members.encode()).hexdigest(),
+              "members_count": len(members), "selected": bool(level_filter(0, tags))}
+    if source["code"] is None:
+        return
+    area, ignored, nested = area_members(members)
+    if ignored:
+        writer.fh.write(packed({"source": {"kind": "relation", "id": rid}, "ignored_members": ignored}) + "\n")
+        writer.ignored.update(m["type"] + ":" + m["role"] for m in ignored)
+    details = {"resolution": "complete pinned-snapshot relation geometry, or a higher bounded cap with validated topology"}
+    ways, total, shape_box, complete = {}, 0, None, False
+    try:
+        require(len(area) <= MAX_RELATION_MEMBERS, "relation-member-limit")
+        if nested:
+            details["nested_relation_ids"] = sorted({m["ref"] for m in nested})
+            raise ValueError("nested area relation member")
+        missing = []
+        for m in area:
+            if supplied_ways is not None:
+                item = supplied_ways.get(m["ref"])
+            else:
+                sizes = db.execute("SELECT length(nodes),length(coords) FROM ways WHERE id=?", (m["ref"],)).fetchone()
+                if sizes:
+                    require(max(sizes) <= MAX_JSON_BYTES, "member JSON byte limit")
+                    item = tuple(json.loads(v) for v in db.execute("SELECT nodes,coords FROM ways WHERE id=?", (m["ref"],)).fetchone())
+                else:
+                    item = None
+            if item is None:
+                missing.append(m["ref"])
+                continue
+            ids, coords = item
+            require(len(ids) == len(coords) >= 2, "invalid relation member geometry")
+            total += len(coords)
+            member_box = bbox(coords)
+            shape_box = member_box if shape_box is None else [min(shape_box[0], member_box[0]), max(shape_box[1], member_box[1]),
+                                                            min(shape_box[2], member_box[2]), max(shape_box[3], member_box[3])]
+            if total <= MAX_RELATION_VERTICES:
+                ways[m["ref"]] = (ids, coords)
+        if missing:
+            details["missing_way_ids"] = sorted(set(missing))
+            details["resolution"] = "fetch the complete relation at the pinned PBF replication timestamp; present-member bounds are insufficient"
+            raise ValueError("missing relation member way")
+        complete = True
+        if shape_box is not None and not any(intersects(shape_box, w) for _, w in writer.windows):
+            counts["relations_outside_windows"] += 1
+            return
+        require(total <= MAX_RELATION_VERTICES, "relation vertex limit")
+        rings = join_rings(area, ways, MAX_RELATION_VERTICES)
+        validate_rings(rings, MAX_RELATION_VERTICES)
+        coords = stitch_rings(rings, MAX_RELATION_VERTICES)
+        if len(coords) <= MAX_C_VERTICES:
+            writer.geometry(coords, source)
+        else:
+            # Boundary clipping is an allowed supply repair. Keep the unprobed
+            # original's cap gap, so a failed local repair cannot prove absence.
+            writer.gap("native-C vertex limit", {"kind": "relation", "id": rid}, shape_box,
+                       {"resolution": "a positive boundary-clipped C witness overrides; otherwise a bounded original-source probe is still required"})
+            source_sha = hashlib.sha256(packed(coords).encode()).hexdigest()
+            for row, w in writer.windows:
+                if not intersects(shape_box, w):
+                    continue
+                box = b4(writer.grid, int(row["ix"]), int(row["iy"]))
+                a, b, c, d = box
+                local = mirror().clip_rect([(p[1], p[0]) for p in coords], c, a, d, b)
+                if len(local) < 3:
+                    continue
+                clipped = [(lat, lon) for lon, lat in local]
+                repaired = source | {"boundary_clip_target": native(row), "original_coords_sha256": source_sha}
+                try:
+                    result = evaluate(clipped, source["code"], 1, 0, row, writer.grid, writer.probe)
+                    event = {**native(row), "source": repaired, "result": result}
+                    writer.acc.accept(event)
+                    writer.fh.write(packed(event) + "\n")
+                except ValueError as e:
+                    writer.gap(str(e), {"kind": "relation", "id": rid}, box, details)
+        counts["relations_assembled"] += 1
+    except ValueError as e:
+        writer.gap(str(e), {"kind": "relation", "id": rid}, shape_box if complete else None, details)
+
+
+def proof_events(path):
+    with resolve(path).open("rb") as fh:
+        while line := fh.readline(4 << 20):
+            require(line.endswith(b"\n"), "oversized/truncated proof-log event")
+            yield json.loads(line)
+
+
+def readonly_cache(path):
+    path = resolve(path).resolve()
+    require(path.is_file(), "missing retained cache")
+    require(not any(Path(str(path) + suffix).exists() for suffix in ("-wal", "-journal")), "cache has pending journal/WAL")
+    db = sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)
+    db.execute("PRAGMA query_only=ON")
+    db.execute("PRAGMA cache_size=-4096")
+    db.execute("PRAGMA temp_store=FILE")
+    return db
+
+
+def legacy_probe(args, kind, inputs, rows, grid):
+    return read_probe(args.source_json, kind, rows, inputs, grid, args, args.source_run, historical=True)[0]
+
+
+def inherited_inputs(inputs, doc, args):
+    # Historical script is reviewed explicitly. Other dependencies must match.
+    inputs.hashes.update({p: sha for p, sha in doc["inputs_sha256"].items() if p != label(__file__)})
+    inputs.add_file(args.source_json)
+    inputs.add_file(args.source_run)
+    inputs.hashes[label(__file__)] = digest(__file__)
+
+
+def reuse(args):
+    """Refresh already measured spool evidence; never open the retained spool."""
+    rows, _, grid, inputs = context(args)
+    doc = legacy_probe(args, "spool", inputs, rows, grid)
+    proof = Path(args.output).with_suffix(".proofs.jsonl")
+    require(not proof.exists() and not Path(args.output).exists(), "reuse requires fresh outputs")
+    with proof.open("w") as fh:
+        for event in proof_events(doc["proof_log"]):
+            fh.write(packed(event) + "\n")
+    inherited_inputs(inputs, doc, args)
+    result = {k: v for k, v in doc.items() if not k.startswith("_")}
+    result.update(base_document("spool", rows, inputs, grid))
+    result.update(command="reuse", proof_log=label(proof), proof_log_sha256=digest(proof), memory=memory(),
+                  replay_source=label(args.source_json), replay_script_sha256=doc["inputs_sha256"][label(__file__)])
+    write_json(args.output, result)
+    return result
+
+
+def cache_pin(args):
+    """Execute only: pin legacy cache to its successful source run and PBF."""
+    import osmium
+    rows, _, grid, inputs = context(args)
+    doc = legacy_probe(args, "pbf", inputs, rows, grid)
+    run = inputs.read(args.source_run)
+    require("--cache" in run["argv"] and "--pbf" in run["argv"], "source wrapper lacks cache/PBF provenance")
+    cache = resolve(args.cache).resolve() / "geometry.sqlite"
+    require(resolve(run["argv"][run["argv"].index("--cache") + 1]).resolve() == cache.parent, "cache provenance path mismatch")
+    pbf_path = resolve(args.pbf).resolve()
+    require(resolve(run["argv"][run["argv"].index("--pbf") + 1]).resolve() == pbf_path, "PBF provenance path mismatch")
+    require(doc["heavy_inputs"] == [label(pbf_path)], "PBF provenance manifest mismatch")
+    pbf_stamp, cache_stamp = stamp(pbf_path), stamp(cache)
+    require(cache_stamp[3] <= resolve(args.source_run).stat().st_mtime_ns, "cache newer than source run")
+    require(digest(pbf_path) == doc["inputs_sha256"][label(pbf_path)], "PBF provenance SHA256 mismatch")
+    with osmium.io.Reader(str(pbf_path), osmium.osm.osm_entity_bits.NOTHING) as reader:
+        timestamp = reader.header().get("osmosis_replication_timestamp") or None
+    with readonly_cache(cache) as db:
+        require(db.execute("SELECT count(*) FROM nodes").fetchone()[0] == doc["scan_counts"]["nodes"], "cache node census mismatch")
+        require(db.execute("SELECT count(*) FROM relations").fetchone()[0] == doc["scan_counts"]["polygon_relations"], "cache relation census mismatch")
+    cache_sha = digest(cache)
+    require(stamp(pbf_path) == pbf_stamp and stamp(cache) == cache_stamp, "provenance inputs changed during pin")
+    if "cache_sha256" in doc:
+        require(doc["cache_sha256"] == cache_sha and doc["cache_stamp"] == list(cache_stamp), "cache provenance SHA256/stamp mismatch")
+    result = {"schema": "plan30-cache-provenance-v1", "rows": len(rows), "source_json": label(args.source_json),
+              "source_json_sha256": digest(args.source_json), "source_run": label(args.source_run),
+              "source_run_sha256": digest(args.source_run), "cache_path": label(cache), "cache_sha256": cache_sha,
+              "cache_stamp": list(cache_stamp), "pbf_path": label(pbf_path), "pbf_sha256": doc["inputs_sha256"][label(pbf_path)],
+              "pbf_stamp": list(pbf_stamp), "replication_timestamp": timestamp,
+              "legacy_binding": "successful wrapper cache path and census; first content pin (legacy probe recorded no cache digest)",
+              "memory": memory()}
+    require(not Path(args.output).exists(), "cache pin requires a fresh output")
+    write_json(args.output, result)
+    return result
+
+
+def verify_cache_provenance(args, inputs, doc):
+    pin = inputs.read(args.cache_provenance)
+    cache = resolve(args.cache).resolve() / "geometry.sqlite"
+    require(pin["schema"] == "plan30-cache-provenance-v1", "cache provenance schema mismatch")
+    for field, path in (("source_json", args.source_json), ("source_run", args.source_run)):
+        require(resolve(pin[field]).resolve() == resolve(path).resolve() and pin[field + "_sha256"] == digest(path), "cache source provenance mismatch")
+    require(resolve(pin["cache_path"]).resolve() == cache and pin["cache_stamp"] == list(stamp(cache)), "cache provenance stamp/path mismatch")
+    require(doc["heavy_inputs"] == [pin["pbf_path"]] and doc["inputs_sha256"][pin["pbf_path"]] == pin["pbf_sha256"], "cache PBF provenance mismatch")
+    # Stat only: the replay never opens the PBF. Original pin did the hash.
+    require(pin["pbf_stamp"] == list(stamp(resolve(pin["pbf_path"]))), "PBF provenance stamp mismatch")
+    require(digest(cache) == pin["cache_sha256"], "cache provenance SHA256 mismatch")
+    require(pin["cache_stamp"] == list(stamp(cache)), "cache changed during provenance check")
+    return pin
+
+
+def pbf_cache(args):
+    """Read-only disk-cache replay: retain ways, replace all relation evidence."""
+    from kiwiw.vocab import load as load_vocab
+    from kiwiw.selection import level_filter
+    rows, _, grid, inputs = context(args)
+    doc = legacy_probe(args, "pbf", inputs, rows, grid)
+    pin = verify_cache_provenance(args, inputs, doc)
+    cache = resolve(args.cache).resolve() / "geometry.sqlite"
+    cache_stamp = stamp(cache)
+    output = Path(args.output)
+    require(not output.exists() and not output.with_suffix(".proofs.jsonl").exists(), "cache replay requires fresh outputs")
+    probe = c_probe(output.parent / (output.stem + "_c_probe"))
+    writer = ProbeWriter(output.with_suffix(".proofs.jsonl"), rows, grid, probe)
+    counts, omitted = Counter(), {}
+    try:
+        for event in proof_events(doc["proof_log"]):
+            if event["source"]["kind"] == "relation":
+                if event.get("gap") == "relation-member-limit":
+                    omitted[event["source"]["id"]] = event
+                continue
+            if "gap" in event:
+                writer.gaps[event["gap"]] += 1
+            else:
+                writer.acc.accept(event)
+            writer.fh.write(packed(event) + "\n")
+        # No pinned complete-relation snapshot exists yet (see the .requests.json
+        # output); `full` stays empty until one is supplied and pinned.
+        full = {}
+        with readonly_cache(cache) as db:
+            seen = assemble_relations(db, writer, load_vocab("bg_type"), level_filter, pin["pbf_path"], counts, full)
+        for rid, event in omitted.items():
+            if rid not in seen and rid not in full:
+                writer.gap("relation-not-retained-member-limit", {"kind": "relation", "id": rid},
+                           details={"resolution": "fetch this complete relation at the pinned PBF replication timestamp; the legacy cache omitted its member list"})
+        require(stamp(cache) == cache_stamp, "cache changed during replay")
+    finally:
+        writer.fh.close()
+    inherited_inputs(inputs, doc, args)
+    add_runtime_inputs(inputs)
+    for p in (output.parent / (output.stem + "_c_probe")).iterdir():
+        inputs.add_file(p)
+    result = base_document("pbf", rows, inputs, grid) | writer.finish()
+    result.update(command="pbf-cache", scan_complete=True, memory=memory(), compile_argv=probe.cmd,
+                  scan_counts=dict(counts), heavy_inputs=doc["heavy_inputs"], scope=doc["scope"],
+                  cache_provenance=label(args.cache_provenance), cache_sha256=pin["cache_sha256"],
+                  replay_source=label(args.source_json), replay_script_sha256=doc["inputs_sha256"][label(__file__)],
+                  relation_limits={"vertices": MAX_RELATION_VERTICES, "members": MAX_RELATION_MEMBERS,
+                                   "topology_checks": MAX_TOPOLOGY_CHECKS, "json_bytes": MAX_JSON_BYTES})
+    write_json(output, result)
+    requests = sorted({e["source"]["id"] for e in proof_events(result["proof_log"])
+                       if "gap" in e and e["source"]["kind"] == "relation"})
+    write_json(output.with_suffix(".requests.json"), {"schema": "plan30-relation-requests-v1", "relation_ids": requests,
+               "cache_provenance": label(args.cache_provenance), "cache_provenance_sha256": digest(args.cache_provenance),
+               "replication_timestamp": pin["replication_timestamp"]})
+    return result
 
 
 def pbf(args):
@@ -653,7 +950,7 @@ def pbf(args):
             tags = dict(rel.tags)
             if tags.get("type") not in ("multipolygon", "boundary"):
                 return
-            if len(rel.members) > MAX_MEMBERS:
+            if len(rel.members) > MAX_RELATION_MEMBERS:
                 writer.gap("relation-member-limit", {"kind": "relation", "id": rel.id})
                 return
             members = [{"type": m.type, "ref": m.ref, "role": m.role} for m in rel.members]
@@ -709,37 +1006,7 @@ def pbf(args):
         db.commit()
         Geometry().apply_file(str(pbf_path))  # streaming; all coordinates are on disk, no flex_mem/mmap index
         db.commit()
-        for rid, raw_tags, raw_members in db.execute("SELECT id,tags,members FROM relations ORDER BY id"):
-            tags, members = json.loads(raw_tags), json.loads(raw_members)
-            source = {"kind": "relation", "id": rid, "tags": tags, "input": label(pbf_path), "mult": 1, "flags": 0,
-                      "code": vocab.lookup(0, tags), "members_sha256": hashlib.sha256(raw_members.encode()).hexdigest(),
-                      "members_count": len(members), "selected": bool(level_filter(0, tags))}
-            if source["code"] is None:
-                continue
-            ways, total, shape_box, all_bounds_known = {}, 0, None, False
-            try:
-                for m in members:
-                    item = db.execute("SELECT nodes,coords FROM ways WHERE id=?", (m["ref"],)).fetchone() if m["type"] == "w" else None
-                    require(item is not None, "missing/nested relation member")
-                    ids, coords = json.loads(item[0]), json.loads(item[1])
-                    total += len(coords)
-                    member_box = bbox(coords)
-                    shape_box = member_box if shape_box is None else [min(shape_box[0],member_box[0]), max(shape_box[1],member_box[1]),
-                                                                      min(shape_box[2],member_box[2]), max(shape_box[3],member_box[3])]
-                    if total <= MAX_VERTICES:
-                        ways[m["ref"]] = (ids, coords)
-                all_bounds_known = True
-                if shape_box is not None and not any(intersects(shape_box, w) for _, w in writer.windows):
-                    counts["relations_outside_windows"] += 1
-                    continue
-                require(total <= MAX_VERTICES, "relation vertex limit")
-                rings = join_rings(members, ways)
-                validate_rings(rings)
-                writer.geometry(stitch_rings(rings), source)
-                counts["relations_assembled"] += 1
-            except ValueError as e:
-                # Unknown/partial bounds must not exclude an enclosing polygon.
-                writer.gap(str(e), {"kind": "relation", "id": rid}, shape_box if all_bounds_known else None)
+        assemble_relations(db, writer, vocab, level_filter, label(pbf_path), counts)
         require(stamp(pbf_path) == original_stamp, "PBF changed during probe")
     finally:
         db.close()
@@ -755,15 +1022,20 @@ def pbf(args):
     doc = base_document("pbf", rows, inputs, grid) | writer.finish()
     doc.update(scan_complete=True, scope="all production non-road >=3-node ways (production closure), plus tagged multipolygon/boundary relations with EO holes",
                scan_counts=dict(counts), cache="disk SQLite; fixed 4 MiB cache; no node-coordinate RAM index", memory=memory(),
-               compile_argv=probe.cmd, heavy_inputs=[label(pbf_path)])
+               compile_argv=probe.cmd, heavy_inputs=[label(pbf_path)], pbf_stamp=list(original_stamp),
+               cache_path=label(cache / "geometry.sqlite"), cache_stamp=list(stamp(cache / "geometry.sqlite")),
+               cache_sha256=digest(cache / "geometry.sqlite"))
     write_json(args.output, doc)
     return doc
 
 
-def read_probe(path, kind, rows, inputs, grid, args, run_log=None):
+def read_probe(path, kind, rows, inputs, grid, args, run_log=None, historical=False):
     doc = inputs.read(path)
     require(doc["schema"] == "plan30-discriminator-v1" and doc["kind"] == kind, "probe schema/kind mismatch")
-    for p in (args.fingerprint, args.fingerprint_summary, args.members, Path(__file__)):
+    script_sha = doc["inputs_sha256"].get(label(__file__))
+    require(script_sha == inputs.hashes[label(__file__)] or
+            (historical and script_sha == LEGACY_SCRIPT_SHA256), "stale probe input hash")
+    for p in (args.fingerprint, args.fingerprint_summary, args.members):
         require(doc["inputs_sha256"].get(label(p)) == inputs.hashes[label(p)], "stale probe input hash")
     expected = keyed(rows)
     actual = keyed(doc["rows"])
@@ -779,6 +1051,8 @@ def read_probe(path, kind, rows, inputs, grid, args, run_log=None):
         require(len(sha) == 64 and all(c in "0123456789abcdef" for c in sha), "invalid input SHA256")
         if p in heavy:
             require(Path(p).suffix in ((".data", ".idx") if kind == "spool" else (".pbf",)), "unexpected heavy input")
+        elif historical and p == label(__file__) and sha == LEGACY_SCRIPT_SHA256:
+            pass  # Only explicit replay admits this one reviewed predecessor.
         else:
             # Revalidate light/code dependencies only. Never reopen heavy inputs in publish.
             require(Path(p).suffix not in (".data", ".idx", ".pbf", ".KWI"), "undeclared heavy input")
@@ -788,8 +1062,11 @@ def read_probe(path, kind, rows, inputs, grid, args, run_log=None):
     require(log["exit"] == 0 and isinstance(log["memory_peak"], int) and log["memory_peak"] > 0 and
             log["max_rss_kib"] > 0, "heavy wrapper failed/missing memory.peak")
     require("--output" in log["argv"] and resolve(log["argv"][log["argv"].index("--output") + 1]) == resolve(path), "wrapper output mismatch")
-    require(kind in log["argv"] and any(resolve(a) == Path(__file__) for a in log["argv"] if a.endswith("disposition.py")), "wrapper command mismatch")
+    command = doc.get("command", kind)
+    require(command in log["argv"] and any(resolve(a) == Path(__file__) for a in log["argv"] if a.endswith("disposition.py")), "wrapper command mismatch")
     acc, gaps, gap_counts = Accumulator(rows), set(), Counter()
+    gap_details = {}
+    ignored_counts = Counter()
     proof_path = resolve(doc["proof_log"])
     h = hashlib.sha256()
     from kiwiw.vocab import load as load_vocab
@@ -802,11 +1079,20 @@ def read_probe(path, kind, rows, inputs, grid, args, run_log=None):
             require(line.endswith(b"\n"), "oversized/truncated proof-log event")
             h.update(line)
             event = json.loads(line)
+            if "ignored_members" in event:
+                require(kind == "pbf" and event["source"]["kind"] == "relation", "invalid ignored-member event")
+                area, ignored, nested = area_members(event["ignored_members"])
+                require(not area and not nested and len(ignored) == len(event["ignored_members"]), "area member ignored")
+                ignored_counts.update(m["type"] + ":" + m["role"] for m in ignored)
+                continue
             if "gap" in event:
                 affected = set(event["affected_dump_rows"])
                 require(affected <= {int(r["dump_row"]) for r in rows}, "gap member mismatch")
                 gaps.update(affected)
                 gap_counts[event["gap"]] += 1
+                detail = {"gap": event["gap"], "source": event["source"], **event.get("details", {})}
+                for dump in affected:
+                    gap_details.setdefault(dump, []).append(detail)
             else:
                 require(event["source"]["kind"] in (("spool",) if kind == "spool" else ("way", "relation")), "source-kind mismatch")
                 if kind == "pbf":
@@ -815,6 +1101,9 @@ def read_probe(path, kind, rows, inputs, grid, args, run_log=None):
     require(h.hexdigest() == doc["proof_log_sha256"], "proof-log hash mismatch")
     inputs.hashes[label(proof_path)] = h.hexdigest()
     require(keyed(acc.rows.values()) == actual and dict(gap_counts) == doc["gap_counts"], "probe summary/log mismatch")
+    require(dict(ignored_counts) == doc.get("ignored_member_counts", {}), "ignored member summary/log mismatch")
+    # Transient only; publication retains exact IDs/classes for every affected row.
+    doc["_gaps_by_dump"] = gap_details
     return doc, gaps
 
 
@@ -861,7 +1150,8 @@ def publish(args):
         verdict, cause, proof, unresolved = decide(row, inv_rows[k], {kind: (p[k], dump in gaps) for kind, (p, gaps, _) in probes.items()})
         discriminators = {"retained-demander": inv_rows[k]["retained_demander"], "lattice-identity": inv_rows[k]["lattice"],
                           **{kind: {"result": p[k], "coverage_gap": dump in gaps,
-                                    "gap_counts": doc["gap_counts"] if dump in gaps else {}}
+                                    "gap_counts": dict(Counter(d["gap"] for d in doc["_gaps_by_dump"].get(dump, []))),
+                                    "blocking_gaps": doc["_gaps_by_dump"].get(dump, [])}
                              for kind, (p, gaps, doc) in probes.items()}, "unresolved": unresolved}
         paths = [label(args.fingerprint), label(args.inventory), row["R_proof_path"], row["spool_requirement_witness"],
                  *(doc["proof_log"] for _, _, doc in probes.values())]
@@ -923,6 +1213,23 @@ def cli(argv=None):
         elif kind == "pbf":
             p.add_argument("--pbf", type=Path, required=True)
             p.add_argument("--cache", type=Path, required=True)
+    # Unit 2-02: replay subcommands. They never reopen the spool; cache-pin
+    # reads the PBF header and hashes it once; pbf-cache reads the retained
+    # SQLite cache read-only and never opens the PBF.
+    for kind in ("reuse", "cache-pin", "pbf-cache"):
+        p = commands.add_parser(kind)
+        p.add_argument("--fingerprint", type=Path, default=PLAN / "fingerprint.tsv")
+        p.add_argument("--fingerprint-summary", type=Path, default=PLAN / "fingerprint_summary.json")
+        p.add_argument("--members", type=Path, default=MEMBERS)
+        p.add_argument("--source-json", type=Path, required=True)
+        p.add_argument("--source-run", type=Path, required=True)
+        p.add_argument("--output", type=Path, required=True)
+        if kind in ("cache-pin", "pbf-cache"):
+            p.add_argument("--cache", type=Path, required=True)
+        if kind == "cache-pin":
+            p.add_argument("--pbf", type=Path, required=True)
+        if kind == "pbf-cache":
+            p.add_argument("--cache-provenance", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.command != "publish":
         args.output = scratch_path(args.output)
@@ -931,8 +1238,9 @@ def cli(argv=None):
             require(resolve(p).resolve().is_relative_to(PLAN), "publish outputs must be under plan-30")
     if args.command == "pbf":
         args.cache = scratch_path(args.cache)
-    doc = globals()[args.command](args)
-    print(packed({"command": args.command, "rows": len(doc["rows"]) if isinstance(doc["rows"], list) else doc["rows"],
+    doc = globals()[args.command.replace("-", "_")](args)
+    rows_out = doc.get("rows")
+    print(packed({"command": args.command, "rows": len(rows_out) if isinstance(rows_out, list) else rows_out,
                   "counts": doc.get("counts"), "output": label(args.output)}))
     return 0
 

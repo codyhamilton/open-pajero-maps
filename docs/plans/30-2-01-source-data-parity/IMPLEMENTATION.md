@@ -59,3 +59,31 @@ The approach is open: discriminator candidates are scored against the fixed outc
 ### Phase 2 reopened (Execute, 2026-10-06 08:20 AEST)
 
 The Phase 2 close at `10ac108` is **superseded**. DESIGN's Phase 2 outcome is every row `supply-path` or `unfixable-proven`; 99 conflict-open does not meet it, although Outcome 6 allows named opens and the review passed. Execute's scan of the retained PBF evidence shows the 99 are open only because of PBF relation gaps, and most gaps come from the probe treating node and `subarea` members as missing geometry. Unit `briefs/2-02-pbf-relation-gaps.md` corrects that and resolves or names each remaining row. A partial close-out seat for this plan was stopped and its uncommitted moves were reverted.
+
+### 2-02 — PBF relation-gap correction (code)
+
+- **Worker:** a Codex `gpt-6.1-sol` (high) seat started this unit. It stopped
+  at the Codex usage limit (~08:23 AEST; the next window opens at 11:19
+  AEST). Execute (Grok Bot) finished it and discloses that here.
+- **Changes in `disposition.py`:**
+  - `area_members`: only area-role ways form rings. Node members
+    (admin_centre, label) and `subarea` relation members are ignored instead
+    of being reported as missing geometry.
+  - Read-only cache replay commands: `pbf-cache`, `cache-pin` (hashes the
+    PBF and reads its header) and `reuse` (refreshes the spool evidence
+    against the legacy script `e54ea773…`).
+  - Relations the legacy cache never stored with their member list
+    (relation-member-limit) are named as
+    `relation-not-retained-member-limit` gaps.
+  - The remaining unresolved relations are listed in a `.requests.json`
+    beside the PBF output.
+  - CLI dispatch maps `-` to `_`. An unused, undefined complete-relation hook
+    was removed.
+- **Tests:** `parser/tests/test_parity_disposition.py`:
+  - the expected gap name is now "missing relation member way";
+  - adds an assertion that admin_centre members are ignored;
+  - adds 3 new tests.
+- **Measurement:** `output/scratch-30/run_p2b.sh` (log `run_p2b.log`) runs
+  `reuse` → `cache-pin` → `pbf-cache` → `publish`, serially under the wrapper
+  and lock. It is waiting for the shared heavy lock, which another project
+  holds.
