@@ -15,8 +15,9 @@ import json
 import sys
 from pathlib import Path
 
-PLAN = Path("docs/plans/32-other-kind-classify-joins")
-TRIAGE = Path("docs/plans/04-c-core-orchestration/triage")
+ROOT = Path(__file__).resolve().parents[5]
+PLAN = Path(__file__).resolve().parent.relative_to(ROOT)
+TRIAGE = PLAN.parent
 KINDS = ("interior_cover", "name_anchor", "background", "background_boundary")
 POINT_KINDS = ("range", "step", "road_node", "road_point")
 DISC_PIN = "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae"

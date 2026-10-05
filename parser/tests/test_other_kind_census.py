@@ -9,7 +9,7 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location(
-    "other_kind_census", REPO / "docs/plans/32-other-kind-classify-joins/census.py")
+    "other_kind_census", REPO / "docs/plans/04-c-core-orchestration/triage/other_kind_census/census.py")
 assert SPEC and SPEC.loader
 census = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(census)
