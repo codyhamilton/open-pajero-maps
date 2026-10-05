@@ -38,7 +38,7 @@
           6
         ]
       ],
-      "note": "Extractor assigns lon 77.51903576666666 to L0 cell 0,541; documented encoder clamp gives lon 90. Original G frame byte gate passes; remove only that name -> 1 to0 failure. Name source record 0; side_name_anchor.npy."
+      "note": "Extractor defect class closed in plan 18: assign_to_parcel (extractor + mesh) returns None for out-of-span lon (O03 lon 77.51903576666666 \u2192 None, not L0 cell 0,541). Synthetic PBF fixture proves the name is not spooled. On-disc O03 / K1 name_anchor pin (encoder clamp \u2192 lon 90, leaf 928) remains until a future extract+encode. Original G frame byte gate passed; remove only that name \u2192 1\u21920. Name source record 0; side_name_anchor.npy. Historical mechanism: pre-18 clamp of negative _lon_delta into edge cell."
     },
     {
       "id": "O04",

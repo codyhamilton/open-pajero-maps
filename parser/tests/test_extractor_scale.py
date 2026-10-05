@@ -100,7 +100,8 @@ def test_fixture_precheck_preserves_spool_bytes(pbf_path, tmp_path, monkeypatch,
 
 def test_precheck_matches_existing_road_admission():
     # Existing tiling is the permitted extraction oracle. Include wrapped
-    # longitudes and edge columns, where assign_to_parcel clamps positions.
+    # longitudes and edge columns; out-of-span longitudes are dropped by
+    # assign_to_parcel (None), so they contribute no admitted cells.
     targets = [BoundingBox(-32.8, -32.2, 115.2, 115.8),
                BoundingBox(-32.8, -32.2, 110.0, 110.8),
                BoundingBox(-32.8, -32.2, 129.2, 130.0),
@@ -262,15 +263,20 @@ class TestExtractorScale:
             assert total_bgs == 1, level
 
             # Names: suburb (1, every level) + one per road way that
-            # produced a link (3, only when roads are expected at this
+            # produced a link (2, only when roads are expected at this
             # level) + background name (1, level 0 only -- brief 23:
             # background-attached name records are omitted at levels other
             # than 0, since R's real per-level name type_code census there
             # is disjoint from every value bg_type.json can emit).
+            # WAY_CROSS_180's arithmetic centroid is lon 0.0, outside AU
+            # coverage (E90..W142). The plan-18 fix returns None for such an
+            # out-of-span longitude rather than clamping it into an edge
+            # cell, so that road's name is no longer emitted anywhere (it
+            # was the previous (0, iy) edge-clamp record).
             total_names = sum(len(v["names"]) for v in seen_parcels.values())
             expected_names = 1
             if roads_expected_at_level:
-                expected_names += 3
+                expected_names += 2
             if level == 0:
                 expected_names += 1
             assert total_names == expected_names, level

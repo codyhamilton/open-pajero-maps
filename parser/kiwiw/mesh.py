@@ -444,8 +444,9 @@ def assign_to_parcel(lat: float, lon: float, grid: CellGrid) -> Optional[tuple[i
     if dlat < 0 or dlat >= grid.disc_lat_span:
         return None
     dlon = _lon_delta(grid.disc_lon_lo, lon, grid.disc_lon_span)
-    return (_clamp(int(dlon / grid.cell_lon), 0, grid.nx - 1),
-            _clamp(int(dlat / grid.cell_lat), 0, grid.ny - 1))
+    if dlon < 0 or dlon >= grid.disc_lon_span:
+        return None
+    return (int(dlon / grid.cell_lon), int(dlat / grid.cell_lat))
 
 
 def _norm_lon(v: float) -> float:

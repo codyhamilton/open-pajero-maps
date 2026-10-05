@@ -99,17 +99,31 @@ class TestTileAssignment:
         assert par == (5, 5)
 
     def test_outside_disc_returns_none(self):
-        """Points outside the disc's latitude coverage return None.
+        """Points outside the disc's coverage return None on either axis.
 
-        Note: longitude is handled with anti-meridian-safe wrapping (matching
-        the real disc's locate_parcel behaviour), so out-of-longitude-range
-        points are NOT expected to return None — they wrap around to the nearest
-        cell, just as mesh.locate_parcel does.  Only lat-out-of-range returns None.
+        Longitude is still anti-meridian-safe wrapped (so in-span crossing
+        points keep working), but a wrapped delta outside ``[0, span)`` is
+        rejected rather than clamped into an edge cell.
         """
         grid = _make_grid(lat_lo=-35.0, lon_lo=113.0, lat_span=5.0, lon_span=5.0,
                           nx=10, ny=10)
         assert assign_to_parcel(0.0, 113.0, grid) is None    # lat too high
         assert assign_to_parcel(-40.0, 113.0, grid) is None  # lat too low
+        # lon just west of lon_lo (wrapped delta just under 360 -> out of span)
+        assert assign_to_parcel(-32.5, 112.999, grid) is None
+        # lon just at/east of lon_hi (delta == span -> out)
+        assert assign_to_parcel(-32.5, 118.0, grid) is None
+        assert assign_to_parcel(-32.5, 119.0, grid) is None
+
+    def test_o03_au_l0_out_of_span_lon_is_none(self):
+        """O03 (Ile Saint-Paul) lon 77.519 is west of AU lon_lo=90; it must
+        return None, not the edge clamp cell (0, 541) that produced the
+        on-disc name_anchor pin."""
+        lat, lon = -38.727284749, 77.51903576666666
+        grid = TileGrid.from_reference(0)
+        assert grid.disc_lon_lo == pytest.approx(90.0)
+        # Pre-fix behaviour was (0, 541); assert it is gone.
+        assert assign_to_parcel(lat, lon, grid) is None
 
     def test_parcel_bounds_match_assignment(self):
         """parcel_bounds returns a box that contains the query point."""

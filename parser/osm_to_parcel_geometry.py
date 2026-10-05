@@ -264,16 +264,16 @@ def _lon_delta(disc_lon_lo: float, lon: float, lon_span: float) -> float:
 
 
 def assign_to_parcel(lat: float, lon: float, grid: TileGrid) -> Optional[tuple[int, int]]:
-    """Return the (ix, iy) cell index for (lat, lon), or None if outside disc coverage."""
+    """Return the (ix, iy) cell index for (lat, lon), or None if outside disc
+    coverage. Latitude and (wrapped) longitude outside the coverage span are
+    both rejected; in-span points include antimeridian-crossing longitudes."""
     dlat = lat - grid.disc_lat_lo
     if dlat < 0 or dlat >= grid.disc_lat_span:
         return None
     dlon = _lon_delta(grid.disc_lon_lo, lon, grid.disc_lon_span)
-    ix = int(dlon / grid.cell_lon)
-    iy = int(dlat / grid.cell_lat)
-    ix = max(0, min(grid.nx - 1, ix))
-    iy = max(0, min(grid.ny - 1, iy))
-    return ix, iy
+    if dlon < 0 or dlon >= grid.disc_lon_span:
+        return None
+    return int(dlon / grid.cell_lon), int(dlat / grid.cell_lat)
 
 
 def parcel_bounds(ix: int, iy: int, grid: TileGrid) -> BoundingBox:
@@ -810,8 +810,8 @@ class _GeomHandler:
             if cells == (0, grid.nx - 1, 0, grid.ny - 1):
                 continue  # Full-grid extraction keeps its existing path.
             # Admission is by whole cells, including their fixture margins.
-            # Edge columns also accept clamped out-of-coverage longitudes;
-            # retain those rather than alter assign_to_parcel's semantics.
+            # Edge columns sit at the coverage seam where antimeridian wrap
+            # can reach them, so keep the precheck conservative there.
             lon_bounds = None if ix0 == 0 or ix1 == grid.nx - 1 else (
                 grid.disc_lon_lo + ix0 * grid.cell_lon,
                 grid.disc_lon_lo + (ix1 + 1) * grid.cell_lon,
