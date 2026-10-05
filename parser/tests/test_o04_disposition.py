@@ -19,7 +19,7 @@ def module(name, path):
     return result
 
 
-d = module("test_o04_disposition_module", ROOT / "docs/plans/33-o04-spool-successor-seven/disposition.py")
+d = module("test_o04_disposition_module", ROOT / "docs/plans/04-c-core-orchestration/triage/o04_seven/disposition.py")
 fixtures = module("o04_disposition_synthetic_fixtures", Path(__file__).with_name("test_o04_presence_witness.py"))
 w = fixtures.w
 

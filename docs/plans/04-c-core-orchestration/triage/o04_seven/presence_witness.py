@@ -24,7 +24,7 @@ import sys
 from types import SimpleNamespace
 
 PLAN = Path(__file__).resolve().parent
-ROOT = PLAN.parents[2]
+ROOT = PLAN.parents[4]
 TRIAGE = ROOT / "docs/plans/04-c-core-orchestration/triage"
 NATIVE = ("level", "ix", "iy", "code", "p0", "p1", "p2", "p3", "p4", "p5", "p6", "shape", "vert")
 TARGETS = {138: (1695, 699, 288), 236: (913, 876, 578),

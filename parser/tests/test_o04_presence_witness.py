@@ -11,7 +11,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location(
-    "o04_presence_witness", ROOT / "docs/plans/33-o04-spool-successor-seven/presence_witness.py")
+    "o04_presence_witness", ROOT / "docs/plans/04-c-core-orchestration/triage/o04_seven/presence_witness.py")
 w = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(w)
 
