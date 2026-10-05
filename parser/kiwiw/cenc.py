@@ -675,6 +675,10 @@ def _load_k1():
 
 
 def _k1_check_layout(lib) -> None:
+    import numpy as np
+    tall = np.dtype([(n, "<i4") for n in ("type", "cls", "n", "hx", "hy", "rec", "mult")])
+    if (lib.kw_k1_tallrow_size(), lib.kw_k1_tallrow_mult_off()) != (tall.itemsize, tall.fields["mult"][1]):
+        raise K1Error("K1 layout: tall row multiplier differs")
     if lib.kw_k1_ntables() != len(_K1_TABLES):
         raise K1Error(f"K1 layout: C has {lib.kw_k1_ntables()} tables, Python {len(_K1_TABLES)}")
     if lib.kw_k1_sample_n() != K1_SAMPLE:
@@ -902,7 +906,7 @@ def k1_tall(spool: "E1Spool", lat5, a: int, b: int):
         _k1_spec = _k1_colspec()
     colmap, esz, ckey = _k1_spec
     lat5 = np.ascontiguousarray(lat5, np.float64)
-    dt = np.dtype([(n, "<i4") for n in ("type", "cls", "n", "hx", "hy", "rec")])
+    dt = np.dtype([(n, "<i4") for n in ("type", "cls", "n", "hx", "hy", "rec", "mult")])
     rcap, xcap = 1024, 1 << 14
     while True:
         rows, xy, need = np.zeros(rcap, dt), np.zeros(xcap * 2), np.zeros(2, np.int64)

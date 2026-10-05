@@ -46,7 +46,7 @@
 #define K1_EXPLAINED(X) X(road_node_subcell_on_polyline) X(road_node_on_leaf_edge) \
     X(road_point_subcell_on_polyline) X(road_point_on_leaf_edge) X(name_anchor_halo)
 #define K1_COLS(X) X(r_nstored) X(r_npts) X(n_lat) X(n_lon) X(p_lat) X(p_lon) X(b_class) \
-    X(b_type) X(b_nstored) X(c_lat) X(c_lon) X(s_present) X(s_lat) X(s_lon)
+    X(b_type) X(b_mult) X(b_nstored) X(c_lat) X(c_lon) X(s_present) X(s_lat) X(s_lon)
 #define K1_STATS(X) X(calls) X(leaves) X(failed_frames) X(d1_retries) X(cells) X(items) \
     X(rescues) X(ns) X(d1_ns)
 
@@ -142,7 +142,7 @@ struct k1_region;
  * with no stored coordinates is absent. */
 typedef struct {
     int64_t n, ncoord, ncap, ccap;
-    int32_t *type, *cls;
+    int32_t *type, *cls, *mult;
     uint8_t *tall;                /* came from the tall set (1) rather than the local ring (0) */
     int32_t *hx, *hy, *rec;       /* home cell and record ordinal in its spool background column */
     int64_t *off;
@@ -151,7 +151,7 @@ typedef struct {
 
 /* the level's tall shapes (`kw_k1_tall` output) and their per-shape coordinate offsets
  * (`n + 1`) and bounding boxes (x0, x1, y0, y1 per shape), cached by Python per spool */
-typedef struct { int32_t type, cls, n, hx, hy, rec; } k1_tallrow;
+typedef struct { int32_t type, cls, n, hx, hy, rec, mult; } k1_tallrow;
 typedef struct {
     const k1_tallrow *rows; const double *xy; const int64_t *off; const double *bb; int64_t n;
 } k1_tallset;

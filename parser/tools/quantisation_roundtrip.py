@@ -208,10 +208,11 @@ def _cheb_seg(px, py, x1, y1, x2, y2):
 class Shapes:
     """A set of spool shapes in global raw coordinates (numpy only)."""
 
-    __slots__ = ("x", "y", "off", "type", "cls")
+    __slots__ = ("x", "y", "off", "type", "cls", "mult")
 
-    def __init__(self, x, y, off, typ, cls):
+    def __init__(self, x, y, off, typ, cls, mult=None):
         self.x, self.y, self.off, self.type, self.cls = x, y, off, typ, cls
+        self.mult = np.ones(len(typ), np.int64) if mult is None else np.maximum(mult, 1)
 
     @classmethod
     def empty(cls):
@@ -243,7 +244,7 @@ class Shapes:
         off = np.zeros(len(sel) + 1, np.int64)
         np.cumsum(n, out=off[1:])
         src = np.repeat(self.off[:-1][sel] - off[:-1], n) + np.arange(off[-1], dtype=np.int64)
-        return Shapes(self.x[src], self.y[src], off, self.type[sel], self.cls[sel])
+        return Shapes(self.x[src], self.y[src], off, self.type[sel], self.cls[sel], self.mult[sel])
 
     @staticmethod
     def concat(parts):
@@ -256,7 +257,7 @@ class Shapes:
             base += p.off[-1]
         return Shapes(np.concatenate([p.x for p in parts]), np.concatenate([p.y for p in parts]),
                       np.concatenate(offs), np.concatenate([p.type for p in parts]),
-                      np.concatenate([p.cls for p in parts]))
+                      np.concatenate([p.cls for p in parts]), np.concatenate([p.mult for p in parts]))
 
     def segments(self, closed_classes=(2,)):
         """(x1, y1, x2, y2, shape) of every edge; rings of the given classes
@@ -320,7 +321,7 @@ def _road_segments(cols, lat):
 
 def _cells_to_shapes(lat_parts, cols_list, lat):
     """Concatenate the background shapes of decoded spool cell columns."""
-    xs, ys, lens, typ, cls = [], [], [], [], []
+    xs, ys, lens, typ, cls, mult = [], [], [], [], [], []
     for c in cols_list:
         if len(c["b_type"]) == 0:
             continue
@@ -329,13 +330,14 @@ def _cells_to_shapes(lat_parts, cols_list, lat):
         lens.append(c["b_nstored"].astype(np.int64))
         typ.append(c["b_type"].astype(np.int64))
         cls.append(c["b_class"].astype(np.int64))
+        mult.append(c["b_mult"].astype(np.int64))
     if not xs:
         return Shapes.empty()
     n = np.concatenate(lens)
     off = np.zeros(len(n) + 1, np.int64)
     np.cumsum(n, out=off[1:])
     return Shapes(np.concatenate(xs), np.concatenate(ys), off,
-                  np.concatenate(typ), np.concatenate(cls))
+                  np.concatenate(typ), np.concatenate(cls), np.concatenate(mult))
 
 
 def _tall_mask(sh: Shapes, hx, hy):
@@ -383,7 +385,7 @@ def _pass1(task):
         if m.any():
             parts.append(sh.take(np.nonzero(m)[0]))
     t = Shapes.concat(parts)
-    return level, a, (t.x, t.y, t.off, t.type, t.cls)
+    return level, a, (t.x, t.y, t.off, t.type, t.cls, t.mult)
 
 
 # ------------------------------------------------------------------ pass 2 helpers
@@ -1027,8 +1029,23 @@ def _check_block(task):
     # --- completeness per (cell, type)
     cells = set(zip(dec.leaf["ix"].tolist(), dec.leaf["iy"].tolist())) | region.spool_cells
     cells = {cr for cr in cells if c0 <= cr[0] <= c1 and r0 <= cr[1] <= r1}
-    req = _required_cells(region, cells, c0, c1, r0, r1)
-    missing = sorted((k for k in req if k not in present), key=lambda k: (k[1], k[0], k[2]))
+    req = _required_cells(region, cells, c0, c1, r0, r1, with_demanders=True)
+    from tools.k1_representable import centre_demands, representable
+    sh = region.shapes
+    def survives(key):
+        ix, iy, typ = key
+        demanders = req[key]
+        # Centre queries remain batched. Resolve their per-shape provenance
+        # only for absent pairs; every original demanded key stays checked.
+        candidates = np.nonzero((sh.cls == 2) & (sh.type == typ) & (sh.lengths() >= 3))[0] \
+            if -1 in demanders else demanders
+        for s in candidates:
+            poly = list(zip(sh.x[sh.off[s]:sh.off[s + 1]], sh.y[sh.off[s]:sh.off[s + 1]]))
+            if (s in demanders or centre_demands(poly, ix, iy, TOL)) \
+                    and representable(poly, ix, iy, int(sh.mult[s])):
+                return True
+        return False
+    missing = sorted((k for k in req if k not in present and survives(k)), key=lambda k: (k[1], k[0], k[2]))
     acc.add("completeness", len(req), len(missing))
     if missing:
         acc.sample("completeness", [{"cell": [ix, iy], "kind": "completeness", "type": t,
@@ -1038,19 +1055,22 @@ def _check_block(task):
     return level, acc, dec.n_leaves
 
 
-def _required_cells(region: Region, cells, c0, c1, r0, r1):
-    """`(ix, iy, type)` of emitted block cells that a spool polygon's
-    interior demonstrably meets:
-
-    - a polygon inside one cell rectangle whose ring, rounded to the raw
-      lattice, has non-zero area (it cannot clip or round away);
-    - a polygon with a vertex at least one raw unit inside the cell;
-    - a polygon holding the cell centre (the cell is wholly or largely
-      covered).
-    Cells the polygon only grazes along an edge are not required: whether
-    such a sliver survives rounding is the clip's business, not a check."""
+def _required_cells(region: Region, cells, c0, c1, r0, r1, *, with_demanders=False):
+    """Demanded pairs, unchanged by representability: (a) in-cell rounded
+    nonzero area, (b) a crossing ring's vertex >=1 raw inside, or (c) a
+    TOL-aware centre hit. With provenance, values hold shape indices;
+    -1 marks a batched centre hit, resolved only when a piece is absent.
+    Completeness fails an absent pair only if some demander's EO faces,
+    clipped to the cell, survive densify with its multiplier, rint,
+    deduplication/spike removal and the nonzero lattice area test."""
     sh = region.shapes
-    req = set()
+    req = {} if with_demanders else set()
+    def demand(ix, iy, typ, shape):
+        key = (ix, iy, typ)
+        if with_demanders:
+            req.setdefault(key, set()).add(int(shape))
+        else:
+            req.add(key)
     if not cells or sh.n == 0:
         return req
     poly = np.nonzero((sh.cls == 2) & (sh.lengths() >= 3))[0]
@@ -1070,10 +1090,10 @@ def _required_cells(region: Region, cells, c0, c1, r0, r1):
     cr = rx * ry[nxt] - rx[nxt] * ry
     area = np.add.reduceat(cr, ps.off[:-1])
     a_ok = inside1 & (area != 0)
-    for ix, iy, t in zip(cx[a_ok].astype(np.int64).tolist(), cy[a_ok].astype(np.int64).tolist(),
-                         ps.type[a_ok].tolist()):
+    for ix, iy, t, s in zip(cx[a_ok].astype(np.int64).tolist(), cy[a_ok].astype(np.int64).tolist(),
+                         ps.type[a_ok].tolist(), poly[a_ok].tolist()):
         if (ix, iy) in cellkey:
-            req.add((ix, iy, t))
+            demand(ix, iy, t, s)
     # (b) polygons crossing cells: vertices at least one raw unit inside a cell
     vs = np.repeat(np.arange(ps.n), n)
     multi = ~inside1[vs]
@@ -1084,13 +1104,13 @@ def _required_cells(region: Region, cells, c0, c1, r0, r1):
     deep = (fxr >= 1) & (fxr <= RAW - 1) & (fyr >= 1) & (fyr <= RAW - 1) \
         & (kx >= c0) & (kx <= c1) & (ky >= r0) & (ky <= r1)
     if deep.any():
-        k = np.unique(_pack(vt[deep], kx[deep].astype(np.int64), ky[deep].astype(np.int64)))
-        for key in k.tolist():
+        packed = _pack(vt[deep], kx[deep].astype(np.int64), ky[deep].astype(np.int64))
+        for key, s in zip(packed.tolist(), poly[vs[multi][deep]].tolist()):
             t = key >> 52
             ix = ((key >> 26) & _MASK26) - _OFF
             iy = (key & _MASK26) - _OFF
             if (ix, iy) in cellkey:
-                req.add((ix, iy, t))
+                demand(ix, iy, t, s)
     # (c) cell centres inside a polygon of each type present
     types = np.unique(ps.type)
     cl = sorted(cellkey)
@@ -1102,7 +1122,7 @@ def _required_cells(region: Region, cells, c0, c1, r0, r1):
         qt = np.repeat(types, len(cl))
         ok = region.inside(np.zeros(len(qx), np.int64), qy, qx, qt)
         for i in np.nonzero(ok)[0].tolist():
-            req.add((int(cix[i % len(cl)]), int(ciy[i % len(cl)]), int(qt[i])))
+            demand(int(cix[i % len(cl)]), int(ciy[i % len(cl)]), int(qt[i]), -1)
     return req
 
 

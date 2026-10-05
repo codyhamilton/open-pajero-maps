@@ -44,7 +44,7 @@ Read ranges and grep; do not read a whole file to find one section, do not re-re
 
 ## Goal
 
-DESIGN Phase 3 outcome (1), **checker**, for groups `g-omits-cell-local-dvd-type` (2-01, 342) and `r-absent-complete-repair-zero` (2-02, 432):
+DESIGN Phase 3 outcome (1), **checker**, for groups `g-omits-cell-local-dvd-type` (2-01, 342) and `r-absent-complete-repair-zero` (2-02, 432; 433 after 3-02 folded dump_row 765, amended 2026-10-06 on the worker's report):
 - the checker change lands;
 - the predicted rows leave the failing set;
 - the build sha is unchanged.

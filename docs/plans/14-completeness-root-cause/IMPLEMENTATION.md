@@ -127,3 +127,20 @@ Refine: **Proceed.** Units 3-01 (demand attribution / 335), 3-02 (765 R zero con
 Research only; no implementation or regression added. Required reading and multiplier investigation consumed 15 files including the brief (14 excluding it), crossing the 14-file budget. Stopped as directed. Both protected disc SHAs match the brief. Demand attribution predicts all 776 keys removed and no exceptions. C `k1_shapes` and Python `Shapes` lack per-shape multiplier carriage; tall-shape C ABI needs an owned-path solution, such as recovering spool attributes by existing home/ordinal identity. Independent C/Python EO representability, regression before/after, live K1, identity diff, and fresh re-encode remain undone. Full handoff: `reports/3-03-checker-representable-demand.md`. Existing-suite validation will be recorded in that report before any commit.
 
 Validation: all four existing suites passed, 259 tests in 22.39s, via the heavy runner (child exit 0). No expectation edits. Budget-fallback handoff eligible for commit; implementation remains unfinished.
+
+### 3-03 — checker representable demand (Codex `gpt-6.1-sol`)
+
+- **First attempt** (high, session `01a10cf6-e9b8-7803-90d2-f4d213c2b993`, `9eed7c8`): over budget. A 14-file read cap was hit during required reading, so no code changed; its handoff was kept.
+- **Brief amended twice** (`3d71786`, `77f67eb`):
+  - own `cenc.py` K1 ABI for multiplier carriage;
+  - budget resized;
+  - the worker runs in a Codex `workspace-write` sandbox and leaves its changes in the tree, because Auto-review blocked the sandbox-bypass flag and the sandbox has no systemd user scope or git-metadata writes. The orchestrator runs the heavy verification and commits.
+- **Retry** (xhigh, session `01a10cfb-e727-7163-90bb-2ee1c5494ed2`): `done with concerns`, the concern being only the sandbox-blocked systemd test.
+  - Built: independent C (`_k1_cmp.c`) and Python (`parser/tools/k1_representable.py`) representability filters, with no `_cenc.c` calls. Per-shape multiplier carried through local and tall shapes (`_k1.c`, `_k1.h`, `cenc.py`, `quantisation_roundtrip.py`).
+  - 15 new tests (`test_k1_completeness_representable.py` + fixtures): 6 failed before the change, all pass after. Positive controls still fail as intended. No existing expectation was edited.
+  - Contradiction reported: the brief's 2-02 count was 432, but it is 433 after 3-02. Brief amended.
+- **Orchestrator verification (plan-25 guards, one heavy job at a time):**
+  - Tests: 274 passed, including the memory-guard test outside the sandbox (`runs/p3_tests.json`).
+  - Live K1 `-j6` on `4ed9cd80…` (`runs/k1_p3.json`, `p3/k1_p3.{json,log}`, 81.4 s, memory.peak 4.0 GiB): **completeness checked 1,800,514 → 1,800,514, failing 776 → 0.** The completeness dump is empty, so all 776 Phase 1 keys left, no new key appeared, and there were no exceptions, matching 3-01's prediction exactly. Every other kind's checked/failing is identical to Phase 1 `k1_full.json` (name_anchor 1 is pre-existing and outside plan 14, so K1 still exits 1).
+  - Re-encode `-j4` with the rebuilt `_cenc.so` (`runs/p3_reencode.json`): sha256 `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`, so the build sha is unchanged.
+  - Protected discs unchanged (`013586b5…`, `4ed9cd80…`).

@@ -1,34 +1,41 @@
 # 3-03 — Checker representable demand
 
-Status: **over budget**. Implementation is unfinished; this is a research handoff only.
+Status: **done with concerns**. Implementation and sandbox-runnable validation are complete; one required test needs the orchestrator's systemd user scope. All changes remain uncommitted in the working tree.
 
-## Done
+## Changes
 
-- Read the brief, required design sections, demand attribution, C completeness implementation, Python demand/completeness sections, wire emission contract, Phase 2 mirror, existing completeness tests and fixture helpers, compile-on-demand mechanism, and heavy-runner usage.
-- Investigated shape multiplier carriage in `_k1.h` and `_k1.c`.
-- Verified protected discs before any edit:
-  - `output/scratch-3-11/G_new/ALLDATA.KWI`: `013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04`.
-  - `output/scratch-14/G_new/ALLDATA.KWI`: `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`.
-- No checker, encoder, test, expectation, or protected-output changes.
+- Independent representability filter in `_k1_cmp.c` and new `parser/tools/k1_representable.py`: EO faces, cell clipping, multiplier-aware densification, ties-to-even rounding, adjacent/closing deduplication, spike removal, and nonzero lattice area. C crossing predicates use lossless dyadic integer grids and `__int128`; Python uses exact Fractions. Neither checker calls encoder geometry code or imports research artifacts.
+- Carried spool `b_mult` through C local shapes, tall rows, compaction and selection, Python construction/take/concat/pass-one serialization, and the tall-row dtype/layout assertion. Values below 1 follow the encoder's default to 1.
+- Preserved demand branches, demanded-pair counts, sample order and tolerances. Branches (a)/(b) retain shape indices; batched branch (c) retains a marker and resolves its demanding indices only for missing pairs, avoiding a full per-shape centre scan on the normal path.
+- Added 15 regression cases: local/tall TOL-only vertical slivers, vertex pokes, representable squares/slivers, a bowtie with exactly one surviving lobe, row-656 densification collapse, multiplier-2 survival, and multiple-demanders positive control.
+- `_cenc.c`, encoder paths, other kinds, existing tests, phase artifacts and protected outputs are unchanged.
 
-## Not done
+## Test evidence
 
-No failing regression was written or run. No representability implementation, live K1 rerun, identity diff, or fresh re-encode was performed. The brief supplies baseline completeness `checked=1,800,514`, `failing=776`; after totals and other-kind equality are unverified. The current protected-disc SHA is not fresh re-encode evidence.
+Commands used plain `.venv-rp/bin/python -B -m pytest` as amended.
 
-Existing suites: **259 passed in 22.39s** (all four named suites), through `run_heavy_python.py`; log `output/scratch-14/runs/k1_p3_baseline_tests.json`, child exit 0, memory peak 198,352,896 bytes. This is baseline validation only; there is no implementation after-state. No existing-test expectation edits.
+- Before implementation: **6 failed, 9 passed in 1.11 s**. Cases (i), (ii), (v) failed in both local/tall forms; positive controls passed. Log: `output/scratch-14/runs/k1_p3_tests_before.txt`.
+- Final new suite: **15 passed in 1.11 s**. Densification cases also prove survival without densification, collapse with multiplier 1, and survival with multiplier 2. Log: `output/scratch-14/runs/k1_p3_tests_new.txt`.
+- All five suites, unfiltered: **273 passed, 1 failed in 29.69 s**. Only `test_plan25_memory_guards.py::test_run_heavy_python_records_argv_and_peak` failed: systemd reports “Operation not permitted” connecting to the user scope bus. Log: `output/scratch-14/runs/k1_p3_tests_after.txt`.
+- Final five-suite run excluding only that environmental failure: **273 passed, 1 deselected in 23.56 s**. This includes the existing all-kind C/Python equality, completeness sample/partition invariance, dump and remaining memory-guard checks. Log: `output/scratch-14/runs/k1_p3_tests_sandbox.txt`.
+- Supplemental independent C/Python footprint probes: **1,950 agreements**, including 1,500 thin/self-crossing cases (228 unrepresentable, 1,272 representable), multiple multipliers and large raw-coordinate translations. `git diff --check` passes.
+- Existing-test expectation edits: **none**.
 
-## What was learned / continuation
+## Orchestrator verification remaining
 
-- Attribution predicts **776** removed keys and **zero** surviving exceptions; its branch counts are b=797, c=1, a=1 distinct demanders. Row 335 is a TOL-only centre hit; row 656 is the branch-a densification control.
-- `k1_shapes` has no multiplier. `_k1.c:shp_begin`, local `region_build`, tall-shape compaction, and selected-tall insertion need carriage. The tall rows currently carry only type, class, vertex count, home cell, and record ordinal. Adding a tall-row field would require examining the Python ABI binding, which is outside owned paths; consider recovering the multiplier from the spool by the existing home/ordinal identity instead. This is an implementation constraint, not a proved blocker.
-- Python `Shapes` also lacks the multiplier. Carry spool `b_mult` through construction, `take`, `concat`, and pass-one serialization. Preserve demanded-key count; retain demanding shape indices separately and filter only missing decoded pairs.
-- The Phase 2 mirror supplies exact Fraction crossing detection and EO arrangement decomposition, followed by floating face coordinates, clipping, densification, rint, adjacent deduplication, spike removal, and area testing. The new checker must independently implement this contract in C and Python; no encoder calls are permitted.
-- cbuild hashes C sources and headers, so a changed checker rebuilds the shared library; fresh re-encode SHA evidence remains required despite encoder source being unchanged.
+No live K1, identity diff or live re-encode was run, as instructed. Run the amended brief's commands through `run_heavy_python.py`, one heavy job at a time, K1 `-j6`, encode `-j4`; also rerun the systemd-dependent test outside this sandbox.
 
-## Budget, deviations, contracts
+Attribution TSV verified: **799 demanders, 776 distinct keys, 776 all-unrepresentable, zero exceptions**. Baseline live completeness is **checked 1,800,514 / failing 776**; expected after is **checked 1,800,514 / failing 0**. Actual after totals are pending. Other live kinds must equal `output/scratch-14/k1_full.json`; fixture equality passed, live equality remains pending.
 
-Stopped under the brief's explicit budget fallback after reading 15 repository files including the brief (14 excluding it). The required reading plus `_k1.h` / `_k1.c` multiplier investigation consumed this budget before implementation. No further implementation research was performed. The fallback expressly authorizes a handoff in `IMPLEMENTATION.md`.
+Expected identity diff against `output/scratch-14/dump_raw/`: **776 removed, zero surviving, zero new keys**. No predicted build-defect candidates. Actual identity diff remains pending.
 
-The referenced repository rubric `tools/quality/checks/execution-report.json` does not exist in this worktree. A similarly named plugin copy was located, but not read because the file-read budget was exhausted. This report follows the brief's report-back fields without claiming rubric validation.
+Expected fresh re-encode SHA256: `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`; fresh re-encode remains pending. Protected discs were hashed before and after implementation and remain:
 
-No contradiction between the geometry contracts was identified. No non-trivial out-of-scope bug was established. No agents spawned; no push.
+- `output/scratch-3-11/G_new/ALLDATA.KWI`: `013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04`.
+- `output/scratch-14/G_new/ALLDATA.KWI`: `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`.
+
+## Departures and contract discrepancies
+
+The required memory-guard suite cannot fully pass in this sandbox because its user-scope test invokes precisely the systemd facility the amended brief says is unavailable. Its failure is recorded; no test, wrapper or expectation was changed. All other authorized worker work is complete. No agents, commits, live K1 or live re-encode.
+
+The brief retains the original 2-02 count of 432, while binding 3-02 evidence folds row 765 into 2-02 for **433**, giving `776 = 342 + 433 + 1`. The filter and prediction cover all 776 keys; no accounting artifact was edited. No geometry-contract contradiction or new non-trivial out-of-scope code bug was found.

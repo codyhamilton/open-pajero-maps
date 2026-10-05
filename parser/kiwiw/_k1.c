@@ -27,6 +27,8 @@ const char *kw_k1_field_name(int t, int i) { return KT[t].f[i].name; }
 const char *kw_k1_field_kind(int t, int i) { return KT[t].f[i].kind; }
 int kw_k1_field_off(int t, int i) { return KT[t].f[i].off; }
 int kw_k1_sample_n(void) { return K1_SAMPLE; }
+int kw_k1_tallrow_size(void) { return sizeof(k1_tallrow); }
+int kw_k1_tallrow_mult_off(void) { return offsetof(k1_tallrow, mult); }
 
 #define K1_STR(n) #n,
 static const char *const N_KINDS[] = { K1_KINDS(K1_STR) };
@@ -370,7 +372,7 @@ static int road_hit(struct k1_region *R, int64_t X, int64_t Y) {
 static void region_free(struct k1_region *R) {
     free(R->nodes.p); free(R->rpts.p); free(R->names.p); free(R->names_y.p);
     free(R->seg); free(R->sk);
-    free(R->shp.type); free(R->shp.cls); free(R->shp.tall); free(R->shp.off);
+    free(R->shp.mult); free(R->shp.type); free(R->shp.cls); free(R->shp.tall); free(R->shp.off);
     free(R->shp.hx); free(R->shp.hy); free(R->shp.rec);
     free(R->shp.x); free(R->shp.y); free(R->oix); free(R->oiy);
 }
@@ -383,7 +385,7 @@ int64_t k1_region_cells(const struct k1_region *R, const int32_t **ix, const int
 /* ---- the band's background shapes */
 
 static int shp_begin(k1_shapes *h, int32_t type, int32_t cls, int tall, int32_t hx, int32_t hy,
-                     int32_t rec) {
+                     int32_t rec, int32_t mult) {
     if (h->n + 1 >= h->ncap || !h->off) {
         int64_t nc = h->ncap ? h->ncap * 2 : 64;
         int32_t *t = (int32_t *)realloc(h->type, (size_t)nc * 4);
@@ -392,6 +394,9 @@ static int shp_begin(k1_shapes *h, int32_t type, int32_t cls, int tall, int32_t 
         int32_t *c = (int32_t *)realloc(h->cls, (size_t)nc * 4);
         if (!c) return -4;
         h->cls = c;
+        int32_t *mu = (int32_t *)realloc(h->mult, (size_t)nc * 4);
+        if (!mu) return -4;
+        h->mult = mu;
         uint8_t *tl = (uint8_t *)realloc(h->tall, (size_t)nc);
         if (!tl) return -4;
         h->tall = tl;
@@ -411,7 +416,7 @@ static int shp_begin(k1_shapes *h, int32_t type, int32_t cls, int tall, int32_t 
         if (h->n == 0) h->off[0] = 0;
     }
     h->type[h->n] = type; h->cls[h->n] = cls; h->tall[h->n] = (uint8_t)tall;
-    h->hx[h->n] = hx; h->hy[h->n] = hy; h->rec[h->n] = rec;
+    h->hx[h->n] = hx; h->hy[h->n] = hy; h->rec[h->n] = rec; h->mult[h->n] = mult < 1 ? 1 : mult;
     h->n++;
     h->off[h->n] = h->off[h->n - 1];
     return 0;
@@ -449,7 +454,7 @@ static int shp_add_tall(k1_shapes *h, const k1_tallset *T, int64_t c0, int64_t c
     for (int64_t s = 0; s < h->n; s++) {
         if (h->tall[s]) continue;
         int64_t a = h->off[s], n = h->off[s + 1] - a;
-        h->type[m] = h->type[s]; h->cls[m] = h->cls[s]; h->tall[m] = 0;
+        h->mult[m] = h->mult[s]; h->type[m] = h->type[s]; h->cls[m] = h->cls[s]; h->tall[m] = 0;
         h->hx[m] = h->hx[s]; h->hy[m] = h->hy[s]; h->rec[m] = h->rec[s];
         if (mc != a) { memmove(h->x + mc, h->x + a, (size_t)n * 8); memmove(h->y + mc, h->y + a, (size_t)n * 8); }
         h->off[m] = mc;
@@ -461,7 +466,7 @@ static int shp_add_tall(k1_shapes *h, const k1_tallset *T, int64_t c0, int64_t c
         const double *b = T->bb + 4 * t;
         if (!(b[1] >= bx0 && b[0] <= bx1 && b[3] >= by0 && b[2] <= by1)) continue;
         int rc = shp_begin(h, T->rows[t].type, T->rows[t].cls, 1, T->rows[t].hx, T->rows[t].hy,
-                           T->rows[t].rec);
+                           T->rows[t].rec, T->rows[t].mult);
         for (int64_t j = T->off[t]; rc == 0 && j < T->off[t + 1]; j++) rc = shp_xy(h, T->xy[2 * j], T->xy[2 * j + 1]);
         if (rc) return rc;
     }
@@ -519,7 +524,7 @@ static int region_build(struct k1_region *R, const k1_spool *S, const k1_lat *L,
             int local = mnx >= (double)((hx - 1) * K1_RAW + 1) && mxx <= (double)((hx + 2) * K1_RAW - 1) &&
                         mny >= (double)((hy - 1) * K1_RAW + 1) && mxy <= (double)((hy + 2) * K1_RAW - 1);
             rc = shp_begin(&R->shp, rd_i32(C.c[K1_b_type], j), rd_i32(C.c[K1_b_class], j), !local,
-                           hx, hy, (int32_t)j);
+                           hx, hy, (int32_t)j, rd_i32(C.c[K1_b_mult], j));
             for (int64_t v = 0; v < n && rc == 0; v++)
                 rc = shp_xy(&R->shp, gx(L, rd_f64(C.c[K1_c_lon], co + v)), gy(L, rd_f64(C.c[K1_c_lat], co + v)));
             co += n;
@@ -876,7 +881,7 @@ int64_t kw_k1_tall(const uint8_t *idx, int64_t idx_len, const uint8_t *data, int
                         }
                         k1_tallrow t = {rd_i32(C.c[K1_b_type], s),
                                         rd_i32(C.c[K1_b_class], s), (int32_t)n, (int32_t)hx,
-                                        (int32_t)hy, (int32_t)s};
+                                        (int32_t)hy, (int32_t)s, rd_i32(C.c[K1_b_mult], s)};
                         rows[nrow] = t;
                     }
                     nrow++; nxy += n;

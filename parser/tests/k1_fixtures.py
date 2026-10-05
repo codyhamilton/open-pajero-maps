@@ -471,3 +471,40 @@ def build_inside_fixture(tmp_path: Path, name: str):
     disc, _ = _build(tmp_path, f"{name}_d", disc_cells)
     _, spool = _build(tmp_path, f"{name}_s", spool_cells)
     return disc, spool
+
+
+# Plan 14 3-03: absent G against demanders at the representability boundary.
+# Raw points are cell-local; conversion exercises the spool and both tall paths.
+REPRESENTABLE_CASES = {
+    "tol_vertical": ([(2048.3, -500), (2048.3, 9000), (2048.3, -500)], 1, False),
+    "vertex_poke": ([(-50, 1000), (1.2, 1000.02), (-50, 1000.04)], 1, False),
+    "square": ([(512, 512), (1024, 512), (1024, 1024), (512, 1024)], 1, True),
+    "surviving_sliver": ([(-50, 1000), (2.4, 1000), (2.4, 1100), (-50, 1100)], 1, True),
+    "bowtie": ([(1024, 1024), (3072, 3072), (1024, 3072), (1024.2, 1024)], 1, True),
+    # Attribution row 656, translated by whole cells: vertex rounding has
+    # nonzero area, but densification adds a spike that collapses the ring.
+    "densify_collapse": ([(6991823.608217601 - 1706 * 4096, 6197222.001868799 - 1512 * 4096),
+                           (6991818.234265599 - 1706 * 4096, 6197109.699379199 - 1512 * 4096),
+                           (6991812.912742399 - 1706 * 4096, 6196998.733823999 - 1512 * 4096)],
+                          1, False),
+    "densify_mult2": ([(6991823.608217601 - 1706 * 4096, 6197222.001868799 - 1512 * 4096),
+                        (6991818.234265599 - 1706 * 4096, 6197109.699379199 - 1512 * 4096),
+                        (6991812.912742399 - 1706 * 4096, 6196998.733823999 - 1512 * 4096)],
+                       2, True),
+}
+
+
+def build_representable_fixture(tmp_path, name, tall_home=False, second_square=False):
+    pts, mc, _ = REPRESENTABLE_CASES[name]
+    coords = [(-50 + y * CELL_LAT / 4096, 90 + (512 * 4096 + x) * RAW_LON)
+              for x, y in pts]
+    shape = _bg(coords + [coords[0]], 288)
+    shape.mult_const = mc
+    target = {"roads": [], "backgrounds": [], "names": [_name(*_centre(512, 0))]}
+    disc, _ = _build(tmp_path, f"{name}_absent", {(512, 0): target})
+    home = (512, 5) if tall_home else (512, 0)
+    cells = {(512, 0): target, home: {**target, "backgrounds": [shape]}}
+    if second_square:
+        lat, lon = _centre(512, 0)
+        cells[home]["backgrounds"].append(_bg(_square(lat, lon, 0.001), 288))
+    return disc, _write_spool(tmp_path / f"{name}_demand", cells)
