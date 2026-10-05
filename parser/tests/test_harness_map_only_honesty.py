@@ -14,8 +14,10 @@ from harness import registry, report
 from harness.context import CheckResult, Context
 
 
-WP_IDS = ("wp2_route", "wp3_address", "wp4_index", "wp5_meta")
-WP_LAYERS = ("route", "address", "index", "meta")
+WP_IDS = ("wp2_route", "wp3_address", "wp4_index")
+WP_LAYERS = ("route", "address", "index")
+META_CHECK_ID = "copy_through_graphics"  # plan 23 subsumed wp5_meta
+META_LAYER = "meta"
 
 
 def test_wp_na_checks_discovered():
@@ -45,7 +47,7 @@ def test_report_json_map_only_scope(tmp_path):
          "message": "layer 'address' not present per config", "details": {}},
         {"id": "wp4_index", "layer": "index", "status": "NA",
          "message": "layer 'index' not present per config", "details": {}},
-        {"id": "wp5_meta", "layer": "meta", "status": "NA",
+        {"id": "copy_through_graphics", "layer": "meta", "status": "NA",
          "message": "layer 'meta' not present per config", "details": {}},
     ]
     path = tmp_path / "report.json"
@@ -56,7 +58,7 @@ def test_report_json_map_only_scope(tmp_path):
     assert data["layers_present"] == ["map"]
     assert data["scope"] == "map-only"
     assert data["full_disc_parity"] is False
-    assert {c["id"] for c in data["checks"]} >= set(WP_IDS)
+    assert {c["id"] for c in data["checks"]} >= set(WP_IDS) | {META_CHECK_ID}
     assert all(c["status"] != "FAIL" for c in data["checks"])
     # exit policy: no FAIL → 0
     assert all(c["status"] in ("PASS", "NA") for c in data["checks"])
@@ -64,7 +66,7 @@ def test_report_json_map_only_scope(tmp_path):
 
 def test_wp_run_body_na_not_started():
     by_id = {c.id: c for c in registry.discover()}
-    # Even if layer were present, sentinel stays NA / not started
+    # Even if layer were present, WP2–WP4 sentinels stay NA / not started
     ctx = Context(reference=None, generated="/dev/null",
                   config={"layers_present": ["map", "route", "address", "index", "meta"]})
     for cid in WP_IDS:
@@ -72,3 +74,7 @@ def test_wp_run_body_na_not_started():
         assert isinstance(result, CheckResult)
         assert result.status == "NA"
         assert "not started" in result.message.lower()
+    # plan 23: meta layer check is real cmp (NA without disc roots), not wp5_meta
+    assert META_CHECK_ID in by_id
+    assert by_id[META_CHECK_ID].layer == META_LAYER
+    assert "wp5_meta" not in by_id

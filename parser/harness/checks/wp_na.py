@@ -1,8 +1,11 @@
-"""WP2–WP5 negative-control checks: absent layers report NA under map-only
-config so a green harness run cannot omit that route / address / index /
-metadata packages were not evaluated.
+"""WP2–WP4 negative-control checks: absent layers report NA under map-only
+config so a green harness run cannot omit that route / address / index
+packages were not evaluated.
 
-Real parity science for those packages lives in future WP designs. Until a
+WP5 / metadata copy-through is owned by `copy_through_graphics` on layer
+`meta` (plan 23); the former `wp5_meta` sentinel is subsumed there.
+
+Real parity science for WP2–WP4 packages lives in future WP designs. Until a
 layer is present *and* a real check body replaces these sentinels, run()
 returns NA (not started) if somehow invoked with the layer marked present.
 """
@@ -14,7 +17,6 @@ _WP = (
     ("wp2_route", "route", "WP2", "route planning frames / ext frames"),
     ("wp3_address", "address", "WP3", "address and POI search"),
     ("wp4_index", "index", "WP4", "remaining IDX / HWMAP / INDEXDAT"),
-    ("wp5_meta", "meta", "WP5", "disc stamp / coverage / image / burn"),
 )
 
 

@@ -103,12 +103,21 @@ Spec Ch.13 defines metadata as BNF with keywords `DMHT`, `RBPM`, `MBDF`, `ROOT`,
 
 ## LOADING.KWI and other copy-through files
 
+When harness layer `meta` is in scope, the ten target-disc **copy** basenames
+(`LOADING.KWI`, `DICVCE56.KWI`, `GRA256D.KWI`, `KGRA256.KWI`, `PCT256D.KWI`,
+`KPCT256.KWI`, `PCT2DAT.KWI`, `KPCT2DT.KWI`, `KGRPDAT.KWI`, `VAR256D.KWI`) must
+exist on both R and G disc roots and be byte-identical (`copy_through_graphics`).
+**Missing copy-through files are FAIL (missing verification), not successful
+copying.** Under default `layers_present=["map"]` the check is NA. WP5 copy
+writers are not started; this contract does not claim WP5 or Phase 3 closed.
+`HWMAP.KWI` is WP4 / regenerate and is outside this list.
+
 | Field | Meaning | Status | Evidence | Code |
 |---|---|---|---|---|
 | `LOADING.KWI` 0 u16 systems, 2 u16 reserved | Number of accommodated systems (1) and reserved 0 | observed | R read via `parse_loading_header`; layout from spec ch.30.1/30.2 (Ch.30 not in the chapter list we hold beyond that header) | `parser/kiwiw/misc.py` |
 | `LOADING.KWI` system record (16 B at offset 4) | 12 B manufacturer ID `DENSO` NUL padded, u16 modules (1), u16 reserved | observed | R read (spot-check 2026-09); spec ch.30.2 | `parser/kiwiw/misc.py` |
 | `LOADING.KWI` module id/management/code | ASCII `KH07` seen after the header; 31,338,496-byte file is otherwise an opaque head-unit payload | unknown | Not decoded; copied whole | - |
-| `GRA256D`, `PCT256D`, `PCT2DAT`, `VAR256D` (D files) and `KGRA256`, `KPCT256`, `KPCT2DT`, `KGRPDAT` (K files), `DICVCE56`, `HWMAP` | Image/tile/voice data and their indexes; content-independent so copied | unknown | Sizes and stamp headers seen on R; internal structure not decoded (`HWMAP.KWI` is WP4 and may be map-dependent, see `docs/design/target-disc.md`) | - |
+| `GRA256D`, `PCT256D`, `PCT2DAT`, `VAR256D` (D files) and `KGRA256`, `KPCT256`, `KPCT2DT`, `KGRPDAT` (K files), `DICVCE56`, `HWMAP` | Image/tile/voice data and their indexes; content-independent so copied (`HWMAP` regenerate/WP4) | unknown | Sizes and stamp headers seen on R; internal structure not decoded (`HWMAP.KWI` is WP4 and may be map-dependent, see `docs/design/target-disc.md`); ten-file cmp: `parser/harness/checks/copy_through.py` | `parser/kiwiw/misc.py`, `parser/harness/checks/copy_through.py` |
 | Disc stamp effect on copied files | Copied files carry R's stamp; a generated disc built with a different stamp would mismatch them | assumed | We build with R's stamp unchanged; no test | `parser/kiwiw/misc.py` |
 
 ## ALLDATA management header record 29 (`parser/refdata/mht29_frame.bin`, 2048 bytes)

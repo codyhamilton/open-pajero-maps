@@ -58,6 +58,13 @@ reports PASS, FAIL or N/A; a check is applicable to a work package's output
 when that package's plan says so, and the harness's config lists which files
 and layers exist in `G`.
 
+Copy-through siblings on the disc root (the ten content-independent files in
+the file table's **copy** row) are verified by harness check
+`copy_through_graphics` on layer `meta`: when that layer is in scope, each
+basename must exist on both R and G and be byte-identical; **missing files
+are FAIL, not successful copying.** Default map-only config leaves the check
+NA. WP5 copy writers remain Not started.
+
 ## Target disc: file by file
 
 | File | Source | Owning work package | Deviations |

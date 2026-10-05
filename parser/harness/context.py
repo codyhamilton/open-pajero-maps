@@ -82,10 +82,17 @@ def _compute_walk_summary(path: str) -> WalkSummary:
 
 class Context:
     def __init__(self, reference: Optional[str], generated: str, config: dict,
-                 workers: int = 1):
+                 workers: int = 1,
+                 reference_root: Optional[str] = None,
+                 generated_root: Optional[str] = None):
         self.reference = reference
         self.generated = generated
         self.config = config
+        # Disc roots that hold copy-through siblings next to ALLDATA.KWI.
+        # Set when the CLI was given a disc directory or an ALLDATA.KWI path;
+        # None when a bare non-ALLDATA file has no sibling meaning.
+        self.reference_root = reference_root
+        self.generated_root = generated_root
         # Worker-pool width a check may use for a parallel-over-blocks decode
         # (e.g. `coord_scale`); 1 (the default) keeps every check's prior
         # single-process behaviour. Set from `compare_disc.py --workers`.

@@ -11,9 +11,10 @@ Usage::
 Exit code 0 when no check is FAIL (PASS and NA both OK).
 
 Default config has layers_present=["map"] only. A green exit under that
-map-only scope is **not** full-disc parity: WP2–WP5 appear as NA negative
-controls, and the JSON report sets full_disc_parity=false. See
-docs/OVERVIEW.md WP table and the Assessor functional-e2e warning.
+map-only scope is **not** full-disc parity: WP2–WP4 appear as NA negative
+controls; copy_through_graphics (layer meta) is also NA under map-only.
+The JSON report sets full_disc_parity=false. See docs/OVERVIEW.md WP table
+and the Assessor functional-e2e warning.
 
 This module is a thin CLI over `parser/harness/`; all check logic lives
 there. See `parser/harness/__init__.py` for the reading-paths-only import
@@ -38,11 +39,25 @@ DEFAULT_PROFILE_OUT = Path(__file__).resolve().parent / "refdata" / "profile" / 
 
 def _resolve_alldata_path(p: str) -> str:
     """Accept either a disc root directory or a direct path to
-    `ALLDATA.KWI`."""
+    `ALLDATA.KWI`. Prefer `_resolve_disc_paths` when sibling roots matter."""
+    alldata, _root = _resolve_disc_paths(p)
+    return alldata
+
+
+def _resolve_disc_paths(p: str) -> tuple[str, str | None]:
+    """Return `(alldata_path, disc_root)`.
+
+    A directory argument is the disc root (`…/ALLDATA.KWI` beside siblings).
+    A path whose basename is `ALLDATA.KWI` uses its parent as the root.
+    Any other bare file has no sibling meaning → root is None.
+    """
     path = Path(p)
     if path.is_dir():
-        return str(path / "ALLDATA.KWI")
-    return str(path)
+        return str(path / "ALLDATA.KWI"), str(path)
+    alldata = str(path)
+    if path.name.upper() == "ALLDATA.KWI":
+        return alldata, str(path.parent)
+    return alldata, None
 
 
 def _load_config(path: str | None) -> dict:
@@ -95,8 +110,11 @@ def main() -> int:
         ap.error("--generated is required unless --profile")
 
     config = _load_config(args.config)
-    generated_path = _resolve_alldata_path(args.generated)
-    reference_path = _resolve_alldata_path(args.reference) if args.reference else None
+    generated_path, generated_root = _resolve_disc_paths(args.generated)
+    if args.reference:
+        reference_path, reference_root = _resolve_disc_paths(args.reference)
+    else:
+        reference_path, reference_root = None, None
 
     binding, err = report.bind_generated(generated_path, args.manifest,
                                          args.no_manifest)
@@ -105,7 +123,8 @@ def main() -> int:
         return 2
 
     ctx = Context(reference=reference_path, generated=generated_path, config=config,
-                  workers=args.workers)
+                  workers=args.workers,
+                  reference_root=reference_root, generated_root=generated_root)
 
     all_checks = registry.discover()
     if args.checks:

@@ -66,7 +66,7 @@ detailed evidence remain in plan 04. The repo contains no plan 06 design: the
 earlier CI-gate draft is not a work unit on master.
 WP2–WP5 labels below are program scope, not executable briefs.
 
-The offline oracle (`parser/compare_disc.py`) defaults to `layers_present=["map"]`. Green exit under that map-only scope is **not** full-disc parity: WP2–WP5 register as NA negative controls and the report sets `full_disc_parity: false`.
+The offline oracle (`parser/compare_disc.py`) defaults to `layers_present=["map"]`. Green exit under that map-only scope is **not** full-disc parity: WP2–WP4 register as NA negative controls; WP5 copy-through siblings are covered by `copy_through_graphics` on layer `meta` (also NA under map-only — missing G graphics do not PASS). The report sets `full_disc_parity: false`. WP5 copy writers remain **Not started**; the cmp contract does not close WP5 or Phase 3.
 
 ## Where to read next
 
