@@ -69,3 +69,40 @@ Tests: `test_dump_join_other_mechanism.py` + `test_dump_join_memory.py` gave **2
 ## Phase 2 — Every assignment joins to its proven plan-14 cause, with conflicts discriminated
 
 Refine skipped (DESIGN). One unit, with its brief authored inline: `briefs/2-01-join-reconcile.md`.
+
+### 2-01 — per-row join, cause reconciliation and F3 resolution
+
+- **Worker:** Codex `gpt-6.1-sol` (high), sandboxed, 04:44–04:49. 90,346 tokens; the harness reports no turn count. Report: `reports/2-01-join-reconcile.md`. Status: `done with concerns` (the concerns are only the carried DESIGN arithmetic and deleted 3-17 data).
+- **Built:**
+  - `triage/join_reconcile.py` (argparse; reads committed TSVs only);
+  - `triage/phase2_join.tsv` (776 rows), `phase2_crosstab.tsv`, `phase2_discriminators.tsv` (7 O04 rows);
+  - `phase2_reconciliation.md`;
+  - an appended F3 resolution in `docs/plans/14-completeness-root-cause.md`: the F3 follow-up bullet is repointed, and everything else is an addition;
+  - OVERVIEW: the completeness blocker is narrowed, and the stale "plan 14 open" mentions in the WP1 row and "What remains unfinished?" are corrected to closed-out `3fb5a35`.
+- **Result:**
+  - **769 consistent, 7 conflict-proven, 0 conflict-open.**
+  - Cross-tab: O01 → 2-01 340 / 2-02 23; O05 → 2-01 2 / 2-02 130; O04 → 2-02 7 (conflict-proven); NO_RULE → 2-02 274.
+  - Predictions: every 2-01 row rule-assigned (342/342) PASS; `NO_RULE` ⊆ 2-02 (274/274) PASS.
+  - O06: 0 rows.
+- **O04 discriminators** (rows 138, 236, 282, 284, 317, 496, 563): R presence false on all seven, and the original geometry has 0 C records on all seven (3-03 checker disposition holds). After penultimate-coordinate repair under the current contract, rows 138, 284 and 496 yield a representable piece (1 C record, required); 236, 282, 317 and 563 still yield none. All seven are named for plan 04's successor spool list and not relabelled checker.
+- **Row 335:** amended 2-02 per the F2 ruling, with its distinct 3-01 trigger recorded.
+- **Additional observation (worker):** 2-01 holds 341 type-288 rows and 1 type-321 row, whereas the historical wording says 288 only. Recorded in `phase2_reconciliation.md`.
+- **Deviation (Execute):** the worker's re-run command omitted the interpreter from the wrapper argv. Execute corrected it in `phase2_reconciliation.md`.
+
+### Phase 2 verification (Execute, cheap tier)
+
+Entry point `join_reconcile.py` re-run under the guard (`runs/p2_join_reconcile.json`, exit 0, 0.1 s):
+- outputs byte-identical to the worker's (md5 check);
+- 776 rows / 776 unique keys; key set equal to `phase3_membership.tsv`; cross-tab sum 776; 7 discriminator rows equal to the O04 key set;
+- both predictions PASS; 0 conflict-open.
+
+`git diff` of the plan 14 record before commit showed one repointed follow-up line plus an appended paragraph. `artifact_feedback` was not called (workflow-service calls excluded).
+
+**Phase 2 outcome verified.**
+
+#### Carried
+
+1. The DESIGN's 34-versus-31 arithmetic (Phase 1 Carried 1) and the unrecoverable 3-17 per-row identity (Phase 1 Carried 2): recorded in `phase2_reconciliation.md`.
+2. The 2-01 source-data parity observation stays carried to Design (not absorbed).
+3. The seven O04 spool rows go to plan 04's successor spool list (not drafted here).
+4. 2-01 type wording (341 × 288 + 1 × 321) versus the historical "288" phrasing. Informational.
