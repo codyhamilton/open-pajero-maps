@@ -1,9 +1,10 @@
 # Implementation — 14 completeness root cause
 
-- Tool: Codex (assigned instance), model `gpt-6.1-sol`
-- Session: Phase 1 closed
-- Started: 2026-10-05 ~23:05 Australia/Brisbane
+- Tool: OpenCode DeepSeek Flash (Phase 2); Phase 1 was Codex `gpt-6.1-sol`
+- Session: Phase 2 refine + execute
+- Started: 2026-10-05 ~23:05 Australia/Brisbane (Phase 1)
 - Phase 1 closed: 2026-10-05 ~23:34 Australia/Brisbane
+- Phase 2 refine: 2026-10-06 ~00:09 Australia/Brisbane
 
 ## Phase 1 — Per-row completeness evidence table
 
@@ -31,6 +32,22 @@
 
 ### Carried
 
-- Live O01/O04/O05/O06 partition blocked until `other_mechanism` sides are recovered or recomputed reproducibly (Phase 2 may need that before rule-sensitive grouping).
+- Live O01/O04/O05/O06 partition blocked until `other_mechanism` sides are recovered or recomputed reproducibly (Phase 2 refine rejected blocking on recovery; may try as optional discriminator only).
 - One spool source-evidence gap at `(0,1379,1138,288,…)` — which source/requirement branch establishes the K1 demand?
 - Assignment-gap numeric deltas (+468 / +502) are not live unattributed drift; do not treat them as count movement in Phase 2.
+- Phase 1 R presence is frame-presence (sparse-tile alias possible); Phase 2 unit 2-01 must apply cell-local geometric meet before closing `g-omits-cell-local-dvd-type`.
+
+## Phase 2 — Root-cause groups
+
+**Refine accepted (docs-only, Execute).** Approach C: R-presence primary + cell-local check; complete-repair package for R=0; residuals → open questions. Units `2-01`, `2-02`, `2-03` briefed under `briefs/`. `artifact_feedback` MCP unreachable — continued without workflow post.
+
+Seed cross-tab from Phase 1 TSV (pre cell-local / pre repair):
+
+| Bucket | R>0 G=0 | R=0 G=0 |
+| --- | ---: | ---: |
+| historic_188 | 1 | 187 |
+| added_89 | 0 | 89 |
+| neither_499 | 342 | 157 |
+| **total** | **343** | **433** (incl. row 335 source gap) |
+
+Execute units via OpenCode DeepSeek Flash next; Phase 2 close trailer only on the closing commit.

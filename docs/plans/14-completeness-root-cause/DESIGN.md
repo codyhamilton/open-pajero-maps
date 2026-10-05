@@ -121,9 +121,29 @@ Prove, row by row, why each currently unattributed completeness failure exists, 
 
 - Outcome: every Phase 1 unattributed row is either (a) member of exactly one named group whose committed reproducer isolates a single mechanism and states the expected completeness count movement (or expected R/G byte equality), or (b) listed under `open questions` with the discriminators tried and why none proved. Groups that merely restate `checker:repaired-not-representable` or “EO-stitch side-effect” without a new positive reproducer are rejected. The 3-16 negative result may be cited to exclude the already-failed EO-stitch bypass; it does not close a group by itself. No rule registration and no encoder/checker edit in this phase.
 - Surfaces: group note + reproducer scripts under the plan-14 scratch/triage paths; may read `_k1_cmp.c` / `_cenc.c` / spool forensics read-only.
-- Approach: open
+- Approach: open → **refined 2026-10-06** (see Units below).
 - Depends on: Phase 1 evidence table.
 - Refine: required (approach open). Divergent candidates are scored only against the Phase 2 outcome above.
+
+#### Phase 2 refine (2026-10-06)
+
+Universe: all **776** Phase 1 evidence rows (assignment column is `evidence-gap:other_mechanism`; live O01/O04/O05 partition not recoverable without side tables — do not fabricate mechanism codes). Primary discriminator is Phase 1 **R vs G type presence** under the committed decode contract, not the 3-15/3-16 science labels alone.
+
+| Candidate | Score vs Phase 2 outcome | Verdict |
+| --- | --- | --- |
+| A. Partition by historic_188 / added_89 / neither | Weak: Phase 1 shows neither is split 342 R>0 / 157 R=0; historic+added are almost all R=0 — set membership is not one mechanism | Reject as primary |
+| B. Recover `other_mechanism` then group only NO_RULE | Ideal if sides existed; producer side tables cleaned; fabricating codes forbidden; blocking on recovery fails the phase | Reject as gate; may be tried as a read-only discriminator inside units and recorded if it fails |
+| C. **R-presence primary; cell-local R check; complete-repair package for R=0** | Matches outcome: positive reproducers, expected count/byte movement, covers all 776, rejects label-only closes; 3-16 cited only to exclude EO-stitch bypass for the R=0 added_89 subset | **Accept** |
+
+#### Units
+
+| Unit | Group / deliverable | Membership (Phase 1 columns) | Reproducer isolates | Expected movement |
+| --- | --- | --- | --- | --- |
+| **2-01** | `g-omits-cell-local-dvd-type` | Rows with `R_polygon_count > 0` that pass a **cell-local** R presence check (geometric meet of a qualifying R polygon with the target cell — not sparse-tile alias alone). Seed count before cell-local filter: **343**. | Single mechanism: production G path omits a type that R emits cell-locally for the same completeness key. Script under plan-14 triage/scratch; read-only discs/spool/`_cenc.c` clip contract. | Build fix emitting that type → those rows leave the failing set; or committed R/G type-count equality for each member cell/type. |
+| **2-02** | `r-absent-complete-repair-zero` | Rows with `R_polygon_count == 0` and a concrete spool source witness (exclude native dump_row **335**). Seed count: **432**. Historic_188 ∩ R=0, added_89 (all R=0), and neither∩R=0 share this bucket until a discriminator splits them. | **New** committed complete-repair harness (3-13-style EO face decompose + builder clip/densify/round): each member yields 0 quantised area2 / 0 C records for the demanded type. Citing `checker:repaired-not-representable` without this re-run/package is rejected. 3-16 may exclude EO-stitch bypass for the 89; it does not close the group. | Checker stop over-demanding these → −N failing; or proven non-deviation if R and G both lack the type under the named contract and the demand is shown inapplicable. |
+| **2-03** | Open questions + residual ledger | (1) dump_row **335** source-evidence gap; (2) any 2-01 seed that fails cell-local R (tile-alias only); (3) any 2-02 row where complete-repair emits a representable piece; (4) any row whose discriminators diverge (e.g. non-288 codes if repair/clip behaviour differs). | Discriminators tried and why none proved a single mechanism; no fake group close. | N/A — rows remain open questions for Phase 3 / later. |
+
+Membership must be exhaustive and disjoint: every one of the 776 rows appears in exactly one of 2-01 group, 2-02 group, or 2-03 open questions. No rule registration; no encoder/checker edit.
 
 ### Phase 3 — Fix or proven non-deviation per group
 
