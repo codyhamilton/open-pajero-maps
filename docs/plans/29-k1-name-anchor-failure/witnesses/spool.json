@@ -1,0 +1,155 @@
+{
+  "ancestor_exit": 0,
+  "drift": [],
+  "halo_eligible": false,
+  "k1_bucket_distance_raw": null,
+  "k1_bucket_result": "inf (saved K1 error_raw null)",
+  "k1_query_global_raw": [
+    0,
+    2216306
+  ],
+  "mesh_assignment": null,
+  "nearest_distance_raw": 1635904.9439914674,
+  "provenance_source": "docs/plans/14-completeness-root-cause.md and docs/provenance.md spool recovery",
+  "region_block_cells": [
+    0,
+    31,
+    512,
+    575
+  ],
+  "region_cells_read": 3,
+  "region_names_checked": 1,
+  "schema": 1,
+  "spool": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/extract_timing/spool",
+  "spool_extractor_tree": "34a04cc",
+  "target": {
+    "byte_layout": "concatenated on-file scalar columns then label/text; offsets in segments",
+    "cell": [
+      0,
+      541
+    ],
+    "cell_length": 2616,
+    "cell_offset": 248992624,
+    "cell_sha256": "5b7c1a75a573ca9efbd55c6961b02b1fce06b0dd041b3f6f517f38a79f25d44c",
+    "columns": {
+      "label": "unknown type 0x120",
+      "label_hex": "756e6b6e6f776e2074797065203078313230",
+      "s_angflags": 0,
+      "s_angle": 0.0,
+      "s_code": 288,
+      "s_dsf": 0,
+      "s_label_len": 18,
+      "s_lat": -38.727285888405795,
+      "s_lon": 77.51903576666666,
+      "s_present": 3,
+      "s_prio": 5,
+      "s_text_len": 131,
+      "s_type": 6,
+      "s_vertical": 0,
+      "text": "France, Terres australes et antarctiques fran\u00e7aises, \u00celes Saint-Paul et Nouvelle-Amsterdam - \u00cele Saint-Paul (eaux territoriales)",
+      "text_hex": "4672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ec3a761697365732c20c38e6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20c38e6c65205361696e742d5061756c202865617578207465727269746f7269616c657329"
+    },
+    "encoder_string_hex": "4672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ee761697365732c20ce6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20ce6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+    "lat": -38.727285888405795,
+    "level": 0,
+    "lon": 77.51903576666666,
+    "record": 0,
+    "record_hex": "060000002001000005000000000000000000000000031200000083000000c9c538b4175d43c068d2cae1376153400000000000000000756e6b6e6f776e20747970652030783132304672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ec3a761697365732c20c38e6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20c38e6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+    "record_length": 203,
+    "record_sha256": "e2a39a45284bd347400a40e313a7eaa5c2245994fef706710a0aac98fc618f9c",
+    "segments": [
+      {
+        "column": "s_type",
+        "hex": "06000000",
+        "length": 4,
+        "offset": 248994960
+      },
+      {
+        "column": "s_code",
+        "hex": "20010000",
+        "length": 4,
+        "offset": 248994968
+      },
+      {
+        "column": "s_prio",
+        "hex": "05000000",
+        "length": 4,
+        "offset": 248994976
+      },
+      {
+        "column": "s_dsf",
+        "hex": "00000000",
+        "length": 4,
+        "offset": 248994984
+      },
+      {
+        "column": "s_angflags",
+        "hex": "00000000",
+        "length": 4,
+        "offset": 248994992
+      },
+      {
+        "column": "s_vertical",
+        "hex": "00",
+        "length": 1,
+        "offset": 248995000
+      },
+      {
+        "column": "s_present",
+        "hex": "03",
+        "length": 1,
+        "offset": 248995008
+      },
+      {
+        "column": "s_label_len",
+        "hex": "12000000",
+        "length": 4,
+        "offset": 248995016
+      },
+      {
+        "column": "s_text_len",
+        "hex": "83000000",
+        "length": 4,
+        "offset": 248995024
+      },
+      {
+        "column": "s_lat",
+        "hex": "c9c538b4175d43c0",
+        "length": 8,
+        "offset": 248995032
+      },
+      {
+        "column": "s_lon",
+        "hex": "68d2cae137615340",
+        "length": 8,
+        "offset": 248995040
+      },
+      {
+        "column": "s_angle",
+        "hex": "0000000000000000",
+        "length": 8,
+        "offset": 248995048
+      },
+      {
+        "column": "blob_name_label",
+        "hex": "756e6b6e6f776e2074797065203078313230",
+        "length": 18,
+        "offset": 248995080
+      },
+      {
+        "column": "blob_name_text",
+        "hex": "4672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ec3a761697365732c20c38e6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20c38e6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+        "length": 131,
+        "offset": 248995104
+      }
+    ],
+    "source_distance_raw": 1635904.9439914674,
+    "string_encoding": "utf-8",
+    "string_hex": "4672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ec3a761697365732c20c38e6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20c38e6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+    "string_type": 6,
+    "text": "France, Terres australes et antarctiques fran\u00e7aises, \u00celes Saint-Paul et Nouvelle-Amsterdam - \u00cele Saint-Paul (eaux territoriales)",
+    "type_code": 288
+  },
+  "tip_assignment": null,
+  "tolerance_raw": 0.5
+}

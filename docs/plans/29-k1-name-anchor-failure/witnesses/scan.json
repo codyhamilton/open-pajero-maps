@@ -1,0 +1,48 @@
+{
+  "checked": 2006629,
+  "expected_O03_rejected": 1,
+  "extra_rejected": 0,
+  "per_level": {
+    "0": {
+      "checked": 1971463,
+      "rejected": 1,
+      "without_anchor": 0
+    },
+    "10": {
+      "checked": 8,
+      "rejected": 0,
+      "without_anchor": 0
+    },
+    "12": {
+      "checked": 8,
+      "rejected": 0,
+      "without_anchor": 0
+    },
+    "2": {
+      "checked": 30286,
+      "rejected": 0,
+      "without_anchor": 0
+    },
+    "4": {
+      "checked": 3354,
+      "rejected": 0,
+      "without_anchor": 0
+    },
+    "6": {
+      "checked": 1223,
+      "rejected": 0,
+      "without_anchor": 0
+    },
+    "8": {
+      "checked": 287,
+      "rejected": 0,
+      "without_anchor": 0
+    }
+  },
+  "rejected": 1,
+  "rejects_tsv": "/home/codyh/workspace/open-pajero-maps-14-completeness/docs/plans/29-k1-name-anchor-failure/witnesses/scan_rejects.tsv",
+  "rejects_tsv_sha256": "47521830a4a4abaec1a54852984ed636ef26e1ad1bc94548487c7e019fe20089",
+  "schema": 1,
+  "spool": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/extract_timing/spool",
+  "without_anchor": 0
+}

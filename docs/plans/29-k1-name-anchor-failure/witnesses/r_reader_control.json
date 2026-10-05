@@ -1,0 +1,39 @@
+{
+ "R": {
+  "perth_827_866": [
+   [
+    "resolved",
+    4,
+    739
+   ]
+  ],
+  "block0_cells_with_frames": 0,
+  "block0_names": 0,
+  "block0_nonempty": []
+ },
+ "G": {
+  "perth_827_866": [
+   [
+    "resolved",
+    4,
+    3879
+   ]
+  ],
+  "block0_cells_with_frames": 3,
+  "block0_names": 1,
+  "block0_nonempty": [
+   [
+    0,
+    541
+   ],
+   [
+    0,
+    562
+   ],
+   [
+    0,
+    563
+   ]
+  ]
+ }
+}

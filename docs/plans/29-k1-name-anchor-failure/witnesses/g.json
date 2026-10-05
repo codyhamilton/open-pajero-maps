@@ -1,0 +1,162 @@
+{
+  "cell": {
+    "block": 0,
+    "block_cells": [
+      0,
+      31,
+      512,
+      575
+    ],
+    "blockset": 32,
+    "cell": [
+      0,
+      541
+    ],
+    "frames": [
+      {
+        "bounds": {
+          "coord_range": null,
+          "lat_hi": -38.70833333333333,
+          "lat_lo": -38.729166666666664,
+          "lon_hi": 90.03125,
+          "lon_lo": 90.0
+        },
+        "frame_class": "leaf",
+        "leaf_path": [
+          928
+        ],
+        "length": 320,
+        "names": [
+          {
+            "class": 288,
+            "global_raw": [
+              0.0,
+              2216306.0000000005
+            ],
+            "lat": -38.727284749348954,
+            "lon": 90.0,
+            "raw": [
+              0,
+              370
+            ],
+            "record_hex": "004806050120000000000172800000404672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ee761697365732c20ce6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20ce6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+            "record_length": 144,
+            "record_offset": 197597764,
+            "record_sha256": "a681fcc453e60a6ea0bde560254ab0d5f66ee58644e22de7632480f944d6b92a",
+            "stored_string_hex": "4672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ee761697365732c20ce6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20ce6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+            "string_encoding": "latin-1",
+            "string_hex": "4672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ee761697365732c20ce6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20ce6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+            "string_type": 6,
+            "text": "France, Terres australes et antarctiques fran\u00e7aises, \u00celes Saint-Paul et Nouvelle-Amsterdam - \u00cele Saint-Paul (eaux territoriales)",
+            "type_code": 288
+          }
+        ],
+        "offset": 197597600,
+        "range": 4096,
+        "sha256": "3c927c6b4868664907ab14c8a8c49fbf34d5debb8e5ef4d4a22d28e323251b48"
+      }
+    ],
+    "status": "resolved"
+  },
+  "disc": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-14/G_new/ALLDATA.KWI",
+  "drift": [],
+  "failures": [
+    {
+      "cell": [
+        0,
+        541
+      ],
+      "error_raw": null,
+      "kind": "name_anchor",
+      "leaf_path": [
+        928
+      ],
+      "reason": "no spool record within half a raw unit",
+      "vertex": {
+        "lat": -38.727284749,
+        "lon": 90.0,
+        "raw": [
+          0,
+          370
+        ]
+      }
+    }
+  ],
+  "full_pin_remeasured": false,
+  "historical_disc_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+  "live_report": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-14/p3/indep/rem01/k1_live.json",
+  "live_report_sha256": "07664e01b11ee0f65bcc7e2a3b8c2e815ee275a0437d7534c692d4c9b21398a1",
+  "live_total": {
+    "checked": 2317056,
+    "failing": 1,
+    "worst_error_raw": 0.499999
+  },
+  "schema": 1,
+  "target": {
+    "frame": {
+      "bounds": {
+        "coord_range": null,
+        "lat_hi": -38.70833333333333,
+        "lat_lo": -38.729166666666664,
+        "lon_hi": 90.03125,
+        "lon_lo": 90.0
+      },
+      "frame_class": "leaf",
+      "leaf_path": [
+        928
+      ],
+      "length": 320,
+      "names": [
+        {
+          "class": 288,
+          "global_raw": [
+            0.0,
+            2216306.0000000005
+          ],
+          "lat": -38.727284749348954,
+          "lon": 90.0,
+          "raw": [
+            0,
+            370
+          ],
+          "record_hex": "004806050120000000000172800000404672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ee761697365732c20ce6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20ce6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+          "record_length": 144,
+          "record_offset": 197597764,
+          "record_sha256": "a681fcc453e60a6ea0bde560254ab0d5f66ee58644e22de7632480f944d6b92a",
+          "stored_string_hex": "4672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ee761697365732c20ce6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20ce6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+          "string_encoding": "latin-1",
+          "string_hex": "4672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ee761697365732c20ce6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20ce6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+          "string_type": 6,
+          "text": "France, Terres australes et antarctiques fran\u00e7aises, \u00celes Saint-Paul et Nouvelle-Amsterdam - \u00cele Saint-Paul (eaux territoriales)",
+          "type_code": 288
+        }
+      ],
+      "offset": 197597600,
+      "range": 4096,
+      "sha256": "3c927c6b4868664907ab14c8a8c49fbf34d5debb8e5ef4d4a22d28e323251b48"
+    },
+    "name": {
+      "class": 288,
+      "global_raw": [
+        0.0,
+        2216306.0000000005
+      ],
+      "lat": -38.727284749348954,
+      "lon": 90.0,
+      "raw": [
+        0,
+        370
+      ],
+      "record_hex": "004806050120000000000172800000404672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ee761697365732c20ce6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20ce6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+      "record_length": 144,
+      "record_offset": 197597764,
+      "record_sha256": "a681fcc453e60a6ea0bde560254ab0d5f66ee58644e22de7632480f944d6b92a",
+      "stored_string_hex": "4672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ee761697365732c20ce6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20ce6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+      "string_encoding": "latin-1",
+      "string_hex": "4672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ee761697365732c20ce6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20ce6c65205361696e742d5061756c202865617578207465727269746f7269616c657329",
+      "string_type": 6,
+      "text": "France, Terres australes et antarctiques fran\u00e7aises, \u00celes Saint-Paul et Nouvelle-Amsterdam - \u00cele Saint-Paul (eaux territoriales)",
+      "type_code": 288
+    }
+  }
+}

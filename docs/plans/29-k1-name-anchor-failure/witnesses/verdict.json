@@ -1,0 +1,11 @@
+{
+  "concerns": [],
+  "criterion": "byte-equal string at Chebyshev distance <= 0.5 in the shared L0 raw lattice",
+  "drift": [],
+  "full_name_record_byte_equal": false,
+  "phase1_ready": true,
+  "position_matches": [],
+  "scan_rejected": 1,
+  "schema": 1,
+  "verdict": "A"
+}
