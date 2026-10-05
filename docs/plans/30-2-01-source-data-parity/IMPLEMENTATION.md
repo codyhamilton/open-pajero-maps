@@ -55,3 +55,7 @@ The approach is open: discriminator candidates are scored against the fixed outc
 `artifact_feedback` was not called (workflow-service calls excluded).
 
 **Phase 2 outcome verified** (with 99 named conflict-open rows, as DESIGN Outcome 6 permits).
+
+### Phase 2 reopened (Execute, 2026-10-06 08:20 AEST)
+
+The Phase 2 close at `10ac108` is **superseded**. DESIGN's Phase 2 outcome is every row `supply-path` or `unfixable-proven`; 99 conflict-open does not meet it, although Outcome 6 allows named opens and the review passed. Execute's scan of the retained PBF evidence shows the 99 are open only because of PBF relation gaps, and most gaps come from the probe treating node and `subarea` members as missing geometry. Unit `briefs/2-02-pbf-relation-gaps.md` corrects that and resolves or names each remaining row. A partial close-out seat for this plan was stopped and its uncommitted moves were reverted.
