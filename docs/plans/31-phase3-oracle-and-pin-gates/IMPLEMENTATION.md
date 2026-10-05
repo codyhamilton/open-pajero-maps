@@ -36,3 +36,21 @@ Refine skipped. One unit: `briefs/1-01-oracle-chain.md`.
 ## Phase 2 — Live pin contract for Phase 3 close is stated; historical 100/26650 disposed without invention
 
 Refine skipped. One unit: `briefs/2-01-live-pin-contract.md`.
+
+### 2-01 — live pin contract
+
+- **Worker:** Codex `gpt-6.1-sol` (high), sandboxed, 08:05–~08:14 AEST, 89,962 tokens. Report: `reports/2-01-live-pin-contract.md`.
+- **Built:** `pin_contract.py` (`publish`, light, no disc read), `pin_contract.tsv`/`.json`, `phase2_note.md`, and `parser/tests/test_pin_contract.py` (synthetic, 28 passed; Execute re-ran it, 28 passed). The worker ran `publish` itself; it reads only committed or retained JSON and verifies each sha256, so no guarded run was needed.
+- **Result:** live failing is 0 for every K1 kind on `2ee3456a…` (background 176,386,506 checked; background_boundary 64,111,046; completeness 1,800,514; interior_cover 1,590,566; name_anchor 2,317,055; range 285,809,587; road_node 42,994,980; road_point 0; step 227,935,489), from plan 29's compare, corroborated by plan 32's K1 `-j6` report. Live contract: pinned set ∅ = live failing set ∅. `pinned_candidates.tsv`: digest, 100 shown groups and the 26,650 / 1,939,931 footer verified; no full enumerations recovered; disposition **residual-not-required-for-live-close**, historical identity unverifiable. No rows invented.
+
+### Phase 2 verification (Execute, cheap tier)
+
+1. `pin_contract.tsv`/`.json` give live failing counts per kind on the successor, cited with sha256; the live pinned-failure set is empty because failing is 0 everywhere; the set-equality rule for the live close is stated, and any missing or positive count keeps it open.
+2. Historical `pinned_candidates.tsv`: sha256 verified; disposition `residual-not-required-for-live-close` with root cause (full enumerations were never committed; the live contract does not need them when the live set is ∅).
+3. OVERVIEW's `pinned_candidates` set-equality blocker is narrowed accordingly.
+4. Plan 04 Phase 3 is **not** closed; PSS remains a blocker.
+5. No 3-90, no invented pin list, no later phases, no reseat.
+
+`artifact_feedback` was not called (workflow-service calls excluded).
+
+**Phase 2 outcome verified.**
