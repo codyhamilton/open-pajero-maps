@@ -20,3 +20,15 @@ Refine skipped. One unit: `briefs/1-01-oracle-chain.md`.
   - Perth 3-14 (`da13a775…`→`04be2f6e…`): **795 changed cells** (L0 784 / L2 11); causes unattributed.
   - AU plan 29 (`4ed9cd80…`→`2ee3456a…`): 1 L0 cell (0,541), leaf 928, 146 bytes, 0 unexplained.
   - Perth 3-11 and plan 29: unchanged (recorded equality).
+
+### Phase 1 verification (Execute, cheap tier)
+
+1. `oracle_chain.tsv` covers `87a01b14…→013586b5…`, `013586b5…→4ed9cd80…` and `4ed9cd80…→2ee3456a…` with full digests, artefact path and sha256, changed count, confinement claim and unexplained count (plus Perth rows).
+2. Unexplained: 3-11 0; plan 29 0; 3-14 AU 246,123 and Perth 795, each listed by cell in the sha-pinned retained lists, with the open reason "payload causes not measured" (DESIGN Outcome 2's "named with why it is open").
+3. OVERVIEW's "3-11 versus 3-14 oracle" wording is narrowed to "3-14 oracle cause attribution", with the measured identities and the table link.
+4. Protected discs re-hashed unchanged after the read-only diffs (`protected_unchanged: true`).
+5. No Phase 3 close, PSS, other-kind joins, 3-90 brief or later phases.
+
+`artifact_feedback` was not called (workflow-service calls excluded).
+
+**Phase 1 outcome verified**, with the 3-14 cause attribution carried as a named residual.
