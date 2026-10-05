@@ -40,7 +40,7 @@ Refine skipped (DESIGN). One unit, with its brief authored inline: `briefs/1-01-
   - L0 (0,541) leaf [928] frame at offset 197,597,600, length 320, sha256 `3c927c6b…51b48`.
   - Name record at offset 197,597,764, 144 B, sha256 `a681fcc4…6b92a`: class 288, string_type 6, raw (0,370), lat −38.727284749 / lon 90.0, Latin-1 text "France, Terres australes et antarctiques françaises, Îles Saint-Paul et Nouvelle-Amsterdam - Île Saint-Paul (eaux territoriales)".
 - **Spool:** L0 (0,541) cell at offset 248,992,624, 2,616 B, sha256 `5b7c1a75…`. Record 0 column bytes sha256 `e2a39a45…`. lat −38.727285888 / lon 77.519035767, the same text in UTF-8. K1 nearest distance 1,635,904.94 raw (> 0.5). Not halo-eligible.
-- **R** (`8c2d2027…`): all nine cells (0..1 × 540..542) are `empty_slot`, and ix −1 is outside coverage. Byte-equal names: **none**.
+- **R** (`8c2d2027…`): six in-coverage cells (0..1 × 540..542) are reported as `empty_slot`; the other three requested cells, at ix −1, are outside coverage. Byte-equal names: **none**.
 - Tip `assign_to_parcel` and the mesh twin both return `None` for this name. `git merge-base --is-ancestor 34a04cc 16e2931` exits 0.
 - Whole-spool scan: 2,006,629 anchored names checked across all levels; plan-18-rejectable **1**, which is exactly the pinned item; 0 extras.
 
