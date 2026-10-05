@@ -60,7 +60,7 @@ is **not** cleared; a later 3-90 re-run under the amended brief is still
 required. Remaining open blockers: PSS contract (ceiling held; live gate at
 ops ≤6), native classify joins, truncated pins, 3-11 versus 3-14 oracle,
 incomplete independent-review chain, and historic completeness attribution
-(open under plan **14**). These still block Phase 3 closure; no later phase
+(open under plan **14**). Plan **25** records the 2026-10-06 OOM RCA and memory guards; heavy-Maps **CHM hold** pending clear (`docs/plans/25-oom-memory-rca/`) — not auto-cleared. These still block Phase 3 closure; no later phase
 is released; plan 04 Phase 3 is not closed. The signed phase outcome and
 detailed evidence remain in plan 04. The repo contains no plan 06 design: the
 earlier CI-gate draft is not a work unit on master.

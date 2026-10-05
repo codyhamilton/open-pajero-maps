@@ -39,10 +39,18 @@ It writes:
 
 No rule registration; no `_k1_cmp.c`/`_cenc.c`/rules JSON edit. It is safe to
 re-run; it only writes the paths above.
+
+Plan 25 memory bounds: require ``--max-seeds N`` (or explicit ``--all-seeds``),
+drop full polygon coords from RAM after each proof write, process in batches
+with ``gc.collect``, and refuse whole-file reads of ALLDATA / spool data
+(``whole_file_guard``). Membership / proof semantics unchanged when the same
+seed set is processed.
 """
 from __future__ import annotations
 
+import argparse
 import csv
+import gc
 import json
 import sys
 import hashlib
@@ -61,6 +69,7 @@ from kiwiw.spool import SpoolReader, decode_columns  # noqa: E402
 from overlay_test import RReader  # noqa: E402
 from r_neighbours import LeafIndex  # noqa: E402
 from quantisation_roundtrip import Lattice, RAW  # noqa: E402
+from whole_file_guard import refuse_whole_file_read  # noqa: E402
 
 EVIDENCE = TRIAGE / "completeness_evidence.tsv"
 R_DISC = Path("/run/media/codyh/464210-8480")
@@ -266,18 +275,88 @@ def spool_source_shape(spool, lat, level, source_cell, ordinal):
     return (lat.gx(cols["c_lon"][a:b]), lat.gy(cols["c_lat"][a:b]))
 
 
-def main() -> int:
+
+def polys_without_coords(polys):
+    """Proof metadata without full coordinate rings (plan 25 RAM bound)."""
+    out = []
+    for p in polys:
+        out.append({"leaf_path": p["leaf_path"], "n_coords": p["n_coords"]})
+    return out
+
+
+def assert_no_whole_file_discs(r_path: Path, g_path: Path, spool_dir: Path) -> None:
+    """Fail closed if caller would need whole-file anon for discs/spool data.
+
+    Leaf decode and SpoolReader.pread are the allowed paths; this only asserts
+    the on-disk sizes exceed the refuse threshold so a mistaken read_bytes would
+    be caught by whole_file_guard elsewhere.
+    """
+    for label, p in (("R", r_path), ("G", g_path),
+                     ("spool_L0", spool_dir / "level_0.data")):
+        if not p.exists():
+            continue
+        # Expect these to be large; calling refuse confirms the guard trips.
+        try:
+            refuse_whole_file_read(p)
+            raise SystemExit(
+                f"plan25: {label} {p} is unexpectedly under refuse threshold; "
+                f"update WHOLE_FILE_REFUSE_BYTES or path"
+            )
+        except Exception as e:
+            # WholeFileReadError expected for real discs/spool data
+            if e.__class__.__name__ != "WholeFileReadError":
+                raise
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--max-seeds", type=int, default=None,
+                    help="Process at most N R>0 seeds (plan 25 bound; required unless --all-seeds)")
+    ap.add_argument("--seed-offset", type=int, default=0,
+                    help="Skip this many R>0 seeds before taking --max-seeds")
+    ap.add_argument("--all-seeds", action="store_true",
+                    help="Process every R>0 seed (343). Explicit opt-in; prefer windowed runs.")
+    ap.add_argument("--batch-size", type=int, default=32,
+                    help="gc.collect + drop buffers every N seeds (default 32)")
+    ap.add_argument("--keep-proof-coords", action="store_true",
+                    help="Retain full rings in proof JSON (default: strip coords after write meta)")
+    ap.add_argument("--proofs-dir", type=Path, default=None,
+                    help="Override proofs output directory (harness isolation)")
+    args = ap.parse_args(argv)
+
     gdisc = G_DISC / "ALLDATA.KWI"
+    rdisc = R_DISC / "ALLDATA.KWI"
     assert digest(gdisc) == G_SHA, "G disc sha mismatch"
+    assert_no_whole_file_discs(rdisc, gdisc, SPOOL)
     SCRATCH.mkdir(parents=True, exist_ok=True)
-    PROOFS.mkdir(parents=True, exist_ok=True)
+    proofs_dir = Path(args.proofs_dir) if args.proofs_dir else PROOFS
+    if not proofs_dir.is_absolute():
+        proofs_dir = (ROOT / proofs_dir).resolve()
+    else:
+        proofs_dir = proofs_dir.resolve()
+    proofs_dir.mkdir(parents=True, exist_ok=True)
 
     rows = []
     with EVIDENCE.open() as fh:
         for r in csv.DictReader(fh, delimiter="\t"):
             rows.append(r)
-    seeds = [r for r in rows if int(r["R_polygon_count"]) > 0]
-    assert len(rows) == 776 and len(seeds) == 343, (len(rows), len(seeds))
+    seeds_all = [r for r in rows if int(r["R_polygon_count"]) > 0]
+    assert len(rows) == 776 and len(seeds_all) == 343, (len(rows), len(seeds_all))
+    if args.all_seeds:
+        if args.max_seeds is not None:
+            ap.error("pass only one of --all-seeds / --max-seeds")
+        seeds = seeds_all[args.seed_offset:]
+    else:
+        if args.max_seeds is None:
+            raise SystemExit(
+                "plan25: refuse uncapped cell_local run — pass --max-seeds N "
+                "or explicit --all-seeds (see docs/plans/25-oom-memory-rca/)"
+            )
+        if args.max_seeds < 1:
+            ap.error("--max-seeds must be >= 1")
+        seeds = seeds_all[args.seed_offset: args.seed_offset + args.max_seeds]
+    if not seeds:
+        raise SystemExit("plan25: empty seed window")
 
     r_reader = RReader(str(R_DISC))
     g_reader = RReader(str(G_DISC))
@@ -343,15 +422,24 @@ def main() -> int:
             "spool_requirement_witness": r["spool_K1_requirement_witness"],
             "mechanism": mech,
         }
-        proof_path = PROOFS / f"{dump_row}.json"
+        # Strip full rings from the in-RAM proof before/after write (plan 25).
+        if not args.keep_proof_coords:
+            proof["r_matching_polygons"] = polys_without_coords(rsl["polys"])
+        proof_path = proofs_dir / f"{dump_row}.json"
         proof_path.write_text(json.dumps(proof, sort_keys=True, indent=1) + "\n")
+        # Drop large decode buffers each seed; batch GC.
+        rsl["polys"] = polys_without_coords(rsl["polys"])
+        gsl["polys"] = []
+        del proof
 
         branches = sorted({b for m in meet for b in m["branches"]})
         member = bool(meet) and g_count == 0
         row_out = [int(r[k]) for k in NATIVE] + [
             dump_row, int(r["in_historic_188"]), int(r["in_added_89"]),
             int(r["R_polygon_count"]), int(r["G_polygon_count"]), rsl["status"],
-            "|".join(branches), len(meet), str(proof_path.relative_to(ROOT)),
+            "|".join(branches), len(meet),
+            str(proof_path.relative_to(ROOT) if proof_path.is_relative_to(ROOT)
+                else proof_path),
             g_count,
             mech["spool_source_branch"], mech["spool_source_cell"],
             mech["spool_source_ncoord"],
@@ -364,6 +452,8 @@ def main() -> int:
         key = "|".join(branches) if branches else "none"
         branch_hist[key] = branch_hist.get(key, 0) + 1
         mech_hist[mech["mechanism"]] = mech_hist.get(mech["mechanism"], 0) + 1
+        if (len(members) + len(rejects)) % max(1, args.batch_size) == 0:
+            gc.collect()
 
     def write_tsv(path, data):
         with path.open("w", newline="") as fh:
@@ -371,11 +461,25 @@ def main() -> int:
             w.writerow(MEMBERSHIP_HEADER)
             w.writerows(data)
 
-    write_tsv(TRIAGE / "2-01_g-omits-cell-local-dvd-type_members.tsv", members)
-    write_tsv(TRIAGE / "2-01_g-omits-cell-local-dvd-type_rejects.tsv", rejects)
+    # Plan 25: never overwrite the committed full membership TSVs from a
+    # windowed probe. Full TSV write requires --all-seeds.
+    if args.all_seeds:
+        write_tsv(TRIAGE / "2-01_g-omits-cell-local-dvd-type_members.tsv", members)
+        write_tsv(TRIAGE / "2-01_g-omits-cell-local-dvd-type_rejects.tsv", rejects)
+    else:
+        probe = SCRATCH / "windowed"
+        probe.mkdir(parents=True, exist_ok=True)
+        write_tsv(probe / f"members_offset{args.seed_offset}_n{len(seeds)}.tsv", members)
+        write_tsv(probe / f"rejects_offset{args.seed_offset}_n{len(seeds)}.tsv", rejects)
 
     summary = {
         "seeds": len(seeds),
+        "seeds_available": len(seeds_all),
+        "seed_offset": args.seed_offset,
+        "max_seeds": args.max_seeds,
+        "all_seeds": bool(args.all_seeds),
+        "proof_coords_retained": bool(args.keep_proof_coords),
+        "plan25_memory_bounds": True,
         "members_2_01": len(members),
         "rejects_2_03_open_tile_alias": len(rejects),
         "g_absence_on_all_seeds": all(int(r["G_polygon_count"]) == 0 for r in seeds),
@@ -396,4 +500,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(None))

@@ -68,6 +68,27 @@ sibling terminal or browser, and the scope's cgroup v2 `memory.peak` /
 `MemoryHigh=` throttle may be added the same way; there is **no** machine-wide
 memory cap imposed by this repo.
 
+### Flash / OpenCode heavy Python (plan 25)
+
+**CHM hold (2026-10-06):** heavy Maps jobs stay on hold until plan 25 criteria
+are met **and** Coding Harness Manager clears the hold — see
+`docs/plans/25-oom-memory-rca/`. Landing plan 25 does **not** auto-clear.
+
+Every Flash/OpenCode heavy Python under the lock **must** go through the argv +
+`memory.peak` wrapper so the next OOM has a recoverable cmdline:
+
+```bash
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py \
+  --log output/scratch-25/runs/<tag>.json -- \
+  .venv-rp/bin/python -B <script> [args…]
+```
+
+The wrapper takes `flock output/.heavy.lock` and runs inside
+`systemd-run --user --scope -p MemoryAccounting=yes`. Missing `memory.peak` →
+exit 2 (fail closed). Plan-14 cell-local triage requires `--max-seeds N` (or
+explicit `--all-seeds`); do not whole-file `read()` ALLDATA / spool `level_*.data`
+(see `parser/tools/whole_file_guard.py`).
+
 ### Bounded benchmark / replay commands
 
 Run from the repository root with `.venv-rp/bin/python`. Controllers generate
