@@ -4,6 +4,7 @@ Consumer: Codex `gpt-6.1-sol`, reasoning high, in worktree `/home/codyh/workspac
 Owned paths:
 - `parser/kiwiw/_k1_cmp.c`
 - `parser/kiwiw/_k1.h`, `parser/kiwiw/_k1.c`, `parser/kiwiw/_k1_bg.c` — only to carry per-shape `mult_const` into `k1_shapes` if it is not already there
+- `parser/kiwiw/cenc.py` — K1 ABI only: the tall-row dtype (`:905`, mirrors `k1_tallrow` in `_k1.h:154`) and the `_k1_check_layout` assertions, to carry the multiplier (amended 2026-10-06)
 - `parser/tools/quantisation_roundtrip.py` — `_required_cells`, the completeness block of `_check_block`, and the per-shape mult carriage that feeds it; nothing else
 - new `parser/tools/k1_representable.py`
 - new `parser/tests/test_k1_completeness_representable.py`
@@ -13,10 +14,19 @@ Owned paths:
 
 Touch nothing else. **`parser/kiwiw/_cenc.c` is read-only.**
 Commits: Commit to the current detached HEAD when done evidence passes, with a plain-summary title and no trailer. Do not push.
-Report: before committing, write `docs/plans/14-completeness-root-cause/reports/3-03-checker-representable-demand.md` (a handoff; rubric in `tools/quality/checks/execution-report.json`) and include it in the commit.
+Report: before committing, write `docs/plans/14-completeness-root-cause/reports/3-03-checker-representable-demand.md` (a handoff; rubric at `/home/codyh/workspace/workflow-plugin/tools/quality/checks/execution-report.json`, which is not in this repository) and include it in the commit. It replaces the first attempt's handoff report.
 Depends on: 3-01. Its `triage/demand_attribution_3-01.tsv` is the prediction. Dispatched after 3-02.
 Runs alongside: nothing.
-Budget: 14 files to read, about 450 lines changed or added (C, Python, tests), 90 tool turns. Past the budget, stop: write a handoff under this brief's name in `docs/plans/14-completeness-root-cause/IMPLEMENTATION.md` (done, not done, what you learned), commit only if tests pass, and report `over budget`.
+Budget (amended 2026-10-06: the first attempt hit a 14-file read cap during required reading): 40 files to read, about 800 lines changed or added (C, Python, ABI, tests), 220 tool turns. Past the budget, stop: write a handoff under this brief's name in `docs/plans/14-completeness-root-cause/IMPLEMENTATION.md` (done, not done, what you learned), commit only if tests pass, and report `over budget`.
+
+## Prior attempt
+
+The first attempt, `9eed7c8`, stopped over budget after required reading and made no code change. Read its findings in `reports/3-03-checker-representable-demand.md` and the 3-03 entry in `IMPLEMENTATION.md`; do not redo that research:
+
+- `k1_shapes` and the Python `Shapes` have no multiplier.
+- Carriage points: `_k1.c:shp_begin`, `region_build`, tall compaction, selected-tall insertion, `k1_tallrow`, and the `cenc.py` tall dtype.
+- Python `Shapes` needs it through construction, `take`, `concat`, and pass-one serialisation.
+- Baseline: the four named suites pass, 259 in 22.4 s.
 
 ## Required reading, in order
 
