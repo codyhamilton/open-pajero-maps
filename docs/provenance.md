@@ -408,13 +408,20 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
   items; `nominal_producers.jsonl` resolves all eight and the entire probe was
   repeated with build arithmetic. The retained `full_` trace is historical,
   not the definitive source table. No missing match is presumed synthetic.
-- **Dump extension:** `extend.py` copies `dump_new_ext` into `dump_ext`,
-  populates `residual_crossing_verified` (u8) at **byte146, previously padding**,
-  and checks every other byte against the input. Row size remains152. Exact
-  full-key join of status1, default0; inherited fields/flags stay unchanged.
-  `dump_ext/dump_manifest.json` records the extension. `rules_bg.json`
-  S03/S04/S05 depend on this field; R01/S02 retain priority. This scratch
-  dump/side-table dependency is required to reproduce classification.
+- **Dump extension:** `extend.py` (live, gitignored) is a thin wrapper over the
+  tracked residual adapter `parser/tools/dump_join.py` with its unchanged
+  `DEFAULT_*` residual paths; the durable equivalent is
+  `.venv-rp/bin/python parser/tools/dump_join.py` (mode `residual`, defaults).
+  It writes `dump_ext` from `dump_new_ext`, populating
+  `residual_crossing_verified` (u8) at **byte146, previously padding**, via the
+  bounded windowed I/O path; semantics are unchanged (other bytes identical,
+  row size remains152, exact full-key join of status1, default0; inherited
+  fields/flags stay unchanged). `dump_ext/dump_manifest.json` records the
+  extension. `rules_bg.json` S03/S04/S05 depend on this field; R01/S02 retain
+  priority. This scratch dump/side-table dependency is required to reproduce
+  classification. The vendored whole-file baseline
+  `parser/tests/fixtures/dump_join_baseline/extend.py` (SHA `1b13b844…`) stays
+  frozen in fixtures for replay and is not overwritten by the wrapper.
 - **Independent witnesses:** `independent.py` reads the established all-level
   spool caches in scratch-3-07 without writing them; no K1/Python checker
   imports. Uniform distinct-group seeds2026100212 (initial) and2026100213

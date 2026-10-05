@@ -1,6 +1,6 @@
 # Heavy-job memory usage
 
-Plan 05 cut peak residency and dirty page-cache charge for residual dump joins, the K1 dump finalizer, the 3-07 extension, and `k1_triage` readers after systemd-oomd pressure kills on the Ubuntu host. Bounded windowed I/O, a leaner finalizer, and stable lock/scope docs landed on master. Byte and aggregate semantics were preserved on the seeded fixtures; every phase memory gate that was measured passed. Live `scratch-3-12/extend.py` was left on the whole-file baseline until plan04 3-13/3-14 coordination clears.
+Plan 05 cut peak residency and dirty page-cache charge for residual dump joins, the K1 dump finalizer, the 3-07 extension, and `k1_triage` readers after systemd-oomd pressure kills on the Ubuntu host. Bounded windowed I/O, a leaner finalizer, and stable lock/scope docs landed on master. Byte and aggregate semantics were preserved on the seeded fixtures; every phase memory gate that was measured passed. Live `scratch-3-12/extend.py` was left on the whole-file baseline at plan-05 close-out; plan 17 later switched it to a thin wrapper over the tracked residual `dump_join` adapter.
 
 ## Intent
 
@@ -34,7 +34,7 @@ WORKFLOW: one repo-root `output/.heavy.lock`, one-worker serial rule, recommende
 
 ## Deviations
 
-- Scratch `output/scratch-3-12/extend.py` not switched to `dump_join` (Assumption 6 tension with plan04 3-13); durable path is the tracked adapter + isolated harness.
+- Scratch `output/scratch-3-12/extend.py` left on the whole-file baseline at close-out (Assumption 6 tension with plan04 3-13); durable path kept as the tracked adapter + isolated harness. Follow-up landed in plan 17 (thin wrapper over `dump_join`).
 - Empty-kind: candidate rejects before write; baseline left partial output then failed on `memmap` — matches validation-before-write / Assumption 7.
 - Phase 2 candidate write uses chunked permutation slices rather than a single gathered array write (same bytes, lower peak).
 - High-cardinality triage 1M RSS pair not separately measured; unit late-first / window-straddle identity stands in.
@@ -51,14 +51,14 @@ Bounded serial evidence under `output/.heavy.lock`, fresh `systemd-run --user --
 
 ## Residual Risks
 
-- Re-running the live scratch-3-12 whole-file script still dirties multi-GiB cache.
+- The live scratch-3-12 path is now the `dump_join` wrapper / tracked CLI (plan 17); the whole-file risk remains only if the vendored baseline under `parser/tests/fixtures/dump_join_baseline/` is re-run live outside the isolated replay harness.
 - Finalize still holds one full in-memory kind array (out-of-core deferred).
 - `memory.peak` spreads under concurrent load; the advisory lock cannot stop a job that never takes it.
 - High-cardinality triage RSS remains unmeasured at 1M rows.
 
 ## Follow-ups
 
-- Switch `output/scratch-3-12/extend.py` to `dump_join` after plan04 3-13 is accepted (Assumption 6). Recorded under WORKFLOW Heavy-jobs limitations until then.
+- ~~Switch `output/scratch-3-12/extend.py` to `dump_join` after plan04 3-13 is accepted (Assumption 6).~~ **Closed — landed in plan 17** (thin wrapper over tracked `dump_join` residual defaults).
 - Optional high-cardinality triage 1M RSS pair if a regression is suspected (Architecture / WORKFLOW limitations).
 - Optional serial re-run of finalize / s07 / triage documented commands when disk headroom allows.
 - Out-of-core `_finalize_dump` remains a known limitation in `docs/ARCHITECTURE.md`, not live plan work.
