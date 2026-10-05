@@ -1,0 +1,22 @@
+# Plan 24 security sketch — pickle.load allowlist oracle ONLY.
+# Not plan 06: do not expand to full pytest parser/tests, C build, or Perth smoke.
+name: security-sketch
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  pickle-quarantine-oracle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: pip install pytest
+      - name: Run pickle quarantine allowlist oracle
+        run: pytest -q parser/tests/test_pickle_quarantine.py

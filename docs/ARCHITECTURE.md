@@ -53,7 +53,7 @@ any module missing from it. Extraction stays Python (plan 04 Decision 9).
 | Extraction | `osm_to_parcel_geometry.py`, `osm_to_route_planning.py`, `osm_to_address_index.py`, `build_route_graph.py` | OSM to spool and route graph |
 | Evaluation | `compare_disc.py`, `harness/` (`checks/`, `profile.py`, `bytediff.py`, `report.py`) | Parity checks against R |
 | Analysis | `roundtrip_*.py`, `analyze_*.py`, `study_*.py`, `estimate_*.py`, `survey_*.py`, `dump_parcel.py` | Research and round-trip proofs; not on the build path |
-| Tools | `tools/lint_schema.py`, `bench_build.py`, `convert_spool.py`, `parcel_occupancy.py` | Schema lint, benchmarking, spool conversion |
+| Tools | `tools/lint_schema.py`, `bench_build.py`, `convert_spool.py`, `parcel_occupancy.py` | Schema lint, benchmarking, spool conversion (`convert_spool` requires `--i-trust-this-pickle`; legacy pickle quarantined in `kiwiw/spool_legacy.py`, plan 24) |
 | Tests | `tests/` | Boundary tests (decode what E2 wrote), the C unit-test binary, committed goldens, round-trip and harness tests. No Python encoder exists to compare C against |
 
 Plan 04 Phase 2 landed the C decoder (**D1**) and checker (**K1**). Phase 3
@@ -66,7 +66,10 @@ Python parcel decoders still exist as migration oracles and harness readers.
 **Spool.** Per level, a `.data` file of per-cell records and a `.idx` file, little-endian,
 fixed-width, mmap-able, no pickle. Cells ascend `(iy, ix)`. The spool carries lat/lon for every
 vertex, and encoders derive pixels at assembly from each frame's range, so a coordinate-range
-change needs only re-assembly, not re-extraction.
+change needs only re-assembly, not re-extraction. Production build/extract/harness use
+`kiwiw.spool` only. Legacy pickle (`kiwiw.spool_legacy`) is quarantined (plan 24): every
+`pickle.load` needs `enable_legacy_pickle_trust` / convert `--i-trust-this-pickle`; an offline
+allowlist oracle fails new `pickle.load` outside that module.
 
 **Assembly.** `ALLDATA.KWI` layout is a pure function of the spool and the parcel mask.
 Frames are keyed `(level, ix, iy, parcel_type, sub_ix, sub_iy)`. Blocks are written in

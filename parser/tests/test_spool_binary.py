@@ -13,6 +13,17 @@ from kiwiw import spool_legacy as old
 from kiwiw.model import BackgroundShape, NameRecord, RoadLink, RoadNode
 
 import convert_spool
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _legacy_pickle_trust():
+    """Plan 24: enable quarantine trust for lossless binary↔legacy proofs only."""
+    old.enable_legacy_pickle_trust("test_spool_binary: synthetic fixture spool")
+    try:
+        yield
+    finally:
+        old.reset_legacy_pickle_trust()
 
 
 def _road(i, way=None):
@@ -97,7 +108,7 @@ def test_converter(tmp_path):
     o = old.SpoolWriter(tmp_path / "old")
     _fill(o)
     o.close()
-    convert_spool.convert(str(tmp_path / "old"), str(tmp_path / "bin"), verbose=False)
+    convert_spool.convert(str(tmp_path / "old"), str(tmp_path / "bin"), verbose=False, trust=True)
     a, b = old.SpoolReader(tmp_path / "old"), new.SpoolReader(tmp_path / "bin")
     for (_, _, ca), (_, _, cb) in zip(a.iter_level(2), b.iter_level(2)):
         for k in ("roads", "backgrounds", "names"):

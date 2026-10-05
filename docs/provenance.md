@@ -170,7 +170,9 @@ same commit.
   wall clock, 8,188,004 KB peak RSS.
 - **Format (plan 02)**: binary columnar (`kiwiw/spool.py`, `.data` + `.idx` with magic
   `KWSPIDX1`); ~4.5 GB. Spools written before plan 02 are pickle (6.9 GB) and are
-  converted once with `.venv-rp/bin/python parser/tools/convert_spool.py <old> <new>`.
+  converted once with
+  `.venv-rp/bin/python parser/tools/convert_spool.py --i-trust-this-pickle <old> <new>`
+  (plan 24: trusted-input gate required; production stays pickle-free).
 - **Why not committed**: large (multi-GB), fully regenerable from the PBF.
 - **Reproduce**: the command above. Non-deterministic input dependency: the
   OSM PBF extract's own date/content, not the code, determines its bytes.

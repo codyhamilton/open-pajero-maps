@@ -28,6 +28,27 @@ Then `python3 …/tools/driver/check_skills.py` must exit 0 (six core skills und
 Local Claude Code / OpenCode on this host keep using the installed plugin / skill symlinks; they do not need this curl path.
 
 
+## Security sketch CI (plan 24)
+
+Production spool is **pickle-free** (`kiwiw.spool`, magic `KWSPIDX1`). Legacy pickle
+lives only in `parser/kiwiw/spool_legacy.py` behind `enable_legacy_pickle_trust` /
+`convert_spool --i-trust-this-pickle`.
+
+| Gate | What it runs | What it does **not** run |
+| --- | --- | --- |
+| **Sketch** (`.github/workflows/security-sketch.yml`) | `pytest parser/tests/test_pickle_quarantine.py` only (AST allowlist + production import freeze + trust-gate unit checks) | Full `pytest parser/tests`, C/`cbuild`, Perth/sha smoke, disc/PBF |
+| **Local / heavy** | Operator runs under `output/.heavy.lock` (and plan-25 wrapper when Flash) | Unchanged by this sketch |
+| **Future full CI** | Not drawn here; plan **06** is not a work unit | — |
+
+**Sanitizer posture:** default `cbuild` `CFLAGS` stay `-O2 -ffp-contract=off -fPIC`.
+AddressSanitizer / UBSan are **not** default and are a named follow-up only — not
+mandatory on every commit. This sketch does not replace Assessor Security recipes
+(D1/pointers/dump-join).
+
+Local oracle::
+
+    .venv-rp/bin/python -m pytest -q parser/tests/test_pickle_quarantine.py
+
 ## Heavy jobs (memory)
 
 Plan 05 (`docs/plans/05-heavy-job-memory.md`) cut peak residency for residual dump

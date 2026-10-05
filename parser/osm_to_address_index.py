@@ -20,7 +20,11 @@ Default PBF path matches ``build_route_graph.py``'s convention
 Output
 ------
 A Python ``pickle`` file containing an ``OsmAddressIndex`` object whose
-three record lists map directly onto the three SADSR matching-data frames:
+three record lists map directly onto the three SADSR matching-data frames.
+
+**Lab-trusted handoff only (plan 24):** the ``.pkl`` is dump-only. Do **not**
+add an in-tree ``pickle.load`` reader without a new design. Prefer future
+non-pickle handoff formats when WP3 address work lands.
 
 =================  ===========  ================================================
 IR list            Frame type   Writer consumer
@@ -602,7 +606,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--out",
         default="address_index.pkl",
         metavar="OUTPUT",
-        help="output pickle file path (default: address_index.pkl)",
+        help=(
+            "output pickle path (default: address_index.pkl); "
+            "lab-trusted handoff only — must not gain an in-tree pickle.load "
+            "reader without a new design (plan 24)"
+        ),
     )
     parser.add_argument(
         "--dry-run",
@@ -632,6 +640,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 0
 
     out_path = args.out
+    print(
+        "WARNING: address_index.pkl is lab-trusted handoff only; "
+        "must not grow an in-tree pickle.load reader without a new design "
+        "(plan 24)",
+        file=sys.stderr,
+    )
     with open(out_path, "wb") as fh:
         pickle.dump(idx, fh, protocol=pickle.HIGHEST_PROTOCOL)
     print(f"Written: {out_path}")

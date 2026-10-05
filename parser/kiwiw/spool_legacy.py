@@ -2,6 +2,12 @@
 can read existing `output/spool/` directories and tests can build pickle
 fixtures; new code uses `kiwiw.spool` (binary columnar).
 
+**Quarantine (plan 24):** every `pickle.load` requires an explicit trusted-input
+enablement via `enable_legacy_pickle_trust(reason)` (or the convert CLI flag
+`--i-trust-this-pickle`). Without enablement, loads raise
+`LegacyPickleTrustError` and never call `pickle.load`. Production build /
+extract / harness paths must not import this module.
+
 Append-only per-level spool for streamed parcel content.
 
 `osm_to_parcel_geometry.extract_parcel_geometry` makes one pass over the PBF
@@ -39,6 +45,51 @@ import pickle
 from collections import defaultdict
 from pathlib import Path
 from typing import Callable, Iterator, Optional
+
+_LEGACY_PICKLE_TRUSTED = False
+
+
+class LegacyPickleTrustError(RuntimeError):
+    """Raised when a legacy pickle deserialize is attempted without trust enablement."""
+
+
+def enable_legacy_pickle_trust(reason: str) -> None:
+    """Enable `pickle.load` inside this module for operator-trusted local input.
+
+    `reason` must be a non-empty string naming why the caller trusts the spool
+    (test fixture, convert of a known-local path, etc.). Off by default.
+    """
+    if not reason or not str(reason).strip():
+        raise ValueError("enable_legacy_pickle_trust requires a non-empty reason")
+    global _LEGACY_PICKLE_TRUSTED
+    _LEGACY_PICKLE_TRUSTED = True
+
+
+def reset_legacy_pickle_trust() -> None:
+    """Disable trust again (tests restoring default-off)."""
+    global _LEGACY_PICKLE_TRUSTED
+    _LEGACY_PICKLE_TRUSTED = False
+
+
+def is_legacy_pickle_trusted() -> bool:
+    return _LEGACY_PICKLE_TRUSTED
+
+
+def require_legacy_pickle_trust() -> None:
+    if not _LEGACY_PICKLE_TRUSTED:
+        raise LegacyPickleTrustError(
+            "legacy pickle deserialize refused: call "
+            "kiwiw.spool_legacy.enable_legacy_pickle_trust(reason=...) "
+            "or pass convert_spool --i-trust-this-pickle "
+            "(operator-trusted local spool only; never untrusted uploads)"
+        )
+
+
+def _pickle_load(fh):
+    """Trust-gated pickle.load — the only deserialize entry in this quarantine."""
+    require_legacy_pickle_trust()
+    return pickle.load(fh)
+
 
 _CONTENT_KEYS = ("roads", "backgrounds", "names")
 
@@ -129,7 +180,7 @@ class SpoolWriter:
             while True:
                 pos = fh.tell()
                 try:
-                    ix, iy, content = pickle.load(fh)
+                    ix, iy, content = _pickle_load(fh)
                 except EOFError:
                     break
                 by_key[(ix, iy)].append(pos)
@@ -144,7 +195,7 @@ class SpoolWriter:
             for ix, iy, offsets in cells:
                 for off in offsets:
                     fh.seek(off)
-                    _, _, content = pickle.load(fh)
+                    _, _, content = _pickle_load(fh)
                     for key in _CONTENT_KEYS:
                         totals[key] += len(content.get(key, []))
         idx = {"cells": cells, "totals": totals}
@@ -179,7 +230,7 @@ class SpoolReader:
         if not p.exists():
             return None
         with open(p, "rb") as fh:
-            return pickle.load(fh)
+            return _pickle_load(fh)
 
     def iter_level(self, level: int) -> Iterator[tuple[int, int, dict]]:
         """Yield `(ix, iy, content)` for every non-empty parcel at `level`,
@@ -193,7 +244,7 @@ class SpoolReader:
                 merged = _empty_content()
                 for off in offsets:
                     fh.seek(off)
-                    _, _, content = pickle.load(fh)
+                    _, _, content = _pickle_load(fh)
                     for key in _CONTENT_KEYS:
                         merged[key].extend(content.get(key, []))
                 yield ix, iy, merged
