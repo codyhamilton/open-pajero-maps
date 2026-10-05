@@ -476,6 +476,10 @@ def build_inside_fixture(tmp_path: Path, name: str):
 # Plan 14 3-03: absent G against demanders at the representability boundary.
 # Raw points are cell-local; conversion exercises the spool and both tall paths.
 REPRESENTABLE_CASES = {
+    "endpoint_lobes": ([(2000, 2000), (2100, 2000), (2100, 2100), (2000, 2100),
+                         (2000, 2000), (2000, 1900), (1900, 1900), (1900, 2000)], 1, True),
+    "twice_square": ([(1800, 1800), (2300, 1800), (2300, 2300), (1800, 2300)] * 2, 1, False),
+    "twice_crossing": ([(1000, 1000), (2500, 2000), (1000, 2000), (2300, 1000)] * 2, 1, False),
     "tol_vertical": ([(2048.3, -500), (2048.3, 9000), (2048.3, -500)], 1, False),
     "vertex_poke": ([(-50, 1000), (1.2, 1000.02), (-50, 1000.04)], 1, False),
     "square": ([(512, 512), (1024, 512), (1024, 1024), (512, 1024)], 1, True),

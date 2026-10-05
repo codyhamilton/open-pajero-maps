@@ -194,3 +194,10 @@ Plan 04 Phase 3 is **not** closed by this plan.
 5. Plan 04 Phase 3 remains open: name_anchor 1, 3-90 blockers.
 
 `artifact_feedback` skipped for the Phase 3 briefs and reports: the workflow service is barred for this run.
+
+## Terminal review
+
+- Independent review: clean Codex `gpt-6.1-sol` (high), session `01a10d23-a8b2-74d2-a4c9-f95e4e2a8f54`. **REMEDIATE**: F1 high (EO topology), F2 medium (335 disposition). F4 and F5 were fixed in review. F3 and F6 are follow-ups.
+- Spot checks 1 (memory guard outside the sandbox) and 2 (disc rehash) pass.
+- F1 remediated by a clean Codex agent and verified by the orchestrator. Live failing is still 0, and the older-disc control still detects exactly the 52 genuine build defects. See REVIEW.md's resolution record.
+- **Close-out not run.** F2 stands and requires a Design ruling on dump_row 335.

@@ -1,7 +1,7 @@
 """Independent EO footprint / wire representability for K1 completeness.
 
 Ported from the Phase 2 complete-repair mirror, without importing research
-artifacts or calling the encoder. Crossings use exact Fraction predicates;
+artifacts or calling the encoder. Topology uses exact Fraction predicates;
 face clipping and wire densification use the encoder's floating arithmetic.
 """
 from collections import defaultdict
@@ -12,46 +12,41 @@ def _as_frac(poly):
     return [(Fraction(x), Fraction(y)) for x, y in poly]
 
 
-def _seg_proper_intersect(a, b, c, d):
-    ax, ay = a; bx, by = b; cx, cy = c; dx, dy = d
-    den = (bx - ax) * (dy - cy) - (by - ay) * (dx - cx)
-    if den == 0:
-        return None
-    t = ((cx - ax) * (dy - cy) - (cy - ay) * (dx - cx)) / den
-    u = ((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / den
-    if t <= 0 or t >= 1 or u <= 0 or u >= 1:
-        return None
-    return (ax + t * (bx - ax), ay + t * (by - ay))
-
-
-def _point_in_poly_eo(px, py, ring):
-    n = len(ring)
-    odd = False
-    for i in range(n):
-        ax, ay = ring[i]
-        bx, by = ring[(i + 1) % n]
-        if (ay > py) != (by > py):
-            xint = ax + (py - ay) / (by - ay) * (bx - ax)
-            if px < xint:
-                odd = not odd
-    return odd
-
-
-def _find_crossings(ring):
-    n = len(ring)
+def _contacts(ring):
+    """All contacts, including overlap ends; adjacent shared ends are simple."""
     out = []
-    for i in range(n):
-        a, b = ring[i], ring[(i + 1) % n]
+    n = len(ring)
+    simple = len(set(ring)) == n
+    for i, a in enumerate(ring):
+        b = ring[(i + 1) % n]
+        if a == b:
+            simple = False
+            continue
+        dx, dy = b[0] - a[0], b[1] - a[1]
         for j in range(i + 1, n):
-            if (j + 1) % n == i or (i + 1) % n == j:
-                continue
-            if i == 0 and j == n - 1:
-                continue
             c, d = ring[j], ring[(j + 1) % n]
-            pt = _seg_proper_intersect(a, b, c, d)
-            if pt is not None:
+            if c == d:
+                continue
+            ex, ey = d[0] - c[0], d[1] - c[1]
+            den = dx * ey - dy * ex
+            if den:
+                t = ((c[0] - a[0]) * ey - (c[1] - a[1]) * ex) / den
+                u = ((c[0] - a[0]) * dy - (c[1] - a[1]) * dx) / den
+                pts = [(a[0] + t * dx, a[1] + t * dy)] if 0 <= t <= 1 and 0 <= u <= 1 else []
+            elif (c[0] - a[0]) * dy == (c[1] - a[1]) * dx:
+                pts = [p for p in (a, b, c, d)
+                       if min(a[0], b[0]) <= p[0] <= max(a[0], b[0])
+                       and min(a[1], b[1]) <= p[1] <= max(a[1], b[1])
+                       and min(c[0], d[0]) <= p[0] <= max(c[0], d[0])
+                       and min(c[1], d[1]) <= p[1] <= max(c[1], d[1])]
+            else:
+                pts = []
+            for pt in set(pts):
+                adjacent = (i + 1) % n == j or (j + 1) % n == i
+                if not (adjacent and pt in (a, b) and pt in (c, d)):
+                    simple = False
                 out.append((i, j, pt))
-    return out
+    return out, simple
 
 
 def _edge_param(p, a, b):
@@ -60,10 +55,10 @@ def _edge_param(p, a, b):
     return (p[1] - a[1]) / (b[1] - a[1])
 
 
-def _split_ring_at_crossings(ring, crossings):
+def _split_ring_at_contacts(ring, contacts):
     n = len(ring)
     cuts = [[] for _ in range(n)]
-    for i, j, pt in crossings:
+    for i, j, pt in contacts:
         a, b = ring[i], ring[(i + 1) % n]
         c, d = ring[j], ring[(j + 1) % n]
         cuts[i].append((_edge_param(pt, a, b), pt))
@@ -99,106 +94,120 @@ def _split_ring_at_crossings(ring, crossings):
             key = (u, v) if u < v else (v, u)
             edge_parity[key] ^= 1
 
-    edges = [(a, b) for (a, b), bit in edge_parity.items() if bit]
+    edges = [(a, b, bit) for (a, b), bit in edge_parity.items() if bit]
+    if not edges:
+        return verts, []
+    # Keep only a forest of even edges joining parity components. These are
+    # zero-width cuts, needed to walk an outer boundary with nested holes.
+    parent = list(range(len(verts)))
+
+    def root(v):
+        while v != parent[v]:
+            parent[v] = parent[parent[v]]
+            v = parent[v]
+        return v
+
+    for a, b, _ in edges:
+        parent[root(a)] = root(b)
+    for (a, b), bit in edge_parity.items():
+        if not bit and root(a) != root(b):
+            parent[root(a)] = root(b)
+            edges.append((a, b, 0))
     return verts, edges
 
 
 def _walk_faces(verts, edges):
+    from functools import cmp_to_key
     halves = []
     out_of = defaultdict(list)
-    for a, b in edges:
-        ia = len(halves)
-        ib = ia + 1
-        ang_ab = math.atan2(float(verts[b][1] - verts[a][1]),
-                            float(verts[b][0] - verts[a][0]))
-        ang_ba = math.atan2(float(verts[a][1] - verts[b][1]),
-                            float(verts[a][0] - verts[b][0]))
-        halves.append([a, b, ang_ab, ib])
-        halves.append([b, a, ang_ba, ia])
-        out_of[a].append(ia)
-        out_of[b].append(ib)
+    for a, b, odd in edges:
+        h = len(halves)
+        halves.extend([(a, b, odd), (b, a, odd)])
+        out_of[a].append(h)
+        out_of[b].append(h + 1)
 
-    for v, hs in out_of.items():
-        hs.sort(key=lambda h: halves[h][2])
+    def direction_cmp(h, k):
+        a, b = verts[halves[h][0]], verts[halves[h][1]]
+        c, d = verts[halves[k][0]], verts[halves[k][1]]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        ex, ey = d[0] - c[0], d[1] - c[1]
+        upper = dy > 0 or (dy == 0 and dx > 0)
+        other = ey > 0 or (ey == 0 and ex > 0)
+        if upper != other:
+            return -1 if upper else 1
+        cross = dx * ey - dy * ex
+        if not cross:
+            raise ValueError("EO arrangement has coincident outgoing edges")
+        return -1 if cross > 0 else 1
 
-    used = [False] * len(halves)
+    successor = {}
+    for hs in out_of.values():
+        hs.sort(key=cmp_to_key(direction_cmp))
+        for i, h in enumerate(hs):
+            successor[h ^ 1] = hs[i - 1]
+    face_of = {}
     faces = []
     for start in range(len(halves)):
-        if used[start]:
+        if start in face_of:
             continue
-        h = start
-        cycle = []
-        area2 = Fraction(0)
-        guard = 0
-        closed = False
-        while not used[h] and guard < len(halves) + 2:
-            used[h] = True
-            a, b = halves[h][0], halves[h][1]
-            cycle.append(a)
-            area2 += verts[a][0] * verts[b][1] - verts[b][0] * verts[a][1]
-            rev = halves[halves[h][3]][2]
-            outs = out_of[b]
-            best, best_turn = None, None
-            for k in outs:
-                turn = rev - halves[k][2]
-                if turn <= 0:
-                    turn += 2 * math.pi
-                if best is None or turn < best_turn:
-                    best, best_turn = k, turn
-            if best is None:
-                break
-            h = best
-            guard += 1
-            if h == start:
-                closed = True
-                break
-        if closed and len(cycle) >= 3 and area2 > 0:
-            faces.append(cycle)
-    return faces
+        h, cycle = start, []
+        while h not in face_of:
+            face_of[h] = len(faces)
+            cycle.append(halves[h][0])
+            h = successor[h]
+        if h != start:
+            raise ValueError("EO arrangement face walk did not close")
+        faces.append(cycle)
+    if not faces:
+        return []
+    # At the lowest vertex, the most CCW outgoing edge has exterior on its
+    # left. Bridges make the graph connected, including nested boundaries.
+    lowest = min(out_of, key=lambda v: (verts[v][1], verts[v][0]))
+    outside = face_of[out_of[lowest][-1]]
+    adjacent = defaultdict(list)
+    for h in range(0, len(halves), 2):
+        a, b = face_of[h], face_of[h ^ 1]
+        odd = halves[h][2]
+        adjacent[a].append((b, odd))
+        adjacent[b].append((a, odd))
+    parity = {outside: 0}
+    pending = [outside]
+    while pending:
+        a = pending.pop()
+        for b, odd in adjacent[a]:
+            bit = parity[a] ^ odd
+            if b in parity:
+                if parity[b] != bit:
+                    raise ValueError("EO arrangement has inconsistent face parity")
+            else:
+                parity[b] = bit
+                pending.append(b)
+    if len(parity) != len(faces):
+        raise ValueError("EO arrangement has disconnected face topology")
+    return [face for i, face in enumerate(faces) if parity[i]]
+
 
 
 def decompose_eo_faces(poly):
-    """Decompose closed ring into EO simple faces (exact Fraction).
+    """Independent exact EO arrangement; empty parity stays empty.
 
-    Independent checker arrangement (ported from the Phase 2 mirror):
-      * Fraction vertices; find proper edge-edge crossings (no endpoint touches).
-      * No crossings -> one face.
-      * Else split edges, cancel even-multiplicity coincident segments, walk CCW
-        faces via leftmost-turn half-edge succession; keep faces whose mid-edge
-        left-nudge sample is EO-interior of the original ring.
+    Split crossings, endpoint contacts and overlaps, cancel even edges, and
+    walk faces with exact angular order and label them from exterior parity.
+    Unlike the historical Phase 2 mirror, shortcut only proven simple rings.
     """
-    if len(poly) < 3:
-        return []
     ring = list(poly)
-    if ring[0] == ring[-1]:
-        ring = ring[:-1]
+    if ring and ring[0] == ring[-1]:
+        ring.pop()
     if len(ring) < 3:
         return []
     fr = _as_frac(ring)
-    crossings = _find_crossings(fr)
-    if not crossings:
+    contacts, simple = _contacts(fr)
+    if simple:
         return [[(float(x), float(y)) for x, y in fr]]
-
-    verts, edges = _split_ring_at_crossings(fr, crossings)
-    if not edges:
-        return [[(float(x), float(y)) for x, y in fr]]
-    cycles = _walk_faces(verts, edges)
+    verts, edges = _split_ring_at_contacts(fr, contacts)
     out = []
-    for cyc in cycles:
-        a, b = verts[cyc[0]], verts[cyc[1]]
-        mx = (a[0] + b[0]) / 2
-        my = (a[1] + b[1]) / 2
-        dx, dy = b[0] - a[0], b[1] - a[1]
-        if dx == 0 and dy == 0:
-            continue
-        scale = Fraction(1, 10 ** 9)
-        sx = mx - dy * scale
-        sy = my + dx * scale
-        if not _point_in_poly_eo(sx, sy, fr):
-            continue
+    for cyc in _walk_faces(verts, edges):
         out.append([(float(verts[i][0]), float(verts[i][1])) for i in cyc])
-    if not out:
-        out = [[(float(x), float(y)) for x, y in fr]]
     return out
 
 

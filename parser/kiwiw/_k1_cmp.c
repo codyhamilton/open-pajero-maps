@@ -67,17 +67,17 @@ static int in_cells(const cellk *cl, int64_t n, int64_t ix, int64_t iy) {
 
 static int fin_cell(double v) { return isfinite(v) && fabs(v) < 2e9; }
 
-/* Independent Phase 2 EO arrangement and wire footprint. No encoder calls.
+/* Independent EO arrangement and wire footprint. No encoder calls.
  * Original binary64 coordinates are lifted losslessly to per-axis dyadic
  * int64 grids; determinants and crossing parameters are exact __int128.
- * Conversion to floating coordinates happens after the proper-crossing test,
- * for the mirror's clipping / densification / rint arithmetic. Unsupported
+ * Conversion to floating coordinates happens after exact contact tests,
+ * for clipping / densification / rint arithmetic. Unsupported
  * grid extents fail closed, rather than approximate a topology predicate. */
 typedef struct { double x, y; } rpt;
 typedef struct { rpt *v; int64_t n, cap; } rpts;
 typedef unsigned __int128 ru128;
 typedef struct { int64_t edge, id; ru128 p, q; } rcut;
-typedef struct { int64_t a, b; double angle; int used, canceled; } rhalf;
+typedef struct { int64_t a, b, dx, dy; int used, canceled, odd; } rhalf;
 
 static int rpoint(rpts *p, rpt v) {
     if (p->n == p->cap) {
@@ -206,13 +206,29 @@ static int rcut_push(rcut **v, int64_t *n, int64_t *cap, rcut c) {
 static __int128 rcross(int64_t ax, int64_t ay, int64_t bx, int64_t by) {
     return (__int128)ax*by - (__int128)ay*bx;
 }
-static int reo(rpt p, const rpt *ring, int64_t n) {
-    int odd = 0;
-    for (int64_t i = 0; i < n; i++) {
-        rpt a = ring[i], b = ring[(i+1)%n];
-        if ((a.y > p.y) != (b.y > p.y) && p.x < a.x+(p.y-a.y)/(b.y-a.y)*(b.x-a.x)) odd ^= 1;
-    }
-    return odd;
+/* Split segments inherit exact source-grid directions. Positive per-axis
+ * scaling preserves angular order, so no rounded intersection predicates. */
+static int rdircmp(const rhalf *a, const rhalf *b) {
+    int upper = a->dy > 0 || (!a->dy && a->dx > 0);
+    int other = b->dy > 0 || (!b->dy && b->dx > 0);
+    if (upper != other) return upper ? -1 : 1;
+    __int128 cross = rcross(a->dx,a->dy,b->dx,b->dy);
+    return (cross < 0) - (cross > 0);
+}
+static int64_t rroot(int64_t *parent, int64_t v) {
+    while (parent[v] != v) { parent[v] = parent[parent[v]]; v = parent[v]; }
+    return v;
+}
+static int rcontact(rcut **cuts, int64_t *nc, int64_t *cap, int64_t edge,
+                    int64_t id, int64_t ax, int64_t ay, int64_t bx, int64_t by,
+                    int64_t px, int64_t py) {
+    int64_t dx = bx-ax, dy = by-ay;
+    if ((!dx && !dy) || rcross(px-ax, py-ay, dx, dy) ||
+        px < (ax < bx ? ax : bx) || px > (ax > bx ? ax : bx) ||
+        py < (ay < by ? ay : by) || py > (ay > by ? ay : by)) return 0;
+    int64_t den = dx ? dx : dy, num = dx ? px-ax : py-ay;
+    if (den < 0) { den = -den; num = -num; }
+    return rcut_push(cuts, nc, cap, (rcut){edge, id, num, den});
 }
 static int rrepresent(const k1_shapes *h, int64_t s, trip cell) {
     int64_t a = h->off[s], n = h->off[s+1]-a;
@@ -220,7 +236,8 @@ static int rrepresent(const k1_shapes *h, int64_t s, trip cell) {
     if (n > 1 && x[0] == x[n-1] && y[0] == y[n-1]) n--;
     if (n < 3) return 0;
     int64_t *gx = malloc((size_t)n*8), *gy = malloc((size_t)n*8), *ids = malloc((size_t)n*8);
-    rpts verts = {0}; rcut *cuts = NULL; int64_t nc = 0, cap = 0; rhalf *edges = NULL;
+    rpts verts = {0}; rcut *cuts = NULL; int64_t nc = 0, cap = 0; rhalf *edges = NULL; int64_t *parent = NULL;
+    rpts *faces = NULL; int8_t *parity = NULL; int64_t nf = 0;
     int rc = gx && gy && ids ? 0 : -4;
     if (!rc) rc = rgrid(x, n, gx);
     if (!rc) rc = rgrid(y, n, gy);
@@ -233,17 +250,31 @@ static int rrepresent(const k1_shapes *h, int64_t s, trip cell) {
         rc = rcut_push(&cuts, &nc, &cap, (rcut){i, ids[i], 0, 1});
         if (!rc) rc = rcut_push(&cuts, &nc, &cap, (rcut){i, ids[(i+1)%n], 1, 1});
     }
-    int crossings = 0;
+    int simple = verts.n == n;
     for (int64_t i = 0; i < n && !rc; i++) for (int64_t j = i+1; j < n && !rc; j++) {
         int64_t ib = (i+1)%n, jb = (j+1)%n;
-        if (ib == j || jb == i) continue;
         int64_t dx = gx[ib]-gx[i], dy = gy[ib]-gy[i], ex = gx[jb]-gx[j], ey = gy[jb]-gy[j];
         __int128 den = rcross(dx, dy, ex, ey), p = rcross(gx[j]-gx[i], gy[j]-gy[i], ex, ey);
         __int128 q = rcross(gx[j]-gx[i], gy[j]-gy[i], dx, dy);
         if (den < 0) { den = -den; p = -p; q = -q; }
-        if (den == 0 || p <= 0 || p >= den || q <= 0 || q >= den) continue;
-        crossings++; int64_t id = -1;
-        for (int64_t k = 0; k < nc; k++)
+        if (!dx && !dy) { simple = 0; continue; }
+        if (!ex && !ey) { simple = 0; continue; }
+        if (den == 0) {
+            if (p) continue;
+            int64_t ends[4] = {i, ib, j, jb};
+            for (int z = 0; z < 4 && !rc; z++) {
+                int64_t v = ends[z], e = z < 2 ? j : i, eb = (e+1)%n;
+                int64_t old = nc;
+                rc = rcontact(&cuts, &nc, &cap, e, ids[v], gx[e], gy[e], gx[eb], gy[eb], gx[v], gy[v]);
+                if (nc != old && !((ib == j || jb == i) &&
+                    (ids[v] == ids[e] || ids[v] == ids[eb]))) simple = 0;
+            }
+            continue;
+        }
+        if (p < 0 || p > den || q < 0 || q > den) continue;
+        if (!((ib == j || jb == i) && (p == 0 || p == den) && (q == 0 || q == den))) simple = 0;
+        int64_t id = p == 0 ? ids[i] : p == den ? ids[ib] : q == 0 ? ids[j] : q == den ? ids[jb] : -1;
+        for (int64_t k = 0; id < 0 && k < nc; k++)
             if ((cuts[k].edge == i && !rratio(cuts[k].p, cuts[k].q, p, den)) ||
                 (cuts[k].edge == j && !rratio(cuts[k].p, cuts[k].q, q, den))) { id = cuts[k].id; break; }
         if (id < 0) {
@@ -255,7 +286,7 @@ static int rrepresent(const k1_shapes *h, int64_t s, trip cell) {
         if (!rc) rc = rcut_push(&cuts, &nc, &cap, (rcut){i, id, p, den});
         if (!rc) rc = rcut_push(&cuts, &nc, &cap, (rcut){j, id, q, den});
     }
-    if (!rc && !crossings) {
+    if (!rc && simple) {
         rpts ring = {0};
         for (int64_t i = 0; i < n && !rc; i++) rc = rpoint(&ring, (rpt){x[i],y[i]});
         if (!rc) rc = rclip_wire(ring.v, ring.n, cell, h->mult[s]);
@@ -263,53 +294,106 @@ static int rrepresent(const k1_shapes *h, int64_t s, trip cell) {
     }
     int64_t ne = 0;
     if (!rc) { edges = calloc((size_t)(2*nc+1), sizeof(rhalf)); if (!edges) rc = -4; }
-    if (!rc) qsort(cuts, (size_t)nc, sizeof(rcut), rcut_cmp);
+    if (!rc) {
+        parent = malloc((size_t)verts.n*sizeof(int64_t));
+        if (!parent) rc = -4;
+    }
+    if (!rc) {
+        qsort(cuts, (size_t)nc, sizeof(rcut), rcut_cmp);
+        for (int64_t i = 0; i < verts.n; i++) parent[i] = i;
+        /* Concurrent intersections may have been discovered through disjoint
+         * edge pairs. Equal parameters identify them transitively, exactly. */
+        for (int64_t i = 0; i+1 < nc; i++)
+            if (cuts[i].edge == cuts[i+1].edge && !rratio(cuts[i].p,cuts[i].q,cuts[i+1].p,cuts[i+1].q))
+                parent[rroot(parent,cuts[i+1].id)] = rroot(parent,cuts[i].id);
+        for (int64_t i = 0; i < nc; i++) cuts[i].id = rroot(parent,cuts[i].id);
+        for (int64_t i = 0; i < n; i++) ids[i] = rroot(parent,ids[i]);
+        for (int64_t i = 0; i < verts.n && !rc; i++) if (rroot(parent,i) == i)
+            for (int64_t j = 0; j < i; j++) if (rroot(parent,j) == j &&
+                verts.v[i].x == verts.v[j].x && verts.v[i].y == verts.v[j].y) { rc = -3; break; }
+    }
     for (int64_t i = 0; i+1 < nc && !rc; i++) {
         if (cuts[i].edge != cuts[i+1].edge) continue;
         int64_t u = cuts[i].id, v = cuts[i+1].id;
         if (u == v) continue;
         int64_t k;
         for (k = 0; k < ne; k += 2) if ((edges[k].a == u && edges[k].b == v) || (edges[k].a == v && edges[k].b == u)) break;
-        if (k < ne) { edges[k].canceled ^= 1; edges[k+1].canceled = edges[k].canceled; continue; }
-        rpt p = verts.v[u], q = verts.v[v];
-        edges[ne++] = (rhalf){u, v, atan2(q.y-p.y, q.x-p.x), 0};
-        edges[ne++] = (rhalf){v, u, atan2(p.y-q.y, p.x-q.x), 0};
+        if (k < ne) { edges[k].canceled ^= 1; edges[k+1].canceled = edges[k].canceled;
+            edges[k].odd ^= 1; edges[k+1].odd = edges[k].odd; continue; }
+        int64_t e = cuts[i].edge, eb = (e+1)%n, dx = gx[eb]-gx[e], dy = gy[eb]-gy[e];
+        edges[ne++] = (rhalf){u, v, dx, dy, 0, 0, 1};
+        edges[ne++] = (rhalf){v, u, -dx, -dy, 0, 0, 1};
     }
-    int faces = 0;
+    if (!rc) {
+        int odd = 0;
+        for (int64_t i = 0; i < verts.n; i++) parent[i] = i;
+        for (int64_t k = 0; k < ne; k += 2) if (edges[k].odd) {
+            odd = 1; parent[rroot(parent,edges[k].a)] = rroot(parent,edges[k].b);
+        }
+        if (!odd) goto done; /* Empty parity must never revive the source ring. */
+        /* Even edges may join boundaries through zero-width cuts, but may
+         * not subdivide faces. Keep a forest, including attached hole bridges. */
+        for (int64_t k = 0; k < ne; k += 2) if (!edges[k].odd) {
+            int64_t u = rroot(parent,edges[k].a), v = rroot(parent,edges[k].b);
+            if (u != v) { parent[u] = v; edges[k].canceled = edges[k+1].canceled = 0; }
+        }
+        for (int64_t k = 0; k < ne && !rc; k++) if (!edges[k].canceled)
+            for (int64_t j = 0; j < k; j++) if (!edges[j].canceled && edges[k].a == edges[j].a &&
+                !rdircmp(&edges[k],&edges[j])) { rc = -3; break; }
+    }
+    if (!rc) {
+        faces = calloc((size_t)ne, sizeof(rpts)); parity = malloc((size_t)ne);
+        if (!faces || !parity) rc = -4;
+        else memset(parity, -1, (size_t)ne);
+    }
     for (int64_t start = 0; start < ne && !rc; start++) {
         if (edges[start].used || edges[start].canceled) continue;
-        rpts face = {0}; int64_t k = start; long double area = 0; int closed = 0;
+        rpts *face = &faces[nf++]; int64_t k = start; int closed = 0;
         while (!edges[k].used && !rc) {
-            edges[k].used = 1; rpt p = verts.v[edges[k].a], q = verts.v[edges[k].b];
-            rc = rpoint(&face, p); area += (long double)p.x*q.y-(long double)q.x*p.y;
-            int64_t best = -1; double turnbest = INFINITY;
+            edges[k].used = nf; /* One-based left-face identity. */
+            rc = rpoint(face, verts.v[edges[k].a]);
+            int64_t best = -1, wrap = -1;
             for (int64_t j = 0; j < ne; j++) if (!edges[j].canceled && edges[j].a == edges[k].b) {
-                double turn = edges[k^1].angle-edges[j].angle;
-                if (turn <= 0) turn += 2*M_PI;
-                if (turn < turnbest) { best = j; turnbest = turn; }
+                if (wrap < 0 || rdircmp(&edges[wrap],&edges[j]) < 0) wrap = j;
+                if (rdircmp(&edges[j],&edges[k^1]) < 0 &&
+                    (best < 0 || rdircmp(&edges[best],&edges[j]) < 0)) best = j;
             }
+            if (best < 0) best = wrap;
             if (best < 0) break;
             k = best; if (k == start) { closed = 1; break; }
         }
-        if (!rc && closed && face.n >= 3 && area > 0) {
-            rpt p = face.v[0], q = face.v[1];
-            rpt sample = {(p.x+q.x)/2-(q.y-p.y)*1e-9, (p.y+q.y)/2+(q.x-p.x)*1e-9};
-            rpts ring = {0};
-            for (int64_t i = 0; i < n && !rc; i++) rc = rpoint(&ring, (rpt){x[i], y[i]});
-            if (!rc && reo(sample, ring.v, n)) { faces++; rc = rclip_wire(face.v, face.n, cell, h->mult[s]); }
-            free(ring.v);
-        }
-        free(face.v);
+        if (!rc && !closed) rc = -3;
     }
-    /* Match the Phase 2 mirror's original-ring fallback. */
-    if (!rc && !faces) {
-        rpts ring = {0};
-        for (int64_t i = 0; i < n && !rc; i++) rc = rpoint(&ring, (rpt){x[i], y[i]});
-        if (!rc) rc = rclip_wire(ring.v, ring.n, cell, h->mult[s]);
-        free(ring.v);
+    if (!rc) {
+        /* Intersections cannot be below the lowest source vertex. Select its
+         * most CCW outgoing edge by exact source-grid directions. Its left
+         * face is exterior; all other labels follow by crossing edge parity. */
+        int64_t low = 0, exterior = -1;
+        for (int64_t i = 1; i < n; i++)
+            if (gy[i] < gy[low] || (gy[i] == gy[low] && gx[i] < gx[low])) low = i;
+        for (int64_t k = 0; k < ne; k++) if (!edges[k].canceled && edges[k].a == ids[low] &&
+            (exterior < 0 || rdircmp(&edges[exterior],&edges[k]) < 0)) exterior = k;
+        if (exterior < 0) rc = -3;
+        else parity[edges[exterior].used-1] = 0;
+        int changed = 1;
+        while (changed && !rc) {
+            changed = 0;
+            for (int64_t k = 0; k < ne && !rc; k += 2) if (!edges[k].canceled) {
+                int64_t a = edges[k].used-1, b = edges[k+1].used-1;
+                if (parity[a] >= 0 && parity[b] >= 0) {
+                    if ((parity[a]^parity[b]) != edges[k].odd) rc = -3;
+                } else if (parity[a] >= 0) { parity[b] = parity[a]^edges[k].odd; changed = 1; }
+                else if (parity[b] >= 0) { parity[a] = parity[b]^edges[k].odd; changed = 1; }
+            }
+        }
+        for (int64_t i = 0; i < nf && !rc; i++) if (parity[i] < 0) rc = -3;
+        for (int64_t i = 0; i < nf && !rc; i++) if (parity[i])
+            rc = rclip_wire(faces[i].v, faces[i].n, cell, h->mult[s]);
     }
 done:
-    free(gx); free(gy); free(ids); free(verts.v); free(cuts); free(edges); return rc;
+    for (int64_t i = 0; i < nf; i++) free(faces[i].v);
+    free(faces); free(parity);
+    free(gx); free(gy); free(ids); free(verts.v); free(cuts); free(edges); free(parent); return rc;
 }
 
 int k1_cmp_kinds(k1_ctx *c) {

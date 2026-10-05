@@ -227,3 +227,24 @@ spot; its occurrence on additional real data is not measured by this review.
    remediation-01; the orchestrator owns any heavy run outside this sandbox.
 
 Append subsequent verdicts and resolutions; preserve this review and findings.
+
+## Resolution record — F1 remediation (2026-10-06, appended by the orchestrator)
+
+Verdict after remediation: **REMEDIATE**. F1 is resolved below, but F2 still stands and needs a Design ruling that neither the reviewer nor the orchestrator can supply.
+
+**F1 — resolved** by a clean Codex `gpt-6.1-sol` (high) agent from `briefs/remediation-01.md` (session `01a10d2f-5163-7a33-850d-e8b0d42b0eee`; report `reports/remediation-01.md`). Both checkers now split at endpoint, repeated-vertex and collinear contacts, preserve parity cancellation, and walk the actual non-empty EO faces. There is no fallback to the original contour. `_cenc.c` is untouched, and neither checker calls the encoder.
+
+Orchestrator verification, outside the sandbox and under plan-25 guards:
+
+- Reproductions, re-run independently against the plan-14 production `bg_shape` probe:
+  - `endpoint_lobes`: checker representable → true; production 2 records.
+  - `twice_square`: false; production 0.
+  - `twice_crossing`: false; production 0.
+  - Control square: true; production 1.
+  - The worker reports missing-disc C/Python completeness after the fix as lobes 1/1 failing and both doubled contours 1/0, for local and tall selection.
+- Tests: 399 passed, including `test_bg_eo_stitch.py` and the systemd-dependent `test_plan25_memory_guards.py` (`runs/rem01_tests.json`). Spot check 1: the memory-guard file passes outside the sandbox (4 passed).
+- Live K1 `-j6` on `4ed9cd80…` (`runs/rem01_k1_live.json`): completeness checked 1,800,514, failing **0**. Every other kind's checked/failing is identical to Phase 1. The 776 excused keys remain backed by 0 production records (3-01).
+- Older-disc positive control, `scratch-3-11/G_new` (`013586b5…`, `runs/rem01_k1_311.json`): failing **52**, exactly the keys the 3-14 build fix repaired. Their intersection with the 776 is empty.
+- Spot check 2: `p3/G_reencode` and `G_new` both hash to `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`. No re-encode was needed for remediation: only `_k1_cmp.c` changed, which is not on the encoder path.
+
+**F2 — stands (Design).** dump_row 335 has a named, unrepresentable demander (3-01), but no group disposition. Folding it into 2-02 needs a ruling like the one 765 got.
