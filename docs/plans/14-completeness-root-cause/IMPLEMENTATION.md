@@ -91,3 +91,19 @@ Seed cross-tab from Phase 1 TSV (pre cell-local / pre repair):
 ## Phase 3 — Fix or proven non-deviation per group
 
 Refine: **Proceed.** Units 3-01 (demand attribution / 335), 3-02 (765 R zero contribution, Design ruling), 3-03 (checker representable demand for 2-01 + 2-02). See DESIGN "Phase 3 refine". `artifact_feedback` skipped (workflow service barred by the user). Accounting held at `776 = 342 + 432 + 335 + 765` until 3-02 closes.
+
+### 3-01 — demand attribution (Codex `gpt-6.1-sol` high, session `01a10cda-05de-7b50-90f8-971b7946cef7`, `631f97a`)
+
+- **Q-source-335 named.** Demander: `tall=39083:L0:home(1379,1143):ordinal=0`, type 288, branch (c). It is a 4-coordinate triangular sliver.
+  - At the cell centre's scan line, its interval is 0.00067 raw wide and misses the centre by 0.348 raw. `Region.inside`'s `TOL=0.5` accepts it.
+  - 2-03's ±32 search missed it because that search used strict EO; the home is only 5 rows away.
+  - Mirror and production C: 0 records, so it is unrepresentable.
+- Status `done with concerns`: the 25-key timing projected 601.5 s, which is ≥10 min, so the run split at kickoff (3-01b).
+- Surfaces: `triage/demand_attribution_3-01.{py,tsv,md}`, `reports/3-01-demand-attribution.md`.
+- Deviation: rubric read from the installed workflow plugin (the repository path is absent).
+
+### 3-01b — attribution remainder (orchestrator, direct; `5253301` brief, `06a5c1f`)
+
+- 750 keys in two windows (128.8 s and 81.7 s): **776/776 keys, 799 demanders, branches a 1 / b 797 / c 1, all unrepresentable**. 0 errors, 0 C/Python disagreements, 0 mirror/C disagreements, 0 representable exceptions.
+- 3-03 prediction: failing 776 → 0, `checked` unchanged.
+- Known problem: the script exits 1 on long `--keys` lists (summary filename too long) after `publish`; outputs are complete. Recorded in the 3-01b report.
