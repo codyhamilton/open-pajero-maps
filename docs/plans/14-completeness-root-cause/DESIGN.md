@@ -69,9 +69,9 @@ Prove, row by row, why each currently unattributed completeness failure exists, 
 ### Assumption 1
 
 - Question: is the post-3-14 AU disc and its extended completeness dump still available to re-classify without a fresh full-AU encode?
-- Answer chosen: yes — use the paths recorded in `docs/provenance.md` for scratch-3-14 / 3-17 (read-only), or an identical-sha copy. Phase 1 may rebuild only the classify/evidence artefacts under a new scratch dir.
-- Rationale: 3-17 and plans 08–09 already consumed that disc at `4ed9cd80…`; provenance still points at it.
-- If wrong: Phase 1 stops at `blocked: disc unavailable` and does not encode a replacement unless Cody authorises a fresh encode that must re-hit `4ed9cd80…` or record a new oracle.
+- Answer chosen: prefer the paths recorded in `docs/provenance.md` for scratch-3-14 / 3-17 (read-only), or an identical-sha copy, and rebuild only classify/evidence artefacts under a new scratch dir when those paths exist.
+- Rationale: 3-17 and plans 08–09 already consumed that disc at `4ed9cd80…`; provenance may still point at it.
+- If wrong (paths gone after cleanup): there is **no encode gate** and **no Cody-authorise stop**. Phase 1 runs a fresh full-AU encode under `flock output/.heavy.lock`, then either re-hits sha256 `4ed9cd80…` or records a new oracle. Do not invent Cody-auth widgets or waits.
 
 ### Assumption 2
 
@@ -114,7 +114,7 @@ Prove, row by row, why each currently unattributed completeness failure exists, 
 - Outcome: on the disc in force (`4ed9cd80…` or a recorded successor), a committed evidence table lists every currently failing completeness identity exactly once. Each row has full native key, classify assignment (O01/O04/O05/O06/`NO_RULE`/other), flags `in_historic_188` and `in_added_89` against the committed 3-17 table and 3-16 TSV, an R byte/decode witness, a G byte/decode witness, and a spool/K1 requirement witness (or an explicit `evidence gap` open question for that column). The table header states: failing total, attributed by rule, unattributed total, and the numeric drift vs 3-17 (776 failing, 308 unclassified) and 3-15 (274 unattributed). No cause is named. No rule file is edited. 3-16 / 3-17 / design-170 files are not rewritten.
 - Surfaces: new triage record under `docs/plans/14-completeness-root-cause/` (evidence TSV + short note), read-only use of `parser/tools/k1_triage.py classify` and existing dump/disc paths; `docs/provenance.md` scratch entry for new evidence only.
 - Approach: known
-- Depends on: master tip containing 3-17 and plans 08–13; disc sha gate as Assumption 1.
+- Depends on: master tip containing 3-17 and plans 08–13; Assumption 1 disc/encode path (prefer existing sha, else flock full-AU encode).
 - Refine: skipped if the dump+classify path is unchanged; otherwise a short refine for the R-fetch helper only.
 
 ### Phase 2 — Root-cause groups, each closed by a reproducer
