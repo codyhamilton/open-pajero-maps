@@ -1,25 +1,36 @@
 # Implementation — 14 completeness root cause
 
-- Tool: Codex (assigned instance)
-- Session: Phase 1 in progress
+- Tool: Codex (assigned instance), model `gpt-6.1-sol`
+- Session: Phase 1 closed
 - Started: 2026-10-05 ~23:05 Australia/Brisbane
+- Phase 1 closed: 2026-10-05 ~23:34 Australia/Brisbane
 
-## Phase 1
+## Phase 1 — Per-row completeness evidence table
 
-In progress.
+**Closed.**
 
-### Disc restore (Execute, 2026-10-05 ~23:12–23:14 Australia/Brisbane)
+### Disc restore (Execute)
 
-- No local file matched sha `4ed9cd80…` (scratch-3-11/G_new remains `013586b5…`, protected; `output/ALLDATA.KWI` was `51c254ac…`; R disc present at `/run/media/codyh/464210-8480/ALLDATA.KWI`).
+- No local file matched sha `4ed9cd80…` at start (scratch-3-11/G_new remains protected `013586b5…`; `output/ALLDATA.KWI` was `51c254ac…`).
 - Fresh full-AU encode under `flock output/.heavy.lock` from main checkout:
-  - cwd: `/home/codyh/workspace/open-pajero-maps`
-  - spool: `output/extract_timing/spool`
-  - out: `output/scratch-14/G_new/ALLDATA.KWI`
-  - workers: `-j4`
-  - log: `output/scratch-14/full_build.log` (encode total 119.0s, assemble 13.5s)
-- Result sha256: `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72` — **matched** prior oracle; disc in force restored. Size 1,692,105,152 bytes. No new oracle required.
-- Protected `output/scratch-3-11/G_new/ALLDATA.KWI` unchanged (`013586b5…`).
+  - spool `output/extract_timing/spool` → `output/scratch-14/G_new/ALLDATA.KWI`, `-j4`
+  - log `output/scratch-14/full_build.log` (encode 119.0s, assemble 13.5s)
+- Result sha256 `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72` — **matched** prior oracle; size 1,692,105,152. No new oracle.
+- Protected `output/scratch-3-11/G_new/ALLDATA.KWI` unchanged.
 
-### Evidence table
+### Evidence (Codex `gpt-6.1-sol`, pid ~2108761, worktree `open-pajero-maps-14-completeness`)
 
-Codex brief: `briefs/1-01-evidence-table.md`. Rebuild classify/evidence under `output/scratch-14/`; commit TSV + note + report; do not push.
+- Brief: `briefs/1-01-evidence-table.md`
+- Fresh K1 completeness-only dump under flock, `-j6`: **776** failing identities (drift vs 3-17 failing: **0**).
+- Committed table: `triage/completeness_evidence.tsv` (776 rows) + `triage/completeness_evidence.md`
+- Flags: all **188** historic and **89** added present and disjoint; **499** in neither.
+- Classify: exit 2 — missing `other_mechanism` (sides cleaned). Assignment column = `evidence-gap:other_mechanism` for all 776. Header states verified attributed-by-rule **0** in this table; historical 3-17 partition (468/308) and 3-15 (274) retained as inputs, not substituted. Numeric difference of unresolved evidence entries vs 3-17 unclassified: **+468**; vs 3-15: **+502** (measures missing assignment evidence, not partition movement).
+- R/G/spool witnesses under `output/scratch-14/witnesses/` (git-ignored); audit PASS (1,791 byte ranges). One spool source-evidence gap (native row 335).
+- Provenance scratch entry for `output/scratch-14/` committed.
+- No rule/encoder/checker edits; 3-16/3-17/170 untouched. Plan 04 Phase 3 not claimed closed.
+
+### Carried
+
+- Live O01/O04/O05/O06 partition blocked until `other_mechanism` sides are recovered or recomputed reproducibly (Phase 2 may need that before rule-sensitive grouping).
+- One spool source-evidence gap at `(0,1379,1138,288,…)` — which source/requirement branch establishes the K1 demand?
+- Assignment-gap numeric deltas (+468 / +502) are not live unattributed drift; do not treat them as count movement in Phase 2.
