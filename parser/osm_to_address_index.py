@@ -464,7 +464,7 @@ def street_to_srmx_dict(
     The seven gated fields (STID, NXKD, NXFN, NXST, NXCT, KYCH, NAME)
     correspond to STFG bits 0-6.  This emits the verified reference-disc
     pattern ``STFG = 0x7f 0x00`` (SADSR201 SRMX on 38,119 of 38,120; all
-    2,827 in SADSR202), per ``docs/plans/15-sadsr-srmx-stfg/0x3f00-claim-evidence.md``.
+    2,827 in SADSR202), per verified ``docs/schema/index-idx.md`` census (plan ``docs/plans/15-sadsr-srmx-stfg.md``).
     NAME carries the same street string as KYCH (Assumption 2).  Bits 7-11
     (RPAT, RPNK, RPNF, RPNS, RPNC) stay absent.
 
