@@ -1,0 +1,262 @@
+{
+  "disc_binding": "Plan-29 signed record and successor diff pin; plan-32 wrapper argv names that recorded successor path. Report and manifest contain no disc digest; no fresh byte attestation is claimed.",
+  "disc_in_force_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+  "dump_bins": [
+    {
+      "bytes": 0,
+      "inspection": "stat only; not opened",
+      "kind": "background",
+      "manifest_rows": 0,
+      "path": "output/scratch-32/dump/background.bin"
+    },
+    {
+      "bytes": 0,
+      "inspection": "stat only; not opened",
+      "kind": "background_boundary",
+      "manifest_rows": 0,
+      "path": "output/scratch-32/dump/background_boundary.bin"
+    },
+    {
+      "bytes": 0,
+      "inspection": "stat only; not opened",
+      "kind": "interior_cover",
+      "manifest_rows": 0,
+      "path": "output/scratch-32/dump/interior_cover.bin"
+    },
+    {
+      "bytes": 0,
+      "inspection": "stat only; not opened",
+      "kind": "name_anchor",
+      "manifest_rows": 0,
+      "path": "output/scratch-32/dump/name_anchor.bin"
+    }
+  ],
+  "future_check": "A future 3-90 check 4 must compare live failing identities on the then-current disc in force with its pinned-failure identities. These cited empty sets apply only to this successor; positive or missing counts require evidence, never a default empty set.",
+  "historical_candidates": {
+    "disposition": "residual-not-required-for-live-close",
+    "exhaustive_set_equality": null,
+    "git_inventory": {
+      "commands": [
+        [
+          "git",
+          "log",
+          "--all",
+          "--format=%H",
+          "--",
+          ":(glob)**/enumerate_*.tsv",
+          ":(glob)**/pins_*.tsv"
+        ],
+        [
+          "git",
+          "ls-files",
+          "--",
+          ":(glob)**/enumerate_*.tsv",
+          ":(glob)**/pins_*.tsv"
+        ],
+        [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ]
+      ],
+      "head": "373a38aa8b3b88df4435cfac629041aa7f343160",
+      "matching_commits": [],
+      "scope": "All locally available refs; no fetch, unreachable-object search, or content fabrication.",
+      "tracked_matches": []
+    },
+    "identity_status": "unverifiable",
+    "live_close_requirement": "Historical S02 rows are not required for the cited live-empty close pin contract.",
+    "output_inventory": {
+      "depth_limit": null,
+      "errors": [],
+      "excluded_examples": [
+        "/home/codyh/workspace/open-pajero-maps-14-completeness/output/extract_timing/spool",
+        "/home/codyh/workspace/open-pajero-maps-14-completeness/output/goldens-3C/l0_divided_trim_halo/spool",
+        "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-14/remediation/after/endpoint_lobes_local/spool_endpoint_lobes_absent",
+        "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-14/remediation/after/endpoint_lobes_tall/spool_endpoint_lobes_absent",
+        "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-14/remediation/after/twice_crossing_local/spool_twice_crossing_absent"
+      ],
+      "excluded_protected_directory_count": 866,
+      "exclusion_rule": "Paths resolving to spool-named components, R directories or KWI files are never entered/opened.",
+      "follow_symlinks": true,
+      "historical_recovery_candidates": [],
+      "matches": [
+        "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-31/tests-p2/test_inventory_follows_symlinkcurrent/output/link/b/c/enumerate_background.tsv",
+        "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-31/tests-p2/test_inventory_follows_symlinkcurrent/output/link/b/c/pins_names.tsv",
+        "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-31/tests-p2/test_own_synthetic_matches_are0/output/scratch-31/tests-p2/retained/enumerate_fixture.tsv"
+      ],
+      "resolved_root": "/home/codyh/workspace/open-pajero-maps/output",
+      "root": "/home/codyh/workspace/open-pajero-maps-14-completeness/output",
+      "scope_limit": "No search inside protected spool/R paths or outside this output root.",
+      "synthetic_match_rule": "Matches resolving beneath this unit's synthetic --basetemp are fixtures, never recovered historical enumerations.",
+      "synthetic_test_matches": [
+        "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-31/tests-p2/test_inventory_follows_symlinkcurrent/output/link/b/c/enumerate_background.tsv",
+        "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-31/tests-p2/test_inventory_follows_symlinkcurrent/output/link/b/c/pins_names.tsv",
+        "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-31/tests-p2/test_own_synthetic_matches_are0/output/scratch-31/tests-p2/retained/enumerate_fixture.tsv"
+      ],
+      "visited_directories": 3011
+    },
+    "root_cause": "The signed TSV deliberately contains only 100/26650 groups. Full enumerations are non-committed scratch; no exhaustive historical spool-assignment equality proof has been recovered. Non-fixture inventory matches, if any, are candidates only until their hashes and historical assignment joins are verified.",
+    "shown_groups": 100,
+    "total_groups": 26650,
+    "total_rows": 1939931,
+    "totals_scope": "Historical footer claims; exhaustive identities not reproduced.",
+    "truncated": true
+  },
+  "kinds": [
+    {
+      "checked": 176386506,
+      "corroborating_path": "output/scratch-32/k1_dump_report.json",
+      "corroborating_sha256": "ade63d88ec6b0cefb659e2ecff3db38cbb99e8e327666e0770b75529d19480dc",
+      "failing": 0,
+      "issues": [],
+      "kind": "background",
+      "source_path": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_k1_compare.json",
+      "source_sha256": "d4d5038d9d66d420e6e9788100a894006051ee28fe785ed069281b761d1d5d4b",
+      "status": "empty"
+    },
+    {
+      "checked": 64111046,
+      "corroborating_path": "output/scratch-32/k1_dump_report.json",
+      "corroborating_sha256": "ade63d88ec6b0cefb659e2ecff3db38cbb99e8e327666e0770b75529d19480dc",
+      "failing": 0,
+      "issues": [],
+      "kind": "background_boundary",
+      "source_path": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_k1_compare.json",
+      "source_sha256": "d4d5038d9d66d420e6e9788100a894006051ee28fe785ed069281b761d1d5d4b",
+      "status": "empty"
+    },
+    {
+      "checked": 1800514,
+      "corroborating_path": "output/scratch-32/k1_dump_report.json",
+      "corroborating_sha256": "ade63d88ec6b0cefb659e2ecff3db38cbb99e8e327666e0770b75529d19480dc",
+      "failing": 0,
+      "issues": [],
+      "kind": "completeness",
+      "source_path": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_k1_compare.json",
+      "source_sha256": "d4d5038d9d66d420e6e9788100a894006051ee28fe785ed069281b761d1d5d4b",
+      "status": "empty"
+    },
+    {
+      "checked": 1590566,
+      "corroborating_path": "output/scratch-32/k1_dump_report.json",
+      "corroborating_sha256": "ade63d88ec6b0cefb659e2ecff3db38cbb99e8e327666e0770b75529d19480dc",
+      "failing": 0,
+      "issues": [],
+      "kind": "interior_cover",
+      "source_path": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_k1_compare.json",
+      "source_sha256": "d4d5038d9d66d420e6e9788100a894006051ee28fe785ed069281b761d1d5d4b",
+      "status": "empty"
+    },
+    {
+      "checked": 2317055,
+      "corroborating_path": "output/scratch-32/k1_dump_report.json",
+      "corroborating_sha256": "ade63d88ec6b0cefb659e2ecff3db38cbb99e8e327666e0770b75529d19480dc",
+      "failing": 0,
+      "issues": [],
+      "kind": "name_anchor",
+      "source_path": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_k1_compare.json",
+      "source_sha256": "d4d5038d9d66d420e6e9788100a894006051ee28fe785ed069281b761d1d5d4b",
+      "status": "empty"
+    },
+    {
+      "checked": 285809587,
+      "corroborating_path": "output/scratch-32/k1_dump_report.json",
+      "corroborating_sha256": "ade63d88ec6b0cefb659e2ecff3db38cbb99e8e327666e0770b75529d19480dc",
+      "failing": 0,
+      "issues": [],
+      "kind": "range",
+      "source_path": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_k1_compare.json",
+      "source_sha256": "d4d5038d9d66d420e6e9788100a894006051ee28fe785ed069281b761d1d5d4b",
+      "status": "empty"
+    },
+    {
+      "checked": 42994980,
+      "corroborating_path": "output/scratch-32/k1_dump_report.json",
+      "corroborating_sha256": "ade63d88ec6b0cefb659e2ecff3db38cbb99e8e327666e0770b75529d19480dc",
+      "failing": 0,
+      "issues": [],
+      "kind": "road_node",
+      "source_path": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_k1_compare.json",
+      "source_sha256": "d4d5038d9d66d420e6e9788100a894006051ee28fe785ed069281b761d1d5d4b",
+      "status": "empty"
+    },
+    {
+      "checked": 0,
+      "corroborating_path": "output/scratch-32/k1_dump_report.json",
+      "corroborating_sha256": "ade63d88ec6b0cefb659e2ecff3db38cbb99e8e327666e0770b75529d19480dc",
+      "failing": 0,
+      "issues": [],
+      "kind": "road_point",
+      "source_path": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_k1_compare.json",
+      "source_sha256": "d4d5038d9d66d420e6e9788100a894006051ee28fe785ed069281b761d1d5d4b",
+      "status": "empty"
+    },
+    {
+      "checked": 227935489,
+      "corroborating_path": "output/scratch-32/k1_dump_report.json",
+      "corroborating_sha256": "ade63d88ec6b0cefb659e2ecff3db38cbb99e8e327666e0770b75529d19480dc",
+      "failing": 0,
+      "issues": [],
+      "kind": "step",
+      "source_path": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_k1_compare.json",
+      "source_sha256": "d4d5038d9d66d420e6e9788100a894006051ee28fe785ed069281b761d1d5d4b",
+      "status": "empty"
+    }
+  ],
+  "live_contract": {
+    "live_failing_set": [],
+    "live_pinned_failure_set": [],
+    "open_kinds": [],
+    "rule": "Future close compares the live failing set on the disc in force with the live pinned-failure set. Zero failures in every kind implies both sets are empty; missing or positive counts leave that kind open.",
+    "scope": "Cited successor measurements only; not a fresh K1 run or a Phase 3 close.",
+    "set_equality": true,
+    "status": "live-empty"
+  },
+  "measurement_mode": "cited evidence; no disc/spool opened, no K1 run",
+  "phase3_closed": false,
+  "remaining": [
+    "PSS <= -j6 live gate remains a blocker.",
+    "Other-kind joins are handled by plan 32, outside this unit.",
+    "Plan-31 Phase-1 3-14 cause-attribution residual remains."
+  ],
+  "schema_version": 1,
+  "sources": {
+    "candidates": {
+      "path": "docs/plans/04-c-core-orchestration/triage/pinned_candidates.tsv",
+      "sha256": "7dfe6ed7b99e9d234e688d6855a885d3cd1a140db409dc1f726a48bd0948855a"
+    },
+    "compare": {
+      "path": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_k1_compare.json",
+      "sha256": "d4d5038d9d66d420e6e9788100a894006051ee28fe785ed069281b761d1d5d4b"
+    },
+    "diff": {
+      "path": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_diff.json",
+      "sha256": "a129b4f8e57643c94dea5c2b03a2bff57e9100b3fccf1f84a7181c809bf73172"
+    },
+    "ledger": {
+      "path": "docs/plans/27-independent-fix-review-truncated-pins.md",
+      "sha256": "ba413f764e51437938970d3363d8c2c76e48a3d1efef6202dc4a2646ea9cdd12"
+    },
+    "log": {
+      "path": "output/scratch-32/run_p1.log",
+      "sha256": "474573a96e1cdb0fb2cff826ac9386f3d77e74e3bcbe4dfd1b1be1a00de884f2"
+    },
+    "manifest": {
+      "path": "output/scratch-32/dump/dump_manifest.json",
+      "sha256": "c29ed9f0bd2fb382729f7fba2d200c9ab3b514aca8154a27e4aaa34a59536839"
+    },
+    "record": {
+      "path": "docs/plans/29-k1-name-anchor-failure.md",
+      "sha256": "ca1278f821c20b09a4ff0ca77cda6b27664cebef6291d3fff312acbfc88f3b19"
+    },
+    "report": {
+      "path": "output/scratch-32/k1_dump_report.json",
+      "sha256": "ade63d88ec6b0cefb659e2ecff3db38cbb99e8e327666e0770b75529d19480dc"
+    },
+    "run": {
+      "path": "output/scratch-32/runs/k1_dump.json",
+      "sha256": "4d3d893aedc3488ba5898768d8aef3de0a6a47731062975321ad7a24fa78d4ad"
+    }
+  }
+}
