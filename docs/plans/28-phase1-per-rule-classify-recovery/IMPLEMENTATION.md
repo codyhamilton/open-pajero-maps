@@ -65,3 +65,7 @@ Tests: `test_dump_join_other_mechanism.py` + `test_dump_join_memory.py` gave **2
 2. The 3-17 per-row identity comparison is impossible (the inherited-byte table is deleted). Only aggregate candidates are listed.
 3. The legacy-contract control (Open question 2) is skipped.
 4. Phase 2 needs a bounded discriminator for each of the 7 O04 rows. Three are among the added 89 rows; the other four are not.
+
+## Phase 2 — Every assignment joins to its proven plan-14 cause, with conflicts discriminated
+
+Refine skipped (DESIGN). One unit, with its brief authored inline: `briefs/2-01-join-reconcile.md`.
