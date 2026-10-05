@@ -1,10 +1,11 @@
 # Implementation — 14 completeness root cause
 
-- Tool: OpenCode DeepSeek Flash (Phase 2); Phase 1 was Codex `gpt-6.1-sol`
+- Tool: Phase 1 Codex `gpt-6.1-sol`; Phase 2 units 2-01 OpenCode DeepSeek Flash, 2-02/2-03/close Execute background worker (CHM reseated the assigned instance to Codex at 01:35 for any new seats)
 - Session: Phase 2 refine + execute
 - Started: 2026-10-05 ~23:05 Australia/Brisbane (Phase 1)
 - Phase 1 closed: 2026-10-05 ~23:34 Australia/Brisbane
 - Phase 2 refine: 2026-10-06 ~00:09 Australia/Brisbane
+- Phase 2 closed: 2026-10-06 ~02:30 Australia/Brisbane
 
 ## Phase 1 — Per-row completeness evidence table
 
@@ -39,6 +40,42 @@
 
 ## Phase 2 — Root-cause groups
 
+**Closed.** Exhaustive, disjoint union map `triage/phase2_membership.tsv` (776):
+
+| Unit | Commit | Group / ledger | Rows | Reproducer |
+| --- | --- | --- | ---: | --- |
+| 2-01 | `b775e9b` | `g-omits-cell-local-dvd-type` | 342 | `triage/cell_local_2-01.py` |
+| 2-02 | `bcb266b` | `r-absent-complete-repair-zero` | 432 | `triage/complete_repair_2-02.py` (EO faces + densified `emit_piece` mirror + production C `bg_shape` probe; 0 emits / 0 C records on 432/432) |
+| 2-03 | `e24b89b` | open questions `Q-source-335`, `Q-tile-alias` (765) | 2 | `triage/residuals_2-03.py` |
+
+Predicted Phase 3 movement: up to −342 (2-01, build or checker; Phase 3 picks) and
+−432 (2-02, proven non-deviation or checker stops the demand). The 2 open questions
+stay open. Production C confirms 2-01 sources give 0 records on 342/342 (densify
+caveat closed). Plan heavy guards were used throughout: `run_heavy_python.py`
+(flock + memory.peak logs in `output/scratch-14/runs/`), windowed/`--max-seeds`
+probes before `--all-seeds`.
+
+**Spool incident (2-02 setup, 00:44).** The live `output/extract_timing/spool` was
+destroyed by a symlink step that resolved through the worktree's `output` link.
+
+- Restored with extractor tree `34a04cc`. A tip-extractor rebuild was rejected
+  because 138/775 witness cells differed.
+- Proofs: 775/775 witness pins match, and a full-AU `-j4` re-encode at `f385ef5`
+  gives `4ed9cd80…` (byte-identical).
+- Record: `output/scratch-14/spool_recovery/INCIDENT.md` and `docs/provenance.md`.
+
+### Carried to Phase 3
+
+- **Q-source-335.** No spool source reproduces the K1 demand within ±32 cells.
+  Instrument the checker read-only to name the demanding shape.
+- **Q-tile-alias (765).** The evidence matches the 2-02 mechanism. Design should
+  rule whether cell-local R absence counts as `R_polygon_count == 0`.
+- **Locus choice.** Phase 3 decides the 2-01 locus (build vs checker) and the 2-02
+  disposition (non-deviation vs checker).
+- Plan 04 Phase 3 is **not** closed by this plan.
+
+### Phase 2 refine (record)
+
 **Refine accepted (docs-only, Execute).** Approach C: R-presence primary + cell-local check; complete-repair package for R=0; residuals → open questions. Units `2-01`, `2-02`, `2-03` briefed under `briefs/`. `artifact_feedback` MCP unreachable — continued without workflow post.
 
 Seed cross-tab from Phase 1 TSV (pre cell-local / pre repair):
@@ -50,4 +87,3 @@ Seed cross-tab from Phase 1 TSV (pre cell-local / pre repair):
 | neither_499 | 342 | 157 |
 | **total** | **343** | **433** (incl. row 335 source gap) |
 
-Execute units via OpenCode DeepSeek Flash next; Phase 2 close trailer only on the closing commit.
