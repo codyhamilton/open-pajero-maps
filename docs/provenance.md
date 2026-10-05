@@ -707,3 +707,23 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
   `plans/14-completeness-root-cause/triage/cell_local_2-01.py` under
   `flock output/.heavy.lock`; reads only R, G (`G_new/`), and the spool. No
   re-encode.
+- **Spool incident + recovery (2026-10-06 00:44–02:01):** a resume-setup symlink
+  step resolved through the worktree's `output` link and replaced the live
+  `output/extract_timing/spool` with a self-symlink (contents lost). Restored by
+  re-extracting `australia-260824.osm.pbf` with tree `34a04cc` (last master
+  commit before the Sep-21 spool-of-record run; later extractor commits
+  `8355950`/`16e2931` change 138/775 witness cells and are NOT the record).
+  Proof: L0 counts equal `extract_timing/run.log`; 775/775 Phase-1
+  `source_cell_sha256` pins match; full-AU `-j4` re-encode at `f385ef5` →
+  `4ed9cd80…` (byte-identical to `G_new`). Record in
+  `spool_recovery/INCIDENT.md`; run logs `runs/spool_rebuild_34a04cc.json`,
+  `runs/G_verify_encode.json` (run_heavy_python argv + memory.peak). The
+  non-record tip extract is parked at `spool_recovery/spool_16e2931_NOT_RECORD/`.
+- **Phase 2 unit 2-02 (added 2026-10-06):** `complete_repair/` holds
+  `proofs/<dump_row>.json` (EO faces, per-face clipped q/area2 with and without
+  densify, production C `bg_shape` record counts), `summary.json`,
+  `positive_control.json`, `c_positive_control.json`, and `cprobe/`
+  (`probe_bg.c` `#include`s `parser/kiwiw/_cenc.c` read-only; compiled
+  `gcc -O2 -ffp-contract=off -fPIC -shared`). Produced by committed
+  `plans/14-completeness-root-cause/triage/complete_repair_2-02.py --all-seeds`
+  via `parser/tools/run_heavy_python.py` (flock); reads only G sha pin and spool.
