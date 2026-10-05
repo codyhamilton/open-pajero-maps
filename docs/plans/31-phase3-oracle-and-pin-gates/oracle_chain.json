@@ -1,0 +1,448 @@
+{
+  "disc_in_force_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+  "hops": [
+    {
+      "authoritative_list": {
+        "path": "output/scratch-3-11/Gnew.diff_cells.txt",
+        "sha256": "9f2b0e554465d030637fa7d19b4ceaf88b6283b1d4d86810de5ccd4dece50e5e"
+      },
+      "census_audit": {
+        "expected": {
+          "path": "output/scratch-3-11/Gnew.expected37.txt",
+          "sha256": "9f2b0e554465d030637fa7d19b4ceaf88b6283b1d4d86810de5ccd4dece50e5e"
+        },
+        "expected_cells_present": 37,
+        "kind": "census_audit",
+        "pass": true,
+        "path": "output/scratch-3-11/Gnew.cells.tsv",
+        "rows": 3951970,
+        "sha256": "5d1dde4d8c305a3d2d58d50e0b3f2986e3d7ed9405b1f45efea95e145c48b3c3"
+      },
+      "changed_cells": [
+        [
+          0,
+          1530,
+          843
+        ],
+        [
+          0,
+          1530,
+          844
+        ],
+        [
+          0,
+          1583,
+          707
+        ],
+        [
+          0,
+          1669,
+          748
+        ],
+        [
+          0,
+          1672,
+          748
+        ],
+        [
+          0,
+          1673,
+          718
+        ],
+        [
+          0,
+          1673,
+          719
+        ],
+        [
+          0,
+          1681,
+          729
+        ],
+        [
+          0,
+          1687,
+          735
+        ],
+        [
+          0,
+          1688,
+          734
+        ],
+        [
+          0,
+          1711,
+          729
+        ],
+        [
+          0,
+          1712,
+          729
+        ],
+        [
+          0,
+          1712,
+          730
+        ],
+        [
+          0,
+          1732,
+          1493
+        ],
+        [
+          0,
+          1755,
+          591
+        ],
+        [
+          0,
+          1769,
+          587
+        ],
+        [
+          0,
+          1789,
+          731
+        ],
+        [
+          0,
+          1793,
+          737
+        ],
+        [
+          0,
+          1794,
+          736
+        ],
+        [
+          0,
+          1795,
+          647
+        ],
+        [
+          0,
+          1796,
+          648
+        ],
+        [
+          0,
+          1814,
+          1467
+        ],
+        [
+          0,
+          1830,
+          1447
+        ],
+        [
+          0,
+          1842,
+          1303
+        ],
+        [
+          0,
+          1886,
+          839
+        ],
+        [
+          0,
+          1903,
+          846
+        ],
+        [
+          0,
+          1911,
+          1139
+        ],
+        [
+          0,
+          1915,
+          980
+        ],
+        [
+          0,
+          1929,
+          1121
+        ],
+        [
+          0,
+          1936,
+          1119
+        ],
+        [
+          0,
+          1941,
+          1105
+        ],
+        [
+          0,
+          1948,
+          1098
+        ],
+        [
+          0,
+          1957,
+          771
+        ],
+        [
+          0,
+          1969,
+          1069
+        ],
+        [
+          0,
+          1969,
+          1070
+        ],
+        [
+          0,
+          2007,
+          1179
+        ],
+        [
+          0,
+          872,
+          880
+        ]
+      ],
+      "changed_count": 37,
+      "confinement": "Exactly 37 predicted L0 cells; 37/37, no extra cells.",
+      "counts_by_level": {
+        "0": {
+          "changed": 37
+        }
+      },
+      "from_sha256": "87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862",
+      "region": "AU",
+      "residuals": [
+        "Pre-3-11 disc and old census not located; no fresh byte replay of this hop.",
+        "Historical review carries +60 bytes of non-payload growth without attribution."
+      ],
+      "signing_record": {
+        "path": "docs/plans/04-c-core-orchestration/IMPLEMENTATION.md",
+        "sha256": "8af0a631320b3fc2fc966381fad2a2df104ba3cb6299e1342656b26189824764"
+      },
+      "signing_unit": "3-11",
+      "status": "retained-list-verified",
+      "supporting_evidence": [
+        {
+          "path": "output/scratch-3-11/Gnew.expected37.txt",
+          "sha256": "9f2b0e554465d030637fa7d19b4ceaf88b6283b1d4d86810de5ccd4dece50e5e"
+        },
+        {
+          "path": "output/scratch-3-11/Gnew.scan.json",
+          "sha256": "d625360bf528b63a5be6e8156c0e8d2b262350744ef0db4cdf133f7540c654e0"
+        },
+        {
+          "path": "output/scratch-31/census-3-11.json",
+          "sha256": "9e4bff14e41a60d561aaca2dc2b4b036d6f500638ee8e0165bd2585dd624a5ec"
+        }
+      ],
+      "to_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+      "unexplained_cells": [],
+      "unexplained_count": 0
+    },
+    {
+      "authoritative_list": {
+        "path": "output/scratch-31/diff-3-14-au.cells.tsv",
+        "sha256": "77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f"
+      },
+      "changed_count": 246123,
+      "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes.",
+      "counts_by_level": {
+        "0": {
+          "changed": 244060
+        },
+        "2": {
+          "changed": 1944
+        },
+        "6": {
+          "changed": 118
+        },
+        "8": {
+          "changed": 1
+        }
+      },
+      "from_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+      "matches_recorded_counts": true,
+      "measurement": {
+        "path": "output/scratch-31/diff-3-14-au.json",
+        "sha256": "4e5f1b31e180f2551202029d88c1ef928ee46c946e9a0305411f67b29136fe04"
+      },
+      "recorded_added": 0,
+      "recorded_changed_count": 246123,
+      "recorded_counts_by_level": {
+        "0": 244060,
+        "2": 1944,
+        "6": 118,
+        "8": 1
+      },
+      "recorded_removed": 0,
+      "region": "AU",
+      "residuals": [
+        "Payload causes not measured; all listed cells are unexplained.",
+        "Container/index/padding relocation is outside this cell-identity measurement."
+      ],
+      "signing_record": {
+        "path": "docs/plans/04-c-core-orchestration/IMPLEMENTATION.md",
+        "sha256": "8af0a631320b3fc2fc966381fad2a2df104ba3cb6299e1342656b26189824764"
+      },
+      "signing_unit": "3-14",
+      "status": "measured-identities-residual-causes",
+      "to_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+      "unexplained_cells": {
+        "path": "output/scratch-31/diff-3-14-au.cells.tsv",
+        "selector": "all rows"
+      },
+      "unexplained_count": 246123
+    },
+    {
+      "authoritative_list": {
+        "path": "output/scratch-31/diff-3-14-perth.cells.tsv",
+        "sha256": "af26b6b48aef6e7b5a407b5db367894f28f7f6c1ea29a8ff31ab560b65d8355f"
+      },
+      "changed_count": 795,
+      "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes.",
+      "counts_by_level": {
+        "0": {
+          "changed": 784
+        },
+        "2": {
+          "changed": 11
+        }
+      },
+      "from_sha256": "da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc",
+      "matches_recorded_counts": true,
+      "measurement": {
+        "path": "output/scratch-31/diff-3-14-perth.json",
+        "sha256": "51dd2ab81d5af672fcef9a19e643a04a9a53e7ac8076fe70dbc15e4a1f05770d"
+      },
+      "recorded_added": 0,
+      "recorded_changed_count": 795,
+      "recorded_counts_by_level": {
+        "0": 784,
+        "2": 11
+      },
+      "recorded_removed": 0,
+      "region": "Perth",
+      "residuals": [
+        "Payload causes not measured; all listed cells are unexplained.",
+        "Container/index/padding relocation is outside this cell-identity measurement."
+      ],
+      "signing_record": {
+        "path": "docs/plans/04-c-core-orchestration/IMPLEMENTATION.md",
+        "sha256": "8af0a631320b3fc2fc966381fad2a2df104ba3cb6299e1342656b26189824764"
+      },
+      "signing_unit": "3-14",
+      "status": "measured-identities-residual-causes",
+      "to_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+      "unexplained_cells": {
+        "path": "output/scratch-31/diff-3-14-perth.cells.tsv",
+        "selector": "all rows"
+      },
+      "unexplained_count": 795
+    },
+    {
+      "authoritative_list": {
+        "path": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_diff.json",
+        "sha256": "a129b4f8e57643c94dea5c2b03a2bff57e9100b3fccf1f84a7181c809bf73172"
+      },
+      "changed_bytes": 146,
+      "changed_cells": [
+        [
+          0,
+          0,
+          541
+        ]
+      ],
+      "changed_count": 1,
+      "changed_leaf_count": 1,
+      "changed_leaves": [
+        {
+          "cell": [
+            0,
+            541
+          ],
+          "kind": "frame",
+          "leaf": [
+            928
+          ],
+          "level": 0
+        }
+      ],
+      "confinement": "Equal file sizes; at least one changed byte; every differing byte is inside a frame covering level 0 cell [0,541] in BOTH discs. Header, PDMDH, BMT, block slot tables, padding and unmapped changes fail. Leaf [928] only.",
+      "counts_by_level": {
+        "0": {
+          "changed": 1
+        }
+      },
+      "from_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+      "region": "AU",
+      "residuals": [],
+      "signing_record": {
+        "path": "docs/plans/29-k1-name-anchor-failure.md",
+        "sha256": "ca1278f821c20b09a4ff0ca77cda6b27664cebef6291d3fff312acbfc88f3b19"
+      },
+      "signing_unit": "plan 29",
+      "status": "committed-leaf-proof-verified",
+      "to_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+      "unexplained_cells": [],
+      "unexplained_count": 0
+    },
+    {
+      "authoritative_list": null,
+      "changed_count": 0,
+      "confinement": "N/A: signed record says Perth unchanged at this full digest.",
+      "counts_by_level": {},
+      "from_sha256": "da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc",
+      "region": "Perth",
+      "residuals": [
+        "Recorded equality reused; no fresh disc hash by this worker."
+      ],
+      "signing_record": {
+        "path": "docs/plans/04-c-core-orchestration/IMPLEMENTATION.md",
+        "sha256": "8af0a631320b3fc2fc966381fad2a2df104ba3cb6299e1342656b26189824764"
+      },
+      "signing_unit": "3-11",
+      "status": "unchanged-recorded",
+      "supporting_evidence": [
+        {
+          "path": "docs/plans/04-c-core-orchestration/IMPLEMENTATION.md",
+          "sha256": "8af0a631320b3fc2fc966381fad2a2df104ba3cb6299e1342656b26189824764"
+        }
+      ],
+      "to_sha256": "da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc",
+      "unexplained_cells": [],
+      "unexplained_count": 0
+    },
+    {
+      "authoritative_list": null,
+      "changed_count": 0,
+      "confinement": "N/A: signed record says Perth unchanged at this full digest.",
+      "counts_by_level": {},
+      "from_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+      "region": "Perth",
+      "residuals": [
+        "Recorded equality reused; no fresh disc hash by this worker."
+      ],
+      "signing_record": {
+        "path": "docs/plans/04-c-core-orchestration/IMPLEMENTATION.md",
+        "sha256": "8af0a631320b3fc2fc966381fad2a2df104ba3cb6299e1342656b26189824764"
+      },
+      "signing_unit": "plan 29",
+      "status": "unchanged-recorded",
+      "supporting_evidence": [
+        {
+          "path": "docs/plans/29-k1-name-anchor-failure.md",
+          "sha256": "ca1278f821c20b09a4ff0ca77cda6b27664cebef6291d3fff312acbfc88f3b19"
+        }
+      ],
+      "to_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+      "unexplained_cells": [],
+      "unexplained_count": 0
+    }
+  ],
+  "phase3_closed": false,
+  "schema": 1,
+  "scope": "Existing signed hops; no new re-oracle. Unknown counts are null, never zero."
+}
