@@ -32,3 +32,7 @@ Refine skipped. One unit: `briefs/1-01-oracle-chain.md`.
 `artifact_feedback` was not called (workflow-service calls excluded).
 
 **Phase 1 outcome verified**, with the 3-14 cause attribution carried as a named residual.
+
+## Phase 2 — Live pin contract for Phase 3 close is stated; historical 100/26650 disposed without invention
+
+Refine skipped. One unit: `briefs/2-01-live-pin-contract.md`.
