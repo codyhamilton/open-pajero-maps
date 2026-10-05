@@ -14,9 +14,25 @@ sys.path.insert(0, str(ROOT / 'parser/tools'))
 import dump_join as J
 
 
+# Original 144-byte dump contract; fixtures must work without saved scratch.
+BASE_FIELDS = [{'name': name, 'type': typ} for name, typ in [
+    ('lat', 'f64'), ('lon', 'f64'), ('err', 'f64'),
+    ('ix', 'i32'), ('iy', 'i32'), ('vx', 'i32'), ('vy', 'i32'),
+    ('reason', 'i32'), ('code', 'i32'),
+    *[(f'p{i}', 'u16') for i in range(7)],
+    ('depth', 'u8'), ('kind', 'u8'), ('level', 'u8'),
+    ('shape', 'i32'), ('vert', 'i32'), ('onb', 'u8'),
+    ('d_any', 'f64'), ('any_type', 'i32'),
+    ('in_eo_same', 'u8'), ('in_wn_same', 'u8'), ('in_eo_any', 'u8'),
+    ('src_ix', 'i32'), ('src_iy', 'i32'), ('src_rec', 'i32'),
+    ('src_tall', 'u8'), ('src_nv', 'i32'), ('src_maxseg', 'f64'),
+    ('d_src', 'f64'), ('dcls', 'i32'), ('dnv', 'i32'),
+]]
+
+
 @pytest.fixture
 def source(tmp_path):
-    fields = json.loads((ROOT / 'output/scratch-14/dump_raw/dump_manifest.json').read_text())['fields']
+    fields = BASE_FIELDS
     dt = np.dtype([(f['name'], J.TS[f['type']]) for f in fields], align=True)
     src = tmp_path / 'src'
     src.mkdir()
@@ -99,6 +115,23 @@ def test_refuses_invalid_input_before_writing(source, tmp_path, bad):
     assert (src / 'completeness.bin').read_bytes() == raw.tobytes()
     if dst != src:
         assert not dst.exists()
+
+
+@pytest.mark.parametrize('target,input_name', [
+    ('completeness.bin', 'completeness.bin'),
+    ('dump_manifest.json', 'dump_manifest.json'),
+    ('completeness.bin', 'side'),
+])
+def test_refuses_hardlinked_inputs_before_writing(source, tmp_path, target, input_name):
+    src, side, raw, sha = source
+    protected = [src / 'completeness.bin', src / 'dump_manifest.json', side]
+    before = {p: p.read_bytes() for p in protected}
+    dst = tmp_path / 'dst'
+    dst.mkdir()
+    (dst / target).hardlink_to(side if input_name == 'side' else src / input_name)
+    with pytest.raises(ValueError, match='aliases an input'):
+        J.extend_other_mechanism(src, side, dst, 2, source_sha256=sha)
+    assert all(p.read_bytes() == before[p] for p in protected)
 
 
 @pytest.fixture(scope='module')

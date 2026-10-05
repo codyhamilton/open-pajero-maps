@@ -61,7 +61,7 @@ Execute re-runs under the guard:
 ```sh
 .venv-rp/bin/python -B parser/tools/run_heavy_python.py \
   --log output/scratch-28/runs/p2_join_reconcile.json -- \
-  docs/plans/28-phase1-per-rule-classify-recovery/triage/join_reconcile.py
+  .venv-rp/bin/python -B docs/plans/28-phase1-per-rule-classify-recovery/triage/join_reconcile.py
 ```
 
 ## Deviations

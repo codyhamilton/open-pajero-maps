@@ -374,9 +374,10 @@ def extend_other_mechanism(src_dir, side_path, dst_dir, window_rows=DEFAULT_WIND
         raise ValueError('source manifest size/count mismatch')
     if src_dir.resolve() == dst_dir.resolve() or dst_dir.is_symlink():
         raise ValueError('destination is the source or a symlink')
+    inputs = (src, side_path, src_dir / 'dump_manifest.json')
     for target in (dest, dst_dir / 'dump_manifest.json'):
-        if target.is_symlink() or target.resolve() in (src.resolve(), side_path.resolve(),
-                                                     (src_dir / 'dump_manifest.json').resolve()):
+        if (target.is_symlink() or target.resolve() in tuple(p.resolve() for p in inputs)
+                or (target.exists() and any(target.samefile(p) for p in inputs))):
             raise ValueError('destination aliases an input or is a symlink')
     before_sha = _digest(src)
     if before_sha != source_sha256:
