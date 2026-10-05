@@ -1,0 +1,160 @@
+{
+  "branch_flag": "all_live_empty",
+  "carried_point_kinds": [],
+  "control": {
+    "pass_failing_counts": true,
+    "plan29_pass": true
+  },
+  "disc_pin": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+  "disc_pin_basis": "Execute K1 argv and plan-29 successor_sha.json; disc not opened",
+  "excluded": {
+    "completeness": {
+      "plan": "docs/plans/28-phase1-per-rule-classify-recovery.md",
+      "status": "excluded"
+    }
+  },
+  "inputs": {
+    "control": "docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_k1_compare.json",
+    "dump_dir": "output/scratch-32/dump",
+    "guard": "output/scratch-32/runs/k1_dump.json",
+    "report": "output/scratch-32/k1_dump_report.json"
+  },
+  "kinds": [
+    {
+      "control_failing": 0,
+      "control_match": true,
+      "disc_pin": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+      "dump_bytes": 0,
+      "dump_path": "output/scratch-32/dump/interior_cover.bin",
+      "dump_row_ids": {
+        "start": 0,
+        "step": 1,
+        "stop": 0
+      },
+      "dump_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failing_rows": 0,
+      "k1_failing": 0,
+      "kind": "interior_cover",
+      "manifest_sha256": "c29ed9f0bd2fb382729f7fba2d200c9ab3b514aca8154a27e4aaa34a59536839",
+      "memory_peak_bytes": 5940453376,
+      "native_key_set": [],
+      "row_size": 144,
+      "workers": 6
+    },
+    {
+      "control_failing": 0,
+      "control_match": true,
+      "disc_pin": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+      "dump_bytes": 0,
+      "dump_path": "output/scratch-32/dump/name_anchor.bin",
+      "dump_row_ids": {
+        "start": 0,
+        "step": 1,
+        "stop": 0
+      },
+      "dump_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failing_rows": 0,
+      "k1_failing": 0,
+      "kind": "name_anchor",
+      "manifest_sha256": "c29ed9f0bd2fb382729f7fba2d200c9ab3b514aca8154a27e4aaa34a59536839",
+      "memory_peak_bytes": 5940453376,
+      "native_key_set": [],
+      "row_size": 144,
+      "workers": 6
+    },
+    {
+      "control_failing": 0,
+      "control_match": true,
+      "disc_pin": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+      "dump_bytes": 0,
+      "dump_path": "output/scratch-32/dump/background.bin",
+      "dump_row_ids": {
+        "start": 0,
+        "step": 1,
+        "stop": 0
+      },
+      "dump_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failing_rows": 0,
+      "k1_failing": 0,
+      "kind": "background",
+      "manifest_sha256": "c29ed9f0bd2fb382729f7fba2d200c9ab3b514aca8154a27e4aaa34a59536839",
+      "memory_peak_bytes": 5940453376,
+      "native_key_set": [],
+      "row_size": 144,
+      "workers": 6
+    },
+    {
+      "control_failing": 0,
+      "control_match": true,
+      "disc_pin": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+      "dump_bytes": 0,
+      "dump_path": "output/scratch-32/dump/background_boundary.bin",
+      "dump_row_ids": {
+        "start": 0,
+        "step": 1,
+        "stop": 0
+      },
+      "dump_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failing_rows": 0,
+      "k1_failing": 0,
+      "kind": "background_boundary",
+      "manifest_sha256": "c29ed9f0bd2fb382729f7fba2d200c9ab3b514aca8154a27e4aaa34a59536839",
+      "memory_peak_bytes": 5940453376,
+      "native_key_set": [],
+      "row_size": 144,
+      "workers": 6
+    }
+  ],
+  "nonempty_kinds": [],
+  "point_kinds": [
+    {
+      "k1_failing": 0,
+      "kind": "range",
+      "status": "out_of_scope"
+    },
+    {
+      "k1_failing": 0,
+      "kind": "step",
+      "status": "out_of_scope"
+    },
+    {
+      "k1_failing": 0,
+      "kind": "road_node",
+      "status": "out_of_scope"
+    },
+    {
+      "k1_failing": 0,
+      "kind": "road_point",
+      "status": "out_of_scope"
+    }
+  ],
+  "provenance": {
+    "argv": [
+      ".venv-rp/bin/python",
+      "-B",
+      "parser/tools/quantisation_roundtrip.py",
+      "--disc",
+      "output/scratch-29/G_new/ALLDATA.KWI",
+      "--spool",
+      "output/extract_timing/spool",
+      "--out",
+      "output/scratch-32/k1_dump_report.json",
+      "-j",
+      "6",
+      "--engine",
+      "c",
+      "--dump-failures",
+      "output/scratch-32/dump",
+      "--dump-kinds",
+      "interior_cover,name_anchor,background,background_boundary"
+    ],
+    "control_sha256": "d4d5038d9d66d420e6e9788100a894006051ee28fe785ed069281b761d1d5d4b",
+    "guard_sha256": "4d3d893aedc3488ba5898768d8aef3de0a6a47731062975321ad7a24fa78d4ad",
+    "manifest_sha256": "c29ed9f0bd2fb382729f7fba2d200c9ab3b514aca8154a27e4aaa34a59536839",
+    "memory_peak_bytes": 5940453376,
+    "pss_peak_kb": 7478057,
+    "report_sha256": "ade63d88ec6b0cefb659e2ecff3db38cbb99e8e327666e0770b75529d19480dc",
+    "workers": 6
+  },
+  "schema": 1
+}
