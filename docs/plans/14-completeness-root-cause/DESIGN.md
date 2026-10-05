@@ -153,6 +153,47 @@ Membership must be exhaustive and disjoint: every one of the 776 rows appears in
 - Depends on: Phase 2.
 - Refine: skipped per group when the reproducer already names the fix site; otherwise refine that group only.
 
+#### Phase 3 refine (2026-10-06)
+
+Refine ran because neither Phase 2 reproducer named a single fix site. 2-01 left "build or checker" open; 2-02 left "non-deviation or checker" open. Verdict: **Proceed.**
+
+**Locus decisions (settled for the units below).**
+
+| Group | Disposition | Why |
+| --- | --- | --- |
+| 2-01 `g-omits-cell-local-dvd-type` (342) | (1) **checker** | Production C `bg_shape` gives 0 records for every member's demanding source (342/342, `phase2_open_questions.md` Q-2-01-densify). The builder can only emit 288 there by inventing geometry the spool does not hold, so a build fix is excluded. K1's demand passes these sources through branch (b) ("vertex ≥1 raw inside") or (c) (`Region.inside` with `TOL`), although `_required_cells`' own docstring leaves surviving slivers to "the clip's business". |
+| 2-02 `r-absent-complete-repair-zero` (432) | (1) **checker**, same change, with (4)-style R/G-absent evidence cited | A (4)-only close leaves the K1 rows failing and unattributed, which contradicts "live unattributed count equals the open-question count". The fix site and the criterion are identical to 2-01. |
+
+- One unit, 3-03, carries both groups. "Each group is one worker" would put two workers on the same lines of `_k1_cmp.c`. The rule is narrow: a demanded pair with no piece fails only if some demander's in-cell footprint is representable under the wire contract. The positive controls in 3-03 keep the check able to catch real build drops.
+- A 2-01/2-02 key with a representable demander, if 3-01 finds one, keeps failing after 3-03 and is named as a build-defect candidate.
+
+**Design ruling on dump_row 765 (2026-10-06, binding).**
+- 765 is its own unit (3-02). Proof obligation: show that the single R polygon (code 291, column 1304) contributes **0 records** to cell (0,1307,1756) in the repaired source, using actual geometry and emitted output, not counts.
+- **If proven:** in the Phase 3 record, amend the 2-02 definition to "R polygons contributing 0 cell-local records", cite the proof, fold 765 into 2-02, and re-check all 432 under the amended definition.
+- **If not proven:** 765 stays a separate root-cause group with its own mechanism.
+- The 2-03 accounting `776 = 342 + 432 + 335 + 765` is unchanged until 3-02 closes.
+
+**Carried from Phase 2, placed.**
+1. Q-source-335 → 3-01. Read-only instrumentation of the checker's own region/branch path names the demander. Two leads: (c)'s `TOL` slack along the scan line, which the 2-03 strict even-odd search did not model, and tall shapes homed more than 32 cells away. 335 stays an open question unless 3-01's evidence is later ruled on.
+2. Q-tile-alias (765) → 3-02, per the ruling above.
+3. Locus choice → decided above. 2-01 → 3-03, 2-02 → 3-03.
+4. Plan 04 Phase 3 not closed → unchanged; the Phase 3 close record restates it.
+5. Not placed in a unit: in the 342 2-01 cells, R emits 288 while the spool holds no representable 288 source. That is a source-data parity difference, not a K1 completeness defect. The Phase 3 record carries it as a named observation for Design. This plan adds no scope for it.
+
+`artifact_feedback` skipped: the user barred the workflow service for this run.
+
+#### Units
+
+| Unit | Brief | Depends on | Runs alongside |
+| --- | --- | --- | --- |
+| 3-01 | `briefs/3-01-demand-attribution.md` | — | — |
+| 3-02 | `briefs/3-02-765-r-zero-contribution.md` | — | — |
+| 3-03 | `briefs/3-03-checker-representable-demand.md` | 3-01 (dispatched after 3-02) | — |
+
+- Order: 3-01 → 3-02 → 3-03 → Phase 3 close (orchestrator).
+- Workers: Codex `gpt-6.1-sol`, one at a time. Single worktree; all heavy steps go through `run_heavy_python.py`.
+- Expected done-evidence waits: 3-03's K1 run is about 125 s and its re-encode about 90 s, so no split is needed. 3-01 decides its split at kickoff from a 25-key timing run.
+
 ## Provenance
 
 - Ground tip read: `origin/master` `f870e7c882322f55cbf9dbb2848483daad89ca72` (“Record repository audit through 3b716a2 and unchanged blockers”).

@@ -5,7 +5,8 @@
 - Started: 2026-10-05 ~23:05 Australia/Brisbane (Phase 1)
 - Phase 1 closed: 2026-10-05 ~23:34 Australia/Brisbane
 - Phase 2 refine: 2026-10-06 ~00:09 Australia/Brisbane
-- Phase 2 closed: 2026-10-06 ~02:30 Australia/Brisbane
+- Phase 2 closed: 2026-10-06 02:09 Australia/Brisbane (`8c37bae`)
+- Phase 3: orchestrator Execute background worker; unit workers Codex `gpt-6.1-sol` (high) via `codex exec`, one at a time; refine 2026-10-06 ~02:15 Australia/Brisbane
 
 ## Phase 1 — Per-row completeness evidence table
 
@@ -87,3 +88,6 @@ Seed cross-tab from Phase 1 TSV (pre cell-local / pre repair):
 | neither_499 | 342 | 157 |
 | **total** | **343** | **433** (incl. row 335 source gap) |
 
+## Phase 3 — Fix or proven non-deviation per group
+
+Refine: **Proceed.** Units 3-01 (demand attribution / 335), 3-02 (765 R zero contribution, Design ruling), 3-03 (checker representable demand for 2-01 + 2-02). See DESIGN "Phase 3 refine". `artifact_feedback` skipped (workflow service barred by the user). Accounting held at `776 = 342 + 432 + 335 + 765` until 3-02 closes.
