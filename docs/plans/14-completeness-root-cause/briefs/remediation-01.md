@@ -2,6 +2,13 @@
 
 Severity: **high**. Status: **briefed**, not attempted in terminal review.
 
+Consumer: a clean Codex `gpt-6.1-sol` (high) agent in worktree `/home/codyh/workspace/open-pajero-maps-14-completeness`, in a `workspace-write` sandbox.
+Owned paths: `parser/tools/k1_representable.py`, `parser/kiwiw/_k1_cmp.c`, `parser/tests/test_k1_completeness_representable.py`, `parser/tests/k1_fixtures.py` (additions), `docs/plans/14-completeness-root-cause/reports/remediation-01.md`, and scratch under `output/scratch-14/remediation/`. Touch nothing else. `_cenc.c` and every encoder path are read-only. Do not edit `REVIEW.md`; the orchestrator appends the verdict.
+Commits: leave changes in the working tree. The sandbox cannot write git metadata, and the orchestrator runs the heavy checks and commits.
+Report: write `docs/plans/14-completeness-root-cause/reports/remediation-01.md`. Rubric: `/home/codyh/workspace/workflow-plugin/tools/quality/checks/execution-report.json`.
+Budget: 30 files to read, about 600 lines changed, 200 tool turns.
+Heavy work: none in the sandbox. Done-evidence item 4 belongs to the orchestrator. Light pytest via `.venv-rp/bin/python -B -m pytest` is fine.
+
 ## Defect and contract
 
 Plan 14 Phase 3 permits an absent `(cell, type)` to pass only when no demanding
