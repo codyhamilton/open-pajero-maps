@@ -11,4 +11,12 @@
 
 ### Outcomes
 
-(pending)
+- `1-01-map-only-honesty`: wp_na checks discovered; report JSON + footer declare map-only / `full_disc_parity: false`; OVERVIEW + docstring updated; 4 unit tests PASS. Report `reports/1-01-map-only-honesty.md`.
+
+### Verification
+
+- `.venv-rp/bin/pytest parser/tests/test_harness_map_only_honesty.py` → 4 passed.
+
+### Carried
+
+None.

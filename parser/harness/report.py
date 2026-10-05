@@ -9,14 +9,22 @@ from pathlib import Path
 DEFAULT_REPORT_PATH = "output/compare_report.json"
 
 
-def print_table(results: list[dict]) -> None:
-    id_width = max([len("id")] + [len(r["id"]) for r in results])
-    status_width = max([len("status")] + [len(r["status"]) for r in results])
+def print_table(results: list[dict], *, layers_present: list | None = None) -> None:
+    id_width = max([len("id")] + [len(r["id"]) for r in results] or [2])
+    status_width = max([len("status")] + [len(r["status"]) for r in results] or [6])
     header = f"{'id':<{id_width}}  {'status':<{status_width}}  message"
     print(header)
     print("-" * len(header))
     for r in results:
         print(f"{r['id']:<{id_width}}  {r['status']:<{status_width}}  {r['message']}")
+    layers = list(layers_present) if layers_present is not None else []
+    map_only = layers == ["map"]
+    if map_only:
+        print()
+        print(
+            "scope: map-only (layers_present=['map']); "
+            "full_disc_parity=false — exit 0 is not full-disc parity"
+        )
 
 
 def sha256_file(path: str, chunk: int = 1 << 20) -> str:
@@ -60,13 +68,23 @@ def bind_generated(generated: str, manifest_path: str | None, no_manifest: bool)
 
 
 def write_report(path: str, reference, generated: str, results: list[dict],
-                 binding: dict | None = None) -> None:
+                 binding: dict | None = None,
+                 layers_present: list | None = None) -> None:
+    layers = list(layers_present) if layers_present is not None else []
+    map_only = layers == ["map"]
     out = {
         "generated": generated,
         "reference": reference,
         **(binding or {}),
+        "layers_present": layers,
+        "scope": "map-only" if map_only else ("full-disc" if layers else "unspecified"),
+        "full_disc_parity": False if map_only or not layers else None,
         "checks": results,
     }
+    if out["full_disc_parity"] is None:
+        # Non-map-only configs: do not claim full-disc parity here either
+        # until WP2–WP5 real checks exist; honesty default is false.
+        out["full_disc_parity"] = False
     out_path = Path(path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w") as f:

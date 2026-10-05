@@ -8,7 +8,12 @@ Usage::
         --generated <dir or ALLDATA.KWI> [--checks a,b,c] [--config file.json] \\
         [--report output/compare_report.json]
 
-Exit code 0 only when every applicable (non-NA) check is PASS.
+Exit code 0 when no check is FAIL (PASS and NA both OK).
+
+Default config has layers_present=["map"] only. A green exit under that
+map-only scope is **not** full-disc parity: WP2–WP5 appear as NA negative
+controls, and the JSON report sets full_disc_parity=false. See
+docs/OVERVIEW.md WP table and the Assessor functional-e2e warning.
 
 This module is a thin CLI over `parser/harness/`; all check logic lives
 there. See `parser/harness/__init__.py` for the reading-paths-only import
@@ -128,8 +133,10 @@ def main() -> int:
             "details": result.details,
         })
 
-    report.print_table(results)
-    report.write_report(args.report, reference_path, generated_path, results, binding)
+    layers_present = list(config.get("layers_present") or [])
+    report.print_table(results, layers_present=layers_present)
+    report.write_report(args.report, reference_path, generated_path, results, binding,
+                        layers_present=layers_present)
 
     exit_code = 0 if all(r["status"] != "FAIL" for r in results) else 1
     return exit_code
