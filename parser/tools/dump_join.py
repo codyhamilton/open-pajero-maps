@@ -320,9 +320,146 @@ def extend_s02_producer(dump_dir, side_path, dst_dir, window_rows: int = DEFAULT
     return matches
 
 
+# Plan 28: completeness-only, exact native item key (including vert).
+OTHER_NATIVE = (*GROUP, 'vert')
+BASELINE_SHA256 = '1a91b1c26e474b2c689fef9811b73878a4ead144db97eea3aaf6f442ed30d323'
+
+
+def _digest(path):
+    import hashlib
+    h = hashlib.sha256()
+    with Path(path).open('rb') as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def other_selection(rows, keys=None, max_rows=None):
+    selected = sorted(set(range(rows) if keys is None else keys))
+    if not selected or any(k < 0 or k >= rows for k in selected):
+        raise ValueError('empty or out-of-range source dump rows')
+    if max_rows is not None:
+        if max_rows < 1:
+            raise ValueError('max_rows must be >= 1')
+        selected = selected[:max_rows]
+    return selected
+
+
+def extend_other_mechanism(src_dir, side_path, dst_dir, window_rows=DEFAULT_WINDOW,
+                           *, source_sha256=BASELINE_SHA256, keys=None, max_rows=None,
+                           log=lambda s: print(s, flush=True)):
+    """144→152 exact TSV join, verifying source hash and ALL 144 original bytes.
+
+    Only selected rows are written for a window; their original dump_row mapping
+    is retained in the manifest. Missing/duplicate/foreign side keys are errors.
+    Side storage is bounded by the selected completeness row count, never a disc.
+    """
+    import csv
+    if window_rows < 1:
+        raise ValueError('window_rows must be >= 1')
+    src_dir, side_path, dst_dir = map(Path, (src_dir, side_path, dst_dir))
+    manifest = json.loads((src_dir / 'dump_manifest.json').read_text())
+    if set(manifest['kinds']) != {'completeness'}:
+        raise ValueError('other_mechanism requires a completeness-only manifest')
+    fields = manifest['fields']
+    old = np.dtype([(f['name'], TS[f['type']]) for f in fields], align=True)
+    if old.itemsize != 144 or any(k not in old.names for k in OTHER_NATIVE):
+        raise ValueError('expected original 144-byte native-key layout')
+    info = manifest['kinds']['completeness']
+    if Path(info['file']).name != info['file']:
+        raise ValueError('source file must be a basename')
+    src, dest = src_dir / info['file'], dst_dir / info['file']
+    rows = dump_io.file_rows(src, 144)
+    if info['rows'] != rows or info.get('row_size', 144) != 144:
+        raise ValueError('source manifest size/count mismatch')
+    if src_dir.resolve() == dst_dir.resolve() or dst_dir.is_symlink():
+        raise ValueError('destination is the source or a symlink')
+    for target in (dest, dst_dir / 'dump_manifest.json'):
+        if target.is_symlink() or target.resolve() in (src.resolve(), side_path.resolve(),
+                                                     (src_dir / 'dump_manifest.json').resolve()):
+            raise ValueError('destination aliases an input or is a symlink')
+    before_sha = _digest(src)
+    if before_sha != source_sha256:
+        raise ValueError(f'source sha256 {before_sha} != {source_sha256}')
+    selected = other_selection(rows, keys, max_rows)
+    side = {}
+    with side_path.open() as fh:
+        for r in csv.DictReader(fh, delimiter='\t'):
+            key = tuple(int(r[k]) for k in OTHER_NATIVE)
+            rid, code = int(r['dump_row']), int(r['other_mechanism'])
+            if rid in side or code not in (0, 4, 5, 7, 8):
+                raise ValueError('duplicate side row or invalid mechanism code')
+            side[rid] = key, code
+            if len(side) > rows:
+                raise ValueError('side table exceeds source row count')
+    if set(side) != set(selected):
+        raise ValueError('side table must cover exactly the selected source rows')
+    # Validate every selected key before creating any output.
+    with src.open('rb') as fh:
+        for rid in selected:
+            fh.seek(rid * 144)
+            r = np.frombuffer(fh.read(144), old, count=1)[0]
+            if tuple(int(r[k]) for k in OTHER_NATIVE) != side[rid][0]:
+                raise ValueError(f'side native key differs at dump_row {rid}')
+    man = json.loads(json.dumps(manifest))
+    man['fields'] = fields + [{'name': 's02_producer_verified', 'type': 'u8'},
+                              {'name': 'other_mechanism', 'type': 'u8'}]
+    new = np.dtype([(f['name'], TS[f['type']]) for f in man['fields']], align=True)
+    if new.itemsize != 152 or new.fields['other_mechanism'][1] != 145:
+        raise ValueError('byte-145 extension layout mismatch')
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    # Reusable windows only. Preserve padding and NaN payloads by copying bytes.
+    with dump_io.WindowedReader(src, old, window_rows, rows=rows) as reader, \
+            dump_io.WindowedWriter(dest, 152, len(selected), window_rows) as writer:
+        out = np.zeros((window_rows, 152), 'u1')
+        offset = 0
+        chosen = set(selected)
+        for lo, n, arr in reader.windows():
+            ids = [rid for rid in range(lo, lo + n) if rid in chosen]
+            if not ids:
+                del arr
+                continue
+            out[:len(ids)] = 0
+            mv = reader.window_bytes(n)
+            raw = np.frombuffer(mv, 'u1').reshape(n, 144)
+            for i, rid in enumerate(ids):
+                out[i, :144] = raw[rid - lo]
+                out[i, 145] = side[rid][1]
+            del raw, arr
+            mv.release()
+            mv = memoryview(out[:len(ids)]).cast('B')
+            writer.write_window(offset, len(ids), mv)
+            mv.release()
+            offset += len(ids)
+    # Independently compare raw source rows and complete destination tails.
+    with src.open('rb') as fh, dump_io.WindowedReader(dest, new, window_rows) as reader:
+        for lo, n, arr in reader.windows():
+            mv = reader.window_bytes(n)
+            raw = np.frombuffer(mv, 'u1').reshape(n, 152)
+            for i, rid in enumerate(selected[lo:lo + n]):
+                fh.seek(rid * 144)
+                if (raw[i, :144].tobytes() != fh.read(144) or raw[i, 144] != 0
+                        or raw[i, 145] != side[rid][1] or raw[i, 146:].any()):
+                    raise VerifyError(f'completeness: byte mismatch at dump_row {rid}')
+            del arr, raw
+            mv.release()
+    if _digest(src) != before_sha:
+        raise VerifyError('source changed while extending')
+    man['row_size'] = 152
+    man['kinds']['completeness'].update(fields=man['fields'], row_size=152, rows=len(selected))
+    man['extension_other_mechanism'] = {
+        'source': str(src_dir), 'source_sha256': before_sha, 'side_table': str(side_path),
+        'side_sha256': _digest(side_path), 'offset': 145, 'source_dump_rows': selected,
+        'original_144_bytes_verified': True, 'byte144_zero': True,
+        'destination_sha256': _digest(dest)}
+    (dst_dir / 'dump_manifest.json').write_text(json.dumps(man, indent=2) + '\n')
+    log(f'EXTENDED completeness {len(selected)}; original 144 bytes VERIFIED; byte144 zero')
+    return len(selected)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description='Bounded dump join / extension adapters.')
-    ap.add_argument('--mode', choices=('residual', 's02'), default='residual')
+    ap.add_argument('--mode', choices=('residual', 's02', 'other_mechanism'), default='residual')
     # residual
     ap.add_argument('--src', default=DEFAULT_SRC, help='source dump dir (read-only)')
     ap.add_argument('--side-dir', default=DEFAULT_SIDE, help='dir holding side_<kind>.npy')
@@ -336,9 +473,17 @@ def main(argv=None) -> int:
     ap.add_argument('--dump', default=S02_DEFAULT_DUMP, help='3-07 source dump dir (144-byte)')
     ap.add_argument('--side', default=S02_DEFAULT_SIDE, help='3-07 side_background_boundary.npy')
     ap.add_argument('--s02-dst', default=S02_DEFAULT_DST, help='3-07 destination dump dir')
+    # other_mechanism: --src, --side (TSV), --dst; selection uses original dump_row.
+    ap.add_argument('--source-sha256', default=BASELINE_SHA256)
+    ap.add_argument('--keys', help='comma-separated original dump_row ids (new mode only)')
+    ap.add_argument('--max-rows', type=int, help='limit selected rows (new mode only)')
     a = ap.parse_args(argv)
     try:
-        if a.mode == 's02':
+        if a.mode == 'other_mechanism':
+            keys = None if a.keys is None else [int(k) for k in a.keys.split(',')]
+            extend_other_mechanism(a.src, a.side, a.dst, a.window_rows,
+                                   source_sha256=a.source_sha256, keys=keys, max_rows=a.max_rows)
+        elif a.mode == 's02':
             extend_s02_producer(a.dump, a.side, a.s02_dst, a.window_rows)
         else:
             extend_residual(a.src, a.side_dir, a.assign_dir, a.dst, a.counts, a.window_rows,

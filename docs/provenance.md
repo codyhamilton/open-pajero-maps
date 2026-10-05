@@ -377,10 +377,10 @@ byte-equality pair. Regenerable, so not committed.
 Summaries and assignments written by `parser/tools/k1_triage.py` over a K1 failure dump (`summary` → `totals.tsv`, `by_level_type.tsv`, group tables; `classify` → per-rule assignment files and `rules.json`). Regenerable: `.venv-rp/bin/python parser/tools/k1_triage.py summary --dump output/scratch-3-03/dump --out output/scratch-3-05/summary` (about 2.3 min, ~3.4 GB RSS); the dump itself is the 3-02/3-03 entries above.
 
 ### output/scratch-3-07/ (3-07 cause-table scratch, Phase 3, not committed)
-Witness scripts, side tables (`side_background_boundary.npy`, partial: S02 producer scan stopped at the 10,000-ring pin cap), `pins_S02.tsv`, counterfactual windows (`spool_cf/`, `cf_*`) and `dump_attempt3/` (2.6 GB): the 3-03 dump (`output/scratch-3-03/dump`) with one appended u8 column `s02_producer_verified`, built by `output/scratch-3-07/extend_dump_attempt3.py` from the side table. Committed `triage/rules_bg.json` rule S02 needs that column; `classify` against the original dump exits 2. Regenerate: run the 3-07 producer scan script(s) then `extend_dump_attempt3.py` (see `triage/causes_bg.md`, section on the side-table extension); the scan is partial by design until the pin-cap decision. Reviews: `output/scratch-3-07/review/`, `review3/`.
+Witness scripts, side tables (`side_background_boundary.npy`, partial: S02 producer scan stopped at the 10,000-ring pin cap), `pins_S02.tsv`, counterfactual windows (`spool_cf/`, `cf_*`) and `dump_attempt3/` (2.6 GB): the 3-03 dump (`output/scratch-3-03/dump`) with one appended u8 column `s02_producer_verified`, built by `output/scratch-3-07/extend_dump_attempt3.py` from the side table. Committed `triage/rules_bg.json` rule S02 needs that column; `classify` against the original dump exits 2. These artefacts and scratch-only producer scripts were deleted (plan-28 Ground); older worktree links are dangling. They are **not regenerable by this old recipe**. The tracked `parser/tools/dump_join.py --mode s02` can reproduce the join only if its deleted producer-qualified side table is supplied; it does not reconstruct that table. The historical scan was partial until the pin-cap decision. Reviews: `output/scratch-3-07/review/`, `review3/`.
 
 ### output/scratch-3-08/ (3-08 cause-table scratch, Phase 3, not committed)
-Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anchor.npy`, `sources_other.json`), audit scripts, counterfactuals (`cf_count_wrap`, `cf_name`, `cf_completeness`) and `dump_other/` (272 KB for the three small kinds, plus read-only symlinks to `output/scratch-3-07/dump_attempt3` big files): the 3-03 dump with `s02_producer_verified` (byte 144, 3-07) and `other_mechanism` (byte 145, 3-08, previously padding). Committed `triage/rules_other.json` needs these columns; on the original dump `classify` exits 2. Reproduce: 3-07 entry, then the scripts in `output/scratch-3-08/` (see `triage/cause_table.md`). Reviews: `output/scratch-3-08/review/`.
+Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anchor.npy`, `sources_other.json`), audit scripts, counterfactuals (`cf_count_wrap`, `cf_name`, `cf_completeness`) and `dump_other/` (272 KB for the three small kinds, plus read-only symlinks to `output/scratch-3-07/dump_attempt3` big files): the 3-03 dump with `s02_producer_verified` (byte 144, 3-07) and `other_mechanism` (byte 145, 3-08, previously padding). Committed `triage/rules_other.json` needs these columns; on the original dump `classify` exits 2. These artefacts and the scratch-only producer scripts were deleted (plan-28 Ground). They are **not regenerable by this old recipe**, and `other_mechanism` had no tracked producer. Plan 28 below provides a fresh completeness-only measurement under the current contract; it does not restore 3-08 bytes or reconstruct the other kinds. Reviews: `output/scratch-3-08/review/`.
 
 ### output/scratch-3-12/ (new-disc residual attribution, not committed)
 
@@ -746,3 +746,62 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
     - Old checker (`0b19b5e`) and new checker K1 runs on `scratch-3-11/G_new` (`013586b5…`, read only): `{old,new}_k1_311.{json,log}`, the completeness dumps, and `sets.json`.
     - Result: new failing 52 = exactly the keys fixed by the 3-14 build.
   - Wrapper logs: `runs/{attribution_*,r_contribution_*,p3_tests,k1_p3,p3_reencode,indep_old_k1_311,indep_new_k1_311}.json`.
+
+
+### output/scratch-28/ (plan-14 completeness per-rule recovery)
+
+Tracked producer: `docs/plans/28-phase1-per-rule-classify-recovery/triage/completeness_mechanism.py`.
+Inputs are the pinned 776 × 144-byte `scratch-14/dump_raw/completeness.bin`
+(SHA256 `1a91b1c26e474b2c689fef9811b73878a4ead144db97eea3aaf6f442ed30d323`),
+committed plan-04/14 TSVs, and saved `scratch-14/attribution/proofs/` JSONs.
+No spool or disc open; current production C probes run on saved in-memory
+rings. Each side row records predicate inputs and its light path. Optional
+legacy control skipped. This is a fresh measurement, not historical-byte
+restoration; see `phase1_note.md` and the unit report in the plan folder.
+
+Worker verification: `scratch-28/window25/` contains 25 side rows, the byte-145
+dump, real classifier outputs, assignment TSV and generated controls; O01 2,
+O04 6, O05 3, NO_RULE 14. Classifier exit 1 is valid. Window command argv and
+exit codes are recorded in `scratch-28/window_verification.json`.
+New fixture before/after logs are `scratch-28/tests/{before,after}.txt`.
+Existing replay tests use a runtime pytest plugin in `scratch-28/tests/` to
+relocate their temporary trees there; no plan-05 repository code is edited.
+
+Full baseline execution was run by Execute on 2026-10-06 ~04:36 AEST, in this order, each taking
+the plan-25 lock/memory guard and saving its run log. Commands write the
+complete tracked TSVs, projection/hashes, controls and run metadata, plus
+`scratch-28/dump_mech/` and `scratch-28/classify/`:
+
+```sh
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/produce.json -- .venv-rp/bin/python -B docs/plans/28-phase1-per-rule-classify-recovery/triage/completeness_mechanism.py produce --all-rows
+```
+
+```sh
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/projection.json -- .venv-rp/bin/python -B docs/plans/28-phase1-per-rule-classify-recovery/triage/completeness_mechanism.py projection
+```
+
+```sh
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/dump-join.json -- .venv-rp/bin/python -B parser/tools/dump_join.py --mode other_mechanism --src output/scratch-14/dump_raw --side docs/plans/28-phase1-per-rule-classify-recovery/triage/completeness_mechanism.tsv --dst output/scratch-28/dump_mech --window-rows 25
+```
+
+```sh
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/classify.json -- .venv-rp/bin/python -B parser/tools/k1_triage.py classify --dump output/scratch-28/dump_mech --rules docs/plans/28-phase1-per-rule-classify-recovery/triage/rules_completeness_projection.json --out output/scratch-28/classify --window-rows 25
+```
+
+```sh
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-28/runs/publish.json -- .venv-rp/bin/python -B docs/plans/28-phase1-per-rule-classify-recovery/triage/completeness_mechanism.py publish
+```
+
+Expected exits: 0, 0, 0, 1 (valid NO_RULE partition; 0 also valid if measured
+complete), 0. Continue to publish after classify exit 1; exit 2 is a failure.
+The full-run predictions are yardsticks, never assignments. The generated
+controls preserve the 34-versus-31 arithmetic contradiction in DESIGN and
+name identity-control mismatches with predicate inputs; exact 3-17 row
+comparisons cannot be inferred from counts alone.
+
+Measured: exits 0, 0, 0, 1, 0, with `run_p1.sh` / `run_p1.log` in scratch-28.
+- Codes: 4: 363, 5: 132, 7: 7, 0: 274; all 776 rows on the light path, no evidence gap.
+- Classify: `PARTITION FAIL` with O01 363 / O05 132 / O04 7 / NO_RULE 274, equal to the 3-15 yardstick.
+- Controls: 188/188 historic `NO_RULE`; 89 added split O04 3 / NO_RULE 86.
+- `dump_raw` re-hashed `1a91b1c2…` before and after the run.
+- Peak memory 81 MB (produce, 57 s).
