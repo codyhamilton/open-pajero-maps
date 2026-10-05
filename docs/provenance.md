@@ -727,3 +727,16 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
   `gcc -O2 -ffp-contract=off -fPIC -shared`). Produced by committed
   `plans/14-completeness-root-cause/triage/complete_repair_2-02.py --all-seeds`
   via `parser/tools/run_heavy_python.py` (flock); reads only G sha pin and spool.
+- **Phase 3 (added 2026-10-06):**
+  - `attribution/`: unit 3-01/3-01b demand attribution.
+    - Contents: `proofs/<dump_row>.json` (the checking block's actual `Region`, every demanding shape with a/b/c branch, the EO-face mirror verdict, and production C `bg_shape` records), `summary.json`, `geometry_335.json`, cached tall sets, and `w{1,2}.log`.
+    - Produced by the committed `plans/14-completeness-root-cause/triage/demand_attribution_3-01.py` via `run_heavy_python.py`.
+  - `r_contribution/`: unit 3-02 R-side proofs.
+    - Contents: `765.json` and the per-row 2-02 re-check JSON, built from R slot byte-range decodes of `/run/media/codyh/464210-8480/ALLDATA.KWI`.
+    - Produced by the committed `triage/r_contribution_3-02.py`.
+  - `p3/`: unit 3-03 orchestrator verification.
+    - `k1_p3.{json,log}`: live K1 `-j6` on `4ed9cd80…` after the checker change; completeness 1,800,514 checked, 0 failing; other kinds identical to `k1_full.json`.
+    - `dump/`: completeness dump, 0 rows.
+    - `G_reencode/ALLDATA.KWI`: full re-encode `-j4` with the rebuilt `_cenc.so`, sha `4ed9cd801bdd7099…`, identical to the disc in force. About 1.6 GB, regenerable.
+    - `reencode.log`.
+  - Wrapper logs: `runs/{attribution_*,r_contribution_*,p3_tests,k1_p3,p3_reencode}.json`.
