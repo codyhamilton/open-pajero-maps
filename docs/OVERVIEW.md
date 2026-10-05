@@ -39,7 +39,7 @@ are of each fact, is in `docs/schema/`.
 
 | Package | Scope | State |
 |---|---|---|
-| WP1 | Map layer (`ALLDATA.KWI`) and the evaluation harness | Build and harness exist (plans 01–02); map parity is unfinished. Plan **04** C-core Phases 1–2 are closed; Phase 3 is blocked at **3-90** after 3-14–3-17 landed. Phases 4–6 depend on that close. Plan **03** content phases remain frozen until 04 Phase 6. Heavy-job memory (05), padding attribution (07), classify fixes (08–09), the carried assembly-loader error (10), recorded triage summary determinism failures (11), carried density wording (12), the recorded fixture way precheck (13), SADSR SRMX STFG (15), and K1 determinism `wall_s` strip (16) are finished; records are under `docs/plans/`. Plan **14** completeness root-cause is **open** (Phase 1 evidence landed; Phases 2–3 remain). |
+| WP1 | Map layer (`ALLDATA.KWI`) and the evaluation harness | Build and harness exist (plans 01–02); map parity is unfinished. Plan **04** C-core Phases 1–2 are closed; Phase 3 is blocked at **3-90** after 3-14–3-17 landed. Phases 4–6 depend on that close. Plan **03** content phases remain frozen until 04 Phase 6. Heavy-job memory (05), padding attribution (07), classify fixes (08–09), the carried assembly-loader error (10), recorded triage summary determinism failures (11), carried density wording (12), the recorded fixture way precheck (13), SADSR SRMX STFG (15), and K1 determinism `wall_s` strip (16) are finished; records are under `docs/plans/`. Plan **14** completeness root-cause closed out at `3fb5a35`; record: `docs/plans/14-completeness-root-cause.md`. |
 | WP2 | Route planning frames and ext frames | Not started; first-pass writer exists |
 | WP3 | Address and POI search | Not started (plan 26: offline seven-state search fixtures/tests only — ≠ WP3 complete ≠ Australia-wide MMCS proof) |
 | WP4 | Remaining `IDX/` families, `HWMAP`, `INDEXDAT` | Not started; bodies undecoded |
@@ -58,9 +58,8 @@ ceiling **9,726,501 kB** is the historical `-j 12` peak, while ops and the
 3-90 gate must use ≤ `-j 6` — not an unexplained memory blow-up. The PSS bar
 is **not** cleared; a later 3-90 re-run under the amended brief is still
 required. Remaining open blockers: PSS contract (ceiling held; live gate at
-ops ≤6), native classify joins, 3-11 versus 3-14 oracle,
-`pinned_candidates` exhaustive set-equality (unverifiable from git until enumerate artifacts are authorised), and historic completeness attribution
-(open under plan **14**). The plan-16 strip independent-review gap is closed by plan **27**; other historical unreviewed fix units are out of that discharge. Plan **25** records the 2026-10-06 OOM RCA and memory guards; heavy-Maps **CHM hold** pending clear (`docs/plans/25-oom-memory-rca/`) — not auto-cleared. These still block Phase 3 closure; no later phase
+ops ≤6), other kinds' native classify joins, 3-11 versus 3-14 oracle,
+and `pinned_candidates` exhaustive set-equality (unverifiable from git until enumerate artifacts are authorised). Completeness per-rule assignments and historic attribution are recovered and joined under plan **28** (`docs/plans/28-phase1-per-rule-classify-recovery/phase2_reconciliation.md`): 776 rows, 769 consistent, 7 conflict-proven, **0 conflict-open**. The seven O04 spool rows (138, 236, 282, 284, 317, 496, 563) remain successor spool items; the 2-01 source-data parity observation stays carried to Design. The plan-16 strip independent-review gap is closed by plan **27**; other historical unreviewed fix units are out of that discharge. Plan **25** records the 2026-10-06 OOM RCA and memory guards; heavy-Maps **CHM hold** pending clear (`docs/plans/25-oom-memory-rca/`) — not auto-cleared. These still block Phase 3 closure; no later phase
 is released; plan 04 Phase 3 is not closed. The signed phase outcome and
 detailed evidence remain in plan 04. The repo contains no plan 06 design: the
 earlier CI-gate draft is not a work unit on master.
@@ -76,7 +75,7 @@ The offline oracle (`parser/compare_disc.py`) defaults to `layers_present=["map"
 | How is the code organised? | `docs/ARCHITECTURE.md` |
 | What are we building and how is it judged? | `docs/design/target-disc.md` |
 | How do we run the workflow plugin (design → execute → close)? | `docs/WORKFLOW.md` |
-| What remains unfinished? | `docs/plans/04-c-core-orchestration/` (blocked Phase 3 / 3-90; dependent Phases 4–6). Plan **14** completeness root-cause (Phases 2–3). Plan 03's remaining content phases stay frozen. The closed records under `docs/plans/` describe completed work. |
+| What remains unfinished? | `docs/plans/04-c-core-orchestration/` (blocked Phase 3 / 3-90; dependent Phases 4–6). Other kinds' native classify joins and the carried completeness source-data parity / spool successor items remain; plan **14** closed out at `3fb5a35` (`docs/plans/14-completeness-root-cause.md`). Plan 03's remaining content phases stay frozen. The closed records under `docs/plans/` describe completed work. |
 | What was built before? | `docs/plans/01-…md`, `docs/plans/02-…md` |
 | Where did each non-committed file come from? | `docs/provenance.md` |
 

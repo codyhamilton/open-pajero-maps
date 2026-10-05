@@ -1,0 +1,7 @@
+rule_id	plan14_group	verdict	count
+NO_RULE	r-absent-complete-repair-zero	consistent	274
+O01	g-omits-cell-local-dvd-type	consistent	340
+O01	r-absent-complete-repair-zero	consistent	23
+O04	r-absent-complete-repair-zero	conflict-proven	7
+O05	g-omits-cell-local-dvd-type	consistent	2
+O05	r-absent-complete-repair-zero	consistent	130

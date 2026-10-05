@@ -77,10 +77,12 @@ Independent terminal review (Codex). Initial verdict REMEDIATE; final **PASS_WIT
 
 ## Follow-ups
 
-- **Phase 1 classify assignments** (review F3): Design is drafting a follow-up.
+- **Phase 1 classify assignments** (review F3): resolved by plan 28; see the F3 resolution below.
 - **2-01 source-data parity, a proven deviation cause:** in the 342 cells R emits type 288 while the spool holds no encodable 288 source, so G cannot match R without inventing geometry. The cause is the source data; it is not a non-deviation. Carried to Design.
 - **K1 name_anchor 1:** a pre-existing failure outside plan 14; Design is drafting a separate design. K1 therefore still exits 1.
 - Plan 04 Phase 3 is not closed by this plan.
+
+**F3 resolution (plan 28).** Fresh current-contract classify assignments cover all 776 baseline native keys: O01 363, O05 132, O04 7, O06 0, NO_RULE 274; their full-key join to 342 (2-01) + 434 (amended 2-02) gives 769 consistent, 7 conflict-proven and 0 conflict-open verdicts, with both cross-tab predictions passing. Each O04 spool cause is retained for plan 04's successor spool list: penultimate deletion produces a representable piece for 138, 284 and 496, and removes demand without a piece for 236, 282, 317 and 563; all seven have zero R presence. The historical Phase 1 record stays partial as written; its assignment gap is resolved by the new evidence. Evidence: `docs/plans/28-phase1-per-rule-classify-recovery/triage/phase2_join.tsv`, `docs/plans/28-phase1-per-rule-classify-recovery/triage/phase2_crosstab.tsv`, `docs/plans/28-phase1-per-rule-classify-recovery/triage/phase2_discriminators.tsv` and `docs/plans/28-phase1-per-rule-classify-recovery/phase2_reconciliation.md`. The 2-01 source-data parity observation and Phase 1's 3-17 arithmetic/identity limits remain carried; other kinds' joins and plan 04 Phase 3 remain open.
 
 ## Decisions Worth Keeping
 
