@@ -2,14 +2,17 @@
 
 The existing oracle chain is published by `oracle_chain.py publish` in
 `oracle_chain.json` and `oracle_chain.tsv`. No new re-oracle is signed. Plan 04
-Phase 3 remains open. Missing measured counts are JSON `null` / blank TSV fields;
-the historical aggregates are separate `recorded_*` fields, never measured values.
+Phase 3 remains open. The tables now include the guarded Execute measurements
+in the final section below. The worker findings and prepared commands preceding
+that section describe the handoff before those measurements ran. Unknown measured
+counts use JSON `null` / blank TSV fields; historical aggregates remain separate
+`recorded_*` fields, never substitutes for measurements.
 
 The worker read small text/JSON evidence only. No ALLDATA.KWI or spool was opened,
 hashed, decoded, built, or changed. Disc locations below came from directory
 entries and sizes; their pins came from sidecars or committed records.
 
-## Per-hop findings
+## Per-hop findings before Execute measurements
 
 | Region / signing unit | Finding | Remaining evidence gap |
 | --- | --- | --- |
