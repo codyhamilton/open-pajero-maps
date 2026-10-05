@@ -1,12 +1,15 @@
 # Implementation — 16 K1 determinism wall_s strip
 
-- Tool: Codex (assigned instance)
-- Session: design landed; Phase 1 queued
+- Tool: OpenCode DeepSeek Flash (assigned instance for this unit)
+- Session: design landed; Phase 1 executed on detached worktree open-pajero-maps-16
 - Started: 2026-10-05 ~23:12 Australia/Brisbane
+- Phase 1 closed: 2026-10-05 ~23:30 Australia/Brisbane
+- Worker commit: d15a46f4c6c7dbd5d380a012fadc80cdbadecb48
+- Closing commit carries `Workflow-Phase: 16-k1-determinism-wall-s:1`
 
 ## Phase 1
 
-**Done.**
+**Done** (closed).
 
 - `parser/tools/quantisation_roundtrip.py`: added `strip_compare_excludes(report)`
   next to `COMPARE_EXCLUDES = ["timing", "wall_s"]` — returns a copy with every
