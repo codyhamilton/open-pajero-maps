@@ -13,8 +13,8 @@ Owned paths:
 - scratch under `output/scratch-14/p3/` and `output/scratch-14/runs/`
 
 Touch nothing else. **`parser/kiwiw/_cenc.c` is read-only.**
-Commits: Commit to the current detached HEAD when done evidence passes, with a plain-summary title and no trailer. Do not push.
-Report: before committing, write `docs/plans/14-completeness-root-cause/reports/3-03-checker-representable-demand.md` (a handoff; rubric at `/home/codyh/workspace/workflow-plugin/tools/quality/checks/execution-report.json`, which is not in this repository) and include it in the commit. It replaces the first attempt's handoff report.
+Commits: **Leave changes in the working tree** (amended 2026-10-06). The worker runs in a Codex `workspace-write` sandbox that cannot write git metadata or open a systemd user scope. The orchestrator runs the heavy live verification below under the plan-25 wrapper and commits code, tests, and report together once it passes.
+Report: before finishing, write `docs/plans/14-completeness-root-cause/reports/3-03-checker-representable-demand.md` (a handoff; rubric at `/home/codyh/workspace/workflow-plugin/tools/quality/checks/execution-report.json`, which is not in this repository) Leave it in the working tree with the code. It replaces the first attempt's handoff report.
 Depends on: 3-01. Its `triage/demand_attribution_3-01.tsv` is the prediction. Dispatched after 3-02.
 Runs alongside: nothing.
 Budget (amended 2026-10-06: the first attempt hit a 14-file read cap during required reading): 40 files to read, about 800 lines changed or added (C, Python, ABI, tests), 220 tool turns. Past the budget, stop: write a handoff under this brief's name in `docs/plans/14-completeness-root-cause/IMPLEMENTATION.md` (done, not done, what you learned), commit only if tests pass, and report `over budget`.
@@ -88,6 +88,12 @@ DESIGN Phase 3 outcome (1), **checker**, for groups `g-omits-cell-local-dvd-type
 ## Done evidence
 
 Identify or write the failing check before changing code. Report its output before and after.
+
+**Split (amended 2026-10-06).**
+- The worker owns the test evidence: the first bullet below, with tests run as plain `.venv-rp/bin/python -B -m pytest …`; they are light, peaking around 200 MB.
+- The worker must not run the live K1 or the re-encode: the sandbox has no systemd user scope, and the plan-25 wrapper fails closed without it.
+- The orchestrator runs the live K1, the identity diff, and the re-encode bullets after the worker reports `done`, and records the results under 3-03 in `IMPLEMENTATION.md`.
+- The worker's report states the expected values (from 3-01) that the orchestrator checks.
 
 - New tests fail before the change: (i), (ii), and (v) fail; (iii) and (iv) pass. After the change, all pass. The existing suites listed above pass.
 - Live K1, through `run_heavy_python.py --log output/scratch-14/runs/k1_p3.json`:
