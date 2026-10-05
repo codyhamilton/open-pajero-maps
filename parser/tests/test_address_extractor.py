@@ -41,6 +41,8 @@ from osm_to_address_index import (
     address_range_to_srt1_dict,
     city_to_srha_dict,
 )
+from kiwiw.index_writer import write_matching_record
+from kiwiw.search_frame import FieldDef, parse_matching_record
 
 # ---------------------------------------------------------------------------
 # Synthetic dataset
@@ -304,10 +306,11 @@ def test_city_omitted_when_no_city_tag() -> None:
 def test_srmx_dict_has_required_keys(idx: OsmAddressIndex) -> None:
     street = idx.streets[0]
     d = street_to_srmx_dict(street, nxst_halved=0, nxct=2)
-    for key in ("BFRL", "NFRL", "FGFZ", "STFG", "STID", "NXKD", "NXFN", "NXST", "NXCT", "KYCH"):
+    for key in ("BFRL", "NFRL", "FGFZ", "STFG", "STID", "NXKD", "NXFN", "NXST", "NXCT", "KYCH", "NAME"):
         assert key in d, f"missing key {key!r} in SRMX dict"
     assert d["STID"] == street.stid
     assert d["KYCH"] == street.name
+    assert d["NAME"] == street.name
     assert d["NXCT"] == 2
 
 
@@ -332,11 +335,77 @@ def test_srha_dict_has_required_keys(idx: OsmAddressIndex) -> None:
 
 
 def test_stfg_bits_correct_for_srmx() -> None:
-    """SRMX STFG byte 0 = 0x3F (bits 0-5 set: STID,NXKD,NXFN,NXST,NXCT,KYCH)."""
+    """SRMX STFG byte 0 = 0x7F (bits 0-6 set: STID,NXKD,NXFN,NXST,NXCT,KYCH,NAME)."""
     street = ExtractedStreet(stid=1, name="TEST STREET", city_name="PERTH")
     d = street_to_srmx_dict(street, nxst_halved=0, nxct=0)
-    assert d["STFG"][0] == 0x3F, f"expected STFG[0]=0x3F, got {d['STFG'][0]:#04x}"
+    assert d["STFG"][0] == 0x7F, f"expected STFG[0]=0x7F, got {d['STFG'][0]:#04x}"
     assert d["STFG"][1] == 0x00, f"expected STFG[1]=0x00, got {d['STFG'][1]:#04x}"
+    assert d["NAME"] == street.name, "NAME must carry the street string"
+
+
+def _srmx_field_defs() -> list:
+    """Synthetic SRMX definition-frame field list (no mounted disc required).
+
+    Types mirror the verified SADSR201 SRMX ``DCTF`` definition frame
+    (``parser/kiwiw/search_frame.py``): BFRL/NFRL ``FDRL UB`` one byte,
+    FGFZ ``NORM UB``, STFG ``NORM UB`` count 2 (the on-disc presence bitmap
+    is a two-byte unsigned field, not a ``BF``), STID ``NORM UL``,
+    NXKD/NXFN one ``UH`` nibble each, NXST ``OFST LG`` / NXCT ``NORM LG``
+    (four bytes), KYCH/NAME ``VRBL CH`` with a ``UB`` length prefix, then
+    the trailing gated RPAT/RPNK/RPNF/RPNS/RPNC.  The trailing five stay
+    absent under the emitted ``7f 00`` mask, so their exact types never
+    influence this round-trip; they only reproduce the real 16-field frame.
+    """
+
+    def fd(usage, dtype, etype, count, count_type="", addl=""):
+        return FieldDef(
+            usage=usage,
+            description_type=dtype,
+            element_type=etype,
+            count=count,
+            count_type=count_type,
+            additional=addl,
+        )
+
+    return [
+        fd("BFRL", "FDRL", "UB", 1),
+        fd("NFRL", "FDRL", "UB", 1),
+        fd("FGFZ", "NORM", "UB", 1),
+        fd("STFG", "NORM", "UB", 2),
+        fd("STID", "NORM", "UL", 1),
+        fd("NXKD", "NORM", "UH", 1),
+        fd("NXFN", "NORM", "UH", 1),
+        fd("NXST", "OFST", "LG", 1),
+        fd("NXCT", "NORM", "LG", 1),
+        fd("KYCH", "VRBL", "CH", 1, "UB", "CMCH"),
+        fd("NAME", "VRBL", "CH", 1, "UB", "CMCH"),
+        fd("RPAT", "NORM", "BF", 8),
+        fd("RPNK", "NORM", "UH", 1),
+        fd("RPNF", "NORM", "UH", 1),
+        fd("RPNS", "OFST", "LG", 1),
+        fd("RPNC", "NORM", "UL", 1),
+    ]
+
+
+def test_srmx_record_roundtrip_bit6_name() -> None:
+    """Synthetic SRMX write/parse smoke: bit 6 (NAME) survives round-trip."""
+    fields = _srmx_field_defs()
+    street = ExtractedStreet(stid=42, name="TEST STREET", city_name="PERTH")
+    d = street_to_srmx_dict(street, nxst_halved=0, nxct=0)
+
+    rec = write_matching_record(d, fields)
+    parsed = parse_matching_record(rec, 0, fields)
+
+    assert parsed["STFG"][0] & 0x40, (
+        f"NAME bit 6 not set in round-tripped STFG: {parsed['STFG']!r}"
+    )
+    assert parsed["NAME"] == street.name, (
+        f"NAME did not round-trip: {parsed.get('NAME')!r}"
+    )
+    assert parsed["KYCH"] == street.name
+    assert parsed["STID"] == street.stid
+    assert parsed["NXKD"] == 5
+    assert parsed["NXFN"] == 1
 
 
 if __name__ == "__main__":

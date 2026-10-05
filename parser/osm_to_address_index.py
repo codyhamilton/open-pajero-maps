@@ -461,17 +461,19 @@ def street_to_srmx_dict(
     matching-data frame of the first address-range record for this street.
     ``nxct`` is the number of consecutive SRT1 records belonging to it.
 
-    The six gated fields (STID, NXKD, NXFN, NXST, NXCT, KYCH) correspond
-    to STFG bits 0-5; bits 6-11 (NAME, RPNK, RPNF, RPNS, RPNC, and one
-    reserved) are absent.  This matches the real disc's ``STFG = 0x3F 0x00``
-    pattern for streets that carry only the primary search fields.
+    The seven gated fields (STID, NXKD, NXFN, NXST, NXCT, KYCH, NAME)
+    correspond to STFG bits 0-6.  This emits the verified reference-disc
+    pattern ``STFG = 0x7f 0x00`` (SADSR201 SRMX on 38,119 of 38,120; all
+    2,827 in SADSR202), per ``docs/plans/15-sadsr-srmx-stfg/0x3f00-claim-evidence.md``.
+    NAME carries the same street string as KYCH (Assumption 2).  Bits 7-11
+    (RPAT, RPNK, RPNF, RPNS, RPNC) stay absent.
 
     BFRL / NFRL are set to 0 -- the assembler must patch them.
     """
     # 12 gated fields in the real SRMX definition frame (16 total - 4 pre-STFG)
-    # bits 0-5: STID, NXKD, NXFN, NXST, NXCT, KYCH present
-    # bits 6-11: NAME, RPNK, RPNF, RPNS, RPNC, (reserved) absent
-    stfg = _stfg_bytes([True, True, True, True, True, True, False, False,
+    # bits 0-6: STID, NXKD, NXFN, NXST, NXCT, KYCH, NAME present
+    # bits 7-11: RPAT, RPNK, RPNF, RPNS, RPNC absent
+    stfg = _stfg_bytes([True, True, True, True, True, True, True, False,
                         False, False, False, False])
     return {
         "BFRL": 0,
@@ -484,6 +486,7 @@ def street_to_srmx_dict(
         "NXST": nxst_halved,
         "NXCT": nxct,
         "KYCH": street.name,
+        "NAME": street.name,
     }
 
 
