@@ -60,7 +60,7 @@ Discriminator outputs: `output/scratch-14/residuals/{335,765}.json`,
 0 rows. The single apparent emitter in an early 2-02 run, dump_row 656, came from
 a no-densify mirror. With `emit_piece`'s densify the piece collapses to `q = 2`,
 and production C agrees with 0 records. It is a 2-02 member. See
-`reports/2-02-r-absent-complete-repair.md`.
+the plan 14 record `docs/plans/14-completeness-root-cause.md`.
 
 ## Q-2-01-densify (verification, closed)
 

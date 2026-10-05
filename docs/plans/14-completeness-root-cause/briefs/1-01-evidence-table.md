@@ -57,7 +57,7 @@ On the disc in force (`4ed9cd80…`, restored at `output/scratch-14/G_new/ALLDAT
      --out output/scratch-14/classify_completeness
    ```
    (Adjust dump path to the extended dir you actually wrote.) Completeness-only is expected; record partition totals.
-4. Build the committed evidence table under `docs/plans/14-completeness-root-cause/triage/` (TSV + short note). Native key = `(level, ix, iy, code, p0..p6, shape, vert)` per 3-17. Flags: `in_historic_188` from the preserved identities in `rebaseline_3-17_9064.md` (and/or any retained historic TSV); `in_added_89` from `completeness_3-16_outcomes.tsv` keys. R/G/spool witness columns: path or decode summary, or `evidence-gap`.
+4. Build the committed evidence table under `docs/plans/04-c-core-orchestration/triage/` (TSV + short note). Native key = `(level, ix, iy, code, p0..p6, shape, vert)` per 3-17. Flags: `in_historic_188` from the preserved identities in `rebaseline_3-17_9064.md` (and/or any retained historic TSV); `in_added_89` from `completeness_3-16_outcomes.tsv` keys. R/G/spool witness columns: path or decode summary, or `evidence-gap`.
 5. Header of the note must state failing / attributed-by-rule / unattributed totals and numeric drift vs 3-17 (776 / 308) and 3-15 (274).
 6. Append a short `docs/provenance.md` scratch entry for `output/scratch-14/` (disc restore sha `4ed9cd80…`, dump/classify paths). Do not claim a new oracle — sha matched.
 7. Write `docs/plans/14-completeness-root-cause/reports/1-01-evidence-table.md` (handoff: what was done, deviations, unfinished, known problems).

@@ -52,7 +52,7 @@ Pipeline neighbors of the big python: **2881899 bash → 2881900 python → 2881
 |----------|--------|
 | 00:10:01–00:15:58 | OpenCode **2-01** `ses_ef39991ccffe…` — worktree `open-pajero-maps-14-completeness` |
 | **00:11:16** | Wrote + ran `flock output/.heavy.lock … python -B output/scratch-14/cell_local/proto.py 2>&1 \| tail -40` — **completed** (proto_res.json) |
-| **00:14:29–00:14:35** | `flock output/.heavy.lock … python -B docs/plans/14-completeness-root-cause/triage/cell_local_2-01.py 2>&1 \| tail -60` — **completed**; proofs/summary/TSVs written (~00:14:32 proofs) |
+| **00:14:29–00:14:35** | `flock output/.heavy.lock … python -B docs/plans/04-c-core-orchestration/triage/cell_local_2-01.py 2>&1 \| tail -60` — **completed**; proofs/summary/TSVs written (~00:14:32 proofs) |
 | 00:15:32–00:15:58 | 2-01 commit + session close (Flash 2-01 log closed **00:15:58**) |
 | **00:16:34** | Flash **2-02** pid file; OpenCode 2-02 `ses_ef3938c55ffe…` (~00:16:36), opencode pid **2874846** |
 | **~00:16:50** | **python 2881900** starts (PID after 2874846, before cron-ish 2882167) |
@@ -106,7 +106,7 @@ flock output/.heavy.lock \
 
 flock output/.heavy.lock \
   /home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python -B \
-  docs/plans/14-completeness-root-cause/triage/cell_local_2-01.py 2>&1 | tail -60
+  docs/plans/04-c-core-orchestration/triage/cell_local_2-01.py 2>&1 | tail -60
 ```
 
 Inputs (from script + `summary.json`):

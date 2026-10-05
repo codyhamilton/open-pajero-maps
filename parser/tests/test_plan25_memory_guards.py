@@ -52,7 +52,7 @@ def test_run_heavy_python_records_argv_and_peak(tmp_path):
 
 
 def test_cell_local_refuses_uncapped():
-    script = REPO / "docs/plans/14-completeness-root-cause/triage/cell_local_2-01.py"
+    script = REPO / "docs/plans/04-c-core-orchestration/triage/cell_local_2-01.py"
     r = subprocess.run(
         [sys.executable, "-B", str(script)],
         cwd=str(REPO), capture_output=True, text=True,

@@ -28,7 +28,7 @@ records: 0 for every original ring and 0 for every repaired face.
 - `triage/complete_repair_2-02.py`: the reproducer
 - `triage/2-02_r-absent-complete-repair-zero_members.tsv` (432 rows)
 - `triage/2-02_r-absent-complete-repair-zero_rejects.tsv` (header only)
-- `reports/2-02-r-absent-complete-repair.md`
+- the plan 14 record `docs/plans/14-completeness-root-cause.md` (2-02 handoff, summarised)
 - scratch proofs: `output/scratch-14/complete_repair/`
 
 ## 3-16 citation (exclusion only)

@@ -1,7 +1,7 @@
 # Brief: 3-02 — dump_row 765: prove the R polygon contributes 0 cell-local records
 
 Consumer: Codex `gpt-6.1-sol`, reasoning high, in worktree `/home/codyh/workspace/open-pajero-maps-14-completeness` (detached HEAD at the plan tip).
-Owned paths: `docs/plans/14-completeness-root-cause/triage/r_contribution_3-02.py`, `docs/plans/14-completeness-root-cause/triage/r_contribution_3-02.tsv`, `docs/plans/14-completeness-root-cause/triage/phase3_groups.md`, `docs/plans/14-completeness-root-cause/triage/phase3_membership.tsv`, `docs/plans/14-completeness-root-cause/reports/3-02-765-r-zero-contribution.md`, scratch under `output/scratch-14/r_contribution/` and `output/scratch-14/runs/`. Touch nothing else. Do not edit any Phase 1/2 artefact, including `phase2_membership.tsv`.
+Owned paths: `docs/plans/04-c-core-orchestration/triage/r_contribution_3-02.py`, `docs/plans/04-c-core-orchestration/triage/r_contribution_3-02.tsv`, `docs/plans/04-c-core-orchestration/triage/phase3_groups.md`, `docs/plans/04-c-core-orchestration/triage/phase3_membership.tsv`, `docs/plans/14-completeness-root-cause/reports/3-02-765-r-zero-contribution.md`, scratch under `output/scratch-14/r_contribution/` and `output/scratch-14/runs/`. Touch nothing else. Do not edit any Phase 1/2 artefact, including `phase2_membership.tsv`.
 Commits: Commit to the current detached HEAD when done evidence passes, with a plain-summary title and no trailer. Do not push.
 Report: before committing, write `docs/plans/14-completeness-root-cause/reports/3-02-765-r-zero-contribution.md` (a handoff; rubric in `tools/quality/checks/execution-report.json`) and include it in the commit.
 Depends on: nothing.
@@ -11,10 +11,10 @@ Budget: 10 files to read, about 300 lines of new script, 50 tool turns. Past the
 ## Required reading, in order
 
 1. `docs/plans/14-completeness-root-cause/DESIGN.md` — "Phase 3", the "Phase 3 refine" record (the **Design ruling on 765** is binding), and the Phase 2 Units table (the 2-02 membership definition).
-2. `docs/plans/14-completeness-root-cause/triage/phase2_open_questions.md` — Q-tile-alias.
+2. `docs/plans/04-c-core-orchestration/triage/phase2_open_questions.md` — Q-tile-alias.
 3. `output/scratch-14/witnesses/` — the R witness for dump_row 765. Also the 2-01 reject row for 765 in `triage/2-01_g-omits-cell-local-dvd-type_rejects.tsv`.
-4. `docs/plans/14-completeness-root-cause/triage/cell_local_2-01.py` — `decode_slot_shapes`, `clip_rect` (R slot decode in global raw coordinates).
-5. `docs/plans/14-completeness-root-cause/triage/complete_repair_2-02.py` — `decompose_eo_faces`, `encoder_piece_densified`, `CProbe`, `cell_b4` (reuse these by import).
+4. `docs/plans/04-c-core-orchestration/triage/cell_local_2-01.py` — `decode_slot_shapes`, `clip_rect` (R slot decode in global raw coordinates).
+5. `docs/plans/04-c-core-orchestration/triage/complete_repair_2-02.py` — `decompose_eo_faces`, `encoder_piece_densified`, `CProbe`, `cell_b4` (reuse these by import).
 6. `parser/tools/run_heavy_python.py` — usage.
 
 Read ranges and grep; do not read a whole file to find one section, do not re-read a file already in context, and truncate long tool output.

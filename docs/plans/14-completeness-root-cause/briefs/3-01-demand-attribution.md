@@ -1,7 +1,7 @@
 # Brief: 3-01 — Demand attribution (names the source behind dump_row 335)
 
 Consumer: Codex `gpt-6.1-sol`, reasoning high, in worktree `/home/codyh/workspace/open-pajero-maps-14-completeness` (detached HEAD at the plan tip).
-Owned paths: `docs/plans/14-completeness-root-cause/triage/demand_attribution_3-01.py`, `docs/plans/14-completeness-root-cause/triage/demand_attribution_3-01.tsv`, `docs/plans/14-completeness-root-cause/triage/demand_attribution_3-01.md`, `docs/plans/14-completeness-root-cause/reports/3-01-demand-attribution.md`, scratch under `output/scratch-14/attribution/` and `output/scratch-14/runs/`. Touch nothing else. In particular, edit no file under `parser/`.
+Owned paths: `docs/plans/04-c-core-orchestration/triage/demand_attribution_3-01.py`, `docs/plans/04-c-core-orchestration/triage/demand_attribution_3-01.tsv`, `docs/plans/04-c-core-orchestration/triage/demand_attribution_3-01.md`, `docs/plans/14-completeness-root-cause/reports/3-01-demand-attribution.md`, scratch under `output/scratch-14/attribution/` and `output/scratch-14/runs/`. Touch nothing else. In particular, edit no file under `parser/`.
 Commits: Commit to the current detached HEAD when done evidence passes, with a plain-summary title and no trailer. Do not push.
 Report: before committing, write `docs/plans/14-completeness-root-cause/reports/3-01-demand-attribution.md` (a handoff; rubric in `tools/quality/checks/execution-report.json`) and include it in the commit.
 Depends on: nothing (Phase 2 closed at `8c37bae`).
@@ -11,10 +11,10 @@ Budget: 12 files to read, about 400 lines of new script, 60 tool turns. Past the
 ## Required reading, in order
 
 1. `docs/plans/14-completeness-root-cause/DESIGN.md` — "Phase 3" and its "Phase 3 refine" record and Units table.
-2. `docs/plans/14-completeness-root-cause/triage/phase2_open_questions.md` — Q-source-335 (discriminators tried, untested hypotheses).
+2. `docs/plans/04-c-core-orchestration/triage/phase2_open_questions.md` — Q-source-335 (discriminators tried, untested hypotheses).
 3. `parser/kiwiw/_k1_cmp.c` — the whole file (188 lines): branches (a), (b), and (c), plus the cell list.
 4. `parser/tools/quantisation_roundtrip.py` — `Region.__init__` (:446–503, including the **tall-shape** selection and the ±1 halo), `Region.inside` (:540–597; note the `TOL` slack along the scan line), and the completeness block of `_check_block` plus `_required_cells` (:1026–1100).
-5. `docs/plans/14-completeness-root-cause/triage/complete_repair_2-02.py` — `decompose_eo_faces`, `encoder_piece_densified`, `CProbe`, `source_attrs`, `cell_b4` (reuse these by import; do not copy them).
+5. `docs/plans/04-c-core-orchestration/triage/complete_repair_2-02.py` — `decompose_eo_faces`, `encoder_piece_densified`, `CProbe`, `source_attrs`, `cell_b4` (reuse these by import; do not copy them).
 6. `parser/tools/run_heavy_python.py` — usage (`--log`, `--cwd`, `--lock`).
 
 Read ranges and grep; do not read a whole file to find one section, do not re-read a file already in context, and truncate long tool output.

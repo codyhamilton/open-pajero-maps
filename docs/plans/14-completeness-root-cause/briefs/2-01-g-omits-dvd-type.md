@@ -14,7 +14,7 @@ Close named group **`g-omits-cell-local-dvd-type`**: every Phase 1 row that has 
 
 ## Owned paths
 
-- `docs/plans/14-completeness-root-cause/triage/` — group membership TSV/note + reproducer script(s)
+- `docs/plans/04-c-core-orchestration/triage/` — group membership TSV/note + reproducer script(s)
 - `docs/plans/14-completeness-root-cause/reports/2-01-g-omits-dvd-type.md`
 - Scratch only under `output/scratch-14/` (git-ignored); do not overwrite `scratch-3-11/G_new`
 

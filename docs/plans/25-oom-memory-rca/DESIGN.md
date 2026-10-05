@@ -137,7 +137,7 @@ One bounded memory-incident RCA package: name the stop, inventory the master evi
 ### Phase 2b — Concrete guards land on master (Cody widen)
 
 - Outcome: On master: (1) a Flash/OpenCode **argv + `memory.peak` wrapper** (or equivalent tracked helper + WORKFLOW recipe) is required for heavy Maps Python under `flock output/.heavy.lock`, recording argv, wall time, max RSS, and cgroup `memory.peak`; (2) plan-14 triage scripts that load ALLDATA / completeness spool **bound or stream** (window/chunk/cap) instead of whole-file anon materialization, or refuse without explicit sample/window args that keep peak under the published stand-in ceiling; (3) fixture or unit proof that the wrapper records peak and that an uncapped whole-file path fails closed or streams. Host evidence note `/workspace/maps-oom-2026-10-06.md` (or a copy under the plan folder) is cited. No full plan-14 Phase 2/3 science. No full-AU acceptance encode. No CHM auto-clear. No Phase 3 close.
-- Surfaces: wrapper under `parser/tools/` (or `scripts/`), plan-14 triage load sites under `docs/plans/14-completeness-root-cause/triage/`, WORKFLOW heavy-jobs recipe, tests under `parser/tests/`, plan-25 note.
+- Surfaces: wrapper under `parser/tools/` (or `scripts/`), plan-14 triage load sites under `docs/plans/04-c-core-orchestration/triage/`, WORKFLOW heavy-jobs recipe, tests under `parser/tests/`, plan-25 note.
 - Approach: known
 - Depends on: Phase 1 inventory; preferably Phase 2 class (may land in parallel with Phase 2 if class is already “anonymous spike / whole-file load” from host evidence).
 - Refine: skipped unless a specific triage loader needs a short approach note.

@@ -693,7 +693,7 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
   input pins, summary and byte-range audit. `classify_completeness/` is the
   requested destination; classify exits 2 before emitting partition outputs
   because `other_mechanism` evidence is absent. No fabricated mechanism bytes.
-- **Reproduce:** [plan-14 evidence note](plans/14-completeness-root-cause/triage/completeness_evidence.md)
+- **Reproduce:** [plan-14 evidence note](plans/04-c-core-orchestration/triage/completeness_evidence.md)
   and its committed build/audit helpers; heavy work uses
   `flock output/.heavy.lock`, K1 `-j 6`, existing main-checkout `.venv-rp`.
   [Handoff](plans/14-completeness-root-cause/reports/1-01-evidence-table.md)
@@ -704,7 +704,7 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
   reproducer's outputs -- `proofs/<dump_row>.json` (per-seed R cell-local
   decode, G cell decode, and clipped-source round/drop test) and `summary.json`.
   Produced by committed
-  `plans/14-completeness-root-cause/triage/cell_local_2-01.py` under
+  `plans/04-c-core-orchestration/triage/cell_local_2-01.py` under
   `flock output/.heavy.lock`; reads only R, G (`G_new/`), and the spool. No
   re-encode.
 - **Spool incident + recovery (2026-10-06 00:44–02:01):** a resume-setup symlink
@@ -725,12 +725,12 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
   `positive_control.json`, `c_positive_control.json`, and `cprobe/`
   (`probe_bg.c` `#include`s `parser/kiwiw/_cenc.c` read-only; compiled
   `gcc -O2 -ffp-contract=off -fPIC -shared`). Produced by committed
-  `plans/14-completeness-root-cause/triage/complete_repair_2-02.py --all-seeds`
+  `plans/04-c-core-orchestration/triage/complete_repair_2-02.py --all-seeds`
   via `parser/tools/run_heavy_python.py` (flock); reads only G sha pin and spool.
 - **Phase 3 (added 2026-10-06):**
   - `attribution/`: unit 3-01/3-01b demand attribution.
     - Contents: `proofs/<dump_row>.json` (the checking block's actual `Region`, every demanding shape with a/b/c branch, the EO-face mirror verdict, and production C `bg_shape` records), `summary.json`, `geometry_335.json`, cached tall sets, and `w{1,2}.log`.
-    - Produced by the committed `plans/14-completeness-root-cause/triage/demand_attribution_3-01.py` via `run_heavy_python.py`.
+    - Produced by the committed `plans/04-c-core-orchestration/triage/demand_attribution_3-01.py` via `run_heavy_python.py`.
   - `r_contribution/`: unit 3-02 R-side proofs.
     - Contents: `765.json` and the per-row 2-02 re-check JSON, built from R slot byte-range decodes of `/run/media/codyh/464210-8480/ALLDATA.KWI`.
     - Produced by the committed `triage/r_contribution_3-02.py`.
@@ -739,6 +739,9 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
     - `dump/`: completeness dump, 0 rows.
     - `G_reencode/ALLDATA.KWI`: full re-encode `-j4` with the rebuilt `_cenc.so`, sha `4ed9cd801bdd7099…`, identical to the disc in force. About 1.6 GB, regenerable.
     - `reencode.log`.
+  - **Regenerated 2026-10-06 04:10 (operator slip):** a `--help` smoke test of the moved triage scripts ran `build_evidence.py` (no argument parser; killed by a 120 s timeout) and `verify_evidence.py` for real, outside the plan-25 wrapper.
+    - Rewritten: `dump_ext/`, `classify_{invocation.json,stdout,stderr}`, `evidence_verification.json`. Witnesses and discs were untouched.
+    - Verified: `dump_ext/completeness.bin` is byte-identical to `dump_raw`; the audit is PASS with unchanged figures (776 rows, 1,791 byte ranges, 775 source witnesses, 1 gap); classify exits 2 as recorded.
   - `p3/indep/`: orchestrator independent check of 3-03.
     - Old checker (`0b19b5e`) and new checker K1 runs on `scratch-3-11/G_new` (`013586b5…`, read only): `{old,new}_k1_311.{json,log}`, the completeness dumps, and `sets.json`.
     - Result: new failing 52 = exactly the keys fixed by the 3-14 build.

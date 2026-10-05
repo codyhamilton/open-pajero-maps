@@ -14,7 +14,7 @@ Close named group **`r-absent-complete-repair-zero`**: Phase 1 rows where R lack
 
 ## Owned paths
 
-- `docs/plans/14-completeness-root-cause/triage/` — membership TSV/note + complete-repair reproducer script(s)
+- `docs/plans/04-c-core-orchestration/triage/` — membership TSV/note + complete-repair reproducer script(s)
 - `docs/plans/14-completeness-root-cause/reports/2-02-r-absent-complete-repair.md`
 - Scratch under `output/scratch-14/` only
 

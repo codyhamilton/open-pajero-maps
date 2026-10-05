@@ -31,11 +31,11 @@ The first attempt, `9eed7c8`, stopped over budget after required reading and mad
 ## Required reading, in order
 
 1. `docs/plans/14-completeness-root-cause/DESIGN.md` — "Domain: fix or proven non-deviation", "Phase 3", and the "Phase 3 refine" record (locus decisions; settled).
-2. `docs/plans/14-completeness-root-cause/triage/demand_attribution_3-01.md` and `.tsv` — the per-key demanders and the `all_demanders_unrepresentable` prediction.
+2. `docs/plans/04-c-core-orchestration/triage/demand_attribution_3-01.md` and `.tsv` — the per-key demanders and the `all_demanders_unrepresentable` prediction.
 3. `parser/kiwiw/_k1_cmp.c` — whole file.
 4. `parser/tools/quantisation_roundtrip.py:1026–1100` — `_required_cells` and its docstring ("whether such a sliver survives rounding is the clip's business, not a check").
 5. `parser/kiwiw/_cenc.c:534–603` — `emit_piece`, the wire contract (densify `lim = 127·mc − 1`, `rint`, dedup, area test). Read only.
-6. `docs/plans/14-completeness-root-cause/triage/complete_repair_2-02.py` — `decompose_eo_faces`, `encoder_piece_densified`. These are the Phase 2 mirror, cross-checked against production C on 774 sources.
+6. `docs/plans/04-c-core-orchestration/triage/complete_repair_2-02.py` — `decompose_eo_faces`, `encoder_piece_densified`. These are the Phase 2 mirror, cross-checked against production C on 774 sources.
 7. `parser/tests/test_k1_completeness.py`, `parser/tests/test_quantisation_roundtrip.py` (completeness cases), `parser/tests/k1_fixtures.py:297+`.
 8. `parser/kiwiw/cbuild.py` — `EXT_SOURCES` and the hash-keyed rebuild of `_cenc.so`.
 9. `parser/tools/run_heavy_python.py` — usage.

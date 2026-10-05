@@ -61,7 +61,7 @@ Final wrapper logs: `output/scratch-14/runs/r_contribution_6.json` and
 .venv-rp/bin/python -B parser/tools/run_heavy_python.py \
   --log output/scratch-14/runs/r_contribution_<n>.json -- \
   .venv-rp/bin/python -B \
-  docs/plans/14-completeness-root-cause/triage/r_contribution_3-02.py --keys 765
+  docs/plans/04-c-core-orchestration/triage/r_contribution_3-02.py --keys 765
 # Then repeat with --keys 2-02 and a new log number.
 ```
 

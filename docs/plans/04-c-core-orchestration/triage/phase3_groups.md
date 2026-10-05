@@ -3,7 +3,7 @@
 Amended 2-02 definition: **"R polygons contributing 0 cell-local records"**.
 dump_row 765 folds into 2-02; the Phase 2 ledger is unchanged.
 
-Binding authority: DESIGN.md, Phase 3 refine, Design ruling on 765.
+Binding authority: plan 14 DESIGN Phase 3 refine, Design ruling on 765 (now the record `docs/plans/14-completeness-root-cause.md`).
 
 Evidence: `output/scratch-14/r_contribution/765.json` and dump_row 765 in `r_contribution_3-02.tsv`; full decode, multiplier, bbox, EO faces, mirror, production C, and emitted-output footprint. Verdict: proven. Mechanism: outside the cell.
 

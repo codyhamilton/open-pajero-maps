@@ -203,7 +203,7 @@ def phase3(rows, proofs, absent_ok):
     p = proofs[765]
     (TRIAGE / "phase3_groups.md").write_text(
         '# Phase 3 membership — unit 3-02\n\n' + definition + '\n'
-        'Binding authority: DESIGN.md, Phase 3 refine, Design ruling on 765.\n\n'
+        'Binding authority: plan 14 DESIGN Phase 3 refine, Design ruling on 765 (now the record `docs/plans/14-completeness-root-cause.md`).\n\n'
         'Evidence: `output/scratch-14/r_contribution/765.json` and dump_row 765 in '
         '`r_contribution_3-02.tsv`; full decode, multiplier, bbox, EO faces, mirror, '
         'production C, and emitted-output footprint. Verdict: ' + p['verdict'] + '. '

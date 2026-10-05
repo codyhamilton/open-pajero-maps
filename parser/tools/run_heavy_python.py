@@ -9,7 +9,7 @@ Recipe (from repository root)::
 
     .venv-rp/bin/python -B parser/tools/run_heavy_python.py \\
       --log output/scratch-25/runs/cell_local.json -- \\
-      docs/plans/14-completeness-root-cause/triage/cell_local_2-01.py --max-seeds 8
+      docs/plans/04-c-core-orchestration/triage/cell_local_2-01.py --max-seeds 8
 
 The wrapper itself takes the lock (unless ``--no-flock``) and runs the child
 inside ``systemd-run --user --scope -p MemoryAccounting=yes``. The log JSON

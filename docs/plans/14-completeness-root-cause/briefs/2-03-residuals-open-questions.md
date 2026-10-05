@@ -13,8 +13,8 @@ Every Phase 1 row not closed in groups 2-01 or 2-02 is listed under **open quest
 
 ## Owned paths
 
-- `docs/plans/14-completeness-root-cause/triage/phase2_open_questions.md` (+ optional TSV)
-- `docs/plans/14-completeness-root-cause/triage/phase2_membership.md` (or TSV) — authoritative union map: dump_row → `g-omits-cell-local-dvd-type` | `r-absent-complete-repair-zero` | `open-question:<id>`
+- `docs/plans/04-c-core-orchestration/triage/phase2_open_questions.md` (+ optional TSV)
+- `docs/plans/04-c-core-orchestration/triage/phase2_membership.md` (or TSV) — authoritative union map: dump_row → `g-omits-cell-local-dvd-type` | `r-absent-complete-repair-zero` | `open-question:<id>`
 - `docs/plans/14-completeness-root-cause/reports/2-03-residuals-open-questions.md`
 
 ## Non-goals

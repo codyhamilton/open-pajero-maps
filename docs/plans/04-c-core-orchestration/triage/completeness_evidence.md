@@ -71,8 +71,8 @@ Reproduce from the repository root, retaining the current discs and spool:
 
 ```sh
 flock output/.heavy.lock /home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python -B parser/tools/quantisation_roundtrip.py --disc output/scratch-14/G_new/ALLDATA.KWI --spool output/extract_timing/spool --out output/scratch-14/k1_full.json -j 6 --engine c --dump-failures output/scratch-14/dump_raw --dump-kinds completeness
-flock output/.heavy.lock /home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python -B docs/plans/14-completeness-root-cause/triage/build_evidence.py
-flock output/.heavy.lock /home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python -B docs/plans/14-completeness-root-cause/triage/verify_evidence.py
+flock output/.heavy.lock /home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/build_evidence.py
+flock output/.heavy.lock /home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/verify_evidence.py
 ```
 
 Expected exits: K1 1; builder 0 after retaining classify's exit 2; audit 0.
