@@ -31,3 +31,5 @@ None.
 []
 Mirror/C disagreements: [].
 C/Python checker disagreements: [].
+
+**Checker pin (review F6):** this attribution compares raw Python demands with the C missing set of the pre-3-03 checker. Reproduce it at `0b19b5e`, in a throwaway worktree with isolated scratch destinations. From `a890662` on, the C checker filters unrepresentable misses, so the zero-disagreement baseline cannot be reproduced at a later HEAD.

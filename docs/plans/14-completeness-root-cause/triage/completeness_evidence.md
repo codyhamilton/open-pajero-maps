@@ -67,6 +67,8 @@ witness supports each assignment? No cause or new rule is proposed.
 
 Reproduce from the repository root, retaining the current discs and spool:
 
+**Checker pin (review F6):** the expected 776 failures need the pre-3-03 completeness checker. Run these commands from a throwaway worktree at `0b19b5e` (`git worktree add --detach <tmp> 0b19b5e`), with isolated scratch destinations, so the recorded outputs are not overwritten. At or after `a890662`, the same K1 command gives 0 completeness failures.
+
 ```sh
 flock output/.heavy.lock /home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python -B parser/tools/quantisation_roundtrip.py --disc output/scratch-14/G_new/ALLDATA.KWI --spool output/extract_timing/spool --out output/scratch-14/k1_full.json -j 6 --engine c --dump-failures output/scratch-14/dump_raw --dump-kinds completeness
 flock output/.heavy.lock /home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python -B docs/plans/14-completeness-root-cause/triage/build_evidence.py
