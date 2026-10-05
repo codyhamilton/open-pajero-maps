@@ -29,3 +29,22 @@ Refine skipped. Unit `briefs/1-01-presence-witness.md`.
 ## Phase 2 — Each row closed as proven-non-deviation or fix-landed
 
 Refine skipped. Unit `briefs/2-01-disposition.md`. Execute owns the OVERVIEW and plan-28 follow-up narrowing.
+
+### 2-01 — per-row disposition
+
+- **Worker:** Codex `gpt-6.1-sol` (high), sandboxed, 08:13–~08:20 AEST, 86,240 tokens. Report: `reports/2-01-disposition.md`.
+- **Built:** `disposition.py` (`publish`, light), `disposition.tsv`/`.json`, `phase2_note.md`, and `parser/tests/test_o04_disposition.py` (synthetic, 50 passed; Execute re-ran it, 50 passed). Tests cover lookup_failed, non-zero counts, missing witnesses and hash mismatches.
+- **Run (Execute):** `publish`, exit 0, 48 MiB RSS, output byte-identical to the worker's (tsv `b26795c1…`, json `64c8b624…`). It reads only committed JSON and was run under `prlimit` without the heavy lock, because another project's job held the shared lock and this step is not heavy.
+- **Result:** all seven rows (138, 236, 282, 284, 317, 496, 563) **proven-non-deviation**, each on its own Phase 1 witness: demanded type count 0 on G successor, G historical and R, slots resolved with frame bytes. K1 completeness on `2ee3456a…`: 1,800,514 checked / 0 failing (plan 29 compare, cited with sha256). No `fix-landed`: emitting the emit-piece counterfactuals (138, 284, 496) would invent presence that R lacks. The O04 spool-hygiene observation is retained as evidence only.
+
+### Phase 2 verification (Execute, cheap tier)
+
+1. `disposition.tsv`: verdict, rationale, witness refs and hashes, fix artefacts (none), and K1 completeness failing (0) per row.
+2. Emit-piece stratum (138, 284, 496): each is `proven-non-deviation` with its own per-row G/R absence witness; no default verdict was applied (Decision 3, amended).
+3. Demand-removed stratum (236, 282, 317, 563): `proven-non-deviation` on the same rule.
+4. `conflict-open` = 0.
+5. OVERVIEW's O04 wording and the plan-28 follow-up are narrowed (the latter append-only). Plan 04 Phase 3 is not closed.
+
+`artifact_feedback` was not called (workflow-service calls excluded).
+
+**Phase 2 outcome verified.**

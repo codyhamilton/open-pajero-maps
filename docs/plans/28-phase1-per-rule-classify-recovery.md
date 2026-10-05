@@ -77,7 +77,7 @@ Independent terminal review (Codex), **PASS_WITH_FOLLOWUPS**, reviewed `cc96570`
 ## Follow-ups
 
 - **3-17 per-row identity control** (review F2) and the 34-vs-31 explanation. Owner: Design; there is no plan yet. Carried in `docs/plans/04-c-core-orchestration/triage/per_rule_phase1_controls.md` and here.
-- **Seven O04 spool rows** for plan 04's successor spool list (`docs/plans/04-c-core-orchestration/triage/per_rule_phase2_reconciliation.md`).
+- **Seven O04 spool rows** for plan 04's successor spool list (`docs/plans/04-c-core-orchestration/triage/per_rule_phase2_reconciliation.md`). *(2026-10-06, appended: plan 33 closes all seven as proven-non-deviation on per-row G/R byte/decode witnesses; no spool edit.)*
 - **2-01 source-data parity** stays a carried observation for Design (plan 14 record).
 - Plan 04 Phase 3 is not closed by this plan.
 
