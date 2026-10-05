@@ -53,3 +53,7 @@ Refine skipped (DESIGN). One unit, with its brief authored inline: `briefs/1-01-
 1. Phase 2 follows branch A: a route (a)/(b) candidate comparison, a new disc at a new path, live K1, R parity, a positive control, and provenance/OVERVIEW/3-90 note updates.
 2. Observation for Design, out of scope here: G has two other non-empty L0 frames, at (0,562) and (0,563), in a block where R has none. They carry no names and no K1 failure. They are not investigated by this plan and are not absorbed.
 3. The DESIGN's "spool lat −38.727284749" is G's decoded latitude. The spool holds −38.727285888 (same raw row). The plan record states this correction.
+
+## Phase 2 — K1 exits 0 on the disc in force, with no relabel and parity recorded against R (branch A)
+
+The approach is open. The invoker declared a route-(a)/(b) candidate comparison, scored against the fixed Phase 2 outcome and recorded in the plan record; no separate refine. Implementation is one unit, with its brief authored inline: `briefs/2-01-drop-guard-successor-oracle.md`. Execute runs the encode, K1, diff and tests under the guard.
