@@ -201,3 +201,12 @@ Plan 04 Phase 3 is **not** closed by this plan.
 - Spot checks 1 (memory guard outside the sandbox) and 2 (disc rehash) pass.
 - F1 remediated by a clean Codex agent and verified by the orchestrator. Live failing is still 0, and the older-disc control still detects exactly the 52 genuine build defects. See REVIEW.md's resolution record.
 - **Close-out not run.** F2 stands and requires a Design ruling on dump_row 335.
+
+## Design ruling on dump_row 335 (2026-10-06)
+
+- **335 folded into amended 2-02.** Evidence: R has 0 cell-local 288 in the key cell (1379,1138), whose tile carries only 289; G lacks 288; the production encoder gives 0 records.
+- **Distinct sub-cause:** a type-288 tall triangular sliver (home (1379,1143)) misses the cell centre by 0.348 raw. The pre-3-03 checker's 0.5-raw centre slack wrongly counted it. Fix: 3-03 (`a890662`) plus remediation-01 (`0dc5cac`).
+- **Final accounting: 776 = 342 (2-01) + 434 (2-02), 0 open.** Resolves review F2 (`triage/phase3_membership.tsv`, `triage/phase3_groups.md`).
+- **2-01 source-data parity:** recorded as a **proven deviation cause**, not a non-deviation. In the 342 cells R emits 288, while the spool holds no encodable 288 source. G cannot match R without inventing geometry; the cause lies in the source data.
+- **Phase 1 is partial:** the per-rule classify assignments were never recovered (review F3). No claim is made beyond that. Design is drafting a follow-up.
+- K1 name_anchor 1: outside plan 14; Design is drafting a separate design.

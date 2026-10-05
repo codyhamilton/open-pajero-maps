@@ -334,7 +334,7 @@ level	ix	iy	code	p0	p1	p2	p3	p4	p5	p6	shape	vert	dump_row	phase2_group	phase3_gr
 0	1109	1133	288	0	0	0	0	0	0	0	-1	-1	332	r-absent-complete-repair-zero	r-absent-complete-repair-zero
 0	1248	1134	288	0	0	0	0	0	0	0	-1	-1	333	r-absent-complete-repair-zero	r-absent-complete-repair-zero
 0	1248	1136	288	0	0	0	0	0	0	0	-1	-1	334	r-absent-complete-repair-zero	r-absent-complete-repair-zero
-0	1379	1138	288	0	0	0	0	0	0	0	-1	-1	335	open-question:Q-source-335	open-question:Q-source-335
+0	1379	1138	288	0	0	0	0	0	0	0	-1	-1	335	open-question:Q-source-335	r-absent-complete-repair-zero
 0	1109	1139	288	0	0	0	0	0	0	0	-1	-1	336	r-absent-complete-repair-zero	r-absent-complete-repair-zero
 0	1401	1139	291	0	0	0	0	0	0	0	-1	-1	337	r-absent-complete-repair-zero	r-absent-complete-repair-zero
 0	1248	1141	288	0	0	0	0	0	0	0	-1	-1	338	r-absent-complete-repair-zero	r-absent-complete-repair-zero

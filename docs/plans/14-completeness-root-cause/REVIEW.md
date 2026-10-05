@@ -248,3 +248,12 @@ Orchestrator verification, outside the sandbox and under plan-25 guards:
 - Spot check 2: `p3/G_reencode` and `G_new` both hash to `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`. No re-encode was needed for remediation: only `_k1_cmp.c` changed, which is not on the encoder path.
 
 **F2 — stands (Design).** dump_row 335 has a named, unrepresentable demander (3-01), but no group disposition. Folding it into 2-02 needs a ruling like the one 765 got.
+
+## Resolution record — F2 (2026-10-06, appended by the orchestrator on the Design ruling)
+
+Verdict now: **PASS_WITH_FOLLOWUPS**. F1 is resolved (record above) and F2 is resolved below. F3 and F6 are follow-ups: F6 is pinned in close-out; F3 stays non-blocking, with a Design follow-up being drafted.
+
+**F2 — resolved.** Design ruled to fold dump_row 335 into amended 2-02:
+- R has 0 cell-local 288 in key cell (1379,1138); G lacks 288; the production encoder gives 0 records.
+- The trigger is recorded as a distinct sub-cause: a type-288 triangular sliver (home (1379,1143)) misses the cell centre by 0.348 raw, and the pre-3-03 checker's 0.5-raw centre slack wrongly counted it. 3-03 is cited as the fix.
+- Accounting: 776 = 342 + 434, 0 open questions, consistent with live unattributed 0. `triage/phase3_membership.tsv` and `triage/phase3_groups.md` were updated.

@@ -9,8 +9,19 @@ Evidence: `output/scratch-14/r_contribution/765.json` and dump_row 765 in `r_con
 
 Re-check: 432/432 from actual covering-slot decodes; zero polygons and zero contribution. Per-row evidence: `r_contribution_3-02.tsv` and its proof paths.
 
-776 = 342 (2-01) + 433 (2-02 amended) + 1 (Q-source-335). Membership: 776 rows, unique native keys and dump_row IDs, exact ID coverage 0–775; exhaustive and disjoint assertions pass.
+776 = 342 (2-01) + 433 (2-02 amended) + 1 (Q-source-335) at 3-02 close; superseded by the 335 ruling below. Membership: 776 rows, unique native keys and dump_row IDs, exact ID coverage 0–775; exhaustive and disjoint assertions pass.
 
 335 stays `open-question:Q-source-335`; 3-01 disposition is outside this unit. This records membership only; checker changes belong to 3-03. Plan 04 Phase 3 remains open.
 
 Carried Design observation: R emits 288 in the 342 2-01 cells while the spool has no representable 288 source: a source-data parity difference outside this unit.
+
+## Design ruling on dump_row 335 (2026-10-06)
+
+dump_row 335, key `(0, 1379, 1138, 288)`, is **folded into amended 2-02** on the evidence:
+- the R decode of the key cell has 0 cell-local 288 (its R tile carries only 289);
+- G lacks 288;
+- the production encoder emits 0 records for the demanding source.
+
+**Distinct sub-cause (trigger):** the demander is a type-288 tall triangular sliver, `tall=39083:L0:home(1379,1143):ordinal=0` (`demand_attribution_3-01.md`). It misses the key cell's centre by 0.348 raw. The pre-3-03 checker's 0.5-raw centre slack (`Region.inside` `TOL`) wrongly counted it as covering the cell. Fixed by 3-03 (checker demands only encodable footprints) and remediation-01.
+
+Final accounting: **776 = 342 (2-01) + 434 (2-02 amended), 0 open questions**. `phase3_membership.tsv` was updated accordingly (exhaustive, disjoint).
