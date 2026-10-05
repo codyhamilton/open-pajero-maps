@@ -53,12 +53,17 @@ classification joins, truncated historical pins, unresolved 3-11 versus 3-14
 oracle evidence, and an incomplete independent-review chain. Plan **16** closed
 the timing-only `wall_s` strip defect (strip now matches Phase 2
 `COMPARE_EXCLUDES`: `timing` + `wall_s`); that strip is not a live blocker.
-Remaining open blockers: PSS ceiling, native classify joins, truncated pins,
-3-11 versus 3-14 oracle, incomplete independent-review chain, and historic
-completeness attribution (open under plan **14**). These still block Phase 3
-closure; no later phase is released; plan 04 Phase 3 is not closed. The signed
-phase outcome and detailed evidence remain in plan 04. The repo contains no
-plan 06 design: the earlier CI-gate draft is not a work unit on master.
+Plan **20** reframes the live PSS item as a **contract mismatch**: the signed
+ceiling **9,726,501 kB** is the historical `-j 12` peak, while ops and the
+3-90 gate must use ≤ `-j 6` — not an unexplained memory blow-up. The PSS bar
+is **not** cleared; a later 3-90 re-run under the amended brief is still
+required. Remaining open blockers: PSS contract (ceiling held; live gate at
+ops ≤6), native classify joins, truncated pins, 3-11 versus 3-14 oracle,
+incomplete independent-review chain, and historic completeness attribution
+(open under plan **14**). These still block Phase 3 closure; no later phase
+is released; plan 04 Phase 3 is not closed. The signed phase outcome and
+detailed evidence remain in plan 04. The repo contains no plan 06 design: the
+earlier CI-gate draft is not a work unit on master.
 WP2–WP5 labels below are program scope, not executable briefs.
 
 The offline oracle (`parser/compare_disc.py`) defaults to `layers_present=["map"]`. Green exit under that map-only scope is **not** full-disc parity: WP2–WP5 register as NA negative controls and the report sets `full_disc_parity: false`.

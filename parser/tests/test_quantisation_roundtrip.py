@@ -298,6 +298,23 @@ def test_one_binding_call_per_range(fixture):
     assert tm["c_ns"] > 0 and tm["pss_peak_kb"] > 0
 
 
+def test_signed_pss_ops_contract_constants():
+    """Plan 20: absolute ceiling, ops max workers, and band plan stay named."""
+    assert qr.PSS_CEILING_KB == 9_726_501
+    assert qr.OPS_MAX_WORKERS == 6
+    assert qr.PLAN_WORKERS == 12
+    assert qr.OPS_MAX_WORKERS < qr.PLAN_WORKERS
+
+
+def test_cli_default_workers_at_most_ops_max():
+    """CLI `-j` default must not exceed the ops K1 cap (plan 20)."""
+    src = inspect.getsource(qr.main)
+    assert "default=OPS_MAX_WORKERS" in src
+    default = qr.OPS_MAX_WORKERS
+    assert default <= qr.OPS_MAX_WORKERS
+    assert default == 6
+
+
 def test_pss_sampler_returns_a_positive_peak():
     import time
     s = qr.PssSampler(interval=0.05).start()

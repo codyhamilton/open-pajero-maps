@@ -108,6 +108,15 @@ plan04 multiprocess **PSS** sampler gates are a separate contract and remain
 unchanged; the K1 dump finalizer historically ran after that sampler stopped, so
 PSS peaks did not include it.
 
+### Signed PSS ceiling vs ops K1 cap
+
+Plan 04's signed absolute PSS ceiling is **9,726,501 kB** (Phase 2 close;
+historical measured peak of three dump-off K1 runs at `-j 12`; no margin).
+That ceiling is enforced for live ops and Phase 3 / 3-90 K1 under the
+standing K1/harness cap (**≤ `-j 6`**). Running above the ops cap can
+exceed a no-margin peak that was signed at a higher worker count; do not
+treat such exceedances as a license to raise the ceiling.
+
 ### Measured Phase 1–3 peaks (summary)
 
 Full pair tables: `docs/plans/05-heavy-job-memory.md` (What Was Built). On the

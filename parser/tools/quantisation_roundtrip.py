@@ -1244,6 +1244,8 @@ def roundtrip_python(disc: str, spool: str, workers: int = 12, levels=None, log=
 # (with `wall_s`) is the only part that varies between runs.
 
 PLAN_WORKERS = 12          # the band plan is made for this many workers whatever `-j` is
+OPS_MAX_WORKERS = 6        # WORKFLOW / plan 05 K1/harness ops cap (≤ -j 6)
+PSS_CEILING_KB = 9_726_501  # signed Phase 2 absolute ceiling (no margin); historical -j 12 peak
 PSS_INTERVAL = 0.25
 COMPARE_EXCLUDES = ["timing", "wall_s"]
 
@@ -1599,7 +1601,7 @@ def main(argv=None) -> int:
     ap.add_argument("--disc", required=True, help="built ALLDATA.KWI")
     ap.add_argument("--spool", required=True, help="spool directory it was built from")
     ap.add_argument("--out", help="write the JSON report here")
-    ap.add_argument("--workers", "-j", type=int, default=12)
+    ap.add_argument("--workers", "-j", type=int, default=OPS_MAX_WORKERS)
     ap.add_argument("--engine", choices=("c", "python"), default="c",
                     help="c: K1 through libkiwiw (default); python: the count oracle")
     ap.add_argument("--levels", help="comma-separated levels to check (default: every level)")
