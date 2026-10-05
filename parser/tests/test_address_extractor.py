@@ -310,7 +310,8 @@ def test_srmx_dict_has_required_keys(idx: OsmAddressIndex) -> None:
         assert key in d, f"missing key {key!r} in SRMX dict"
     assert d["STID"] == street.stid
     assert d["KYCH"] == street.name
-    assert d["NAME"] == street.name
+    assert d["NAME"] == ""
+    assert d["NAME"] != street.name or street.name == ""
     assert d["NXCT"] == 2
 
 
@@ -340,7 +341,12 @@ def test_stfg_bits_correct_for_srmx() -> None:
     d = street_to_srmx_dict(street, nxst_halved=0, nxct=0)
     assert d["STFG"][0] == 0x7F, f"expected STFG[0]=0x7F, got {d['STFG'][0]:#04x}"
     assert d["STFG"][1] == 0x00, f"expected STFG[1]=0x00, got {d['STFG'][1]:#04x}"
-    assert d["NAME"] == street.name, "NAME must carry the street string"
+    assert "NAME" in d, "NAME key must be present under STFG 0x7f00"
+    assert d["NAME"] == "", "NAME content must be empty (plan 21; R-dominant)"
+    assert d["KYCH"] == street.name
+    assert not (d["STFG"][0] == 0x7F and d["NAME"] == street.name and street.name), (
+        "fail if NAME equals non-empty street under 7f00"
+    )
 
 
 def _srmx_field_defs() -> list:
@@ -388,7 +394,7 @@ def _srmx_field_defs() -> list:
 
 
 def test_srmx_record_roundtrip_bit6_name() -> None:
-    """Synthetic SRMX write/parse smoke: bit 6 (NAME) survives round-trip."""
+    """Synthetic SRMX write/parse smoke: bit 6 set; empty NAME survives round-trip."""
     fields = _srmx_field_defs()
     street = ExtractedStreet(stid=42, name="TEST STREET", city_name="PERTH")
     d = street_to_srmx_dict(street, nxst_halved=0, nxct=0)
@@ -399,8 +405,11 @@ def test_srmx_record_roundtrip_bit6_name() -> None:
     assert parsed["STFG"][0] & 0x40, (
         f"NAME bit 6 not set in round-tripped STFG: {parsed['STFG']!r}"
     )
-    assert parsed["NAME"] == street.name, (
-        f"NAME did not round-trip: {parsed.get('NAME')!r}"
+    assert parsed["NAME"] == "", (
+        f"NAME must round-trip empty: {parsed.get('NAME')!r}"
+    )
+    assert not (parsed["NAME"] == street.name and street.name), (
+        "fail if NAME equals non-empty street under 7f00 after round-trip"
     )
     assert parsed["KYCH"] == street.name
     assert parsed["STID"] == street.stid

@@ -464,9 +464,13 @@ def street_to_srmx_dict(
     The seven gated fields (STID, NXKD, NXFN, NXST, NXCT, KYCH, NAME)
     correspond to STFG bits 0-6.  This emits the verified reference-disc
     pattern ``STFG = 0x7f 0x00`` (SADSR201 SRMX on 38,119 of 38,120; all
-    2,827 in SADSR202), per verified ``docs/schema/index-idx.md`` census (plan ``docs/plans/15-sadsr-srmx-stfg.md``).
-    NAME carries the same street string as KYCH (Assumption 2).  Bits 7-11
-    (RPAT, RPNK, RPNF, RPNS, RPNC) stay absent.
+    2,827 in SADSR202), per verified ``docs/schema/index-idx.md`` census
+    (plan ``docs/plans/15-sadsr-srmx-stfg.md``).  Bit 6 marks NAME
+    **present**; the dominant R content is an empty VRBL CH (plan 15
+    residual / plan ``docs/plans/21-r-empty-name-vs-g-street-name/``).
+    KYCH carries ``street.name``; NAME is ``""``.  Plan 15 Assumption 2
+    (NAME = KYCH) is retired.  Bits 7-11 (RPAT, RPNK, RPNF, RPNS, RPNC)
+    stay absent.
 
     BFRL / NFRL are set to 0 -- the assembler must patch them.
     """
@@ -486,7 +490,7 @@ def street_to_srmx_dict(
         "NXST": nxst_halved,
         "NXCT": nxct,
         "KYCH": street.name,
-        "NAME": street.name,
+        "NAME": "",
     }
 
 

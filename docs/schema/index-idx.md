@@ -82,7 +82,7 @@ Sizes and addresses are SWS-halved; addresses are record-relative (see indirecti
 |---|---|---|---|---|
 | BFRL, NFRL | First fields; 1 byte, halved; NFRL=0 ends chain. Some frames use FDUH nibble, FDUW/FDWD word, FDUB | verified | `parser/tests/test_roundtrip_idx.py` all street records | `parser/kiwiw/search_frame.py` |
 | Fields up to and including STFG | Unconditional | verified | `parser/tests/test_roundtrip_idx.py` | `parser/kiwiw/search_frame.py` |
-| STFG | Presence bitmap over later fields in definition order, LSB-first, byte 0 first | verified | `parser/tests/test_roundtrip_idx.py`; SADSR201 SRMX 7f00 (38,119 of 38,120); SRT1 STFG=07 present only ZIPN, PRFX, STAD | `parser/kiwiw/search_frame.py` |
+| STFG | Presence bitmap over later fields in definition order, LSB-first, byte 0 first; SADSR SRMX bit 6 = NAME present (value may be empty VRBL CH; plan 21) | verified | `parser/tests/test_roundtrip_idx.py`; SADSR201 SRMX 7f00 (38,119 of 38,120); SRT1 STFG=07 present only ZIPN, PRFX, STAD | `parser/kiwiw/search_frame.py` |
 | NXKD/NXFN nibble pair | Share one byte (0x51 = class 5, serial 1) | verified | `parser/tests/test_roundtrip_idx.py` | `parser/kiwiw/search_frame.py` |
 | Trailing padding | Allowed after last field | observed | dumps | `parser/kiwiw/search_frame.py` |
 | NFRL adjacency in POISR deep frames | NFRL is not physical adjacency; walk physically with end_offset | observed | `iter_matching_records` docstring | `parser/kiwiw/search_frame.py` |
