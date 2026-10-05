@@ -338,10 +338,15 @@ def census(rows):
             "blockset": 32, "block": 0, "bounds": [0, 31, 512, 575]}
 
 
-def disc_document(fh, label, path):
+def disc_document(fh, label, path, expected_sha256=None):
+    if expected_sha256 is not None:
+        if label != "g_successor" or len(expected_sha256) != 64 or any(
+                c not in "0123456789abcdef" for c in expected_sha256):
+            raise ValueError("candidate pin requires g_successor and a lowercase SHA-256")
+    expected = expected_sha256 or PINS[label]
     before = stamp(fh)
     measured = full_hash(fh) if label != "r" else None
-    if measured is not None and measured != PINS[label]:
+    if measured is not None and measured != expected:
         raise ValueError(f"{label} full pin mismatch: {measured}")
     rows, pool = [], {}
     for row in disc_rows(fh, BLOCK_CELLS, label != "r"):
@@ -349,17 +354,19 @@ def disc_document(fh, label, path):
     if stamp(fh) != before:
         raise ValueError("disc changed while probing")
     return {"schema": 1, "kind": "disc", "label": label, "disc": str(path),
-            "disc_sha256": PINS[label], "measured_sha256": measured,
+            "disc_sha256": expected, "measured_sha256": measured,
+            **({"predecessor_sha256": PINS[label]} if expected_sha256 else {}),
             "full_pin_remeasured": label != "r", "r_pin_source": "plan-29 historical pin; not remeasured" if label == "r" else None,
             "hardened_reader": str(Path(reader().__file__).relative_to(ROOT)),
             "byte_pool": pool, "cells": rows, "census": census(rows)}
 
 
-def validate_disc(doc, label):
+def validate_disc(doc, label, expected_sha256=None):
+    expected = expected_sha256 or PINS[label]
     if (doc["schema"] != 1 or doc["kind"] != "disc" or doc["label"] != label
-            or doc["disc_sha256"] != PINS[label]):
+            or doc["disc_sha256"] != expected):
         raise ValueError("disc document identity mismatch")
-    if label != "r" and (not doc["full_pin_remeasured"] or doc["measured_sha256"] != PINS[label]):
+    if label != "r" and (not doc["full_pin_remeasured"] or doc["measured_sha256"] != expected):
         raise ValueError("G pin was not fully verified")
     if [tuple(r["cell"]) for r in doc["cells"]] != list(BLOCK_CELLS):
         raise ValueError("census must cover all 2048 cells exactly once in order")
@@ -601,7 +608,7 @@ def probe(args):
     if args.disc:
         path = args.path or DISCS[args.disc]
         with path.open("rb") as fh:
-            doc = disc_document(fh, args.disc, path)
+            doc = disc_document(fh, args.disc, path, getattr(args, "expected_sha256", None))
         write(args.out or OUT / f"{args.disc}.json", doc)
         return 2 if doc["census"]["lookup_failures"] else 0
     docs = [load(OUT / f"{label}.json") for label in ("g_successor", "g_historical")]
@@ -674,7 +681,8 @@ def main(argv=None):
     inputs = p.add_mutually_exclusive_group(required=True)
     inputs.add_argument("--disc", choices=tuple(PINS))
     inputs.add_argument("--spool", type=Path)
-    p.add_argument("--path", type=Path, help="disc path override; fixed pin is still required")
+    p.add_argument("--path", type=Path, help="disc path override; fixed pin required unless --expected-sha256 is supplied")
+    p.add_argument("--expected-sha256", help="Execute-measured candidate pin; g_successor only; cannot replace Phase 1 evidence")
     p.add_argument("--out", type=Path)
     p.set_defaults(run=probe)
     p = sub.add_parser("publish", help="offline evidence replay and Phase 1 summary; opens no disc or spool")
@@ -688,6 +696,11 @@ def main(argv=None):
             setattr(args, key, ROOT / value)
     if args.command == "probe" and args.spool and args.path:
         parser.error("--path applies only to --disc")
+    if args.command == "probe" and args.expected_sha256:
+        if args.disc != "g_successor" or not args.path or not args.out:
+            parser.error("candidate pin requires --disc g_successor, --path and --out")
+        if args.out.resolve() in {(OUT / f"{label}.json").resolve() for label in (*PINS, "spool", "summary")}:
+            parser.error("candidate probe cannot replace Phase 1 witnesses")
     try:
         return args.run(args)
     except (ValueError, KeyError, TypeError, OSError, struct.error, AssertionError) as exc:

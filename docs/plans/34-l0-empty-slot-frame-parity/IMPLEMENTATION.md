@@ -39,3 +39,36 @@ Approach open; refine skipped. Unit `briefs/2-01-root-cause-and-verdict.md`. Exe
 - **Worker:** Codex `gpt-6.1-sol` (high), sandboxed, 08:07–~08:20 AEST, 168,419 tokens. Report: `reports/2-01-root-cause-and-verdict.md`.
 - **Cause (accepted):** each of (0,541), (0,562), (0,563) is outside the L0 parcel mask; its only input is an own spool record whose class-2 polygon lies wholly west of the cell; clipping emits nothing; `kw_e2` indexes the 158-byte empty shell unconditionally; the writer then allocates a block/BMT where R writes the absent sentinel. (0,541) also carries plan 29's probe-and-pad.
 - **Fix (not accepted as is):** `_omit_witnessed_l0_shells` hard-codes the three cells. Execute will not land a coordinate whitelist in the production builder. Fixer brief `briefs/2-02-general-outside-mask-shell-rule.md` replaces it with a general outside-mask empty-shell rule, a classified all-cell diff gate, and an R empty-slot check over every removed cell.
+
+### 2-02 — general outside-mask empty-shell rule (fixer)
+
+- **Worker:** the Codex `gpt-6.1-sol` (high) fixer seat
+  (`output/scratch-34/codex-34-p2b.log`) died at the Codex usage limit at
+  ~08:23 AEST, before producing a usable diff. The next window opens at
+  11:19 AEST. Execute (Grok Bot) implemented brief 2-02 itself and discloses
+  that here. Independent review is still a fresh Codex seat.
+- **Builder:** `parser/build_alldata.py`.
+  - `is_empty_shell` / `_empty_shell_header`: the exact `encode_common`
+    record-less frame for a given cell and level (12 MFDEs at L12), allowing
+    only zero padding.
+  - `_omit_outside_mask_shells`: drops an undivided cell outside its level's
+    full `load_parcel_mask` rectangle when its final frame is that shell.
+    Applied after probe-and-pad and the declined-row check. Nothing changes
+    without a mask.
+  - The 2-01 whitelist `_L0_EMPTY_SLOT_CELLS` is removed.
+- **Gates:** `phase2_gates.py`.
+  - `diff` is classified, covers all levels, lists every changed cell and
+    passes only with zero `other` cells. It takes `--old-sha` and
+    `--no-require-phase1` (for Perth).
+  - `r-check` requires `empty_slot` on R through the hardened reader for
+    every removed L0 cell. Non-L0 removals fail closed.
+  - `frame_rows` now yields an `is_empty_shell` flag.
+- **Docs:** `phase2_cause.md` § Emission rule (rule, R basis, falsifier),
+  `phase2_commands.md` and the `phase2_note.md` addendum.
+- **Tests:** `parser/tests/test_l0_empty_shell.py` adds generic-level
+  omission, inside-mask kept, L12 shape, padded versus dirty trailer,
+  classified gate refusals and the R-check failure modes. Restricted suite:
+  **53 passed** (`--basetemp output/scratch-34/tests-p2b`).
+- **Measurement:** queued as `output/scratch-34/run_p2b.sh` (log
+  `run_p2b.log`). It runs serially under the wrapper and lock, one step at a
+  time.

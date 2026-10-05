@@ -249,6 +249,69 @@ def _e1_job(job):
     return rows, counters, d
 
 
+def _empty_shell_header(level: int, ix: int, iy: int) -> tuple[int, bytes, bytes]:
+    """`_cenc.c encode_common`'s record-less frame for one cell: a 36-byte
+    header, 20 MFDEs (12 at level 12) all absent except background, and the
+    two-byte empty background list `0001`. Returns `(length, header[10:12],
+    header[12:] + directory + background)`; bytes 2..9 (the cell's
+    south-west corner) are free apart from their zero pad bytes 5 and 9."""
+    mfde = 12 if level == 12 else 20
+    first = 36 + mfde * 6
+    directory = bytearray(b"\xff\xff\xff\xff\x00\x00" * mfde)
+    directory[6:12] = (first // 2).to_bytes(4, "big") + b"\x00\x01"
+    metadata = bytes.fromhex("00000000000000640000000000000000ffffffff00000000")
+    return first + 2, bytes((iy % 256, ix % 256)), metadata + bytes(directory) + b"\x00\x01"
+
+
+def is_empty_shell(raw: bytes, level: int, ix: int, iy: int) -> bool:
+    """True only for the encoder's exact record-less shell of cell (ix, iy),
+    optionally followed by zero padding (plan 29's probe-and-pad extent).
+    Any road/name/extended subframe, region list, non-empty background,
+    metadata difference or non-zero trailing byte returns False."""
+    n, cell, tail = _empty_shell_header(level, ix, iy)
+    return (len(raw) >= n and raw[:2] == (n // 2).to_bytes(2, "big")
+            and raw[5] == 0 and raw[9] == 0 and raw[10:12] == cell
+            and raw[12:n] == tail and not any(raw[n:]))
+
+
+def _omit_outside_mask_shells(level, index, spill_path, rect):
+    """Plan 34 emit rule: outside the level's parcel-mask rectangle `rect`
+    (`load_parcel_mask`, brief 26c), R writes a frame only where content
+    exists and the absent sentinel elsewhere. An undivided cell outside
+    `rect` whose final frame is exactly the encoder's empty shell is
+    therefore not indexed. Inside `rect` (R materialises every cell) nothing
+    changes; without a mask (`--no-fill-mask`) nothing changes.
+
+    Runs after the plan-29 name-drop probe-and-pad comparison, so that guard
+    still sees both original and filtered topology. Retained index rows and
+    frame bytes are untouched."""
+    if rect is None or not len(index):
+        return index
+    ix_lo, ix_hi, iy_lo, iy_hi = rect
+    ix, iy = index["ix"], index["iy"]
+    candidate = (ix < ix_lo) | (ix > ix_hi) | (iy < iy_lo) | (iy > iy_hi)
+    candidate &= (index["pt"] == 0) & (index["sx"] == 0) & (index["sy"] == 0)
+    if not candidate.any():
+        return index
+    shortest = _empty_shell_header(level, 0, 0)[0]
+    keep = np.ones(len(index), bool)
+    rfd = os.open(spill_path, os.O_RDONLY)
+    try:
+        for i in np.flatnonzero(candidate):
+            row = index[i]
+            n = int(row["len"])
+            if n < shortest or n > descriptor.MAX_FRAME_BYTES:
+                continue
+            raw = os.pread(rfd, n, int(row["off"]))
+            if len(raw) != n:
+                raise RuntimeError("short shell spill read")
+            if is_empty_shell(raw, level, int(row["ix"]), int(row["iy"])):
+                keep[i] = False
+    finally:
+        os.close(rfd)
+    return index[keep]
+
+
 def _e2_job(job):
     """Pool entry, stage 2: E2 over target rows `[lo, hi)` into this
     process's spill file. E2 divides, retiles, trims and adds the name halo
@@ -262,6 +325,7 @@ def _e2_job(job):
     (spool_dir, level, desc, (lo, hi), rows, spill_dir, want_digest, want_bench,
      want_dump, *rest) = job
     cell_range = rest[0] if rest else None
+    mask_rect = rest[1] if len(rest) > 1 else None
     t0 = time.perf_counter()
     sp = _SPILL.get(spill_dir)
     if sp is None or sp[0] != os.getpid():
@@ -275,9 +339,9 @@ def _e2_job(job):
     # Production E2 stats end here: the drop probe below is not a build range.
     s1 = cenc.e2_stats()
     if spool.name_drops(lo, hi, cell_range):
-        # Removing a name must not relocate later cells in the packed disc.
-        # Probe the original chunk only where drops occurred; retain its
-        # frame extents, filling removed content with zero trailing padding.
+        # Preserve original chunk topology/extents for the name guard.
+        # Plan 34's outside-mask empty-shell omission runs after this comparison;
+        # retained frames still fill removed content with trailing zeros.
         original = cenc.E1Spool(spool_dir, level)
         try:
             old, old_declined, old_cnt = cenc.e2(
@@ -314,6 +378,7 @@ def _e2_job(job):
         raise RuntimeError(
             f"E2 declined {len(declined)} cell(s) it could not encode even after "
             f"division: {cells}{more}")
+    index = _omit_outside_mask_shells(level, index, spill.path, mask_rect)
     stats = _e2_trim_stats(cnt)
     rec = np.zeros(len(index), ft.FRAME_DTYPE)
     for k in ("ix", "iy", "pt", "sx", "sy", "len", "off"):
@@ -407,7 +472,7 @@ def _encode_level(level: int, reader: SpoolReader, fixture, threshold_bytes: int
     # Stage 2: E2 per range.
     e2_out = _run_ranges(pool, _e2_job, [
         (spool_dir, level, desc, c, parts[i], spill_dir, digest_fh is not None, bench,
-         dump is not None, cell_range)
+         dump is not None, cell_range, (mask or {}).get(level))
         for i, c in enumerate(chunks)], weights)
 
     tables = []

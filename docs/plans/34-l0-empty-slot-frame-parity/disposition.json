@@ -1,0 +1,195 @@
+{
+  "cells": [
+    {
+      "cause": "Own out-of-span class-2 polygon clips to zero records; own-row existence still indexes an empty background-header frame; counted O03 name admission removes the sole name and probe-and-pad preserves its 320-byte extent",
+      "cell": [
+        0,
+        541
+      ],
+      "evidence_refs": [
+        "phase2_cause.md",
+        "witnesses/spool.json",
+        "witnesses/g_successor.json",
+        "witnesses/g_historical.json",
+        "witnesses/r.json",
+        "witnesses/summary.json",
+        "parser/build_alldata.py:_omit_outside_mask_shells",
+        "parser/kiwiw/_e2.c:kw_e2",
+        "parser/kiwiw/_cenc.c:bg_shape/enc_bg/encode_common",
+        "parser/kiwiw/alldata_writer.py:EMPTY_BMT_OFFSET/EMPTY_BMT_SIZE/build_alldata_kwi"
+      ],
+      "execute": {
+        "block_proof": null,
+        "candidate_witness": null,
+        "diff_report": null,
+        "k1_exit": null,
+        "k1_pass": null,
+        "k1_report": null,
+        "new_disc_path": "output/scratch-34/G_new/ALLDATA.KWI",
+        "new_disc_sha256": null,
+        "observed_diff_scope": null,
+        "perth_sha256": null,
+        "protected_after": null,
+        "protected_before": null,
+        "spool_fingerprint": null
+      },
+      "frame": {
+        "background_count": 0,
+        "frame_class": "leaf",
+        "leaf_path": [
+          928
+        ],
+        "length": 320,
+        "name_count": 0,
+        "offset": 197597600,
+        "payload_class": "padded_shell",
+        "road_count": 0,
+        "sha256": "967b1d86ce25c23859a17c1332e95a6301539b8790cd45960b0f2e893ba72f07"
+      },
+      "level": 0,
+      "proposed_fix": "Omit only the witnessed encoder shell after probe-and-pad; preserve any payload or unknown layout",
+      "residual": "Execute must measure the candidate successor, three-cell multiset confinement, block absence, live K1 exit 0, Perth and immutable protected inputs",
+      "source_row": 11689,
+      "verdict": "conflict-open"
+    },
+    {
+      "cause": "Own out-of-span class-2 polygon clips to zero records; own-row existence still indexes an empty background-header frame",
+      "cell": [
+        0,
+        562
+      ],
+      "evidence_refs": [
+        "phase2_cause.md",
+        "witnesses/spool.json",
+        "witnesses/g_successor.json",
+        "witnesses/g_historical.json",
+        "witnesses/r.json",
+        "witnesses/summary.json",
+        "parser/build_alldata.py:_omit_outside_mask_shells",
+        "parser/kiwiw/_e2.c:kw_e2",
+        "parser/kiwiw/_cenc.c:bg_shape/enc_bg/encode_common",
+        "parser/kiwiw/alldata_writer.py:EMPTY_BMT_OFFSET/EMPTY_BMT_SIZE/build_alldata_kwi"
+      ],
+      "execute": {
+        "block_proof": null,
+        "candidate_witness": null,
+        "diff_report": null,
+        "k1_exit": null,
+        "k1_pass": null,
+        "k1_report": null,
+        "new_disc_path": "output/scratch-34/G_new/ALLDATA.KWI",
+        "new_disc_sha256": null,
+        "observed_diff_scope": null,
+        "perth_sha256": null,
+        "protected_after": null,
+        "protected_before": null,
+        "spool_fingerprint": null
+      },
+      "frame": {
+        "background_count": 0,
+        "frame_class": "leaf",
+        "leaf_path": [
+          1600
+        ],
+        "length": 160,
+        "name_count": 0,
+        "offset": 197597920,
+        "payload_class": "padded_shell",
+        "road_count": 0,
+        "sha256": "e22e27dfc439350e6b0ecbaf8821744a99e3d91118e9d5e7127d3ebea9e8b7b9"
+      },
+      "level": 0,
+      "proposed_fix": "Omit only the witnessed encoder shell after probe-and-pad; preserve any payload or unknown layout",
+      "residual": "Execute must measure the candidate successor, three-cell multiset confinement, block absence, live K1 exit 0, Perth and immutable protected inputs",
+      "source_row": 13990,
+      "verdict": "conflict-open"
+    },
+    {
+      "cause": "Own out-of-span class-2 polygon clips to zero records; own-row existence still indexes an empty background-header frame",
+      "cell": [
+        0,
+        563
+      ],
+      "evidence_refs": [
+        "phase2_cause.md",
+        "witnesses/spool.json",
+        "witnesses/g_successor.json",
+        "witnesses/g_historical.json",
+        "witnesses/r.json",
+        "witnesses/summary.json",
+        "parser/build_alldata.py:_omit_outside_mask_shells",
+        "parser/kiwiw/_e2.c:kw_e2",
+        "parser/kiwiw/_cenc.c:bg_shape/enc_bg/encode_common",
+        "parser/kiwiw/alldata_writer.py:EMPTY_BMT_OFFSET/EMPTY_BMT_SIZE/build_alldata_kwi"
+      ],
+      "execute": {
+        "block_proof": null,
+        "candidate_witness": null,
+        "diff_report": null,
+        "k1_exit": null,
+        "k1_pass": null,
+        "k1_report": null,
+        "new_disc_path": "output/scratch-34/G_new/ALLDATA.KWI",
+        "new_disc_sha256": null,
+        "observed_diff_scope": null,
+        "perth_sha256": null,
+        "protected_after": null,
+        "protected_before": null,
+        "spool_fingerprint": null
+      },
+      "frame": {
+        "background_count": 0,
+        "frame_class": "leaf",
+        "leaf_path": [
+          1632
+        ],
+        "length": 160,
+        "name_count": 0,
+        "offset": 197598080,
+        "payload_class": "padded_shell",
+        "road_count": 0,
+        "sha256": "0126fc2dcd7acff3f718aa72a7d210bbb6aec2a913462e34d88f6b449cd69138"
+      },
+      "level": 0,
+      "proposed_fix": "Omit only the witnessed encoder shell after probe-and-pad; preserve any payload or unknown layout",
+      "residual": "Execute must measure the candidate successor, three-cell multiset confinement, block absence, live K1 exit 0, Perth and immutable protected inputs",
+      "source_row": 14169,
+      "verdict": "conflict-open"
+    }
+  ],
+  "commands": "phase2_commands.md",
+  "conflict_open_count": 3,
+  "contract_amendment_required": "Execute must explicitly note post-probe shell omission in docs/design/out-of-span-name-guard.md",
+  "expected_diff_scope": [
+    {
+      "cell": [
+        0,
+        541
+      ],
+      "change": "sole pinned record-less frame removed",
+      "level": 0
+    },
+    {
+      "cell": [
+        0,
+        562
+      ],
+      "change": "sole pinned record-less frame removed",
+      "level": 0
+    },
+    {
+      "cell": [
+        0,
+        563
+      ],
+      "change": "sole pinned record-less frame removed",
+      "level": 0
+    }
+  ],
+  "phase3_closed": false,
+  "plan29_residual_discharged": false,
+  "predecessor_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+  "r_sha256": "8c2d20275227b9d2abb0f1802d4e0cbb6697f46545794d19e1a2024b6f169275",
+  "schema": 1,
+  "status": "implementation-ready; guarded Execute verification pending"
+}
