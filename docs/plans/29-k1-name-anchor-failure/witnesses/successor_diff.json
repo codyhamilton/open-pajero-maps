@@ -1,0 +1,260 @@
+{
+  "changed_bytes": 146,
+  "changed_leaf_list": [
+    {
+      "cell": [
+        0,
+        541
+      ],
+      "kind": "frame",
+      "leaf": [
+        928
+      ],
+      "level": 0
+    }
+  ],
+  "changed_ranges": [
+    {
+      "end": 197597602,
+      "new": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "old": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "start": 197597601
+    },
+    {
+      "end": 197597652,
+      "new": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "old": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "start": 197597648
+    },
+    {
+      "end": 197597654,
+      "new": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "old": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "start": 197597653
+    },
+    {
+      "end": 197597760,
+      "new": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "old": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "start": 197597759
+    },
+    {
+      "end": 197597762,
+      "new": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "old": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "start": 197597761
+    },
+    {
+      "end": 197597764,
+      "new": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "old": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "start": 197597763
+    },
+    {
+      "end": 197597770,
+      "new": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "old": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "start": 197597765
+    },
+    {
+      "end": 197597777,
+      "new": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "old": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "start": 197597774
+    },
+    {
+      "end": 197597908,
+      "new": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "old": {
+        "cell": [
+          0,
+          541
+        ],
+        "kind": "frame",
+        "leaf": [
+          928
+        ],
+        "level": 0
+      },
+      "start": 197597779
+    }
+  ],
+  "confined_to_cell_0_541": true,
+  "confinement_rule": "Equal file sizes; at least one changed byte; every differing byte is inside a frame covering level 0 cell [0,541] in BOTH discs. Header, PDMDH, BMT, block slot tables, padding and unmapped changes fail.",
+  "new": "output/scratch-29/G_new/ALLDATA.KWI",
+  "new_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+  "new_size": 1692105152,
+  "old": "output/scratch-14/G_new/ALLDATA.KWI",
+  "old_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+  "old_size": 1692105152
+}

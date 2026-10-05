@@ -1,0 +1,1331 @@
+{
+  "baseline_report": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-14/p3/indep/rem01/k1_live.json",
+  "baseline_run": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-14/runs/rem01_k1_live.json",
+  "comparisons": {
+    "0": {
+      "background": {
+        "baseline": {
+          "checked": 164516755,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        },
+        "equal": true,
+        "expected": {
+          "checked": 164516755,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        },
+        "new": {
+          "checked": 164516755,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        }
+      },
+      "background_boundary": {
+        "baseline": {
+          "checked": 63912410,
+          "failing": 0,
+          "worst_error_raw": 0.499985
+        },
+        "equal": true,
+        "expected": {
+          "checked": 63912410,
+          "failing": 0,
+          "worst_error_raw": 0.499985
+        },
+        "new": {
+          "checked": 63912410,
+          "failing": 0,
+          "worst_error_raw": 0.499985
+        }
+      },
+      "completeness": {
+        "baseline": {
+          "checked": 1773724,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 1773724,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 1773724,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "interior_cover": {
+        "baseline": {
+          "checked": 1590547,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 1590547,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 1590547,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "name_anchor": {
+        "baseline": {
+          "checked": 2281890,
+          "failing": 1,
+          "worst_error_raw": 0.499999
+        },
+        "equal": true,
+        "expected": {
+          "checked": 2281889,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        },
+        "new": {
+          "checked": 2281889,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        }
+      },
+      "range": {
+        "baseline": {
+          "checked": 271374102,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 271374101,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 271374101,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "road_node": {
+        "baseline": {
+          "checked": 40663047,
+          "failing": 0,
+          "worst_error_raw": 0.499998
+        },
+        "equal": true,
+        "expected": {
+          "checked": 40663047,
+          "failing": 0,
+          "worst_error_raw": 0.499998
+        },
+        "new": {
+          "checked": 40663047,
+          "failing": 0,
+          "worst_error_raw": 0.499998
+        }
+      },
+      "road_point": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "step": {
+        "baseline": {
+          "checked": 216281685,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 216281685,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 216281685,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      }
+    },
+    "10": {
+      "background": {
+        "baseline": {
+          "checked": 119,
+          "failing": 0,
+          "worst_error_raw": 0.49975
+        },
+        "equal": true,
+        "expected": {
+          "checked": 119,
+          "failing": 0,
+          "worst_error_raw": 0.49975
+        },
+        "new": {
+          "checked": 119,
+          "failing": 0,
+          "worst_error_raw": 0.49975
+        }
+      },
+      "background_boundary": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "completeness": {
+        "baseline": {
+          "checked": 2,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 2,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 2,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "interior_cover": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "name_anchor": {
+        "baseline": {
+          "checked": 8,
+          "failing": 0,
+          "worst_error_raw": 0.496154
+        },
+        "equal": true,
+        "expected": {
+          "checked": 8,
+          "failing": 0,
+          "worst_error_raw": 0.496154
+        },
+        "new": {
+          "checked": 8,
+          "failing": 0,
+          "worst_error_raw": 0.496154
+        }
+      },
+      "range": {
+        "baseline": {
+          "checked": 127,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 127,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 127,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "road_node": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "road_point": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "step": {
+        "baseline": {
+          "checked": 104,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 104,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 104,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      }
+    },
+    "12": {
+      "background": {
+        "baseline": {
+          "checked": 23,
+          "failing": 0,
+          "worst_error_raw": 0.491014
+        },
+        "equal": true,
+        "expected": {
+          "checked": 23,
+          "failing": 0,
+          "worst_error_raw": 0.491014
+        },
+        "new": {
+          "checked": 23,
+          "failing": 0,
+          "worst_error_raw": 0.491014
+        }
+      },
+      "background_boundary": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "completeness": {
+        "baseline": {
+          "checked": 1,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 1,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 1,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "interior_cover": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "name_anchor": {
+        "baseline": {
+          "checked": 8,
+          "failing": 0,
+          "worst_error_raw": 0.400813
+        },
+        "equal": true,
+        "expected": {
+          "checked": 8,
+          "failing": 0,
+          "worst_error_raw": 0.400813
+        },
+        "new": {
+          "checked": 8,
+          "failing": 0,
+          "worst_error_raw": 0.400813
+        }
+      },
+      "range": {
+        "baseline": {
+          "checked": 31,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 31,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 31,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "road_node": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "road_point": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "step": {
+        "baseline": {
+          "checked": 19,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 19,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 19,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      }
+    },
+    "2": {
+      "background": {
+        "baseline": {
+          "checked": 9402420,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "equal": true,
+        "expected": {
+          "checked": 9402420,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "new": {
+          "checked": 9402420,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        }
+      },
+      "background_boundary": {
+        "baseline": {
+          "checked": 190351,
+          "failing": 0,
+          "worst_error_raw": 0.499981
+        },
+        "equal": true,
+        "expected": {
+          "checked": 190351,
+          "failing": 0,
+          "worst_error_raw": 0.499981
+        },
+        "new": {
+          "checked": 190351,
+          "failing": 0,
+          "worst_error_raw": 0.499981
+        }
+      },
+      "completeness": {
+        "baseline": {
+          "checked": 24403,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 24403,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 24403,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "interior_cover": {
+        "baseline": {
+          "checked": 19,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 19,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 19,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "name_anchor": {
+        "baseline": {
+          "checked": 30286,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "equal": true,
+        "expected": {
+          "checked": 30286,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "new": {
+          "checked": 30286,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        }
+      },
+      "range": {
+        "baseline": {
+          "checked": 11102439,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 11102439,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 11102439,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "road_node": {
+        "baseline": {
+          "checked": 1479382,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "equal": true,
+        "expected": {
+          "checked": 1479382,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "new": {
+          "checked": 1479382,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        }
+      },
+      "road_point": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "step": {
+        "baseline": {
+          "checked": 9254656,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 9254656,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 9254656,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      }
+    },
+    "4": {
+      "background": {
+        "baseline": {
+          "checked": 1946786,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "equal": true,
+        "expected": {
+          "checked": 1946786,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "new": {
+          "checked": 1946786,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        }
+      },
+      "background_boundary": {
+        "baseline": {
+          "checked": 7277,
+          "failing": 0,
+          "worst_error_raw": 0.499571
+        },
+        "equal": true,
+        "expected": {
+          "checked": 7277,
+          "failing": 0,
+          "worst_error_raw": 0.499571
+        },
+        "new": {
+          "checked": 7277,
+          "failing": 0,
+          "worst_error_raw": 0.499571
+        }
+      },
+      "completeness": {
+        "baseline": {
+          "checked": 2006,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 2006,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 2006,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "interior_cover": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "name_anchor": {
+        "baseline": {
+          "checked": 3354,
+          "failing": 0,
+          "worst_error_raw": 0.499878
+        },
+        "equal": true,
+        "expected": {
+          "checked": 3354,
+          "failing": 0,
+          "worst_error_raw": 0.499878
+        },
+        "new": {
+          "checked": 3354,
+          "failing": 0,
+          "worst_error_raw": 0.499878
+        }
+      },
+      "range": {
+        "baseline": {
+          "checked": 2592784,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 2592784,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 2592784,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "road_node": {
+        "baseline": {
+          "checked": 635367,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "equal": true,
+        "expected": {
+          "checked": 635367,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "new": {
+          "checked": 635367,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        }
+      },
+      "road_point": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "step": {
+        "baseline": {
+          "checked": 1905174,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 1905174,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 1905174,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      }
+    },
+    "6": {
+      "background": {
+        "baseline": {
+          "checked": 372750,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "equal": true,
+        "expected": {
+          "checked": 372750,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "new": {
+          "checked": 372750,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        }
+      },
+      "background_boundary": {
+        "baseline": {
+          "checked": 880,
+          "failing": 0,
+          "worst_error_raw": 0.497907
+        },
+        "equal": true,
+        "expected": {
+          "checked": 880,
+          "failing": 0,
+          "worst_error_raw": 0.497907
+        },
+        "new": {
+          "checked": 880,
+          "failing": 0,
+          "worst_error_raw": 0.497907
+        }
+      },
+      "completeness": {
+        "baseline": {
+          "checked": 311,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 311,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 311,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "interior_cover": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "name_anchor": {
+        "baseline": {
+          "checked": 1223,
+          "failing": 0,
+          "worst_error_raw": 0.49993
+        },
+        "equal": true,
+        "expected": {
+          "checked": 1223,
+          "failing": 0,
+          "worst_error_raw": 0.49993
+        },
+        "new": {
+          "checked": 1223,
+          "failing": 0,
+          "worst_error_raw": 0.49993
+        }
+      },
+      "range": {
+        "baseline": {
+          "checked": 484201,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 484201,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 484201,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "road_node": {
+        "baseline": {
+          "checked": 109348,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "equal": true,
+        "expected": {
+          "checked": 109348,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "new": {
+          "checked": 109348,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        }
+      },
+      "road_point": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "step": {
+        "baseline": {
+          "checked": 354432,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 354432,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 354432,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      }
+    },
+    "8": {
+      "background": {
+        "baseline": {
+          "checked": 147653,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "equal": true,
+        "expected": {
+          "checked": 147653,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "new": {
+          "checked": 147653,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        }
+      },
+      "background_boundary": {
+        "baseline": {
+          "checked": 128,
+          "failing": 0,
+          "worst_error_raw": 0.495834
+        },
+        "equal": true,
+        "expected": {
+          "checked": 128,
+          "failing": 0,
+          "worst_error_raw": 0.495834
+        },
+        "new": {
+          "checked": 128,
+          "failing": 0,
+          "worst_error_raw": 0.495834
+        }
+      },
+      "completeness": {
+        "baseline": {
+          "checked": 67,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 67,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 67,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "interior_cover": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "name_anchor": {
+        "baseline": {
+          "checked": 287,
+          "failing": 0,
+          "worst_error_raw": 0.498944
+        },
+        "equal": true,
+        "expected": {
+          "checked": 287,
+          "failing": 0,
+          "worst_error_raw": 0.498944
+        },
+        "new": {
+          "checked": 287,
+          "failing": 0,
+          "worst_error_raw": 0.498944
+        }
+      },
+      "range": {
+        "baseline": {
+          "checked": 255904,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 255904,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 255904,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "road_node": {
+        "baseline": {
+          "checked": 107836,
+          "failing": 0,
+          "worst_error_raw": 0.499981
+        },
+        "equal": true,
+        "expected": {
+          "checked": 107836,
+          "failing": 0,
+          "worst_error_raw": 0.499981
+        },
+        "new": {
+          "checked": 107836,
+          "failing": 0,
+          "worst_error_raw": 0.499981
+        }
+      },
+      "road_point": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "step": {
+        "baseline": {
+          "checked": 139419,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 139419,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 139419,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      }
+    },
+    "totals": {
+      "background": {
+        "baseline": {
+          "checked": 176386506,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        },
+        "equal": true,
+        "expected": {
+          "checked": 176386506,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        },
+        "new": {
+          "checked": 176386506,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        }
+      },
+      "background_boundary": {
+        "baseline": {
+          "checked": 64111046,
+          "failing": 0,
+          "worst_error_raw": 0.499985
+        },
+        "equal": true,
+        "expected": {
+          "checked": 64111046,
+          "failing": 0,
+          "worst_error_raw": 0.499985
+        },
+        "new": {
+          "checked": 64111046,
+          "failing": 0,
+          "worst_error_raw": 0.499985
+        }
+      },
+      "completeness": {
+        "baseline": {
+          "checked": 1800514,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 1800514,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 1800514,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "interior_cover": {
+        "baseline": {
+          "checked": 1590566,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 1590566,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 1590566,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "name_anchor": {
+        "baseline": {
+          "checked": 2317056,
+          "failing": 1,
+          "worst_error_raw": 0.499999
+        },
+        "equal": true,
+        "expected": {
+          "checked": 2317055,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        },
+        "new": {
+          "checked": 2317055,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        }
+      },
+      "range": {
+        "baseline": {
+          "checked": 285809588,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 285809587,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 285809587,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "road_node": {
+        "baseline": {
+          "checked": 42994980,
+          "failing": 0,
+          "worst_error_raw": 0.499998
+        },
+        "equal": true,
+        "expected": {
+          "checked": 42994980,
+          "failing": 0,
+          "worst_error_raw": 0.499998
+        },
+        "new": {
+          "checked": 42994980,
+          "failing": 0,
+          "worst_error_raw": 0.499998
+        }
+      },
+      "road_point": {
+        "baseline": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "step": {
+        "baseline": {
+          "checked": 227935489,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "equal": true,
+        "expected": {
+          "checked": 227935489,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "new": {
+          "checked": 227935489,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      }
+    }
+  },
+  "drops_per_level": {
+    "0": 1,
+    "10": 0,
+    "12": 0,
+    "2": 0,
+    "4": 0,
+    "6": 0,
+    "8": 0
+  },
+  "errors": [],
+  "expected_k1_exit": 0,
+  "new_report": "output/scratch-29/k1_live.json",
+  "pass": true
+}

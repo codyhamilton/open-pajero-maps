@@ -1,0 +1,131 @@
+{
+  "cells": [
+    {
+      "cell": [
+        -1,
+        540
+      ],
+      "frames": [],
+      "status": "outside_coverage"
+    },
+    {
+      "block": 0,
+      "block_cells": [
+        0,
+        31,
+        512,
+        575
+      ],
+      "blockset": 32,
+      "cell": [
+        0,
+        540
+      ],
+      "frames": [],
+      "status": "empty_slot"
+    },
+    {
+      "block": 0,
+      "block_cells": [
+        0,
+        31,
+        512,
+        575
+      ],
+      "blockset": 32,
+      "cell": [
+        1,
+        540
+      ],
+      "frames": [],
+      "status": "empty_slot"
+    },
+    {
+      "cell": [
+        -1,
+        541
+      ],
+      "frames": [],
+      "status": "outside_coverage"
+    },
+    {
+      "block": 0,
+      "block_cells": [
+        0,
+        31,
+        512,
+        575
+      ],
+      "blockset": 32,
+      "cell": [
+        0,
+        541
+      ],
+      "frames": [],
+      "status": "empty_slot"
+    },
+    {
+      "block": 0,
+      "block_cells": [
+        0,
+        31,
+        512,
+        575
+      ],
+      "blockset": 32,
+      "cell": [
+        1,
+        541
+      ],
+      "frames": [],
+      "status": "empty_slot"
+    },
+    {
+      "cell": [
+        -1,
+        542
+      ],
+      "frames": [],
+      "status": "outside_coverage"
+    },
+    {
+      "block": 0,
+      "block_cells": [
+        0,
+        31,
+        512,
+        575
+      ],
+      "blockset": 32,
+      "cell": [
+        0,
+        542
+      ],
+      "frames": [],
+      "status": "empty_slot"
+    },
+    {
+      "block": 0,
+      "block_cells": [
+        0,
+        31,
+        512,
+        575
+      ],
+      "blockset": 32,
+      "cell": [
+        1,
+        542
+      ],
+      "frames": [],
+      "status": "empty_slot"
+    }
+  ],
+  "disc": "/run/media/codyh/464210-8480/ALLDATA.KWI",
+  "full_pin_remeasured": false,
+  "historical_disc_sha256": "8c2d20275227b9d2abb0f1802d4e0cbb6697f46545794d19e1a2024b6f169275",
+  "match_result": "none",
+  "matches": [],
+  "schema": 1,
+  "string_hex": "4672616e63652c20546572726573206175737472616c657320657420616e74617263746971756573206672616ee761697365732c20ce6c6573205361696e742d5061756c206574204e6f7576656c6c652d416d7374657264616d202d20ce6c65205361696e742d5061756c202865617578207465727269746f7269616c657329"
+}

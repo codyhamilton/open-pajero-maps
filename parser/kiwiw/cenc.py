@@ -81,20 +81,101 @@ def _load_e1():
 
 
 class E1Spool:
-    """One level's spool `.idx` and `.data`, memory-mapped read-only for E1
-    (zero-copy: C reads the mapped pages directly)."""
+    """One level's spool, read-only by default or privately filtered for assembly.
 
-    def __init__(self, spool_dir, level: int):
+    C reads mapped pages directly; even the private mode cannot write back.
+    """
+
+    def __init__(self, spool_dir, level: int, *, guard_names: bool = False):
         import numpy as np
         self.level = level
         d = Path(spool_dir)
-        self.idx = np.memmap(d / f"level_{level}.idx", dtype=np.uint8, mode="r")
+        # Assembly can reject stale names in PRIVATE mappings. K1 and every
+        # other reader keep the default original, read-only input.
+        mode = "c" if guard_names else "r"
+        self.idx = np.memmap(d / f"level_{level}.idx", dtype=np.uint8, mode=mode)
         p = d / f"level_{level}.data"
-        self.data = (np.memmap(p, dtype=np.uint8, mode="r") if p.stat().st_size
+        self.data = (np.memmap(p, dtype=np.uint8, mode=mode) if p.stat().st_size
                      else np.zeros(0, np.uint8))
+        import struct
+        n = struct.unpack_from("<Q", self.idx, 8)[0]
+        if bytes(self.idx[:8]) != b"KWSPIDX1" or len(self.idx) != 48 + n * 24:
+            raise E1Error("bad spool index")
+        self.xs = np.frombuffer(self.idx, "<i4", n, 48)
+        self.ys = np.frombuffer(self.idx, "<i4", n, 48 + 4 * n)
+        self.offsets = np.frombuffer(self.idx, "<u8", n, 48 + 8 * n)
+        self.lengths = np.frombuffer(self.idx, "<u8", n, 48 + 16 * n)
+        self.drops = np.zeros(n, np.int64)
+        if guard_names:
+            self._guard_names()
+
+    def _guard_names(self):
+        """Apply plan 18's lattice-span admission, preserving all other columns.
+
+        Only rejected cells are repacked, at their original offsets; private
+        index lengths shrink to match. No source file is writable or flushed.
+        Filtering the whole level also protects E2's cross-range name halo.
+        """
+        import numpy as np
+        from . import mesh, spool
+        grid = mesh.CellGrid.from_reference(self.level)
+        for i, (offset, length) in enumerate(zip(self.offsets, self.lengths)):
+            off, size = int(offset), int(length)
+            if off + size > len(self.data):
+                raise E1Error("spool cell extends beyond data")
+            cols = spool.decode_columns(self.data[off:off + size])
+            anchored = (cols["s_present"] & 3) == 3
+            lat, lon = cols["s_lat"][anchored], cols["s_lon"][anchored]
+            if not (np.isfinite(lat).all() and np.isfinite(lon).all()):
+                raise E1Error("non-finite name anchor")
+            delta = lon - grid.disc_lon_lo
+            while (delta < 0).any():
+                delta[delta < 0] += 360.0
+            while (delta > grid.disc_lon_span).any():
+                delta[delta > grid.disc_lon_span] -= 360.0
+            reject = np.zeros(len(anchored), bool)
+            dlat = lat - grid.disc_lat_lo
+            reject[anchored] = ((dlat < 0) | (dlat >= grid.disc_lat_span)
+                                | (delta < 0) | (delta >= grid.disc_lon_span))
+            self.drops[i] = int(reject.sum())
+            if not self.drops[i]:
+                continue
+            keep = ~reject
+            filtered = dict(cols)
+            for key in cols:
+                if key.startswith("s_"):
+                    filtered[key] = cols[key][keep]
+            for kind in ("label", "text"):
+                lengths = cols[f"s_{kind}_len"]
+                edges = np.concatenate(([0], np.cumsum(lengths, dtype=np.int64)))
+                blob = cols[f"blob_name_{kind}"]
+                filtered[f"blob_name_{kind}"] = np.concatenate(
+                    [blob[edges[j]:edges[j + 1]] for j in np.flatnonzero(keep)]
+                    or [np.zeros(0, np.uint8)])
+            record = spool.encode_columns(filtered)
+            if len(record) > size:
+                raise E1Error("name drop enlarged spool cell")
+            self.data[off:off + len(record)] = np.frombuffer(record, np.uint8)
+            self.lengths[i] = len(record)
+
+    def name_drops(self, lo, hi, rect=None) -> int:
+        """Drops in source rows `[lo, hi)`, counted once by E1 regardless of
+        worker partition. `rect` (x0, x1, y0, y1, inclusive) restricts the
+        count to source cells inside a `--fixture`/`--window` build's cell
+        rectangle, so a windowed build counts (and probes) only its own drops."""
+        import numpy as np
+        a = 0 if lo is None else int(np.searchsorted(self.ys, lo))
+        b = len(self.ys) if hi is None else int(np.searchsorted(self.ys, hi))
+        drops = self.drops[a:b]
+        if rect is not None:
+            x0, x1, y0, y1 = rect
+            xs, ys = self.xs[a:b], self.ys[a:b]
+            drops = drops[(xs >= x0) & (xs <= x1) & (ys >= y0) & (ys <= y1)]
+        return int(drops.sum())
 
     def close(self) -> None:
         self.idx = self.data = None
+        self.xs = self.ys = self.offsets = self.lengths = None
 
 
 _E1_I64_MIN, _E1_I64_MAX = -(1 << 63), (1 << 63) - 1

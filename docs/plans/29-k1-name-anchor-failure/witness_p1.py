@@ -197,6 +197,20 @@ def disc_cells(path, cells):
 
 
 def g_witness(args):
+    if args.successor:
+        historical = load(args.historical_g)
+        cell = next(disc_cells(args.disc, [CELL]))
+        names = [n for f in cell["frames"] for n in f["names"]]
+        target_hex = historical["target"]["name"]["string_hex"]
+        o03_absent = not any(n["string_hex"] == target_hex for n in names)
+        write_json(args.out, {"schema": 1, "disc": str(args.disc),
+                              "disc_sha256": streamed_sha(args.disc),
+                              "historical_g": str(args.historical_g), "cell": cell,
+                              "o03_absent": o03_absent,
+                              "residual_names": names,
+                              "r_parity": "R has no covering frames: names equal" if not names
+                              else "residual differences: every name in residual_names"})
+        return 0 if o03_absent else 1
     live = load(args.live)
     failures = [r for v in live["levels"].values() for r in v["failures"] if r["kind"] == "name_anchor"]
     cell = next(disc_cells(args.disc, [CELL]))
@@ -357,7 +371,8 @@ def r_witness(args):
                 if n["string_hex"] == want:
                     matches.append({"cell": row["cell"], "leaf_path": f["leaf_path"],
                                     "frame_offset": f["offset"], "name": n})
-            del f["names"]
+            if not args.keep_names:
+                del f["names"]
         cells.append(row)
     write_json(args.out, {"schema": 1, "disc": str(args.disc), "historical_disc_sha256": R_PIN,
                           "full_pin_remeasured": False, "string_hex": want, "cells": cells,
@@ -479,6 +494,8 @@ def main(argv=None):
     p = sub.add_parser("g-witness", help="bounded G frame/name witness")
     p.add_argument("--disc", type=Path, default=G_DISC)
     p.add_argument("--live", type=Path, default=LIVE)
+    p.add_argument("--successor", action="store_true", help="check O03 absence and list all residual names")
+    p.add_argument("--historical-g", type=Path, default=OUT / "g.json")
     p.add_argument("--out", type=Path, default=OUT / "g.json")
     p.set_defaults(run=g_witness)
     p = sub.add_parser("spool-witness", help="record 0 bytes and bounded K1 block-region nearest query")
@@ -490,6 +507,7 @@ def main(argv=None):
     p.add_argument("--disc", type=Path, default=R_DISC)
     p.add_argument("--g", type=Path, default=OUT / "g.json")
     p.add_argument("--out", type=Path, default=OUT / "r.json")
+    p.add_argument("--keep-names", action="store_true", help="retain every R name for successor parity")
     p.set_defaults(run=r_witness)
     p = sub.add_parser("spool-scan", help="stream all levels; count coverage-rejected names and list each")
     p.add_argument("--spool", type=Path, default=SPOOL)

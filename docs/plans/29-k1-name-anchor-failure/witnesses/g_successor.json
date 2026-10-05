@@ -1,0 +1,44 @@
+{
+  "cell": {
+    "block": 0,
+    "block_cells": [
+      0,
+      31,
+      512,
+      575
+    ],
+    "blockset": 32,
+    "cell": [
+      0,
+      541
+    ],
+    "frames": [
+      {
+        "bounds": {
+          "coord_range": null,
+          "lat_hi": -38.70833333333333,
+          "lat_lo": -38.729166666666664,
+          "lon_hi": 90.03125,
+          "lon_lo": 90.0
+        },
+        "frame_class": "leaf",
+        "leaf_path": [
+          928
+        ],
+        "length": 320,
+        "names": [],
+        "offset": 197597600,
+        "range": 4096,
+        "sha256": "967b1d86ce25c23859a17c1332e95a6301539b8790cd45960b0f2e893ba72f07"
+      }
+    ],
+    "status": "resolved"
+  },
+  "disc": "output/scratch-29/G_new/ALLDATA.KWI",
+  "disc_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+  "historical_g": "/home/codyh/workspace/open-pajero-maps-14-completeness/docs/plans/29-k1-name-anchor-failure/witnesses/g.json",
+  "o03_absent": true,
+  "r_parity": "R has no covering frames: names equal",
+  "residual_names": [],
+  "schema": 1
+}

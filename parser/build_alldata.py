@@ -229,17 +229,20 @@ def _e1spool(spool_dir: str, level: int) -> cenc.E1Spool:
     sp = _WORKER.get("e1spool")
     if sp is None or sp[0] != (os.getpid(), spool_dir, level):
         sp = _WORKER["e1spool"] = ((os.getpid(), spool_dir, level),
-                                   cenc.E1Spool(spool_dir, level))
+                                   cenc.E1Spool(spool_dir, level, guard_names=True))
     return sp[1]
 
 
 def _e1_job(job):
     """Pool entry, stage 1: E1 over source rows `[lo, hi)`. Returns the
     routing rows, E1's counters and this call's time split."""
-    spool_dir, level, desc, (lo, hi) = job
+    spool_dir, level, desc, (lo, hi), *rest = job
+    cell_range = rest[0] if rest else None
     t0 = time.perf_counter()
     s0 = cenc.e1_stats()
-    rows, counters = cenc.e1(desc, _e1spool(spool_dir, level), lo, hi)
+    spool = _e1spool(spool_dir, level)
+    rows, counters = cenc.e1(desc, spool, lo, hi)
+    counters["out_of_span_names_dropped"] = spool.name_drops(lo, hi, cell_range)
     s1 = cenc.e1_stats()
     d = {k: s1[k] - s0[k] for k in ("ranges", "calls", "c_s", "handoff_s")}
     d["py_s"] = max(0.0, time.perf_counter() - t0 - d["c_s"] - d["handoff_s"])
@@ -257,17 +260,53 @@ def _e2_job(job):
     bytes are pickled back unless `want_dump` (small windowed captures only).
     A declined row is an error: E2 declines nothing that a build needs."""
     (spool_dir, level, desc, (lo, hi), rows, spill_dir, want_digest, want_bench,
-     want_dump) = job
+     want_dump, *rest) = job
+    cell_range = rest[0] if rest else None
     t0 = time.perf_counter()
     sp = _SPILL.get(spill_dir)
     if sp is None or sp[0] != os.getpid():
         sp = _SPILL[spill_dir] = (os.getpid(), ft.ChunkSpill(spill_dir))
     spill = sp[1]
     s0 = cenc.e2_stats()
-    index, declined, cnt = cenc.e2(desc, _e1spool(spool_dir, level), rows, lo, hi,
+    spool = _e1spool(spool_dir, level)
+    index, declined, cnt = cenc.e2(desc, spool, rows, lo, hi,
                                    spill._fd, spill.end)
     spill.end += cnt["frame_bytes"]
+    # Production E2 stats end here: the drop probe below is not a build range.
     s1 = cenc.e2_stats()
+    if spool.name_drops(lo, hi, cell_range):
+        # Removing a name must not relocate later cells in the packed disc.
+        # Probe the original chunk only where drops occurred; retain its
+        # frame extents, filling removed content with zero trailing padding.
+        original = cenc.E1Spool(spool_dir, level)
+        try:
+            old, old_declined, old_cnt = cenc.e2(
+                desc, original, rows, lo, hi, spill._fd, spill.end)
+        finally:
+            original.close()
+        spill.end += old_cnt["frame_bytes"]
+        keys = ("ix", "iy", "pt", "sx", "sy")
+        if len(old_declined) or len(old) != len(index) or any(
+                not np.array_equal(old[k], index[k]) for k in keys):
+            raise RuntimeError("name drop changed frame topology; root-cause required")
+        rfd = os.open(spill.path, os.O_RDONLY)
+        try:
+            for new, previous in zip(index, old):
+                n, extent = int(new["len"]), int(previous["len"])
+                if n == extent:
+                    continue
+                if n > extent:
+                    raise RuntimeError("name drop enlarged a frame")
+                fb = os.pread(rfd, n, int(new["off"]))
+                if len(fb) != n:
+                    raise RuntimeError("short spill read")
+                padded = fb + bytes(extent - n)
+                if os.pwrite(spill._fd, padded, spill.end) != extent:
+                    raise RuntimeError("short spill write")
+                new["off"], new["len"] = spill.end, extent
+                spill.end += extent
+        finally:
+            os.close(rfd)
     if len(declined):
         cells = ", ".join(f"(level {level}, ix {int(r['ix'])}, iy {int(r['iy'])})"
                           for r in declined[:8])
@@ -349,7 +388,9 @@ def _encode_level(level: int, reader: SpoolReader, fixture, threshold_bytes: int
     # Stage 1: E1 per range; route the rows to their target ranges with one
     # stable sort on the target key and one split at the range edges.
     t_e1 = time.monotonic()
-    e1_out = _run_ranges(pool, _e1_job, [(spool_dir, level, desc, c) for c in chunks], weights)
+    cell_range = _combined_cell_range(level, fixture, window_rect)
+    e1_out = _run_ranges(pool, _e1_job, [(spool_dir, level, desc, c, cell_range)
+                                         for c in chunks], weights)
     rows = np.zeros(sum(len(r) for r, _c, _d in e1_out), descriptor.E1_ROW_DTYPE)
     at = 0
     for r, _c, _d in e1_out:    # (np.concatenate would drop the dtype's padding)
@@ -359,12 +400,14 @@ def _encode_level(level: int, reader: SpoolReader, fixture, threshold_bytes: int
     edges = np.searchsorted(rows["tiy"], [hi for _lo, hi in chunks[:-1]])
     parts = np.split(rows, edges)
     ov = {k: sum(c[k] for _r, c, _d in e1_out) for k in cenc.E1_COUNTERS}
+    ov["out_of_span_names_dropped"] = sum(
+        c["out_of_span_names_dropped"] for _r, c, _d in e1_out)
     prepass_s = time.monotonic() - t_e1
 
     # Stage 2: E2 per range.
     e2_out = _run_ranges(pool, _e2_job, [
         (spool_dir, level, desc, c, parts[i], spill_dir, digest_fh is not None, bench,
-         dump is not None)
+         dump is not None, cell_range)
         for i, c in enumerate(chunks)], weights)
 
     tables = []
@@ -474,6 +517,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     trimmed_items: dict[str, dict] = {}
     halo_names: dict[str, int] = {}
     overlap_stats: dict[str, dict] = {}
+    name_drops = {str(level): 0 for level in levels}
     bench_levels: dict[str, dict] = {}
 
     spool_stats = {lvl: reader.stats(lvl) for lvl in levels}
@@ -500,6 +544,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         print(f"level {level}: encoding ...", flush=True)
         if level not in available:
             print(f"level {level}: no spooled content, skipping", flush=True)
+            print(f"level {level}: out-of-span names dropped: 0", flush=True)
             level_builds[level] = aw.LevelBuild(level=level)
             manifest_levels[str(level)] = {"parcels": 0, "bytes": 0, "divided_parents": 0}
             continue
@@ -515,6 +560,9 @@ def run(spool_dir: str, out_path: str, levels: list[int],
             pool=pool, jobs=workers, window_rect=window_rect,
             bench=bench_path is not None, dump=dump)
         overlap_stats[str(level)] = ov_stats
+        name_drops[str(level)] = ov_stats.pop("out_of_span_names_dropped")
+        print(f"level {level}: out-of-span names dropped: {name_drops[str(level)]:,}",
+              flush=True)
         print(f"level {level}: overlap: {ov_stats['shared_shapes']:,} shapes shared into "
               f"{ov_stats['edge_cells']:,} edge + {ov_stats['interior_cells']:,} interior "
               f"cells, {ov_stats['skipped_missing_cells']:,} overlapped cells skipped "
@@ -579,6 +627,7 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         "trimmed_items": trimmed_items,
         "halo_names": halo_names,
         "overlap": overlap_stats,
+        "out_of_span_names_dropped": name_drops,
         "fixture": fixture,
     }
     manifest_path = os.path.join(os.path.dirname(out_path) or ".", "manifest.json")
