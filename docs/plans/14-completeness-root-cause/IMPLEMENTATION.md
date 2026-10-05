@@ -107,3 +107,16 @@ Refine: **Proceed.** Units 3-01 (demand attribution / 335), 3-02 (765 R zero con
 - 750 keys in two windows (128.8 s and 81.7 s): **776/776 keys, 799 demanders, branches a 1 / b 797 / c 1, all unrepresentable**. 0 errors, 0 C/Python disagreements, 0 mirror/C disagreements, 0 representable exceptions.
 - 3-03 prediction: failing 776 → 0, `checked` unchanged.
 - Known problem: the script exits 1 on long `--keys` lists (summary filename too long) after `publish`; outputs are complete. Recorded in the 3-01b report.
+
+### 3-02 — dump_row 765 R zero contribution (Codex `gpt-6.1-sol` high; first session `01a10ceb-…` died on a network disconnect before any tracked write; fresh session `01a10cee-2f7c-7b91-bf12-f96338273b86`, `85d80f1`)
+
+- **Proven.** The single R 291 polygon (mult 1, 291 coords) has bbox x `[5341184, 5343857]`, wholly in column 1304. Cell (1307,1756) starts at x `5353472`, a 9,615-raw gap.
+  - Clip is empty; mirror emits 0; production C gives 0 records; R emitted-output presence in the cell is false.
+  - Positive control emits 1 record.
+- **Design ruling, proven branch applied:**
+  - 2-02 is amended to "R polygons contributing 0 cell-local records" (`triage/phase3_groups.md`, proof `output/scratch-14/r_contribution/765.json`).
+  - 765 is folded into 2-02.
+  - The 432 were re-checked from actual R slot decodes: 432/432 have 0 polygons and 0 contribution.
+- Accounting is now **776 = 342 (2-01) + 433 (2-02 amended) + 1 (Q-source-335)** (`triage/phase3_membership.tsv`, exhaustive and disjoint).
+- Surfaces: `triage/r_contribution_3-02.{py,tsv}`, `triage/phase3_{groups.md,membership.tsv}`, `reports/3-02-765-r-zero-contribution.md`.
+- Deviation: rubric read from the installed plugin. Protected shas unchanged.
