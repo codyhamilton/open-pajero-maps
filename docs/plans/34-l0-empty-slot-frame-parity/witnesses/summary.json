@@ -1,0 +1,325 @@
+{
+  "G_frame_R_empty_cells": {
+    "g_historical": [
+      [
+        0,
+        541
+      ],
+      [
+        0,
+        562
+      ],
+      [
+        0,
+        563
+      ]
+    ],
+    "g_successor": [
+      [
+        0,
+        541
+      ],
+      [
+        0,
+        562
+      ],
+      [
+        0,
+        563
+      ]
+    ]
+  },
+  "cells": [
+    {
+      "cell": [
+        0,
+        541
+      ],
+      "discs": {
+        "g_historical": {
+          "frames": [
+            {
+              "background_count": 0,
+              "frame_class": "leaf",
+              "leaf_path": [
+                928
+              ],
+              "length": 320,
+              "name_count": 1,
+              "offset": 197597600,
+              "payload_class": "content",
+              "road_count": 0,
+              "sha256": "3c927c6b4868664907ab14c8a8c49fbf34d5debb8e5ef4d4a22d28e323251b48"
+            }
+          ],
+          "reason": "indexed_leaf_frames",
+          "status": "resolved"
+        },
+        "g_successor": {
+          "frames": [
+            {
+              "background_count": 0,
+              "frame_class": "leaf",
+              "leaf_path": [
+                928
+              ],
+              "length": 320,
+              "name_count": 0,
+              "offset": 197597600,
+              "payload_class": "padded_shell",
+              "road_count": 0,
+              "sha256": "967b1d86ce25c23859a17c1332e95a6301539b8790cd45960b0f2e893ba72f07"
+            }
+          ],
+          "reason": "indexed_leaf_frames",
+          "status": "resolved"
+        },
+        "r": {
+          "frames": [],
+          "reason": "absent_BMT_sentinel",
+          "status": "empty_slot"
+        }
+      },
+      "spool_sources": [
+        {
+          "backgrounds": [],
+          "cell": [
+            0,
+            541
+          ],
+          "cell_length": 2616,
+          "cell_offset": 248992624,
+          "level": 0,
+          "own": true,
+          "source_row": 11689
+        }
+      ]
+    },
+    {
+      "cell": [
+        0,
+        562
+      ],
+      "discs": {
+        "g_historical": {
+          "frames": [
+            {
+              "background_count": 0,
+              "frame_class": "leaf",
+              "leaf_path": [
+                1600
+              ],
+              "length": 160,
+              "name_count": 0,
+              "offset": 197597920,
+              "payload_class": "padded_shell",
+              "road_count": 0,
+              "sha256": "e22e27dfc439350e6b0ecbaf8821744a99e3d91118e9d5e7127d3ebea9e8b7b9"
+            }
+          ],
+          "reason": "indexed_leaf_frames",
+          "status": "resolved"
+        },
+        "g_successor": {
+          "frames": [
+            {
+              "background_count": 0,
+              "frame_class": "leaf",
+              "leaf_path": [
+                1600
+              ],
+              "length": 160,
+              "name_count": 0,
+              "offset": 197597920,
+              "payload_class": "padded_shell",
+              "road_count": 0,
+              "sha256": "e22e27dfc439350e6b0ecbaf8821744a99e3d91118e9d5e7127d3ebea9e8b7b9"
+            }
+          ],
+          "reason": "indexed_leaf_frames",
+          "status": "resolved"
+        },
+        "r": {
+          "frames": [],
+          "reason": "absent_BMT_sentinel",
+          "status": "empty_slot"
+        }
+      },
+      "spool_sources": [
+        {
+          "backgrounds": [],
+          "cell": [
+            0,
+            562
+          ],
+          "cell_length": 22872,
+          "cell_offset": 310662272,
+          "level": 0,
+          "own": true,
+          "source_row": 13990
+        }
+      ]
+    },
+    {
+      "cell": [
+        0,
+        563
+      ],
+      "discs": {
+        "g_historical": {
+          "frames": [
+            {
+              "background_count": 0,
+              "frame_class": "leaf",
+              "leaf_path": [
+                1632
+              ],
+              "length": 160,
+              "name_count": 0,
+              "offset": 197598080,
+              "payload_class": "padded_shell",
+              "road_count": 0,
+              "sha256": "0126fc2dcd7acff3f718aa72a7d210bbb6aec2a913462e34d88f6b449cd69138"
+            }
+          ],
+          "reason": "indexed_leaf_frames",
+          "status": "resolved"
+        },
+        "g_successor": {
+          "frames": [
+            {
+              "background_count": 0,
+              "frame_class": "leaf",
+              "leaf_path": [
+                1632
+              ],
+              "length": 160,
+              "name_count": 0,
+              "offset": 197598080,
+              "payload_class": "padded_shell",
+              "road_count": 0,
+              "sha256": "0126fc2dcd7acff3f718aa72a7d210bbb6aec2a913462e34d88f6b449cd69138"
+            }
+          ],
+          "reason": "indexed_leaf_frames",
+          "status": "resolved"
+        },
+        "r": {
+          "frames": [],
+          "reason": "absent_BMT_sentinel",
+          "status": "empty_slot"
+        }
+      },
+      "spool_sources": [
+        {
+          "backgrounds": [],
+          "cell": [
+            0,
+            563
+          ],
+          "cell_length": 1256,
+          "cell_offset": 315499152,
+          "level": 0,
+          "own": true,
+          "source_row": 14169
+        }
+      ]
+    }
+  ],
+  "census": {
+    "g_historical": {
+      "block": 0,
+      "blockset": 32,
+      "bounds": [
+        0,
+        31,
+        512,
+        575
+      ],
+      "cells_requested": 2048,
+      "cells_with_frames": [
+        [
+          0,
+          541
+        ],
+        [
+          0,
+          562
+        ],
+        [
+          0,
+          563
+        ]
+      ],
+      "frame_count": 3,
+      "lookup_failures": [],
+      "status_counts": {
+        "empty_slot": 2045,
+        "resolved": 3
+      }
+    },
+    "g_successor": {
+      "block": 0,
+      "blockset": 32,
+      "bounds": [
+        0,
+        31,
+        512,
+        575
+      ],
+      "cells_requested": 2048,
+      "cells_with_frames": [
+        [
+          0,
+          541
+        ],
+        [
+          0,
+          562
+        ],
+        [
+          0,
+          563
+        ]
+      ],
+      "frame_count": 3,
+      "lookup_failures": [],
+      "status_counts": {
+        "empty_slot": 2045,
+        "resolved": 3
+      }
+    },
+    "r": {
+      "block": 0,
+      "blockset": 32,
+      "bounds": [
+        0,
+        31,
+        512,
+        575
+      ],
+      "cells_requested": 2048,
+      "cells_with_frames": [],
+      "frame_count": 0,
+      "lookup_failures": [],
+      "status_counts": {
+        "empty_slot": 2048
+      }
+    }
+  },
+  "extra_cells": {
+    "g_historical": [],
+    "g_successor": []
+  },
+  "fix": "not attempted",
+  "phase3_closed": false,
+  "pins": {
+    "g_historical": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+    "g_successor": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+    "r": "8c2d20275227b9d2abb0f1802d4e0cbb6697f46545794d19e1a2024b6f169275"
+  },
+  "residuals": [],
+  "schema": 1,
+  "spool_source_meaning": "Source inputs before admission, division and trimming; not proof of emitted record identity",
+  "status": "witnessed"
+}
