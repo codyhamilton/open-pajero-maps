@@ -1,3 +1,64 @@
+# 3-90 independent fix-review + truncated-pins
+
+Independent review of the plan-16 / 3-90 check-3 strip (**PASS**, all four
+clauses) and truncated-pin ledger (in-scope digests expanded; `pinned_candidates.tsv`
+unverifiable from git). Offline / artifact-only. Phase 3 not closed.
+
+## Intent
+
+Cody's standing rule (2026-10-05, hard): Maps is complete only when end-to-end
+generation matches the original DVD in every aspect that can be verified, every
+claim, assumption, and implementation aspect is verified and proven, and there
+are no unexplained deviations — each has a root cause.
+
+3-90 independent fix-review + truncated-pins (Quality) — independently review
+the 3-90 / plan-16 strip fix against its stated outcome; expand truncated pins
+to full provable digests or mark unverifiable with root cause. Land on master.
+No feature branch. No pull request. Do not reseat 170 / 3-16 / 3-17. Do not
+draw plan 04 P4–6 or plan 06. Do not mega-close 3-90 or claim Phase 3 closed.
+
+## Delivered
+
+### Phase 1 — Independent REVIEW
+
+- Artifact (archived below): fresh `REVIEW.md`, not a copy of plan 16's Review.
+- Verdict: **PASS** on all four clauses (equal after `COMPARE_EXCLUDES` strip;
+  non-excluded diffs unequal; timing-only leaves `wall_s` mismatch; brief check 3
+  requires `strip_compare_excludes`).
+- Pytest: 4 passed / 96 deselected (strip fixture tests); light helper recompute
+  corroborated. No disc / 3-90 / encode / heavy.lock.
+
+### Phase 2 — Truncated-pin ledger
+
+- Ledger (archived below): `pins.md`.
+- Expanded live surfaces: brief Contract + check 6 (`87a01b14…`, `da13a775…`),
+  OVERVIEW `5c5823e` → full object, plan 04 DESIGN hard-gate truncations of those
+  oracles. Adjacent proven forms ledgered: `4ed9cd80…`, `013586b5…`, `04be2f6e…`.
+- Unverifiable: `pinned_candidates.tsv` (`TRUNCATED=yes`; sha256
+  `7dfe6ed7b99e9d234e688d6855a885d3cd1a140db409dc1f726a48bd0948855a`) — exhaustive
+  group identity not in git (scratch enumerate dumps). No fabricated pin list.
+- OVERVIEW updated per Assumption 6: in-scope truncated-digest defect and plan-16
+  strip independent-review gap cleared; other blockers retained; Phase 3 open.
+
+## Explicit non-claims
+
+No 3-90 re-run, no disc mount, no full-AU encode, no Phase 3 / mega-close 3-90,
+no WP3 / plan 06, no 170 / 3-16 / 3-17 reseat, no steal of `output/.heavy.lock`,
+`output/scratch-3-11/G_new` untouched, `.venv-rp` left untracked, plan-14
+completeness worktree not edited.
+
+## Close SHAs
+
+| Step | SHA |
+| --- | --- |
+| Design land | `a03c9bc2ec66399cd5634bdbb748e79a7f36a55f` |
+| Phase 1 | `aaba108e8ab9de5f673158a201c22528142e0f40` |
+| Phase 2 | `279e654031d2554a3ab020dc4082ebb66f59e6fb` |
+
+---
+
+## Design (archived)
+
 ---
 design_id:
 ---
@@ -136,3 +197,119 @@ One bounded honesty package: (1) land an **independent review** of the plan-16 /
 - Design method: workflow design skill structure (problem, solution shape, boundaries, contracts, phases closed by provable outcomes, headless assumption ledger). Workflow-service posts skipped under the user instruction. Box draft only — no commit/push.
 - Plan 04 Phase 3 stays open. This plan does not draw phases 4–6 or plan 06. Plans 170 / 3-16 / 3-17 are not reseated.
 - NN verification: `origin/master` occupies 01–05, 07–23, 25; `/workspace/maps-design-drafts/` has **24** and **26** → this draft is **27**.
+
+---
+
+## Independent REVIEW (archived)
+
+# Independent review: plan-16 / 3-90 check-3 strip
+
+**Reviewer:** Open Pajero Maps Execute (plan 27 Phase 1) — fresh verification pass, not a copy of plan 16's Review section.
+**Tip reviewed:** `a03c9bc2ec66399cd5634bdbb748e79a7f36a55f` (plan 27 DESIGN on `origin/master`; strip code ancestry includes plan 16 `d15a46f` / `2a9f3a7`).
+**Method:** tip code + four fixture strip tests under pytest + live brief check 3 + light helper recompute. No disc mount, no 3-90 re-run, no full-AU encode, no heavy lock. Historical timing-only 3-90 FAIL rows are **not** treated as current strip defects.
+
+## Stated outcome (plan 16 / brief check 3)
+
+Reports that differ only in keys in `COMPARE_EXCLUDES` (`timing`, `wall_s`) compare equal after `strip_compare_excludes` / `normalise_k1_report_for_compare`; non-excluded diffs remain unequal; a timing-only strip leaves a `wall_s` mismatch; brief check 3 requires the shared helper, not timing alone.
+
+## Evidence walked
+
+| Surface | Tip cite |
+| --- | --- |
+| `COMPARE_EXCLUDES` | `parser/tools/quantisation_roundtrip.py:1250` = `["timing", "wall_s"]` |
+| `strip_compare_excludes` | `parser/tools/quantisation_roundtrip.py:1253–1258` — shallow copy removing every top-level key in `COMPARE_EXCLUDES` |
+| `normalise_k1_report_for_compare` | `parser/tools/quantisation_roundtrip.py:1261–1267` — canonical JSON of stripped report (dict or path) |
+| Four fixture strip tests | `parser/tests/test_quantisation_roundtrip.py:451–518` |
+| Live brief check 3 | `docs/plans/04-c-core-orchestration/briefs/3-90-fresh-verify.md:31` — requires strip of `timing` **and** `wall_s` via `strip_compare_excludes` |
+| Plan 16 self-Review | `docs/plans/16-k1-determinism-wall-s.md` Review: "This is not an independent review." — author/close-out only; does not discharge this ticket |
+
+## Pytest (preferred gate)
+
+Command (no `output/.heavy.lock`; used existing `.venv-rp` from main checkout, left untracked):
+
+```text
+.venv-rp/bin/python -m pytest parser/tests/test_quantisation_roundtrip.py -q \
+  -k 'strip_compare_excludes_removes or reports_differing_only_in_excludes or non_excluded_field_difference or locked_strip_is_not_timing_only'
+```
+
+Result: **4 passed, 96 deselected in 4.21s**
+
+| Test | Maps to clause |
+| --- | --- |
+| `test_strip_compare_excludes_removes_every_excluded_key` | Shared helper removes every `COMPARE_EXCLUDES` key; input untouched |
+| `test_reports_differing_only_in_excludes_compare_equal` | Differ only in excludes → equal after `normalise_k1_report_for_compare` |
+| `test_non_excluded_field_difference_still_unequal` | Non-excluded diffs remain unequal |
+| `test_locked_strip_is_not_timing_only` | Timing-only strip leaves `wall_s` mismatch; locked strip equalises |
+
+Light in-process recompute of the same four clauses against tip helpers also **PASS** (disclosure: corroborates pytest; not a substitute).
+
+## PASS/FAIL per clause
+
+| # | Clause | Verdict | Notes |
+| --- | --- | --- | --- |
+| 1 | Reports differing only in `COMPARE_EXCLUDES` (`timing`, `wall_s`) compare equal after strip helpers | **PASS** | pytest + light recompute; helpers strip both top-level keys |
+| 2 | Non-excluded diffs remain unequal | **PASS** | `failing` / `levels` diffs stay unequal after normalise |
+| 3 | Timing-only strip leaves a `wall_s` mismatch | **PASS** | `test_locked_strip_is_not_timing_only` asserts timing-only JSON unequal while locked strip equal |
+| 4 | Brief check 3 requires the shared helper (`strip_compare_excludes`), not timing alone | **PASS** | Live brief L31 names `COMPARE_EXCLUDES` — `timing` **and** `wall_s` — and `strip_compare_excludes` |
+
+**Overall strip-fix review: PASS** (all four clauses).
+
+## Explicit non-claims
+
+- Does **not** clear other 3-90 blockers (PSS contract, native classify joins, 3-11 vs 3-14 oracle cell identities, completeness / plan 14, OOM/CHM hold).
+- Does **not** close plan 04 Phase 3; does **not** mega-close 3-90; does **not** claim WP3 / plan 06.
+- Does **not** reseat 170 / 3-16 / 3-17.
+- Historical timing-only 3-90 FAIL rows remain accurate history of a past defect; they are not current strip defects on tip.
+
+## Residual
+
+None within the plan-16 / check-3 strip contract. Truncated-pin ledger is Phase 2 of this plan (separate domain).
+
+---
+
+## Truncated-pin ledger (archived)
+
+# Truncated-pin ledger (plan 27 Phase 2)
+
+In-scope surfaces only (Assumption 2): live 3-90 brief Contract + check 6, OVERVIEW 3-90 paragraph short SHA, plan 04 DESIGN hard-gate truncations of the same oracles, and `pinned_candidates.tsv` truncation named by OVERVIEW. Historical IMPLEMENTATION quotes of past blocked runs may remain as history when live pins are ledger-mapped.
+
+Proof tip at ledger write: `aaba108e8ab9de5f673158a201c22528142e0f40` (post Phase 1). No disc re-hash; expansions from tracked full forms + `git rev-parse`.
+
+## Expansions
+
+| path:line (pre-amend) | truncated | disposition | full value | proof |
+| --- | --- | --- | --- | --- |
+| `briefs/3-90-fresh-verify.md:23` (Contract) | `87a01b14…` | expanded | `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862` | plan 04 `DESIGN.md:47` (full form already present); `IMPLEMENTATION.md` build-gate rows; `briefs/2-06-…:77` |
+| `briefs/3-90-fresh-verify.md:34` (check 6) | `87a01b14…` | expanded | `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862` | same |
+| `briefs/3-90-fresh-verify.md:34` (check 6) | `da13a775…` | expanded | `da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc` | `docs/provenance.md:517`; `IMPLEMENTATION.md:576` |
+| `docs/OVERVIEW.md:50` | `5c5823e` | expanded | `5c5823e4c267dd64bc986038caddb3ed4b745f60` | `git rev-parse 5c5823e` → full object id |
+| `docs/plans/04-c-core-orchestration/DESIGN.md:11` | `87a01b14…` | expanded | `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862` | DESIGN.md:47 same oracle |
+| `DESIGN.md:47` | `da13a775…` | expanded | `da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc` | provenance / IMPLEMENTATION |
+| `DESIGN.md:50` | `87a01b14…` | expanded | `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862` | DESIGN.md:47 |
+| `DESIGN.md:72` (hard gates) | `87a01b14…` / `da13a775…` | expanded | full forms above | DESIGN.md:47 + provenance |
+| `DESIGN.md:152` | `87a01b14…` | expanded | full form above | DESIGN.md:47 |
+| `DESIGN.md:184` | `87a01b14…` | expanded | full form above | DESIGN.md:47 |
+
+### Minimum expansions also proven on tip (adjacent same-oracle; for ledger completeness)
+
+| truncated | full | proof |
+| --- | --- | --- |
+| `4ed9cd80…` | `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72` | `docs/provenance.md:601`; plan 14 / 3-17 records |
+| `013586b5…` | `013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04` | `docs/provenance.md:388`; triage `causes_residual.md:7` |
+| `04be2f6e…` | `04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728` | `IMPLEMENTATION.md:505` (full form adjacent to truncated quotes) |
+
+These three are **not** live brief check-6 pins (brief still cites the original `87a01b14…` / `da13a775…` oracles until a signed re-oracle); they are ledgered so OVERVIEW "truncated pins" for the same oracle family is discharged without hunting.
+
+## Unverifiable
+
+| path | truncated / issue | disposition | root cause |
+| --- | --- | --- | --- |
+| `docs/plans/04-c-core-orchestration/triage/pinned_candidates.tsv` | content view `SHOWN=100` / footer `TRUNCATED=yes` | **unverifiable from git** | Brief-required 100-row candidate view, not an exhaustive pinned list. File sha256 `7dfe6ed7b99e9d234e688d6855a885d3cd1a140db409dc1f726a48bd0948855a` (tracked; verified `sha256sum` at ledger write). Exhaustive group identity lives under non-committed scratch (`enumerate_*.tsv` / dump joins). Do **not** fabricate a full pin list without those artifacts. Material to a future 3-90 check 4 set-equality only when enumerate artifacts are authorised. |
+
+## Counts
+
+- Expanded (live surfaces amended or DESIGN gates expanded): **10** occurrence rows above (brief ×3 digest cites across Contract+check6, OVERVIEW ×1, DESIGN ×6 line sites).
+- Minimum adjacent oracle expansions proven: **3** (`4ed9cd80…`, `013586b5…`, `04be2f6e…`).
+- Unverifiable: **1** (`pinned_candidates.tsv` content truncation).
+
+No fabricated full pinned enumerate list.

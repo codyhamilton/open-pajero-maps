@@ -53,7 +53,7 @@ classification joins, truncated historical pins, unresolved 3-11 versus 3-14
 oracle evidence, and an incomplete independent-review chain. Plan **16** closed
 the timing-only `wall_s` strip defect (strip now matches Phase 2
 `COMPARE_EXCLUDES`: `timing` + `wall_s`); that strip is not a live blocker.
-Plan **27** independently reviewed the plan-16 / check-3 strip (PASS) and expanded in-scope truncated oracle pins / the OVERVIEW short SHA to full digests (`docs/plans/27-independent-fix-review-truncated-pins/`); `pinned_candidates.tsv` remains a brief-required 100-row candidate view (`TRUNCATED=yes`) whose exhaustive group identity is **unverifiable from git** (full enumerations are non-committed scratch) — see that plan's pin ledger. Plan **20** reframes the live PSS item as a **contract mismatch**: the signed
+Plan **27** independently reviewed the plan-16 / check-3 strip (PASS) and expanded in-scope truncated oracle pins / the OVERVIEW short SHA to full digests (`docs/plans/27-independent-fix-review-truncated-pins.md`); `pinned_candidates.tsv` remains a brief-required 100-row candidate view (`TRUNCATED=yes`) whose exhaustive group identity is **unverifiable from git** (full enumerations are non-committed scratch) — see that plan's pin ledger. Plan **20** reframes the live PSS item as a **contract mismatch**: the signed
 ceiling **9,726,501 kB** is the historical `-j 12` peak, while ops and the
 3-90 gate must use ≤ `-j 6` — not an unexplained memory blow-up. The PSS bar
 is **not** cleared; a later 3-90 re-run under the amended brief is still
