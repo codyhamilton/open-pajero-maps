@@ -7,6 +7,7 @@
 - Phase 2 refine: 2026-10-06 ~00:09 Australia/Brisbane
 - Phase 2 closed: 2026-10-06 02:09 Australia/Brisbane (`8c37bae`)
 - Phase 3: orchestrator Execute background worker; unit workers Codex `gpt-6.1-sol` (high) via `codex exec`, one at a time; refine 2026-10-06 ~02:15 Australia/Brisbane
+- Phase 3 closed: 2026-10-06 ~03:45 Australia/Brisbane (trailer commit `Workflow-Phase: 14-completeness-root-cause:3`)
 
 ## Phase 1 — Per-row completeness evidence table
 
@@ -144,3 +145,52 @@ Validation: all four existing suites passed, 259 tests in 22.39s, via the heavy 
   - Live K1 `-j6` on `4ed9cd80…` (`runs/k1_p3.json`, `p3/k1_p3.{json,log}`, 81.4 s, memory.peak 4.0 GiB): **completeness checked 1,800,514 → 1,800,514, failing 776 → 0.** The completeness dump is empty, so all 776 Phase 1 keys left, no new key appeared, and there were no exceptions, matching 3-01's prediction exactly. Every other kind's checked/failing is identical to Phase 1 `k1_full.json` (name_anchor 1 is pre-existing and outside plan 14, so K1 still exits 1).
   - Re-encode `-j4` with the rebuilt `_cenc.so` (`runs/p3_reencode.json`): sha256 `4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`, so the build sha is unchanged.
   - Protected discs unchanged (`013586b5…`, `4ed9cd80…`).
+
+### Phase 3 verification (orchestrator)
+
+**Closed.** Verified on the disc in force through the outcome's own entry point: live K1 (`quantisation_roundtrip.py --engine c -j 6`) on `output/scratch-14/G_new/ALLDATA.KWI` (`4ed9cd80…`) against the restored spool.
+
+| Group (Phase 3 membership) | Rows | Disposition | Root-cause proof |
+| --- | ---: | --- | --- |
+| 2-01 `g-omits-cell-local-dvd-type` | 342 | (1) checker (3-03 `a890662`) | Phase 2: every member's demanding source gives 0 production-C records in the cell (342/342). 3-01: all demanders enumerated, all unrepresentable |
+| 2-02 `r-absent-complete-repair-zero`, amended to "R polygons contributing 0 cell-local records" | 433 (432 + 765) | (1) checker (3-03), with R/G-absent evidence | Phase 2 complete repair: 0 records on 432/432. 3-02 `85d80f1`: R 291 polygon for 765 lies wholly in column 1304 (bbox x 5341184–5343857 against cell x ≥ 5353472), clip empty, mirror 0, C 0, no R emitted piece; 432/432 re-checked from R decodes. 3-01: unrepresentable demanders |
+| Q-source-335 (open question) | 1 | No group disposition (Design) | 3-01: tall triangular sliver `tall=39083:L0:home(1379,1143):ordinal=0` misses the cell centre by 0.348 raw. `Region.inside`'s `TOL=0.5` creates the branch-(c) demand; mirror and production C give 0 records |
+
+Counts:
+- **Live completeness:** checked 1,800,514 → 1,800,514; failing **776 → 0**. The removal set equals 3-01's prediction exactly (776 keys, 0 exceptions).
+- **Live unattributed:** 0.
+- **Ledger:** 776 = 342 + 433 + 1 (`triage/phase3_membership.tsv`).
+- **Other K1 kinds:** identical to Phase 1 (name_anchor 1 is pre-existing and outside plan 14; K1 still exits 1).
+- **Build sha unchanged:** re-encode `4ed9cd80…`.
+- O01–O06 and `rules_*.json` untouched. No tolerance was loosened.
+
+**Independent check of 3-03** (orchestrator, after the worker; Cody's rule that no deviation is relabelled away):
+
+1. *Criterion rests on the Phase 2/3 proofs.* Every one of the 776 keys belongs to 2-01, amended 2-02, or Q-source-335 (`phase3_membership.tsv`). Each key's full demander set (799 shapes, from the checker's own `Region`) has 0 production-encoder records (3-01). The live removal set equals that prediction exactly.
+   - 3-03's test is independent of the encoder: a port of the Phase 2 mirror, with no `_cenc.c` calls.
+   - Demand branches and `checked` are unchanged; only absent pairs with no representable demander pass.
+2. *Synthetic positive controls* (`test_k1_completeness_representable.py`, C == Python):
+   - G missing a representable square, a surviving 2.4-raw sliver, a bowtie with one representable lobe, or a mult-2 ring that survives densify → **K1 fails**.
+   - A second representable demander keeps a TOL-only pair failing.
+   - 274 tests pass, including the plan-25 memory-guard test.
+3. *Real-data positive control.* `output/scratch-3-11/G_new` (`013586b5…`) was built from the same spool before 3-14's builder fix. Results:
+   - Old checker (`0b19b5e`, throwaway worktree, since removed): 739 failing.
+   - New checker: **52 failing**.
+   - The 52 equal **exactly** the keys that failed on 3-11 but not on the current disc, i.e. the genuine missing footprints that the later build fix repaired. F ⊆ B and B ⊆ F; B ∩ the 776 = ∅.
+   - Conclusion: the new checker still catches every real missing representable footprint on real data, and it excuses only the demand that persisted unrepresentable into the current disc.
+   - Evidence: `output/scratch-14/p3/indep/{old,new}_k1_311.{json,log}`, dumps, `sets.json`; wrapper logs `runs/indep_{old,new}_k1_311.json`.
+
+Plan 04 Phase 3 is **not** closed by this plan.
+
+### Carried
+
+1. **Design ruling needed: dump_row 335.**
+   - DESIGN's 2-02 membership explicitly excluded 335 for lack of a source witness.
+   - 3-01 now supplies it, with the 2-02 mechanism: R has 289 only (`R_polygon_count == 0`), G lacks 288, and the demander is unrepresentable.
+   - The row no longer fails live. Folding it (342 + 434) needs a ruling like the one 765 got.
+2. **Design observation (no scope added):** R emits 288 in the 342 2-01 cells, while the spool holds no representable 288 source there. This is a source-data parity difference, not a K1 completeness defect.
+3. **Tooling bug:** `triage/demand_attribution_3-01.py` exits 1 after `publish` on long `--keys` lists (the summary filename is built from the key list). Outputs are complete.
+4. **Harness note:** Codex `exec` with the sandbox-bypass flag was blocked by Auto-review at the 3-03 retry. The `workspace-write` sandbox has no systemd user scope (the plan-25 wrapper fails closed) and no git-metadata writes, so sandboxed workers leave their tree and the orchestrator verifies heavily and commits.
+5. Plan 04 Phase 3 remains open: name_anchor 1, 3-90 blockers.
+
+`artifact_feedback` skipped for the Phase 3 briefs and reports: the workflow service is barred for this run.

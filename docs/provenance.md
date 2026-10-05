@@ -739,4 +739,7 @@ Side tables (`side_interior_cover.npy`, `side_completeness.npy`, `side_name_anch
     - `dump/`: completeness dump, 0 rows.
     - `G_reencode/ALLDATA.KWI`: full re-encode `-j4` with the rebuilt `_cenc.so`, sha `4ed9cd801bdd7099…`, identical to the disc in force. About 1.6 GB, regenerable.
     - `reencode.log`.
-  - Wrapper logs: `runs/{attribution_*,r_contribution_*,p3_tests,k1_p3,p3_reencode}.json`.
+  - `p3/indep/`: orchestrator independent check of 3-03.
+    - Old checker (`0b19b5e`) and new checker K1 runs on `scratch-3-11/G_new` (`013586b5…`, read only): `{old,new}_k1_311.{json,log}`, the completeness dumps, and `sets.json`.
+    - Result: new failing 52 = exactly the keys fixed by the 3-14 build.
+  - Wrapper logs: `runs/{attribution_*,r_contribution_*,p3_tests,k1_p3,p3_reencode,indep_old_k1_311,indep_new_k1_311}.json`.
