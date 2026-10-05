@@ -805,3 +805,13 @@ Measured: exits 0, 0, 0, 1, 0, with `run_p1.sh` / `run_p1.log` in scratch-28.
 - Controls: 188/188 historic `NO_RULE`; 89 added split O04 3 / NO_RULE 86.
 - `dump_raw` re-hashed `1a91b1c2…` before and after the run.
 - Peak memory 81 MB (produce, 57 s).
+
+### output/scratch-29/ (plan 29 K1 name-anchor failure, successor oracle)
+
+Not committed; regenerable from the in-force spool. Record: `docs/plans/29-k1-name-anchor-failure.md`.
+- `G_new/ALLDATA.KWI` + `manifest.json`: the **successor oracle disc in force**. sha256 `2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae`, 1,692,105,152 bytes. Built from `output/extract_timing/spool` (fingerprint unchanged) with the plan-29 route (a) assembly drop guard, `-j4`. The manifest has `out_of_span_names_dropped` L0 1, every other level 0.
+- `G_verify/ALLDATA.KWI`: an independent re-encode after the 2-02 accounting fix. Its sha equals `G_new`.
+- Diff against the historical oracle `scratch-14/G_new` (`4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`, still kept and protected): 146 changed bytes, all inside the L0 (0,541) leaf [928] frame (`docs/plans/29-k1-name-anchor-failure/witnesses/successor_diff.json`). `4ed9cd80…` stays the historical oracle for every earlier record.
+- `k1_live.json`: live K1 `-j6` on the successor exits 0. name_anchor 2,317,055 checked / 0 failing; completeness 1,800,514 / 0. `compare_k1` passes (`runs/p2_compare_k1b.json`): name checked and range checked each fall by exactly the 1 dropped name, and every other kind is unchanged.
+- `perth_base/`, `perth_new/`: the Perth fixture at `cc96570` and with plan-29 code are identical, `04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728`.
+- `run_p2.{sh,log}`, `run_p2b.{sh,log}`, `runs/*.json`: guarded heavy-run logs (`run_heavy_python.py` + `flock output/.heavy.lock`).

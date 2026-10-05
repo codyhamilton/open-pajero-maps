@@ -57,3 +57,72 @@ Refine skipped (DESIGN). One unit, with its brief authored inline: `briefs/1-01-
 ## Phase 2 — K1 exits 0 on the disc in force, with no relabel and parity recorded against R (branch A)
 
 The approach is open. The invoker declared a route-(a)/(b) candidate comparison, scored against the fixed Phase 2 outcome and recorded in the plan record; no separate refine. Implementation is one unit, with its brief authored inline: `briefs/2-01-drop-guard-successor-oracle.md`. Execute runs the encode, K1, diff and tests under the guard.
+
+### 2-01 — counted assembly drop guard and successor oracle (route (a))
+
+- **Worker:** Codex `gpt-6.1-sol` (high), sandboxed. Report: `reports/2-01-drop-guard-successor-oracle.md`. Status: `done with concerns` (heavy gates deferred to Execute, by design).
+- **Route comparison** (`phase2_routes.md`): (a), the counted assembly guard, scored 12; (b), cell-scoped spool regeneration, scored 7. Hybrid cell regeneration was rejected. (a) was chosen.
+- **Built:**
+  - `parser/kiwiw/cenc.py`: `E1Spool(guard_names=True)` uses private copy-on-write mappings and filters names outside the plan-18 lattice span (`name_drops`). The spool stays byte-untouched.
+  - `parser/build_alldata.py`: drops are counted per level to stdout and to manifest `out_of_span_names_dropped`. In chunks with drops, a probe-and-pad step re-runs E2 on the unfiltered spool and zero-pads any shrunk frame to its original extent, so no later frame relocates. `_cenc.c` is unchanged.
+  - Tools: `diff_disc.py`, `compare_k1.py`, and `witness_p1.py --successor`.
+  - Tests: `parser/tests/test_name_drop_guard.py`, `parser/tests/test_successor_oracle_tools.py`.
+  - The O03 note in `rules_other.json`.
+- **Runs (Execute, guarded, `output/scratch-29/run_p2.{sh,log}`):**
+  - Encode exited 0 (101 s): L0 drop 1, every other level 0, equal to Phase 1's prediction (1 rejectable name, at L0).
+  - Successor sha `2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae`, 1,692,105,152 B (same size as `4ed9cd80…`).
+  - `diff_disc`: 146 changed bytes, `confined_to_cell_0_541` true. Changed-leaf list: [L0 (0,541) leaf 928].
+  - Live K1 `-j6` exited **0**.
+  - G/R successor witnesses exited 0.
+- **Execute amendment to `compare_k1.py` (deviation):** the first compare exited 1 because `range` checked fell by exactly 1. Every name anchor is also a range-check vertex (`parser/kiwiw/_k1.c` `range_item` for names). The expectation is now range checked −drops, with failing and worst error unchanged. The re-run (`runs/p2_compare_k1b.json`) gives pass True. DESIGN's "every other kind identical" did not foresee this coupling.
+- **Full suite after 2-01:** 3 failed / 1055 passed / 7 skipped.
+  - `test_perf_inventory` also fails on baseline `cc96570` (`runs/p2_tests_base3.json`), so it is pre-existing and carried.
+  - `test_build_wiring::test_e1_e2_once_per_range` and `test_bench_record::test_bench_output_byte_identical_to_unbenched` were caused by the guard. Fixer brief `briefs/2-02-guard-accounting-fix.md`.
+
+### 2-02 — guard accounting fix
+
+- **Worker:** Codex hit its usage limit (about 05:11 AEST; resets 06:18 AEST) after adding two tests. **Execute finished the fix directly** (deviation). Report: `reports/2-02-guard-accounting-fix.md`.
+- **Fix:**
+  - `name_drops` filters by the build window rect, using the per-name cell index.
+  - Job tuples carry the combined cell range.
+  - E2 stats are captured before the probe.
+  - Defect 3 confirmed: the synthetic fixture names are genuinely out of span.
+- **Runs (`output/scratch-29/run_p2b.{sh,log}`):**
+  - `test_name_drop_guard` + `test_build_wiring`: 12 passed.
+  - Perth with plan-29 code is `04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728`, equal to `perth_base` built at `cc96570`, with 0 drops at every level.
+  - The AU re-encode `G_verify` equals `2ee3456a…` (110.9 s, peak 4.49 GB).
+
+### Phase 2 verification (Execute)
+
+Outcome A items:
+1. O03 is absent (`witnesses/g_successor.json`: `o03_absent` true, leaf 928 names `[]`). Drops per level are L0 1 / others 0, equal to Phase 1's single rejectable name.
+2. Successor at the new path `output/scratch-29/G_new/ALLDATA.KWI`, sha `2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae`. The independent re-encode is identical. The diff against `4ed9cd80…` is 146 bytes, all inside the L0 (0,541) leaf [928] frame (`witnesses/successor_diff.json`).
+   - Protected discs re-hashed unchanged: `4ed9cd80…` and `013586b5…`.
+   - Spool fingerprint unchanged (`9541a10a…`).
+   - `4ed9cd80…` stays the historical oracle.
+3. Live K1 `-j6` exits **0**:
+   - name_anchor 2,317,055 checked / 0 failing (checked −1);
+   - completeness 1,800,514 / 0;
+   - range checked −1 (coupled, see 2-01);
+   - every other kind identical to `rem01_k1_live` (`witnesses/successor_k1_compare.json`, pass True).
+4. R parity: R has no frames over the nine cells (all `empty_slot` / `outside_coverage`). The successor leaf 928 has zero names, so the names are equal. Named structural residual: G still has a (now nameless) L0 (0,541) leaf frame where R has an empty slot.
+5. Perth: tip Perth `04be2f6e…` is unchanged by plan-29 code. DESIGN's `da13a775…` is the 3-11-era Perth (`scratch-3-11/perth_fix`), which tip already differed from before plan 29, so this is explained, not caused here. Goldens: in the full suite below.
+6. Positive control: `test_quantisation_roundtrip.py::test_moved_road_node_and_name_are_caught` passes on both engines (an in-span misplaced name still fails name_anchor). It is also in the full suite.
+7. Updated: `docs/provenance.md` (scratch-29 entry), the OVERVIEW WP1 disc-in-force sentence, the 3-90 brief successor-pin note, and the plan-27 pin ledger row.
+
+Both branches:
+- `rules_other.json` O03 note carries the disposition and the successor sha.
+- No tolerance changed; no checker change.
+- No 3-90 run, no plan 04 phases 4–6 or plan 06, and no Phase 3 close. 170 / 3-16 / 3-17 were not reseated.
+- Full suite after 2-02 (`runs/p2_parser_tests2.json`, 605 s, peak 10.1 GB under the guard): **1 failed / 1060 passed / 7 skipped**. The only failure is the pre-existing `test_perf_inventory::test_inventory_covers_every_module` (modules missing from `perf_inventory.json`, which also fails at `cc96570`). Goldens, the bench and wiring tests, and the positive control pass.
+
+`artifact_feedback` was not called (workflow-service calls excluded).
+
+**Phase 2 outcome verified: branch A. K1 exits 0 on the successor disc in force `2ee3456a…`.**
+
+#### Carried
+
+1. `test_perf_inventory` fails on baseline too; it is pre-existing and not caused by plan 29.
+2. G frames at L0 (0,562) / (0,563), and the now-nameless (0,541) frame, exist where R has empty slots. This structural difference goes to Design, not absorbed.
+3. The probe-and-pad design keeps frame extents by zero-padding the shrunk leaf. That keeps the diff confined, but it is not R parity of frame layout.
+4. The coupling of range checked to name anchors (−drops) is documented in `compare_k1.py`.
