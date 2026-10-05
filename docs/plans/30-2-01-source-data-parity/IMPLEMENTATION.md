@@ -31,3 +31,7 @@ Refine skipped (DESIGN). One unit: `briefs/1-01-fingerprint-census.md`.
 `artifact_feedback` was not called (workflow-service calls excluded).
 
 **Phase 1 outcome verified.**
+
+## Phase 2 — Every 2-01 row has a supply-path or unfixable-proven disposition
+
+The approach is open: discriminator candidates are scored against the fixed outcome, and the comparison is recorded in `phase2_candidates.md` and the plan record. Refine skipped. One unit: `briefs/2-01-disposition.md`. Execute owns the OVERVIEW narrowing.
