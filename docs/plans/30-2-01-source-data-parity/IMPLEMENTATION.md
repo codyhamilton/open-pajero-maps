@@ -42,3 +42,16 @@ The approach is open: discriminator candidates are scored against the fixed outc
 - **Built:** `disposition.py` (`inventory`, `spool`, `pbf`, `publish`), `disposition.tsv` (342 rows), `disposition_summary.json`, `phase2_note.md`, and `parser/tests/test_parity_disposition.py` (synthetic, 36 passed; Execute re-ran it, 36 passed).
 - **Runs (Execute, guarded, `output/scratch-30/run_p2.{sh,log}`):** inventory, spool (283.7 s, 575 MB peak), PBF (2,382.5 s, 6.05 GB cgroup peak including page cache, max RSS 258 MiB), and publish. All exit 0.
 - **Result:** **243 supply-path / 0 unfixable-proven / 99 conflict-open.** Every supply witness is an OSM multipolygon relation (marine parks and habitat zones) that the spool lacks as an emitting demanded-code source. The 99 open rows (98 type-288, mostly south_offshore, plus row 246) carry PBF coverage gaps in their windows and list the discriminators tried. Details are in `phase2_note.md` § Execute measured result.
+
+### Phase 2 verification (Execute, cheap tier)
+
+1. `disposition.tsv` has 342 rows and joins exactly to the Phase 1 native keys and dump rows; publish validated the pins, hashes, wrapper logs and proof-event SHA256s.
+2. Counts: **243 supply-path / 0 unfixable-proven / 99 conflict-open**. Type-288 is split (243 supply / 98 open); row 246 (type 321) is open.
+3. DESIGN Outcome 6 holds: each of the 99 open rows carries `discriminators_tried` (lattice identity, retained demander, spool result, PBF result with gap counts).
+4. No R geometry was copied; no disc, encoder, vocabulary or extractor change. The supply rows are successor-implement candidates, not fixes.
+5. OVERVIEW: the carried source-data parity wording is narrowed to these counts with the TSV link (WP1 paragraph and the "What remains unfinished?" row). The seven O04 rows and the plan 04 Phase 3 blockers stay listed.
+6. Heavy steps were serialised under the lock; the PBF peak (6.05 GB cgroup, 258 MiB RSS) stayed inside plan-25 guards.
+
+`artifact_feedback` was not called (workflow-service calls excluded).
+
+**Phase 2 outcome verified** (with 99 named conflict-open rows, as DESIGN Outcome 6 permits).
