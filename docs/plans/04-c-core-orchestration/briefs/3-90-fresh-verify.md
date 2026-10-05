@@ -20,7 +20,7 @@ Independent proof that, on the oracle disc in force, build-caused and checker-ca
 
 ## Contract
 
-Cited from `DESIGN.md` Phase 3 Outcome: "On the oracle disc in force at phase close, the checker reports build-caused and checker-caused failures of 0 in every kind, and the failures that remain are exactly the enumerated spool-caused list (item identity, not only counts)… The run takes ≤ 120 s. Any sha change is a recorded re-oracle (Assumption 1); otherwise 87a01b14… stands."
+Cited from `DESIGN.md` Phase 3 Outcome: "On the oracle disc in force at phase close, the checker reports build-caused and checker-caused failures of 0 in every kind, and the failures that remain are exactly the enumerated spool-caused list (item identity, not only counts)… The run takes ≤ 120 s. Any sha change is a recorded re-oracle (Assumption 1); otherwise 87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862 stands (full form; was 87a01b14…)."
 
 ## Changes (checks, in order; every check: command, raw output saved, pass/fail)
 
@@ -31,7 +31,7 @@ All heavy runs under `flock output/.heavy.lock` (Contract W). Record the HEAD co
 3. Determinism: one `-j 1` run; the report JSON byte-equals the `-j 6` one after removing every key in `quantisation_roundtrip.COMPARE_EXCLUDES` — `timing` **and** `wall_s` (the Phase 2 contract), not `timing` alone (`cmp` after stripping both keys with `quantisation_roundtrip.strip_compare_excludes`).
 4. Dump check: one `-j 6` run with `--dump-failures` (ops K1 cap; dump bytes are worker-count-independent); run `k1_triage.py classify` with the final merged rules over it. Required: 0 rows of causes `build` and `checker` in every kind, no unclassified rows, `PARTITION OK`. Compare the `spool` rows at group granularity with the pinned list: set equality (print the two counts and the `diff` of the sorted lists; empty diff required).
 5. Counts: per kind `checked`/`failing` in the report equal the 3C-04 `checked` values (Phase 2 DESIGN outcome), and `failing` equal the pinned list's row counts per kind. name_anchor failing 1 is allowed.
-6. Build gates: full-AU build sha equals 87a01b14… (or the recorded re-oracle sha, with the fix unit that produced it named and the exact differing cells quoted from its record). Perth `-j 1` == `-j 4` == da13a775… (or recorded re-oracle value). Goldens and the H-budget tests pass: `.venv-rp/bin/python -m pytest parser/tests -q -x` (full), quote the summary line.
+6. Build gates: full-AU build sha equals `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862` (or the recorded re-oracle sha, with the fix unit that produced it named and the exact differing cells quoted from its record). Perth `-j 1` == `-j 4` == `da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc` (or recorded re-oracle value). Goldens and the H-budget tests pass: `.venv-rp/bin/python -m pytest parser/tests -q -x` (full), quote the summary line.
 7. Perf inventory and `cbuild` staleness tests included in step 6; additionally run `grep -c` of nothing else; do not edit anything.
 8. Write the Phase 3 record in `IMPLEMENTATION.md`: parameters line, the cause-per-kind table from `cause_table.md` with the post-fix counts, check results 1-6 with numbers, any re-oracle with its sha and exact cells, the pinned list's path and sha256, a "Carried" list (spool items and Phase 2 carried items not absorbed, per DESIGN.md Phase 3 Units, "Carried-item placement"). Add `docs/provenance.md` entries for the final dump and the pinned list if they live outside git.
 

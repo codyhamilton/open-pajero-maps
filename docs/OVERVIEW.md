@@ -47,20 +47,20 @@ are of each fact, is in `docs/schema/`.
 
 Full map-layer build is about **12.2 s** median at `-j 12` (3C close / plan 04 evidence; earlier plan-02 ~32 s is historical). Heavy K1/triage jobs use `flock output/.heavy.lock` and are not that wall.
 
-The latest 3-90 record at `5c5823e` reported repeated PSS failure, a
+The latest 3-90 record at `5c5823e4c267dd64bc986038caddb3ed4b745f60` reported repeated PSS failure, a
 determinism comparison that retained varying `wall_s`, native dumps missing
 classification joins, truncated historical pins, unresolved 3-11 versus 3-14
 oracle evidence, and an incomplete independent-review chain. Plan **16** closed
 the timing-only `wall_s` strip defect (strip now matches Phase 2
 `COMPARE_EXCLUDES`: `timing` + `wall_s`); that strip is not a live blocker.
-Plan **20** reframes the live PSS item as a **contract mismatch**: the signed
+Plan **27** independently reviewed the plan-16 / check-3 strip (PASS) and expanded in-scope truncated oracle pins / the OVERVIEW short SHA to full digests (`docs/plans/27-independent-fix-review-truncated-pins/`); `pinned_candidates.tsv` remains a brief-required 100-row candidate view (`TRUNCATED=yes`) whose exhaustive group identity is **unverifiable from git** (full enumerations are non-committed scratch) — see that plan's pin ledger. Plan **20** reframes the live PSS item as a **contract mismatch**: the signed
 ceiling **9,726,501 kB** is the historical `-j 12` peak, while ops and the
 3-90 gate must use ≤ `-j 6` — not an unexplained memory blow-up. The PSS bar
 is **not** cleared; a later 3-90 re-run under the amended brief is still
 required. Remaining open blockers: PSS contract (ceiling held; live gate at
-ops ≤6), native classify joins, truncated pins, 3-11 versus 3-14 oracle,
-incomplete independent-review chain, and historic completeness attribution
-(open under plan **14**). Plan **25** records the 2026-10-06 OOM RCA and memory guards; heavy-Maps **CHM hold** pending clear (`docs/plans/25-oom-memory-rca/`) — not auto-cleared. These still block Phase 3 closure; no later phase
+ops ≤6), native classify joins, 3-11 versus 3-14 oracle,
+`pinned_candidates` exhaustive set-equality (unverifiable from git until enumerate artifacts are authorised), and historic completeness attribution
+(open under plan **14**). The plan-16 strip independent-review gap is closed by plan **27**; other historical unreviewed fix units are out of that discharge. Plan **25** records the 2026-10-06 OOM RCA and memory guards; heavy-Maps **CHM hold** pending clear (`docs/plans/25-oom-memory-rca/`) — not auto-cleared. These still block Phase 3 closure; no later phase
 is released; plan 04 Phase 3 is not closed. The signed phase outcome and
 detailed evidence remain in plan 04. The repo contains no plan 06 design: the
 earlier CI-gate draft is not a work unit on master.
