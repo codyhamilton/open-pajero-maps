@@ -41,7 +41,7 @@ The approach is open: discriminator candidates are scored against the fixed outc
 - **Worker:** Codex `gpt-6.1-sol` (high), sandboxed, 06:50–07:12 AEST, 181,898 tokens. Report: `reports/2-01-disposition.md`. Candidate comparison: `phase2_candidates.md` (chosen: spool + PBF + lattice, 4.55/5).
 - **Built:** `disposition.py` (`inventory`, `spool`, `pbf`, `publish`), `disposition.tsv` (342 rows), `disposition_summary.json`, `phase2_note.md`, and `parser/tests/test_parity_disposition.py` (synthetic, 36 passed; Execute re-ran it, 36 passed).
 - **Runs (Execute, guarded, `output/scratch-30/run_p2.{sh,log}`):** inventory, spool (283.7 s, 575 MB peak), PBF (2,382.5 s, 6.05 GB cgroup peak including page cache, max RSS 258 MiB), and publish. All exit 0.
-- **Result:** **243 supply-path / 0 unfixable-proven / 99 conflict-open.** Every supply witness is an OSM multipolygon relation (marine parks and habitat zones) that the spool lacks as an emitting demanded-code source. The 99 open rows (98 type-288, mostly south_offshore, plus row 246) carry PBF coverage gaps in their windows and list the discriminators tried. Details are in `phase2_note.md` § Execute measured result.
+- **Result:** **243 supply-path / 0 unfixable-proven / 99 conflict-open.** Every supply witness is an OSM boundary relation (`type=boundary`; marine parks and habitat zones) that the spool lacks as an emitting demanded-code source. The 99 open rows (98 type-288, mostly south_offshore, plus row 246) carry PBF coverage gaps in their windows and list the discriminators tried. Details are in `phase2_note.md` § Execute measured result.
 
 ### Phase 2 verification (Execute, cheap tier)
 
