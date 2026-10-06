@@ -43,3 +43,26 @@ logs `evidence/runs.json`, chain log `evidence/run_p1.log`.
 - G6 is measured as PASS. G7 is FAIL on pytest only and goes to Phase 2 as a
   named residual.
 - No re-pin and no Phase 3 claim.
+
+## Phase 2 — close synthesis (Execute; Codex weekly-limited)
+
+- **Pre-step: full suite after the parcel_mask fix.** The plan-34 stale test
+  was fixed at `a906818`. Root cause: the outside-mask empty-shell omission
+  of `5182c83` correctly drops synthetic (720, 30); the test was updated and
+  `build_alldata` is unchanged.
+  - Guarded full `parser/tests` at `873f161` (12:02–12:14 AEST,
+    `output/scratch-35/run_p2_pytest.sh`):
+    **1383 passed, 7 skipped, 0 failed in 700.38s**. Wrapper exit 0,
+    memory.peak 11,474,386,944 B.
+  - Evidence: `evidence/pytest_p2_tail.txt` and `evidence/p2_pytest_run.json`.
+  - G7 is PASS.
+- **Outputs:** `gates.tsv` (G1–G10), `residuals.tsv` and `synthesis.md`.
+- **Gate states:** G2, G3, G6 and G7 PASS. G1, G4, G5, G8 and G9 RESIDUAL.
+  G10 RESIDUAL (non-gating): OVERVIEW is fixed here; the plan 31, contract
+  and `oracle_chain.tsv` "+60 B" wording belongs to plan 36 P1.
+- **Verdict: residual branch.** No plan 04 Phase 3 record and no Phase 3
+  trailer.
+- **OVERVIEW:** the blocker paragraph is now a pointer to the
+  `blocks-phase3` rows. CHM, plan-30 and +60 B drift is corrected.
+- **Review:** independent clean-context review by the Claude CLI, because
+  Codex is weekly-limited (`REVIEW.md`).

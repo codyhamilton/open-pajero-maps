@@ -1,0 +1,8 @@
+HEAD 873f161a964d4db45a3d68f2b0752d2351815565 12:02:12
+run_heavy_python: unit=maps-heavy-2560384 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', '-m', 'pytest', '-q', '-p', 'no:cacheprovider', 'parser/tests', '--basetemp', 'output/scratch-35/pytest_p2']
+...
+......................                                                   [100%]
+1383 passed, 7 skipped in 700.38s (0:11:40)
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p2_pytest.json", "max_rss_kib": 9359180, "memory_peak": 11474386944, "wall_s": 702.381}
+EXIT 0 12:13:54

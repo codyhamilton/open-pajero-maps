@@ -39,7 +39,7 @@ are of each fact, is in `docs/schema/`.
 
 | Package | Scope | State |
 |---|---|---|
-| WP1 | Map layer (`ALLDATA.KWI`) and the evaluation harness | Build and harness exist (plans 01–02); map parity is unfinished. Plan **04** C-core Phases 1–2 are closed; Phase 3 is blocked at **3-90** after 3-14–3-17 landed. Phases 4–6 depend on that close. Plan **03** content phases remain frozen until 04 Phase 6. Heavy-job memory (05), padding attribution (07), classify fixes (08–09), the carried assembly-loader error (10), recorded triage summary determinism failures (11), carried density wording (12), the recorded fixture way precheck (13), SADSR SRMX STFG (15), and K1 determinism `wall_s` strip (16) are finished; records are under `docs/plans/`. Plan **14** completeness root-cause closed out at `3fb5a35`; record: `docs/plans/14-completeness-root-cause.md`. Plan **29** fixed the K1 name_anchor failure (verdict A: the original disc lacks the out-of-span O03 name). Its assembly drop guard produced successor `2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae` (`output/scratch-29/G_new`), whose diff from `4ed9cd80…` is confined to the L0 (0,541) frame. Record: `docs/plans/29-k1-name-anchor-failure.md`. [Plan **34**](plans/34-l0-empty-slot-frame-parity.md) removed the remaining L0 empty-slot frames with a general outside-mask empty-shell rule. Its successor is the **oracle disc in force**: `4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448` (`output/scratch-34/G_new`; [oracle record](plans/04-c-core-orchestration/triage/l0_empty_slot/successor_oracle_4e6b0de7.json)). Its classified diff vs `2ee3456a…` removes 5 L0 outside-mask empty shells ((0,141), (0,176), (0,541), (0,562), (0,563)), all `empty_slot` on R. Every other cell has an identical whole-frame multiset (offsets may relocate), live K1 `-j6` fails 0 in every kind, and Perth stays `04be2f6e…`. `2ee3456a…` and `4ed9cd80…` are historical and kept protected. |
+| WP1 | Map layer (`ALLDATA.KWI`) and the evaluation harness | Build and harness exist (plans 01–02); map parity is unfinished. Plan **04** C-core Phases 1–2 are closed; Phase 3 is not closed: plan **35**'s synthesis (residual branch) lists the blocking residuals after 3-14–3-17 landed. Phases 4–6 depend on that close. Plan **03** content phases remain frozen until 04 Phase 6. Heavy-job memory (05), padding attribution (07), classify fixes (08–09), the carried assembly-loader error (10), recorded triage summary determinism failures (11), carried density wording (12), the recorded fixture way precheck (13), SADSR SRMX STFG (15), and K1 determinism `wall_s` strip (16) are finished; records are under `docs/plans/`. Plan **14** completeness root-cause closed out at `3fb5a35`; record: `docs/plans/14-completeness-root-cause.md`. Plan **29** fixed the K1 name_anchor failure (verdict A: the original disc lacks the out-of-span O03 name). Its assembly drop guard produced successor `2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae` (`output/scratch-29/G_new`), whose diff from `4ed9cd80…` is confined to the L0 (0,541) frame. Record: `docs/plans/29-k1-name-anchor-failure.md`. [Plan **34**](plans/34-l0-empty-slot-frame-parity.md) removed the remaining L0 empty-slot frames with a general outside-mask empty-shell rule. Its successor is the **oracle disc in force**: `4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448` (`output/scratch-34/G_new`; [oracle record](plans/04-c-core-orchestration/triage/l0_empty_slot/successor_oracle_4e6b0de7.json)). Its classified diff vs `2ee3456a…` removes 5 L0 outside-mask empty shells ((0,141), (0,176), (0,541), (0,562), (0,563)), all `empty_slot` on R. Every other cell has an identical whole-frame multiset (offsets may relocate), live K1 `-j6` fails 0 in every kind, and Perth stays `04be2f6e…`. `2ee3456a…` and `4ed9cd80…` are historical and kept protected. |
 | WP2 | Route planning frames and ext frames | Not started; first-pass writer exists |
 | WP3 | Address and POI search | Not started (plan 26: offline seven-state search fixtures/tests only — ≠ WP3 complete ≠ Australia-wide MMCS proof) |
 | WP4 | Remaining `IDX/` families, `HWMAP`, `INDEXDAT` | Not started; bodies undecoded |
@@ -55,13 +55,46 @@ the timing-only `wall_s` strip defect (strip now matches Phase 2
 `COMPARE_EXCLUDES`: `timing` + `wall_s`); that strip is not a live blocker.
 Plan **27** independently reviewed the plan-16 / check-3 strip (PASS) and expanded in-scope truncated oracle pins / the OVERVIEW short SHA to full digests (`docs/plans/27-independent-fix-review-truncated-pins.md`); `pinned_candidates.tsv` remains a brief-required 100-row candidate view (`TRUNCATED=yes`) whose exhaustive group identity is **unverifiable from git** (full enumerations are non-committed scratch) — see that plan's pin ledger. Plan **20** reframes the live PSS item as a **contract mismatch**: the signed
 ceiling **9,726,501 kB** is the historical `-j 12` peak, while ops and the
-3-90 gate must use ≤ `-j 6` — not an unexplained memory blow-up. The PSS bar
-is **not** cleared; a later 3-90 re-run under the amended brief is still
-required. Remaining open blockers: PSS contract (ceiling held; live gate at
-ops ≤6), 3-14 oracle cause attribution
-([plan **31**](plans/31-phase3-oracle-and-pin-gates.md), `docs/plans/04-c-core-orchestration/triage/oracle_chain/oracle_chain.tsv`: the retained SHA-pinned AU 3-11 37-cell list; measured AU 3-14 246,123 / Perth 3-14 795 changed cells, complete under both the whole-frame multiset and the routed footprint identity (0 routed-only cells); and the committed plan-29 L0 (0,541) leaf-928 successor byte proof. All 3-14 per-cell payload causes stay unattributed; AU 3-11's +60 B non-payload growth and the unmeasured 3-14 container/index/padding changes remain residuals),
-and the live pin contract is settled under plan **31** (`docs/plans/04-c-core-orchestration/triage/oracle_chain/pin_contract.tsv`): live failing is 0 for every K1 kind on `2ee3456a…`, so the live pinned set is ∅ = ∅; historical `pinned_candidates.tsv` (100 shown / 26,650 groups) is residual-not-required-for-live-close, its exhaustive identity still unverifiable from git. Other kinds' native classify joins are discharged under [plan **32**](plans/32-other-kind-classify-joins.md) ([census](plans/04-c-core-orchestration/triage/other_kind_census/census.tsv)): interior_cover, name_anchor, background and background_boundary each have 0 failing rows on successor `2ee3456a…` (K1 `-j6`), so their assignment artefacts are empty; historical causes stay in [the disposition note](plans/04-c-core-orchestration/triage/other_kind_census/phase2_disposition.md). Completeness per-rule assignments and historic attribution are recovered and joined under plan **28** (`docs/plans/04-c-core-orchestration/triage/per_rule_phase2_reconciliation.md`): 776 rows, 769 consistent, 7 conflict-proven, **0 conflict-open**. The seven O04 spool rows (138, 236, 282, 284, 317, 496, 563) are closed under plan **33** as proven-non-deviation: per-row byte/decode witnesses show the demanded type absent in G successor, G historical and R (`docs/plans/04-c-core-orchestration/triage/o04_seven/disposition.tsv`); 2-01 source-data parity (342 rows) is dispositioned under plan **30** (`docs/plans/30-2-01-source-data-parity/disposition.tsv`): **338 supply-path** (OSM boundary relations — marine parks — the spool does not assemble; successor implement unit), **0 unfixable-proven**, **4 conflict-open** (dump_row 246, 396, 397, 775: no in-cell supply witness, and relations whose ways are absent from the pinned PBF block a proof either way; resolving them needs a Design ruling on a pinned complete-relation source — plan 30 stays open). The plan-16 strip independent-review gap is closed by plan **27**; other historical unreviewed fix units are out of that discharge. Plan **25** records the 2026-10-06 OOM RCA and memory guards; heavy-Maps **CHM hold** pending clear (`docs/plans/25-oom-memory-rca/`) — not auto-cleared. These still block Phase 3 closure; no later phase
-is released; plan 04 Phase 3 is not closed. The signed phase outcome and
+3-90 gate must use ≤ `-j 6` — not an unexplained memory blow-up. The PSS bar is **cleared** under plan **35** at ≤ `-j 6` on
+`4e6b0de7…`: the median of three is 79.661 s and the PSS max is 7,599,962 kB,
+within the held ceiling. `-j 1` is deterministic, and the AU rebuild and Perth
+reproduce their pins.
+
+Plan 35's close synthesis (`docs/plans/35-pss-and-phase3-close-synthesis/gates.tsv`)
+ends on the **residual branch**: plan 04 Phase 3 is **not closed**. The
+remaining Phase 3 blockers are exactly the `blocks-phase3` rows of
+[`residuals.tsv`](plans/35-pss-and-phase3-close-synthesis/residuals.tsv):
+
+- 3-14 per-cell payload causes, 3-14 container accounting and the 3-11 routed
+  proof (plan **36**);
+- `checked` move explanation for the 3-11 and 3-14 hops;
+- the historical cause remainder: 8,739 background_boundary + 137 background
+  rows (180 groups), polygon 65623 and R01 exclusivity;
+- the 3-14 to 3-17 independent fix reviews.
+
+Already settled:
+
+- **Oracle chain:** plan **31**
+  (`docs/plans/04-c-core-orchestration/triage/oracle_chain/oracle_chain.tsv`),
+  plus plan **34**'s successor record. AU 3-11's +60 B non-payload growth is
+  attributed by plan **07** to Map Frame allocation padding,
+  34×(−4)+7×(+28).
+- **Pin contract:** ∅ = ∅ (`pin_contract.tsv`, re-applied on `4e6b0de7…` by
+  plan 35). Historical `pinned_candidates.tsv` is
+  residual-not-required-for-live-close.
+- **Other-kind classify joins:** discharged under
+  [plan **32**](plans/32-other-kind-classify-joins.md).
+- **Completeness joins:** plan **28** (776 rows, 0 conflict-open).
+- **O04 seven:** plan **33** (proven-non-deviation).
+- **2-01 source-data parity:** plan **30** (`docs/plans/30-2-01-source-data-parity/disposition.tsv`):
+  341 supply-path (successor implement unit), 0 unfixable-proven and
+  1 conflict-open (dump_row 246, Design ruling). These rows are Maps parity
+  carried, not Phase 3 blockers.
+- **Plan-16 strip review:** closed by plan **27**.
+- **Plan 25 CHM heavy hold:** cleared on 2026-10-06. Heavy work runs only
+  under `flock output/.heavy.lock` + `run_heavy_python.py`.
+
+No later phase is released. The signed phase outcome and
 detailed evidence remain in plan 04. The repo contains no plan 06 design: the
 earlier CI-gate draft is not a work unit on master.
 WP2–WP5 labels below are program scope, not executable briefs.
