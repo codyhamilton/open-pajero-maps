@@ -65,14 +65,20 @@ ends on the **residual branch**: plan 04 Phase 3 is **not closed**. The
 remaining Phase 3 blockers are exactly the `blocks-phase3` rows of
 [`residuals.tsv`](plans/04-c-core-orchestration/triage/phase3_synthesis/residuals.tsv):
 
-- `checked` move explanation for the 3-11 hop (R-G4-1). The 3-14 hop's
+- the 3-14 hop's
   per-cell payload causes (R-G1-1/2: every changed cell classed, 0
   unattributed; the EO-only build equals the 3-14 disc), its `checked` move
   confinement (R-G4-2), the 3-11 routed proof (R-G1-4) and the 3-14
   container accounting (R-G1-3) are discharged by plan **36**
   ([record](plans/36-3-14-cause-and-container-attribution.md));
-- the historical cause remainder: 8,739 background_boundary + 137 background
-  rows (180 groups), polygon 65623 and R01 exclusivity;
+- the historical cause remainder: the row identities of 8,739
+  background_boundary + 137 background rows (180 groups; side-column producers
+  not regenerable). Plan **39** found that every such row is removed by 3-14 or
+  lies in a footprint-changed cell. It also discharged R-G4-1 (the 3-11 checked
+  moves are the 167,936 records the count wrap hid) and polygon 65623 (it
+  produces no failing item). R01 exclusivity holds for 920,693 rows; 80 rows in
+  `eo_division_ceiling` cells stay named (R-G5-4-a)
+  ([record](plans/39-historical-bg-cause-counterfactual-ledger.md));
 - the named conditions of the 3-14 to 3-17 independent fix reviews. The
   reviews of record landed under plan **40** (all ACCEPT-WITH-CONDITIONS),
   which discharges "review missing" (R-G8-1..4). Their UNVERIFIABLE or FAIL

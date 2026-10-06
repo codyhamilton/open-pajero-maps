@@ -1,0 +1,41 @@
+{
+ "window": [
+  1414,
+  274,
+  1890,
+  750
+ ],
+ "control_cells": 226576,
+ "control_g_cells": 226576,
+ "control_cell_mismatches": 0,
+ "control_mismatch_sample": [],
+ "changed_leaves": 58030,
+ "produced_records": 58032,
+ "produced_types": {
+  "288": 58032
+ },
+ "other_changes": {
+  "name": 1
+ },
+ "background": {
+  "rows_total": 1438558,
+  "rows_in_window": 296893,
+  "validated": 106493,
+  "changed_leaf_other_record": 106493,
+  "cell_unchanged_by_cf": 190400
+ },
+ "background_boundary": {
+  "rows_total": 16549569,
+  "rows_in_window": 3065225,
+  "cell_unchanged_by_cf": 2520776,
+  "validated": 544449,
+  "changed_leaf_other_record": 544449
+ },
+ "interior_cover": {
+  "rows_total": 824,
+  "rows_in_window": 297,
+  "validated": 16,
+  "changed_leaf_other_record": 16,
+  "cell_unchanged_by_cf": 281
+ }
+}

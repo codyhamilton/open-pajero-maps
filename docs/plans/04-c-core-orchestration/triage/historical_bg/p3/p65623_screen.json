@@ -1,0 +1,31 @@
+{
+ "source": "(L0,1689,508,rec0,type288,n1810)",
+ "bbox": {
+  "lat0": -44.2609896,
+  "lat1": -34.3905473,
+  "lon0": 134.2256316,
+  "lon1": 149.0274827
+ },
+ "eps_deg": 0.01,
+ "background": {
+  "rows": 1438558,
+  "L0_type288": 724750,
+  "candidates_in_bbox": 197676,
+  "candidate_cells": 6431,
+  "candidates_nearest_src_is_65623": 20
+ },
+ "background_boundary": {
+  "rows": 16549569,
+  "L0_type288": 3186137,
+  "candidates_in_bbox": 765932,
+  "candidate_cells": 8383,
+  "candidates_nearest_src_is_65623": 69
+ },
+ "interior_cover": {
+  "rows": 824,
+  "L0_type288": 254,
+  "candidates_in_bbox": 0,
+  "candidate_cells": 0,
+  "candidates_nearest_src_is_65623": 0
+ }
+}
