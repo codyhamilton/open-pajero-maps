@@ -137,6 +137,7 @@ def leaf_rects(leaves):
                 P = np.asarray(pts)
                 out = np.maximum.reduce([r[0] - P[:, 0], P[:, 0] - r[2], r[1] - P[:, 1], P[:, 1] - r[3], np.zeros(len(P))])
                 worst[kind] = max(worst[kind], round(float(out.max()), 3))
+    assert worst["background"] == 0.0, ("leaf grid inference disagrees with decoded backgrounds", worst)
     return g, worst
 
 
@@ -164,7 +165,7 @@ def local_dist(Pts, S, reach):
     sy0 = np.minimum(S[:, 1], S[:, 3]); sy1 = np.maximum(S[:, 1], S[:, 3])
     m = (sx1 >= lo[0]) & (sx0 <= hi[0]) & (sy1 >= lo[1]) & (sy0 <= hi[1])
     d = seg_dist(Pts, S[m]) if m.any() else np.full(len(Pts), np.inf)
-    return np.minimum(d, np.inf)
+    return d
 
 
 def qs(a):
@@ -217,7 +218,14 @@ def v2_analysis(level, ix, iy, rows, rleaves):
     sub_rect = [sx * RAW / gg, sy * RAW / gg, (sx + 1) * RAW / gg, (sy + 1) * RAW / gg]
     R_roads = [(dc, np.asarray(p)) for lf in rleaves for dc, p in lf["_links"]]
     RS = np.vstack([segs(p, False) for _, p in R_roads if len(p) > 1])
-    out = {"R_rect_grid": rg, "R_rect_check_max_outside_raw": rworst,
+    def outside(p, r):
+        return not (r[0] <= p[0] <= r[2] and r[1] <= p[1] <= r[3])
+    degen = [(lf, dc, p) for lf in gleaves for dc, p in lf["_links"] if len(p) > 1 and len({tuple(q) for q in p}) == 1]
+    out = {"G_degenerate_links_n": len(degen),
+           "G_degenerate_links_outside_leaf_rect": [
+               {"leaf_path": lf["leaf_path"], "dc": dc, "n_pts": len(p), "point": [round(p[0][0], 3), round(p[0][1], 3)]}
+               for lf, dc, p in degen if outside(p[0], lf["rect_leaf_raw"])],
+           "R_rect_grid": rg, "R_rect_check_max_outside_raw": rworst,
            "G_oracle_disc": str(G_DISC / "ALLDATA.KWI"), "G_divided": gdiv, "G_rect_grid": gg,
            "G_rect_check_max_outside_raw": gworst,
            "G_leaves": [{k: v for k, v in lf.items() if not k.startswith("_")} for lf in gleaves],
@@ -257,15 +265,26 @@ def v2_analysis(level, ix, iy, rows, rleaves):
     if roadsK:
         ctrl = [med_dist(i["P"], 0.25) for i in roadsK]; ctrl_src = "kept pieces of the trimmed sub-cell (exact dump geometry)"
     else:
-        ctrl = [med_dist(np.asarray(p), 2.0) for lf in gleaves if lf["leaf_path"][-1] != sy * gg + sx
-                for _, p in lf["_links"] if len(p) > 1]
+        cpairs = [(dc, med_dist(np.asarray(p), 2.0)) for lf in gleaves if lf["leaf_path"][-1] != sy * gg + sx
+                  for dc, p in lf["_links"] if len(p) > 1]
+        ctrl = [d for _, d in cpairs]
         ctrl_src = "G oracle-decoded kept roads of the parent's other sub-cells (no kept road in the trimmed sub-cell)"
+        out["road_control_by_class"] = {str(dc): {"kept_q50": round(float(np.median([d for c, d in cpairs if c == dc])), 1),
+                                                   "kept_within20": round(float(np.mean([d <= 20 for c, d in cpairs if c == dc])), 3),
+                                                   "kept_n": sum(c == dc for c, _ in cpairs)}
+                                        for dc in sorted({c for c, _ in cpairs})}
     drop = [med_dist(i["P"], 0.25 if level else 2.0) for i in roadsD]
+    if "road_control_by_class" in out:
+        for dc, v in out["road_control_by_class"].items():
+            dd = [d for i, d in zip(roadsD, drop) if str(i["code"]) == dc]
+            v["dropped_n"] = len(dd)
+            if dd:
+                v["dropped_q50"] = round(float(np.median(dd)), 1); v["dropped_within20"] = round(float(np.mean([d <= 20 for d in dd])), 3)
     rec = {t: round(float(np.mean(np.asarray(ctrl) <= t)), 4) for t in TOLS}
     rec_d = {t: round(float(np.mean(np.asarray(drop) <= t)), 4) for t in TOLS}
     tstar = next((t for t in TOLS if rec[t] >= 0.9), None)
     out["road_control"] = {"source": ctrl_src, "n": len(ctrl),
-                           "metric": "per-piece median of sampled distance to the nearest R road of any class, parent raw units (clamped at 600)",
+                           "metric": "per-piece median of sampled distance to the nearest R road of any class, parent raw units (out-of-reach values set to 600; in-reach values exact)",
                            "control_quantiles": qs(ctrl), "dropped_quantiles": qs(drop),
                            "control_recall_at_tol": rec, "dropped_within_tol": rec_d,
                            "calibrated_tol_recall90": tstar,
@@ -288,6 +307,41 @@ def v2_analysis(level, ix, iy, rows, rleaves):
                 c = "R-has-specific" if f >= 0.5 else "R-lacks" if f == 0 else "ambiguous"
             i["v2"] = c; cats[c] += 1
         out["dropped_categories"] = dict(cats)
+        # re-review N4: the evidence that carries the L8 verdict
+        mx = 0.0
+        for i in roadsD:
+            Q = sample(i["P"], 0.02)
+            mx = max(mx, float(local_dist(Q, KS, 2.0).max()))
+        out["dropped_max_sampled_dist_to_kept_raw"] = round(mx, 3)
+        par_d = {i["par"] for i in roadsD}; par_k = {i["par"] for i in roadsK}
+        out["dropped_records_distinct"] = {"dropped_par_distinct": len(par_d), "shared_with_kept": len(par_d & par_k)}
+        # connected components among dropped pieces (shared endpoints, exact)
+        parent = list(range(len(roadsD)))
+        def find(a):
+            while parent[a] != a:
+                parent[a] = parent[parent[a]]; a = parent[a]
+            return a
+        ends = {}
+        for n_, i in enumerate(roadsD):
+            for e in (tuple(i["P"][0]), tuple(i["P"][-1])):
+                if e in ends:
+                    parent[find(n_)] = find(ends[e])
+                else:
+                    ends[e] = n_
+        comp = Counter(find(n_) for n_ in range(len(roadsD)))
+        clen = Counter()
+        for n_, i in enumerate(roadsD):
+            clen[find(n_)] += plen(i["P"])
+        out["dropped_components"] = {"n": len(comp), "max_len_raw": round(max(clen.values()), 3)}
+        kend = {tuple(e) for i in roadsK for e in (i["P"][0], i["P"][-1])}
+        out["dropped_sharing_endpoint_with_kept"] = int(sum(
+            tuple(i["P"][0]) in kend or tuple(i["P"][-1]) in kend for i in roadsD))
+        allr = roadsK + roadsD
+        rk = np.argsort(np.argsort([i_ for i_ in range(len(allr))]))  # rank order = dump order (priority)
+        ln = np.array([plen(i["P"]) for i in allr]); lr = np.argsort(np.argsort(ln))
+        out["spearman_rank_vs_length"] = round(float(np.corrcoef(rk, lr)[0, 1]), 3)
+        out["kept_sub_quantum"] = int(sum(plen(i["P"]) < 1.0 for i in roadsK))
+        out["kept_len_exact_raw"] = round(klen, 1)
         out["dropped_within_1_of_kept_all_vertices"] = int(sum(
             bool((local_dist(i["P"], KS, 2.0) <= 1.0).all()) for i in roadsD))
         # kept control, any class primary (review F3)

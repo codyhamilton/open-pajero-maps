@@ -51,8 +51,8 @@ The trimmed items were dumped by a bounded instrumentation hook in a
   kind against its per-kind limit, in `dv_order`.
   - If the frame still does not fit, a fallback loop cuts kinds in the
     **fixed order road → background → name** until it fits.
-  - At L0 (2,1) the backgrounds alone overflow the ceiling, so the fallback
-    takes roads to 0 before cutting 227 backgrounds.
+  - At L0 (2,1) the fallback takes roads to 0. The 227 backgrounds are cut
+    by the per-kind pass or by the fallback; which one is not shown.
   - This kind order is a separate policy from `dv_order`. Any priority
     change has to account for it.
 - **L0 parent (1755,591):** Melbourne, near Tullamarine (lat −37.6875 …
@@ -82,9 +82,15 @@ decodes of the oracle `4e6b0de7` (G, read only). It writes
   quadrant (2 × 2) or sixteenth (4 × 4), derived from the leaf index.
   - It was checked against the decoded data. R data and G backgrounds fall
     0.0 raw outside their rects.
-  - G L0 road pieces extend up to 3,072 raw outside their sub-cell rect,
-    because the pieces are not clipped to the sub-cell. G volumes below
-    therefore count length inside the rect only.
+  - G L0 road pieces are clipped to their sub-cells, with one exception.
+    **5 degenerate links** in western sub-cells (leaves 0, 4, 4, 4 and 8;
+    6–10 vertices, dc 12/2/7/7/7) have every vertex at one point, x = 4096,
+    the parent's east edge.
+    - They are the only data outside a rect, by up to 3,072 raw.
+    - Whether they are a D1 decode artefact or an encoder defect in the
+      oracle is **not determined**. This is a named residual (R-G9-3-d).
+    - Their effect on the control is 5 of 1,108 pieces.
+  - G volumes count length inside each leaf's rect.
 - **R quantum:** every R leaf here has frame range 4096 over the whole
   parent, so one R coordinate step is **1 parent raw unit**. That is
   0.56 × 0.73 m at L0 and about 145 × 188 m at L8.
@@ -126,11 +132,23 @@ drives no verdict**.
 - **Dropped 207:** q10 / q50 / q90 = 15.7 / 100.6 / 266.3 raw.
   - The distances are farther than the control: 50% within 100 raw against
     76%, and 26% within 50 against 59%.
-  - 164 of the 207 are **dc 2**, a class R does not carry anywhere in the
-    parent. G keeps 773 dc 2 pieces in the other sub-cells.
+  - 164 of the 207 are dc 2. Class code is not a G ↔ R identity, so the
+    geometric per-class control is the evidence (re-review N3).
+    - Kept-piece q50 distance to any R road: dc 2 63.8 / dc 4 3.2 / dc 7
+      6.1 / dc 9 7.2 / dc 10 143.5 / dc 12 3.4 raw.
+    - Dropped dc 2 q50: 126.8 raw.
+    - Within 20 raw: 25% of kept dc 2 and 1% of dropped dc 2.
+    - **G's dc 2 is geometrically distant from R across the parent, kept and
+      dropped alike.** That is an upstream L0 selection matter, not a trim
+      matter.
+    - The other 43 dropped pieces are closer to R. Within 20 raw: dc 12
+      38%, dc 4 56%, dc 7 30% and dc 9 75%. These are the likely
+      R-carried part, consistent with R's 3,695 raw in (2,1).
+    - Per-class numbers are in `v2.road_control_by_class`.
 - **Volume** (length inside each G sub-cell rect, raw units):
   - Sub-cell (2,1): **G emits 0 after the trim; R has 3,695 raw** (about
-    2.3 km).
+    2.3 km). G pieces kept in all leaves have 19 raw of spill-in inside the
+    (2,1) rect.
   - G before the trim had 37,039 raw there, a G/R ratio of 10.0.
   - The other 15 sub-cells have G/R ratios of 0.79–12.7 (median 2.6). G is
     denser than R across the parent, and (2,1) is at the dense end.
@@ -152,20 +170,35 @@ drives no verdict**.
     pieces' median is 1.15 raw.
   - The total dropped length is **94 raw**, 2.0% of the sub-cell's
     pre-trim 4,738 raw.
-- **Redundancy:** all 308 lie, at every vertex, within 1 R step of a kept G
-  piece.
-  - By category: **295 are sub-quantum** (shorter than 1 R step). The other
-    **13 are redundant**: every sample along the stub is within 1 R step of
-    a kept G piece.
-  - **0** carry R-specific evidence: no sample lies away from kept G pieces
-    and near an R road.
+- **Redundancy:** this evidence carries the L8 verdict (re-review N4).
+  - The **maximum sampled distance** from any dropped stub to a kept G
+    piece is **0.768 raw** (step 0.02), under one R step.
+  - The 308 dropped pieces form **237 connected components**, the largest
+    5.5 raw long. No run of dropped stubs therefore opens a gap of one R
+    step.
+  - Each dropped piece is its own spool record: 308 distinct `par`, 0
+    shared with kept pieces. 294 share an endpoint with a kept piece.
+  - Priority correlates with length: Spearman rank–length is −0.796.
+  - By category, 295 are sub-quantum (shorter than 1 R step) and 13 are
+    redundant. Given the shared endpoints, these categories are
+    near-tautological, and the R-specific test was **not exercised**
+    (0 pieces reached it).
+  - G also **keeps 968 equally sub-quantum pieces**, which supports
+    "fragmentation".
 - **Control** (kept 2,109, any class): recall is 56% at 1 raw and 92% at
   10. The dropped stubs' distances match it: 57% at 1 raw and 94% at 10.
   - The v1 rule, any class: 1,053 kept present / 815 absent / 241
     ambiguous. Same class: 752 / 1,162 / 195.
 - **Volume:**
-  - R's road length inside sub (3,0) is 6,623 raw. G's is 5,373 decoded
-    (4,738 exact, before the trim). **G does not over-select by length.**
+  - Decoded against decoded: R's road length inside sub (3,0) is 6,623 raw
+    and G's kept is 5,373. Exact dump geometry gives G's kept 4,645 and
+    pre-trim 4,738. Decode quantisation of tiny pieces inflates G by about
+    16%. **G is not above R by length** either way.
+  - In the parent's other G leaves, **G under-selects against R**
+    (re-review N1). Leaf 2 has 225 against 4,786 raw; leaves 11 and 14 have
+    0 against 1,251 and 3,336.
+    - R has 801 dc 10 links in the parent; G has no dc 10 (2,979 dc 12).
+    - This is a named residual (R-G9-3-c).
   - G does over-fragment: 2,979 pieces in the parent against R's 929 links,
     and 2,417 pieces in (3,0) against 750 links in R's whole quadrant.
 
@@ -174,13 +207,16 @@ drives no verdict**.
 - **L0 roads: the deviation is real by volume; per-item identity is not
   decidable.**
   - Sub-cell (2,1) is drawn with 0 roads where R has 3,695 raw of road.
-  - Most dropped pieces are G-only: farther from R than the control, and
-    79% dc 2, a class absent from R. The geometry cannot say which of them R
+  - The dropped pieces are farther from R than the control (q50 100.6
+    against 31.1 raw). Dropped dc 2 is distant from R, like kept dc 2
+    parent-wide. The geometry cannot say which individual pieces R
     carries.
-  - Mechanism, from the code and the dump: the backgrounds alone overflow
-    the frame, and the shrink fallback cuts roads first. The overflowing
-    backgrounds are 6,628 type-288 items, a type R lacks in the whole
-    parent.
+  - Mechanism, from the code and the dump: the frame overflows with 6,628
+    type-288 items, a type R lacks in the whole parent.
+    - Roads are cut to 0 by the shrink fallback, which cuts roads first.
+    - The 227 backgrounds were cut either by the per-kind pass (every
+      per-kind limit is the 131,070 B ceiling) or by the fallback. Which one
+      is not shown (re-review N6).
 - **L0 backgrounds: `R-lacks-trimmed` by type census.** R has 0 type-288
   records in the parent. The trim removes content R does not have.
 - **L8 roads: not a priority difference.** The earlier "priority difference
@@ -189,20 +225,30 @@ drives no verdict**.
     length, all within one R step of kept G roads.
   - At R's resolution the trim removes no distinguishable geometry. The
     count-based "2.198% > 1% BLOCKER" line counts fragments.
-  - The underlying difference is **G fragmentation**: about 3× R's link
-    count per parent, from short clipped or split stubs.
+  - The trimmed count comes from **G fragmentation**: 2,979 pieces against
+    R's 929 links per parent. The pieces are separate short spool records
+    that touch kept roads. The cause of the short records is not
+    established (R-G9-3-b).
   - Hypotheses after review:
     - (a) sub-quantum stubs: **supported**;
-    - (b) L8 selection volume: **not supported by length** (G is below R);
+    - (b) G selection relative to R: G **under**-selects across the parent
+      (dc 10 missing; R-G9-3-c). If G selected what R selects, (3,0) would
+      hold more road bytes, so fragmentation is a partial account of the
+      trim pressure;
     - (c) priority: **not needed** to explain the drop.
 - **R topology difference:**
   - L8: R divides (7,4) 2 × 2, and its largest quadrant is 106,400 B with
     750 links. We divide 4 × 4, and one sixteenth held 2,417 pieces.
   - L0: R does not divide (1755,591); we divide it 4 × 4.
 - **For Phase 2:** no R-evidenced trim-priority rule exists.
-  - The L0 loss comes upstream, from type-288 over-emission (the
-    288-template completeness item) through the fixed shrink kind order.
-  - The L8 count comes from fragmentation.
+  - The L0 loss comes upstream, from type-288 over-emission (R-G9-3-a)
+    through the fixed shrink kind order.
+  - The L8 count comes from fragmentation (R-G9-3-b).
+- **`leaf_rects` grid inference** is a heuristic (2 × 2 when every index is
+  below 4). It now asserts 0.0 background outside-distance on every use
+  (re-review N7).
+- **Clamp wording** (re-review N9): only out-of-reach values are set to 600.
+  In-reach values are exact.
 
 ### Phase 1 review
 
@@ -222,3 +268,25 @@ Fixes:
   a stated limit.
 - **F7:** the count wording is fixed, and oracle byte-identity is recorded.
 - **F8:** the shrink kind order is stated.
+
+### Phase 1 re-review
+
+Claude CLI clean-context seat (disclosed): **PASS_WITH_FOLLOWUPS**. F1–F8
+are resolved; F8 mostly, with N6 now fixed. The text is kept as
+`reviews/p1b-REVIEW.md`. New findings N1–N9 are applied:
+
+- **N1:** G under-selection at L8 is recorded (R-G9-3-c), and hypothesis (b)
+  is relabelled.
+- **N2:** the 5 degenerate east-edge links are recorded, with no
+  "not clipped" claim (R-G9-3-d).
+- **N3:** a per-class geometric control replaces the dc-2 identity
+  argument.
+- **N4:** max distance, components, record distinctness, Spearman and the
+  968 kept sub-quantum pieces are recorded in the JSON and the text.
+- **N5:** volumes are compared like for like, with the inflation stated.
+- **N6:** the stage that cut the 227 backgrounds is stated as not shown.
+- **N7:** the grid assertion is added.
+- **N8:** follow-ons are named, as rows R-G9-3-a..d (Phase 2).
+- **N9:** the clamp wording is fixed.
+
+The witness was re-run after the fixes.

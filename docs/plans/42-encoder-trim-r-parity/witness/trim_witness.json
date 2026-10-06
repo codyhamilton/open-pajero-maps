@@ -104439,6 +104439,69 @@
     "road|D|ambiguous": 3
    },
    "v2": {
+    "G_degenerate_links_n": 6,
+    "G_degenerate_links_outside_leaf_rect": [
+     {
+      "dc": 12,
+      "leaf_path": [
+       507,
+       0
+      ],
+      "n_pts": 10,
+      "point": [
+       4096.0,
+       619.0
+      ]
+     },
+     {
+      "dc": 2,
+      "leaf_path": [
+       507,
+       4
+      ],
+      "n_pts": 9,
+      "point": [
+       4096.0,
+       1625.0
+      ]
+     },
+     {
+      "dc": 7,
+      "leaf_path": [
+       507,
+       4
+      ],
+      "n_pts": 6,
+      "point": [
+       4096.0,
+       1766.0
+      ]
+     },
+     {
+      "dc": 7,
+      "leaf_path": [
+       507,
+       4
+      ],
+      "n_pts": 8,
+      "point": [
+       4096.0,
+       1274.0
+      ]
+     },
+     {
+      "dc": 7,
+      "leaf_path": [
+       507,
+       8
+      ],
+      "n_pts": 10,
+      "point": [
+       4096.0,
+       2193.0
+      ]
+     }
+    ],
     "G_divided": true,
     "G_leaves": [
      {
@@ -104948,9 +105011,57 @@
       "200": 0.7971,
       "500": 1.0
      },
-     "metric": "per-piece median of sampled distance to the nearest R road of any class, parent raw units (clamped at 600)",
+     "metric": "per-piece median of sampled distance to the nearest R road of any class, parent raw units (out-of-reach values set to 600; in-reach values exact)",
      "n": 1108,
      "source": "G oracle-decoded kept roads of the parent's other sub-cells (no kept road in the trimmed sub-cell)"
+    },
+    "road_control_by_class": {
+     "10": {
+      "dropped_n": 0,
+      "kept_n": 22,
+      "kept_q50": 143.5,
+      "kept_within20": 0.045
+     },
+     "12": {
+      "dropped_n": 13,
+      "dropped_q50": 29.0,
+      "dropped_within20": 0.385,
+      "kept_n": 57,
+      "kept_q50": 3.4,
+      "kept_within20": 0.947
+     },
+     "2": {
+      "dropped_n": 164,
+      "dropped_q50": 126.8,
+      "dropped_within20": 0.012,
+      "kept_n": 773,
+      "kept_q50": 63.8,
+      "kept_within20": 0.254
+     },
+     "4": {
+      "dropped_n": 16,
+      "dropped_q50": 15.3,
+      "dropped_within20": 0.562,
+      "kept_n": 76,
+      "kept_q50": 3.2,
+      "kept_within20": 0.829
+     },
+     "7": {
+      "dropped_n": 10,
+      "dropped_q50": 50.6,
+      "dropped_within20": 0.3,
+      "kept_n": 127,
+      "kept_q50": 6.1,
+      "kept_within20": 0.748
+     },
+     "9": {
+      "dropped_n": 4,
+      "dropped_q50": 13.1,
+      "dropped_within20": 0.75,
+      "kept_n": 53,
+      "kept_q50": 7.2,
+      "kept_within20": 0.736
+     }
     },
     "road_volume": {
      "G_classes_dropped": {
@@ -160974,6 +161085,8 @@
     "road|K|present": 752
    },
    "v2": {
+    "G_degenerate_links_n": 722,
+    "G_degenerate_links_outside_leaf_rect": [],
     "G_divided": true,
     "G_leaves": [
      {
@@ -161160,12 +161273,24 @@
      "redundant (every sample within 1 R step of a kept G piece)": 13,
      "sub-quantum (<1 R step)": 295
     },
+    "dropped_components": {
+     "max_len_raw": 5.522,
+     "n": 237
+    },
+    "dropped_max_sampled_dist_to_kept_raw": 0.768,
+    "dropped_records_distinct": {
+     "dropped_par_distinct": 308,
+     "shared_with_kept": 0
+    },
+    "dropped_sharing_endpoint_with_kept": 294,
     "dropped_within_1_of_kept_all_vertices": 308,
     "kept_any_class_v1_rule": {
      "absent": 815,
      "ambiguous": 241,
      "present": 1053
     },
+    "kept_len_exact_raw": 4644.5,
+    "kept_sub_quantum": 968,
     "piece_shape": {
      "dropped_len_raw": {
       "max": 4.685,
@@ -161221,7 +161346,7 @@
       "200": 1.0,
       "500": 1.0
      },
-     "metric": "per-piece median of sampled distance to the nearest R road of any class, parent raw units (clamped at 600)",
+     "metric": "per-piece median of sampled distance to the nearest R road of any class, parent raw units (out-of-reach values set to 600; in-reach values exact)",
      "n": 2109,
      "source": "kept pieces of the trimmed sub-cell (exact dump geometry)"
     },
@@ -161345,6 +161470,7 @@
       "R_len_in_rect_raw": 6623.1
      }
     },
+    "spearman_rank_vs_length": -0.796,
     "trimmed_sub": [
      3,
      0
