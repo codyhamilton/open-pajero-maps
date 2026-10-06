@@ -1,4 +1,71 @@
-# Implementation — 42 encoder trim vs R parity
+# Encoder content trim vs R parity (R-G9-3) — proven cause with named children
+
+Plan 42 closed in two phases with a **proven cause**. There is no encoder
+change, and the oracle in force stays `4e6b0de7`. All trimming on the
+oracle is the `dv_shrink` tier, in two sub-cells.
+
+- **L0 (1755,591)(2,1):** R lacks the 227 dropped type-288 backgrounds
+  (type census: R has 0 type-288 in the parent).
+  - The 207 roads are cut to 0 by the shrink fallback (fixed kind order
+    road → background → name), under a frame overflowing with type-288
+    content R does not have.
+  - R has 3,695 raw of road there, so the road loss is a **real deviation
+    by volume**; per-item identity is not decidable. Child R-G9-3-a.
+- **L8 (7,4)(3,0):** the 308 dropped pieces are 2-vertex stubs. 295 are
+  sub-quantum, all lie within 0.768 raw of kept roads (R step 1 raw), and
+  they are 2.0% of length.
+  - No geometry is lost at R's resolution. The count reflects **G
+    fragmentation** (R-G9-3-b).
+  - The first-pass "priority difference" verdict was withdrawn after the
+    review (FAIL → rework → PASS_WITH_FOLLOWUPS).
+- **Named children (open, maps-parity-carried):**
+  - R-G9-3-a: L0 road loss;
+  - R-G9-3-b: L8 fragmentation;
+  - R-G9-3-c: L8 under-selection against R (dc 10 missing);
+  - R-G9-3-d: 5 degenerate G L0 links at the parent's east edge.
+- **Witness:** kept at
+  `docs/plans/04-c-core-orchestration/triage/trim_r_parity/`.
+- **Reviews:** a Claude CLI clean-context seat (disclosed; Codex is
+  weekly-limited).
+
+Plan 04 Phase 3 is **not** claimed closed.
+
+## Intent
+User request, verbatim (DESIGN):
+> Cody's standing rule (2026-10-05, hard): Maps is complete only when end-to-end generation matches the original DVD in every aspect that can be verified, every claim, assumption, and implementation aspect is verified and proven, and there are no unexplained deviations — each has a root cause.
+
+Close Design-owned residual row R-G9-3: encoder content trim on the oracle in force, with no R-parity proof and invisible to K1. Outcome: expand-to-zero with a confined, recorded successor oracle, or a proven cause (including proven non-deviation if R drops exactly the same items). Never a relabel. Oracle `4e6b0de7…` or later. Heavy work only under flock plus the wrapper (encode ≤ `-j4`, K1 ≤ `-j6`). Master direct. No plan 04 Phases 4–6. Do not run the 3-90 brief.
+
+## Why This Existed
+The encoder trims items by priority when a divided sub-cell cannot fit the 131,070 B frame ceiling (`_e2.c` `dv_trim`, "last tier"). It prints `** >1% BLOCKER **` when a level's dropped share exceeds 1% (`parser/build_alldata.py` ~L645–652).
+
+**Ground (master `b10e787`; manifest of `4e6b0de7` read-only on host):**
+
+| Level | Kind | Dropped / total | Sub-cells | Note |
+| --- | --- | --- | --- | --- |
+| 8 | road | 308 / 14,012 (2.198%) | 1 (hard-ceiling fallback sub-cell (3,0), 308 / 2,417) | prints BLOCKER; identical on `87a01b14`, `013586b5`, `4ed9cd80`, `4e6b0de7` (3-14 TRIM ruling) |
+| 0 | road | 207 / 3,015,057 | 1 | same absolutes as the `l0_divided_trim_halo` golden window (1755,591)–(1756,592) |
+| 0 | background | 227 / 11,029,580 | 1 | same window |
+
+- **Sources:** `output/scratch-34/G_new/manifest.json` `trimmed_items`; plan 35 `run_p1.log` L134, L152–153; plan 04 IMPLEMENTATION L230–233 (Design TRIM ruling 2026-10-03: "known budget … Design ticket for any expand-to-zero follow-up").
+- **No R-parity measurement exists** for these items. K1 checks G against the spool only for emitted items, so trimmed items are invisible to it. The manifest gives counts only, not item identity or parent cell (except via the window golden and the build log).
+
+R is the reference. If R carries the trimmed items in those parcels (for example, deeper division or a different sub-cell split), our trim is a deviation. If R carries none of them, or exactly the same subset, that is evidence for a shared budget rule.
+
+## What Landed
+
+Master direct; no `parser/` change.
+- **Phase 1:**
+  - The instrumented item dump (throwaway worktree, byte-equal frames) and
+    the R decode.
+  - The first verdict FAILED review. It was reworked with a calibrated
+    control, volume, census and stub analysis, then re-reviewed
+    PASS_WITH_FOLLOWUPS, and N1–N9 were applied.
+- **Phase 2:** proven-cause disposition; R-G9-3 discharged with children
+  a–d; OVERVIEW updated. The re-review recommended this exact close.
+- **Close-out:** the witness and reviews moved to
+  `triage/trim_r_parity/`. The witness was re-run at the new path with an
+  unchanged JSON.
 
 Master direct. Oracle in force: `4e6b0de7…`.
 
@@ -8,7 +75,7 @@ Master direct. Oracle in force: `4e6b0de7…`.
 
 The trimmed items were dumped by a bounded instrumentation hook in a
 **throwaway worktree** at `20b4bf9`. The hook is in
-`witness/instr_e2.patch` and is not landed. It writes to
+`triage/trim_r_parity/instr_e2.patch` and is not landed. It writes to
 `KW_TRIM_DUMP=<path>` from both trim tiers in `_e2.c`: `dv_trim` (tag
 `trim`) and `dv_shrink` (tag `shrink`).
 
@@ -42,8 +109,8 @@ The trimmed items were dumped by a bounded instrumentation hook in a
 | L0 window | `--window 0 1755 591 1756 592 -j 1` | road 207/1,083 in 1 sub-cell; background 227/8,824 in 1 sub-cell |
 | L8 level | `--levels 8 -j 1` | road 308/14,012 in 1 sub-cell |
 
-- **Dumps:** `witness/trim_l0_1755_591.tsv.gz` (6,849 rows) and
-  `witness/trim_l8_7_4.tsv.gz` (2,417 rows).
+- **Dumps:** `triage/trim_r_parity/trim_l0_1755_591.tsv.gz` (6,849 rows) and
+  `triage/trim_r_parity/trim_l8_7_4.tsv.gz` (2,417 rows).
 - **Where trimming happens:** all trimming is in the `shrink` tier (the
   whole sub-cell is over the 131,070 B ceiling). The `trim` tier fired 0
   times.
@@ -69,9 +136,9 @@ The trimmed items were dumped by a bounded instrumentation hook in a
 
 ### R decode (Contract 2) and G control (Contract 3)
 
-`witness/trim_witness.py` does bounded R leaf preads and bounded leaf
+`triage/trim_r_parity/trim_witness.py` does bounded R leaf preads and bounded leaf
 decodes of the oracle `4e6b0de7` (G, read only). It writes
-`witness/trim_witness.json`.
+`triage/trim_r_parity/trim_witness.json`.
 
 | parent | R topology | G topology |
 |---|---|---|
@@ -253,7 +320,7 @@ drives no verdict**.
 ### Phase 1 review
 
 Claude CLI clean-context seat (disclosed; Codex is weekly-limited):
-**FAIL** on P1.3 / P1.4 / C3. The text is kept as `reviews/p1-REVIEW.md`.
+**FAIL** on P1.3 / P1.4 / C3. The text is kept as `triage/trim_r_parity/reviews/p1-REVIEW.md`.
 Fixes:
 
 - **F1:** the L8 rule now uses piece length, redundancy against kept pieces
@@ -273,7 +340,7 @@ Fixes:
 
 Claude CLI clean-context seat (disclosed): **PASS_WITH_FOLLOWUPS**. F1–F8
 are resolved; F8 mostly, with N6 now fixed. The text is kept as
-`reviews/p1b-REVIEW.md`. New findings N1–N9 are applied:
+`triage/trim_r_parity/reviews/p1b-REVIEW.md`. New findings N1–N9 are applied:
 
 - **N1:** G under-selection at L8 is recorded (R-G9-3-c), and hypothesis (b)
   is relabelled.
@@ -327,3 +394,22 @@ The witness was re-run after the fixes.
 - **Witness:** at close it moves to
   `docs/plans/04-c-core-orchestration/triage/trim_r_parity/`.
 
+## Commits
+
+- `e4d2dca` — P1 witness (`:1`).
+- `ca85ede` — P1 rework after the FAIL review (`:1`).
+- `d0a3b5c` — P1 re-review follow-ups (`:1`).
+- `fbed5c3` — P2 proven cause, residuals and OVERVIEW (`:2`).
+- Close-out (`:done`).
+
+## Not done
+
+- No expand-to-zero. It would need either the rejected ceiling raise or a
+  cut rule R does not evidence.
+- Upstream items stay with Design as R-G9-3-a..d:
+  - type-288 over-emission;
+  - the kind-order policy;
+  - L8 fragmentation and under-selection;
+  - the degenerate links.
+- Per-item `dv_key` fields and bytes were not captured (stated limit).
+- Codex confirmation waits for the Codex reset (2026-10-10 11:50 AEST).
