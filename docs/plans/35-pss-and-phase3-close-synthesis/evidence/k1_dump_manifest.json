@@ -1,0 +1,908 @@
+{
+  "engine": "c",
+  "fields": [
+    {
+      "name": "lat",
+      "type": "f64"
+    },
+    {
+      "name": "lon",
+      "type": "f64"
+    },
+    {
+      "name": "err",
+      "type": "f64"
+    },
+    {
+      "name": "ix",
+      "type": "i32"
+    },
+    {
+      "name": "iy",
+      "type": "i32"
+    },
+    {
+      "name": "vx",
+      "type": "i32"
+    },
+    {
+      "name": "vy",
+      "type": "i32"
+    },
+    {
+      "name": "reason",
+      "type": "i32"
+    },
+    {
+      "name": "code",
+      "type": "i32"
+    },
+    {
+      "name": "p0",
+      "type": "u16"
+    },
+    {
+      "name": "p1",
+      "type": "u16"
+    },
+    {
+      "name": "p2",
+      "type": "u16"
+    },
+    {
+      "name": "p3",
+      "type": "u16"
+    },
+    {
+      "name": "p4",
+      "type": "u16"
+    },
+    {
+      "name": "p5",
+      "type": "u16"
+    },
+    {
+      "name": "p6",
+      "type": "u16"
+    },
+    {
+      "name": "depth",
+      "type": "u8"
+    },
+    {
+      "name": "kind",
+      "type": "u8"
+    },
+    {
+      "name": "level",
+      "type": "u8"
+    },
+    {
+      "name": "shape",
+      "type": "i32"
+    },
+    {
+      "name": "vert",
+      "type": "i32"
+    },
+    {
+      "name": "onb",
+      "type": "u8"
+    },
+    {
+      "name": "d_any",
+      "type": "f64"
+    },
+    {
+      "name": "any_type",
+      "type": "i32"
+    },
+    {
+      "name": "in_eo_same",
+      "type": "u8"
+    },
+    {
+      "name": "in_wn_same",
+      "type": "u8"
+    },
+    {
+      "name": "in_eo_any",
+      "type": "u8"
+    },
+    {
+      "name": "src_ix",
+      "type": "i32"
+    },
+    {
+      "name": "src_iy",
+      "type": "i32"
+    },
+    {
+      "name": "src_rec",
+      "type": "i32"
+    },
+    {
+      "name": "src_tall",
+      "type": "u8"
+    },
+    {
+      "name": "src_nv",
+      "type": "i32"
+    },
+    {
+      "name": "src_maxseg",
+      "type": "f64"
+    },
+    {
+      "name": "d_src",
+      "type": "f64"
+    },
+    {
+      "name": "dcls",
+      "type": "i32"
+    },
+    {
+      "name": "dnv",
+      "type": "i32"
+    }
+  ],
+  "kinds": {
+    "background": {
+      "fields": [
+        {
+          "name": "lat",
+          "type": "f64"
+        },
+        {
+          "name": "lon",
+          "type": "f64"
+        },
+        {
+          "name": "err",
+          "type": "f64"
+        },
+        {
+          "name": "ix",
+          "type": "i32"
+        },
+        {
+          "name": "iy",
+          "type": "i32"
+        },
+        {
+          "name": "vx",
+          "type": "i32"
+        },
+        {
+          "name": "vy",
+          "type": "i32"
+        },
+        {
+          "name": "reason",
+          "type": "i32"
+        },
+        {
+          "name": "code",
+          "type": "i32"
+        },
+        {
+          "name": "p0",
+          "type": "u16"
+        },
+        {
+          "name": "p1",
+          "type": "u16"
+        },
+        {
+          "name": "p2",
+          "type": "u16"
+        },
+        {
+          "name": "p3",
+          "type": "u16"
+        },
+        {
+          "name": "p4",
+          "type": "u16"
+        },
+        {
+          "name": "p5",
+          "type": "u16"
+        },
+        {
+          "name": "p6",
+          "type": "u16"
+        },
+        {
+          "name": "depth",
+          "type": "u8"
+        },
+        {
+          "name": "kind",
+          "type": "u8"
+        },
+        {
+          "name": "level",
+          "type": "u8"
+        },
+        {
+          "name": "shape",
+          "type": "i32"
+        },
+        {
+          "name": "vert",
+          "type": "i32"
+        },
+        {
+          "name": "onb",
+          "type": "u8"
+        },
+        {
+          "name": "d_any",
+          "type": "f64"
+        },
+        {
+          "name": "any_type",
+          "type": "i32"
+        },
+        {
+          "name": "in_eo_same",
+          "type": "u8"
+        },
+        {
+          "name": "in_wn_same",
+          "type": "u8"
+        },
+        {
+          "name": "in_eo_any",
+          "type": "u8"
+        },
+        {
+          "name": "src_ix",
+          "type": "i32"
+        },
+        {
+          "name": "src_iy",
+          "type": "i32"
+        },
+        {
+          "name": "src_rec",
+          "type": "i32"
+        },
+        {
+          "name": "src_tall",
+          "type": "u8"
+        },
+        {
+          "name": "src_nv",
+          "type": "i32"
+        },
+        {
+          "name": "src_maxseg",
+          "type": "f64"
+        },
+        {
+          "name": "d_src",
+          "type": "f64"
+        },
+        {
+          "name": "dcls",
+          "type": "i32"
+        },
+        {
+          "name": "dnv",
+          "type": "i32"
+        }
+      ],
+      "file": "background.bin",
+      "row_size": 144,
+      "rows": 0
+    },
+    "background_boundary": {
+      "fields": [
+        {
+          "name": "lat",
+          "type": "f64"
+        },
+        {
+          "name": "lon",
+          "type": "f64"
+        },
+        {
+          "name": "err",
+          "type": "f64"
+        },
+        {
+          "name": "ix",
+          "type": "i32"
+        },
+        {
+          "name": "iy",
+          "type": "i32"
+        },
+        {
+          "name": "vx",
+          "type": "i32"
+        },
+        {
+          "name": "vy",
+          "type": "i32"
+        },
+        {
+          "name": "reason",
+          "type": "i32"
+        },
+        {
+          "name": "code",
+          "type": "i32"
+        },
+        {
+          "name": "p0",
+          "type": "u16"
+        },
+        {
+          "name": "p1",
+          "type": "u16"
+        },
+        {
+          "name": "p2",
+          "type": "u16"
+        },
+        {
+          "name": "p3",
+          "type": "u16"
+        },
+        {
+          "name": "p4",
+          "type": "u16"
+        },
+        {
+          "name": "p5",
+          "type": "u16"
+        },
+        {
+          "name": "p6",
+          "type": "u16"
+        },
+        {
+          "name": "depth",
+          "type": "u8"
+        },
+        {
+          "name": "kind",
+          "type": "u8"
+        },
+        {
+          "name": "level",
+          "type": "u8"
+        },
+        {
+          "name": "shape",
+          "type": "i32"
+        },
+        {
+          "name": "vert",
+          "type": "i32"
+        },
+        {
+          "name": "onb",
+          "type": "u8"
+        },
+        {
+          "name": "d_any",
+          "type": "f64"
+        },
+        {
+          "name": "any_type",
+          "type": "i32"
+        },
+        {
+          "name": "in_eo_same",
+          "type": "u8"
+        },
+        {
+          "name": "in_wn_same",
+          "type": "u8"
+        },
+        {
+          "name": "in_eo_any",
+          "type": "u8"
+        },
+        {
+          "name": "src_ix",
+          "type": "i32"
+        },
+        {
+          "name": "src_iy",
+          "type": "i32"
+        },
+        {
+          "name": "src_rec",
+          "type": "i32"
+        },
+        {
+          "name": "src_tall",
+          "type": "u8"
+        },
+        {
+          "name": "src_nv",
+          "type": "i32"
+        },
+        {
+          "name": "src_maxseg",
+          "type": "f64"
+        },
+        {
+          "name": "d_src",
+          "type": "f64"
+        },
+        {
+          "name": "dcls",
+          "type": "i32"
+        },
+        {
+          "name": "dnv",
+          "type": "i32"
+        }
+      ],
+      "file": "background_boundary.bin",
+      "row_size": 144,
+      "rows": 0
+    },
+    "completeness": {
+      "fields": [
+        {
+          "name": "lat",
+          "type": "f64"
+        },
+        {
+          "name": "lon",
+          "type": "f64"
+        },
+        {
+          "name": "err",
+          "type": "f64"
+        },
+        {
+          "name": "ix",
+          "type": "i32"
+        },
+        {
+          "name": "iy",
+          "type": "i32"
+        },
+        {
+          "name": "vx",
+          "type": "i32"
+        },
+        {
+          "name": "vy",
+          "type": "i32"
+        },
+        {
+          "name": "reason",
+          "type": "i32"
+        },
+        {
+          "name": "code",
+          "type": "i32"
+        },
+        {
+          "name": "p0",
+          "type": "u16"
+        },
+        {
+          "name": "p1",
+          "type": "u16"
+        },
+        {
+          "name": "p2",
+          "type": "u16"
+        },
+        {
+          "name": "p3",
+          "type": "u16"
+        },
+        {
+          "name": "p4",
+          "type": "u16"
+        },
+        {
+          "name": "p5",
+          "type": "u16"
+        },
+        {
+          "name": "p6",
+          "type": "u16"
+        },
+        {
+          "name": "depth",
+          "type": "u8"
+        },
+        {
+          "name": "kind",
+          "type": "u8"
+        },
+        {
+          "name": "level",
+          "type": "u8"
+        },
+        {
+          "name": "shape",
+          "type": "i32"
+        },
+        {
+          "name": "vert",
+          "type": "i32"
+        },
+        {
+          "name": "onb",
+          "type": "u8"
+        },
+        {
+          "name": "d_any",
+          "type": "f64"
+        },
+        {
+          "name": "any_type",
+          "type": "i32"
+        },
+        {
+          "name": "in_eo_same",
+          "type": "u8"
+        },
+        {
+          "name": "in_wn_same",
+          "type": "u8"
+        },
+        {
+          "name": "in_eo_any",
+          "type": "u8"
+        },
+        {
+          "name": "src_ix",
+          "type": "i32"
+        },
+        {
+          "name": "src_iy",
+          "type": "i32"
+        },
+        {
+          "name": "src_rec",
+          "type": "i32"
+        },
+        {
+          "name": "src_tall",
+          "type": "u8"
+        },
+        {
+          "name": "src_nv",
+          "type": "i32"
+        },
+        {
+          "name": "src_maxseg",
+          "type": "f64"
+        },
+        {
+          "name": "d_src",
+          "type": "f64"
+        },
+        {
+          "name": "dcls",
+          "type": "i32"
+        },
+        {
+          "name": "dnv",
+          "type": "i32"
+        }
+      ],
+      "file": "completeness.bin",
+      "row_size": 144,
+      "rows": 0
+    },
+    "interior_cover": {
+      "fields": [
+        {
+          "name": "lat",
+          "type": "f64"
+        },
+        {
+          "name": "lon",
+          "type": "f64"
+        },
+        {
+          "name": "err",
+          "type": "f64"
+        },
+        {
+          "name": "ix",
+          "type": "i32"
+        },
+        {
+          "name": "iy",
+          "type": "i32"
+        },
+        {
+          "name": "vx",
+          "type": "i32"
+        },
+        {
+          "name": "vy",
+          "type": "i32"
+        },
+        {
+          "name": "reason",
+          "type": "i32"
+        },
+        {
+          "name": "code",
+          "type": "i32"
+        },
+        {
+          "name": "p0",
+          "type": "u16"
+        },
+        {
+          "name": "p1",
+          "type": "u16"
+        },
+        {
+          "name": "p2",
+          "type": "u16"
+        },
+        {
+          "name": "p3",
+          "type": "u16"
+        },
+        {
+          "name": "p4",
+          "type": "u16"
+        },
+        {
+          "name": "p5",
+          "type": "u16"
+        },
+        {
+          "name": "p6",
+          "type": "u16"
+        },
+        {
+          "name": "depth",
+          "type": "u8"
+        },
+        {
+          "name": "kind",
+          "type": "u8"
+        },
+        {
+          "name": "level",
+          "type": "u8"
+        },
+        {
+          "name": "shape",
+          "type": "i32"
+        },
+        {
+          "name": "vert",
+          "type": "i32"
+        },
+        {
+          "name": "onb",
+          "type": "u8"
+        },
+        {
+          "name": "d_any",
+          "type": "f64"
+        },
+        {
+          "name": "any_type",
+          "type": "i32"
+        },
+        {
+          "name": "in_eo_same",
+          "type": "u8"
+        },
+        {
+          "name": "in_wn_same",
+          "type": "u8"
+        },
+        {
+          "name": "in_eo_any",
+          "type": "u8"
+        },
+        {
+          "name": "src_ix",
+          "type": "i32"
+        },
+        {
+          "name": "src_iy",
+          "type": "i32"
+        },
+        {
+          "name": "src_rec",
+          "type": "i32"
+        },
+        {
+          "name": "src_tall",
+          "type": "u8"
+        },
+        {
+          "name": "src_nv",
+          "type": "i32"
+        },
+        {
+          "name": "src_maxseg",
+          "type": "f64"
+        },
+        {
+          "name": "d_src",
+          "type": "f64"
+        },
+        {
+          "name": "dcls",
+          "type": "i32"
+        },
+        {
+          "name": "dnv",
+          "type": "i32"
+        }
+      ],
+      "file": "interior_cover.bin",
+      "row_size": 144,
+      "rows": 0
+    },
+    "name_anchor": {
+      "fields": [
+        {
+          "name": "lat",
+          "type": "f64"
+        },
+        {
+          "name": "lon",
+          "type": "f64"
+        },
+        {
+          "name": "err",
+          "type": "f64"
+        },
+        {
+          "name": "ix",
+          "type": "i32"
+        },
+        {
+          "name": "iy",
+          "type": "i32"
+        },
+        {
+          "name": "vx",
+          "type": "i32"
+        },
+        {
+          "name": "vy",
+          "type": "i32"
+        },
+        {
+          "name": "reason",
+          "type": "i32"
+        },
+        {
+          "name": "code",
+          "type": "i32"
+        },
+        {
+          "name": "p0",
+          "type": "u16"
+        },
+        {
+          "name": "p1",
+          "type": "u16"
+        },
+        {
+          "name": "p2",
+          "type": "u16"
+        },
+        {
+          "name": "p3",
+          "type": "u16"
+        },
+        {
+          "name": "p4",
+          "type": "u16"
+        },
+        {
+          "name": "p5",
+          "type": "u16"
+        },
+        {
+          "name": "p6",
+          "type": "u16"
+        },
+        {
+          "name": "depth",
+          "type": "u8"
+        },
+        {
+          "name": "kind",
+          "type": "u8"
+        },
+        {
+          "name": "level",
+          "type": "u8"
+        },
+        {
+          "name": "shape",
+          "type": "i32"
+        },
+        {
+          "name": "vert",
+          "type": "i32"
+        },
+        {
+          "name": "onb",
+          "type": "u8"
+        },
+        {
+          "name": "d_any",
+          "type": "f64"
+        },
+        {
+          "name": "any_type",
+          "type": "i32"
+        },
+        {
+          "name": "in_eo_same",
+          "type": "u8"
+        },
+        {
+          "name": "in_wn_same",
+          "type": "u8"
+        },
+        {
+          "name": "in_eo_any",
+          "type": "u8"
+        },
+        {
+          "name": "src_ix",
+          "type": "i32"
+        },
+        {
+          "name": "src_iy",
+          "type": "i32"
+        },
+        {
+          "name": "src_rec",
+          "type": "i32"
+        },
+        {
+          "name": "src_tall",
+          "type": "u8"
+        },
+        {
+          "name": "src_nv",
+          "type": "i32"
+        },
+        {
+          "name": "src_maxseg",
+          "type": "f64"
+        },
+        {
+          "name": "d_src",
+          "type": "f64"
+        },
+        {
+          "name": "dcls",
+          "type": "i32"
+        },
+        {
+          "name": "dnv",
+          "type": "i32"
+        }
+      ],
+      "file": "name_anchor.bin",
+      "row_size": 144,
+      "rows": 0
+    }
+  },
+  "row_size": 144,
+  "tool": "quantisation_roundtrip"
+}

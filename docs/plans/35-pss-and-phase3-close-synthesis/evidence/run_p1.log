@@ -1,0 +1,247 @@
+HEAD 9c99dcb8e7a456b0a128ef1c863527e2f601ef1d 11:05:40
+== p1_before 11:05:40
+run_heavy_python: unit=maps-heavy-2270240 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2_gates.py', 'snapshot', '--out', 'output/scratch-35/protected_before.json']
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_before.json", "max_rss_kib": 25516, "memory_peak": 6087610368, "wall_s": 13.336}
+== p1_sha_oracle 11:05:53
+run_heavy_python: unit=maps-heavy-2271309 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2_gates.py', 'sha', '--path', 'output/scratch-34/G_new/ALLDATA.KWI', '--expected', '4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448', '--out', 'output/scratch-35/sha_oracle.json']
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_sha_oracle.json", "max_rss_kib": 26172, "memory_peak": 23998464, "wall_s": 1.179}
+== p1_sha_perth 11:05:55
+run_heavy_python: unit=maps-heavy-2271376 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2_gates.py', 'sha', '--path', 'output/scratch-29/perth_base/ALLDATA.KWI', '--expected', '04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728', '--out', 'output/scratch-35/sha_perth_pin.json']
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_sha_perth.json", "max_rss_kib": 26184, "memory_peak": 54972416, "wall_s": 0.097}
+== p1_k1_j6_1 11:05:55
+run_heavy_python: unit=maps-heavy-2271382 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'parser/tools/quantisation_roundtrip.py', '--disc', 'output/scratch-34/G_new/ALLDATA.KWI', '--spool', 'output/extract_timing/spool', '-j', '6', '--engine', 'c', '--out', 'output/scratch-35/k1_j6_1.json']
+[quantisation_roundtrip] 2137 blocks over levels [0, 2, 4, 6, 8, 10, 12], 2163 ranges (3.2s)
+[quantisation_roundtrip] 500/2163 ranges (70.8s)
+[quantisation_roundtrip] 1000/2163 ranges (76.4s)
+[quantisation_roundtrip] 1500/2163 ranges (77.7s)
+[quantisation_roundtrip] 2000/2163 ranges (79.6s)
+[quantisation_roundtrip] 2163/2163 ranges (79.7s)
+[quantisation_roundtrip] range: checked 285,809,587 failing 0 worst 0.0
+[quantisation_roundtrip] step: checked 227,935,489 failing 0 worst 0.0
+[quantisation_roundtrip] road_node: checked 42,994,980 failing 0 worst 0.499998
+[quantisation_roundtrip] road_point: checked 0 failing 0 worst 0.0
+[quantisation_roundtrip] name_anchor: checked 2,317,055 failing 0 worst 0.499999
+[quantisation_roundtrip] background: checked 176,386,506 failing 0 worst 0.499999
+[quantisation_roundtrip] background_boundary: checked 64,111,046 failing 0 worst 0.499985
+[quantisation_roundtrip] interior_cover: checked 1,590,566 failing 0 worst 0.0
+[quantisation_roundtrip] completeness: checked 1,800,514 failing 0 worst 0.0
+[quantisation_roundtrip] engine c: 2163 ranges, PSS peak 7372 MiB, C check 436.181s (D1 7.152s, summed over workers)
+[quantisation_roundtrip] PASS in 79.9s
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_k1_j6_1.json", "max_rss_kib": 4403208, "memory_peak": 3467198464, "wall_s": 80.218}
+== p1_k1_j6_2 11:07:15
+run_heavy_python: unit=maps-heavy-2277894 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'parser/tools/quantisation_roundtrip.py', '--disc', 'output/scratch-34/G_new/ALLDATA.KWI', '--spool', 'output/extract_timing/spool', '-j', '6', '--engine', 'c', '--out', 'output/scratch-35/k1_j6_2.json']
+[quantisation_roundtrip] 2137 blocks over levels [0, 2, 4, 6, 8, 10, 12], 2163 ranges (3.2s)
+[quantisation_roundtrip] 500/2163 ranges (70.7s)
+[quantisation_roundtrip] 1000/2163 ranges (76.1s)
+[quantisation_roundtrip] 1500/2163 ranges (77.4s)
+[quantisation_roundtrip] 2000/2163 ranges (79.2s)
+[quantisation_roundtrip] 2163/2163 ranges (79.3s)
+[quantisation_roundtrip] range: checked 285,809,587 failing 0 worst 0.0
+[quantisation_roundtrip] step: checked 227,935,489 failing 0 worst 0.0
+[quantisation_roundtrip] road_node: checked 42,994,980 failing 0 worst 0.499998
+[quantisation_roundtrip] road_point: checked 0 failing 0 worst 0.0
+[quantisation_roundtrip] name_anchor: checked 2,317,055 failing 0 worst 0.499999
+[quantisation_roundtrip] background: checked 176,386,506 failing 0 worst 0.499999
+[quantisation_roundtrip] background_boundary: checked 64,111,046 failing 0 worst 0.499985
+[quantisation_roundtrip] interior_cover: checked 1,590,566 failing 0 worst 0.0
+[quantisation_roundtrip] completeness: checked 1,800,514 failing 0 worst 0.0
+[quantisation_roundtrip] engine c: 2163 ranges, PSS peak 7379 MiB, C check 433.349s (D1 7.147s, summed over workers)
+[quantisation_roundtrip] PASS in 79.5s
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_k1_j6_2.json", "max_rss_kib": 4406376, "memory_peak": 3542409216, "wall_s": 79.845}
+== p1_k1_j6_3 11:08:35
+run_heavy_python: unit=maps-heavy-2284282 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'parser/tools/quantisation_roundtrip.py', '--disc', 'output/scratch-34/G_new/ALLDATA.KWI', '--spool', 'output/extract_timing/spool', '-j', '6', '--engine', 'c', '--out', 'output/scratch-35/k1_j6_3.json']
+[quantisation_roundtrip] 2137 blocks over levels [0, 2, 4, 6, 8, 10, 12], 2163 ranges (3.4s)
+[quantisation_roundtrip] 500/2163 ranges (70.7s)
+[quantisation_roundtrip] 1000/2163 ranges (76.2s)
+[quantisation_roundtrip] 1500/2163 ranges (77.5s)
+[quantisation_roundtrip] 2000/2163 ranges (79.4s)
+[quantisation_roundtrip] 2163/2163 ranges (79.5s)
+[quantisation_roundtrip] range: checked 285,809,587 failing 0 worst 0.0
+[quantisation_roundtrip] step: checked 227,935,489 failing 0 worst 0.0
+[quantisation_roundtrip] road_node: checked 42,994,980 failing 0 worst 0.499998
+[quantisation_roundtrip] road_point: checked 0 failing 0 worst 0.0
+[quantisation_roundtrip] name_anchor: checked 2,317,055 failing 0 worst 0.499999
+[quantisation_roundtrip] background: checked 176,386,506 failing 0 worst 0.499999
+[quantisation_roundtrip] background_boundary: checked 64,111,046 failing 0 worst 0.499985
+[quantisation_roundtrip] interior_cover: checked 1,590,566 failing 0 worst 0.0
+[quantisation_roundtrip] completeness: checked 1,800,514 failing 0 worst 0.0
+[quantisation_roundtrip] engine c: 2163 ranges, PSS peak 7422 MiB, C check 433.584s (D1 7.058s, summed over workers)
+[quantisation_roundtrip] PASS in 79.7s
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_k1_j6_3.json", "max_rss_kib": 4430980, "memory_peak": 3472334848, "wall_s": 80.013}
+== p1_k1_j1 11:09:55
+run_heavy_python: unit=maps-heavy-2290544 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'parser/tools/quantisation_roundtrip.py', '--disc', 'output/scratch-34/G_new/ALLDATA.KWI', '--spool', 'output/extract_timing/spool', '-j', '1', '--engine', 'c', '--out', 'output/scratch-35/k1_j1.json']
+[quantisation_roundtrip] 2137 blocks over levels [0, 2, 4, 6, 8, 10, 12], 2163 ranges (3.2s)
+[quantisation_roundtrip] 500/2163 ranges (373.1s)
+[quantisation_roundtrip] 1000/2163 ranges (402.8s)
+[quantisation_roundtrip] 1500/2163 ranges (408.6s)
+[quantisation_roundtrip] 2000/2163 ranges (417.4s)
+[quantisation_roundtrip] 2163/2163 ranges (417.5s)
+[quantisation_roundtrip] range: checked 285,809,587 failing 0 worst 0.0
+[quantisation_roundtrip] step: checked 227,935,489 failing 0 worst 0.0
+[quantisation_roundtrip] road_node: checked 42,994,980 failing 0 worst 0.499998
+[quantisation_roundtrip] road_point: checked 0 failing 0 worst 0.0
+[quantisation_roundtrip] name_anchor: checked 2,317,055 failing 0 worst 0.499999
+[quantisation_roundtrip] background: checked 176,386,506 failing 0 worst 0.499999
+[quantisation_roundtrip] background_boundary: checked 64,111,046 failing 0 worst 0.499985
+[quantisation_roundtrip] interior_cover: checked 1,590,566 failing 0 worst 0.0
+[quantisation_roundtrip] completeness: checked 1,800,514 failing 0 worst 0.0
+[quantisation_roundtrip] engine c: 2163 ranges, PSS peak 6349 MiB, C check 410.153s (D1 6.426s, summed over workers)
+[quantisation_roundtrip] PASS in 417.7s
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_k1_j1.json", "max_rss_kib": 6510872, "memory_peak": 1178214400, "wall_s": 418.133}
+== p1_k1_dump 11:16:53
+run_heavy_python: unit=maps-heavy-2323286 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'parser/tools/quantisation_roundtrip.py', '--disc', 'output/scratch-34/G_new/ALLDATA.KWI', '--spool', 'output/extract_timing/spool', '-j', '6', '--engine', 'c', '--out', 'output/scratch-35/k1_dump.json', '--dump-failures', 'output/scratch-35/dump']
+[quantisation_roundtrip] 2137 blocks over levels [0, 2, 4, 6, 8, 10, 12], 2163 ranges (3.3s)
+[quantisation_roundtrip] 500/2163 ranges (71.2s)
+[quantisation_roundtrip] 1000/2163 ranges (76.9s)
+[quantisation_roundtrip] 1500/2163 ranges (78.3s)
+[quantisation_roundtrip] 2000/2163 ranges (80.2s)
+[quantisation_roundtrip] 2163/2163 ranges (80.3s)
+[quantisation_roundtrip] dump: name_anchor 0, background 0, background_boundary 0, interior_cover 0, completeness 0
+[quantisation_roundtrip] range: checked 285,809,587 failing 0 worst 0.0
+[quantisation_roundtrip] step: checked 227,935,489 failing 0 worst 0.0
+[quantisation_roundtrip] road_node: checked 42,994,980 failing 0 worst 0.499998
+[quantisation_roundtrip] road_point: checked 0 failing 0 worst 0.0
+[quantisation_roundtrip] name_anchor: checked 2,317,055 failing 0 worst 0.499999
+[quantisation_roundtrip] background: checked 176,386,506 failing 0 worst 0.499999
+[quantisation_roundtrip] background_boundary: checked 64,111,046 failing 0 worst 0.499985
+[quantisation_roundtrip] interior_cover: checked 1,590,566 failing 0 worst 0.0
+[quantisation_roundtrip] completeness: checked 1,800,514 failing 0 worst 0.0
+[quantisation_roundtrip] engine c: 2163 ranges, PSS peak 7488 MiB, C check 438.952s (D1 7.465s, summed over workers)
+[quantisation_roundtrip] PASS in 80.6s
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_k1_dump.json", "max_rss_kib": 4451492, "memory_peak": 3389931520, "wall_s": 80.941}
+== p1_encode_au 11:18:15
+run_heavy_python: unit=maps-heavy-2331186 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'parser/build_alldata.py', '--spool', 'output/extract_timing/spool', '--out', 'output/scratch-35/G_rebuild/ALLDATA.KWI', '-j4']
+level 12: encoding ...
+level 12: out-of-span names dropped: 0
+level 12: overlap: 0 shapes shared into 0 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 12: 1 parcels (0 parents divided), 646 frame bytes, max frame 646 bytes (threshold 131,070) [0.0s]
+level 10: encoding ...
+level 10: out-of-span names dropped: 0
+level 10: overlap: 0 shapes shared into 0 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 10: 9 parcels (0 parents divided), 2,294 frame bytes, max frame 600 bytes (threshold 131,070) [0.0s]
+level 8: encoding ...
+level 8: out-of-span names dropped: 0
+level 8: overlap: 17 shapes shared into 17 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 8: TRIM road: dropped 308/14,012 (2.198%) in 1 sub-cells  ** >1% BLOCKER **
+level 8: 95 parcels (4 parents divided), 1,279,590 frame bytes, max frame 131,056 bytes (threshold 131,070) [0.1s]
+level 6: encoding ...
+level 6: out-of-span names dropped: 0
+level 6: overlap: 140 shapes shared into 141 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 6: 930 parcels (3 parents divided), 2,033,138 frame bytes, max frame 76,368 bytes (threshold 131,070) [0.1s]
+level 4: encoding ...
+level 4: out-of-span names dropped: 0
+level 4: overlap: 776 shapes shared into 817 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 4: 14521 parcels (8 parents divided), 11,961,876 frame bytes, max frame 116,332 bytes (threshold 131,070) [0.3s]
+level 2: encoding ...
+level 2: out-of-span names dropped: 0
+level 2: overlap: 11,875 shapes shared into 15,773 edge + 15 interior cells, 5 overlapped cells skipped (not emitted)
+level 2: 231573 parcels (3 parents divided), 72,180,918 frame bytes, max frame 128,766 bytes (threshold 131,070) [3.4s]
+level 0: encoding ...
+level 0: out-of-span names dropped: 1
+level 0: overlap: 708,857 shapes shared into 1,907,537 edge + 1,575,723 interior cells, 821,967 overlapped cells skipped (not emitted)
+level 0: name halo added 310,427 neighbouring road-name records to divided sub-cells
+level 0: TRIM road: dropped 207/3,015,057 (0.007%) in 1 sub-cells
+level 0: TRIM background: dropped 227/11,029,580 (0.002%) in 1 sub-cells
+level 0: 3707025 parcels (560 parents divided), 1,558,502,334 frame bytes, max frame 131,064 bytes (threshold 131,070) [102.6s]
+assembling ALLDATA.KWI ... [encode total 106.6s]
+wrote output/scratch-35/G_rebuild/ALLDATA.KWI (1,692,079,168 bytes) [assemble 9.2s]
+wrote output/scratch-35/G_rebuild/manifest.json
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_encode_au.json", "max_rss_kib": 3661568, "memory_peak": 4536086528, "wall_s": 115.993}
+== p1_sha_rebuild 11:20:11
+run_heavy_python: unit=maps-heavy-2343630 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2_gates.py', 'sha', '--path', 'output/scratch-35/G_rebuild/ALLDATA.KWI', '--expected', '4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448', '--out', 'output/scratch-35/sha_rebuild.json']
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_sha_rebuild.json", "max_rss_kib": 26004, "memory_peak": 24657920, "wall_s": 1.221}
+== p1_perth_j1 11:20:12
+run_heavy_python: unit=maps-heavy-2343854 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'parser/build_alldata.py', '--spool', 'output/extract_timing/spool', '--fixture', 'perth', '--out', 'output/scratch-35/perth_j1/ALLDATA.KWI', '-j1']
+level 12: encoding ...
+level 12: out-of-span names dropped: 0
+level 12: overlap: 0 shapes shared into 0 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 12: 1 parcels (0 parents divided), 646 frame bytes, max frame 646 bytes (threshold 131,070) [0.0s]
+level 10: encoding ...
+level 10: out-of-span names dropped: 0
+level 10: overlap: 0 shapes shared into 0 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 10: 1 parcels (0 parents divided), 158 frame bytes, max frame 158 bytes (threshold 131,070) [0.0s]
+level 8: encoding ...
+level 8: out-of-span names dropped: 0
+level 8: overlap: 2 shapes shared into 2 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 8: 1 parcels (0 parents divided), 60,210 frame bytes, max frame 60,210 bytes (threshold 131,070) [0.0s]
+level 6: encoding ...
+level 6: out-of-span names dropped: 0
+level 6: overlap: 2 shapes shared into 2 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 6: 2 parcels (0 parents divided), 74,242 frame bytes, max frame 67,234 bytes (threshold 131,070) [0.1s]
+level 4: encoding ...
+level 4: out-of-span names dropped: 0
+level 4: overlap: 6 shapes shared into 6 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 4: 15 parcels (1 parents divided), 422,052 frame bytes, max frame 116,332 bytes (threshold 131,070) [0.3s]
+level 2: encoding ...
+level 2: out-of-span names dropped: 0
+level 2: overlap: 90 shapes shared into 106 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 2: 117 parcels (0 parents divided), 1,108,402 frame bytes, max frame 109,820 bytes (threshold 131,070) [2.2s]
+level 0: encoding ...
+level 0: out-of-span names dropped: 0
+level 0: overlap: 13,850 shapes shared into 19,638 edge + 3,595 interior cells, 0 overlapped cells skipped (not emitted)
+level 0: name halo added 27,594 neighbouring road-name records to divided sub-cells
+level 0: 1812 parcels (49 parents divided), 29,795,312 frame bytes, max frame 130,820 bytes (threshold 131,070) [34.7s]
+assembling ALLDATA.KWI ... [encode total 37.2s]
+wrote output/scratch-35/perth_j1/ALLDATA.KWI (31,546,688 bytes) [assemble 0.1s]
+wrote output/scratch-35/perth_j1/manifest.json
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_perth_j1.json", "max_rss_kib": 3922324, "memory_peak": 1653886976, "wall_s": 37.644}
+== p1_perth_j4 11:20:50
+run_heavy_python: unit=maps-heavy-2347829 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'parser/build_alldata.py', '--spool', 'output/extract_timing/spool', '--fixture', 'perth', '--out', 'output/scratch-35/perth_j4/ALLDATA.KWI', '-j4']
+level 12: encoding ...
+level 12: out-of-span names dropped: 0
+level 12: overlap: 0 shapes shared into 0 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 12: 1 parcels (0 parents divided), 646 frame bytes, max frame 646 bytes (threshold 131,070) [0.0s]
+level 10: encoding ...
+level 10: out-of-span names dropped: 0
+level 10: overlap: 0 shapes shared into 0 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 10: 1 parcels (0 parents divided), 158 frame bytes, max frame 158 bytes (threshold 131,070) [0.0s]
+level 8: encoding ...
+level 8: out-of-span names dropped: 0
+level 8: overlap: 2 shapes shared into 2 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 8: 1 parcels (0 parents divided), 60,210 frame bytes, max frame 60,210 bytes (threshold 131,070) [0.0s]
+level 6: encoding ...
+level 6: out-of-span names dropped: 0
+level 6: overlap: 2 shapes shared into 2 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 6: 2 parcels (0 parents divided), 74,242 frame bytes, max frame 67,234 bytes (threshold 131,070) [0.0s]
+level 4: encoding ...
+level 4: out-of-span names dropped: 0
+level 4: overlap: 6 shapes shared into 6 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 4: 15 parcels (1 parents divided), 422,052 frame bytes, max frame 116,332 bytes (threshold 131,070) [0.1s]
+level 2: encoding ...
+level 2: out-of-span names dropped: 0
+level 2: overlap: 90 shapes shared into 106 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 2: 117 parcels (0 parents divided), 1,108,402 frame bytes, max frame 109,820 bytes (threshold 131,070) [1.7s]
+level 0: encoding ...
+level 0: out-of-span names dropped: 0
+level 0: overlap: 13,850 shapes shared into 19,638 edge + 3,595 interior cells, 0 overlapped cells skipped (not emitted)
+level 0: name halo added 27,594 neighbouring road-name records to divided sub-cells
+level 0: 1812 parcels (49 parents divided), 29,795,312 frame bytes, max frame 130,820 bytes (threshold 131,070) [28.3s]
+assembling ALLDATA.KWI ... [encode total 30.3s]
+wrote output/scratch-35/perth_j4/ALLDATA.KWI (31,546,688 bytes) [assemble 0.2s]
+wrote output/scratch-35/perth_j4/manifest.json
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_perth_j4.json", "max_rss_kib": 3291968, "memory_peak": 248115200, "wall_s": 30.6}
+== p1_sha_perth_j1 11:21:20
+run_heavy_python: unit=maps-heavy-2351127 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2_gates.py', 'sha', '--path', 'output/scratch-35/perth_j1/ALLDATA.KWI', '--expected', '04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728', '--out', 'output/scratch-35/sha_perth_j1.json']
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_sha_perth_j1.json", "max_rss_kib": 26040, "memory_peak": 23945216, "wall_s": 0.09}
+== p1_sha_perth_j4 11:21:21
+run_heavy_python: unit=maps-heavy-2351267 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2_gates.py', 'sha', '--path', 'output/scratch-35/perth_j4/ALLDATA.KWI', '--expected', '04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728', '--out', 'output/scratch-35/sha_perth_j4.json']
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_sha_perth_j4.json", "max_rss_kib": 26000, "memory_peak": 23957504, "wall_s": 0.089}
+== p1_after 11:21:21
+run_heavy_python: unit=maps-heavy-2351273 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', 'docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2_gates.py', 'snapshot', '--against', 'output/scratch-35/protected_before.json', '--out', 'output/scratch-35/protected_after.json']
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_after.json", "max_rss_kib": 25900, "memory_peak": 6527143936, "wall_s": 13.728}
+ALLDONE 11:21:35

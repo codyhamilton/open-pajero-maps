@@ -1,0 +1,505 @@
+{
+  "compare_excludes": [
+    "timing",
+    "wall_s"
+  ],
+  "disc": "ALLDATA.KWI",
+  "engine": "c",
+  "failing": 0,
+  "levels": {
+    "0": {
+      "blocks": 1856,
+      "explained": {
+        "name_anchor_halo": 310420,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 547794,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 164516755,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        },
+        "background_boundary": {
+          "checked": 63912410,
+          "failing": 0,
+          "worst_error_raw": 0.499985
+        },
+        "completeness": {
+          "checked": 1773724,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 1590547,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 2281889,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        },
+        "range": {
+          "checked": 271374101,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 40663047,
+          "failing": 0,
+          "worst_error_raw": 0.499998
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 216281685,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 3707025,
+      "tall_shapes": 61157
+    },
+    "10": {
+      "blocks": 6,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 0,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 119,
+          "failing": 0,
+          "worst_error_raw": 0.49975
+        },
+        "background_boundary": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "completeness": {
+          "checked": 2,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 8,
+          "failing": 0,
+          "worst_error_raw": 0.496154
+        },
+        "range": {
+          "checked": 127,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 104,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 9,
+      "tall_shapes": 0
+    },
+    "12": {
+      "blocks": 1,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 0,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 23,
+          "failing": 0,
+          "worst_error_raw": 0.491014
+        },
+        "background_boundary": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "completeness": {
+          "checked": 1,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 8,
+          "failing": 0,
+          "worst_error_raw": 0.400813
+        },
+        "range": {
+          "checked": 31,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 19,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 1,
+      "tall_shapes": 0
+    },
+    "2": {
+      "blocks": 241,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 840,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 9402420,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "background_boundary": {
+          "checked": 190351,
+          "failing": 0,
+          "worst_error_raw": 0.499981
+        },
+        "completeness": {
+          "checked": 24403,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 19,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 30286,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "range": {
+          "checked": 11102439,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 1479382,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 9254656,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 231573,
+      "tall_shapes": 235
+    },
+    "4": {
+      "blocks": 21,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 2882,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 1946786,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "background_boundary": {
+          "checked": 7277,
+          "failing": 0,
+          "worst_error_raw": 0.499571
+        },
+        "completeness": {
+          "checked": 2006,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 3354,
+          "failing": 0,
+          "worst_error_raw": 0.499878
+        },
+        "range": {
+          "checked": 2592784,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 635367,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 1905174,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 14521,
+      "tall_shapes": 0
+    },
+    "6": {
+      "blocks": 6,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 175,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 372750,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "background_boundary": {
+          "checked": 880,
+          "failing": 0,
+          "worst_error_raw": 0.497907
+        },
+        "completeness": {
+          "checked": 311,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 1223,
+          "failing": 0,
+          "worst_error_raw": 0.49993
+        },
+        "range": {
+          "checked": 484201,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 109348,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 354432,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 930,
+      "tall_shapes": 0
+    },
+    "8": {
+      "blocks": 6,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 11,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 147653,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "background_boundary": {
+          "checked": 128,
+          "failing": 0,
+          "worst_error_raw": 0.495834
+        },
+        "completeness": {
+          "checked": 67,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 287,
+          "failing": 0,
+          "worst_error_raw": 0.498944
+        },
+        "range": {
+          "checked": 255904,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 107836,
+          "failing": 0,
+          "worst_error_raw": 0.499981
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 139419,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 95,
+      "tall_shapes": 0
+    }
+  },
+  "pass": true,
+  "spool": "spool",
+  "timing": {
+    "c_check_s": 436.181,
+    "c_ns": 436180855990,
+    "c_stats": {
+      "calls": 2163,
+      "cells": 508488,
+      "d1_ns": 7151739986,
+      "d1_retries": 2119,
+      "failed_frames": 0,
+      "items": 285809587,
+      "leaves": 3954154,
+      "ns": 436180855990,
+      "rescues": 862122
+    },
+    "d1_decode_s": 7.152,
+    "d1_ns": 7151739986,
+    "pss_interval_s": 0.25,
+    "pss_peak_kb": 7549093,
+    "ranges": 2163,
+    "wall_s": 79.887,
+    "workers": 6
+  },
+  "tolerance_raw": 0.5,
+  "tool": "quantisation_roundtrip",
+  "totals": {
+    "background": {
+      "checked": 176386506,
+      "failing": 0,
+      "worst_error_raw": 0.499999
+    },
+    "background_boundary": {
+      "checked": 64111046,
+      "failing": 0,
+      "worst_error_raw": 0.499985
+    },
+    "completeness": {
+      "checked": 1800514,
+      "failing": 0,
+      "worst_error_raw": 0.0
+    },
+    "interior_cover": {
+      "checked": 1590566,
+      "failing": 0,
+      "worst_error_raw": 0.0
+    },
+    "name_anchor": {
+      "checked": 2317055,
+      "failing": 0,
+      "worst_error_raw": 0.499999
+    },
+    "range": {
+      "checked": 285809587,
+      "failing": 0,
+      "worst_error_raw": 0.0
+    },
+    "road_node": {
+      "checked": 42994980,
+      "failing": 0,
+      "worst_error_raw": 0.499998
+    },
+    "road_point": {
+      "checked": 0,
+      "failing": 0,
+      "worst_error_raw": 0.0
+    },
+    "step": {
+      "checked": 227935489,
+      "failing": 0,
+      "worst_error_raw": 0.0
+    }
+  },
+  "wall_s": 79.9
+}
