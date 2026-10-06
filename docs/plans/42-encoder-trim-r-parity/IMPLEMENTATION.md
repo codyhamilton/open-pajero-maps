@@ -290,3 +290,40 @@ are resolved; F8 mostly, with N6 now fixed. The text is kept as
 - **N9:** the clamp wording is fixed.
 
 The witness was re-run after the fixes.
+
+## Phase 2 — proven cause (no expand-to-zero)
+
+- **Outcome branch:** `proven-cause`, per the DESIGN Phase 2 outcome. There
+  is no fix and no encoder change, so no successor oracle; the oracle in
+  force stays `4e6b0de7`. Nothing changed in `parser/`.
+- **Why not expand-to-zero:**
+  - Trimmed totals reach 0 only by raising the frame ceiling (DESIGN
+    rejects this) or by changing what is cut. Phase 1 shows that no
+    R-evidenced trim-priority rule exists.
+  - **L0:** what overflows the frame is type-288 content R does not carry.
+    Cutting backgrounds before roads would restore roads at L0. At L8 the
+    same kind-order change would cut backgrounds first in (3,0), where R
+    carries many class-2 records, so that rule is not R-evidenced across
+    the affected cells.
+  - The real L0 fix is upstream (type-288 emission). That is outside this
+    plan's surfaces (`_e2.c` division/trim tier, R-evidenced only).
+  - **L8:** the dropped stubs are below R's resolution. The count reflects
+    fragmentation, not lost geometry.
+- **Per level and kind:**
+
+  | level / kind | dropped | disposition |
+  |---|---|---|
+  | L0 background | 227 (type 288) | R-lacks-trimmed, by type census: R has 0 type-288 in the parent |
+  | L0 road | 207 (all) | proven cause: shrink fallback kind order under type-288 overflow. The deviation is real by volume (R 3,695 raw vs G 0); per-item identity is not decidable. Child **R-G9-3-a** |
+  | L8 road | 308 | proven cause: G fragmentation. All dropped stubs are within 0.768 raw of kept roads (R step 1 raw), 2.0% of length. Child **R-G9-3-b** |
+
+- **`residuals.tsv`:**
+  - R-G9-3 is discharged by plan 42 Phase 2, as a proven cause with named
+    children.
+  - The children are R-G9-3-a (L0 roads), R-G9-3-b (L8 fragmentation),
+    R-G9-3-c (L8 under-selection) and R-G9-3-d (5 degenerate L0 links).
+  - All four are open, `maps-parity-carried`; Design may promote them.
+- **OVERVIEW:** the residual list now names plan 42 and the children.
+- **Witness:** at close it moves to
+  `docs/plans/04-c-core-orchestration/triage/trim_r_parity/`.
+

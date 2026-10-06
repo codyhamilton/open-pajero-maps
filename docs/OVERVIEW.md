@@ -78,6 +78,16 @@ remaining Phase 3 blockers are exactly the `blocks-phase3` rows of
   which discharges "review missing" (R-G8-1..4). Their UNVERIFIABLE or FAIL
   clauses (lost unit scratch; the 3-14 build wall 26 s → 90 s) are open
   named residuals R-G8-1-a..4-d. They are not counted proven.
+- the encoder content trim (R-G9-3), discharged by plan **42**
+  ([record](plans/42-encoder-trim-r-parity.md)) as a proven cause with
+  named children:
+  - R-G9-3-a: L0 (1755,591)(2,1) draws 0 roads where R has 3.7k raw, under
+    type-288 over-emission and the shrink kind order;
+  - R-G9-3-b: L8 fragmentation;
+  - R-G9-3-c: L8 road under-selection;
+  - R-G9-3-d: 5 degenerate L0 links.
+
+  The L8 "2.198% > 1% BLOCKER" stubs are sub-quantum at R's resolution.
 
 Already settled:
 
