@@ -89,6 +89,31 @@ exited 0:
 - Protected discs and the full spool fingerprint: unchanged before and
   after.
 
+## R empty-slot witness for the out-of-scope cells
+
+(0,141) and (0,176) stay a recorded scope deviation. Each has the same kind of
+R byte witness as the three named cells. `r-check` read each one through the
+same hardened reader as the Phase 1 R witness (`frame_witness.disc_rows`, the
+plan 29 reader) on R `8c2d2027…`. Each row in
+`docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2/r_check.json`
+retains the following, so the proof replays without opening R:
+
+- the L0 blockset entry's offset, raw bytes and sha256, with BMT offset
+  `FFFFFFFF` paired with size 0;
+- the LMR and PDMDH header reads and their byte references.
+
+| Cell | Blockset | Ordinal | Offset | Raw entry | Entry sha256 | Status |
+|---|---:|---:|---:|---|---|---|
+| (0,141) | 0 | 345 | 10814 | `0000ffffffff00000000` | `bb1fbe4c6bddd467…` | empty_slot (absent_BMT_sentinel) |
+| (0,176) | 0 | 345 | 10814 | `0000ffffffff00000000` | `bb1fbe4c6bddd467…` | empty_slot (absent_BMT_sentinel) |
+| (0,541) | 32 | 377 | 11134 | `0020ffffffff00000000` | `4cbaf49a6952d117…` | empty_slot (absent_BMT_sentinel) |
+| (0,562) | 32 | 377 | 11134 | `0020ffffffff00000000` | `4cbaf49a6952d117…` | empty_slot (absent_BMT_sentinel) |
+| (0,563) | 32 | 377 | 11134 | `0020ffffffff00000000` | `4cbaf49a6952d117…` | empty_slot (absent_BMT_sentinel) |
+
+The two extra cells sit in L0 blockset 0. The named cells sit in blockset 32,
+which is also the Phase 1 2,048-cell census block. Both blocksets carry the
+absent-BMT sentinel on R.
+
 ## Deviations
 - 2-01's fix hard-coded the three coordinates. Execute held it and briefed a
   general rule (2-02) instead.
