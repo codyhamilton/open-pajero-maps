@@ -173,3 +173,37 @@ Limitations carried forward: high-cardinality triage 1M RSS pair not separately
 re-measured after Phase 3 (unit artifact identity + fixed-cardinality 50% gates
 stand in); `memory.peak` baseline spread widens under concurrent load; out-of-core
 `_finalize_dump` remains deferred (see Architecture).
+
+## Encoder/build close gates (plan 41)
+
+A **repo rule** (not a workflow-plugin rule): the trigger surfaces and the
+suite command are specific to this repo. A generic plugin counterpart ("run
+the project's declared full suite before closing a phase that touches
+production code") is a separate Workflow System Manager item.
+
+- **Trigger.** The plan's diff from its design-land commit to HEAD touches any
+  of these:
+  - `parser/kiwiw/*.c` or `*.h`;
+  - `parser/kiwiw/cenc.py`;
+  - `parser/build_alldata.py`;
+  - `parser/kiwiw/alldata_writer.py`;
+  - `parser/kiwiw/disc.py`;
+  - `parser/tests/fixtures/goldens/`.
+- **Required before the phase-closing commit.** IMPLEMENTATION quotes all
+  three gates as marker lines:
+  - `Close gate (a) full suite: <the full parser/tests pytest summary line> at <HEAD sha>`.
+    No failures or errors. A known failure is fixed or bisected first;
+    it is never quoted as green.
+  - `Close gate (b) encode wall: median <x> s of 3 at -j4 (spread <y> s) vs baseline <z> s (<source>)`.
+    This is the full-AU encode, under the wrapper and lock. A rise above the
+    spread names its mechanism: the plan 04 Contract H regression rule, made
+    operational.
+  - `Close gate (c) sha gate: AU <sha> <result>, Perth <sha> <result>`.
+- **Checker.** Light, no lock:
+  `.venv-rp/bin/python -B parser/tools/close_gates.py --base <design-land sha> --impl docs/plans/<NN-slug>/IMPLEMENTATION.md`.
+  - It exits 1 when the trigger fires and a gate line is missing (or line (a)
+    shows failures or errors).
+  - Use `--head REV --impl-rev REV` for a past close.
+- **Why.** Plan 34 changed encoder emission (`5182c83`) and closed on 53
+  restricted tests. Its terminal review missed `test_parcel_mask` (fixed in
+  `a906818`; plan 35 R-G8-5).

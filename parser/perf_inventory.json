@@ -518,6 +518,12 @@
    "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
   },
   {
+   "path": "parser/tools/close_gates.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Plan 41 close-gate checker: one git diff --name-only and one IMPLEMENTATION text scan; no disc, spool or per-frame loops"
+  },
+  {
    "path": "parser/tools/continuity_census.py",
    "class": "c-now",
    "phase": 4,
