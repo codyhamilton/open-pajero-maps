@@ -25,3 +25,12 @@ Five modules are `orchestration`. `parser/tools/k1_representable.py` is
 passes 4/4. Plan 29 R4 and the contract carry now point here. The full
 `parser/tests` run is the guarded plan 35 step, and its summary closes this
 phase.
+
+### 1-01 landed (Execute; Codex usage-limited) — Phase 1 closed
+
+The Codex seat died at the weekly cap, so Execute did the unit; see
+`reports/1-01-f2-identity.md`. The result is a **match**: the forced-zero set
+is 34 rows (O05 30 shared; O04 1 shared + 3 added), and it reproduces 3-15 →
+3-17 exactly (predicted O01 363 / O04 3 / O05 102 / NO_RULE 308). The erratum
+is in `triage/per_rule_phase1_f2_identity.md`, and plan 28 F2 points there.
+Tests: 7 passed (new synthetic test plus `test_perf_inventory`).

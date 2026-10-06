@@ -1,0 +1,68 @@
+{
+ "forced_zero": {
+  "by_rule": {
+   "O04": 4,
+   "O05": 30
+  },
+  "by_rule_set": {
+   "O04/added": 3,
+   "O04/shared": 1,
+   "O05/shared": 30
+  },
+  "total": 34
+ },
+ "inputs": {
+  "assignment": {
+   "path": "docs/plans/04-c-core-orchestration/triage/per_rule_classify_assignment.tsv",
+   "rows": 776,
+   "sha256": "c73dc3fb0c07363546ef84da98dd73e741857a2dd5bc1ad47e5ecd14eeb5f9ef"
+  },
+  "changed_cells": {
+   "path": "output/scratch-31/diff-3-14-au.cells.tsv",
+   "rows": 246123,
+   "sha256": "77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f",
+   "status_counts": {
+    "changed": 246123
+   }
+  },
+  "mechanism_partition": {
+   "added": 89,
+   "historic_188": 188,
+   "path": "docs/plans/04-c-core-orchestration/triage/per_rule_completeness_mechanism.tsv",
+   "sha256": "43cbc2c00d2df7ccb9cfc16c7e6fc8ce5c502c66efea2a4d19de13f772e2a85d",
+   "shared": 687
+  }
+ },
+ "match": true,
+ "measured_315": {
+  "NO_RULE": 274,
+  "O01": 363,
+  "O04": 7,
+  "O05": 132,
+  "O06": 0
+ },
+ "non_forced_rules_on_changed_cells": {
+  "NO_RULE": 99
+ },
+ "predicted_317": {
+  "NO_RULE": 308,
+  "O01": 363,
+  "O04": 3,
+  "O05": 102,
+  "O06": 0
+ },
+ "yardstick_315": {
+  "NO_RULE": 274,
+  "O01": 363,
+  "O04": 7,
+  "O05": 132,
+  "O06": 0
+ },
+ "yardstick_317": {
+  "NO_RULE": 308,
+  "O01": 363,
+  "O04": 3,
+  "O05": 102,
+  "O06": 0
+ }
+}
