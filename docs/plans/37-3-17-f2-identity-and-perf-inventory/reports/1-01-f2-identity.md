@@ -14,7 +14,7 @@ brief.
   3-17 363 / 3 / 102 / 0 / 308, which equals the 3-17 yardstick. `match: true`.
 - The 31 statement omitted the 3 added O04 rows (dump_rows 138, 282, 563). The
   erratum is in the `.md`.
-- Tests (11:52 AEST): `parser/tests/test_per_rule_f2_identity.py` (3 synthetic)
+- Tests (about 11:38 AEST): `parser/tests/test_per_rule_f2_identity.py` (3 synthetic)
   plus `test_perf_inventory.py` → 7 passed.
 - Proposed plan 28 pointer, applied by Execute: "**Discharged by plan 37 Phase
   1:** the 34 rows are O05 30 + O04 4 (shared 31, added 3), proven by

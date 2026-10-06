@@ -28,7 +28,7 @@ mirror is deleted or kept as the independent test oracle for
 Diff: 36 inserted lines in `parser/perf_inventory.json` (six entries, each
 inserted after its directory neighbours); no existing entry changed.
 
-Test (11:40 AEST): `PYTHONDONTWRITEBYTECODE=1 .venv-rp/bin/python -B -m pytest
+Test (about 11:33 AEST): `PYTHONDONTWRITEBYTECODE=1 .venv-rp/bin/python -B -m pytest
 -q -p no:cacheprovider parser/tests/test_perf_inventory.py --basetemp
 output/scratch-37/tests` → **4 passed** (before: 1 failed / 3 passed, the
 six modules listed as missing).
