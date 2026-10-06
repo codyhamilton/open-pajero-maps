@@ -193,3 +193,28 @@ Claude CLI clean-context seat (disclosed; Codex is weekly-limited):
 - **F7:** both offset bases are stated.
 
 The witness was re-run after the fixes; the verdict is unchanged.
+
+## Phase 2 — proven cause (H3 branch)
+
+- **Outcome branch:** DESIGN Contract 2.4 (H2/H3). The proven cause is
+  recorded with the R bytes and the source evidence, all from Phase 1.
+- **No fix:** no encoder change, so no successor oracle, no blast-radius
+  build, and no K1, Perth or goldens step. Nothing changed in `parser/`. The
+  oracle in force stays `4e6b0de7`.
+- **Disposition:** an append-only correction row for dump_row 246 in
+  `triage/source_parity/disposition.tsv`. The verdict is
+  `proven-cause:H3-other-feature`, with cause class "source-data: R feature
+  absent from pinned OSM extract". The original `conflict-open` row stays;
+  there are now 343 data rows.
+- **`residuals.tsv`:**
+  - R-G9-1 is discharged by plan 38 Phase 2.
+  - R-G9-2 is unchanged in substance. Its owner text now records that plan
+    38 took row 246 only, because the 341-row implement unit is a DESIGN
+    non-goal.
+- **OVERVIEW:** the plan 30 bullet and the "what remains" row name the
+  proven cause.
+- **Limit:** R's source vintage is unknown, so the R-side feature is not
+  identified as an OSM object. The proof is that the pinned extract has no
+  geometry that could produce R's ring.
+- **Witness:** at close it moves to `triage/source_parity/row246/`.
+
