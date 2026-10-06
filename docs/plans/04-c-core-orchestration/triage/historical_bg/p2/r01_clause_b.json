@@ -1,0 +1,23 @@
+{
+ "r01_rows": 920773,
+ "cells": 44052,
+ "item_removed_on_4ed9cd80": 920693,
+ "footprints_changed": 80,
+ "per_type": {
+  "288": {
+   "removed": 620286,
+   "footprints_changed": 65
+  },
+  "289": {
+   "removed": 15823,
+   "footprints_changed": 6
+  },
+  "291": {
+   "removed": 277391,
+   "footprints_changed": 9
+  },
+  "578": {
+   "removed": 7193
+  }
+ }
+}

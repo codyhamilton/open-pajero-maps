@@ -1,0 +1,20 @@
+{
+ "r01_rows_pre311": 920773,
+ "assign_values": {
+  "0": 920773,
+  "65535": 517785
+ },
+ "clause_a_absent_on_4ed9cd80": {
+  "holds_for_all": true,
+  "basis": "K1 background failing on 4ed9cd80 = 0 (dump_314 empty)"
+ },
+ "clause_c_cell_class": {
+  "eo_bg_stitch": 920693,
+  "eo_division_ceiling": 80
+ },
+ "non_R01_background_cell_class": {
+  "eo_bg_stitch": 517763,
+  "eo_division_ceiling": 22
+ },
+ "clause_b_item_still_checked": "NOT TESTED: K1 dumps failing items only; no per-item checked identity on 4ed9cd80. Whole-kind background checked 175,171,302 (013586b5) -> 176,386,506 (4ed9cd80)"
+}

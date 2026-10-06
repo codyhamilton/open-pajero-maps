@@ -1,0 +1,14 @@
+{
+ "background": {
+  "removed_on_4ed9cd80": 1438456,
+  "footprints_changed": 102
+ },
+ "background_non_R01": {
+  "removed_on_4ed9cd80": 517763,
+  "footprints_changed": 22
+ },
+ "background_boundary": {
+  "removed_on_4ed9cd80": 16548853,
+  "footprints_changed": 716
+ }
+}

@@ -1,0 +1,19 @@
+{
+ "version": 1,
+ "rules": [
+  {
+   "id": "R01",
+   "cause": "checker",
+   "kind": "background",
+   "where": [
+    [
+     "in_eo_same",
+     "==",
+     1
+    ]
+   ],
+   "note": "Under 3-07 Amendment 4, a fill vertex is valid inside a same-type level polygon. K1 instead demands proximity to an outline. Independent all-level witness: 200/200 valid; 920786 rows on G_new (920773 on the old disc)."
+  }
+ ],
+ "note_plan39": "R01 only: S02-S05 need side columns (s02_producer_verified, residual_crossing_verified) not regenerable by tracked tools (docs/provenance.md L380, L418)"
+}

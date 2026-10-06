@@ -1,0 +1,4 @@
+population	basis	rows	cause	reason	evidence
+R01 (background, in_eo_same=1)	87a01b14	920693	checker	removed-by-3-14 (failing vertex absent on 4ed9cd80; clause (b) fails; 0 present)	p2/r01_clause_b.json; p2/r01_join.json (eo_bg_stitch)
+R01 (background, in_eo_same=1)	87a01b14	80	unattributed	eo_division_ceiling cells, footprints changed: clause (b) untestable (R-G5-4-a)	p2/r01_join.json; p2/allrows/allrows_clause_b.json
+remainder 8,876 (137 background + 8,739 background_boundary; 9,064 incl. 188 completeness)	013586b5	8876	identity blocked	every failing background/background_boundary row of 013586b5 is removed-by-3-14 or in a footprint-changed cell (102 background / 716 background_boundary); row identities need the deleted side-column producers (S02-S05)	p2/allrows/allrows_clause_b.json; p2/allrows/allrows_311_cells.json; p1/basis_311.json; docs/provenance.md
