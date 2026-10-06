@@ -114,48 +114,72 @@ Same HEAD K1, same spool; only the disc varies (`4ed9cd80` = 3-14 build change o
     record's **non-failing** vertices at their exact raw positions. That is
     the same source-ring vertices under the same quantisation, and it can only
     be tested in footprint-equal cells.
-  - **Persists (≥ 50 %):** one new record holds at least half of those
-    vertices.
-  - **Traceable (≥ 1):** the best new record holds at least one of them.
-  - **Control (vertex level):** 79.2 % of ordinary vertices persist.
+  - **Identity guard** (re-review N1). The neighbour-masquerade probe found
+    that about 5 % of best matches are another, unchanged record. So a vertex
+    counts as identity-bearing only if no other old same-type record in the
+    leaf holds it and it is not on the leaf's outer vertex-bbox edge. New
+    records that are coordinate-identical to an unchanged other old record are
+    excluded.
+    - **Identity-proven:** a remaining same-type new record holds at least one
+      identity-bearing vertex.
+    - **Weak:** shared vertices exist, but every one is neighbour-held or on
+      the leaf edge, so identity is undetermined.
+    - **None:** nothing is shared once the identical neighbours are excluded.
+  - The 50 % and ≥ 1 thresholds are implementer choices, not the design's.
+  - Only the processed kind's failing vertices are excluded from
+    "non-failing" (review N2). This is conservative: it can only lower shares.
 
-| population (87a01b14) | rows | persists ≥ 50 % | traceable 1 – < 50 % | same type, no shared vertex | type absent (removed) | footprints changed |
+| population (87a01b14) | rows | identity-proven (of which ≥ 50 % share) | weak (identity undetermined) | none | type absent (removed) | footprints changed |
 |---|---|---|---|---|---|---|
-| R01 (background) | 920,773 | 309,597 | 611,089 | 7 | 0 | 80 |
-| background non-R01 | 517,785 | 109,639 | 406,979 | 217 | 928 | 22 |
-| background_boundary | 16,549,569 | 6,530,639 | 9,945,993 | 46,400 | 25,821 | 716 |
-| 013586b5, 37 cells: background / boundary | 157 / 1,938 | 24 / 832 | 133 / 1,106 | 0 | 0 | 0 |
+| R01 (background) | 920,773 | **825,634** (288,476) | 94,134 | 925 | 0 | 80 |
+| background non-R01 | 517,785 | 489,589 | 26,785 | 461 | 928 | 22 |
+| background_boundary | 16,549,569 | 15,180,713 (6,305,975) | 1,249,396 | 92,923 | 25,821 | 716 |
+| 013586b5, 37 cells: background / boundary | 157 / 1,938 | 144 / 1,680 | 13 / 242 | 0 / 16 | 0 | 0 |
 
-  Among rows with a shared vertex, the share quantiles (10 / 50 / 90 %) are
-  0.12 / 0.33 / 0.77 for background and 0.13 / 0.40 / 1.00 for
-  background_boundary. There are 0 old-mapping mismatches. Run: under the lock,
-  443 s.
+  There are 0 old-mapping mismatches. The unguarded tiers (≥ 50 % / 1 – < 50 %
+  share, before the guard) are kept in the same JSON. The re-review's probe
+  (`output/scratch-39/review2/partial_probe.json`) found a median of 28 shared
+  vertices in the partial tier and 39 in the ≥ 50 % tier. Run: under the lock,
+  656 s. The per-row arrays are kept keyed by (level, cell, leaf, shape,
+  vertex) in `output/scratch-39/keep/*_keyed.npz`, so they do not depend on dump
+  row order.
 
-### R01 exclusivity (design rule 3, open question 1)
+### R01 exclusivity: disproven by count; cause per Design's ruling
 
-- **Disproven by count.** 920,686 of the 920,693 testable R01 rows satisfy all
-  three clauses at shape level. Their record persists, re-encoded and checked
-  with 0 failures, after a build-only change (`build:eo_bg_stitch`). For
-  309,597 of them, one new record holds at least half the old record's
-  non-failing vertices. 7 rows have no traceable record and stay `checker`. 80
-  rows are in `eo_division_ceiling` cells with changed footprints and are
-  untested.
-- **The design's dual-cause question (open question 1) is raised.** R01's
-  checker rationale (3-07 Amendment 4: a fill vertex inside a same-type
-  polygon is valid) is not refuted by this result. It may hold together with
-  the build fix. Per the design, these rows are reported `build` with the
-  checker note kept, and whether the one-cause rule takes `build`, `checker`
-  or a dual cause is **a ruling for Cody via Design**. R-G5-4 stays open.
-- `rules_bg.json`: only the R01 note text changed (an evidence note); the rule,
-  cause and order are unchanged.
+- **Disproven by count.** On the 4ed9cd80 counterfactual (same K1, same spool,
+  build-only change), **825,634** R01 rows satisfy all three clauses with an
+  identity-proven record: (a) absent, (b) the record persists, re-encoded and
+  checked with 0 failures, and (c) an `eo_bg_stitch` cell.
+- **Cause, per Design's advance ruling** (2026-10-06 12:54 AEST, relayed by the
+  parent): a row that the counterfactual proves was fixed by the 3-14 build
+  change, and that still satisfies R01's rationale, takes the build change as
+  its cause. The R01 rationale is recorded as **superseded**, not as a second
+  cause. These 825,634 rows are therefore `build:eo_bg_stitch`, with R01
+  (3-07 Amendment 4) superseded. Design open question 1 is answered by that
+  ruling; nothing goes to Cody.
+- **Rows where the build fix is not proven** (they stay `checker` R01 under
+  design rule 3, with the reason; each is a named residual):
+  - 94,134 rows with weak identity (shared vertices are all neighbour-held or
+    on the leaf edge): **R-G5-4-a**;
+  - 925 rows with no traceable record once identical neighbours are excluded,
+    so (b) fails: **R-G5-4-b**;
+  - 80 rows in `eo_division_ceiling` cells, whose footprints changed and so
+    are untested: **R-G5-4-c**.
+- `rules_bg.json`: only the R01 note changed (the rule, its predicate and order
+  are unchanged). Rule matching still yields `checker` for these rows; the
+  per-row cause of record is `assignment.tsv`.
+- The re-review noted (N4) that the predicate cannot tell "3-14 fixed a
+  defective vertex" from "3-14 stopped emitting a vertex Amendment 4 deems
+  valid". Design's ruling assigns the build cause in either case.
 
 ### Remainder (R-G5-1, R-G5-2) at count level
 
-- The rows inside the 37 cells on `013586b5` all persist at shape level. By
-  the basis map, the rows outside them are the `87a01b14` rows above.
-- So at most 1,254 background rows (224 + 928 + 102) and 72,937
-  background_boundary rows (46,400 + 25,821 + 716) of `013586b5` fail the
-  shape-level predicate or are untested. Every other row satisfies it.
+- The rows inside the 37 cells on `013586b5` were tested directly. By the basis
+  map, the rows outside them are the `87a01b14` rows above.
+- At most 123,335 background rows (928 + 1,386 + 120,919 + 102) and 1,368,856
+  background_boundary rows (25,821 + 92,923 + 1,249,396 + 716) of `013586b5`
+  fail, or cannot be proven to satisfy, the predicate. Every other row is
+  identity-proven.
 - Without the remainder's row identities (Phase 1 item 3), no remainder row
   can be assigned. The 137 / 8,739 split stays blocked on the deleted
   side-column producers.
@@ -232,15 +256,12 @@ record (no roads, no names).
 ### Surfaces updated (Phase 2–3 outcomes)
 
 - **`p2/assignment.tsv`** is count-level, not per row as the design asked:
-  - R01: 920,686 `build:eo_bg_stitch` (checker note kept; dual-cause ruling
-    pending), 7 `checker` (no traceable record), 80 `unattributed`
-    (footprints changed);
+  - R01: 825,634 `build:eo_bg_stitch` (R01 superseded, Design ruling 12:54);
+    94,134 + 925 + 80 stay `checker` (R-G5-4-a/b/c);
   - the 8,876 remainder rows: `identity blocked`.
 
-  Per-row shape status for every background-family failing row is in
-  `output/scratch-39/shape/` (dump row order). It is regenerable by
-  `p2/shape_clause_b.py`, and the remainder can join it by row index once its
-  identities exist (BOM: `docs/provenance.md` § `output/scratch-39/`).
+  The per-row arrays are kept keyed in `output/scratch-39/keep/` (BOM:
+  `docs/provenance.md` § `output/scratch-39/`).
 - **`rules_bg.json`:** the R01 note states the measured facts and the pending
   ruling. The note only; the rule and cause are unchanged.
 - **`cause_table.md`:** the 65623 section is rewritten from the Phase 3
@@ -263,12 +284,17 @@ record (no roads, no names).
   as stated in item 2.
 - **R-G5-3: discharged** (Phase 3). No 3C-04 failing item in any kind is
   produced by source 65623. The geometry facts stay recorded as facts.
-- **R-G5-4: answered by count, stays open** (blocks-phase3, owner Design;
-  ruling: Cody via Design). Exclusivity is disproven at shape level: 920,686
-  rows satisfy the build-fixed predicate, 7 stay checker and 80 are untested.
-  The dual-cause question (design open question 1) is raised.
+- **R-G5-4: discharged for the proven rows** (825,634 `build:eo_bg_stitch`,
+  R01 superseded per Design's 12:54 ruling), with named children:
+  - **R-G5-4-a** (94,134, weak identity): more work, either a stronger
+    identity test (a source counterfactual) or a Design waiver;
+  - **R-G5-4-b** (925, no traceable record): R01 `checker` stands under design
+    rule 3; named, and Design may reclassify;
+  - **R-G5-4-c** (80, footprints changed): untested; needs a window
+    counterfactual at `d35b565` or a Design waiver.
 - **R-G5-1, R-G5-2: stay open** (blocks-phase3, owner Design). The basis map
-  states the row mapping. At most 1,254 background and 72,937
-  background_boundary rows fail the shape-level predicate or are untested.
+  states the row mapping. At most 123,335 background and 1,368,856
+  background_boundary rows fail, or cannot be proven to satisfy, the
+  predicate.
   The row identities need a new producer scan for the deleted side columns;
   that is a Design ruling.
