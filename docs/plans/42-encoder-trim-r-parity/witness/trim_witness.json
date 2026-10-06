@@ -13,6 +13,12 @@
       "length": 23680,
       "n_bg": 21,
       "n_road_links": 179,
+      "rect_leaf_raw": [
+       0.0,
+       0.0,
+       4096.0,
+       4096.0
+      ],
       "rect_parent_raw": [
        0.0,
        -4.656612873077393e-10,
@@ -104431,6 +104437,824 @@
     "background|K|absent": 6415,
     "road|D|absent": 204,
     "road|D|ambiguous": 3
+   },
+   "v2": {
+    "G_divided": true,
+    "G_leaves": [
+     {
+      "bg_frame_size": 2028,
+      "file_offset": 352210976,
+      "leaf_path": [
+       507,
+       0
+      ],
+      "length": 4480,
+      "n_bg": 46,
+      "n_road_links": 21,
+      "rect_leaf_raw": [
+       0.0,
+       0.0,
+       1024.0,
+       1024.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 1714,
+      "sha256": "52fd5f131c271e92e9a570cb8b519108c2bf14b2500d8403064b4434e48bfd53"
+     },
+     {
+      "bg_frame_size": 9212,
+      "file_offset": 352215456,
+      "leaf_path": [
+       507,
+       1
+      ],
+      "length": 12576,
+      "n_bg": 407,
+      "n_road_links": 25,
+      "rect_leaf_raw": [
+       1024.0,
+       0.0,
+       2048.0,
+       1024.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 2490,
+      "sha256": "331f175a6648d4ef7553ad2d4ccc2d6c58c5b76c38e3dd621ca82bf810894aac"
+     },
+     {
+      "bg_frame_size": 5198,
+      "file_offset": 352228032,
+      "leaf_path": [
+       507,
+       2
+      ],
+      "length": 12032,
+      "n_bg": 209,
+      "n_road_links": 56,
+      "rect_leaf_raw": [
+       2048.0,
+       0.0,
+       3072.0,
+       1024.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 5538,
+      "sha256": "09f895cc81e92fe28b1fe7b692035228b3890cbf2e6a2b034ece1c9c8e7f357a"
+     },
+     {
+      "bg_frame_size": 2020,
+      "file_offset": 352240064,
+      "leaf_path": [
+       507,
+       3
+      ],
+      "length": 5024,
+      "n_bg": 76,
+      "n_road_links": 22,
+      "rect_leaf_raw": [
+       3072.0,
+       0.0,
+       4096.0,
+       1024.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 1858,
+      "sha256": "888ec57e16055a264e611337f683cfecd152783099281f8e3c4908c42d8805b1"
+     },
+     {
+      "bg_frame_size": 2632,
+      "file_offset": 352245088,
+      "leaf_path": [
+       507,
+       4
+      ],
+      "length": 7840,
+      "n_bg": 74,
+      "n_road_links": 48,
+      "rect_leaf_raw": [
+       0.0,
+       1024.0,
+       1024.0,
+       2048.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 4034,
+      "sha256": "eceb4fc5a848ca017acf960581fe33cc828f9353c6a366cf9ef0163c32fd736a"
+     },
+     {
+      "bg_frame_size": 21462,
+      "file_offset": 352252928,
+      "leaf_path": [
+       507,
+       5
+      ],
+      "length": 38528,
+      "n_bg": 1004,
+      "n_road_links": 225,
+      "rect_leaf_raw": [
+       1024.0,
+       1024.0,
+       2048.0,
+       2048.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 14776,
+      "sha256": "934979ea89a073f867dfeb2c3377c652d35b003168c35519039ef14ab7106b69"
+     },
+     {
+      "bg_frame_size": 130100,
+      "file_offset": 352291456,
+      "leaf_path": [
+       507,
+       6
+      ],
+      "length": 131072,
+      "n_bg": 6415,
+      "n_road_links": 0,
+      "rect_leaf_raw": [
+       2048.0,
+       1024.0,
+       3072.0,
+       2048.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 0,
+      "sha256": "40f840ae1fd42434180640ea75157b7a480cbe5726b2df049ae5b0de5da4ed06"
+     },
+     {
+      "bg_frame_size": 1938,
+      "file_offset": 352422528,
+      "leaf_path": [
+       507,
+       7
+      ],
+      "length": 6080,
+      "n_bg": 73,
+      "n_road_links": 30,
+      "rect_leaf_raw": [
+       3072.0,
+       1024.0,
+       4096.0,
+       2048.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 2820,
+      "sha256": "4342830094d5da42c21394367380bc89ed88001400906ef6a747f7c9680e1a70"
+     },
+     {
+      "bg_frame_size": 6124,
+      "file_offset": 352428608,
+      "leaf_path": [
+       507,
+       8
+      ],
+      "length": 21632,
+      "n_bg": 197,
+      "n_road_links": 156,
+      "rect_leaf_raw": [
+       0.0,
+       2048.0,
+       1024.0,
+       3072.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 11166,
+      "sha256": "6bc1b443e865fc518ff5e6798a175b46e46fca566cc8fe61cbb3df5acae00400"
+     },
+     {
+      "bg_frame_size": 3122,
+      "file_offset": 352450240,
+      "leaf_path": [
+       507,
+       9
+      ],
+      "length": 20992,
+      "n_bg": 91,
+      "n_road_links": 216,
+      "rect_leaf_raw": [
+       1024.0,
+       2048.0,
+       2048.0,
+       3072.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 14418,
+      "sha256": "97af0c611b3d7d2df0c0671ed87fc33103727e2feb5c0c5705e1384375e3b7de"
+     },
+     {
+      "bg_frame_size": 946,
+      "file_offset": 352471232,
+      "leaf_path": [
+       507,
+       10
+      ],
+      "length": 6272,
+      "n_bg": 25,
+      "n_road_links": 40,
+      "rect_leaf_raw": [
+       2048.0,
+       2048.0,
+       3072.0,
+       3072.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 3374,
+      "sha256": "694898601584f02c7a0ad729be29be7a6eccdfecad4422e5e8cb6553f9e6b2b7"
+     },
+     {
+      "bg_frame_size": 1514,
+      "file_offset": 352477504,
+      "leaf_path": [
+       507,
+       11
+      ],
+      "length": 3840,
+      "n_bg": 44,
+      "n_road_links": 14,
+      "rect_leaf_raw": [
+       3072.0,
+       2048.0,
+       4096.0,
+       3072.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 1438,
+      "sha256": "3d7173b0211fa39dbc73251f358d081b86fffd06e4b8963a475fb0c2e19c285f"
+     },
+     {
+      "bg_frame_size": 4746,
+      "file_offset": 352481344,
+      "leaf_path": [
+       507,
+       12
+      ],
+      "length": 14912,
+      "n_bg": 128,
+      "n_road_links": 76,
+      "rect_leaf_raw": [
+       0.0,
+       3072.0,
+       1024.0,
+       4096.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 6142,
+      "sha256": "10ad26c1d6d779319935e265d80ab77030e1aa68a7199c2f73fc7a89b6cbdfc9"
+     },
+     {
+      "bg_frame_size": 4304,
+      "file_offset": 352496256,
+      "leaf_path": [
+       507,
+       13
+      ],
+      "length": 19296,
+      "n_bg": 112,
+      "n_road_links": 164,
+      "rect_leaf_raw": [
+       1024.0,
+       3072.0,
+       2048.0,
+       4096.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 11072,
+      "sha256": "14672fe275c368187048d2c5c3560e51c6a6f60658e7c3b108b7258ca38b4a59"
+     },
+     {
+      "bg_frame_size": 458,
+      "file_offset": 352515552,
+      "leaf_path": [
+       507,
+       14
+      ],
+      "length": 3072,
+      "n_bg": 10,
+      "n_road_links": 8,
+      "rect_leaf_raw": [
+       2048.0,
+       3072.0,
+       3072.0,
+       4096.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 1222,
+      "sha256": "6fa78affc8eb807c1afb4afc927031c1747e8a0b8b037310c1c40ad34abe5973"
+     },
+     {
+      "bg_frame_size": 1446,
+      "file_offset": 352518624,
+      "leaf_path": [
+       507,
+       15
+      ],
+      "length": 2848,
+      "n_bg": 34,
+      "n_road_links": 7,
+      "rect_leaf_raw": [
+       3072.0,
+       3072.0,
+       4096.0,
+       4096.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       -4.656612873077393e-10,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 874,
+      "sha256": "6bfdb0fad1d2d44459a6f31eac24009a2dc7c5dee32e51b55d8da1921cd4fa41"
+     }
+    ],
+    "G_oracle_disc": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-34/G_new/ALLDATA.KWI",
+    "G_rect_check_max_outside_raw": {
+     "background": 0.0,
+     "road": 3072.0
+    },
+    "G_rect_grid": 4,
+    "R_quantum_note": "every R leaf here has frame range 4096 over the whole parent (divided_parent or leaf), so one R coordinate step is one parent raw unit",
+    "R_quantum_parent_raw": 1.0,
+    "R_rect_check_max_outside_raw": {
+     "background": 0.0,
+     "road": 0.0
+    },
+    "R_rect_grid": 1,
+    "background_census": {
+     "G_class_type": {
+      "2:288": 8777,
+      "2:290": 2,
+      "2:291": 3,
+      "2:321": 137,
+      "2:322": 13,
+      "2:640": 13
+     },
+     "R_class_type": {
+      "1:291": 1,
+      "2:1024": 19,
+      "2:321": 1
+     },
+     "dropped_types": {
+      "288": 227
+     }
+    },
+    "piece_shape": {
+     "dropped_len_raw": {
+      "max": 1000.101,
+      "q10": 21.172,
+      "q50": 109.683,
+      "q90": 468.781
+     },
+     "dropped_n_pts": {
+      "2": 27,
+      "3": 18,
+      "4": 18,
+      "5": 7,
+      "6": 10,
+      "7": 9,
+      "8": 11,
+      "9": 11,
+      "10": 20,
+      "11": 11,
+      "12": 12,
+      "13": 11,
+      "14": 4,
+      "15": 6,
+      "16": 7,
+      "17": 3,
+      "18": 2,
+      "19": 3,
+      "20": 4,
+      "21": 1,
+      "22": 5,
+      "23": 1,
+      "25": 1,
+      "26": 1,
+      "27": 2,
+      "28": 2
+     },
+     "kept_len_raw": null
+    },
+    "road_control": {
+     "calibrated_tol_recall90": 500,
+     "control_quantiles": {
+      "max": 600.0,
+      "q10": 2.247,
+      "q50": 31.067,
+      "q90": 227.96
+     },
+     "control_recall_at_tol": {
+      "1": 0.0361,
+      "2": 0.0884,
+      "5": 0.2193,
+      "10": 0.3078,
+      "20": 0.4043,
+      "50": 0.5875,
+      "100": 0.7617,
+      "200": 0.8791,
+      "500": 0.9892
+     },
+     "dropped_absent_at_calibrated_tol": 0,
+     "dropped_present_at_calibrated_tol": 207,
+     "dropped_quantiles": {
+      "max": 342.596,
+      "q10": 15.666,
+      "q50": 100.624,
+      "q90": 266.327
+     },
+     "dropped_within_tol": {
+      "1": 0.0145,
+      "2": 0.0193,
+      "5": 0.0338,
+      "10": 0.0628,
+      "20": 0.1063,
+      "50": 0.2609,
+      "100": 0.4976,
+      "200": 0.7971,
+      "500": 1.0
+     },
+     "metric": "per-piece median of sampled distance to the nearest R road of any class, parent raw units (clamped at 600)",
+     "n": 1108,
+     "source": "G oracle-decoded kept roads of the parent's other sub-cells (no kept road in the trimmed sub-cell)"
+    },
+    "road_volume": {
+     "G_classes_dropped": {
+      "2": 164,
+      "4": 16,
+      "7": 10,
+      "9": 4,
+      "12": 13
+     },
+     "G_classes_kept_whole_parent": {
+      "2": 773,
+      "4": 76,
+      "7": 127,
+      "9": 53,
+      "10": 22,
+      "12": 57
+     },
+     "G_kept_links_whole_parent": 1108,
+     "R_classes": {
+      "3": 4,
+      "4": 23,
+      "7": 98,
+      "9": 18,
+      "10": 32,
+      "12": 4
+     },
+     "R_links_whole_parent": 179,
+     "per_G_leaf": [
+      {
+       "G_kept_len_in_rect_raw": 5205.6,
+       "G_kept_links": 21,
+       "G_over_R": 1.464,
+       "R_len_in_rect_raw": 3555.0,
+       "leaf_path": [
+        507,
+        0
+       ],
+       "rect": [
+        0.0,
+        0.0,
+        1024.0,
+        1024.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 4718.0,
+       "G_kept_links": 25,
+       "G_over_R": 1.871,
+       "R_len_in_rect_raw": 2521.9,
+       "leaf_path": [
+        507,
+        1
+       ],
+       "rect": [
+        1024.0,
+        0.0,
+        2048.0,
+        1024.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 11506.8,
+       "G_kept_links": 56,
+       "G_over_R": 6.198,
+       "R_len_in_rect_raw": 1856.6,
+       "leaf_path": [
+        507,
+        2
+       ],
+       "rect": [
+        2048.0,
+        0.0,
+        3072.0,
+        1024.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 3799.3,
+       "G_kept_links": 22,
+       "G_over_R": 0.79,
+       "R_len_in_rect_raw": 4810.6,
+       "leaf_path": [
+        507,
+        3
+       ],
+       "rect": [
+        3072.0,
+        0.0,
+        4096.0,
+        1024.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 7703.4,
+       "G_kept_links": 48,
+       "G_over_R": 5.12,
+       "R_len_in_rect_raw": 1504.6,
+       "leaf_path": [
+        507,
+        4
+       ],
+       "rect": [
+        0.0,
+        1024.0,
+        1024.0,
+        2048.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 27257.6,
+       "G_kept_links": 225,
+       "G_over_R": 12.673,
+       "R_len_in_rect_raw": 2150.9,
+       "leaf_path": [
+        507,
+        5
+       ],
+       "rect": [
+        1024.0,
+        1024.0,
+        2048.0,
+        2048.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 0,
+       "G_kept_links": 0,
+       "G_over_R": 0.0,
+       "R_len_in_rect_raw": 3695.3,
+       "leaf_path": [
+        507,
+        6
+       ],
+       "rect": [
+        2048.0,
+        1024.0,
+        3072.0,
+        2048.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 7184.8,
+       "G_kept_links": 30,
+       "G_over_R": 1.078,
+       "R_len_in_rect_raw": 6663.3,
+       "leaf_path": [
+        507,
+        7
+       ],
+       "rect": [
+        3072.0,
+        1024.0,
+        4096.0,
+        2048.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 18042.9,
+       "G_kept_links": 156,
+       "G_over_R": 3.07,
+       "R_len_in_rect_raw": 5877.0,
+       "leaf_path": [
+        507,
+        8
+       ],
+       "rect": [
+        0.0,
+        2048.0,
+        1024.0,
+        3072.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 29519.8,
+       "G_kept_links": 216,
+       "G_over_R": 3.272,
+       "R_len_in_rect_raw": 9023.0,
+       "leaf_path": [
+        507,
+        9
+       ],
+       "rect": [
+        1024.0,
+        2048.0,
+        2048.0,
+        3072.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 7913.7,
+       "G_kept_links": 40,
+       "G_over_R": 1.871,
+       "R_len_in_rect_raw": 4230.1,
+       "leaf_path": [
+        507,
+        10
+       ],
+       "rect": [
+        2048.0,
+        2048.0,
+        3072.0,
+        3072.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 4128.7,
+       "G_kept_links": 14,
+       "G_over_R": 1.701,
+       "R_len_in_rect_raw": 2427.2,
+       "leaf_path": [
+        507,
+        11
+       ],
+       "rect": [
+        3072.0,
+        2048.0,
+        4096.0,
+        3072.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 11417.9,
+       "G_kept_links": 76,
+       "G_over_R": 3.14,
+       "R_len_in_rect_raw": 3636.5,
+       "leaf_path": [
+        507,
+        12
+       ],
+       "rect": [
+        0.0,
+        3072.0,
+        1024.0,
+        4096.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 17681.3,
+       "G_kept_links": 164,
+       "G_over_R": 1.495,
+       "R_len_in_rect_raw": 11828.3,
+       "leaf_path": [
+        507,
+        13
+       ],
+       "rect": [
+        1024.0,
+        3072.0,
+        2048.0,
+        4096.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 3288.1,
+       "G_kept_links": 8,
+       "G_over_R": 2.575,
+       "R_len_in_rect_raw": 1277.0,
+       "leaf_path": [
+        507,
+        14
+       ],
+       "rect": [
+        2048.0,
+        3072.0,
+        3072.0,
+        4096.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 1177.4,
+       "G_kept_links": 7,
+       "G_over_R": 7.801,
+       "R_len_in_rect_raw": 150.9,
+       "leaf_path": [
+        507,
+        15
+       ],
+       "rect": [
+        3072.0,
+        3072.0,
+        4096.0,
+        4096.0
+       ]
+      }
+     ],
+     "trimmed_sub": {
+      "G_dropped_len_raw": 37039.2,
+      "G_dropped_pieces": 207,
+      "G_kept_pieces": 0,
+      "G_pre_trim_len_raw": 37039.2,
+      "G_pre_trim_pieces": 207,
+      "R_len_in_rect_raw": 3695.3
+     }
+    },
+    "trimmed_sub": [
+     2,
+     1
+    ],
+    "trimmed_sub_rect_raw": [
+     2048.0,
+     1024.0,
+     3072.0,
+     2048.0
+    ]
    }
   },
   {
@@ -104447,6 +105271,12 @@
       "length": 6176,
       "n_bg": 48,
       "n_road_links": 30,
+      "rect_leaf_raw": [
+       0.0,
+       0.0,
+       2048.0,
+       2048.0
+      ],
       "rect_parent_raw": [
        0.0,
        0.0,
@@ -104466,6 +105296,12 @@
       "length": 106400,
       "n_bg": 227,
       "n_road_links": 750,
+      "rect_leaf_raw": [
+       2048.0,
+       0.0,
+       4096.0,
+       2048.0
+      ],
       "rect_parent_raw": [
        0.0,
        0.0,
@@ -104485,6 +105321,12 @@
       "length": 12448,
       "n_bg": 50,
       "n_road_links": 25,
+      "rect_leaf_raw": [
+       0.0,
+       2048.0,
+       2048.0,
+       4096.0
+      ],
       "rect_parent_raw": [
        0.0,
        0.0,
@@ -104504,6 +105346,12 @@
       "length": 31104,
       "n_bg": 121,
       "n_road_links": 124,
+      "rect_leaf_raw": [
+       2048.0,
+       2048.0,
+       4096.0,
+       4096.0
+      ],
       "rect_parent_raw": [
        0.0,
        0.0,
@@ -160124,8 +160972,391 @@
     "road|K|absent": 1162,
     "road|K|ambiguous": 195,
     "road|K|present": 752
+   },
+   "v2": {
+    "G_divided": true,
+    "G_leaves": [
+     {
+      "bg_frame_size": 2,
+      "file_offset": 1691875968,
+      "leaf_path": [
+       19,
+       2
+      ],
+      "length": 6112,
+      "n_bg": 0,
+      "n_road_links": 41,
+      "rect_leaf_raw": [
+       2048.0,
+       0.0,
+       3072.0,
+       1024.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       0.0,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 5890,
+      "sha256": "59bafdbc2ede695bda61cd0a45deabdb615c3628168474d75d9d669e0a07b8c5"
+     },
+     {
+      "bg_frame_size": 2160,
+      "file_offset": 1691882080,
+      "leaf_path": [
+       19,
+       3
+      ],
+      "length": 131072,
+      "n_bg": 29,
+      "n_road_links": 2109,
+      "rect_leaf_raw": [
+       3072.0,
+       0.0,
+       4096.0,
+       1024.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       0.0,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 128300,
+      "sha256": "0abcd2600317d410fa1dce85441e93f7a7c20bb54646f6bf4fa35fa5f8b10bff"
+     },
+     {
+      "bg_frame_size": 360,
+      "file_offset": 1692013152,
+      "leaf_path": [
+       19,
+       7
+      ],
+      "length": 54400,
+      "n_bg": 10,
+      "n_road_links": 829,
+      "rect_leaf_raw": [
+       3072.0,
+       1024.0,
+       4096.0,
+       2048.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       0.0,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 53436,
+      "sha256": "8f8b02e6ad8022d073df3a45f02dbfca709c775be6930955266c3532e2450aeb"
+     },
+     {
+      "bg_frame_size": 552,
+      "file_offset": 1692067552,
+      "leaf_path": [
+       19,
+       11
+      ],
+      "length": 896,
+      "n_bg": 5,
+      "n_road_links": 0,
+      "rect_leaf_raw": [
+       3072.0,
+       2048.0,
+       4096.0,
+       3072.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       0.0,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 0,
+      "sha256": "c01879ca1646e7540a183778d1b69882c8754c62425232466a073d80606a8608"
+     },
+     {
+      "bg_frame_size": 844,
+      "file_offset": 1692068448,
+      "leaf_path": [
+       19,
+       14
+      ],
+      "length": 1408,
+      "n_bg": 13,
+      "n_road_links": 0,
+      "rect_leaf_raw": [
+       2048.0,
+       3072.0,
+       3072.0,
+       4096.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       0.0,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 0,
+      "sha256": "41d68aa57ede9ad77ca8e712c014c393e77858138098e53b51363f52f092510d"
+     },
+     {
+      "bg_frame_size": 608,
+      "file_offset": 1692069856,
+      "leaf_path": [
+       19,
+       15
+      ],
+      "length": 768,
+      "n_bg": 15,
+      "n_road_links": 0,
+      "rect_leaf_raw": [
+       3072.0,
+       3072.0,
+       4096.0,
+       4096.0
+      ],
+      "rect_parent_raw": [
+       0.0,
+       0.0,
+       4096.0,
+       4096.0
+      ],
+      "road_frame_size": 0,
+      "sha256": "b768ee07613cbc88fc6b8bee7212318174cf715c1b60a362309e8e28eae73c75"
+     }
+    ],
+    "G_oracle_disc": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-34/G_new/ALLDATA.KWI",
+    "G_rect_check_max_outside_raw": {
+     "background": 0.0,
+     "road": 0.0
+    },
+    "G_rect_grid": 4,
+    "R_quantum_note": "every R leaf here has frame range 4096 over the whole parent (divided_parent or leaf), so one R coordinate step is one parent raw unit",
+    "R_quantum_parent_raw": 1.0,
+    "R_rect_check_max_outside_raw": {
+     "background": 0.0,
+     "road": 0.0
+    },
+    "R_rect_grid": 2,
+    "background_census": {
+     "G_class_type": {
+      "2:288": 39,
+      "2:289": 29,
+      "2:290": 3,
+      "2:321": 1
+     },
+     "R_class_type": {
+      "2:288": 1,
+      "2:289": 260,
+      "2:290": 42,
+      "2:291": 66,
+      "2:321": 77
+     },
+     "dropped_types": {}
+    },
+    "dropped_categories": {
+     "redundant (every sample within 1 R step of a kept G piece)": 13,
+     "sub-quantum (<1 R step)": 295
+    },
+    "dropped_within_1_of_kept_all_vertices": 308,
+    "kept_any_class_v1_rule": {
+     "absent": 815,
+     "ambiguous": 241,
+     "present": 1053
+    },
+    "piece_shape": {
+     "dropped_len_raw": {
+      "max": 4.685,
+      "q10": 0.062,
+      "q50": 0.174,
+      "q90": 0.648
+     },
+     "dropped_n_pts": {
+      "2": 308
+     },
+     "kept_len_raw": {
+      "max": 47.939,
+      "q10": 0.221,
+      "q50": 1.154,
+      "q90": 5.528
+     }
+    },
+    "road_control": {
+     "calibrated_tol_recall90": 10,
+     "control_quantiles": {
+      "max": 48.465,
+      "q10": 0.124,
+      "q50": 0.788,
+      "q90": 7.798
+     },
+     "control_recall_at_tol": {
+      "1": 0.5605,
+      "2": 0.7274,
+      "5": 0.872,
+      "10": 0.9175,
+      "20": 0.9369,
+      "50": 1.0,
+      "100": 1.0,
+      "200": 1.0,
+      "500": 1.0
+     },
+     "dropped_absent_at_calibrated_tol": 19,
+     "dropped_present_at_calibrated_tol": 289,
+     "dropped_quantiles": {
+      "max": 42.691,
+      "q10": 0.103,
+      "q50": 0.573,
+      "q90": 6.508
+     },
+     "dropped_within_tol": {
+      "1": 0.5714,
+      "2": 0.7208,
+      "5": 0.8864,
+      "10": 0.9383,
+      "20": 0.9481,
+      "50": 1.0,
+      "100": 1.0,
+      "200": 1.0,
+      "500": 1.0
+     },
+     "metric": "per-piece median of sampled distance to the nearest R road of any class, parent raw units (clamped at 600)",
+     "n": 2109,
+     "source": "kept pieces of the trimmed sub-cell (exact dump geometry)"
+    },
+    "road_volume": {
+     "G_classes_dropped": {
+      "12": 308
+     },
+     "G_classes_kept_whole_parent": {
+      "12": 2979
+     },
+     "G_kept_links_whole_parent": 2979,
+     "R_classes": {
+      "10": 801,
+      "12": 128
+     },
+     "R_links_whole_parent": 929,
+     "per_G_leaf": [
+      {
+       "G_kept_len_in_rect_raw": 224.9,
+       "G_kept_links": 41,
+       "G_over_R": 0.047,
+       "R_len_in_rect_raw": 4786.1,
+       "leaf_path": [
+        19,
+        2
+       ],
+       "rect": [
+        2048.0,
+        0.0,
+        3072.0,
+        1024.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 5373.3,
+       "G_kept_links": 2109,
+       "G_over_R": 0.811,
+       "R_len_in_rect_raw": 6623.1,
+       "leaf_path": [
+        19,
+        3
+       ],
+       "rect": [
+        3072.0,
+        0.0,
+        4096.0,
+        1024.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 3002.7,
+       "G_kept_links": 829,
+       "G_over_R": 0.823,
+       "R_len_in_rect_raw": 3647.3,
+       "leaf_path": [
+        19,
+        7
+       ],
+       "rect": [
+        3072.0,
+        1024.0,
+        4096.0,
+        2048.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 0,
+       "G_kept_links": 0,
+       "G_over_R": 0.0,
+       "R_len_in_rect_raw": 1250.9,
+       "leaf_path": [
+        19,
+        11
+       ],
+       "rect": [
+        3072.0,
+        2048.0,
+        4096.0,
+        3072.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 0,
+       "G_kept_links": 0,
+       "G_over_R": 0.0,
+       "R_len_in_rect_raw": 3335.6,
+       "leaf_path": [
+        19,
+        14
+       ],
+       "rect": [
+        2048.0,
+        3072.0,
+        3072.0,
+        4096.0
+       ]
+      },
+      {
+       "G_kept_len_in_rect_raw": 0,
+       "G_kept_links": 0,
+       "G_over_R": null,
+       "R_len_in_rect_raw": 0.0,
+       "leaf_path": [
+        19,
+        15
+       ],
+       "rect": [
+        3072.0,
+        3072.0,
+        4096.0,
+        4096.0
+       ]
+      }
+     ],
+     "trimmed_sub": {
+      "G_dropped_len_raw": 94.0,
+      "G_dropped_pieces": 308,
+      "G_kept_pieces": 2109,
+      "G_pre_trim_len_raw": 4738.4,
+      "G_pre_trim_pieces": 2417,
+      "R_len_in_rect_raw": 6623.1
+     }
+    },
+    "trimmed_sub": [
+     3,
+     0
+    ],
+    "trimmed_sub_rect_raw": [
+     3072.0,
+     0.0,
+     4096.0,
+     1024.0
+    ]
    }
   }
  ],
- "rule": "(DESIGN Contract 2, fixed before measuring), parent-cell raw units of\nthe item's level (RAW = 4096 per parent cell):\n  road: every vertex of the G chain piece lies within 1 raw unit of the union of\n        R road polylines of the same display class in the parent's R leaves ->\n        present; no vertex within 1 unit -> absent; otherwise ambiguous.\n  bg:   an R class-2 record of the same type whose every vertex lies within 1 raw\n        unit of the G source ring or of its own R leaf frame edge, with at least\n        one vertex within 1 unit of the ring and more than 1 unit from the frame\n        edge -> present; none -> absent; an R record of the same type meeting the\n        ring at some but not all vertices -> ambiguous.\nG control: the kept (K) items of the same trimmed sub-cell go through the same rule."
+ "rule_v1_not_validated": "(DESIGN Contract 2, fixed before measuring), parent-cell raw units of\nthe item's level (RAW = 4096 per parent cell):\n  road: every vertex of the G chain piece lies within 1 raw unit of the union of\n        R road polylines of the same display class in the parent's R leaves ->\n        present; no vertex within 1 unit -> absent; otherwise ambiguous.\n  bg:   an R class-2 record of the same type whose every vertex lies within 1 raw\n        unit of the G source ring or of its own R leaf frame edge, with at least\n        one vertex within 1 unit of the ring and more than 1 unit from the frame\n        edge -> present; none -> absent; an R record of the same type meeting the\n        ring at some but not all vertices -> ambiguous.\nG control: the kept (K) items of the same trimmed sub-cell go through the same rule."
 }
