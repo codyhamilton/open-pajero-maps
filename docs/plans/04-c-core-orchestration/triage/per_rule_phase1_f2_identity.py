@@ -2,7 +2,8 @@
 """Plan 37 Phase 1: per-row identity for plan 28 F2 (3-15 -> 3-17 O05 -30, O04 -4).
 
 Light join of committed tables plus one streamed read of the 3-14 AU
-changed-cell list. The 3-14 dump extension keeps `other_mechanism` only on
+changed-cell list (plan 31 `diff-3-14-au.cells.tsv`, used as a proxy for the
+3-15 text's `AU.differing_cells.tsv`, which is not in the repo). The 3-14 dump extension keeps `other_mechanism` only on
 byte-unchanged cells and zeroes it on changed cells (`rebaseline_3-17_9064.md`),
 so the predicted forced-zero set is every O04/O05 row whose (level, ix, iy) is
 a 3-14 changed cell. The script reports that set split shared/added x rule and

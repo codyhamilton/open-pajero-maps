@@ -56,7 +56,7 @@ Met. Both predictions PASS. Every conflict is discriminated by byte-level eviden
 
 Independent terminal review (Codex), **PASS_WITH_FOLLOWUPS**, reviewed `cc96570`, landed `904f416`.
 - **F1 (medium), resolved:** hard-linked destinations could overwrite protected inputs in `extend_other_mechanism`. Fixed with `samefile()` checks, plus three regression cases.
-- **F2 (medium), follow-up:** the historical 3-17 control cannot identify all mismatches (34 vs 31). **Discharged by plan 37 Phase 1:** the 34 rows are O05 30 + O04 4 (shared 31, added 3), proven per row in `docs/plans/04-c-core-orchestration/triage/per_rule_phase1_f2_identity.md`. The 31 statement omitted the 3 added O04 rows (dump_rows 138, 282, 563).
+- **F2 (medium), follow-up:** the historical 3-17 control cannot identify all mismatches (34 vs 31). **Discharged by plan 37 Phase 1:** the 34 rows are O05 30 + O04 4 (shared 31, added 3), named per row by the 3-14 forced-zero mechanism and matched exactly to the 3-17 aggregates (the per-row 3-17 bytes are deleted), in `docs/plans/04-c-core-orchestration/triage/per_rule_phase1_f2_identity.md`. The 31 statement omitted the 3 added O04 rows (dump_rows 138, 282, 563).
 - **F3 (low), resolved:** the fixture depended on ignored saved scratch; it now uses an explicit 144-byte fixture contract.
 - **F4 (low), resolved:** a report's guarded rerun command lacked an interpreter.
 
@@ -76,7 +76,7 @@ Independent terminal review (Codex), **PASS_WITH_FOLLOWUPS**, reviewed `cc96570`
 
 ## Follow-ups
 
-- **3-17 per-row identity control** (review F2) and the 34-vs-31 explanation. Owner: Design; there is no plan yet. Carried in `docs/plans/04-c-core-orchestration/triage/per_rule_phase1_controls.md` and here. **Discharged by plan 37 Phase 1:** the 34 rows are O05 30 + O04 4 (shared 31, added 3), proven per row in `docs/plans/04-c-core-orchestration/triage/per_rule_phase1_f2_identity.md`. The 31 statement omitted the 3 added O04 rows (dump_rows 138, 282, 563).
+- **3-17 per-row identity control** (review F2) and the 34-vs-31 explanation. Owner: Design; there is no plan yet. Carried in `docs/plans/04-c-core-orchestration/triage/per_rule_phase1_controls.md` and here. **Discharged by plan 37 Phase 1:** the 34 rows are O05 30 + O04 4 (shared 31, added 3), named per row by the 3-14 forced-zero mechanism and matched exactly to the 3-17 aggregates (the per-row 3-17 bytes are deleted), in `docs/plans/04-c-core-orchestration/triage/per_rule_phase1_f2_identity.md`. The 31 statement omitted the 3 added O04 rows (dump_rows 138, 282, 563).
 - **Seven O04 spool rows** for plan 04's successor spool list (`docs/plans/04-c-core-orchestration/triage/per_rule_phase2_reconciliation.md`). *(2026-10-06, appended: plan 33 closes all seven as proven-non-deviation on per-row G/R byte/decode witnesses; no spool edit.)*
 - **2-01 source-data parity** stays a carried observation for Design (plan 14 record).
 - Plan 04 Phase 3 is not closed by this plan.

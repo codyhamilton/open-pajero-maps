@@ -46,12 +46,25 @@ that the mechanism predicts exactly the measured 3-17 aggregates, and it names
 the 34 rows that mechanism forces. It cannot compare row-for-row against bytes
 that no longer exist. 3-17 was not re-run or reseated.
 
+**Cell-list proxy:** the 3-15 text names the changed cells as
+`AU.differing_cells.tsv`. No file or producer with that name exists in the
+repo. As DESIGN prescribed, this note uses plan 31's
+`output/scratch-31/diff-3-14-au.cells.tsv` (013586b5 → 4ed9cd80 Whole-Map-Frame
+multiset diff by cell, sha `77ff1d86…`). The two sets are inferred to be equal
+rather than pinned. The discriminating aggregate match supports that
+inference: 31 of the 136 shared O04/O05 rows fall on changed cells, and the
+other 105 survive at exactly O04 3 / O05 102. It is fully closed only if
+`AU.differing_cells.tsv` is recovered and hashed.
+
 ## Erratum (plan 28-scoped)
 
 `completeness_3-15_cell_local.md` says the 3-14 dump's forced-zero bytes are
-"30 O05 and 1 O04 on `AU.differing_cells.tsv` cells". The statement is an
-arithmetic undercount. It names the shared rows (30 O05 + O04 dump_row 317)
-and omits the 3 **added** O04 rows, dump_rows 138, 282 and 563. Those rows lie
+"30 O05 and 1 O04 on `AU.differing_cells.tsv` cells". As an explanation of
+the 34 delta it is incomplete: it accounts for the 31 shared forced-zero rows
+only. The 3-15 text names no rows. Matching its 31 to the shared rows (30 O05 +
+O04 dump_row 317) is derived here. It omits the 3 **added** O04 rows,
+dump_rows 138, 282 and 563. Those rows are post-only keys with no pre-3-14 byte
+to inherit, so "inherited bytes zeroed" is literally consistent with 31. Those rows lie
 on changed cells as well, which is expected: the 89 added keys are EO-stitch
 side-effects on 3-14-changed cells. The forced-zero total is 30 + 1 + 3 = 34,
 matching O05 −30 / O04 −4 / NO_RULE +34. The 3-15 text, the 3-17 rebaseline
