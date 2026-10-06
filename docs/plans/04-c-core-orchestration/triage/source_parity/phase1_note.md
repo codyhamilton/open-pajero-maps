@@ -28,9 +28,9 @@ The Execute-only `--disc` command first validates the full SHA256 by streaming 1
 Execute runs these sequentially from the repository root:
 
 ```bash
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-30/runs/g_successor.json -- .venv-rp/bin/python -B docs/plans/30-2-01-source-data-parity/fingerprint.py --disc output/scratch-29/G_new/ALLDATA.KWI --pin successor --output output/scratch-30/g_successor.json
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-30/runs/g_historical.json -- .venv-rp/bin/python -B docs/plans/30-2-01-source-data-parity/fingerprint.py --disc output/scratch-14/G_new/ALLDATA.KWI --pin historical --output output/scratch-30/g_historical.json
-.venv-rp/bin/python -B docs/plans/30-2-01-source-data-parity/fingerprint.py merge --successor-json output/scratch-30/g_successor.json --historical-json output/scratch-30/g_historical.json
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-30/runs/g_successor.json -- .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/source_parity/fingerprint.py --disc output/scratch-29/G_new/ALLDATA.KWI --pin successor --output output/scratch-30/g_successor.json
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-30/runs/g_historical.json -- .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/source_parity/fingerprint.py --disc output/scratch-14/G_new/ALLDATA.KWI --pin historical --output output/scratch-30/g_historical.json
+.venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/source_parity/fingerprint.py merge --successor-json output/scratch-30/g_successor.json --historical-json output/scratch-30/g_historical.json
 ```
 
 The merge validates both full pins, input membership hashes, exact native-key sets, dump rows, count/status validity and equality of every historical count to `g_cell_type_count`. Validation happens before either census output is changed. It fills both G columns only from the probe JSON, marks their slot statuses as disc-verified and records hashes of its inputs. A different successor count is preserved as measured evidence. Never fill the successor columns by hand.
@@ -38,7 +38,7 @@ The merge validates both full pins, input membership hashes, exact native-key se
 To reproduce the light census before probing or merging:
 
 ```bash
-.venv-rp/bin/python -B docs/plans/30-2-01-source-data-parity/fingerprint.py census
+.venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/source_parity/fingerprint.py census
 ```
 
 Execute also owns the append-only wording corrections in OVERVIEW, the plan-14 follow-up and the plan-28 reconciliation note. This unit changes none of those surfaces. No disposition verdict, encoder/checker/vocab change, 3-90 run, Phase 3 close claim or plan-29 work is included.

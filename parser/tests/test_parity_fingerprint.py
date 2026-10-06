@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-SCRIPT = Path(__file__).resolve().parents[2] / "docs/plans/30-2-01-source-data-parity/fingerprint.py"
+SCRIPT = Path(__file__).resolve().parents[2] / "docs/plans/04-c-core-orchestration/triage/source_parity/fingerprint.py"
 SPEC = importlib.util.spec_from_file_location("parity_fingerprint", SCRIPT)
 fp = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(fp)

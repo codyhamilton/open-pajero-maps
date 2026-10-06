@@ -17,9 +17,9 @@ Departure from Ground wording: both computed templates have positive signed doub
 Remaining actions for Execute, sequentially from the repository root:
 
 ```bash
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-30/runs/g_successor.json -- .venv-rp/bin/python -B docs/plans/30-2-01-source-data-parity/fingerprint.py --disc output/scratch-29/G_new/ALLDATA.KWI --pin successor --output output/scratch-30/g_successor.json
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-30/runs/g_historical.json -- .venv-rp/bin/python -B docs/plans/30-2-01-source-data-parity/fingerprint.py --disc output/scratch-14/G_new/ALLDATA.KWI --pin historical --output output/scratch-30/g_historical.json
-.venv-rp/bin/python -B docs/plans/30-2-01-source-data-parity/fingerprint.py merge --successor-json output/scratch-30/g_successor.json --historical-json output/scratch-30/g_historical.json
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-30/runs/g_successor.json -- .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/source_parity/fingerprint.py --disc output/scratch-29/G_new/ALLDATA.KWI --pin successor --output output/scratch-30/g_successor.json
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-30/runs/g_historical.json -- .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/source_parity/fingerprint.py --disc output/scratch-14/G_new/ALLDATA.KWI --pin historical --output output/scratch-30/g_historical.json
+.venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/source_parity/fingerprint.py merge --successor-json output/scratch-30/g_successor.json --historical-json output/scratch-30/g_historical.json
 ```
 
 Both heavy commands stream the pin check and perform bounded per-cell pread/decode for only the 342 keys. Historical disagreement fails before writing a result; merge also requires exact historical control equality and exact key/pin/hash provenance. Wrapper logs capture argv and memory.peak under scratch-30.

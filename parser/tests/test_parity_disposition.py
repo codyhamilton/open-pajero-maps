@@ -11,7 +11,7 @@ import struct
 
 import pytest
 
-SCRIPT = Path(__file__).resolve().parents[2] / "docs/plans/30-2-01-source-data-parity/disposition.py"
+SCRIPT = Path(__file__).resolve().parents[2] / "docs/plans/04-c-core-orchestration/triage/source_parity/disposition.py"
 SPEC = importlib.util.spec_from_file_location("parity_disposition", SCRIPT)
 dp = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(dp)

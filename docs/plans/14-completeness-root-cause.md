@@ -78,7 +78,7 @@ Independent terminal review (Codex). Initial verdict REMEDIATE; final **PASS_WIT
 ## Follow-ups
 
 - **Phase 1 classify assignments** (review F3): resolved by plan 28; see the F3 resolution below.
-- **2-01 source-data parity, a proven deviation cause:** in the 342 cells R emits type 288 while the spool holds no encodable 288 source, so G cannot match R without inventing geometry. The cause is the source data; it is not a non-deviation. Carried to Design. **Census correction (plan 30, append-only):** the 342 rows are 341 × type 288 plus 1 × type 321 (dump_row 246), not 342 × 288; see `30-2-01-source-data-parity/fingerprint.tsv`.
+- **2-01 source-data parity, a proven deviation cause:** in the 342 cells R emits type 288 while the spool holds no encodable 288 source, so G cannot match R without inventing geometry. The cause is the source data; it is not a non-deviation. Carried to Design. **Census correction (plan 30, append-only):** the 342 rows are 341 × type 288 plus 1 × type 321 (dump_row 246), not 342 × 288; see `docs/plans/04-c-core-orchestration/triage/source_parity/fingerprint.tsv`.
 - **K1 name_anchor 1:** a pre-existing failure outside plan 14; Design is drafting a separate design. K1 therefore still exits 1.
 - Plan 04 Phase 3 is not closed by this plan.
 

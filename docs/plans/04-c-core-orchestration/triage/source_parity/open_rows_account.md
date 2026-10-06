@@ -109,3 +109,15 @@ and response sha256 (the 17 MB response stays at
 polygon sha. `attic/missing_ways.json` holds the requested id list. The
 polygon is Geofabrik's current file, fetched 2026-10-06; its bbox matches the
 PBF header.
+
+## Post-close note (plan 30 close-out, 2026-10-06)
+
+- **Design ruling (12:45 AEST):** dump_row 246 is **not** unfixable-proven.
+  It is carried as a named residual.
+- **Candidate cause, UNPROVEN:** R's in-cell 321 record may come from the
+  edge-touching relation under a different clip-inclusion rule. R would keep
+  boundary-touching or degenerate clips that our encoder drops.
+- **Owner: plan 38** (Design drafting). It will byte-decode R's record,
+  match it to the relation, then fix the clip rule with no other cell or
+  kind change, or record the proven cause.
+- Record: `docs/plans/30-2-01-source-data-parity.md`.

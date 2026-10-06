@@ -22,7 +22,7 @@ import struct
 import sys
 from datetime import datetime, timezone
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[5]
 PLAN = Path(__file__).resolve().parent
 TRIAGE = ROOT / "docs/plans/04-c-core-orchestration/triage"
 MEMBERS = TRIAGE / "2-01_g-omits-cell-local-dvd-type_members.tsv"

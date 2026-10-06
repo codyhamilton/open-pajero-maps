@@ -87,10 +87,14 @@ Already settled:
   [plan **32**](plans/32-other-kind-classify-joins.md).
 - **Completeness joins:** plan **28** (776 rows, 0 conflict-open).
 - **O04 seven:** plan **33** (proven-non-deviation).
-- **2-01 source-data parity:** plan **30** (`docs/plans/30-2-01-source-data-parity/disposition.tsv`):
-  341 supply-path (successor implement unit), 0 unfixable-proven and
-  1 conflict-open (dump_row 246, Design ruling). These rows are Maps parity
-  carried, not Phase 3 blockers.
+- **2-01 source-data parity:** plan **30**, closed
+  (`docs/plans/30-2-01-source-data-parity.md`; disposition
+  `docs/plans/04-c-core-orchestration/triage/source_parity/disposition.tsv`):
+  341 supply-path (successor implement unit), 0 unfixable-proven, and
+  1 carried residual. The residual is dump_row 246: Design ruled it not
+  unfixable-proven, and its candidate cause, a clip-inclusion-rule
+  difference, is **unproven**. Owner: plan **38**. These rows are Maps
+  parity carried, not Phase 3 blockers.
 - **Plan-16 strip review:** closed by plan **27**.
 - **Plan 25 CHM heavy hold:** cleared on 2026-10-06. Heavy work runs only
   under `flock output/.heavy.lock` + `run_heavy_python.py`.
@@ -110,7 +114,7 @@ The offline oracle (`parser/compare_disc.py`) defaults to `layers_present=["map"
 | How is the code organised? | `docs/ARCHITECTURE.md` |
 | What are we building and how is it judged? | `docs/design/target-disc.md` |
 | How do we run the workflow plugin (design → execute → close)? | `docs/WORKFLOW.md` |
-| What remains unfinished? | `docs/plans/04-c-core-orchestration/` (blocked Phase 3 / 3-90; dependent Phases 4–6). The completeness successor items remain (2-01 source-data parity under plan 30: 341 supply-path rows to implement, 0 unfixable-proven, 1 conflict-open (dump_row 246, Design ruling needed); `docs/plans/30-2-01-source-data-parity/open_rows_account.md`); plan **14** closed out at `3fb5a35` (`docs/plans/14-completeness-root-cause.md`). Plan 03's remaining content phases stay frozen. The closed records under `docs/plans/` describe completed work. |
+| What remains unfinished? | `docs/plans/04-c-core-orchestration/` (blocked Phase 3 / 3-90; dependent Phases 4–6). The completeness successor items remain (2-01 source-data parity under plan 30: 341 supply-path rows to implement, 0 unfixable-proven, 1 carried residual (dump_row 246, unproven candidate cause, plan 38); plan 30 closed, `docs/plans/30-2-01-source-data-parity.md`); plan **14** closed out at `3fb5a35` (`docs/plans/14-completeness-root-cause.md`). Plan 03's remaining content phases stay frozen. The closed records under `docs/plans/` describe completed work. |
 | What was built before? | `docs/plans/01-…md`, `docs/plans/02-…md` |
 | Where did each non-committed file come from? | `docs/provenance.md` |
 

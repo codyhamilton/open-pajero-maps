@@ -86,7 +86,7 @@ def readers():
     old = ROOT / "docs/plans/29-k1-name-anchor-failure/witness_p1.py"
     hardened = old if old.exists() else TRIAGE / "name_anchor/witness_p1.py"
     return (module("o04_hardened_index", hardened),
-            module("o04_g_fingerprint", ROOT / "docs/plans/30-2-01-source-data-parity/fingerprint.py"),
+            module("o04_g_fingerprint", ROOT / "docs/plans/04-c-core-orchestration/triage/source_parity/fingerprint.py"),
             module("o04_cell_local", TRIAGE / "cell_local_2-01.py"))
 
 
