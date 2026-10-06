@@ -643,6 +643,16 @@ static int eo_left(Pt a, Pt b, int64_t n) {
     if (!length) return 0;
     for (int64_t i = 0; i < n; i++) {
         int64_t j = (i + 1) % n;
+        /* Plan 41: an edge whose bounding box is farther than 4*step from the
+         * sample point cannot lower step (its distance d > 4*step), so skip it
+         * before the hypotl. The 1e-9 margin dwarfs long-double evaluation
+         * error at raw-unit coordinate scale; output bytes are unchanged. */
+        {
+            long double lim = 4 * step + 1e-9L;
+            long double x0 = g_fx[i] < g_fx[j] ? g_fx[i] : g_fx[j], x1 = g_fx[i] < g_fx[j] ? g_fx[j] : g_fx[i];
+            long double y0 = g_fy[i] < g_fy[j] ? g_fy[i] : g_fy[j], y1 = g_fy[i] < g_fy[j] ? g_fy[j] : g_fy[i];
+            if (x - x1 > lim || x0 - x > lim || y - y1 > lim || y0 - y > lim) continue;
+        }
         long double ux = (long double)g_fx[j] - g_fx[i], uy = (long double)g_fy[j] - g_fy[i];
         long double vx = x - g_fx[i], vy = y - g_fy[i], l2 = ux * ux + uy * uy;
         long double t = l2 ? fmaxl(0, fminl(1, (vx * ux + vy * uy) / l2)) : 0;
