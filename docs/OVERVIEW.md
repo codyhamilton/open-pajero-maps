@@ -69,7 +69,8 @@ remaining Phase 3 blockers are exactly the `blocks-phase3` rows of
   per-cell payload causes (R-G1-1/2: every changed cell classed, 0
   unattributed; the EO-only build equals the 3-14 disc), its `checked` move
   confinement (R-G4-2), the 3-11 routed proof (R-G1-4) and the 3-14
-  container accounting (R-G1-3) are discharged by plan 36 Phases 1–3;
+  container accounting (R-G1-3) are discharged by plan **36**
+  ([record](plans/36-3-14-cause-and-container-attribution.md));
 - the historical cause remainder: 8,739 background_boundary + 137 background
   rows (180 groups), polygon 65623 and R01 exclusivity;
 - the 3-14 to 3-17 independent fix reviews.
