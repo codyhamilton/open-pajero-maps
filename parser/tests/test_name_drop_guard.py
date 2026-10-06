@@ -172,3 +172,28 @@ def test_wiring_fixture_names_are_outside_lattice_span(tmp_path):
     assert guarded.name_drops(None, None) == 9
     raw.close()
     guarded.close()
+
+
+def test_vectorised_screen_matches_per_cell_scan(tmp_path):
+    """Plan 41: the once-per-level screen gives the per-cell verdicts and bytes."""
+    path = tmp_path / 'spool'
+    with SpoolWriter(str(path)) as w:
+        w.add(0, 0, 541, names=[name('outside', -38.727285888, 77.519035766),
+                                name('valid', -38.727285888, 90.01)])
+        w.add(0, 1, 541, names=[name('neighbour', -38.727285888, 90.04)])
+        w.add(0, 2, 541, names=[])
+        w.add(0, 3, 542, names=[name('wrap', -38.6, 90.02 + 360.0),
+                                name('south', -91.0, 90.02),
+                                name('ok2', -38.6, 90.03)])
+    fast = cenc.E1Spool(path, 0, guard_names=True)
+    slow = cenc.E1Spool(path, 0)
+    slow.data = slow.data.copy()
+    slow.lengths = slow.lengths.copy()
+    grid = mesh.CellGrid.from_reference(0)
+    for i in range(len(slow.offsets)):
+        slow._guard_cell(i, grid)
+    assert fast.drops.tolist() == slow.drops.tolist()
+    assert cenc.E1Spool(path, 0)._name_rejects(grid).tolist() == slow.drops.tolist()
+    assert sum(slow.drops) == 2
+    assert bytes(fast.data) == bytes(slow.data)
+    assert fast.lengths.tolist() == slow.lengths.tolist()

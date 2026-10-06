@@ -115,48 +115,108 @@ class E1Spool:
         Only rejected cells are repacked, at their original offsets; private
         index lengths shrink to match. No source file is writable or flushed.
         Filtering the whole level also protects E2's cross-range name halo.
+
+        Plan 41: the admission test runs once, vectorised over every cell's
+        name columns (`_name_rejects`); only cells with a rejected anchor take
+        the per-cell repack (`_guard_cell`), which re-derives the same verdict.
+        Cells without a reject were never modified, so the private mapping is
+        byte-identical to the former per-cell scan.
         """
         import numpy as np
-        from . import mesh, spool
+        from . import mesh
         grid = mesh.CellGrid.from_reference(self.level)
-        for i, (offset, length) in enumerate(zip(self.offsets, self.lengths)):
-            off, size = int(offset), int(length)
-            if off + size > len(self.data):
-                raise E1Error("spool cell extends beyond data")
-            cols = spool.decode_columns(self.data[off:off + size])
-            anchored = (cols["s_present"] & 3) == 3
-            lat, lon = cols["s_lat"][anchored], cols["s_lon"][anchored]
-            if not (np.isfinite(lat).all() and np.isfinite(lon).all()):
-                raise E1Error("non-finite name anchor")
-            delta = lon - grid.disc_lon_lo
-            while (delta < 0).any():
-                delta[delta < 0] += 360.0
-            while (delta > grid.disc_lon_span).any():
-                delta[delta > grid.disc_lon_span] -= 360.0
-            reject = np.zeros(len(anchored), bool)
-            dlat = lat - grid.disc_lat_lo
-            reject[anchored] = ((dlat < 0) | (dlat >= grid.disc_lat_span)
-                                | (delta < 0) | (delta >= grid.disc_lon_span))
-            self.drops[i] = int(reject.sum())
-            if not self.drops[i]:
-                continue
-            keep = ~reject
-            filtered = dict(cols)
-            for key in cols:
-                if key.startswith("s_"):
-                    filtered[key] = cols[key][keep]
-            for kind in ("label", "text"):
-                lengths = cols[f"s_{kind}_len"]
-                edges = np.concatenate(([0], np.cumsum(lengths, dtype=np.int64)))
-                blob = cols[f"blob_name_{kind}"]
-                filtered[f"blob_name_{kind}"] = np.concatenate(
-                    [blob[edges[j]:edges[j + 1]] for j in np.flatnonzero(keep)]
-                    or [np.zeros(0, np.uint8)])
-            record = spool.encode_columns(filtered)
-            if len(record) > size:
-                raise E1Error("name drop enlarged spool cell")
-            self.data[off:off + len(record)] = np.frombuffer(record, np.uint8)
-            self.lengths[i] = len(record)
+        drops = self._name_rejects(grid)
+        if drops is None:  # layout not 8-byte aligned: per-cell scan of every cell
+            for i in range(len(self.offsets)):
+                self._guard_cell(i, grid)
+            return
+        for i in np.flatnonzero(drops):
+            self._guard_cell(int(i), grid)
+            if self.drops[i] != drops[i]:
+                raise E1Error("name guard screen disagrees with per-cell scan")
+
+    @staticmethod
+    def _admission_rejects(lat, lon, grid):
+        """Plan 18 lattice-span rejects for anchored names (`lat`, `lon`)."""
+        delta = lon - grid.disc_lon_lo
+        while (delta < 0).any():
+            delta[delta < 0] += 360.0
+        while (delta > grid.disc_lon_span).any():
+            delta[delta > grid.disc_lon_span] -= 360.0
+        dlat = lat - grid.disc_lat_lo
+        return ((dlat < 0) | (dlat >= grid.disc_lat_span)
+                | (delta < 0) | (delta >= grid.disc_lon_span))
+
+    def _name_rejects(self, grid):
+        """Per-cell count of rejected anchored names, read from the name
+        columns only (record layout: `spool.encode_columns`). Returns None
+        when the layout is not 8-byte aligned (the caller then scans per cell)."""
+        import numpy as np
+        from . import spool
+        n = len(self.offsets)
+        off = self.offsets.astype(np.int64)
+        size = self.lengths.astype(np.int64)
+        if n and int((off + size).max()) > len(self.data):
+            raise E1Error("spool cell extends beyond data")
+        if not n:
+            return np.zeros(0, np.int64)
+        if (off % 8).any() or len(self.data) % 8:
+            return None
+        hdr = self.data.view("<u8")[(off // 8)[:, None] + np.arange(9)]
+        counts = dict(zip(spool._COUNT_KEYS, hdr.T))
+        pos = off + spool._HDR.size
+        col = {}
+        for name, dt, key in spool._COLUMNS:
+            col[name] = pos.copy()
+            nbytes = counts[key].astype(np.int64) * np.dtype(dt).itemsize
+            pos += nbytes + (8 - nbytes % 8) % 8
+        nn = counts["n_names"].astype(np.int64)
+        cell = np.repeat(np.arange(n), nn)
+        k = np.arange(len(cell)) - np.repeat(np.cumsum(nn) - nn, nn)
+        present = self.data[col["s_present"][cell] + k]
+        anchored = (present & 3) == 3
+        f64 = self.data.view("<f8")
+        lat = f64[(col["s_lat"][cell] // 8) + k][anchored]
+        lon = f64[(col["s_lon"][cell] // 8) + k][anchored]
+        if not (np.isfinite(lat).all() and np.isfinite(lon).all()):
+            raise E1Error("non-finite name anchor")
+        reject = self._admission_rejects(lat, lon, grid)
+        return np.bincount(cell[anchored][reject], minlength=n).astype(np.int64)
+
+    def _guard_cell(self, i, grid):
+        """Per-cell admission and repack (the pre-plan-41 loop body)."""
+        import numpy as np
+        from . import spool
+        off, size = int(self.offsets[i]), int(self.lengths[i])
+        if off + size > len(self.data):
+            raise E1Error("spool cell extends beyond data")
+        cols = spool.decode_columns(self.data[off:off + size])
+        anchored = (cols["s_present"] & 3) == 3
+        lat, lon = cols["s_lat"][anchored], cols["s_lon"][anchored]
+        if not (np.isfinite(lat).all() and np.isfinite(lon).all()):
+            raise E1Error("non-finite name anchor")
+        reject = np.zeros(len(anchored), bool)
+        reject[anchored] = self._admission_rejects(lat.copy(), lon.copy(), grid)
+        self.drops[i] = int(reject.sum())
+        if not self.drops[i]:
+            return
+        keep = ~reject
+        filtered = dict(cols)
+        for key in cols:
+            if key.startswith("s_"):
+                filtered[key] = cols[key][keep]
+        for kind in ("label", "text"):
+            lengths = cols[f"s_{kind}_len"]
+            edges = np.concatenate(([0], np.cumsum(lengths, dtype=np.int64)))
+            blob = cols[f"blob_name_{kind}"]
+            filtered[f"blob_name_{kind}"] = np.concatenate(
+                [blob[edges[j]:edges[j + 1]] for j in np.flatnonzero(keep)]
+                or [np.zeros(0, np.uint8)])
+        record = spool.encode_columns(filtered)
+        if len(record) > size:
+            raise E1Error("name drop enlarged spool cell")
+        self.data[off:off + len(record)] = np.frombuffer(record, np.uint8)
+        self.lengths[i] = len(record)
 
     def name_drops(self, lo, hi, rect=None) -> int:
         """Drops in source rows `[lo, hi)`, counted once by E1 regardless of
