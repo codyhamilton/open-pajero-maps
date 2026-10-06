@@ -1,5 +1,9 @@
 {
  "G": {
+  "R_centroid_cell_raw": [
+   3683.964285714286,
+   1462.9642857142858
+  ],
   "disc": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-34/G_new/ALLDATA.KWI",
   "expected_sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
   "leaves": [
@@ -23,6 +27,525 @@
    }
   ],
   "n_type321": 0,
+  "records": [
+   {
+    "cell_raw": [
+     [
+      1544.0,
+      1672.0
+     ],
+     [
+      1536.0,
+      1665.0
+     ],
+     [
+      1537.0,
+      1659.0
+     ],
+     [
+      1538.0,
+      1655.0
+     ],
+     [
+      1546.0,
+      1655.0
+     ],
+     [
+      1548.0,
+      1657.0
+     ],
+     [
+      1549.0,
+      1661.0
+     ],
+     [
+      1549.0,
+      1667.0
+     ],
+     [
+      1544.0,
+      1672.0
+     ]
+    ],
+    "class": 2,
+    "code": 288,
+    "contains_R_centroid": false,
+    "full_cell_rect": false,
+    "n": 9
+   },
+   {
+    "cell_raw": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      4096.0,
+      0.0
+     ],
+     [
+      4096.0,
+      4096.0
+     ],
+     [
+      0.0,
+      4096.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ],
+    "class": 2,
+    "code": 288,
+    "contains_R_centroid": true,
+    "full_cell_rect": true,
+    "n": 5
+   },
+   {
+    "cell_raw": [
+     [
+      2883.0,
+      0.0
+     ],
+     [
+      2825.0,
+      120.0
+     ],
+     [
+      2768.0,
+      240.0
+     ],
+     [
+      2710.0,
+      359.0
+     ],
+     [
+      2653.0,
+      479.0
+     ],
+     [
+      2595.0,
+      599.0
+     ],
+     [
+      2538.0,
+      719.0
+     ],
+     [
+      2480.0,
+      839.0
+     ],
+     [
+      2423.0,
+      959.0
+     ],
+     [
+      2365.0,
+      1078.0
+     ],
+     [
+      2308.0,
+      1198.0
+     ],
+     [
+      2250.0,
+      1318.0
+     ],
+     [
+      2193.0,
+      1438.0
+     ],
+     [
+      2135.0,
+      1558.0
+     ],
+     [
+      2078.0,
+      1678.0
+     ],
+     [
+      2020.0,
+      1797.0
+     ],
+     [
+      1963.0,
+      1917.0
+     ],
+     [
+      1905.0,
+      2037.0
+     ],
+     [
+      1903.0,
+      1969.0
+     ],
+     [
+      1900.0,
+      1900.0
+     ],
+     [
+      1914.0,
+      1812.0
+     ],
+     [
+      1928.0,
+      1723.0
+     ],
+     [
+      1942.0,
+      1634.0
+     ],
+     [
+      1990.0,
+      1543.0
+     ],
+     [
+      2038.0,
+      1451.0
+     ],
+     [
+      2139.0,
+      1368.0
+     ],
+     [
+      2177.0,
+      1298.0
+     ],
+     [
+      2215.0,
+      1228.0
+     ],
+     [
+      2215.0,
+      1149.0
+     ],
+     [
+      2215.0,
+      1070.0
+     ],
+     [
+      2239.0,
+      1001.0
+     ],
+     [
+      2262.0,
+      933.0
+     ],
+     [
+      2274.0,
+      832.0
+     ],
+     [
+      2285.0,
+      732.0
+     ],
+     [
+      2344.0,
+      655.0
+     ],
+     [
+      2403.0,
+      577.0
+     ],
+     [
+      2436.0,
+      478.0
+     ],
+     [
+      2468.0,
+      379.0
+     ],
+     [
+      2513.0,
+      383.0
+     ],
+     [
+      2554.0,
+      316.0
+     ],
+     [
+      2594.0,
+      249.0
+     ],
+     [
+      2594.0,
+      182.0
+     ],
+     [
+      2648.0,
+      139.0
+     ],
+     [
+      2735.0,
+      49.0
+     ],
+     [
+      2788.0,
+      0.0
+     ],
+     [
+      2883.0,
+      0.0
+     ]
+    ],
+    "class": 2,
+    "code": 291,
+    "contains_R_centroid": false,
+    "full_cell_rect": false,
+    "n": 46
+   },
+   {
+    "cell_raw": [
+     [
+      0.0,
+      4004.0
+     ],
+     [
+      0.0,
+      3889.0
+     ],
+     [
+      0.0,
+      3774.0
+     ],
+     [
+      0.0,
+      3658.0
+     ],
+     [
+      0.0,
+      3543.0
+     ],
+     [
+      0.0,
+      3428.0
+     ],
+     [
+      0.0,
+      3313.0
+     ],
+     [
+      0.0,
+      3198.0
+     ],
+     [
+      0.0,
+      3082.0
+     ],
+     [
+      0.0,
+      2967.0
+     ],
+     [
+      0.0,
+      2852.0
+     ],
+     [
+      0.0,
+      2737.0
+     ],
+     [
+      124.0,
+      2737.0
+     ],
+     [
+      247.0,
+      2737.0
+     ],
+     [
+      371.0,
+      2737.0
+     ],
+     [
+      495.0,
+      2737.0
+     ],
+     [
+      619.0,
+      2737.0
+     ],
+     [
+      742.0,
+      2737.0
+     ],
+     [
+      866.0,
+      2737.0
+     ],
+     [
+      990.0,
+      2737.0
+     ],
+     [
+      1113.0,
+      2738.0
+     ],
+     [
+      1237.0,
+      2738.0
+     ],
+     [
+      1361.0,
+      2738.0
+     ],
+     [
+      1484.0,
+      2738.0
+     ],
+     [
+      1608.0,
+      2738.0
+     ],
+     [
+      1732.0,
+      2738.0
+     ],
+     [
+      1856.0,
+      2738.0
+     ],
+     [
+      1856.0,
+      2861.0
+     ],
+     [
+      1856.0,
+      2985.0
+     ],
+     [
+      1856.0,
+      3108.0
+     ],
+     [
+      1856.0,
+      3232.0
+     ],
+     [
+      1856.0,
+      3355.0
+     ],
+     [
+      1856.0,
+      3479.0
+     ],
+     [
+      1856.0,
+      3602.0
+     ],
+     [
+      1856.0,
+      3726.0
+     ],
+     [
+      1856.0,
+      3849.0
+     ],
+     [
+      1857.0,
+      3973.0
+     ],
+     [
+      1857.0,
+      4096.0
+     ],
+     [
+      1733.0,
+      4096.0
+     ],
+     [
+      1608.0,
+      4096.0
+     ],
+     [
+      1484.0,
+      4096.0
+     ],
+     [
+      1360.0,
+      4096.0
+     ],
+     [
+      1236.0,
+      4096.0
+     ],
+     [
+      1112.0,
+      4096.0
+     ],
+     [
+      988.0,
+      4096.0
+     ],
+     [
+      864.0,
+      4096.0
+     ],
+     [
+      739.0,
+      4096.0
+     ],
+     [
+      615.0,
+      4096.0
+     ],
+     [
+      491.0,
+      4096.0
+     ],
+     [
+      367.0,
+      4096.0
+     ],
+     [
+      245.0,
+      4065.0
+     ],
+     [
+      122.0,
+      4035.0
+     ],
+     [
+      0.0,
+      4004.0
+     ]
+    ],
+    "class": 2,
+    "code": 288,
+    "contains_R_centroid": false,
+    "full_cell_rect": false,
+    "n": 53
+   },
+   {
+    "cell_raw": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      4096.0,
+      0.0
+     ],
+     [
+      4096.0,
+      4096.0
+     ],
+     [
+      0.0,
+      4096.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ],
+    "class": 2,
+    "code": 288,
+    "contains_R_centroid": true,
+    "full_cell_rect": true,
+    "n": 5
+   }
+  ],
   "records_by_class_code": {
    "class2:code288": 4,
    "class2:code291": 1
@@ -2929,11 +3452,11 @@
    "return": 0
   },
   "python_clip": {
-   "area2": -0.964,
+   "area2": 0.964,
    "area2_rint": 0,
    "clip": [
     [
-     4021.03,
+     4021.433,
      0
     ],
     [
@@ -2941,7 +3464,7 @@
      2.392
     ],
     [
-     4021.433,
+     4021.03,
      0
     ]
    ],
@@ -2965,7 +3488,7 @@
    "alternatives_ranked": [
     {
      "area2_R": 621301.0,
-     "area2_clip": -0.964,
+     "area2_clip": 0.964,
      "first_far": [
       0,
       1,
@@ -2977,7 +3500,7 @@
      "magnitude_ok": false,
      "match": false,
      "ordinal": 15,
-     "sign_ok": false,
+     "sign_ok": true,
      "source_cell": [
       834,
       885
@@ -2987,7 +3510,7 @@
    ],
    "vs_demander": {
     "area2_R": 621301.0,
-    "area2_clip": -0.964,
+    "area2_clip": 0.964,
     "first_far": [
      0,
      1,
@@ -2998,12 +3521,12 @@
     "hausdorff_cell_raw": 2053.765,
     "magnitude_ok": false,
     "match": false,
-    "sign_ok": false,
+    "sign_ok": true,
     "vertices_beyond_1u": 28
    }
   }
  ],
- "predicate": "(DESIGN Contract 4, fixed before measuring):\n  R's record matches the demander iff\n    (i)  every R vertex lies within 1 raw unit of the demander's clipped\n         in-cell geometry (its clip-ring segments, unrounded) or of the cell\n         edge segment it touches; and\n    (ii) R's ring area2 has the clip's sign and magnitude: same sign (0 counts\n         as its own sign) and |A_R - A_clip| <= 2 * perimeter_R (the most a\n         1-unit vertex band can move area2).\n  Otherwise no match; the nearest alternative among the R polygons and the\n  spool's type-321 features near the cell is named (Hausdorff, cell units).",
+ "predicate": "(DESIGN Contract 4, fixed before measuring):\n  R's record matches the demander iff\n    (i)  every R vertex lies within 1 raw unit of the demander's clipped\n         in-cell geometry (its clip-ring segments, unrounded) or of the cell\n         edge segment it touches (implemented as the nearest of the four cell\n         lines: looser than DESIGN, so it can only add matches); and\n    (ii) R's ring area2 has the clip's sign and magnitude: same sign (0 counts\n         as its own sign) and |A_R - A_clip| <= 2 * perimeter_R (a first-order\n         bound on how far a 1-unit vertex band moves area2). The clip ring is\n         oriented positive first, as bg_shape does.\n  Otherwise no match; the nearest alternative among the R polygons and the\n  spool's type-321 features near the cell is named (Hausdorff, cell units).",
  "spool_321_reaching_cell": [
   {
    "bbox_cell_raw": [
@@ -3024,11 +3547,11 @@
     "return": 0
    },
    "python_clip": {
-    "area2": -0.964,
+    "area2": 0.964,
     "area2_rint": 0,
     "clip": [
      [
-      4021.03,
+      4021.433,
       0
      ],
      [
@@ -3036,7 +3559,7 @@
       2.392
      ],
      [
-      4021.433,
+      4021.03,
       0
      ]
     ],
@@ -3049,6 +3572,60 @@
     885
    ],
    "type": 321
+  }
+ ],
+ "spool_any_type_class2_reaching_cell_5x5": [
+  {
+   "clip_n": 19,
+   "contains_R_centroid": false,
+   "label": "water system (river)",
+   "min_dist_to_R_vertex": 1084.6,
+   "n_coords": 34,
+   "ordinal": 1,
+   "source_cell": [
+    834,
+    885
+   ],
+   "type": 291
+  },
+  {
+   "clip_n": 3,
+   "contains_R_centroid": false,
+   "label": "green belt, park",
+   "min_dist_to_R_vertex": 917.9,
+   "n_coords": 58,
+   "ordinal": 15,
+   "source_cell": [
+    834,
+    885
+   ],
+   "type": 321
+  },
+  {
+   "clip_n": 9,
+   "contains_R_centroid": false,
+   "label": "unknown type 0x120",
+   "min_dist_to_R_vertex": 1975.6,
+   "n_coords": 9,
+   "ordinal": 0,
+   "source_cell": [
+    834,
+    886
+   ],
+   "type": 288
+  },
+  {
+   "clip_n": 5,
+   "contains_R_centroid": false,
+   "label": "unknown type 0x120",
+   "min_dist_to_R_vertex": 1829.6,
+   "n_coords": 33,
+   "ordinal": 0,
+   "source_cell": [
+    835,
+    887
+   ],
+   "type": 288
   }
  ]
 }

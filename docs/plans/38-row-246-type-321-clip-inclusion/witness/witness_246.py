@@ -10,10 +10,12 @@ Match predicate (DESIGN Contract 4, fixed before measuring):
   R's record matches the demander iff
     (i)  every R vertex lies within 1 raw unit of the demander's clipped
          in-cell geometry (its clip-ring segments, unrounded) or of the cell
-         edge segment it touches; and
+         edge segment it touches (implemented as the nearest of the four cell
+         lines: looser than DESIGN, so it can only add matches); and
     (ii) R's ring area2 has the clip's sign and magnitude: same sign (0 counts
-         as its own sign) and |A_R - A_clip| <= 2 * perimeter_R (the most a
-         1-unit vertex band can move area2).
+         as its own sign) and |A_R - A_clip| <= 2 * perimeter_R (a first-order
+         bound on how far a 1-unit vertex band moves area2). The clip ring is
+         oriented positive first, as bg_shape does.
   Otherwise no match; the nearest alternative among the R polygons and the
   spool's type-321 features near the cell is named (Hausdorff, cell units).
 """
@@ -223,12 +225,25 @@ def main():
     gr = RReader(str(G_DISC))
     gst, grecs, gleaves = slot_records(gr, LeafIndex(gr, 0), IX, IY)
     hist = {}
+    grec_list = []
+    rloc = [r for r in r321 if "a" in r["meet_branches"]]
+    rc = None
+    if rloc:
+        pts = rloc[0]["cell_raw"]
+        rc = (sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
     for _, _, _, s in grecs:
         k = f"class{s.shape_class}:code{s.type_code}"
         hist[k] = hist.get(k, 0) + 1
+        gp = [(float(lat.gx(c[1])) - IX * RAW, float(lat.gy(c[0])) - IY * RAW) for c in s.coords]
+        full = len(gp) >= 4 and all(min(abs(x), abs(x - RAW)) <= 0.5 and min(abs(y), abs(y - RAW)) <= 0.5 for x, y in gp)
+        grec_list.append({"class": s.shape_class, "code": s.type_code, "n": len(gp),
+                          "cell_raw": [[round(x, 2), round(y, 2)] for x, y in gp], "full_cell_rect": full,
+                          "contains_R_centroid": bool(rc and s.shape_class == 2 and len(gp) >= 3 and
+                                                      cl.point_in_poly(rc[0], rc[1], [q[0] for q in gp], [q[1] for q in gp]))})
     res["G"] = {"disc": str(G_DISC / "ALLDATA.KWI"), "expected_sha256": G_SHA,
                 "sha_source": "output/scratch-41/bench/protected_before.json (phase2_gates snapshot)",
                 "slot_status": gst, "leaves": gleaves, "records_by_class_code": dict(sorted(hist.items())),
+                "records": grec_list, "R_centroid_cell_raw": rc,
                 "n_type321": sum(v for k, v in hist.items() if k.endswith(f"code{CODE}"))}
 
     # 3. Spool demander and neighbourhood type-321 features
@@ -244,6 +259,8 @@ def main():
         x = (lat.gx(cols["c_lon"][a:b]) - IX * RAW).astype("f8")
         y = (lat.gy(cols["c_lat"][a:b]) - IY * RAW).astype("f8")
         poly = list(zip(x.tolist(), y.tolist()))
+        if int(cols["b_class"][o]) == 2 and len(poly) >= 3 and area2(poly) < 0:
+            poly = poly[::-1]  # bg_shape orients closed rings positive before clipping (_cenc.c bg_shape)
         clip = cl.clip_rect(poly, 0, 0, RAW, RAW)
         q, a2, emits = cl.encoder_piece(clip)
         out = np.zeros(65536, "u1"); nr = ctypes.c_int64()
@@ -285,6 +302,29 @@ def main():
                 if f["python_clip"]["n"] or f["production_bg_shape"]["nrec"]:
                     neigh.append(f)
     res["spool_321_reaching_cell"] = [{k: v for k, v in f.items() if k != "_clip"} for f in neigh]
+    anyt = []
+    for cx in range(IX - 2, IX + 3):
+        for cy in range(IY - 2, IY + 3):
+            p = np.nonzero((idx.ix == cx) & (idx.iy == cy))[0]
+            if not len(p):
+                continue
+            cols = decode_columns(sp._read_cell(0, int(idx.offset[p[0]]), int(idx.length[p[0]])))
+            n = cols["b_nstored"].astype(np.int64); offs = np.r_[0, np.cumsum(n)]
+            lo = np.r_[0, np.cumsum(cols["b_label_len"].astype(np.int64))]
+            for o in range(len(n)):
+                a, b = int(offs[o]), int(offs[o + 1])
+                if b - a < 1 or int(cols["b_class"][o]) != 2:
+                    continue
+                x = (lat.gx(cols["c_lon"][a:b]) - IX * RAW).tolist(); y = (lat.gy(cols["c_lat"][a:b]) - IY * RAW).tolist()
+                clip = cl.clip_rect(list(zip(x, y)), 0, 0, RAW, RAW)
+                if not clip:
+                    continue
+                anyt.append({"source_cell": [cx, cy], "ordinal": o, "type": int(cols["b_type"][o]),
+                             "label": bytes(cols["blob_bg_label"][lo[o]:lo[o + 1]]).decode("utf-8", "replace"),
+                             "n_coords": b - a, "clip_n": len(clip),
+                             "contains_R_centroid": bool(rc and cl.point_in_poly(rc[0], rc[1], x, y)),
+                             "min_dist_to_R_vertex": round(min(dist_to_ring(tuple(q), clip) for q in rloc[0]["cell_raw"]), 1) if rloc else None})
+    res["spool_any_type_class2_reaching_cell_5x5"] = anyt
 
     # 4. Match predicate
     def match(r, f):
