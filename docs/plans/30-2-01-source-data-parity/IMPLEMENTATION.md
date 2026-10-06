@@ -180,3 +180,5 @@ blocks all four rows, and its data is not in the pinned PBF. So
 Execute did **not** fetch external data. Phase 2's outcome (0
 conflict-open) is **not met**, so plan 30 stays open and is not closed out.
 The DESIGN does not authorise another source.
+
+Per-row gap lists for Design (relation ids by class, row-specific gaps): `open_rows_account.md`.
