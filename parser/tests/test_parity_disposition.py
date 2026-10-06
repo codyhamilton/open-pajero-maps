@@ -497,3 +497,177 @@ def test_cache_provenance_refuses_mismatched_pin(tmp_path):
                               source_json=pin_path, source_run=pin_path)
     with pytest.raises(ValueError, match="cache provenance schema mismatch"):
         dp.verify_cache_provenance(args, dp.Inputs(), {"heavy_inputs": [], "inputs_sha256": {}})
+
+
+# --- Unit 2-03: date-matched relation snapshot (DESIGN Amendment 1) ---------
+
+ADMIN = {"type": "boundary", "boundary": "administrative", "admin_level": "4"}
+
+
+def _snap_fixture(tmp_path, *, cache_ways=(10, 11), snap_ways=(11,), snap_members=None, extra=None,
+                  conflict=False, requested=(500,), cache_rel=True):
+    from kiwiw.vocab import load as load_vocab
+    grid = dp.lattice()
+    row = {n: 0 for n in dp.NATIVE} | {"ix": 400, "iy": 600, "code": 288, "dump_row": 0}
+    outer = square(dp.b4(grid, 400, 600), -.5, 1.5)
+    geo = {10: ([1, 2, 3], outer[:3]), 11: ([3, 4, 1], [outer[2], outer[3], outer[0]])}
+    members = [{"ref": 10, "role": "outer", "type": "w"}, {"ref": 11, "role": "outer", "type": "w"}]
+    db = dp.disk_db(tmp_path / "geometry.sqlite")
+    if cache_rel:
+        db.execute("INSERT INTO relations VALUES(?,?,?)", (500, dp.packed(ADMIN), dp.packed(members)))
+    for wid in cache_ways:
+        ids, coords = geo[wid]
+        db.execute("INSERT INTO ways VALUES(?,?,?)", (wid, dp.packed(ids), dp.packed(coords)))
+        for n, (lat, lon) in zip(ids, coords):
+            db.execute("INSERT OR IGNORE INTO nodes VALUES(?,?,?)", (n, lat, lon))
+    sw = {}
+    for wid in snap_ways:
+        ids, coords = geo[wid]
+        coords = [list(c) for c in coords]
+        if conflict:
+            coords[0] = [coords[0][0] + 1e-7, coords[0][1]]
+        sw[str(wid)] = {"nodes": ids, "coords": coords}
+    rels = {"500": {"tags": ADMIN, "members": snap_members if snap_members is not None else members,
+                    "version": 1, "timestamp": "2026-08-01T00:00:00Z"}}
+    rels.update(extra or {})
+    doc = {"schema": dp.SNAPSHOT_SCHEMA, "requested_relation_ids": list(requested), "relations": rels, "ways": sw,
+           "nodes": {}}
+    for k, v in (extra or {}).items():
+        for m in v["members"]:
+            if m["type"] == "w" and str(m["ref"]) not in sw and m["ref"] in geo:
+                sw[str(m["ref"])] = {"nodes": geo[m["ref"]][0], "coords": [list(c) for c in geo[m["ref"]][1]]}
+    path = tmp_path / "snapshot.json"
+    path.write_text(dp.packed(doc))
+    return grid, row, db, path, load_vocab("bg_type")
+
+
+def _assemble(tmp_path, grid, row, db, snap, probe, name="proofs.jsonl"):
+    from kiwiw.selection import level_filter
+    from kiwiw.vocab import load as load_vocab
+    writer = dp.ProbeWriter(tmp_path / name, [row], grid, probe)
+    counts = dp.Counter()
+    dp.assemble_relations(db, writer, load_vocab("bg_type"), level_filter, "synthetic.pbf", counts, {}, snap)
+    doc = writer.finish()
+    events = [json.loads(l) for l in (tmp_path / name).read_text().splitlines()]
+    return doc, events, counts
+
+
+def test_snapshot_sha_and_schema_refused(tmp_path):
+    _, _, _, path, _ = _snap_fixture(tmp_path)
+    with pytest.raises(ValueError, match="SHA256 mismatch"):
+        dp.load_snapshot(path, "0" * 64, [500])
+    with pytest.raises(ValueError, match="request-set"):
+        dp.load_snapshot(path, dp.digest(path), [500, 501])
+    assert dp.load_snapshot(path, dp.digest(path), [500])["relations"]["500"]["tags"] == ADMIN
+
+
+def test_snapshot_supplies_missing_way_and_completes_ring(tmp_path, production_probe):
+    grid, row, db, path, _ = _snap_fixture(tmp_path, cache_ways=(10,), snap_ways=(11,))
+    legacy, legacy_events, _ = _assemble(tmp_path, grid, row, db, None, production_probe, "legacy.jsonl")
+    assert legacy["gap_counts"] == {"missing relation member way": 1} and legacy["rows"][0]["supply"] is None
+    snap = dp.Snapshot(dp.load_snapshot(path, dp.digest(path), [500]), [500], db)
+    doc, events, counts = _assemble(tmp_path, grid, row, db, snap, production_probe)
+    assert doc["gap_counts"] == {} and counts["snapshot_relations_assembled"] == 1
+    supply = doc["rows"][0]["supply"]
+    assert supply and supply["source"]["geometry_ways"] == {"cache": 1, "snapshot": 1}
+    assert supply["source"]["tags_members"] == "pbf-cache"
+
+
+def test_snapshot_member_mismatch_is_gap_and_unused(tmp_path, production_probe):
+    other = [{"ref": 10, "role": "outer", "type": "w"}, {"ref": 12, "role": "outer", "type": "w"}]
+    grid, row, db, path, _ = _snap_fixture(tmp_path, cache_ways=(10,), snap_ways=(11,), snap_members=other)
+    snap = dp.Snapshot(dp.load_snapshot(path, dp.digest(path), [500]), [500], db)
+    doc, events, _ = _assemble(tmp_path, grid, row, db, snap, production_probe)
+    assert doc["gap_counts"] == {"snapshot-member-mismatch": 1, "missing relation member way": 1}
+    assert doc["rows"][0]["supply"] is None  # snapshot way 11 was not used
+
+
+def test_snapshot_shared_node_conflict_refused(tmp_path, production_probe):
+    grid, row, db, path, _ = _snap_fixture(tmp_path, cache_ways=(10,), snap_ways=(11,), conflict=True)
+    snap = dp.Snapshot(dp.load_snapshot(path, dp.digest(path), [500]), [500], db)
+    doc, _, _ = _assemble(tmp_path, grid, row, db, snap, production_probe)
+    assert doc["gap_counts"] == {"snapshot shared-node coordinate conflict": 1}
+    assert doc["rows"][0]["supply"] is None
+
+
+def test_snapshot_non_requested_relation_ignored(tmp_path, production_probe):
+    extra = {"777": {"tags": ADMIN, "members": [{"ref": 10, "role": "outer", "type": "w"},
+                                                {"ref": 11, "role": "outer", "type": "w"}]}}
+    grid, row, db, path, _ = _snap_fixture(tmp_path, cache_ways=(), snap_ways=(10, 11), extra=extra, cache_rel=False,
+                                           requested=())
+    snap = dp.Snapshot(dp.load_snapshot(path, dp.digest(path), []), [], db)
+    assert snap.eligible == set()
+    doc, events, _ = _assemble(tmp_path, grid, row, db, snap, production_probe)
+    assert events == [] and doc["rows"][0]["events"] == 0
+
+
+def test_snapshot_not_retained_relation_tags_from_snapshot_are_noted(tmp_path, production_probe):
+    grid, row, db, path, _ = _snap_fixture(tmp_path, cache_ways=(), snap_ways=(10, 11), cache_rel=False)
+    snap = dp.Snapshot(dp.load_snapshot(path, dp.digest(path), [500]), [500], db)
+    doc, events, _ = _assemble(tmp_path, grid, row, db, snap, production_probe)
+    assert doc["note_counts"] == {"snapshot-tags-members": 1}
+    assert doc["rows"][0]["supply"]["source"]["tags_members"] == "snapshot"
+
+
+@pytest.mark.parametrize("complete", [True, False])
+def test_snapshot_nested_parent_bounded_only_when_all_descendants_present(tmp_path, production_probe, complete):
+    far = [[10., 10.], [10., 11.], [11., 11.], [10., 10.]]
+    child = {"tags": {"type": "multipolygon"}, "members": [{"ref": 20, "role": "outer", "type": "w"}]}
+    parent_members = [{"ref": 900, "role": "outer", "type": "r"}]
+    grid, row, db, path, _ = _snap_fixture(tmp_path, cache_ways=(), snap_ways=(), snap_members=parent_members,
+                                           extra={"900": child}, cache_rel=False)
+    doc_json = json.loads(path.read_text())
+    if complete:
+        doc_json["ways"]["20"] = {"nodes": [1, 2, 3, 1], "coords": far}
+    path.write_text(dp.packed(doc_json))
+    snap = dp.Snapshot(dp.load_snapshot(path, dp.digest(path), [500]), [500], db)
+    assert snap.eligible == {500, 900}
+    doc, events, _ = _assemble(tmp_path, grid, row, db, snap, production_probe)
+    if complete:
+        assert doc["gap_counts"] == {} and doc["note_counts"]["nested-outside-windows"] == 1
+    else:
+        assert doc["gap_counts"]["nested area relation member"] == 1
+        gap = next(e for e in events if e.get("gap") == "nested area relation member")
+        assert gap["affected_dump_rows"] == [0]  # unknown bound blocks every row
+
+
+def test_snapshot_no_area_geometry_is_note_not_gap(tmp_path, production_probe):
+    grid, row, db, path, _ = _snap_fixture(tmp_path, cache_ways=(), snap_ways=(),
+                                           snap_members=[{"ref": 1, "role": "", "type": "n"}], cache_rel=False)
+    snap = dp.Snapshot(dp.load_snapshot(path, dp.digest(path), [500]), [500], db)
+    doc, _, _ = _assemble(tmp_path, grid, row, db, snap, production_probe)
+    assert doc["gap_counts"] == {} and doc["note_counts"]["no-area-geometry"] == 1
+
+
+def test_snapshot_vertex_limit_uses_boundary_clip_without_blanket_gap(tmp_path, production_probe):
+    grid, row, db, path, _ = _snap_fixture(tmp_path, cache_ways=(), snap_ways=(), cache_rel=False)
+    a, b, c, d = dp.b4(grid, 400, 600)
+    n = dp.MAX_C_VERTICES + 10   # a dense ring that wholly contains the target cell
+    lat0, lat1, lon0, lon1 = a - (b - a), b + (b - a), c - (d - c), d + (d - c)
+    ring = ([[lat0, lon0 + (lon1 - lon0) * i / n] for i in range(n)] + [[lat0, lon1], [lat1, lon1], [lat1, lon0]])
+    ring.append(ring[0])
+    doc_json = json.loads(path.read_text())
+    doc_json["relations"]["500"]["members"] = [{"ref": 30, "role": "outer", "type": "w"}]
+    doc_json["ways"] = {"30": {"nodes": list(range(1, len(ring))) + [1], "coords": ring}}
+    path.write_text(dp.packed(doc_json))
+    snap = dp.Snapshot(dp.load_snapshot(path, dp.digest(path), [500]), [500], db)
+    doc, events, _ = _assemble(tmp_path, grid, row, db, snap, production_probe)
+    assert "native-C vertex limit" not in doc["gap_counts"]
+    assert doc["rows"][0]["supply"]["source"]["boundary_clip_target"]["dump_row"] == 0
+
+
+def test_snapshot_inert_without_eligible_relations_and_flag_guard(tmp_path, production_probe):
+    grid, row, db, path, _ = _snap_fixture(tmp_path, cache_ways=(10,), snap_ways=(11,), requested=())
+    legacy, _, _ = _assemble(tmp_path, grid, row, db, None, production_probe, "legacy.jsonl")
+    snap = dp.Snapshot(dp.load_snapshot(path, dp.digest(path), []), [], db)
+    inert, _, _ = _assemble(tmp_path, grid, row, db, snap, production_probe, "inert.jsonl")
+    assert (tmp_path / "legacy.jsonl").read_bytes() == (tmp_path / "inert.jsonl").read_bytes()
+    assert "note_counts" not in legacy and "note_counts" not in inert
+    args = argparse.Namespace(relation_snapshot=None, relation_snapshot_sha256="a" * 64)
+    with pytest.raises(ValueError):
+        dp.pbf_cache(args)
+
+
+def test_publish_rejects_unknown_note(dataset):
+    with pytest.raises(ValueError, match="unknown proof note"):
+        dp.ProbeWriter(dataset.output.parent / "n.jsonl", [], dp.lattice(), None).note("made-up", {}, {})

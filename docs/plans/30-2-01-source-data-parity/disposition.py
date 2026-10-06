@@ -44,6 +44,13 @@ MAX_TOPOLOGY_CHECKS = 5000000
 MAX_JSON_BYTES = 64 << 20
 LEGACY_SCRIPT_SHA256 = "e54ea773c826874abad8c7d8a81ea940296a177d4edf9cc7b937ee812cdcf3bb"
 AREA_ROLES = ("", "outer", "inner")
+# Unit 2-03 (DESIGN Amendment 1): date-matched relation snapshot, opt-in only.
+SNAPSHOT_SCHEMA = "plan30-relation-snapshot-v1"
+SNAPSHOT_PIN_SCHEMA = "plan30-relation-snapshot-pin-v1"
+REQUESTS = PLAN / "relation_requests.json"
+SNAPSHOT_PIN = PLAN / "phase2_snapshot_pin.json"
+NOTE_KINDS = ("no-area-geometry", "boundary-clip-empty", "nested-outside-windows", "snapshot-tags-members")
+MAX_NESTED_DEPTH = 4
 HALO = 1
 sys.path[:0] = [str(ROOT / "parser"), str(ROOT / "parser/tools")]
 
@@ -345,6 +352,13 @@ class ProbeWriter:
         self.gaps = Counter()
         self.ignored = Counter()
         self.gap_samples = []
+        self.notes = Counter()
+
+    def note(self, kind, source, details):
+        """Snapshot-mode proof record that is neither a C event nor a gap."""
+        require(kind in NOTE_KINDS, "unknown proof note")
+        self.notes[kind] += 1
+        self.fh.write(packed({"note": kind, "source": source, "details": details}) + "\n")
 
     def gap(self, reason, source, box=None, details=None):
         # An unknown bbox can hide an enclosing polygon: it affects all negatives.
@@ -384,8 +398,11 @@ class ProbeWriter:
 
     def finish(self):
         self.fh.close()
-        return {"rows": list(self.acc.rows.values()), "proof_log": label(self.path), "proof_log_sha256": digest(self.path),
-                "gap_counts": dict(self.gaps), "gap_samples": self.gap_samples, "ignored_member_counts": dict(self.ignored)}
+        result = {"rows": list(self.acc.rows.values()), "proof_log": label(self.path), "proof_log_sha256": digest(self.path),
+                  "gap_counts": dict(self.gaps), "gap_samples": self.gap_samples, "ignored_member_counts": dict(self.ignored)}
+        if self.notes:  # absent without a snapshot, so no-flag output is unchanged
+            result["note_counts"] = dict(self.notes)
+        return result
 
 
 def stamp(path):
@@ -674,11 +691,14 @@ def relation_rows(db):
         last = page[-1][0]
 
 
-def assemble_relations(db, writer, vocab, level_filter, input_name, counts, full=None):
+def assemble_relations(db, writer, vocab, level_filter, input_name, counts, full=None, snap=None):
     """Complete-area-member bounds only; missing parts always have unknown bounds."""
     seen = set()
     for rid, raw_tags, raw_members in relation_rows(db):
         seen.add(rid)
+        if snap is not None and rid in snap.eligible:
+            assemble_snapshot(rid, raw_tags, raw_members, db, writer, vocab, level_filter, input_name, counts, snap)
+            continue
         replacement = full.get(rid) if full else None
         if replacement:
             raw_tags, raw_members, ways = replacement
@@ -688,7 +708,233 @@ def assemble_relations(db, writer, vocab, level_filter, input_name, counts, full
     for rid, (raw_tags, raw_members, ways) in (full or {}).items():
         if rid not in seen:
             assemble_relation(rid, raw_tags, raw_members, db, writer, vocab, level_filter, input_name, counts, ways)
+    if snap is not None:
+        for rid in sorted(snap.eligible - seen):
+            assemble_snapshot(rid, None, None, db, writer, vocab, level_filter, input_name, counts, snap)
     return seen
+
+
+def load_snapshot(path, expected_sha, requested):
+    """Verify the pinned snapshot digest and schema before any use."""
+    path = resolve(path)
+    require(isinstance(expected_sha, str) and len(expected_sha) == 64, "relation snapshot SHA256 required")
+    require(digest(path) == expected_sha, "relation snapshot SHA256 mismatch")
+    snap = json.loads(path.read_bytes())
+    require(isinstance(snap, dict) and snap.get("schema") == SNAPSHOT_SCHEMA, "relation snapshot schema mismatch")
+    require(sorted(snap.get("requested_relation_ids", [])) == sorted(requested), "relation snapshot request-set mismatch")
+    rels, ways = snap.get("relations"), snap.get("ways")
+    require(isinstance(rels, dict) and isinstance(ways, dict), "relation snapshot schema mismatch")
+    require(all(str(rid) in rels for rid in requested), "requested relation missing from snapshot")
+    for r in rels.values():
+        require(isinstance(r.get("tags"), dict) and isinstance(r.get("members"), list), "relation snapshot schema mismatch")
+        require(all(isinstance(m, dict) and set(m) == {"type", "ref", "role"} and m["type"] in ("n", "w", "r")
+                    for m in r["members"]), "relation snapshot member schema mismatch")
+    for w in ways.values():
+        require(isinstance(w.get("nodes"), list) and isinstance(w.get("coords"), list) and
+                len(w["nodes"]) == len(w["coords"]) >= 2 and all(len(p) == 2 for p in w["coords"]),
+                "relation snapshot way schema mismatch")
+    return snap
+
+
+class Snapshot:
+    """Date-matched member geometry for the requested relations only.
+
+    Eligible: the requested ids, plus area-role child relations of a requested
+    parent (assembled as their own sources). Nothing else is ever added.
+    """
+    def __init__(self, doc, requested, db):
+        self.rels, self.ways, self.db = doc["relations"], doc["ways"], db
+        self.requested = set(int(r) for r in requested)
+        self.eligible = set(self.requested)
+        self.children = {}
+        for rid in sorted(self.requested):
+            _, _, nested = area_members(self.rels[str(rid)]["members"])
+            for m in nested:
+                if str(m["ref"]) in self.rels:
+                    self.eligible.add(int(m["ref"]))
+                    self.children.setdefault(int(m["ref"]), rid)
+
+    def members(self, rid):
+        rel = self.rels.get(str(rid))
+        return None if rel is None else [{"ref": m["ref"], "role": m["role"], "type": m["type"]} for m in rel["members"]]
+
+    def cache_way(self, wid):
+        sizes = self.db.execute("SELECT length(nodes),length(coords) FROM ways WHERE id=?", (wid,)).fetchone()
+        if not sizes:
+            return None
+        require(max(sizes) <= MAX_JSON_BYTES, "member JSON byte limit")
+        return tuple(json.loads(v) for v in self.db.execute("SELECT nodes,coords FROM ways WHERE id=?", (wid,)).fetchone())
+
+    def member_ways(self, area):
+        """Cache geometry first (pinned PBF); the snapshot only for absent ways.
+
+        A node shared with a cache way or present in the cache node table
+        must carry identical coordinates, else the relation is refused.
+        """
+        ways, origin, known, supplied = {}, Counter(), {}, []
+        for m in area:
+            if m["ref"] in ways:
+                continue
+            item = self.cache_way(m["ref"])
+            if item is not None:
+                ids, coords = item
+                require(len(ids) == len(coords) >= 2, "invalid relation member geometry")
+                known.update((n, tuple(c)) for n, c in zip(ids, coords))
+                ways[m["ref"]] = (ids, coords)
+                origin["cache"] += 1
+                continue
+            w = self.ways.get(str(m["ref"]))
+            if w is None:
+                continue
+            ways[m["ref"]] = (list(w["nodes"]), [list(c) for c in w["coords"]])
+            supplied.append(m["ref"])
+            origin["snapshot"] += 1
+        pending = {}
+        for wid in supplied:
+            for n, c in zip(*ways[wid]):
+                c = tuple(c)
+                if n in known:
+                    require(known[n] == c, "snapshot shared-node coordinate conflict")
+                require(pending.setdefault(n, c) == c, "snapshot shared-node coordinate conflict")
+        ids = sorted(n for n in pending if n not in known)
+        for i in range(0, len(ids), 900):
+            chunk = ids[i:i + 900]
+            for n, lat, lon in self.db.execute(f"SELECT id,lat,lon FROM nodes WHERE id IN ({','.join('?' * len(chunk))})", chunk):
+                require((lat, lon) == pending[n], "snapshot shared-node coordinate conflict")
+        return ways, dict(origin)
+
+    def nested_bound(self, rid, depth=0, stack=()):
+        """Union bbox of every descendant area way, or None if any is absent."""
+        if depth > MAX_NESTED_DEPTH or rid in stack:
+            return None, []
+        members = self.members(rid)
+        if members is None:
+            return None, []
+        area, _, nested = area_members(members)
+        ways, _ = self.member_ways(area)
+        if any(m["ref"] not in ways for m in area):
+            return None, []
+        boxes = [bbox(c) for _, c in ways.values()]
+        seen = [rid]
+        for m in nested:
+            box, ids = self.nested_bound(int(m["ref"]), depth + 1, (*stack, rid))
+            if box is None:
+                return None, []
+            boxes.append(box)
+            seen.extend(ids)
+        if not boxes:
+            return None, []
+        return [min(b[0] for b in boxes), max(b[1] for b in boxes), min(b[2] for b in boxes), max(b[3] for b in boxes)], seen
+
+
+def assemble_snapshot(rid, raw_tags, raw_members, db, writer, vocab, level_filter, input_name, counts, snap):
+    """Snapshot-mode assembly for one eligible relation (DESIGN Amendment 1 §2)."""
+    ref = {"kind": "relation", "id": rid}
+    snap_members = snap.members(rid)
+    if snap_members is None:
+        return assemble_relation(rid, raw_tags, raw_members, db, writer, vocab, level_filter, input_name, counts) if raw_members else None
+    origin_tm = "pbf-cache"
+    if raw_members is None:
+        rel = snap.rels[str(rid)]
+        raw_tags, raw_members, origin_tm = packed(rel["tags"]), packed(snap_members), "snapshot"
+    else:
+        cache_members = [(m["type"], m["ref"], m["role"]) for m in json.loads(raw_members)]
+        if cache_members != [(m["type"], m["ref"], m["role"]) for m in snap_members]:
+            writer.gap("snapshot-member-mismatch", ref, None,
+                       {"resolution": "snapshot member list differs from the pinned PBF; the snapshot is not used for this relation"})
+            return assemble_relation(rid, raw_tags, raw_members, db, writer, vocab, level_filter, input_name, counts)
+    tags, members = json.loads(raw_tags), json.loads(raw_members)
+    source = {"kind": "relation", "id": rid, "tags": tags, "input": input_name, "mult": 1, "flags": 0,
+              "code": vocab.lookup(0, tags), "members_sha256": hashlib.sha256(raw_members.encode()).hexdigest(),
+              "members_count": len(members), "selected": bool(level_filter(0, tags))}
+    if source["code"] is None:
+        return
+    if origin_tm == "snapshot":
+        rel = snap.rels[str(rid)]
+        why = ("area-role child of requested relation %d, absent from the legacy cache" % snap.children[rid]
+               if rid in snap.children and rid not in snap.requested else
+               "legacy cache never retained this relation (member limit)")
+        writer.note("snapshot-tags-members", ref, {"reason": why + "; tags and members from the date-matched snapshot",
+                                                   "version": rel.get("version"), "timestamp": rel.get("timestamp")})
+    area, ignored, nested = area_members(members)
+    if ignored:
+        writer.fh.write(packed({"source": ref, "ignored_members": ignored}) + "\n")
+        writer.ignored.update(m["type"] + ":" + m["role"] for m in ignored)
+    details = {"resolution": "date-matched snapshot geometry (plan 30 unit 2-03)", "tags_members": origin_tm}
+    shape_box, complete = None, False
+    try:
+        if not area and not nested:
+            writer.note("no-area-geometry", ref, {"members": len(members), "tags_members": origin_tm,
+                        "reason": "no area-role way or relation member in the date-matched member list: no polygon anywhere"})
+            return
+        require(len(area) <= MAX_RELATION_MEMBERS, "relation-member-limit")
+        ways, origin = snap.member_ways(area)
+        missing = sorted({m["ref"] for m in area if m["ref"] not in ways})
+        if missing:
+            details["missing_way_ids"] = missing
+            raise ValueError("missing relation member way")
+        if nested:
+            details["nested_relation_ids"] = sorted({m["ref"] for m in nested})
+            box, descendants = snap.nested_bound(rid)
+            if box is not None and not any(intersects(box, w) for _, w in writer.windows):
+                writer.note("nested-outside-windows", ref, {"union_bbox_lat_lon": box, "descendants": descendants})
+                counts["relations_outside_windows"] += 1
+                return
+            details["union_bbox_lat_lon"] = box
+            shape_box, complete = box, box is not None
+            raise ValueError("nested area relation member")
+        boxes = [bbox(c) for _, c in ways.values()]
+        shape_box = [min(b[0] for b in boxes), max(b[1] for b in boxes), min(b[2] for b in boxes), max(b[3] for b in boxes)]
+        complete = True
+        if not any(intersects(shape_box, w) for _, w in writer.windows):
+            counts["relations_outside_windows"] += 1
+            return
+        total = sum(len(c) for _, c in ways.values())
+        require(total <= MAX_RELATION_VERTICES, "relation vertex limit")
+        rings = join_rings(area, ways, MAX_RELATION_VERTICES)
+        validate_rings(rings, MAX_RELATION_VERTICES)
+        coords = stitch_rings(rings, MAX_RELATION_VERTICES)
+        source["geometry_ways"] = origin
+        source["tags_members"] = origin_tm
+        if len(coords) <= MAX_C_VERTICES:
+            writer.geometry(coords, source)
+        else:
+            boundary_clip(coords, shape_box, source, writer, details)
+        counts["relations_assembled"] += 1
+        counts["snapshot_relations_assembled"] += 1
+    except ValueError as e:
+        writer.gap(str(e), ref, shape_box if complete else None, details)
+
+
+def boundary_clip(coords, shape_box, source, writer, details):
+    """Validated complete geometry above the native-C cap: the in-cell piece.
+
+    Topology is validated, so the polygon's restriction to the target cell is
+    its boundary clip. An empty clip is recorded as a note; a non-empty clip
+    is a production-C event; a C error stays a gap at that cell.
+    """
+    ref = {"kind": "relation", "id": source["id"]}
+    source_sha = hashlib.sha256(packed(coords).encode()).hexdigest()
+    for row, w in writer.windows:
+        if not intersects(shape_box, w):
+            continue
+        box = b4(writer.grid, int(row["ix"]), int(row["iy"]))
+        a, b, c, d = box
+        local = mirror().clip_rect([(p[1], p[0]) for p in coords], c, a, d, b)
+        if len(local) < 3:
+            writer.note("boundary-clip-empty", ref, {"dump_row": int(row["dump_row"]), "vertices": len(coords),
+                                                     "original_coords_sha256": source_sha})
+            continue
+        clipped = [(lat, lon) for lon, lat in local]
+        repaired = source | {"boundary_clip_target": native(row), "original_coords_sha256": source_sha}
+        try:
+            result = evaluate(clipped, source["code"], 1, 0, row, writer.grid, writer.probe)
+        except ValueError as e:
+            writer.gap(str(e), ref, box, details)
+            continue
+        event = {**native(row), "source": repaired, "result": result}
+        writer.acc.accept(event)
+        writer.fh.write(packed(event) + "\n")
 
 
 def assemble_relation(rid, raw_tags, raw_members, db, writer, vocab, level_filter, input_name, counts, supplied_ways=None):
@@ -874,6 +1120,8 @@ def verify_cache_provenance(args, inputs, doc):
 
 def pbf_cache(args):
     """Read-only disk-cache replay: retain ways, replace all relation evidence."""
+    require(bool(getattr(args, "relation_snapshot", None)) == bool(getattr(args, "relation_snapshot_sha256", None)),
+            "--relation-snapshot and --relation-snapshot-sha256 go together")
     from kiwiw.vocab import load as load_vocab
     from kiwiw.selection import level_filter
     rows, _, grid, inputs = context(args)
@@ -883,6 +1131,19 @@ def pbf_cache(args):
     cache_stamp = stamp(cache)
     output = Path(args.output)
     require(not output.exists() and not output.with_suffix(".proofs.jsonl").exists(), "cache replay requires fresh outputs")
+    snapshot_doc = snapshot_meta = None
+    if getattr(args, "relation_snapshot", None):
+        requested = inputs.read(args.relation_requests)["relation_ids"]
+        pin_doc = inputs.read(args.relation_snapshot_pin)
+        require(pin_doc.get("schema") == SNAPSHOT_PIN_SCHEMA and pin_doc["snapshot"]["sha256"] == args.relation_snapshot_sha256
+                and resolve(pin_doc["snapshot"]["path"]).resolve() == resolve(args.relation_snapshot).resolve(),
+                "relation snapshot pin mismatch")
+        snapshot_doc = load_snapshot(args.relation_snapshot, args.relation_snapshot_sha256, requested)
+        inputs.hashes[label(resolve(args.relation_snapshot))] = args.relation_snapshot_sha256
+        snapshot_meta = {"path": label(resolve(args.relation_snapshot)), "sha256": args.relation_snapshot_sha256,
+                         "pin": label(args.relation_snapshot_pin), "requests": label(args.relation_requests),
+                         "attic_date": snapshot_doc.get("attic_date"), "requested_relations": len(requested),
+                         "role": "member geometry for the requested relations only (DESIGN Amendment 1)"}
     probe = c_probe(output.parent / (output.stem + "_c_probe"))
     writer = ProbeWriter(output.with_suffix(".proofs.jsonl"), rows, grid, probe)
     counts, omitted = Counter(), {}
@@ -901,9 +1162,13 @@ def pbf_cache(args):
         # output); `full` stays empty until one is supplied and pinned.
         full = {}
         with readonly_cache(cache) as db:
-            seen = assemble_relations(db, writer, load_vocab("bg_type"), level_filter, pin["pbf_path"], counts, full)
+            snap = Snapshot(snapshot_doc, requested, db) if snapshot_doc is not None else None
+            seen = assemble_relations(db, writer, load_vocab("bg_type"), level_filter, pin["pbf_path"], counts, full, snap)
+            if snap is not None:
+                snapshot_meta["eligible_relations"] = len(snap.eligible)
+        snapshot_doc = None
         for rid, event in omitted.items():
-            if rid not in seen and rid not in full:
+            if rid not in seen and rid not in full and not (snap is not None and rid in snap.eligible):
                 writer.gap("relation-not-retained-member-limit", {"kind": "relation", "id": rid},
                            details={"resolution": "fetch this complete relation at the pinned PBF replication timestamp; the legacy cache omitted its member list"})
         require(stamp(cache) == cache_stamp, "cache changed during replay")
@@ -920,6 +1185,8 @@ def pbf_cache(args):
                   replay_source=label(args.source_json), replay_script_sha256=doc["inputs_sha256"][label(__file__)],
                   relation_limits={"vertices": MAX_RELATION_VERTICES, "members": MAX_RELATION_MEMBERS,
                                    "topology_checks": MAX_TOPOLOGY_CHECKS, "json_bytes": MAX_JSON_BYTES})
+    if snapshot_meta is not None:
+        result["relation_snapshot"] = snapshot_meta
     write_json(output, result)
     requests = sorted({e["source"]["id"] for e in proof_events(result["proof_log"])
                        if "gap" in e and e["source"]["kind"] == "relation"})
@@ -1065,6 +1332,7 @@ def read_probe(path, kind, rows, inputs, grid, args, run_log=None, historical=Fa
     command = doc.get("command", kind)
     require(command in log["argv"] and any(resolve(a) == Path(__file__) for a in log["argv"] if a.endswith("disposition.py")), "wrapper command mismatch")
     acc, gaps, gap_counts = Accumulator(rows), set(), Counter()
+    note_counts = Counter()
     gap_details = {}
     ignored_counts = Counter()
     proof_path = resolve(doc["proof_log"])
@@ -1085,6 +1353,11 @@ def read_probe(path, kind, rows, inputs, grid, args, run_log=None, historical=Fa
                 require(not area and not nested and len(ignored) == len(event["ignored_members"]), "area member ignored")
                 ignored_counts.update(m["type"] + ":" + m["role"] for m in ignored)
                 continue
+            if "note" in event:
+                require(kind == "pbf" and event["note"] in NOTE_KINDS and event["source"]["kind"] == "relation",
+                        "invalid proof note")
+                note_counts[event["note"]] += 1
+                continue
             if "gap" in event:
                 affected = set(event["affected_dump_rows"])
                 require(affected <= {int(r["dump_row"]) for r in rows}, "gap member mismatch")
@@ -1102,6 +1375,7 @@ def read_probe(path, kind, rows, inputs, grid, args, run_log=None, historical=Fa
     inputs.hashes[label(proof_path)] = h.hexdigest()
     require(keyed(acc.rows.values()) == actual and dict(gap_counts) == doc["gap_counts"], "probe summary/log mismatch")
     require(dict(ignored_counts) == doc.get("ignored_member_counts", {}), "ignored member summary/log mismatch")
+    require(dict(note_counts) == doc.get("note_counts", {}), "proof note summary/log mismatch")
     # Transient only; publication retains exact IDs/classes for every affected row.
     doc["_gaps_by_dump"] = gap_details
     return doc, gaps
@@ -1230,6 +1504,10 @@ def cli(argv=None):
             p.add_argument("--pbf", type=Path, required=True)
         if kind == "pbf-cache":
             p.add_argument("--cache-provenance", type=Path, required=True)
+            p.add_argument("--relation-snapshot", type=Path)
+            p.add_argument("--relation-snapshot-sha256")
+            p.add_argument("--relation-snapshot-pin", type=Path, default=SNAPSHOT_PIN)
+            p.add_argument("--relation-requests", type=Path, default=REQUESTS)
     args = parser.parse_args(argv)
     if args.command != "publish":
         args.output = scratch_path(args.output)
