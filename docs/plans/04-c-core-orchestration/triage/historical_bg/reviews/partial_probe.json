@@ -1,0 +1,157 @@
+{
+ "R01_status11": {
+  "n": 300,
+  "cells": 300,
+  "share_recheck_matches": 300,
+  "shared_q0_10_50_90_100": [
+   1,
+   6,
+   28,
+   69,
+   324
+  ],
+  "nonfail_q": [
+   19,
+   39,
+   128,
+   189,
+   797
+  ],
+  "shared_hist": {
+   "1": 4,
+   "2": 5,
+   "3": 9,
+   "4": 3,
+   "5": 7,
+   "6": 6,
+   "7": 5,
+   "8": 7,
+   "9": 5,
+   "10": 249
+  },
+  "union_share_q": [
+   0.029,
+   0.158,
+   0.374,
+   0.639,
+   1.0
+  ],
+  "rows_union_ge50": 73,
+  "best_is_unchanged_other_old_record": 15,
+  "best_equals_old_record": 0,
+  "masq_rows_alt_share": [
+   0.244,
+   0.281,
+   0.028,
+   0.217,
+   0.092,
+   0.2,
+   0.09,
+   0.226,
+   0.144,
+   0.212,
+   0.222,
+   0.029,
+   0.02,
+   0.105,
+   0.129
+  ],
+  "rows_excl_unchanged_neighbours": {
+   "ge50": 0,
+   "partial": 300,
+   "none": 0
+  },
+  "rows_shared_le2": 9,
+  "rows_all_shared_ambiguous": 16,
+  "rows_all_shared_on_leaf_edge": 48,
+  "rows_no_unique_nonedge_shared": 55,
+  "shared_unique_q": [
+   0,
+   3,
+   26,
+   68,
+   324
+  ],
+  "n_new_recs_hit_q": [
+   1,
+   2,
+   4,
+   7,
+   16
+  ]
+ },
+ "R01_status10": {
+  "n": 300,
+  "cells": 298,
+  "share_recheck_matches": 300,
+  "shared_q0_10_50_90_100": [
+   5,
+   22,
+   39,
+   111,
+   1174
+  ],
+  "nonfail_q": [
+   8,
+   34,
+   53,
+   173,
+   1279
+  ],
+  "shared_hist": {
+   "5": 1,
+   "7": 1,
+   "8": 1,
+   "10": 297
+  },
+  "union_share_q": [
+   0.522,
+   0.641,
+   0.939,
+   1.0,
+   1.0
+  ],
+  "rows_union_ge50": 300,
+  "best_is_unchanged_other_old_record": 14,
+  "best_equals_old_record": 0,
+  "masq_rows_alt_share": [
+   0.293,
+   0.463,
+   0.748,
+   0.718,
+   0.158,
+   0.113,
+   0.448,
+   0.562,
+   0.871,
+   0.183,
+   0.161,
+   0.594,
+   0.096,
+   0.0
+  ],
+  "rows_excl_unchanged_neighbours": {
+   "ge50": 291,
+   "partial": 8,
+   "none": 1
+  },
+  "rows_shared_le2": 0,
+  "rows_all_shared_ambiguous": 16,
+  "rows_all_shared_on_leaf_edge": 12,
+  "rows_no_unique_nonedge_shared": 26,
+  "shared_unique_q": [
+   0,
+   15,
+   36,
+   99,
+   1174
+  ],
+  "n_new_recs_hit_q": [
+   1,
+   2,
+   2,
+   6,
+   14
+  ]
+ }
+}
