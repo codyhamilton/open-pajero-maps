@@ -16,5 +16,6 @@
   "eo_bg_stitch": 517763,
   "eo_division_ceiling": 22
  },
- "clause_b_item_still_checked": "NOT TESTED: K1 dumps failing items only; no per-item checked identity on 4ed9cd80. Whole-kind background checked 175,171,302 (013586b5) -> 176,386,506 (4ed9cd80)"
+ "clause_b_item_still_checked": "NOT TESTED: K1 dumps failing items only; no per-item checked identity on 4ed9cd80. Whole-kind background checked 175,171,302 (013586b5) -> 176,386,506 (4ed9cd80)",
+ "superseded_note": "Plan 39 review F1: the clause_b field here is superseded. Vertex-level result: p2/r01_clause_b.json (failing vertex not at its raw position); shape-level result: p2/allrows/shape_clause_b.json."
 }

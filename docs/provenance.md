@@ -839,6 +839,16 @@ Not committed; regenerable. Lasting small witnesses are copied to `docs/plans/04
 - `p3/`: `full.patch` (`3dccca61…`, d35b565 `_cenc.c` diff) and the split patches; `diff-{old,eo,chord}-*-{au,perth}.{json,cells.tsv}` (`oracle_chain.py diff`, summarised with shas in `hop_3_14/mech.json`); `sections-{au,perth}.{tsv,json}` (`hop_3_14/sections.py`; tsv `f0553dcc…` / `e4b2a1b9…`); `detail-*.json` (committed copies in `hop_3_14/`); `k1/rows-{au,perth}-{old,new}.tsv` (`hop_3_14/k1_rows.py run`; `505bcf7c…`, `37325562…`, `d0d77ad2…`, `9643627b…`), `k1/k1-perth-{old,new}.json` (whole-disc K1), `k1/confine-*.json` (committed as `hop_3_14/k1-confine-*.json`).
 - `run_p3_{endpoints,mech,sections,detail,k1perth,k1au}.{sh,log}`, `runs/p3*.json`, `protected_{before,after}_p3{,m,s,k}.json`: guarded Phase 3 logs and snapshots, all unchanged. `pubcheck3/`: the pre-change publish reproduction.
 
+### output/scratch-39/ (plan 39 historical background-family counterfactual)
+
+Not committed; regenerable. Record: `docs/plans/39-historical-bg-cause-counterfactual-ledger.md`. Lasting scripts and small JSON: `docs/plans/04-c-core-orchestration/triage/historical_bg/{p1,p2,p3}/`. All heavy steps ran under `run_heavy_python.py` + `flock output/.heavy.lock` (`runs/*.json`).
+- `dump_pre311/`, `dump_311/`, `dump_314/` (about 2.5 GB each before deletion): HEAD K1 `--dump-failures` for background, background_boundary and interior_cover on `87a01b14` (`scratch-36/G_pre311`), `013586b5` (`scratch-3-11/G_new`) and `4ed9cd80` (`scratch-14/G_new`), at `-j6` with the pinned spool. Producer: `historical_bg/p1/run_k1.sh`. Rows use the C struct natural alignment (`align=True`). `dump_k1old_pre311/` is the K1 at `1cf40f8` (worktree `../open-pajero-maps-39-k1old`).
+- `k1_*.json`, `cmp_*.json`, `rows/`: whole-disc and per-cell-row K1 reports (`run_k1.sh`, `run_rows.sh`, plan 36 `k1_rows.py`).
+- `classifyR01_{pre311,311}/`, `classify_{pre311,311}/`: `k1_triage classify` with `rules_R01_3-13.json` (R01 only) and with the full 3-13 rule set (exits 2: deleted side columns).
+- `allrows/<kind>.status.u8`, `allrows/allrows_311_cells.json`: vertex-level presence status per dump row (`p2/allrows_clause_b.py`, `p2/allrows_311_cells.py`). `shape/<basis>_<kind>.{status.u8,share.f32}`: shape-level status per row (`p2/shape_clause_b.py`). These are the per-row companions of `historical_bg/p2/assignment.tsv`, in dump row order.
+- `p3/`: polygon 65623 window builds at `b7c7c42` (worktree `../open-pajero-maps-39-b7c7c42`) over L0 `[1414,1890)×[274,750)`: `ctl/` (pinned spool) and `cf/` (spool minus the source's home cell). `spool_cf65623/` holds a private `level_0.idx` (`p3/make_cf_spool.py`); every data file is a read-only symlink to `output/extract_timing/spool`. Producer: `historical_bg/p3/run_p3.sh`.
+- Deletion: the dumps and `p3` frames are deleted at plan 39 close (design decision 4), after the identity tables and status arrays are kept. Regenerate with `run_k1.sh` and `run_p3.sh`.
+
 ### output/scratch-30/attic/ (plan 30 second pinned source: date-matched OSM relation snapshot)
 
 Admitted by plan 30 DESIGN Amendment 1 (Design ruling option (a), 2026-10-06). Not committed (79 MB); the pin is committed at `docs/plans/04-c-core-orchestration/triage/source_parity/phase2_snapshot_pin.json`.

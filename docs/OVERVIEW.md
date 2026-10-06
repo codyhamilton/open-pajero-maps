@@ -73,11 +73,11 @@ remaining Phase 3 blockers are exactly the `blocks-phase3` rows of
   ([record](plans/36-3-14-cause-and-container-attribution.md));
 - the historical cause remainder: the row identities of 8,739
   background_boundary + 137 background rows (180 groups; side-column producers
-  not regenerable). Plan **39** found that every such row is removed by 3-14 or
-  lies in a footprint-changed cell. It also discharged R-G4-1 (the 3-11 checked
-  moves are the 167,936 records the count wrap hid) and polygon 65623 (it
-  produces no failing item). R01 exclusivity holds for 920,693 rows; 80 rows in
-  `eo_division_ceiling` cells stay named (R-G5-4-a)
+  not regenerable), and R01 exclusivity (R-G5-4). Plan **39** found R01
+  exclusivity disproven by count: 920,686 R01 rows satisfy the build-fixed
+  predicate at shape level, so a dual-cause ruling is pending with Cody via
+  Design. It also discharged R-G4-1 (the 3-11 checked moves are the 167,936
+  records the count wrap hid) and polygon 65623 (it produces no failing item)
   ([record](plans/39-historical-bg-cause-counterfactual-ledger.md));
 - the named conditions of the 3-14 to 3-17 independent fix reviews. The
   reviews of record landed under plan **40** (all ACCEPT-WITH-CONDITIONS),

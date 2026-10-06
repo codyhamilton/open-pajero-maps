@@ -55,6 +55,13 @@ The Assumption 2 fallback was also run: K1 built at **`1cf40f8`** (pre plan 14) 
 - **R-G4-1 reads:** the 3-11 checked moves are confined to the 37 O06 count-wrap
   cells and are exactly the vertices, steps and whole-leaf covers of the 167,936
   records that the wrapped unit count had hidden from every reader.
+- **Limits (review F7):**
+  - Confinement is shown per cell row (band), not per cell. The per-kind sums
+    over the 37 cells are exact, so a cancelling move elsewhere in a shared
+    band is the only gap.
+  - Only the background + background_boundary **sum** (861,107 vertices) is
+    derived. The 839,197 / 21,910 split per kind follows K1's on-boundary test
+    and is not separately derived.
 
 ### 3. 9,064 remainder regeneration: blocked (exact reason)
 
@@ -83,75 +90,75 @@ outside the 37 cells maps 1:1 to the same row on the 3C-04 basis; rows inside th
 37 cells are 3-11-cell rows (157 / 1,938 on `013586b5`). The remainder's own row
 identities remain blocked by item 3.
 
-## Phase 2 — counterfactual assignment (R01 complete; all rows tested; remainder identity blocked)
+## Phase 2 — counterfactual assignment (reworked after review F1)
 
 Same HEAD K1, same spool; only the disc varies (`4ed9cd80` = 3-14 build change only).
 
-### Build-fixed predicate on all 920,773 R01 rows
+### Build-fixed predicate
 
-- **(a) absent on `4ed9cd80`:** holds for all (K1 failing 0 in background,
+- **(a) absent on `4ed9cd80`:** holds for every row (K1 failing 0 in background,
   background_boundary and interior_cover; `p1/k1_314.json`).
-- **(c) cell in the 3-14 changed list with a plan 36 P3 class:** holds for all.
-  `eo_bg_stitch` 920,693, `eo_division_ceiling` 80 (`p2/r01_join.json`). The
-  517,785 non-R01 background rows are also all in changed cells (517,763 /22).
-- **(b) item still checked on `4ed9cd80`:** item = the failing G vertex (level,
-  cell, leaf path, type, raw vertex). Test (`p2/r01_clause_b.py`): every row's
-  (shape, vert) is first re-derived from the `87a01b14` record bytes (raw vertex and
-  type; **0 mapping mismatches**); then the same leaf on `4ed9cd80` (only where plan
-  36 P3 says footprints are equal) is searched for a record of the same type with a
-  vertex at the same raw position.
-  - **920,693 rows: the item is gone on `4ed9cd80`** (288: 620,286; 291: 277,391;
-    289: 15,823; 578: 7,193). **0 present.**
-  - **80 rows** (the `eo_division_ceiling` cells) have changed footprints, so leaf
-    identity is undefined; untested.
-  - **Control** (`p2/r01_clause_b_control.json`): over 400 random R01 leaves, 79.2%
-    of the 340,772 ordinary vertices are found on `4ed9cd80` by the same test, and
-    0 of the 8,442 R01 vertices in those leaves.
-- **Verdict (design rules 3–4):** no R01 row satisfies the build-fixed predicate,
-  because (b) fails: 3-14 **removed** the items rather than fixing them. Per the
-  design, removed items are never `build-fixed`. **R01's checker attribution stands
-  for 920,693 rows, with the reason "item removed by 3-14 (`removed-by-3-14`)"**, and
-  is not contradicted by the counterfactual. The 31 type-291 fills of the L0/291
-  window that might "overlap build" are inside this population and fail (b) the same
-  way. Open question 1 (dual-cause) is not raised: no row satisfies both.
-- **80 rows remain named:** R01 rows in `eo_division_ceiling` cells, clause (b)
-  untestable by leaf identity.
-- `rules_bg.json`: unchanged (the design allows notes only, and no predicate change
-  is proven). The R01 note text update is left to close-out with review.
+- **(c) cell in the 3-14 changed list with a plan 36 P3 class:** holds for every
+  tested row. R01: `eo_bg_stitch` 920,693, `eo_division_ceiling` 80
+  (`p2/r01_join.json`).
+- **(b) item still checked on `4ed9cd80`:** the design's item is "same cell,
+  type and **shape**". The first test (`p2/r01_clause_b.py`,
+  `p2/allrows_clause_b.py`) keyed the item on the raw failing **vertex**. The
+  review (F1) showed that a vertex key cannot separate "fixed" from "removed",
+  because a build fix moves or deletes exactly the bad vertex. That test's
+  "0 present" result therefore only says that the failing vertex is not at its
+  raw position on `4ed9cd80`.
+- **Shape-level test** (`p2/shape_clause_b.py`, `p2/allrows/shape_clause_b.json`):
+  - The item is the old record that carries the failing vertex. It persists if
+    a class>0 record of the same type, in the same leaf, holds the old
+    record's **non-failing** vertices at their exact raw positions. That is
+    the same source-ring vertices under the same quantisation, and it can only
+    be tested in footprint-equal cells.
+  - **Persists (≥ 50 %):** one new record holds at least half of those
+    vertices.
+  - **Traceable (≥ 1):** the best new record holds at least one of them.
+  - **Control (vertex level):** 79.2 % of ordinary vertices persist.
 
-### All background and background_boundary rows (`p2/allrows_clause_b.py`)
+| population (87a01b14) | rows | persists ≥ 50 % | traceable 1 – < 50 % | same type, no shared vertex | type absent (removed) | footprints changed |
+|---|---|---|---|---|---|---|
+| R01 (background) | 920,773 | 309,597 | 611,089 | 7 | 0 | 80 |
+| background non-R01 | 517,785 | 109,639 | 406,979 | 217 | 928 | 22 |
+| background_boundary | 16,549,569 | 6,530,639 | 9,945,993 | 46,400 | 25,821 | 716 |
+| 013586b5, 37 cells: background / boundary | 157 / 1,938 | 24 / 832 | 133 / 1,106 | 0 | 0 | 0 |
 
-The same clause (b) test, run over **every** failing row of the two kinds on
-`87a01b14` (`p2/allrows/allrows_clause_b.json`; per-row status in
-`output/scratch-39/allrows/<kind>.status.u8`, 1 present, 2 removed, 3 footprints
-changed, 4/6 leaf missing, 5 mapping mismatch):
+  Among rows with a shared vertex, the share quantiles (10 / 50 / 90 %) are
+  0.12 / 0.33 / 0.77 for background and 0.13 / 0.40 / 1.00 for
+  background_boundary. There are 0 old-mapping mismatches. Run: under the lock,
+  443 s.
 
-| kind (87a01b14) | rows | item removed on `4ed9cd80` | footprints changed (untestable) | present | mapping mismatch / leaf missing |
-|---|---|---|---|---|---|
-| background | 1,438,558 | **1,438,456** | 102 | **0** | 0 |
-| of which non-R01 | 517,785 | 517,763 | 22 | 0 | 0 |
-| background_boundary | 16,549,569 | **16,548,853** | 716 | **0** | 0 |
+### R01 exclusivity (design rule 3, open question 1)
 
-- **No failing row of either kind has its item still present on `4ed9cd80`.**
-  Every testable row is `removed-by-3-14`; the untestable rows are exactly those
-  in the plan 36 P3 cells whose footprints changed (background 80 R01 + 22 non-R01).
-- **The 3-11 basis** (`p2/allrows_311_cells.py`, `p2/allrows/allrows_311_cells.json`):
-  the remainder was counted on `013586b5`. By the basis map, its rows outside the 37
-  cells are the `87a01b14` rows above. The rows inside the 37 cells were tested
-  directly on `013586b5`. Background: 157 of 157 removed on `4ed9cd80`.
-  Background_boundary: 1,938 of 1,938 removed. There are 0 mapping mismatches and
-  no row in a footprint-changed cell. So the 102 / 716 footprint-changed rows all
-  lie outside the 37 cells, on both bases.
-- **Consequence for the 9,064 remainder:** the row identities stay unreproducible
-  (item 3). Even so, every failing background and background_boundary row of
-  `013586b5` is either `removed-by-3-14` or one of the 102 / 716 rows in
-  footprint-changed cells. So, at count level, each remainder row is one or the
-  other. No remainder row can be `build-fixed` (clause (b) fails for every
-  testable row), so the counterfactual assigns no new build cause. The
-  137 / 8,739 / 188 split and the 180 groups stay blocked on the side-column
-  producers (item 3).
-- Runs: under the lock; `87a01b14` all rows 394 s (peak RSS 4.8 GiB), `013586b5`
-  37 cells 145 s; both exit 0.
+- **Disproven by count.** 920,686 of the 920,693 testable R01 rows satisfy all
+  three clauses at shape level. Their record persists, re-encoded and checked
+  with 0 failures, after a build-only change (`build:eo_bg_stitch`). For
+  309,597 of them, one new record holds at least half the old record's
+  non-failing vertices. 7 rows have no traceable record and stay `checker`. 80
+  rows are in `eo_division_ceiling` cells with changed footprints and are
+  untested.
+- **The design's dual-cause question (open question 1) is raised.** R01's
+  checker rationale (3-07 Amendment 4: a fill vertex inside a same-type
+  polygon is valid) is not refuted by this result. It may hold together with
+  the build fix. Per the design, these rows are reported `build` with the
+  checker note kept, and whether the one-cause rule takes `build`, `checker`
+  or a dual cause is **a ruling for Cody via Design**. R-G5-4 stays open.
+- `rules_bg.json`: only the R01 note text changed (an evidence note); the rule,
+  cause and order are unchanged.
+
+### Remainder (R-G5-1, R-G5-2) at count level
+
+- The rows inside the 37 cells on `013586b5` all persist at shape level. By
+  the basis map, the rows outside them are the `87a01b14` rows above.
+- So at most 1,254 background rows (224 + 928 + 102) and 72,937
+  background_boundary rows (46,400 + 25,821 + 716) of `013586b5` fail the
+  shape-level predicate or are untested. Every other row satisfies it.
+- Without the remainder's row identities (Phase 1 item 3), no remainder row
+  can be assigned. The 137 / 8,739 split stays blocked on the deleted
+  side-column producers.
 
 ## Phase 3 — polygon 65623 classified
 
@@ -189,9 +196,32 @@ record (no roads, no names).
 | name_anchor | 1 | 0 | source has no name record | **0** |
 
   Completeness rows ("a spool polygon of this type meets the cell but no decoded
-  piece of it does") were tested by an exact ring–cell meet (vertex, edge crossing,
-  or rectangle inside the ring) and by the cf; the meet test agrees with the cf on
-  600 sampled cells (300 changed: all meet; 300 unchanged: none).
+  piece of it does") were tested by an exact ring–cell meet (vertex, edge
+  crossing, or rectangle inside the ring; `p3/completeness65623*.py`). (An
+  earlier sentence citing a 600-cell agreement sample with the cf had no
+  committed artefact and is withdrawn.)
+- **Why the window is exhaustive:** a record produced from this source is L0,
+  type 288, and its vertices lie inside the source ring's lat/lon bbox (+0.01°
+  for quantisation). Clipping to a cell or leaf only produces points of
+  source ∩ leaf, and a whole-leaf cover's corners lie inside the ring.
+  `p3/p65623_screen.json` applies these necessary conditions to every row:
+  background 197,676 rows qualify, background_boundary 765,932, and
+  interior_cover 0. The window is their bounding rectangle, so no row outside it
+  can be produced by the source. Inside it, the counterfactual decides.
+  - The source bbox itself also lies inside the window in cell terms. A linear
+    fit of dump lat/lon to ix/iy (residual ≤ 0.51 cell) gives ix 1414.7–1888.4
+    and iy 275.0–748.8, against the window `[1414,1890)×[274,750)` (the review
+    checked this). So every leaf the source could produce into was rebuilt.
+  - The multiset diff attributes identical twin records in a leaf arbitrarily.
+    This is harmless here: 0 rows were produced, and twins carry identical
+    vertices.
+- **Design contract 4 (the 3C narrative's location):** 3C-04 described
+  whole-cell fill pieces "4–6 cells outside" the polygon. The cells 3-06/3-07
+  sampled for that claim, the covers `(1728,162)` and `(1771,203)`, have other
+  demonstrated producers (`cause_table.md`). The exhaustive join above covers
+  every such row on `87a01b14`, whatever its cell. The narrative's
+  winding/parity contradiction was not reproduced (3-07: no proper crossing,
+  and the 3,969-point grid agrees).
 - **Classification (design contract 2):** **no 3C-04 failing item is produced by
   source 65623**, in any of the five kinds. The alleged disc defect has no
   failing-item footprint. Its geometry facts stand as facts, not a cause: the
@@ -201,37 +231,44 @@ record (no roads, no names).
 
 ### Surfaces updated (Phase 2–3 outcomes)
 
-- **`p2/assignment.tsv`** is count-level, not per-row as the design asked: R01
-  920,693 `checker` / `removed-by-3-14` and 80 `unattributed` (R-G5-4-a); the
-  8,876 remainder is `identity blocked`. Per-row status for every
-  background-family failing row on `87a01b14` is in
-  `output/scratch-39/allrows/<kind>.status.u8`. It is regenerable by
-  `p2/allrows_clause_b.py`, and the remainder can join it by row index once its
-  identities exist.
-- **`rules_bg.json`:** the R01 note gained the plan 39 result (note only; rule
-  and cause unchanged).
-- **`cause_table.md`:** the 65623 section is rewritten from the Phase 3 evidence.
-- **OVERVIEW:** the historical-remainder clause now gives the plan 39 outcome;
+- **`p2/assignment.tsv`** is count-level, not per row as the design asked:
+  - R01: 920,686 `build:eo_bg_stitch` (checker note kept; dual-cause ruling
+    pending), 7 `checker` (no traceable record), 80 `unattributed`
+    (footprints changed);
+  - the 8,876 remainder rows: `identity blocked`.
+
+  Per-row shape status for every background-family failing row is in
+  `output/scratch-39/shape/` (dump row order). It is regenerable by
+  `p2/shape_clause_b.py`, and the remainder can join it by row index once its
+  identities exist (BOM: `docs/provenance.md` § `output/scratch-39/`).
+- **`rules_bg.json`:** the R01 note states the measured facts and the pending
+  ruling. The note only; the rule and cause are unchanged.
+- **`cause_table.md`:** the 65623 section is rewritten from the Phase 3
+  evidence. The two older sentences that called the contract unmet are now
+  marked historical.
+- **OVERVIEW:** the historical-remainder clause gives the plan 39 outcome;
   R-G4-1 is removed from the open list.
-- **Protected snapshot** (`historical_bg/protected_after_39.json`, taken against plan
-  41's `wall/guard/protected_before.json`): all 5 protected discs and the spool
-  fingerprint are identical.
+- **`docs/provenance.md`:** a `scratch-39` section (review F4).
+- **`p2/r01_join.json`:** its `clause_b` field is superseded by
+  `p2/allrows/shape_clause_b.json`.
+- **Protected snapshot** (`historical_bg/protected_after_39.json`, taken against
+  plan 41's last snapshot): all 5 protected discs and the spool fingerprint are
+  identical.
 
 ### Residual rows (`phase3_synthesis/residuals.tsv`)
 
-- **R-G4-1: discharged** (Phase 1 items 1–2). The 3-11 checked moves are confined
-  to the 37 O06 count-wrap cells and equal, exactly, the vertices, steps and
-  whole-leaf covers of the 167,936 formerly unread records.
-- **R-G5-3: discharged** (Phase 3). No 3C-04 failing item in any kind is produced
-  by source 65623; the geometry facts stay recorded as facts.
-- **R-G5-4: discharged, with child R-G5-4-a.** R01 exclusivity against build holds
-  for 920,693 rows (`removed-by-3-14`, clause (b) fails; the 31 type-291 fills
-  included). **R-G5-4-a** (new, blocks-phase3, owner Design): the 80 R01 rows in
-  `eo_division_ceiling` cells, whose footprints changed so that clause (b) cannot be
-  tested by leaf identity.
-- **R-G5-1, R-G5-2: stay open (blocks-phase3, owner Design).** The basis map now
-  states the row mapping: outside the 37 cells, 1:1 and identical in order; inside
-  them, 3-11-cell rows. The all-rows test puts every remainder row at
-  `removed-by-3-14` or in a footprint-changed cell at count level. The row
-  identities (137 / 8,739 and the 180 groups) need a new producer scan for the
-  deleted side columns; that is a Design ruling.
+- **R-G4-1: discharged** (Phase 1 items 1–2). The 3-11 checked moves are
+  confined to the 37 O06 count-wrap cells. They equal, exactly, the vertices,
+  steps and whole-leaf covers of the 167,936 formerly unread records. Limits
+  as stated in item 2.
+- **R-G5-3: discharged** (Phase 3). No 3C-04 failing item in any kind is
+  produced by source 65623. The geometry facts stay recorded as facts.
+- **R-G5-4: answered by count, stays open** (blocks-phase3, owner Design;
+  ruling: Cody via Design). Exclusivity is disproven at shape level: 920,686
+  rows satisfy the build-fixed predicate, 7 stay checker and 80 are untested.
+  The dual-cause question (design open question 1) is raised.
+- **R-G5-1, R-G5-2: stay open** (blocks-phase3, owner Design). The basis map
+  states the row mapping. At most 1,254 background and 72,937
+  background_boundary rows fail the shape-level predicate or are untested.
+  The row identities need a new producer scan for the deleted side columns;
+  that is a Design ruling.

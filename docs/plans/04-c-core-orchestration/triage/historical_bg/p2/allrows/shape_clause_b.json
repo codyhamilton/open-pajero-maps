@@ -1,0 +1,57 @@
+{
+ "87a01b14:background": {
+  "footprints_changed": 102,
+  "persists_ge50pct": 419236,
+  "partial_lt50pct": 1018068,
+  "type_present_no_shared_vertex": 224,
+  "type_absent_removed": 928,
+  "share_quantiles_where_shared": [
+   0.122,
+   0.333,
+   0.765
+  ]
+ },
+ "87a01b14:background_R01": {
+  "footprints_changed": 80,
+  "persists_ge50pct": 309597,
+  "partial_lt50pct": 611089,
+  "type_present_no_shared_vertex": 7
+ },
+ "87a01b14:background_non_R01": {
+  "footprints_changed": 22,
+  "persists_ge50pct": 109639,
+  "partial_lt50pct": 406979,
+  "type_present_no_shared_vertex": 217,
+  "type_absent_removed": 928
+ },
+ "87a01b14:background_boundary": {
+  "footprints_changed": 716,
+  "persists_ge50pct": 6530639,
+  "partial_lt50pct": 9945993,
+  "type_present_no_shared_vertex": 46400,
+  "type_absent_removed": 25821,
+  "share_quantiles_where_shared": [
+   0.125,
+   0.397,
+   1.0
+  ]
+ },
+ "013586b5_37cells:background": {
+  "persists_ge50pct": 24,
+  "partial_lt50pct": 133,
+  "share_quantiles_where_shared": [
+   0.111,
+   0.312,
+   0.6
+  ]
+ },
+ "013586b5_37cells:background_boundary": {
+  "persists_ge50pct": 832,
+  "partial_lt50pct": 1106,
+  "share_quantiles_where_shared": [
+   0.122,
+   0.4,
+   1.0
+  ]
+ }
+}
