@@ -127,6 +127,7 @@
   "file_size": 1731021792,
   "frame_bad_extent": 0,
   "frame_pad_nonzero": 0,
+  "frame_pad_oversize": 0,
   "frames_unique": 3954156,
   "leaf_entries": 3954156,
   "logical_sector_size": 32,
@@ -163,6 +164,7 @@
   "file_size": 1731021568,
   "frame_bad_extent": 0,
   "frame_pad_nonzero": 0,
+  "frame_pad_oversize": 0,
   "frames_unique": 3954156,
   "leaf_entries": 3954156,
   "logical_sector_size": 32,
@@ -690,5 +692,5 @@
   }
  ],
  "schema": 1,
- "tool_sha256": "ed6e65112a818427665beb8e63bf2a51d9fd08538d3fc94aff1c503f50c93760"
+ "tool_sha256": "183d0ee08d9a85b23f7cac1fce957c0a73dec5e2fa6a319ce7c2685761902d83"
 }

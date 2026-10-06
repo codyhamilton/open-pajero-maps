@@ -7,8 +7,9 @@ BMT address arrays / record tail / sector pad; the record-29
 language/country frame), every Parcel Management Record buffer (record
 bytes + zero tail) and every Map Frame allocation (encoded payload, located
 by its two-byte extent marker, + zero allocation padding). The partition
-must be complete and disjoint (sum of regions = file size); otherwise the
-command exits 2 after writing its report.
+must be complete and disjoint (sum of regions = file size), every padding and
+PMR tail byte must be zero, and no frame padding may reach a whole logical
+sector; otherwise the command exits 2 after writing its report.
 
 Old and new are compared by index path, never by offset, so relocation is
 never counted as content:
@@ -223,6 +224,7 @@ def scan(path: Path, progress=print) -> dict:
             fhash[i] = _h(raw[:plen])
             if i and i % 500000 == 0:
                 progress(f'region_accounting: {path.name}: {i:,}/{n:,} frames read')
+        pad_oversize = int(((fa - fpay) >= ls).sum())  # writer allocates ceil(len/ls)*ls
         for i in range(n):
             regions.append((int(fo[i]), int(fo[i] + fa[i]), 'frame'))
         part = check_partition(regions, file_size)
@@ -243,6 +245,7 @@ def scan(path: Path, progress=print) -> dict:
             'frames': {'key': fk, 'off': fo, 'alloc': fa, 'payload': fpay, 'hash': fhash,
                        'aliases': aliases},
             'leaf_entries': int(len(lk)), 'frame_pad_nonzero': pad_nonzero, 'frame_bad_extent': bad_len,
+            'frame_pad_oversize': pad_oversize,
             'partition': part, 'sizes': sizes}
 
 
@@ -258,10 +261,11 @@ def _join(ka, kb):
 def compare(a: dict, b: dict) -> tuple[dict, list]:
     out = {}
     out['fixed'] = {k: {'equal': a['fixed'][k] == b['fixed'][k]} for k in a['fixed']}
-    out['inline'] = {k: {'old_size': a['inline'][k]['size'], 'new_size': b['inline'].get(k, {}).get('size'),
-                         'equal': a['inline'][k]['hash'] == b['inline'].get(k, {}).get('hash'),
-                         'relocated': a['inline'][k]['offset'] != b['inline'].get(k, {}).get('offset')}
-                     for k in a['inline']}
+    out['inline'] = {k: {'old_size': a['inline'].get(k, {}).get('size'),
+                         'new_size': b['inline'].get(k, {}).get('size'),
+                         'equal': a['inline'].get(k, {}).get('hash') == b['inline'].get(k, {}).get('hash'),
+                         'relocated': a['inline'].get(k, {}).get('offset') != b['inline'].get(k, {}).get('offset')}
+                     for k in sorted(set(a['inline']) | set(b['inline']))}
     pa, pb = np.frombuffer(a['pdmdh_buf'], np.uint8), np.frombuffer(b['pdmdh_buf'], np.uint8)
     if len(pa) == len(pb):
         diff = pa != pb
@@ -320,7 +324,8 @@ def compare(a: dict, b: dict) -> tuple[dict, list]:
 
 def _disc_summary(s: dict) -> dict:
     return {k: s[k] for k in ('path', 'file_size', 'sector_size', 'logical_sector_size', 'leaf_entries',
-                              'frame_pad_nonzero', 'frame_bad_extent', 'pmr_tail_nonzero', 'partition', 'sizes')} | {
+                              'frame_pad_nonzero', 'frame_bad_extent', 'frame_pad_oversize',
+                              'pmr_tail_nonzero', 'partition', 'sizes')} | {
         'frames_unique': int(len(s['frames']['key'])), 'pmr_buffers': int(len(s['pmr']['key'])),
         'pdmdh_offset': s['pdmdh_offset']}
 
@@ -344,7 +349,8 @@ def account(old: Path, new: Path, old_sha: str, new_sha: str, out: Path, spans_o
     a, b = scan(Path(old)), scan(Path(new))
     cmp_, spans = compare(a, b)
     ok = a['partition']['complete'] and b['partition']['complete'] and cmp_['unaccounted_bytes'] == 0 \
-        and not a['frame_bad_extent'] and not b['frame_bad_extent']
+        and not a['frame_bad_extent'] and not b['frame_bad_extent'] \
+        and not any(s[k] for s in (a, b) for k in ('frame_pad_nonzero', 'pmr_tail_nonzero', 'frame_pad_oversize'))
     doc = {'schema': SCHEMA, 'kind': 'region_accounting', 'old_sha256': old_sha, 'new_sha256': new_sha,
            'old': _disc_summary(a), 'new': _disc_summary(b), 'compare': cmp_,
            'padding_spans': spans, 'complete_and_accounted': ok,

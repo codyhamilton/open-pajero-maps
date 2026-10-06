@@ -1,0 +1,194 @@
+{
+ "au": {
+  "outside_bytes": [
+   {
+    "offset": 11843,
+    "field_offset_in_entry": 5,
+    "old_byte": 130,
+    "new_byte": 129,
+    "old": {
+     "key": "L0 23/16",
+     "entry_offset": 11838,
+     "entry_len": 6,
+     "size_sectors": 386,
+     "record_bytes": 12348
+    },
+    "new": {
+     "key": "L0 23/16",
+     "entry_offset": 11838,
+     "entry_len": 6,
+     "size_sectors": 385,
+     "record_bytes": 12320
+    }
+   },
+   {
+    "offset": 14297,
+    "field_offset_in_entry": 5,
+    "old_byte": 170,
+    "new_byte": 168,
+    "old": {
+     "key": "L0 51/9",
+     "entry_offset": 14292,
+     "entry_len": 6,
+     "size_sectors": 426,
+     "record_bytes": 13612
+    },
+    "new": {
+     "key": "L0 51/9",
+     "entry_offset": 14292,
+     "entry_len": 6,
+     "size_sectors": 424,
+     "record_bytes": 13556
+    }
+   },
+   {
+    "offset": 14303,
+    "field_offset_in_entry": 5,
+    "old_byte": 139,
+    "new_byte": 141,
+    "old": {
+     "key": "L0 51/10",
+     "entry_offset": 14298,
+     "entry_len": 6,
+     "size_sectors": 395,
+     "record_bytes": 12616
+    },
+    "new": {
+     "key": "L0 51/10",
+     "entry_offset": 14298,
+     "entry_len": 6,
+     "size_sectors": 397,
+     "record_bytes": 12688
+    }
+   }
+  ],
+  "bmt_entries_size_changed": [
+   {
+    "old": {
+     "key": "L0 23/16",
+     "entry_offset": 11838,
+     "entry_len": 6,
+     "size_sectors": 386,
+     "record_bytes": 12348
+    },
+    "new": {
+     "key": "L0 23/16",
+     "entry_offset": 11838,
+     "entry_len": 6,
+     "size_sectors": 385,
+     "record_bytes": 12320
+    }
+   },
+   {
+    "old": {
+     "key": "L0 51/9",
+     "entry_offset": 14292,
+     "entry_len": 6,
+     "size_sectors": 426,
+     "record_bytes": 13612
+    },
+    "new": {
+     "key": "L0 51/9",
+     "entry_offset": 14292,
+     "entry_len": 6,
+     "size_sectors": 424,
+     "record_bytes": 13556
+    }
+   },
+   {
+    "old": {
+     "key": "L0 51/10",
+     "entry_offset": 14298,
+     "entry_len": 6,
+     "size_sectors": 395,
+     "record_bytes": 12616
+    },
+    "new": {
+     "key": "L0 51/10",
+     "entry_offset": 14298,
+     "entry_len": 6,
+     "size_sectors": 397,
+     "record_bytes": 12688
+    }
+   }
+  ]
+ },
+ "perth": {
+  "outside_bytes": [
+   {
+    "offset": 7343,
+    "field_offset_in_entry": 5,
+    "old_byte": 170,
+    "new_byte": 168,
+    "old": {
+     "key": "L0 51/9",
+     "entry_offset": 7338,
+     "entry_len": 6,
+     "size_sectors": 426,
+     "record_bytes": 13612
+    },
+    "new": {
+     "key": "L0 51/9",
+     "entry_offset": 7338,
+     "entry_len": 6,
+     "size_sectors": 424,
+     "record_bytes": 13556
+    }
+   },
+   {
+    "offset": 7349,
+    "field_offset_in_entry": 5,
+    "old_byte": 139,
+    "new_byte": 141,
+    "old": {
+     "key": "L0 51/10",
+     "entry_offset": 7344,
+     "entry_len": 6,
+     "size_sectors": 395,
+     "record_bytes": 12616
+    },
+    "new": {
+     "key": "L0 51/10",
+     "entry_offset": 7344,
+     "entry_len": 6,
+     "size_sectors": 397,
+     "record_bytes": 12688
+    }
+   }
+  ],
+  "bmt_entries_size_changed": [
+   {
+    "old": {
+     "key": "L0 51/9",
+     "entry_offset": 7338,
+     "entry_len": 6,
+     "size_sectors": 426,
+     "record_bytes": 13612
+    },
+    "new": {
+     "key": "L0 51/9",
+     "entry_offset": 7338,
+     "entry_len": 6,
+     "size_sectors": 424,
+     "record_bytes": 13556
+    }
+   },
+   {
+    "old": {
+     "key": "L0 51/10",
+     "entry_offset": 7344,
+     "entry_len": 6,
+     "size_sectors": 395,
+     "record_bytes": 12616
+    },
+    "new": {
+     "key": "L0 51/10",
+     "entry_offset": 7344,
+     "entry_len": 6,
+     "size_sectors": 397,
+     "record_bytes": 12688
+    }
+   }
+  ]
+ }
+}

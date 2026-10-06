@@ -1,0 +1,315 @@
+{
+ "errors": [],
+ "file_size": {
+  "delta": -38916640,
+  "new": 1692105152,
+  "old": 1731021792
+ },
+ "fixed_and_inline": {
+  "fixed": {
+   "data_volume": {
+    "equal": true
+   },
+   "mht": {
+    "equal": true
+   }
+  },
+  "inline": {
+   "29": {
+    "equal": true,
+    "new_size": 2048,
+    "old_size": 2048,
+    "relocated": false
+   }
+  }
+ },
+ "frames": {
+  "alias_pattern_equal": true,
+  "allocation_changed": 230608,
+  "common": 3954144,
+  "new": 3954159,
+  "old": 3954156,
+  "only_new": 15,
+  "only_new_keys": [
+   "L0 23/16: 1285",
+   "L0 51/9: 988",
+   "L0 51/9: 1211",
+   "L0 51/10: 768/4",
+   "L0 51/10: 768/5",
+   "L0 51/10: 768/6",
+   "L0 51/10: 768/7",
+   "L0 51/10: 768/8",
+   "L0 51/10: 768/9",
+   "L0 51/10: 768/10",
+   "L0 51/10: 768/11",
+   "L0 51/10: 768/12",
+   "L0 51/10: 768/13",
+   "L0 51/10: 768/14",
+   "L0 51/10: 768/15"
+  ],
+  "only_old": 12,
+  "only_old_keys": [
+   "L0 23/16: 1285/0",
+   "L0 23/16: 1285/1",
+   "L0 23/16: 1285/2",
+   "L0 23/16: 1285/3",
+   "L0 51/9: 988/0",
+   "L0 51/9: 988/1",
+   "L0 51/9: 988/2",
+   "L0 51/9: 988/3",
+   "L0 51/9: 1211/0",
+   "L0 51/9: 1211/1",
+   "L0 51/9: 1211/2",
+   "L0 51/9: 1211/3"
+  ],
+  "padding_delta_spans": -3302,
+  "padding_spans_changed": 233781,
+  "payload_changed": 247961,
+  "payload_delta_changed_frames": -39108026,
+  "payload_delta_unchanged_frames": 0,
+  "relocated": 3665474
+ },
+ "inputs": {
+  "cell_diff": {
+   "path": "output/scratch-31/diff-3-14-au.json",
+   "sha256": "4e5f1b31e180f2551202029d88c1ef928ee46c946e9a0305411f67b29136fe04"
+  },
+  "cells": {
+   "path": "output/scratch-31/diff-3-14-au.cells.tsv",
+   "sha256": "77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f"
+  },
+  "pdmdh": {
+   "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/pdmdh-fields-3-14.json",
+   "sha256": "07f26f29ccf0d061f3dc95dec7900e3636766bc89fb48497016d935bde2074df"
+  },
+  "region": {
+   "path": "output/scratch-36/r2/region-3-14-au.json",
+   "sha256": "be5e81a91eae56ad64a66c0e173293bd50181bc461c30f44252a7e925a1abfa7"
+  },
+  "spans": {
+   "path": "output/scratch-36/r2/region-3-14-au.spans.tsv",
+   "sha256": "afaefbdd7f3ceed5fd04c9e6966e4b2d2fadff048286b058d1c9fceabca4d09c"
+  }
+ },
+ "kind": "hop_3_14_container_account",
+ "new_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+ "nonzero_padding_or_tail": {
+  "frame_pad_nonzero": [
+   0,
+   0
+  ],
+  "pmr_tail_nonzero": [
+   0,
+   0
+  ]
+ },
+ "old_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+ "padding_span_delta_histogram": {
+  "-10": 10429,
+  "-12": 10677,
+  "-14": 11378,
+  "-16": 9057,
+  "-18": 5282,
+  "-2": 11792,
+  "-20": 4928,
+  "-22": 4023,
+  "-24": 3934,
+  "-26": 3353,
+  "-28": 2337,
+  "-30": 1173,
+  "-4": 11226,
+  "-6": 11056,
+  "-8": 11321,
+  "10": 9222,
+  "12": 8138,
+  "14": 6663,
+  "16": 9228,
+  "18": 8940,
+  "2": 17970,
+  "20": 6395,
+  "22": 4673,
+  "24": 3653,
+  "26": 2631,
+  "28": 1569,
+  "30": 761,
+  "4": 16287,
+  "6": 14385,
+  "8": 11300
+ },
+ "partition": {
+  "new": {
+   "complete": true,
+   "gap_bytes": 0,
+   "gaps": [],
+   "overlap_count": 0,
+   "overlaps": [],
+   "regions": 3956305
+  },
+  "old": {
+   "complete": true,
+   "gap_bytes": 0,
+   "gaps": [],
+   "overlap_count": 0,
+   "overlaps": [],
+   "regions": 3956302
+  }
+ },
+ "pass": true,
+ "payload_vs_cells": {
+  "changed_cells": 246123,
+  "equal": true,
+  "frame_payload_delta": -38913410,
+  "status": {
+   "changed": 246123
+  },
+  "sum_cell_frame_deltas": -38913410
+ },
+ "pdmdh": {
+  "differing_bytes": 5946,
+  "in_bmt_address_fields": 5943,
+  "outside_bmt_address_fields": 3,
+  "outside_bytes": [
+   {
+    "field_offset_in_entry": 5,
+    "new": {
+     "entry_len": 6,
+     "entry_offset": 11838,
+     "key": "L0 23/16",
+     "record_bytes": 12320,
+     "size_sectors": 385
+    },
+    "new_byte": 129,
+    "offset": 11843,
+    "old": {
+     "entry_len": 6,
+     "entry_offset": 11838,
+     "key": "L0 23/16",
+     "record_bytes": 12348,
+     "size_sectors": 386
+    },
+    "old_byte": 130
+   },
+   {
+    "field_offset_in_entry": 5,
+    "new": {
+     "entry_len": 6,
+     "entry_offset": 14292,
+     "key": "L0 51/9",
+     "record_bytes": 13556,
+     "size_sectors": 424
+    },
+    "new_byte": 168,
+    "offset": 14297,
+    "old": {
+     "entry_len": 6,
+     "entry_offset": 14292,
+     "key": "L0 51/9",
+     "record_bytes": 13612,
+     "size_sectors": 426
+    },
+    "old_byte": 170
+   },
+   {
+    "field_offset_in_entry": 5,
+    "new": {
+     "entry_len": 6,
+     "entry_offset": 14298,
+     "key": "L0 51/10",
+     "record_bytes": 12688,
+     "size_sectors": 397
+    },
+    "new_byte": 141,
+    "offset": 14303,
+    "old": {
+     "entry_len": 6,
+     "entry_offset": 14298,
+     "key": "L0 51/10",
+     "record_bytes": 12616,
+     "size_sectors": 395
+    },
+    "old_byte": 139
+   }
+  ]
+ },
+ "pmr": {
+  "buffer_size_changed": 3,
+  "common": 2139,
+  "masked_content_differs": 3,
+  "masked_content_differs_keys": [
+   "L0 23/16",
+   "L0 51/9",
+   "L0 51/10"
+  ],
+  "new": 2139,
+  "old": 2139,
+  "record_size_changed": 3,
+  "relocated": 1998
+ },
+ "pmr_size_changed_blocks": [
+  {
+   "new": {
+    "entry_len": 6,
+    "entry_offset": 11838,
+    "key": "L0 23/16",
+    "record_bytes": 12320,
+    "size_sectors": 385
+   },
+   "old": {
+    "entry_len": 6,
+    "entry_offset": 11838,
+    "key": "L0 23/16",
+    "record_bytes": 12348,
+    "size_sectors": 386
+   }
+  },
+  {
+   "new": {
+    "entry_len": 6,
+    "entry_offset": 14292,
+    "key": "L0 51/9",
+    "record_bytes": 13556,
+    "size_sectors": 424
+   },
+   "old": {
+    "entry_len": 6,
+    "entry_offset": 14292,
+    "key": "L0 51/9",
+    "record_bytes": 13612,
+    "size_sectors": 426
+   }
+  },
+  {
+   "new": {
+    "entry_len": 6,
+    "entry_offset": 14298,
+    "key": "L0 51/10",
+    "record_bytes": 12688,
+    "size_sectors": 397
+   },
+   "old": {
+    "entry_len": 6,
+    "entry_offset": 14298,
+    "key": "L0 51/10",
+    "record_bytes": 12616,
+    "size_sectors": 395
+   }
+  }
+ ],
+ "region": "au",
+ "region_deltas": {
+  "data_volume": 0,
+  "frame_padding": -3198,
+  "frame_payload": -38913410,
+  "mht": 0,
+  "mht_inline_29": 0,
+  "pdmdh_bmt_arrays": 0,
+  "pdmdh_record_tail": 0,
+  "pdmdh_records": 0,
+  "pdmdh_sector_pad": 0,
+  "pmr_records": -12,
+  "pmr_tails": -20
+ },
+ "region_tool_sha256": "183d0ee08d9a85b23f7cac1fce957c0a73dec5e2fa6a319ce7c2685761902d83",
+ "schema": 1,
+ "unaccounted_bytes": 0
+}

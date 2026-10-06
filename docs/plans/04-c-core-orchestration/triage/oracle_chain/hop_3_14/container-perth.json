@@ -1,0 +1,273 @@
+{
+ "errors": [],
+ "file_size": {
+  "delta": -160992,
+  "new": 31546688,
+  "old": 31707680
+ },
+ "fixed_and_inline": {
+  "fixed": {
+   "data_volume": {
+    "equal": true
+   },
+   "mht": {
+    "equal": true
+   }
+  },
+  "inline": {
+   "29": {
+    "equal": true,
+    "new_size": 2048,
+    "old_size": 2048,
+    "relocated": false
+   }
+  }
+ },
+ "frames": {
+  "alias_pattern_equal": true,
+  "allocation_changed": 874,
+  "common": 1935,
+  "new": 1949,
+  "old": 1943,
+  "only_new": 14,
+  "only_new_keys": [
+   "L0 51/9: 988",
+   "L0 51/9: 1211",
+   "L0 51/10: 768/4",
+   "L0 51/10: 768/5",
+   "L0 51/10: 768/6",
+   "L0 51/10: 768/7",
+   "L0 51/10: 768/8",
+   "L0 51/10: 768/9",
+   "L0 51/10: 768/10",
+   "L0 51/10: 768/11",
+   "L0 51/10: 768/12",
+   "L0 51/10: 768/13",
+   "L0 51/10: 768/14",
+   "L0 51/10: 768/15"
+  ],
+  "only_old": 8,
+  "only_old_keys": [
+   "L0 51/9: 988/0",
+   "L0 51/9: 988/1",
+   "L0 51/9: 988/2",
+   "L0 51/9: 988/3",
+   "L0 51/9: 1211/0",
+   "L0 51/9: 1211/1",
+   "L0 51/9: 1211/2",
+   "L0 51/9: 1211/3"
+  ],
+  "padding_delta_spans": 264,
+  "padding_spans_changed": 887,
+  "payload_changed": 945,
+  "payload_delta_changed_frames": -376744,
+  "payload_delta_unchanged_frames": 0,
+  "relocated": 1928
+ },
+ "inputs": {
+  "cell_diff": {
+   "path": "output/scratch-31/diff-3-14-perth.json",
+   "sha256": "51dd2ab81d5af672fcef9a19e643a04a9a53e7ac8076fe70dbc15e4a1f05770d"
+  },
+  "cells": {
+   "path": "output/scratch-31/diff-3-14-perth.cells.tsv",
+   "sha256": "af26b6b48aef6e7b5a407b5db367894f28f7f6c1ea29a8ff31ab560b65d8355f"
+  },
+  "pdmdh": {
+   "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/pdmdh-fields-3-14.json",
+   "sha256": "07f26f29ccf0d061f3dc95dec7900e3636766bc89fb48497016d935bde2074df"
+  },
+  "region": {
+   "path": "output/scratch-36/r2/region-3-14-perth.json",
+   "sha256": "a341cb3ec21fc1c348603d94a3790ebf74c3646309081a76cd277f846a09a456"
+  },
+  "spans": {
+   "path": "output/scratch-36/r2/region-3-14-perth.spans.tsv",
+   "sha256": "7626b3161476f4f45eb1407329f5ab897e2e6544a8d6ee7e93c7d7a45437506a"
+  }
+ },
+ "kind": "hop_3_14_container_account",
+ "new_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+ "nonzero_padding_or_tail": {
+  "frame_pad_nonzero": [
+   0,
+   0
+  ],
+  "pmr_tail_nonzero": [
+   0,
+   0
+  ]
+ },
+ "old_sha256": "da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc",
+ "padding_span_delta_histogram": {
+  "-10": 40,
+  "-12": 42,
+  "-14": 40,
+  "-16": 31,
+  "-18": 21,
+  "-2": 52,
+  "-20": 20,
+  "-22": 16,
+  "-24": 12,
+  "-26": 11,
+  "-28": 7,
+  "-30": 4,
+  "-4": 38,
+  "-6": 46,
+  "-8": 39,
+  "10": 32,
+  "12": 24,
+  "14": 22,
+  "16": 39,
+  "18": 38,
+  "2": 66,
+  "20": 28,
+  "22": 17,
+  "24": 7,
+  "26": 11,
+  "28": 8,
+  "30": 4,
+  "4": 61,
+  "6": 66,
+  "8": 45
+ },
+ "partition": {
+  "new": {
+   "complete": true,
+   "gap_bytes": 0,
+   "gaps": [],
+   "overlap_count": 0,
+   "overlaps": [],
+   "regions": 1964
+  },
+  "old": {
+   "complete": true,
+   "gap_bytes": 0,
+   "gaps": [],
+   "overlap_count": 0,
+   "overlaps": [],
+   "regions": 1958
+  }
+ },
+ "pass": true,
+ "payload_vs_cells": {
+  "changed_cells": 795,
+  "equal": true,
+  "frame_payload_delta": -161380,
+  "status": {
+   "changed": 795
+  },
+  "sum_cell_frame_deltas": -161380
+ },
+ "pdmdh": {
+  "differing_bytes": 20,
+  "in_bmt_address_fields": 18,
+  "outside_bmt_address_fields": 2,
+  "outside_bytes": [
+   {
+    "field_offset_in_entry": 5,
+    "new": {
+     "entry_len": 6,
+     "entry_offset": 7338,
+     "key": "L0 51/9",
+     "record_bytes": 13556,
+     "size_sectors": 424
+    },
+    "new_byte": 168,
+    "offset": 7343,
+    "old": {
+     "entry_len": 6,
+     "entry_offset": 7338,
+     "key": "L0 51/9",
+     "record_bytes": 13612,
+     "size_sectors": 426
+    },
+    "old_byte": 170
+   },
+   {
+    "field_offset_in_entry": 5,
+    "new": {
+     "entry_len": 6,
+     "entry_offset": 7344,
+     "key": "L0 51/10",
+     "record_bytes": 12688,
+     "size_sectors": 397
+    },
+    "new_byte": 141,
+    "offset": 7349,
+    "old": {
+     "entry_len": 6,
+     "entry_offset": 7344,
+     "key": "L0 51/10",
+     "record_bytes": 12616,
+     "size_sectors": 395
+    },
+    "old_byte": 139
+   }
+  ]
+ },
+ "pmr": {
+  "buffer_size_changed": 2,
+  "common": 8,
+  "masked_content_differs": 2,
+  "masked_content_differs_keys": [
+   "L0 51/9",
+   "L0 51/10"
+  ],
+  "new": 8,
+  "old": 8,
+  "record_size_changed": 2,
+  "relocated": 8
+ },
+ "pmr_size_changed_blocks": [
+  {
+   "new": {
+    "entry_len": 6,
+    "entry_offset": 7338,
+    "key": "L0 51/9",
+    "record_bytes": 13556,
+    "size_sectors": 424
+   },
+   "old": {
+    "entry_len": 6,
+    "entry_offset": 7338,
+    "key": "L0 51/9",
+    "record_bytes": 13612,
+    "size_sectors": 426
+   }
+  },
+  {
+   "new": {
+    "entry_len": 6,
+    "entry_offset": 7344,
+    "key": "L0 51/10",
+    "record_bytes": 12688,
+    "size_sectors": 397
+   },
+   "old": {
+    "entry_len": 6,
+    "entry_offset": 7344,
+    "key": "L0 51/10",
+    "record_bytes": 12616,
+    "size_sectors": 395
+   }
+  }
+ ],
+ "region": "perth",
+ "region_deltas": {
+  "data_volume": 0,
+  "frame_padding": 388,
+  "frame_payload": -161380,
+  "mht": 0,
+  "mht_inline_29": 0,
+  "pdmdh_bmt_arrays": 0,
+  "pdmdh_record_tail": 0,
+  "pdmdh_records": 0,
+  "pdmdh_sector_pad": 0,
+  "pmr_records": 16,
+  "pmr_tails": -16
+ },
+ "region_tool_sha256": "183d0ee08d9a85b23f7cac1fce957c0a73dec5e2fa6a319ce7c2685761902d83",
+ "schema": 1,
+ "unaccounted_bytes": 0
+}

@@ -304,7 +304,7 @@ def test_routed_diff_rejects_wrong_or_tampered_baseline(tmp_path):
 
 EVID = PLAN / 'evidence'
 REPLAY_FILES = ('routed-3-11-au.json', 'routed-3-11-au.cells.tsv', 'diff-3-11-au.json',
-                'diff-3-11-au.cells.tsv', 'region-3-11-au.json')
+                'diff-3-11-au.cells.tsv', 'region-3-11-au.json', 'region-3-11-au.spans.tsv', 'sha_pre311.json')
 
 
 def _cells37():
@@ -316,10 +316,11 @@ def test_replay_3_11_accepts_committed_plan36_witnesses():
     summary, extra = chain.replay_3_11(EVID / 'routed-3-11-au.json', EVID / 'region-3-11-au.json', _cells37())
     assert summary['routed_only_count'] == 0 and summary['baseline_cells_missing_from_routed'] == 0
     assert summary['frame_payload_delta'] == 164 and summary['padding_spans'] == {'-4': 34, '+28': 7}
-    assert len(extra) == 5
+    assert len(extra) == 8 and len(chain.plan07_spans()) == 41
 
 
-@pytest.mark.parametrize('mutation', ['routed_only', 'region_unaccounted', 'span_delta', 'list', 'cells_sha'])
+@pytest.mark.parametrize('mutation', ['routed_only', 'region_unaccounted', 'span_delta', 'span_offset', 'list',
+                                      'cells_sha', 'disc_witness'])
 def test_replay_3_11_rejects_tampered_witnesses(tmp_path, mutation):
     for name in REPLAY_FILES:
         (tmp_path / name).write_bytes((EVID / name).read_bytes())
@@ -333,6 +334,11 @@ def test_replay_3_11_rejects_tampered_witnesses(tmp_path, mutation):
     elif mutation == 'span_delta':
         a = json.loads((tmp_path / REPLAY_FILES[4]).read_text()); a['padding_spans'][0]['delta'] = 28
         (tmp_path / REPLAY_FILES[4]).write_text(json.dumps(a))
+    elif mutation == 'span_offset':
+        a = json.loads((tmp_path / REPLAY_FILES[4]).read_text()); a['padding_spans'][0]['old_pad_offset'] += 32
+        (tmp_path / REPLAY_FILES[4]).write_text(json.dumps(a))
+    elif mutation == 'disc_witness':
+        (tmp_path / 'sha_pre311.json').write_text(json.dumps({'sha256': chain.AU1}))
     elif mutation == 'list':
         cells = cells[:-1] + [[0, 1, 1]]
     else:
@@ -340,3 +346,85 @@ def test_replay_3_11_rejects_tampered_witnesses(tmp_path, mutation):
             f.write('\n')
     with pytest.raises(ValueError):
         chain.replay_3_11(tmp_path / REPLAY_FILES[0], tmp_path / REPLAY_FILES[4], cells)
+
+
+HOP = PLAN / 'hop_3_14'
+
+
+@pytest.mark.parametrize('name,start,end,count', [('au', chain.AU1, chain.AU2, 246123),
+                                                 ('perth', chain.P0, chain.P1, 795)])
+def test_container_account_accepts_committed_summaries(name, start, end, count):
+    row = {'changed_count': count, 'residuals': [chain.CONTAINER_RESIDUAL, 'other']}
+    chain.container_account(HOP / f'container-{name}.json', start, end, row)
+    assert row['residuals'] == ['other'] and row['container_account']['unaccounted_bytes'] == 0
+
+
+@pytest.mark.parametrize('mutation', ['pass', 'hop', 'payload', 'count'])
+def test_container_account_rejects_tampered_summary(tmp_path, mutation):
+    c = json.loads((HOP / 'container-au.json').read_text())
+    row = {'changed_count': 246123, 'residuals': [chain.CONTAINER_RESIDUAL]}
+    start, end = chain.AU1, chain.AU2
+    if mutation == 'pass':
+        c['pass'] = False
+    elif mutation == 'hop':
+        start = chain.AU0
+    elif mutation == 'payload':
+        c['payload_vs_cells']['equal'] = False
+    else:
+        row['changed_count'] = 1
+    p = tmp_path / 'c.json'
+    p.write_text(json.dumps(c))
+    with pytest.raises(ValueError):
+        chain.container_account(p, start, end, row)
+
+
+def _container_inputs(tmp_path, cell_new=110):
+    spec2 = importlib.util.spec_from_file_location('container_summary', HOP / 'container_summary.py')
+    cs = importlib.util.module_from_spec(spec2)
+    spec2.loader.exec_module(cs)
+    cells = tmp_path / 'cells.tsv'
+    cells.write_text('level\tix\tiy\tstatus\told_bytes\tnew_bytes\n0\t1\t1\tchanged\t100\t%d\n' % cell_new)
+    blk = {'key': 'L0 1/0', 'entry_offset': 10, 'entry_len': 6, 'size_sectors': 1, 'record_bytes': 20}
+    blk2 = dict(blk, size_sectors=2, record_bytes=40)
+    pd = {'x': {'outside_bytes': [{'offset': 15, 'field_offset_in_entry': 5, 'old': blk, 'new': blk2}],
+                'bmt_entries_size_changed': [{'old': blk, 'new': blk2}]}}
+    region = {'kind': 'region_accounting', 'complete_and_accounted': True, 'old_sha256': 'a', 'new_sha256': 'b',
+              'tool_sha256': 't', 'old': {'partition': {}, 'frame_pad_nonzero': 0, 'pmr_tail_nonzero': 0},
+              'new': {'partition': {}, 'frame_pad_nonzero': 0, 'pmr_tail_nonzero': 0},
+              'compare': {'unaccounted_bytes': 0, 'file_size': {'delta': 42},
+                          'sizes': {'partition_gaps': {'old': 0, 'new': 0, 'delta': 0},
+                                    'frame_payload': {'delta': 10}, 'frame_padding': {'delta': -2},
+                                    'pmr_records': {'delta': 20}, 'pmr_tails': {'delta': 14}},
+                          'frames': {'old': 1, 'new': 2, 'common': 1, 'only_old': 0, 'only_new': 1,
+                                     'only_old_keys': [], 'only_new_keys': ['L0 1/0: 3'], 'payload_changed': 1,
+                                     'payload_delta_changed_frames': 10, 'payload_delta_unchanged_frames': 0,
+                                     'allocation_changed': 1, 'padding_spans_changed': 1,
+                                     'padding_delta_spans': -2, 'relocated': 0, 'alias_pattern_equal': True},
+                          'pmr': {'old': 1, 'new': 1, 'common': 1, 'relocated': 0, 'buffer_size_changed': 1,
+                                  'record_size_changed': 1, 'masked_content_differs': 1,
+                                  'masked_content_differs_keys': ['L0 1/0']},
+                          'pdmdh': {'differing_bytes': 1, 'in_bmt_address_fields': 0,
+                                    'outside_bmt_address_fields': 1, 'outside_offsets': [15]},
+                          'fixed': {}, 'inline': {}}}
+    spans = tmp_path / 'spans.tsv'
+    spans.write_text('key\tdelta\nL0 1/0: 0\t-2\n')
+    paths = {}
+    for k, v in (('region', region), ('pdmdh', pd)):
+        paths[k] = tmp_path / f'{k}.json'
+        paths[k].write_text(json.dumps(v))
+    diff = {'old_sha256': 'a', 'new_sha256': 'b', 'cells': {'sha256': chain.sha(cells)}}
+    paths['diff'] = tmp_path / 'diff.json'
+    paths['diff'].write_text(json.dumps(diff))
+    return cs, paths, spans, cells
+
+
+def test_container_summary_names_every_byte(tmp_path):
+    cs, p, spans, cells = _container_inputs(tmp_path)
+    out = cs.summarise(p['region'], spans, cells, p['diff'], p['pdmdh'], 'x')
+    assert out['pass'] and out['errors'] == []
+
+
+def test_container_summary_rejects_payload_not_equal_cell_deltas(tmp_path):
+    cs, p, spans, cells = _container_inputs(tmp_path, cell_new=111)
+    out = cs.summarise(p['region'], spans, cells, p['diff'], p['pdmdh'], 'x')
+    assert not out['pass'] and any('payload delta' in e for e in out['errors'])

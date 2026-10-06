@@ -89,8 +89,9 @@ No rows were invented.
   not re-proven under the routed identity.
 
 ## Residual Risks
-- The 3-14 payload causes are unattributed. AU 3-11's +60 B non-payload
-  growth and the 3-14 container, index and padding scope are unmeasured.
+- The 3-14 payload causes are unattributed. The 3-14 container, index and
+  padding scope is unmeasured. AU 3-11's +60 B was attributed by plan 07 and
+  reproduced by plan 36 Phase 1.
 - The routed completeness proof covers only the two 3-14 hops.
 - The historical exhaustive pin identity stays unverifiable from git.
 - Plan 04 Phase 3 is not closed. PSS at ≤`-j6` and the close synthesis

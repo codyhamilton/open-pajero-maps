@@ -271,7 +271,19 @@
         },
         {
           "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/region-3-11-au.json",
-          "sha256": "891f6adc0e61e5d9e3bb79946dd69e12e6ecbed093e2487768428c5cbe407ac7"
+          "sha256": "448f1e0c1735ffd03ef37f3b457ed2389c893462610115c0740c7d31cc9ce510"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/region-3-11-au.spans.tsv",
+          "sha256": "ccb74a1ec36eba1f5bd54516864c095cdaaa6590862bca2639e2a902f7d45544"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/sha_pre311.json",
+          "sha256": "1b4a76266e1bcfd0bfc391286bb1f10f80479d3775e9244de8923c35351cc566"
+        },
+        {
+          "path": "docs/design/g-new-nonpayload-accounting.md",
+          "sha256": "2fec9aa550a4e989c097c485f33c1b77f0eb01a5cf86d0b3b20fa715cc10e31c"
         }
       ],
       "to_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
@@ -285,6 +297,26 @@
       },
       "changed_count": 246123,
       "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes.",
+      "container_account": {
+        "file_size_delta": -38916640,
+        "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/container-au.json",
+        "payload_equals_sum_cell_deltas": true,
+        "region_deltas": {
+          "data_volume": 0,
+          "frame_padding": -3198,
+          "frame_payload": -38913410,
+          "mht": 0,
+          "mht_inline_29": 0,
+          "pdmdh_bmt_arrays": 0,
+          "pdmdh_record_tail": 0,
+          "pdmdh_records": 0,
+          "pdmdh_sector_pad": 0,
+          "pmr_records": -12,
+          "pmr_tails": -20
+        },
+        "sha256": "e5622b0590bc85d56a47f416d016e078ff41644a87766be4b370c9950577817d",
+        "unaccounted_bytes": 0
+      },
       "counts_by_level": {
         "0": {
           "changed": 244060
@@ -316,8 +348,7 @@
       "recorded_removed": 0,
       "region": "AU",
       "residuals": [
-        "Payload causes not measured; all listed cells are unexplained.",
-        "Container/index/padding relocation is outside this cell-identity measurement."
+        "Payload causes not measured; all listed cells are unexplained."
       ],
       "signing_record": {
         "path": "docs/plans/04-c-core-orchestration/IMPLEMENTATION.md",
@@ -339,6 +370,26 @@
       },
       "changed_count": 795,
       "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes.",
+      "container_account": {
+        "file_size_delta": -160992,
+        "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/container-perth.json",
+        "payload_equals_sum_cell_deltas": true,
+        "region_deltas": {
+          "data_volume": 0,
+          "frame_padding": 388,
+          "frame_payload": -161380,
+          "mht": 0,
+          "mht_inline_29": 0,
+          "pdmdh_bmt_arrays": 0,
+          "pdmdh_record_tail": 0,
+          "pdmdh_records": 0,
+          "pdmdh_sector_pad": 0,
+          "pmr_records": 16,
+          "pmr_tails": -16
+        },
+        "sha256": "4d56bdd2b7fadd2ffa00bea36dae08c7b47d98dcaf8d63e89ca40b23a4744452",
+        "unaccounted_bytes": 0
+      },
       "counts_by_level": {
         "0": {
           "changed": 784
@@ -362,8 +413,7 @@
       "recorded_removed": 0,
       "region": "Perth",
       "residuals": [
-        "Payload causes not measured; all listed cells are unexplained.",
-        "Container/index/padding relocation is outside this cell-identity measurement."
+        "Payload causes not measured; all listed cells are unexplained."
       ],
       "signing_record": {
         "path": "docs/plans/04-c-core-orchestration/IMPLEMENTATION.md",

@@ -104,6 +104,9 @@ def test_grown_frame_named_as_payload_and_padding(tmp_path, extra):
     # relocation and the changed BS field never count as PMR content
     assert c['pmr']['masked_content_differs'] == 0
     assert c['pdmdh']['outside_bmt_address_fields'] == 0
+    if c['frames']['allocation_changed']:
+        # a grown allocation moves later data: the relocation path is exercised
+        assert c['frames']['relocated'] > 0 or c['pmr']['relocated'] > 0
 
 
 def test_sha_mismatch_refused(tmp_path):
@@ -111,3 +114,46 @@ def test_sha_mismatch_refused(tmp_path):
     a = _disc(tmp_path, 'a', f)
     with pytest.raises(SystemExit):
         ra.account(a[0], a[0], '0' * 64, a[1], tmp_path / 'x.json')
+
+
+def _copy_disc(tmp_path, src, name, mutate):
+    d = tmp_path / name
+    d.mkdir()
+    data = bytearray(src[0].read_bytes())
+    mutate(data)
+    out = d / 'ALLDATA.KWI'
+    out.write_bytes(bytes(data))
+    return out, hashlib.sha256(bytes(data)).hexdigest()
+
+
+def test_trailing_gap_fails_closed(tmp_path):
+    f = _frames(tmp_path)
+    a = _disc(tmp_path, 'a', f)
+    b = _copy_disc(tmp_path, a, 'b', lambda d: d.extend(b'\0' * 32))
+    rc, doc = _account(tmp_path, a, b)
+    assert rc == 2 and not doc['complete_and_accounted']
+    assert doc['new']['partition']['gap_bytes'] == 32 and not doc['new']['partition']['complete']
+
+
+def test_nonzero_frame_padding_fails_closed(tmp_path):
+    f = _frames(tmp_path)
+    g = dict(f)
+    g[(513, 0)] = _grow(f[(513, 0)], 4)
+    a = _disc(tmp_path, 'a', g)
+    s = ra.scan(a[0], progress=lambda *_: None)
+    fr = s['frames']
+    i = next(i for i in range(len(fr['off'])) if fr['alloc'][i] > fr['payload'][i])
+    pos = int(fr['off'][i] + fr['payload'][i])
+    b = _copy_disc(tmp_path, a, 'b', lambda d: d.__setitem__(pos, 1))
+    rc, doc = _account(tmp_path, a, b)
+    assert rc == 2 and not doc['complete_and_accounted']
+    assert doc['new']['frame_pad_nonzero'] == 1 and doc['compare']['unaccounted_bytes'] == 0
+
+
+def test_existing_output_refused(tmp_path):
+    f = _frames(tmp_path)
+    a = _disc(tmp_path, 'a', f)
+    out = tmp_path / 'exists.json'
+    out.write_text('{}')
+    with pytest.raises(SystemExit):
+        ra.account(a[0], a[0], a[1], a[1], out)

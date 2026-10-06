@@ -480,6 +480,23 @@ def measured_row(path, old_sha, new_sha, row):
     return row
 
 
+PLAN07_LEDGER = ROOT / 'docs/design/g-new-nonpayload-accounting.md'
+
+
+def plan07_spans(path=PLAN07_LEDGER):
+    """Parse plan 07's 41-row padding ledger: (index path, old off, old bytes, new off, new bytes, delta)."""
+    import re
+    pat = re.compile(r'\|\s*\d+,\d+\s*\|\s*([^|]+?)\s*\|\s*([\d,]+)\s*\|\s*(\d+)\s*\|\s*([\d,]+)\s*\|'
+                     r'\s*(\d+)\s*\|\s*([+-]?\d+)\s*\|')
+    rows = set()
+    for line in small_bytes(path).decode().splitlines():
+        m = pat.match(line)
+        if m:
+            rows.add((m[1], int(m[2].replace(',', '')), int(m[3]), int(m[4].replace(',', '')),
+                      int(m[5]), int(m[6])))
+    return rows
+
+
 def replay_3_11(routed_path, region_path, cells):
     """Validate the plan 36 3-11 replay witnesses (committed copies; no disc reads)."""
     routed_path, region_path = Path(routed_path), Path(region_path)
@@ -514,16 +531,53 @@ def replay_3_11(routed_path, region_path, cells):
             or [c['sizes']['frame_padding'][k] for k in ('old', 'new')] != [21570746, 21570806]
             or c['file_size']['delta'] != 224 or deltas != [-4] * 34 + [28] * 7):
         raise ValueError('3-11 region accounting does not reproduce plan 07 (+164 payload, 41 padding spans, 0 unaccounted)')
+    got = {(sp['key'].split(' ', 1)[1], sp['old_pad_offset'], sp['old_bytes'], sp['new_pad_offset'],
+            sp['new_bytes'], sp['delta']) for sp in spans}
+    want = plan07_spans()
+    if len(want) != 41 or got != want:
+        raise ValueError('3-11 padding spans differ from plan 07 ledger rows')
+    spans_tsv = region_path.with_name(region_path.stem + '.spans.tsv')
+    with spans_tsv.open() as f:
+        tsv = {(r['key'].split(' ', 1)[1], int(r['old_pad_offset']), int(r['old_bytes']), int(r['new_pad_offset']),
+                int(r['new_bytes']), int(r['delta'])) for r in csv.DictReader(f, delimiter='\t')}
+    if tsv != got:
+        raise ValueError('3-11 spans TSV differs from the region accounting JSON')
+    disc_witness = region_path.with_name('sha_pre311.json')
+    if json.loads(small_bytes(disc_witness)).get('sha256') != AU0:
+        raise ValueError('pre-3-11 replay disc witness is not 87a01b14')
     summary = {'replay_disc_sha256': AU0, 'replay_disc_witness': 'docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/sha_pre311.json',
                'routed_only_count': 0, 'baseline_cells_missing_from_routed': 0, 'routed_changed_total': 37,
                'region_unaccounted_bytes': 0, 'file_size_delta': 224, 'frame_payload_delta': 164,
                'frame_padding': [21570746, 21570806], 'padding_spans': {'-4': 34, '+28': 7},
                'plan07_record': 'docs/design/g-new-nonpayload-accounting.md'}
     return summary, [evidence(routed_path), evidence(routed_cells_path), evidence(base_path),
-                     evidence(base_cells_path), evidence(region_path)]
+                     evidence(base_cells_path), evidence(region_path), evidence(spans_tsv),
+                     evidence(disc_witness), evidence(PLAN07_LEDGER)]
 
 
-def publish(scratch, dest, au_diff=None, perth_diff=None, census=None, routed_3_11=None, region_3_11=None):
+CONTAINER_RESIDUAL = 'Container/index/padding relocation is outside this cell-identity measurement.'
+
+
+def container_account(path, start, end, row):
+    """Attach the plan 36 Phase 2 container account (small committed summary; no disc reads)."""
+    c = json.loads(small_bytes(path))
+    if (c.get('kind') != 'hop_3_14_container_account' or c.get('pass') is not True or c['errors']
+            or [c['old_sha256'], c['new_sha256']] != [start, end] or c['unaccounted_bytes'] != 0
+            or not c['payload_vs_cells']['equal']
+            or c['payload_vs_cells']['changed_cells'] != row.get('changed_count')
+            or sum(c['region_deltas'].values()) != c['file_size']['delta']):
+        raise ValueError('3-14 container account does not name every byte for this hop')
+    if CONTAINER_RESIDUAL not in row['residuals']:
+        raise ValueError('3-14 container residual missing; publish order changed')
+    row['residuals'] = [x for x in row['residuals'] if x != CONTAINER_RESIDUAL]
+    row['container_account'] = dict(evidence(path), file_size_delta=c['file_size']['delta'],
+                                    region_deltas=c['region_deltas'], unaccounted_bytes=0,
+                                    payload_equals_sum_cell_deltas=True)
+    return row
+
+
+def publish(scratch, dest, au_diff=None, perth_diff=None, census=None, routed_3_11=None, region_3_11=None,
+            container_3_14_au=None, container_3_14_perth=None):
     """Publish verified small witnesses or explicit missing-evidence residuals."""
     cells, supporting = retained37(scratch)
     successor = NAME_ANCHOR / 'witnesses/successor_diff.json'
@@ -542,9 +596,9 @@ def publish(scratch, dest, au_diff=None, perth_diff=None, census=None, routed_3_
                 residuals=['Pre-3-11 disc and old census not located; no fresh byte replay of this hop.',
                            'Historical review carries +60 bytes of non-payload growth without attribution.',
                            'Large Gnew.cells.tsv audit deferred to guarded Execute command.'])]
-    for region, start, end, recorded, measurement in (
-            ('AU', AU1, AU2, {'0':244060, '2':1944, '6':118, '8':1}, au_diff),
-            ('Perth', P0, P1, {'0':784, '2':11}, perth_diff)):
+    for region, start, end, recorded, measurement, container in (
+            ('AU', AU1, AU2, {'0':244060, '2':1944, '6':118, '8':1}, au_diff, container_3_14_au),
+            ('Perth', P0, P1, {'0':784, '2':11}, perth_diff, container_3_14_perth)):
         r = row(region, '3-14', start, end, status='residual-missing-cell-list', changed_count=None,
                 counts_by_level=None, authoritative_list=None, unexplained_count=None,
                 unexplained_cells={'selector': 'entire hop; exact identities unavailable'},
@@ -562,6 +616,8 @@ def publish(scratch, dest, au_diff=None, perth_diff=None, census=None, routed_3_
                 for v in r['counts_by_level'].values()))
             if not r['matches_recorded_counts']:
                 r['residuals'].append('Measured counts differ from the signed historical census; do not re-sign.')
+        if container:
+            container_account(container, start, end, r)
         rows.append(r)
     rows.append(row('AU', 'plan 29', AU2, AU3, status='committed-leaf-proof-verified',
                     signing_record=evidence(PLAN29_RECORD), changed_count=1,
@@ -642,6 +698,8 @@ def main():
     p.add_argument('--census', type=Path)
     p.add_argument('--routed-3-11', type=Path)
     p.add_argument('--region-3-11', type=Path)
+    p.add_argument('--container-3-14-au', type=Path)
+    p.add_argument('--container-3-14-perth', type=Path)
     args = vars(ap.parse_args())
     command = args.pop('command')
     try:

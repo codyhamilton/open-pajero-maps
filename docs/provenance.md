@@ -831,7 +831,9 @@ Not committed; regenerable. Lasting small witnesses are copied to `docs/plans/04
 - `diff-3-11-au.{json,cells.tsv}`: multiset cell diff `87a01b14 → 013586b5`, 37 changed L0 cells, equal to the retained `Gnew.diff_cells.txt`.
 - `routed-3-11-au.{json,cells.tsv}`: routed diff, 0 routed-only and 0 baseline-missing cells.
 - `region-3-11-au.{json,spans.tsv}`: `region_accounting.py account`. Partition complete, 0 unaccounted bytes, +164 payload, padding 21,570,746 → 21,570,806 over the 41 plan-07 spans.
-- `run_p1_{replay,routed,region}.{sh,log}`, `runs/*.json`, `protected_{before,after}*.json`: guarded heavy-run logs and protected-disc snapshots, all unchanged.
+- `region-3-14-{au,perth}.{json,spans.tsv}` (first tool) and `r2/region-{3-11-au,3-14-au,3-14-perth}.{json,spans.tsv}` (fail-closed tool `183d0ee0…`): 3-14 hop region accounting, AU `013586b5 → 4ed9cd80` and Perth `da13a775 → 04be2f6e`. All complete, 0 unaccounted. The AU JSON is 57 MB and is summarised in `triage/oracle_chain/hop_3_14/container-au.json`.
+- `pdmdh-fields-3-14.json`: classification of the PDMDH bytes outside BMT address fields (committed copy in `hop_3_14/`).
+- `run_p1_{replay,routed,region}`, `run_p2_region`, `run_r2_region` `.{sh,log}`, `runs/*.json`, `protected_{before,after}*.json`: guarded heavy-run logs and protected-disc snapshots, all unchanged.
 
 ### output/scratch-30/attic/ (plan 30 second pinned source: date-matched OSM relation snapshot)
 
