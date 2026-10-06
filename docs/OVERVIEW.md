@@ -60,10 +60,10 @@ ceiling **9,726,501 kB** is the historical `-j 12` peak, while ops and the
 within the held ceiling. `-j 1` is deterministic, and the AU rebuild and Perth
 reproduce their pins.
 
-Plan 35's close synthesis (`docs/plans/35-pss-and-phase3-close-synthesis/gates.tsv`)
+Plan 35's close synthesis (`docs/plans/04-c-core-orchestration/triage/phase3_synthesis/gates.tsv`)
 ends on the **residual branch**: plan 04 Phase 3 is **not closed**. The
 remaining Phase 3 blockers are exactly the `blocks-phase3` rows of
-[`residuals.tsv`](plans/35-pss-and-phase3-close-synthesis/residuals.tsv):
+[`residuals.tsv`](plans/04-c-core-orchestration/triage/phase3_synthesis/residuals.tsv):
 
 - 3-14 per-cell payload causes, 3-14 container accounting and the 3-11 routed
   proof (plan **36**);
