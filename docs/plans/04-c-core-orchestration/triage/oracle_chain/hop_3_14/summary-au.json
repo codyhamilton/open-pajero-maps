@@ -1,0 +1,112 @@
+{
+ "cells": 246123,
+ "classes": {
+  "eo_bg_stitch": 246041,
+  "eo_bg_stitch_ext_relocation": 75,
+  "eo_division_ceiling": 4,
+  "eo_frame_ceiling_name": 3
+ },
+ "classes_by_level": {
+  "0": {
+   "eo_bg_stitch": 244053,
+   "eo_division_ceiling": 4,
+   "eo_frame_ceiling_name": 3
+  },
+  "2": {
+   "eo_bg_stitch": 1944
+  },
+  "6": {
+   "eo_bg_stitch": 44,
+   "eo_bg_stitch_ext_relocation": 74
+  },
+  "8": {
+   "eo_bg_stitch_ext_relocation": 1
+  }
+ },
+ "inputs": {
+  "cells_list_sha256": "77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f",
+  "chord_cells": {
+   "path": "output/scratch-36/p3/diff-old-chord-au.cells.tsv",
+   "sha256": "1c564347aea387ad92ab5db8fff57fc31270fc866480b31033e4923207f081c2"
+  },
+  "detail": {
+   "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/detail-au.json",
+   "sha256": "853203851decb6abc61cf47a15c88a0dfc0ae93767980f4b797e7bd3fd438e66"
+  },
+  "mech": {
+   "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/mech.json",
+   "sha256": "a9d1db8abf2d85f3117b3c2dad5a260cd5b380d80027e253ec2862e4b044db6d"
+  },
+  "sections": {
+   "path": "output/scratch-36/p3/sections-au.tsv",
+   "sha256": "f0553dccc13e8ff990b2d9a66e828ebc0a083c77fb6052dad6516cd452ee11b6"
+  }
+ },
+ "kind": "hop_3_14_cells_causes",
+ "mechanism": {
+  "cause": "d35b565 _cenc.c hunks 1-4 (EO-aware bg_shape stitch via eo_clip)",
+  "cells_also_changed_by_chord_only_build": 77061,
+  "chord_hunk_bytes_with_eo_present": 0,
+  "chord_only_build_changed_cells_vs_old": 77071,
+  "chord_only_build_sha256": "40c1b07dac0a13489de12333adb55625cbc4ba9663eacd791edab0cc8cb76d75",
+  "eo_only_build_equals_new_disc": true
+ },
+ "new_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+ "non_stitch_cells": {
+  "eo_division_ceiling": [
+   [
+    0,
+    827,
+    869
+   ],
+   [
+    0,
+    828,
+    862
+   ],
+   [
+    0,
+    832,
+    856
+   ],
+   [
+    0,
+    1797,
+    424
+   ]
+  ],
+  "eo_frame_ceiling_name": [
+   [
+    0,
+    1739,
+    569
+   ],
+   [
+    0,
+    1892,
+    711
+   ],
+   [
+    0,
+    1974,
+    820
+   ]
+  ]
+ },
+ "old_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+ "out": {
+  "path": "cells_causes-au.tsv.gz",
+  "sha256_gz": "5cf91484e38d18800a4df29bba973af20da745e8fc76aa8ec1aa6743cef03f43",
+  "sha256_tsv": "b31a98e4a8e567c18a923f628764c467d7d36a6751846356ca460a9741517c29"
+ },
+ "predicates": {
+  "eo_bg_stitch": "footprints equal; only the background sub-frame bytes differ (header, region list, ext table, road, name, ext and uncovered bytes identical per leaf).",
+  "eo_bg_stitch_ext_relocation": "footprints equal; background and the raw ext entry table differ; per leaf every ext entry (index >= 3) keeps its presence and size and its offset moves by exactly that leaf's background size delta; ext bytes identical.",
+  "eo_division_ceiling": "footprints differ by one quadtree step (leaf count ratio 4); the coarser side's largest frame is within |delta background bytes| of 131,070; the coarser side is the side with fewer background bytes.",
+  "eo_frame_ceiling_name": "footprints equal; only background and name sections differ; in every leaf whose name differs both frames are within 64 B of 131,070, the name size moves opposite to the background size, and the side with more name bytes would exceed 131,070 with the other side's background (len - name + name_other > 131,070)."
+ },
+ "region": "AU",
+ "schema": 1,
+ "tool_sha256": "dbddffcfdc4b9084ed0ba3a61286a3bab261088492d091c8f6e0bd932cf68804",
+ "unattributed": []
+}

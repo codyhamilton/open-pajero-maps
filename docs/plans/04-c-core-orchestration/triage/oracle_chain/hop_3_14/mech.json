@@ -1,0 +1,154 @@
+{
+ "build": "parser/build_alldata.py --spool SPOOL [-\u2013fixture perth] -j 4 per worktree",
+ "code": {
+  "build_input_diff": "parser/kiwiw/_cenc.c only (other d35b565 files are docs and tests)",
+  "chord_only_patch": {
+   "hunks": "5: best<0 || used -> return -1",
+   "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/chord_only.patch",
+   "sha256": "c56f5c7d0866f421e09972b629b15d10e5414dba5864d21f9ef434ebde21d4eb"
+  },
+  "eo_only_patch": {
+   "hunks": "1-4: float.h include, eo_* helpers, chains() moved, eo_clip call in bg_shape",
+   "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/eo_only.patch",
+   "sha256": "6a34334a7c06f0d6f5d119849a8bb7772e1682e0e4e955f86b48275dceaa0aac"
+  },
+  "eo_plus_chord_equals_post_cenc": true,
+  "post": "d35b56563d82bf8491960cec21960f9953f57e92",
+  "pre": "33006aa609fabdaa655656045d7b3581b23abe25"
+ },
+ "kind": "hop_3_14_mechanism",
+ "regions": {
+  "AU": {
+   "cells_list_sha256": "77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f",
+   "chord_only_sha256": "40c1b07dac0a13489de12333adb55625cbc4ba9663eacd791edab0cc8cb76d75",
+   "diffs": {
+    "diff-chord-new-au": {
+     "added": 0,
+     "changed": 246133,
+     "leaf_counts": {
+      "new": 3954159,
+      "old": 5003334
+     },
+     "new_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+     "old_sha256": "40c1b07dac0a13489de12333adb55625cbc4ba9663eacd791edab0cc8cb76d75",
+     "path": "output/scratch-36/p3/diff-chord-new-au.json",
+     "removed": 0,
+     "sha256": "814ba44733316788e10101c730f3e9023e794a98622680ff029f0c0dcddee162"
+    },
+    "diff-eo-new-au": {
+     "added": 0,
+     "changed": 0,
+     "leaf_counts": {
+      "new": 3954159,
+      "old": 3954159
+     },
+     "new_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+     "old_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+     "path": "output/scratch-36/p3/diff-eo-new-au.json",
+     "removed": 0,
+     "sha256": "398aaa5cba0f5b91314438ee2bb5391c9778fdafcc126ece0a3b043eae1e5f06"
+    },
+    "diff-old-chord-au": {
+     "added": 0,
+     "changed": 77071,
+     "leaf_counts": {
+      "new": 5003334,
+      "old": 3954156
+     },
+     "new_sha256": "40c1b07dac0a13489de12333adb55625cbc4ba9663eacd791edab0cc8cb76d75",
+     "old_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+     "path": "output/scratch-36/p3/diff-old-chord-au.json",
+     "removed": 0,
+     "sha256": "6a824d5adebda80eaf03ada8e012b7892e494d370557729df2bdcf5434500b29"
+    },
+    "diff-old-eo-au": {
+     "added": 0,
+     "changed": 246123,
+     "leaf_counts": {
+      "new": 3954159,
+      "old": 3954156
+     },
+     "new_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+     "old_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+     "path": "output/scratch-36/p3/diff-old-eo-au.json",
+     "removed": 0,
+     "sha256": "9a4a610715faf825e11b6749e4fffccbcf1cb0ce1b89b69348b661b430354795"
+    }
+   },
+   "endpoint_new_rebuild_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+   "endpoint_old_rebuild_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+   "eo_only_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+   "new_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+   "old_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04"
+  },
+  "Perth": {
+   "cells_list_sha256": "af26b6b48aef6e7b5a407b5db367894f28f7f6c1ea29a8ff31ab560b65d8355f",
+   "chord_only_sha256": "a681efca9099f898d35216438848718849ea86b1a7bd7f38fede9ba6f0ca8349",
+   "diffs": {
+    "diff-chord-new-perth": {
+     "added": 0,
+     "changed": 796,
+     "leaf_counts": {
+      "new": 1949,
+      "old": 6163
+     },
+     "new_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+     "old_sha256": "a681efca9099f898d35216438848718849ea86b1a7bd7f38fede9ba6f0ca8349",
+     "path": "output/scratch-36/p3/diff-chord-new-perth.json",
+     "removed": 0,
+     "sha256": "051665347eda0b70b421232c33a564c35fb97ea30fe50dc6b1b3fa54e99d77f4"
+    },
+    "diff-eo-new-perth": {
+     "added": 0,
+     "changed": 0,
+     "leaf_counts": {
+      "new": 1949,
+      "old": 1949
+     },
+     "new_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+     "old_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+     "path": "output/scratch-36/p3/diff-eo-new-perth.json",
+     "removed": 0,
+     "sha256": "60f27836cba9dc4a0ae1f3c859804aed6ede523458fd9e948c729fb26b1b3f73"
+    },
+    "diff-old-chord-perth": {
+     "added": 0,
+     "changed": 295,
+     "leaf_counts": {
+      "new": 6163,
+      "old": 1943
+     },
+     "new_sha256": "a681efca9099f898d35216438848718849ea86b1a7bd7f38fede9ba6f0ca8349",
+     "old_sha256": "da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc",
+     "path": "output/scratch-36/p3/diff-old-chord-perth.json",
+     "removed": 0,
+     "sha256": "8945cdc6cd47b79f752bb81f69a7799812c15b203d619e657ad45829bf7651d6"
+    },
+    "diff-old-eo-perth": {
+     "added": 0,
+     "changed": 795,
+     "leaf_counts": {
+      "new": 1949,
+      "old": 1943
+     },
+     "new_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+     "old_sha256": "da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc",
+     "path": "output/scratch-36/p3/diff-old-eo-perth.json",
+     "removed": 0,
+     "sha256": "28b17ba2e228f04a103d0952ac2b49eeafe8d8785e08d3b15e4cd1226dd5002f"
+    }
+   },
+   "endpoint_new_rebuild_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+   "endpoint_old_rebuild_sha256": "da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc",
+   "eo_only_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+   "new_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+   "old_sha256": "da13a77506424c55e74df186d841d5198cefb6e1e4dac27be25ad9307201fbbc"
+  }
+ },
+ "runs": [
+  "output/scratch-36/run_p3_endpoints.{sh,log}",
+  "output/scratch-36/run_p3_mech.{sh,log}"
+ ],
+ "schema": 1,
+ "spool": "output/extract_timing/spool (pinned; protected snapshots equal before/after)"
+}

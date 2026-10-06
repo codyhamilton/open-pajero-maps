@@ -295,6 +295,65 @@
         "path": "output/scratch-31/diff-3-14-au.cells.tsv",
         "sha256": "77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f"
       },
+      "cause_classes": {
+        "classes": {
+          "eo_bg_stitch": 246041,
+          "eo_bg_stitch_ext_relocation": 75,
+          "eo_division_ceiling": 4,
+          "eo_frame_ceiling_name": 3
+        },
+        "mechanism": {
+          "cause": "d35b565 _cenc.c hunks 1-4 (EO-aware bg_shape stitch via eo_clip)",
+          "cells_also_changed_by_chord_only_build": 77061,
+          "chord_hunk_bytes_with_eo_present": 0,
+          "chord_only_build_changed_cells_vs_old": 77071,
+          "chord_only_build_sha256": "40c1b07dac0a13489de12333adb55625cbc4ba9663eacd791edab0cc8cb76d75",
+          "eo_only_build_equals_new_disc": true
+        },
+        "non_stitch_cells": {
+          "eo_division_ceiling": [
+            [
+              0,
+              827,
+              869
+            ],
+            [
+              0,
+              828,
+              862
+            ],
+            [
+              0,
+              832,
+              856
+            ],
+            [
+              0,
+              1797,
+              424
+            ]
+          ],
+          "eo_frame_ceiling_name": [
+            [
+              0,
+              1739,
+              569
+            ],
+            [
+              0,
+              1892,
+              711
+            ],
+            [
+              0,
+              1974,
+              820
+            ]
+          ]
+        },
+        "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/summary-au.json",
+        "sha256": "d5fa581570b588f829611fc5872aded4b43b6eeb85aa4e25b68d1583425f96d4"
+      },
       "changed_count": 246123,
       "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes.",
       "container_account": {
@@ -347,32 +406,66 @@
       },
       "recorded_removed": 0,
       "region": "AU",
-      "residuals": [
-        "Payload causes not measured; all listed cells are unexplained."
-      ],
+      "residuals": [],
       "signing_record": {
         "path": "docs/plans/04-c-core-orchestration/IMPLEMENTATION.md",
         "sha256": "8af0a631320b3fc2fc966381fad2a2df104ba3cb6299e1342656b26189824764"
       },
       "signing_unit": "3-14",
-      "status": "measured-identities-residual-causes",
+      "status": "measured-identities-causes-attributed",
       "supporting_evidence": [
         {
           "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/container-au.json",
           "sha256": "a5a1333a16719be43a8ee6a17e23318da7d1310247c68a3279278410e128af7c"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/summary-au.json",
+          "sha256": "d5fa581570b588f829611fc5872aded4b43b6eeb85aa4e25b68d1583425f96d4"
         }
       ],
       "to_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
-      "unexplained_cells": {
-        "path": "output/scratch-31/diff-3-14-au.cells.tsv",
-        "selector": "all rows"
-      },
-      "unexplained_count": 246123
+      "unexplained_cells": [],
+      "unexplained_count": 0
     },
     {
       "authoritative_list": {
         "path": "output/scratch-31/diff-3-14-perth.cells.tsv",
         "sha256": "af26b6b48aef6e7b5a407b5db367894f28f7f6c1ea29a8ff31ab560b65d8355f"
+      },
+      "cause_classes": {
+        "classes": {
+          "eo_bg_stitch": 792,
+          "eo_division_ceiling": 3
+        },
+        "mechanism": {
+          "cause": "d35b565 _cenc.c hunks 1-4 (EO-aware bg_shape stitch via eo_clip)",
+          "cells_also_changed_by_chord_only_build": 294,
+          "chord_hunk_bytes_with_eo_present": 0,
+          "chord_only_build_changed_cells_vs_old": 295,
+          "chord_only_build_sha256": "a681efca9099f898d35216438848718849ea86b1a7bd7f38fede9ba6f0ca8349",
+          "eo_only_build_equals_new_disc": true
+        },
+        "non_stitch_cells": {
+          "eo_division_ceiling": [
+            [
+              0,
+              827,
+              869
+            ],
+            [
+              0,
+              828,
+              862
+            ],
+            [
+              0,
+              832,
+              856
+            ]
+          ]
+        },
+        "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/summary-perth.json",
+        "sha256": "4c8992409542517f496b3ef444d2212a9406b9467bb4901a6379f07128d8d5c2"
       },
       "changed_count": 795,
       "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes.",
@@ -418,27 +511,26 @@
       },
       "recorded_removed": 0,
       "region": "Perth",
-      "residuals": [
-        "Payload causes not measured; all listed cells are unexplained."
-      ],
+      "residuals": [],
       "signing_record": {
         "path": "docs/plans/04-c-core-orchestration/IMPLEMENTATION.md",
         "sha256": "8af0a631320b3fc2fc966381fad2a2df104ba3cb6299e1342656b26189824764"
       },
       "signing_unit": "3-14",
-      "status": "measured-identities-residual-causes",
+      "status": "measured-identities-causes-attributed",
       "supporting_evidence": [
         {
           "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/container-perth.json",
           "sha256": "f3f00e739be3564e7dc5829c83f709aba45afaaddb87fd0d5ff77afbadd0bc39"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/summary-perth.json",
+          "sha256": "4c8992409542517f496b3ef444d2212a9406b9467bb4901a6379f07128d8d5c2"
         }
       ],
       "to_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
-      "unexplained_cells": {
-        "path": "output/scratch-31/diff-3-14-perth.cells.tsv",
-        "selector": "all rows"
-      },
-      "unexplained_count": 795
+      "unexplained_cells": [],
+      "unexplained_count": 0
     },
     {
       "authoritative_list": {

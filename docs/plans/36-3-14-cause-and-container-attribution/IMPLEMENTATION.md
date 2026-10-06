@@ -326,3 +326,140 @@ text: `REVIEW.md` § Phase 2.
   the row's `authoritative_list` sha. A tamper test is added.
 - **Tests:** a synthetic wrong-size-byte reject is added. Oracle / region /
   pin / successor tests: 79 passed.
+
+## Phase 3 — 3-14 per-cell payload causes attributed
+
+### Runs (all guarded: run_heavy_python + output/.heavy.lock, one at a time)
+- `output/scratch-36/run_p3_endpoints.{sh,log}` (12:41–12:43 AEST): AU and
+  Perth rebuilds from worktrees at `33006aa` (parent of `d35b565`) and at
+  `d35b565`, with the pinned spool, `-j 4`.
+- `run_p3_mech.{sh,log}` (12:43–12:57): mechanism-isolated builds plus
+  `oracle_chain.py diff` of each against both endpoints.
+- `run_p3_sections.{sh,log}` (12:57–13:01), `run_p3_detail.{sh,log}`
+  (13:02–13:25), `run_p3_k1perth.{sh,log}` (12:54–12:57),
+  `run_p3_k1au.{sh,log}` (13:01–13:25).
+- Protected snapshots before/after equal for the endpoint, mech, sections and
+  AU K1 chains (`protected_{before,after}_p3*.json`). The Perth K1 chain and
+  the detail chain are read-only and took no snapshot.
+
+### Outcome 1: endpoint control
+- `33006aa` rebuild: AU `013586b5…`, Perth `da13a775…`.
+- `d35b565` rebuild: AU `4ed9cd80…`, Perth `04be2f6e…`.
+- All four reproduce byte-exact (`sha_E_{pre314,at314}{,_perth}.json`), so
+  the code diff is the only input change. Of `d35b565`'s files only
+  `parser/kiwiw/_cenc.c` reaches the build (the rest are docs and tests).
+
+### Mechanism isolation (beyond the design: a whole-disc counterfactual)
+- `d35b565`'s `_cenc.c` diff split into `hop_3_14/eo_only.patch` (hunks 1–4:
+  `float.h`, the `eo_*` helpers, `chains()` moved, the `eo_clip` call in
+  `bg_shape`) and `hop_3_14/chord_only.patch` (hunk 5: `best<0 || used` →
+  `return -1`). Applied together to `33006aa` they give `d35b565`'s `_cenc.c`
+  byte-exact.
+- **EO-only build (`33006aa` + hunks 1–4) = `4ed9cd80` (AU) and `04be2f6e`
+  (Perth), byte-identical to the 3-14 discs.** Its cell diff against old is
+  exactly plan 31's list (246,123 / 795, sorted lists equal); against new, 0.
+- Chord-only build: AU `40c1b07d…` (2,064,949,952 B; 77,071 cells changed
+  vs old, leaves 3,954,156 → 5,003,334), Perth `a681efca…` (295 cells). With
+  EO present the chord hunk contributes **0 bytes**.
+- So every 3-14 byte is caused by the EO hunks. Facts in `hop_3_14/mech.json`
+  (shas, patch shas, the eight diff summaries, sha-pinned in output).
+
+### Outcomes 2, 3, 5: per-cell classes
+- **Tools (read-only, committed):**
+  - `hop_3_14/sections.py`: for each changed cell, splits every old and new
+    frame (routed footprints) by its Main Map Data Frame Entry table into
+    header / regions / ext table / road / background / name / ext / rest, and
+    compares per section. Entry 0–2 offsets and sizes are excluded (they move
+    whenever an earlier section changes length).
+  - `hop_3_14/detail.py`: per-leaf section sizes, hashes and raw entry tables
+    for every cell that is not background-only (78 AU, 3 Perth;
+    `detail-{au,perth}.json`).
+  - `hop_3_14/cells_causes.py` (no disc reads): applies the four byte
+    predicates. They are disjoint by construction (it fails if two hold). A
+    cell with none is `unattributed`.
+- **Section patterns:** AU 246,041 background-only, 75 `table+background`,
+  4 topology, 3 `background+name`. Perth 792 background-only and 3 topology.
+- **Classes** (predicates verbatim in `summary-{au,perth}.json` →
+  `predicates`):
+
+  | class | predicate (short) | AU | Perth |
+  |---|---|---:|---:|
+  | `eo_bg_stitch` | footprints equal; only background sub-frame bytes differ | 246,041 | 792 |
+  | `eo_bg_stitch_ext_relocation` | as above, plus every ext entry keeps presence and size and moves by exactly that leaf's background size delta; ext bytes equal | 75 (L6 74, L8 1) | 0 |
+  | `eo_frame_ceiling_name` | only background and name differ; in each name-changed leaf both frames are within 64 B of 131,070, name moves opposite to background, and the larger-name side would exceed 131,070 with the other side's background | 3 | 0 |
+  | `eo_division_ceiling` | one quadtree step (leaf count ×4); coarser side's largest frame within \|Δ background\| of 131,070; coarser side has fewer background bytes | 4 | 3 |
+  | `unattributed` | — | **0** | **0** |
+
+- **The 7 AU / 3 Perth non-payload-only cells (outcome 3):**
+  - `eo_division_ceiling`: L0 (827,869), (828,862), (1797,424) coarsen
+    4 → 1 as background shrinks (new single frames 130,696 / 130,820 /
+    131,022 B). (832,856) refines 4 → 16 as background grows (old coarse
+    frame 131,052 B). Perth has the same three cells (827,869), (828,862) and
+    (832,856). The counts (AU 3 merges + 1 split) match plan 36 P2's
+    leaf-topology account (`L0 23/16` / `51/9` merges, `51/10:768` split);
+    the cell-to-block mapping was not separately checked.
+  - `eo_frame_ceiling_name`: L0 (1739,569), (1892,711), (1974,820). Frames
+    within 64 B of the ceiling. Name bytes trade against background bytes.
+- **Files:** `hop_3_14/cells_causes-{au,perth}.tsv.gz` (one row per changed
+  cell: class, footprints_equal, section pattern, leaves, and whether the
+  chord-only build also changes the cell). Gzip, because the AU TSV is
+  246,123 rows (715 KB gz). The summary pins both the gz sha and the raw TSV
+  sha.
+- **Not claimed:** the classes are byte predicates on the hop's own frames
+  plus the whole-disc EO counterfactual. The `eo_division_ceiling` and
+  `eo_frame_ceiling_name` predicates use measured lengths. They do not
+  re-run the encoder's division or name-trim decision per cell. DVD (R)
+  parity of the changed cells is not asserted (design non-goal).
+
+### Outcome 4: per-kind K1 `checked` confinement
+- **Tool:** `hop_3_14/k1_rows.py run` drives the unmodified K1 C checker
+  (`quantisation_roundtrip` internals, `cenc.k1_check_band`) with every band
+  exactly one cell row of one block (AU 127,549 bands, Perth 235), writing
+  per-band per-kind `checked`. `compare` reports the whole delta, the delta
+  inside bands holding a changed cell of that block, and every band with a
+  delta and no changed cell.
+- **Partition check:** band totals equal the recorded whole-disc K1 reports.
+  AU old = `scratch-14/p3/indep/rem01/k1_311.json` (013586b5) and new =
+  `k1_live.json` (4ed9cd80), every kind. Perth equals fresh whole runs.
+- **AU result:** whole Δ = range −24,243,765, step −25,202,484, road_node
+  −790, name_anchor −927, background +1,215,204, background_boundary
+  −25,457,252, interior_cover −1,479, completeness 0, road_point 0. These are
+  exactly R-G4-2's numbers.
+  - 29,790 bands carry a delta, all among the 29,824 bands holding a changed
+    cell.
+  - Delta in changed-cell bands = whole delta. **Confined: true**
+    (`hop_3_14/k1-confine-au.json`).
+- **Perth:** 107/107 bands, confined (`k1-confine-perth.json`).
+- **Granularity:** the empirical check is row-band level. K1 bands are cell
+  rows (`k1_check_band` has no column filter), and the checker was not
+  modified. Cell-level confinement follows from the checker's code:
+  - the point kinds and the background, boundary and cover kinds count per
+    decoded leaf vertex, against spool-only context;
+  - completeness requirements are keyed by cell over spool shapes and the
+    cell's own leaves.
+
+  So a cell whose frames and footprints are byte-identical contributes
+  identical `checked` counts. That argument reads `_k1.c`, `_k1_bg.c` and
+  `_k1_cmp.c` at HEAD; it is not a cell-filtered run.
+
+### Publication
+- `oracle_chain.py publish --causes-3-14-au/--causes-3-14-perth` validates
+  each `summary-*.json`:
+  - kind and hop pins;
+  - cells equal to the row's count;
+  - class sum equal to cells;
+  - cell-list sha equal to `authoritative_list`;
+  - unattributed list length equal to its count;
+  - EO-only build equal to the new disc.
+
+  It removes "Payload causes not measured", sets `unexplained_count` 0 and
+  status `measured-identities-causes-attributed`, and adds `cause_classes`
+  and the summary to `supporting_evidence`.
+- Before the change the publish command reproduced the committed
+  `oracle_chain.{tsv,json}` byte-exact (`output/scratch-36/pubcheck3`).
+- Both 3-14 rows now carry **no residuals**.
+- **Tests:** `test_hop_3_14_causes.py` (7 tests: section split, the three
+  detail predicates, k1_rows compare confined / not confined / layout
+  change); `test_oracle_chain.py` causes accept (AU, Perth), 7 tamper
+  rejects, and committed gz ↔ summary. Oracle / region / pin / successor /
+  hop tests: 96 passed.

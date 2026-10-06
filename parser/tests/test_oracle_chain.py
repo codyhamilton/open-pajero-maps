@@ -445,3 +445,55 @@ def test_container_summary_rejects_wrong_size_byte(tmp_path):
     p['pdmdh'].write_text(json.dumps(pd))
     out = cs.summarise(p['region'], spans, cells, p['diff'], p['pdmdh'], 'x')
     assert not out['pass'] and any('PDMDH' in e for e in out['errors'])
+
+
+@pytest.mark.parametrize('name,start,end,count', [('au', chain.AU1, chain.AU2, 246123),
+                                                 ('perth', chain.P0, chain.P1, 795)])
+def test_causes_account_accepts_committed_summaries(name, start, end, count):
+    c = json.loads((HOP / f'summary-{name}.json').read_text())
+    row = {'changed_count': count, 'residuals': [chain.CAUSES_RESIDUAL, 'other'],
+           'authoritative_list': {'sha256': c['inputs']['cells_list_sha256']}}
+    chain.causes_account(HOP / f'summary-{name}.json', start, end, row)
+    assert row['residuals'] == ['other'] and row['unexplained_count'] == 0 and row['unexplained_cells'] == []
+    assert row['status'] == 'measured-identities-causes-attributed'
+    assert sum(row['cause_classes']['classes'].values()) == count
+
+
+@pytest.mark.parametrize('mutation', ['kind', 'hop', 'count', 'cells_sha', 'unattributed', 'mechanism', 'residual'])
+def test_causes_account_rejects_tampered_summary(tmp_path, mutation):
+    c = json.loads((HOP / 'summary-au.json').read_text())
+    row = {'changed_count': 246123, 'residuals': [chain.CAUSES_RESIDUAL],
+           'authoritative_list': {'sha256': c['inputs']['cells_list_sha256']}}
+    start, end = chain.AU1, chain.AU2
+    if mutation == 'kind':
+        c['kind'] = 'other'
+    elif mutation == 'hop':
+        start = chain.AU0
+    elif mutation == 'count':
+        c['classes']['eo_bg_stitch'] -= 1
+    elif mutation == 'cells_sha':
+        row['authoritative_list'] = {'sha256': '0' * 64}
+    elif mutation == 'unattributed':
+        c['unattributed'] = [[0, 1, 1]]
+    elif mutation == 'mechanism':
+        c['mechanism']['eo_only_build_equals_new_disc'] = False
+    else:
+        row['residuals'] = []
+    p = tmp_path / 'c.json'
+    p.write_text(json.dumps(c))
+    with pytest.raises(ValueError):
+        chain.causes_account(p, start, end, row)
+
+
+def test_committed_cells_causes_match_summary():
+    import gzip
+    import hashlib
+    for name, count in (('au', 246123), ('perth', 795)):
+        s = json.loads((HOP / f'summary-{name}.json').read_text())
+        gz = (HOP / f'cells_causes-{name}.tsv.gz').read_bytes()
+        raw = gzip.decompress(gz)
+        assert hashlib.sha256(gz).hexdigest() == s['out']['sha256_gz']
+        assert hashlib.sha256(raw).hexdigest() == s['out']['sha256_tsv']
+        rows = raw.decode().splitlines()[1:]
+        assert len(rows) == count == s['cells']
+        assert not [r for r in rows if r.split('\t')[3] == 'unattributed']

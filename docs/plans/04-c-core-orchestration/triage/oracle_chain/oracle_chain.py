@@ -578,8 +578,35 @@ def container_account(path, start, end, row):
     return row
 
 
+CAUSES_RESIDUAL = 'Payload causes not measured; all listed cells are unexplained.'
+
+
+def causes_account(path, start, end, row):
+    """Attach the plan 36 Phase 3 per-cell cause classes (small committed summary; no disc reads)."""
+    c = json.loads(small_bytes(path))
+    if (c.get('kind') != 'hop_3_14_cells_causes' or [c['old_sha256'], c['new_sha256']] != [start, end]
+            or c['cells'] != row.get('changed_count') or sum(c['classes'].values()) != c['cells']
+            or c['inputs']['cells_list_sha256'] != (row.get('authoritative_list') or {}).get('sha256')
+            or len(c['unattributed']) != c['classes'].get('unattributed', 0)
+            or not c['mechanism'].get('eo_only_build_equals_new_disc')):
+        raise ValueError('3-14 cause summary does not cover this hop')
+    if CAUSES_RESIDUAL not in row['residuals']:
+        raise ValueError('3-14 payload-cause residual missing; publish order changed')
+    row['residuals'] = [x for x in row['residuals'] if x != CAUSES_RESIDUAL]
+    n_un = len(c['unattributed'])
+    if n_un:
+        row['residuals'].append(f'{n_un} changed cells unattributed (listed in cause_classes).')
+    row.setdefault('supporting_evidence', []).append(evidence(path))
+    row['unexplained_count'] = n_un
+    row['unexplained_cells'] = c['unattributed']
+    row['status'] = 'measured-identities-causes-attributed' if not n_un else 'measured-identities-partial-causes'
+    row['cause_classes'] = dict(evidence(path), classes=c['classes'], mechanism=c['mechanism'],
+                                non_stitch_cells=c['non_stitch_cells'])
+    return row
+
+
 def publish(scratch, dest, au_diff=None, perth_diff=None, census=None, routed_3_11=None, region_3_11=None,
-            container_3_14_au=None, container_3_14_perth=None):
+            container_3_14_au=None, container_3_14_perth=None, causes_3_14_au=None, causes_3_14_perth=None):
     """Publish verified small witnesses or explicit missing-evidence residuals."""
     cells, supporting = retained37(scratch)
     successor = NAME_ANCHOR / 'witnesses/successor_diff.json'
@@ -598,9 +625,9 @@ def publish(scratch, dest, au_diff=None, perth_diff=None, census=None, routed_3_
                 residuals=['Pre-3-11 disc and old census not located; no fresh byte replay of this hop.',
                            'Historical review carries +60 bytes of non-payload growth without attribution.',
                            'Large Gnew.cells.tsv audit deferred to guarded Execute command.'])]
-    for region, start, end, recorded, measurement, container in (
-            ('AU', AU1, AU2, {'0':244060, '2':1944, '6':118, '8':1}, au_diff, container_3_14_au),
-            ('Perth', P0, P1, {'0':784, '2':11}, perth_diff, container_3_14_perth)):
+    for region, start, end, recorded, measurement, container, causes in (
+            ('AU', AU1, AU2, {'0':244060, '2':1944, '6':118, '8':1}, au_diff, container_3_14_au, causes_3_14_au),
+            ('Perth', P0, P1, {'0':784, '2':11}, perth_diff, container_3_14_perth, causes_3_14_perth)):
         r = row(region, '3-14', start, end, status='residual-missing-cell-list', changed_count=None,
                 counts_by_level=None, authoritative_list=None, unexplained_count=None,
                 unexplained_cells={'selector': 'entire hop; exact identities unavailable'},
@@ -620,6 +647,10 @@ def publish(scratch, dest, au_diff=None, perth_diff=None, census=None, routed_3_
                 r['residuals'].append('Measured counts differ from the signed historical census; do not re-sign.')
         if container:
             container_account(container, start, end, r)
+        if causes:
+            if not measurement:
+                raise ValueError('3-14 causes need the measured cell list')
+            causes_account(causes, start, end, r)
         rows.append(r)
     rows.append(row('AU', 'plan 29', AU2, AU3, status='committed-leaf-proof-verified',
                     signing_record=evidence(PLAN29_RECORD), changed_count=1,
@@ -702,6 +733,8 @@ def main():
     p.add_argument('--region-3-11', type=Path)
     p.add_argument('--container-3-14-au', type=Path)
     p.add_argument('--container-3-14-perth', type=Path)
+    p.add_argument('--causes-3-14-au', type=Path)
+    p.add_argument('--causes-3-14-perth', type=Path)
     args = vars(ap.parse_args())
     command = args.pop('command')
     try:

@@ -1,0 +1,14 @@
+diff --git a/parser/kiwiw/_cenc.c b/parser/kiwiw/_cenc.c
+index 500defc..540c9b1 100644
+--- a/parser/kiwiw/_cenc.c
++++ b/parser/kiwiw/_cenc.c
+@@ -703,7 +998,8 @@ static int64_t bg_shape(const uint8_t *lat, const uint8_t *lon, int64_t o, int64
+                     }
+                 }
+                 for (int j = 0; j < ni; j++) g_pc[np++] = corners[idx[j]];
+-                if (best == c0 || g_used[best]) break;
++                if (best == c0) break;
++                if (best < 0 || g_used[best]) return -1;
+                 c = best;
+             }
+             if (emit_piece(&e, g_pc, np)) return -1;
