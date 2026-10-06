@@ -1,0 +1,73 @@
+{
+ "pre": {
+  "wall_s_instrumented": 24.38,
+  "bg_shape_calls": 30892058,
+  "cpu_s_by_slot": {
+   "bg_shape total": 23.66,
+   "eo_clip stage 1: segment sweep (pair intersections)": 0.0,
+   "eo_clip stage 2: eo_left per-chain side checks": 0.0,
+   "eo_clip stage 3: whole-ring duplicate-vertex check": 0.0,
+   "eo_clip stage 4: successor tie check": 0.0,
+   "eo_clip stage 5: complex EO face path": 0.0,
+   "chains()": 7.94
+  },
+  "entries_by_slot": {
+   "bg_shape total": 30892058,
+   "eo_clip stage 1: segment sweep (pair intersections)": 0,
+   "eo_clip stage 2: eo_left per-chain side checks": 0,
+   "eo_clip stage 3: whole-ring duplicate-vertex check": 0,
+   "eo_clip stage 4: successor tie check": 0,
+   "eo_clip stage 5: complex EO face path": 0,
+   "chains()": 6162566
+  },
+  "level_wall_s": {
+   "12": 3.58,
+   "10": 0.01,
+   "8": 0.03,
+   "6": 0.02,
+   "4": 0.07,
+   "2": 0.31,
+   "0": 12.06
+  },
+  "disc_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+  "sha_pass": null
+ },
+ "head": {
+  "wall_s_instrumented": 121.79,
+  "bg_shape_calls": 30900250,
+  "cpu_s_by_slot": {
+   "bg_shape total": 296.62,
+   "eo_clip stage 1: segment sweep (pair intersections)": 35.93,
+   "eo_clip stage 2: eo_left per-chain side checks": 161.5,
+   "eo_clip stage 3: whole-ring duplicate-vertex check": 2.6,
+   "eo_clip stage 4: successor tie check": 1.09,
+   "eo_clip stage 5: complex EO face path": 66.84,
+   "chains()": 12.84
+  },
+  "entries_by_slot": {
+   "bg_shape total": 30900250,
+   "eo_clip stage 1: segment sweep (pair intersections)": 30900249,
+   "eo_clip stage 2: eo_left per-chain side checks": 30900249,
+   "eo_clip stage 3: whole-ring duplicate-vertex check": 30900249,
+   "eo_clip stage 4: successor tie check": 30900249,
+   "eo_clip stage 5: complex EO face path": 984718,
+   "chains()": 30900249
+  },
+  "level_wall_s": {
+   "12": 4.38,
+   "10": 0.01,
+   "8": 0.08,
+   "6": 0.11,
+   "4": 0.37,
+   "2": 3.68,
+   "0": 104.82
+  },
+  "disc_sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+  "sha_pass": null
+ },
+ "note": "CPU seconds summed over the -j4 worker processes (CLOCK_MONOTONIC per call; timer overhead inflates the instrumented wall). Stages are cumulative-split timestamps inside eo_clip; stage 2 runs only for non-whole rings.",
+ "commits": {
+  "pre": "33006aa (pre 3-14)",
+  "head": "20b4bf9 (master at measure time; parser/kiwiw unchanged from ec90121 to the fix parent)"
+ }
+}

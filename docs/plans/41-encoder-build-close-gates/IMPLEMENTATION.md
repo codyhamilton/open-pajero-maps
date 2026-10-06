@@ -89,3 +89,152 @@ findings are fixed:
   temporary git repo. With `test_perf_inventory.py`: **23 passed**.
 - **Worked examples re-run:** plan 34 is still missing (a), (b), (c) with no
   marker lines, exit 1. Plan 37 is not triggered, exit 0.
+
+## Phase 1 — wall regression attributed; byte-identical fix; measured floor
+
+All runs used the heavy wrapper and lock (`run_heavy_python.py`), full AU at
+`-j4`, on the shared spool. Each commit ran in a throwaway worktree, 3 runs
+per commit, and every disc was sha-checked and then deleted.
+
+- **Protected discs:** the snapshot before and after
+  (`wall/protected_{before,after}.json`) is unchanged across all 5 entries:
+  `013586b5`, `4ed9cd80`, `4e6b0de7`, `2ee3456a` and R `8c2d2027`.
+- **Ordering disclosure:** the bench started early while the lock was idle.
+  Light work (reviews, witnesses) ran in parallel with some runs. It never
+  held the lock, but it may add noise; the spreads are reported.
+
+### Bench table (`wall/bench_table.json`)
+
+Wall is the wrapper `wall_s` of `build_alldata.py` (median of 3). Encode is
+the build log's "encode total". L0 is the level-0 encode time.
+
+| commit | what | runs (s) | median | spread | encode | L0 | AU sha (3/3) | Perth warm `-j4` |
+|---|---|---|---|---|---|---|---|---|
+| `9269ebb` | 3-11 tip | 21.01 / 22.31 / 20.45 | 21.01 | 1.86 | 12.0 | 11.7 | `013586b5` | 5.0 s `da13a775` |
+| `33006aa` | pre 3-14 | 20.27 / 20.90 / 18.87 | 20.27 | 2.03 | 12.1 | 11.7 | `013586b5` | 5.4 s `da13a775` |
+| `d35b565` | **3-14 EO stitch** | 86.40 / 87.04 / 86.95 | **86.95** | 0.64 | 78.8 | 76.4 | `4ed9cd80` | 7.6 s `04be2f6e` |
+| `a890662` | K1 completeness | 85.59 / 85.95 / 85.89 | 85.89 | 0.35 | 77.2 | 74.9 | `4ed9cd80` | 7.8 s `04be2f6e` |
+| `ecfae1c` | **plan 29 name guard** | 115.04 / 118.23 / 116.75 | **116.75** | 3.19 | 107.8 | 103.8 | `2ee3456a` | **36.1 s** `04be2f6e` |
+| `5182c83` | plan 34 emission | 116.55 / 112.74 / 113.81 | 113.81 | 3.81 | 105.8 | 101.6 | `4e6b0de7` | 34.8 s `04be2f6e` |
+| `ec90121` | master at measure | 113.06 / 113.08 / 112.95 | 113.06 | 0.14 | 104.9 | 100.9 | `4e6b0de7` | 35.5 s `04be2f6e` |
+| **`a95501c`** | **this fix** | 65.96 / 67.34 / 66.56 | **66.56** | 1.38 | 57.9 | 54.7 | `4e6b0de7` | Perth `-j1` 36.7 s / `-j4` 30.3 s, `04be2f6e` |
+
+The "Perth warm" column is the first Perth build in each worktree, so it
+includes any one-off compile. The fix row's Perth figures are cold `-j1` and
+`-j4` builds.
+
+### Regressions (Contract H rule: a rise above the spread names its mechanism)
+
+There are **two regressing commits**. Every other step is within spread.
+
+1. **`d35b565` (3-14 EO-aware background stitch): +66.7 s** median (20.27 →
+   86.95; spreads 2.03 / 0.64). The whole rise is in L0 encode (11.7 →
+   76.4 s).
+   - **Mechanism, measured:** call timers in throwaway worktrees
+     (`wall/prof_patch.py`). Both instrumented discs are sha-identical to
+     plain builds (`013586b5`, `4e6b0de7`). See `wall/prof_summary.json`.
+   - `bg_shape` CPU, summed over 4 workers: **23.7 s → 296.6 s**, over
+     30.89M vs 30.90M calls.
+   - The new time is all in `eo_clip`:
+     - **stage 2, `eo_left` per-chain side checks: 161.5 s.** This is
+       O(n) per atomic edge: every source edge gets a `hypotl` distance
+       for every chain endpoint pair and every emitted face, so a polygon
+       spanning many cells pays O(n·m) per cell;
+     - stage 5, the complex EO face path: 66.8 s (linear
+       `eo_vertex`/`eo_edge` searches);
+     - stage 1, the segment sweep: 35.9 s;
+     - the duplicate-vertex check: 2.6 s; the tie check: 1.1 s;
+     - `chains()` 7.9 → 12.8 s.
+   - **Hot function: `eo_clip` → `eo_left`**, 59% of the increase.
+2. **`ecfae1c` (plan 29 out-of-span name guard): +30.9 s** median (85.89 →
+   116.75; spreads 0.35 / 3.19). L0 rose 74.9 → 103.8 s, and Perth warm
+   rose 7.8 → 36.1 s.
+   - **Mechanism, from code and arithmetic; per-call timing was not
+     measured.**
+     - `E1Spool(..., guard_names=True)` runs `_guard_names()` in **every
+       worker process, for every level**.
+     - That is a Python loop over every spool cell, with
+       `spool.decode_columns` (~40 `frombuffer` views) plus numpy span
+       tests per cell.
+     - L0 has 432,295 cells, so each of the 4 workers repeats the same
+       whole-level scan, at about 60 µs per cell ≈ 26 s.
+   - The Perth fixture build pays it too: it opens the full L0 spool, which
+     is why Perth rose by about 28 s with the same disc bytes.
+   - The guard drops 1 name in all of AU.
+
+`5182c83` (−2.9 s) and `ec90121` (−0.75 s) are within spread.
+
+### Fix landed: `a95501c` (byte-identical)
+
+- **The change:** in `eo_left`, an edge whose bounding box lies farther than
+  `4·step + 1e-9` from the sample point is skipped before the `hypotl`.
+  - Such an edge has distance `d > 4·step`, so `step = fminl(step, d/4)`
+    cannot change. `step` only shrinks, so the bound tightens as the loop
+    runs.
+  - The degenerate-support skip (`d <= 128·DBL_EPSILON·scale`) applies
+    only to near-zero `d`, which the prefilter never excludes.
+  - The minimum is order-independent, so the result is unchanged.
+- **Evidence:**
+  - AU `4e6b0de7` 3/3.
+  - Perth `04be2f6e` at both `-j1` and `-j4`.
+  - The full suite is green with goldens (gate (a)).
+- **Effect:** AU median **113.06 → 66.56 s**. Encode 104.9 → 57.9 s, L0
+  100.9 → 54.7 s.
+
+### Outcome 3: measured floor plus the budget question (not < 60 s)
+
+- **Floor:** the byte-identical fix gives a median of **66.56 s** (spread
+  1.38) at `-j4`.
+  - Pre-regression (`33006aa`): 20.27 s.
+  - DESIGN target: < 60 s.
+  - Plan 04's "full build ≪ 60 s" was 12.16 s at `-j12` at the 3C close.
+- **The excess over pre-regression (~46 s) has two named parts:**
+  - **the name guard:** about 29 s at L0 per the `ecfae1c` step (Perth
+    +28 s);
+  - **the remaining EO cost:** stages 1 and 5 and the residual stage-2
+    loop. This is about 17 s by subtraction, not separately re-profiled
+    after the fix.
+- **Candidate second byte-identical fix (not attempted):** run the name
+  guard once per level, in the parent before the pool or cached, or scan
+  only the name-anchor columns.
+  - It would need its own gate cycle: full suite, AU 3 runs, Perth. That
+    was not queued, per the 14:36 instruction to add no heavy jobs.
+  - **Estimate (not a measurement):** about 66.6 − 29 ≈ 37 s, which would
+    be under 60 s at `-j4`.
+- **Budget basis:** whether the budget is set at `-j4` (the encode cap) or
+  `-j12` is **Cody's call via Design**. Phase 1 measures and reports it
+  and does not decide.
+  - No `-j12` run was made: it is above the plan 25 cap.
+
+### Close gates (plan 41 Phase 2 rule; triggered by `parser/kiwiw/_cenc.c` in `a95501c`)
+
+Close gate (a) full suite: 1448 passed, 7 skipped in 696.50s at ca85ede
+
+Close gate (b) encode wall: median 66.56 s of 3 at -j4 (spread 1.38 s) vs baseline 113.06 s (ec90121 bench median of 3, wall/bench_table.json)
+
+Close gate (c) sha gate: AU 4e6b0de7 PASS (3/3), Perth 04be2f6e PASS (-j1 and -j4)
+
+- **(a):** run under the wrapper with `TMPDIR` on disk
+  (`output/scratch-41/suite/pytest2.log`). The full `parser/tests` run
+  with nothing deselected was at the worktree tree of `ca85ede`, which
+  contains `a95501c` and only docs commits after it.
+  - A first attempt was killed and is **void**: tmpfs `/tmp` hit the user
+    quota mid-run, giving mass errors.
+- **(b) and (c):** from `wall/fix_runs.json`. The fix worktree's diff
+  equals `a95501c`.
+- **`close_gates.py`:** `.venv-rp/bin/python -B parser/tools/close_gates.py --base 6e12b36 --impl docs/plans/41-encoder-build-close-gates/IMPLEMENTATION.md` at head `5e355cb` gives `"trigger": true`, `"trigger_paths": ["parser/kiwiw/_cenc.c"]`, `"missing": []`, **`"pass": true`**, exit 0.
+  - This is **plan 41's own triggered-pass example**, which Phase 2 left
+    open.
+
+### Residuals
+
+- **R-G9-4** (full AU wall vs "≪ 60 s"): the mechanism is named for both
+  regressions. The byte-identical fix landed (113 → 66.6 s), and the
+  remainder is named.
+  - It stays open pending Cody's budget ruling and the candidate guard fix.
+  - Updated in `residuals.tsv`.
+- **R-G8-1-a** (3-14 b6 build wall FAIL): the cause is measured
+  (`eo_clip`/`eo_left`) and the fix landed.
+  - The 3-14 share of the wall is now about 17 s by subtraction.
+  - Still open until the budget ruling.
+
