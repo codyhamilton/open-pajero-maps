@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
-PLAN = Path(__file__).resolve().parents[2] / 'docs/plans/31-phase3-oracle-and-pin-gates'
+PLAN = Path(__file__).resolve().parents[2] / 'docs/plans/04-c-core-orchestration/triage/oracle_chain'
 spec = importlib.util.spec_from_file_location('oracle_chain', PLAN / 'oracle_chain.py')
 chain = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(chain)

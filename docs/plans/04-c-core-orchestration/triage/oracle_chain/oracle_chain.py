@@ -24,7 +24,7 @@ from pathlib import Path
 import sqlite3
 import sys
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[5]
 PLAN = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / 'parser'))
 CHUNK = 8 * 1024 * 1024

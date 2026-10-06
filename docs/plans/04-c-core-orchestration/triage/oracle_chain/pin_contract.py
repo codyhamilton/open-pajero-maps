@@ -13,8 +13,8 @@ from pathlib import Path
 import re
 import subprocess
 
-REPO = Path(__file__).resolve().parents[3]
-PLAN = Path('docs/plans/31-phase3-oracle-and-pin-gates')
+REPO = Path(__file__).resolve().parents[5]
+PLAN = Path('docs/plans/04-c-core-orchestration/triage/oracle_chain')
 SUCCESSOR = '2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae'
 KINDS = ('background', 'background_boundary', 'completeness', 'interior_cover',
          'name_anchor', 'range', 'road_node', 'road_point', 'step')
