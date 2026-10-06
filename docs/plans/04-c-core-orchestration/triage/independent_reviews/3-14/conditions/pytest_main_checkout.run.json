@@ -1,0 +1,26 @@
+{
+  "anon": 17317888,
+  "argv": [
+    "/home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python",
+    "-B",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-rfEsx",
+    "parser/tests"
+  ],
+  "cgroup": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/maps-heavy-24212.scope",
+  "cgroup_error": null,
+  "cwd": "/home/codyh/workspace/open-pajero-maps",
+  "exit": 0,
+  "file": 6549770240,
+  "file_dirty": 181895168,
+  "max_rss_kib": 8778680,
+  "memory_peak": 13345292288,
+  "pid": 24214,
+  "ppid": 24213,
+  "time_v_elapsed_s": 352.09000000000003,
+  "wall_s": 352.098836368
+}

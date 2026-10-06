@@ -1,0 +1,15 @@
+MAIN d185fb669833c7609ea585aa2875e569dbbf2843 worktree-list-first=/home/codyh/workspace/open-pajero-maps                          d185fb6 (detached HEAD)
+.git
+run_heavy_python: unit=maps-heavy-24212 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['/home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python', '-B', '-m', 'pytest', '-q', '-p', 'no:cacheprovider', '-rfEsx', 'parser/tests']
+sss.................s................................................... [ 24%]
+=========================== short test summary info ============================
+SKIPPED [3] parser/tests/test_d1_equivalence.py:190: G disc absent (/home/codyh/workspace/open-pajero-maps/output/scratch-3-11/G/ALLDATA.KWI)
+SKIPPED [2] parser/tests/test_d1_equivalence.py:190: R disc absent (/run/media/codyh/464210-8480/ALLDATA.KWI)
+SKIPPED [4] parser/tests/test_e1.py:184: extract_timing spool or 3-11 G manifest absent
+SKIPPED [1] parser/tests/test_e2_names.py:167: /run/media/codyh/464210-8480/ALLDATA.KWI not present (disc not mounted)
+XFAIL parser/tests/test_bg_eo_stress.py::test_known_decline_ring_359 - R-G8-1-d-a: EO face walk declines on seeded ring 359
+1458 passed, 10 skipped, 1 xfailed in 351.77s (0:05:51)
+{"argv0": "/home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-43/runs/suite_main.json", "max_rss_kib": 8778680, "memory_peak": 13345292288, "wall_s": 352.099}
+rc 0
+SUITEDONE

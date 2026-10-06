@@ -1,0 +1,23 @@
+run_heavy_python: unit=maps-heavy-41492 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['.venv-rp/bin/python', '-B', '-m', 'pytest', '-p', 'no:cacheprovider', '-v', 'parser/tests', '-k', 'dump_join_memory']
+============================= test session starts ==============================
+platform linux -- Python 3.14.4, pytest-9.1.1, pluggy-1.6.0 -- /home/codyh/workspace/open-pajero-maps/.venv-rp/bin/python
+rootdir: /home/codyh/workspace/open-pajero-maps
+collecting ... collected 1469 items / 1456 deselected / 13 selected
+
+parser/tests/test_dump_join_memory.py::test_vendored_baseline_hashes_and_group PASSED [  7%]
+parser/tests/test_dump_join_memory.py::test_candidate_matches_baseline_all_cases[None] PASSED [ 15%]
+parser/tests/test_dump_join_memory.py::test_candidate_matches_baseline_all_cases[1] PASSED [ 23%]
+parser/tests/test_dump_join_memory.py::test_candidate_matches_baseline_all_cases[65536] PASSED [ 30%]
+parser/tests/test_dump_join_memory.py::test_candidate_matches_baseline_all_cases[997] PASSED [ 38%]
+parser/tests/test_dump_join_memory.py::test_window_sizes_identical_bytes PASSED [ 46%]
+parser/tests/test_dump_join_memory.py::test_collide_after_wrap PASSED    [ 53%]
+parser/tests/test_dump_join_memory.py::test_empty_kind_rejected_by_baseline_and_candidate_separately PASSED [ 61%]
+parser/tests/test_dump_join_memory.py::test_validation_before_writing PASSED [ 69%]
+parser/tests/test_dump_join_memory.py::test_layout_validation PASSED     [ 76%]
+parser/tests/test_dump_join_memory.py::test_verify_mode_and_corruption PASSED [ 84%]
+parser/tests/test_dump_join_memory.py::test_help PASSED                  [ 92%]
+parser/tests/test_dump_join_memory.py::test_replay_root_refusal PASSED   [100%]
+
+===================== 13 passed, 1456 deselected in 5.81s ======================
+{"argv0": ".venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-43/runs/dump_join_memory_main.json", "max_rss_kib": 84516, "memory_peak": 124362752, "wall_s": 6.034}

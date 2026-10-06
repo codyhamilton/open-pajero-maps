@@ -30,3 +30,21 @@ Evidence folder: `docs/plans/04-c-core-orchestration/triage/independent_reviews/
 - Lost `finish_gates.log` window numbers regenerated: `run_golden_window.sh` rebuilds the golden window (L0 cell (1755,591), from the golden's fixture spool) at master `6a65cf9`: `TRIM road: dropped 207/1,083 (19.114%)` and `TRIM background: dropped 227/8,824 (2.573%)`, exactly the cited lines, and the frames are byte-identical to the golden (`golden_window.log`).
 - Full-AU absolutes: the cited plan 36 logs are scratch; the six lines (pre-3-14 and at-3-14 L8 road 308/14,012, L0 road 207/3,015,057, L0 background 227/11,029,580) are now quoted in `golden_and_trim.json` with the log's sha.
 - `scratch-3-12/G_build.log`: absent; citation dropped. The before-3-14 L8 line is carried by `output/scratch-3-11/G_new_build.log:10` and the E_pre314 log line.
+
+### R-G8-1-e → regenerated
+
+- `run_suite_main.sh`: full `parser/tests` in the main checkout `/home/codyh/workspace/open-pajero-maps` (the primary worktree, `git rev-parse --git-dir` = `.git`; detached at master `d185fb6`, clean before and after), its own `.venv-rp`, `TMPDIR` on disk (`output/tmp-agent`), under the heavy lock.
+- Result (`pytest_main_checkout.log`, `.run.json`): **1458 passed, 10 skipped, 1 xfailed, exit 0, 351.8 s**. Skips are environment: R disc not mounted (3), `scratch-3-11/G` absent (3 + 4 e1 spool/manifest). The xfail is `test_known_decline_ring_359` (R-G8-1-d-a). `test_dump_join_memory`: 13/13 PASSED in the same checkout (`pytest_dump_join_memory_main.log`, verbose).
+- Interruptions, recorded: the first two launches (17:45, 18:42 AEST) were killed by host reboots at 17:53 and 18:47 AEST (journal: `systemd-reboot`); their partial logs are kept in scratch only. The third launch completed.
+
+### Phase 1 verification
+
+- Entry points re-run: `quantisation_roundtrip.py` (K1@`1cf40f8` and K1@master on `4ed9cd80`), `build_alldata.py --window` on the golden spool, `pytest parser/tests` in the main checkout, `pytest parser/tests/test_bg_eo_stress.py`. Each result above is read from its own output file, not from a report.
+- `residuals.tsv`: R-G8-1-b `discharged (superseded-by-proof)`; R-G8-1-c, -d, -e, -h `discharged (regenerated)`; new R-G8-1-d-a `blocks-phase3` (encoder finding, owner Design).
+- `artifact_feedback`: not reachable from this harness; no worker reports exist (units implemented directly), recorded per the skill.
+- Workers: none (orchestrator-direct units).
+
+### Carried
+
+1. R-G8-1-d-a: the EO face-walk decline (5 / 20,000 seeded rings) is an encoder robustness finding with no AU incidence; a fix needs its own design (Design to own or reclassify).
+2. R-G8-1-b per-window boundary counts differ from the 3-13 table (HEAD-checker dump rows vs 3-13 counting); context only, not reconciled.

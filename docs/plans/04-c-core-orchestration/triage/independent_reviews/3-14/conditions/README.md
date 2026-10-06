@@ -11,4 +11,4 @@ Evidence for residual rows R-G8-1-b/c/d/e/h. Record: `docs/plans/43-review-condi
 | `../../../../../../parser/tests/test_bg_eo_stress.py` | R-G8-1-d | seeded stress + degenerate/termination/capacity test |
 | `stress_characterise_20k.py`, `stress_20k.json` | R-G8-1-d-a | 20,000-ring decline characterisation |
 | `run_golden_window.sh`, `golden_window.log`, `golden_window.run.json`, `golden_and_trim.json` | R-G8-1-h | golden shas, regenerated window TRIM lines, full-AU TRIM quotes |
-| `pytest_main_checkout.log`, `pytest_main_checkout.run.json` | R-G8-1-e | full `parser/tests` in the main checkout at master |
+| `run_suite_main.sh`, `pytest_main_checkout.log` (progress dots stripped), `pytest_main_checkout.run.json`, `pytest_dump_join_memory_main.log` | R-G8-1-e | full `parser/tests` in the main checkout at master `d185fb6`; verbose `test_dump_join_memory` there |
