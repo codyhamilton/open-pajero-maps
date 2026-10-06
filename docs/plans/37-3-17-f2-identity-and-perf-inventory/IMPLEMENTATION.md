@@ -15,3 +15,13 @@ Refine skipped. Unit: `briefs/1-01-f2-identity.md`.
 ## Phase 2 — test_perf_inventory passes
 
 Refine skipped. Unit: `briefs/2-01-perf-inventory.md`.
+
+### 2-01 landed (Execute; Codex usage-limited)
+
+The Codex seat (11:23 AEST) hit the weekly Codex cap (reset 2026-10-10 11:50
+AEST) before editing. Execute did the unit; see `reports/2-01-perf-inventory.md`.
+Five modules are `orchestration`. `parser/tools/k1_representable.py` is
+`c-later` and named as a plan 04 Phase 5 input. `test_perf_inventory.py`
+passes 4/4. Plan 29 R4 and the contract carry now point here. The full
+`parser/tests` run is the guarded plan 35 step, and its summary closes this
+phase.

@@ -122,6 +122,12 @@
    "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
   },
   {
+   "path": "parser/harness/checks/copy_through.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Harness meta check: fixed loop over the ten copy-through basenames (LOADING/DICVCE/GRA/PCT/...), whole-file byte compare of those small sibling files; the byte loop in _first_diff_offset runs only on a mismatch of one such file. Never touches ALLDATA frames/parcels/cells"
+  },
+  {
    "path": "parser/harness/checks/decode.py",
    "class": "c-now",
    "phase": 4,
@@ -156,6 +162,12 @@
    "class": "c-now",
    "phase": 4,
    "reason": "Harness hot check/walker: decodes or scans every frame/parcel of a full-AU disc (perf-sensitive = loop whose trip count scales with full-AU vertices/shapes/parcels/frames/cells); moves to D1/census kernels in Phase 4"
+  },
+  {
+   "path": "parser/harness/checks/wp_na.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "WP2-WP4 negative-control sentinels: three Check rows whose run() returns NA; no loop over disc or spool data"
   },
   {
    "path": "parser/harness/context.py",
@@ -398,6 +410,12 @@
    "reason": "Legacy pickle spool and its one-time converter: per-cell loop over full spool, but not on build or gate path; low confidence (delete vs port is a later call)"
   },
   {
+   "path": "parser/kiwiw/state_partitions.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Seven-row IDX state/suffix table loaded from parser/refdata/state_partitions.json (lru_cache); loops bounded by the 7 partitions"
+  },
+  {
    "path": "parser/kiwiw/vocab.py",
    "class": "orchestration",
    "phase": null,
@@ -536,6 +554,12 @@
    "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
   },
   {
+   "path": "parser/tools/k1_representable.py",
+   "class": "c-later",
+   "phase": null,
+   "reason": "Independent Python EO-face/wire representability mirror for K1 completeness: per-ring-vertex exact Fraction loops (O(n^2) contact scan, face walk, densify). Reached only from quantisation_roundtrip._check_block, i.e. the --engine python count oracle, and only for absent (cell,type) pairs; the default --engine c path uses _k1_cmp.c. Per-vertex scaling meets the perf-sensitive definition, so c-later with no phase: a plan 04 Phase 5 input alongside the --engine python oracle (plan 37)"
+  },
+  {
    "path": "parser/tools/k1_triage.py",
    "class": "orchestration",
    "phase": null,
@@ -575,6 +599,18 @@
    "class": "c-now",
    "phase": 4,
    "reason": "Census/overlay tool or shared neighbour lookup: per-parcel/vertex/frame loops over full disc; census kernel in libkiwiw in Phase 4"
+  },
+  {
+   "path": "parser/tools/run_heavy_python.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Plan-25 heavy wrapper: flock, systemd-run scope, /usr/bin/time and cgroup memory.peak log; loops bounded by argv, cgroup stat keys and time -v lines. No disc/spool data loop"
+  },
+  {
+   "path": "parser/tools/whole_file_guard.py",
+   "class": "orchestration",
+   "phase": null,
+   "reason": "Plan-25 whole-file read guard: stat size against a threshold, then Path.read_bytes below it; no loop"
   },
   {
    "path": "parser/tests/**/*.py",

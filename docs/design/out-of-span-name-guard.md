@@ -61,3 +61,6 @@ cells removed: (0,141), (0,176), (0,541), (0,562), (0,563)). See
   fails on the pre-plan-29 baseline as well as the final suite. Repair the
   inventory in its owning work package and verify it there. The recorded final
   suite is 1 failed / 1060 passed / 7 skipped, not a passing full suite.
+  **Discharged by plan 37 Phase 2:** six entries were added to
+  `parser/perf_inventory.json`, and `test_perf_inventory.py` passes 4/4. The
+  full-suite result is recorded in plan 37.

@@ -128,6 +128,9 @@ reseating of 170/3-16/3-17.
   go to plan 34 for structural root causes and disposition.
 - R4: the baseline `test_perf_inventory::test_inventory_covers_every_module`
   failure remains carried to plan 04's performance-inventory owner.
+  **Discharged by plan 37 Phase 2:** the six missing modules are now in
+  `parser/perf_inventory.json`, and `test_perf_inventory.py` passes 4/4
+  (`docs/plans/37-3-17-f2-identity-and-perf-inventory/reports/2-01-perf-inventory.md`).
   Both carries are durable in the [contract's follow-up section](../design/out-of-span-name-guard.md#carried-follow-ups).
 
 ## Decisions Worth Keeping
