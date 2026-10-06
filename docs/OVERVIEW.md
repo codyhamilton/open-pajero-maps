@@ -76,7 +76,7 @@ The offline oracle (`parser/compare_disc.py`) defaults to `layers_present=["map"
 | How is the code organised? | `docs/ARCHITECTURE.md` |
 | What are we building and how is it judged? | `docs/design/target-disc.md` |
 | How do we run the workflow plugin (design → execute → close)? | `docs/WORKFLOW.md` |
-| What remains unfinished? | `docs/plans/04-c-core-orchestration/` (blocked Phase 3 / 3-90; dependent Phases 4–6). The completeness successor items remain (2-01 source-data parity: 243 supply-path rows to implement and 99 conflict-open under plan 30); plan **14** closed out at `3fb5a35` (`docs/plans/14-completeness-root-cause.md`). Plan 03's remaining content phases stay frozen. The closed records under `docs/plans/` describe completed work. |
+| What remains unfinished? | `docs/plans/04-c-core-orchestration/` (blocked Phase 3 / 3-90; dependent Phases 4–6). The completeness successor items remain (2-01 source-data parity under plan 30: 341 supply-path rows to implement, 0 unfixable-proven, 1 conflict-open (dump_row 246, Design ruling needed); `docs/plans/30-2-01-source-data-parity/open_rows_account.md`); plan **14** closed out at `3fb5a35` (`docs/plans/14-completeness-root-cause.md`). Plan 03's remaining content phases stay frozen. The closed records under `docs/plans/` describe completed work. |
 | What was built before? | `docs/plans/01-…md`, `docs/plans/02-…md` |
 | Where did each non-committed file come from? | `docs/provenance.md` |
 

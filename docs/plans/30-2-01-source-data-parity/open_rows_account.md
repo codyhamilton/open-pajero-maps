@@ -1,4 +1,26 @@
-# Plan 30 — exact per-row account of the 4 conflict-open rows
+# Plan 30 — exact per-row account of the conflict-open rows
+
+## Status after unit 2-03 (r4, 2026-10-06 11:59 AEST): 341 / 0 / **1**
+
+Design ruling (a) was executed with the date-matched snapshot `39a836dd…`
+(`reports/2-03-date-matched-relation-snapshot.md`).
+
+- **Rows 396, 397, 775 → supply-path.** Source: r2647638 Australia (EEZ),
+  131 cache ways + 16 snapshot ways, boundary-clipped, demanded code 288.
+- **Row 246 stays conflict-open** (`outlier/stratum evidence insufficient`).
+  - The PBF leg is gap-free.
+  - 284 code-321 candidates reach the windows (natural=wood 274, scrub 10).
+    All give 0 in-cell records under original, clipped and unit-mult.
+  - The spool's retained 321 demander touches the cell edge (vertex 18,
+    −31.5416545, 116.0931811; `encoder_drops_clipped_source_sliver`). A
+    demanded-type feature therefore reaches the cell, and Amendment 1 §4
+    cannot prove absence.
+  - Unresolved: whether an honest repair (sliver retention or a semantic
+    mapping) would supply the record. Owner: Design.
+
+The account below is the **historical 2-02 state** (f1a1368, 4 rows) that
+motivated the ruling. Its gap lists are superseded for rows 396/397/775 and
+for row 246's source gaps.
 
 Generated from `disposition.tsv` (published at f1a1368; 338 supply-path / 0 unfixable-proven / 4 conflict-open). For Design: each row is open because it has no positive in-cell supply witness and the listed relation gaps in the pinned PBF (`2026-08-24T20:20:50Z`) block a proof either way. Relation ids are `r<id>`; way counts are member ways absent from the pinned extract.
 

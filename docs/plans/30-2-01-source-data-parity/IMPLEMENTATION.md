@@ -182,3 +182,30 @@ conflict-open) is **not met**, so plan 30 stays open and is not closed out.
 The DESIGN does not authorise another source.
 
 Per-row gap lists for Design (relation ids by class, row-specific gaps): `open_rows_account.md`.
+
+### 2-03 — date-matched relation snapshot (Execute; Codex weekly-limited)
+
+Design Amendment 1 chose option (a). Execute proved the class-1 root cause
+(extract clipping, `missing_way_attic_proof.json`) and pinned the snapshot
+(`115d720`, `phase2_snapshot_pin.json`, sha `39a836dd…`). It then
+implemented the brief (`bf46547`, `617c7c8`; 75 tests passed) and ran the
+guarded chain `output/scratch-30/run_p2e.{sh,log}` (11:55–11:59 AEST, all
+exits 0).
+
+- **No-flag control:** proof-log `1868d852…`, identical to r2.
+- **Snapshot run:** 166.8 s, memory.peak 957 MB.
+- **Publish: 341 supply-path / 0 unfixable-proven / 1 conflict-open.**
+  - The 338 earlier rows have unchanged source, coords and production-C. 174
+    rows gained two provenance fields.
+  - 396, 397 and 775 are supplied by r2647638 Australia (EEZ), using
+    16 snapshot ways.
+  - 246 stays conflict-open. It is gap-free, but none of 284 code-321
+    candidates emits. The spool's retained 321 demander reaches the cell
+    edge, so absence cannot be proven.
+- **Records:** `reports/2-03-date-matched-relation-snapshot.md`,
+  `phase2_snapshot.md`, `open_rows_account.md`.
+
+Phase 2's outcome (0 conflict-open) is **not met**. Plan 30 stays open with
+one row, which Design must rule on: an honest-repair or semantic question,
+not a source gap. There is no disc change.
+
