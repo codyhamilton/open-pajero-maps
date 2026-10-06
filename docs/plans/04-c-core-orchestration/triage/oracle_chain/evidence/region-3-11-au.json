@@ -1,0 +1,694 @@
+{
+ "compare": {
+  "file_size": {
+   "delta": 224,
+   "new": 1731021792,
+   "old": 1731021568
+  },
+  "fixed": {
+   "data_volume": {
+    "equal": true
+   },
+   "mht": {
+    "equal": true
+   }
+  },
+  "frames": {
+   "alias_pattern_equal": true,
+   "allocation_changed": 7,
+   "common": 3954156,
+   "new": 3954156,
+   "old": 3954156,
+   "only_new": 0,
+   "only_new_keys": [],
+   "only_old": 0,
+   "only_old_keys": [],
+   "padding_delta_spans": 60,
+   "padding_spans_changed": 41,
+   "payload_changed": 41,
+   "payload_delta_changed_frames": 164,
+   "payload_delta_unchanged_frames": 0,
+   "relocated": 2763363
+  },
+  "inline": {
+   "29": {
+    "equal": true,
+    "new_size": 2048,
+    "old_size": 2048,
+    "relocated": false
+   }
+  },
+  "pdmdh": {
+   "differing_bytes": 1695,
+   "in_bmt_address_fields": 1695,
+   "outside_bmt_address_fields": 0,
+   "outside_offsets": [],
+   "same_size": true
+  },
+  "pmr": {
+   "buffer_size_changed": 0,
+   "common": 2139,
+   "masked_content_differs": 0,
+   "masked_content_differs_keys": [],
+   "new": 2139,
+   "old": 2139,
+   "only_new": 0,
+   "only_old": 0,
+   "record_size_changed": 0,
+   "relocated": 1548
+  },
+  "sizes": {
+   "data_volume": {
+    "delta": 0,
+    "new": 2048,
+    "old": 2048
+   },
+   "frame_padding": {
+    "delta": 60,
+    "new": 21570806,
+    "old": 21570746
+   },
+   "frame_payload": {
+    "delta": 164,
+    "new": 1684875146,
+    "old": 1684874982
+   },
+   "mht": {
+    "delta": 0,
+    "new": 2048,
+    "old": 2048
+   },
+   "mht_inline_29": {
+    "delta": 0,
+    "new": 2048,
+    "old": 2048
+   },
+   "partition_gaps": {
+    "delta": 0,
+    "new": 0,
+    "old": 0
+   },
+   "pdmdh_bmt_arrays": {
+    "delta": 0,
+    "new": 15648,
+    "old": 15648
+   },
+   "pdmdh_record_tail": {
+    "delta": 0,
+    "new": 0,
+    "old": 0
+   },
+   "pdmdh_records": {
+    "delta": 0,
+    "new": 7230,
+    "old": 7230
+   },
+   "pdmdh_sector_pad": {
+    "delta": 0,
+    "new": 2,
+    "old": 2
+   },
+   "pmr_records": {
+    "delta": 0,
+    "new": 24488126,
+    "old": 24488126
+   },
+   "pmr_tails": {
+    "delta": 0,
+    "new": 58690,
+    "old": 58690
+   }
+  },
+  "unaccounted_bytes": 0
+ },
+ "complete_and_accounted": true,
+ "kind": "region_accounting",
+ "new": {
+  "file_size": 1731021792,
+  "frame_bad_extent": 0,
+  "frame_pad_nonzero": 0,
+  "frames_unique": 3954156,
+  "leaf_entries": 3954156,
+  "logical_sector_size": 32,
+  "partition": {
+   "complete": true,
+   "gap_bytes": 0,
+   "gaps": [],
+   "overlap_count": 0,
+   "overlaps": [],
+   "regions": 3956302
+  },
+  "path": "output/scratch-3-11/G_new/ALLDATA.KWI",
+  "pdmdh_offset": 6144,
+  "pmr_buffers": 2139,
+  "pmr_tail_nonzero": 0,
+  "sector_size": 2048,
+  "sizes": {
+   "data_volume": 2048,
+   "frame_padding": 21570806,
+   "frame_payload": 1684875146,
+   "mht": 2048,
+   "mht_inline_29": 2048,
+   "partition_gaps": 0,
+   "pdmdh_bmt_arrays": 15648,
+   "pdmdh_record_tail": 0,
+   "pdmdh_records": 7230,
+   "pdmdh_sector_pad": 2,
+   "pmr_records": 24488126,
+   "pmr_tails": 58690
+  }
+ },
+ "new_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+ "old": {
+  "file_size": 1731021568,
+  "frame_bad_extent": 0,
+  "frame_pad_nonzero": 0,
+  "frames_unique": 3954156,
+  "leaf_entries": 3954156,
+  "logical_sector_size": 32,
+  "partition": {
+   "complete": true,
+   "gap_bytes": 0,
+   "gaps": [],
+   "overlap_count": 0,
+   "overlaps": [],
+   "regions": 3956302
+  },
+  "path": "output/scratch-36/G_pre311/ALLDATA.KWI",
+  "pdmdh_offset": 6144,
+  "pmr_buffers": 2139,
+  "pmr_tail_nonzero": 0,
+  "sector_size": 2048,
+  "sizes": {
+   "data_volume": 2048,
+   "frame_padding": 21570746,
+   "frame_payload": 1684874982,
+   "mht": 2048,
+   "mht_inline_29": 2048,
+   "partition_gaps": 0,
+   "pdmdh_bmt_arrays": 15648,
+   "pdmdh_record_tail": 0,
+   "pdmdh_records": 7230,
+   "pdmdh_sector_pad": 2,
+   "pmr_records": 24488126,
+   "pmr_tails": 58690
+  }
+ },
+ "old_sha256": "87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862",
+ "padding_spans": [
+  {
+   "alloc_new": 131072,
+   "alloc_old": 131072,
+   "delta": -4,
+   "key": "L0 38/14: 507/6",
+   "new_bytes": 8,
+   "new_pad_offset": 355895992,
+   "old_bytes": 12,
+   "old_pad_offset": 355895988,
+   "payload_new": 131064,
+   "payload_old": 131060
+  },
+  {
+   "alloc_new": 122304,
+   "alloc_old": 122304,
+   "delta": -4,
+   "key": "L0 38/15: 361/1",
+   "new_bytes": 0,
+   "new_pad_offset": 392631808,
+   "old_bytes": 4,
+   "old_pad_offset": 392631804,
+   "payload_new": 122304,
+   "payload_old": 122300
+  },
+  {
+   "alloc_new": 109024,
+   "alloc_old": 109024,
+   "delta": -4,
+   "key": "L0 38/25: 111",
+   "new_bytes": 18,
+   "new_pad_offset": 453000046,
+   "old_bytes": 22,
+   "old_pad_offset": 453000042,
+   "payload_new": 109006,
+   "payload_old": 109002
+  },
+  {
+   "alloc_new": 86240,
+   "alloc_old": 86240,
+   "delta": -4,
+   "key": "L0 38/28: 457/3",
+   "new_bytes": 0,
+   "new_pad_offset": 470959008,
+   "old_bytes": 4,
+   "old_pad_offset": 470959004,
+   "payload_new": 86240,
+   "payload_old": 86236
+  },
+  {
+   "alloc_new": 107744,
+   "alloc_old": 107712,
+   "delta": 28,
+   "key": "L0 38/28: 489/1",
+   "new_bytes": 28,
+   "new_pad_offset": 471134628,
+   "old_bytes": 0,
+   "old_pad_offset": 471134624,
+   "payload_new": 107716,
+   "payload_old": 107712
+  },
+  {
+   "alloc_new": 129440,
+   "alloc_old": 129440,
+   "delta": -4,
+   "key": "L0 38/28: 817",
+   "new_bytes": 6,
+   "new_pad_offset": 465640442,
+   "old_bytes": 10,
+   "old_pad_offset": 465640438,
+   "payload_new": 129434,
+   "payload_old": 129430
+  },
+  {
+   "alloc_new": 104768,
+   "alloc_old": 104768,
+   "delta": -4,
+   "key": "L0 38/28: 984/13",
+   "new_bytes": 26,
+   "new_pad_offset": 471357446,
+   "old_bytes": 30,
+   "old_pad_offset": 471357410,
+   "payload_new": 104742,
+   "payload_old": 104738
+  },
+  {
+   "alloc_new": 106848,
+   "alloc_old": 106848,
+   "delta": -4,
+   "key": "L0 38/28: 1015/3",
+   "new_bytes": 6,
+   "new_pad_offset": 471663962,
+   "old_bytes": 10,
+   "old_pad_offset": 471663926,
+   "payload_new": 106842,
+   "payload_old": 106838
+  },
+  {
+   "alloc_new": 93664,
+   "alloc_old": 93664,
+   "delta": -4,
+   "key": "L0 38/28: 1413",
+   "new_bytes": 16,
+   "new_pad_offset": 468046704,
+   "old_bytes": 20,
+   "old_pad_offset": 468046700,
+   "payload_new": 93648,
+   "payload_old": 93644
+  },
+  {
+   "alloc_new": 107392,
+   "alloc_old": 107392,
+   "delta": -4,
+   "key": "L0 38/28: 1416",
+   "new_bytes": 4,
+   "new_pad_offset": 468188796,
+   "old_bytes": 8,
+   "old_pad_offset": 468188792,
+   "payload_new": 107388,
+   "payload_old": 107384
+  },
+  {
+   "alloc_new": 92192,
+   "alloc_old": 92192,
+   "delta": -4,
+   "key": "L0 38/29: 815/0",
+   "new_bytes": 14,
+   "new_pad_offset": 477136338,
+   "old_bytes": 18,
+   "old_pad_offset": 477136302,
+   "payload_new": 92178,
+   "payload_old": 92174
+  },
+  {
+   "alloc_new": 90336,
+   "alloc_old": 90336,
+   "delta": -4,
+   "key": "L0 38/29: 815/1",
+   "new_bytes": 8,
+   "new_pad_offset": 477226680,
+   "old_bytes": 12,
+   "old_pad_offset": 477226644,
+   "payload_new": 90328,
+   "payload_old": 90324
+  },
+  {
+   "alloc_new": 92224,
+   "alloc_old": 92224,
+   "delta": -4,
+   "key": "L0 38/29: 816",
+   "new_bytes": 12,
+   "new_pad_offset": 474093268,
+   "old_bytes": 16,
+   "old_pad_offset": 474093232,
+   "payload_new": 92212,
+   "payload_old": 92208
+  },
+  {
+   "alloc_new": 104128,
+   "alloc_old": 104128,
+   "delta": -4,
+   "key": "L0 38/29: 848",
+   "new_bytes": 22,
+   "new_pad_offset": 474349322,
+   "old_bytes": 26,
+   "old_pad_offset": 474349286,
+   "payload_new": 104106,
+   "payload_old": 104102
+  },
+  {
+   "alloc_new": 106816,
+   "alloc_old": 106816,
+   "delta": -4,
+   "key": "L0 38/31: 893",
+   "new_bytes": 16,
+   "new_pad_offset": 481469488,
+   "old_bytes": 20,
+   "old_pad_offset": 481469452,
+   "payload_new": 106800,
+   "payload_old": 106796
+  },
+  {
+   "alloc_new": 85664,
+   "alloc_old": 85632,
+   "delta": 28,
+   "key": "L0 39/16: 227",
+   "new_bytes": 28,
+   "new_pad_offset": 523282724,
+   "old_bytes": 0,
+   "old_pad_offset": 523282688,
+   "payload_new": 85636,
+   "payload_old": 85632
+  },
+  {
+   "alloc_new": 90848,
+   "alloc_old": 90848,
+   "delta": -4,
+   "key": "L0 39/16: 260",
+   "new_bytes": 22,
+   "new_pad_offset": 523569578,
+   "old_bytes": 26,
+   "old_pad_offset": 523569510,
+   "payload_new": 90826,
+   "payload_old": 90822
+  },
+  {
+   "alloc_new": 88032,
+   "alloc_old": 88032,
+   "delta": -4,
+   "key": "L0 39/24: 1026/3",
+   "new_bytes": 24,
+   "new_pad_offset": 559182056,
+   "old_bytes": 28,
+   "old_pad_offset": 559181988,
+   "payload_new": 88008,
+   "payload_old": 88004
+  },
+  {
+   "alloc_new": 88000,
+   "alloc_old": 88000,
+   "delta": -4,
+   "key": "L0 39/24: 1057",
+   "new_bytes": 8,
+   "new_pad_offset": 556695768,
+   "old_bytes": 12,
+   "old_pad_offset": 556695700,
+   "payload_new": 87992,
+   "payload_old": 87988
+  },
+  {
+   "alloc_new": 86336,
+   "alloc_old": 86336,
+   "delta": -4,
+   "key": "L0 51/11: 1544",
+   "new_bytes": 24,
+   "new_pad_offset": 673266280,
+   "old_bytes": 28,
+   "old_pad_offset": 673266212,
+   "payload_new": 86312,
+   "payload_old": 86308
+  },
+  {
+   "alloc_new": 87968,
+   "alloc_old": 87968,
+   "delta": -4,
+   "key": "L0 53/15: 378/3",
+   "new_bytes": 10,
+   "new_pad_offset": 733604854,
+   "old_bytes": 14,
+   "old_pad_offset": 733604786,
+   "payload_new": 87958,
+   "payload_old": 87954
+  },
+  {
+   "alloc_new": 123904,
+   "alloc_old": 123904,
+   "delta": -4,
+   "key": "L0 53/15: 410",
+   "new_bytes": 2,
+   "new_pad_offset": 732605822,
+   "old_bytes": 6,
+   "old_pad_offset": 732605754,
+   "payload_new": 123902,
+   "payload_old": 123898
+  },
+  {
+   "alloc_new": 101888,
+   "alloc_old": 101888,
+   "delta": -4,
+   "key": "L0 55/5: 101/9",
+   "new_bytes": 20,
+   "new_pad_offset": 851563660,
+   "old_bytes": 24,
+   "old_pad_offset": 851563592,
+   "payload_new": 101868,
+   "payload_old": 101864
+  },
+  {
+   "alloc_new": 85376,
+   "alloc_old": 85376,
+   "delta": -4,
+   "key": "L0 55/10: 254/1",
+   "new_bytes": 22,
+   "new_pad_offset": 872663818,
+   "old_bytes": 26,
+   "old_pad_offset": 872663750,
+   "payload_new": 85354,
+   "payload_old": 85350
+  },
+  {
+   "alloc_new": 101312,
+   "alloc_old": 101312,
+   "delta": -4,
+   "key": "L0 55/11: 463",
+   "new_bytes": 20,
+   "new_pad_offset": 874035820,
+   "old_bytes": 24,
+   "old_pad_offset": 874035752,
+   "payload_new": 101292,
+   "payload_old": 101288
+  },
+  {
+   "alloc_new": 117824,
+   "alloc_old": 117824,
+   "delta": -4,
+   "key": "L0 55/27: 667/10",
+   "new_bytes": 18,
+   "new_pad_offset": 926636782,
+   "old_bytes": 22,
+   "old_pad_offset": 926636714,
+   "payload_new": 117806,
+   "payload_old": 117802
+  },
+  {
+   "alloc_new": 108704,
+   "alloc_old": 108704,
+   "delta": -4,
+   "key": "L0 55/27: 667/11",
+   "new_bytes": 18,
+   "new_pad_offset": 926745486,
+   "old_bytes": 22,
+   "old_pad_offset": 926745418,
+   "payload_new": 108686,
+   "payload_old": 108682
+  },
+  {
+   "alloc_new": 95872,
+   "alloc_old": 95840,
+   "delta": 28,
+   "key": "L0 55/27: 667/14",
+   "new_bytes": 28,
+   "new_pad_offset": 926841604,
+   "old_bytes": 0,
+   "old_pad_offset": 926841536,
+   "payload_new": 95844,
+   "payload_old": 95840
+  },
+  {
+   "alloc_new": 103456,
+   "alloc_old": 103424,
+   "delta": 28,
+   "key": "L0 55/27: 667/15",
+   "new_bytes": 30,
+   "new_pad_offset": 926945058,
+   "old_bytes": 2,
+   "old_pad_offset": 926944958,
+   "payload_new": 103426,
+   "payload_old": 103422
+  },
+  {
+   "alloc_new": 116800,
+   "alloc_old": 116768,
+   "delta": 28,
+   "key": "L0 71/5: 1457",
+   "new_bytes": 28,
+   "new_pad_offset": 1086883972,
+   "old_bytes": 0,
+   "old_pad_offset": 1086883840,
+   "payload_new": 116772,
+   "payload_old": 116768
+  },
+  {
+   "alloc_new": 97920,
+   "alloc_old": 97920,
+   "delta": -4,
+   "key": "L0 71/5: 1489",
+   "new_bytes": 18,
+   "new_pad_offset": 1087110542,
+   "old_bytes": 22,
+   "old_pad_offset": 1087110378,
+   "payload_new": 97902,
+   "payload_old": 97898
+  },
+  {
+   "alloc_new": 89504,
+   "alloc_old": 89504,
+   "delta": -4,
+   "key": "L0 71/11: 1655",
+   "new_bytes": 4,
+   "new_pad_offset": 1137938268,
+   "old_bytes": 8,
+   "old_pad_offset": 1137938104,
+   "payload_new": 89500,
+   "payload_old": 89496
+  },
+  {
+   "alloc_new": 102624,
+   "alloc_old": 102592,
+   "delta": 28,
+   "key": "L0 71/12: 348",
+   "new_bytes": 30,
+   "new_pad_offset": 1139139330,
+   "old_bytes": 2,
+   "old_pad_offset": 1139139166,
+   "payload_new": 102594,
+   "payload_old": 102590
+  },
+  {
+   "alloc_new": 83616,
+   "alloc_old": 83616,
+   "delta": -4,
+   "key": "L0 71/12: 565/3",
+   "new_bytes": 12,
+   "new_pad_offset": 1142262324,
+   "old_bytes": 16,
+   "old_pad_offset": 1142262128,
+   "payload_new": 83604,
+   "payload_old": 83600
+  },
+  {
+   "alloc_new": 113024,
+   "alloc_old": 113024,
+   "delta": -4,
+   "key": "L0 71/12: 1008/0",
+   "new_bytes": 16,
+   "new_pad_offset": 1142797200,
+   "old_bytes": 20,
+   "old_pad_offset": 1142797004,
+   "payload_new": 113008,
+   "payload_old": 113004
+  },
+  {
+   "alloc_new": 126400,
+   "alloc_old": 126400,
+   "delta": -4,
+   "key": "L0 71/12: 1065",
+   "new_bytes": 26,
+   "new_pad_offset": 1140969510,
+   "old_bytes": 30,
+   "old_pad_offset": 1140969314,
+   "payload_new": 126374,
+   "payload_old": 126370
+  },
+  {
+   "alloc_new": 93568,
+   "alloc_old": 93536,
+   "delta": 28,
+   "key": "L0 71/22: 887",
+   "new_bytes": 30,
+   "new_pad_offset": 1179739970,
+   "old_bytes": 2,
+   "old_pad_offset": 1179739774,
+   "payload_new": 93538,
+   "payload_old": 93534
+  },
+  {
+   "alloc_new": 86016,
+   "alloc_old": 86016,
+   "delta": -4,
+   "key": "L0 86/30: 676",
+   "new_bytes": 18,
+   "new_pad_offset": 1337589998,
+   "old_bytes": 22,
+   "old_pad_offset": 1337589770,
+   "payload_new": 85998,
+   "payload_old": 85994
+  },
+  {
+   "alloc_new": 103648,
+   "alloc_old": 103648,
+   "delta": -4,
+   "key": "L0 87/1: 754",
+   "new_bytes": 4,
+   "new_pad_offset": 1342189052,
+   "old_bytes": 8,
+   "old_pad_offset": 1342188824,
+   "payload_new": 103644,
+   "payload_old": 103640
+  },
+  {
+   "alloc_new": 96448,
+   "alloc_old": 96448,
+   "delta": -4,
+   "key": "L0 87/16: 1910/1",
+   "new_bytes": 10,
+   "new_pad_offset": 1363593718,
+   "old_bytes": 14,
+   "old_pad_offset": 1363593490,
+   "payload_new": 96438,
+   "payload_old": 96434
+  },
+  {
+   "alloc_new": 84224,
+   "alloc_old": 84224,
+   "delta": -4,
+   "key": "L0 87/17: 1254/3",
+   "new_bytes": 24,
+   "new_pad_offset": 1366763016,
+   "old_bytes": 28,
+   "old_pad_offset": 1366762788,
+   "payload_new": 84200,
+   "payload_old": 84196
+  }
+ ],
+ "schema": 1,
+ "tool_sha256": "ed6e65112a818427665beb8e63bf2a51d9fd08538d3fc94aff1c503f50c93760"
+}

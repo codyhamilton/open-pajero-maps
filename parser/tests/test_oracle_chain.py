@@ -300,3 +300,43 @@ def test_routed_diff_rejects_wrong_or_tampered_baseline(tmp_path):
     with pytest.raises(ValueError, match='different hop'):
         chain.routed_diff(old, new, chain.sha(new), chain.sha(old), tmp_path / 'b.json',
                           tmp_path / 'r2.json', tmp_path / 'r2.tsv', tmp_path / 'r2-work')
+
+
+EVID = PLAN / 'evidence'
+REPLAY_FILES = ('routed-3-11-au.json', 'routed-3-11-au.cells.tsv', 'diff-3-11-au.json',
+                'diff-3-11-au.cells.tsv', 'region-3-11-au.json')
+
+
+def _cells37():
+    with (EVID / 'diff-3-11-au.cells.tsv').open() as f:
+        return [[int(c['level']), int(c['ix']), int(c['iy'])] for c in csv.DictReader(f, delimiter='\t')]
+
+
+def test_replay_3_11_accepts_committed_plan36_witnesses():
+    summary, extra = chain.replay_3_11(EVID / 'routed-3-11-au.json', EVID / 'region-3-11-au.json', _cells37())
+    assert summary['routed_only_count'] == 0 and summary['baseline_cells_missing_from_routed'] == 0
+    assert summary['frame_payload_delta'] == 164 and summary['padding_spans'] == {'-4': 34, '+28': 7}
+    assert len(extra) == 5
+
+
+@pytest.mark.parametrize('mutation', ['routed_only', 'region_unaccounted', 'span_delta', 'list', 'cells_sha'])
+def test_replay_3_11_rejects_tampered_witnesses(tmp_path, mutation):
+    for name in REPLAY_FILES:
+        (tmp_path / name).write_bytes((EVID / name).read_bytes())
+    cells = _cells37()
+    if mutation == 'routed_only':
+        r = json.loads((tmp_path / REPLAY_FILES[0]).read_text()); r['routed_only_count'] = 1
+        (tmp_path / REPLAY_FILES[0]).write_text(json.dumps(r))
+    elif mutation == 'region_unaccounted':
+        a = json.loads((tmp_path / REPLAY_FILES[4]).read_text()); a['compare']['unaccounted_bytes'] = 4
+        (tmp_path / REPLAY_FILES[4]).write_text(json.dumps(a))
+    elif mutation == 'span_delta':
+        a = json.loads((tmp_path / REPLAY_FILES[4]).read_text()); a['padding_spans'][0]['delta'] = 28
+        (tmp_path / REPLAY_FILES[4]).write_text(json.dumps(a))
+    elif mutation == 'list':
+        cells = cells[:-1] + [[0, 1, 1]]
+    else:
+        with (tmp_path / REPLAY_FILES[3]).open('a') as f:
+            f.write('\n')
+    with pytest.raises(ValueError):
+        chain.replay_3_11(tmp_path / REPLAY_FILES[0], tmp_path / REPLAY_FILES[4], cells)

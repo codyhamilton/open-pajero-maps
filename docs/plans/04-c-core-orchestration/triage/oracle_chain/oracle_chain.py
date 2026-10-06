@@ -480,7 +480,50 @@ def measured_row(path, old_sha, new_sha, row):
     return row
 
 
-def publish(scratch, dest, au_diff=None, perth_diff=None, census=None):
+def replay_3_11(routed_path, region_path, cells):
+    """Validate the plan 36 3-11 replay witnesses (committed copies; no disc reads)."""
+    routed_path, region_path = Path(routed_path), Path(region_path)
+    r = json.loads(small_bytes(routed_path))
+    if (r.get('kind') != 'routed_cell_diff' or [r['old_sha256'], r['new_sha256']] != [AU0, AU1]
+            or r['protected_after_sha256'] != [AU0, AU1] or r['protected_unchanged'] is not True
+            or r['routed_only_count'] != 0 or r['baseline_cells_missing_from_routed'] != 0
+            or r['routed_changed_total'] != 37 or r['multiset_list_complete_under_routing'] is not True
+            or r['routed_counts'] != {'added': 0, 'changed': 37, 'removed': 0}):
+        raise ValueError('3-11 routed witness does not prove 0 routed-only / 0 missing on the 3-11 pins')
+    base_path = routed_path.parent / Path(r['baseline']['path']).name
+    base_cells_path = routed_path.parent / Path(r['baseline_cells']['path']).name
+    routed_cells_path = routed_path.parent / Path(r['cells']['path']).name
+    for path, want in ((base_path, r['baseline']['sha256']), (base_cells_path, r['baseline_cells']['sha256']),
+                       (routed_cells_path, r['cells']['sha256'])):
+        if sha(path) != want:
+            raise ValueError(f'3-11 replay evidence SHA mismatch: {path}')
+    b = json.loads(small_bytes(base_path))
+    if (b.get('kind') != 'cell_diff' or [b['old_sha256'], b['new_sha256']] != [AU0, AU1]
+            or b['protected_unchanged'] is not True or b['cells']['sha256'] != r['baseline_cells']['sha256']):
+        raise ValueError('3-11 multiset baseline belongs to another hop')
+    listed = sorted(tuple(int(c[k]) for k in ('level', 'ix', 'iy'))
+                    for c in csv.DictReader(base_cells_path.open(), delimiter='\t'))
+    if listed != sorted(tuple(c) for c in cells):
+        raise ValueError('3-11 replay multiset list differs from the retained 37-cell list')
+    a = json.loads(small_bytes(region_path))
+    c = a['compare'] if a.get('kind') == 'region_accounting' else {}
+    spans = a.get('padding_spans', [])
+    deltas = sorted(sp['delta'] for sp in spans)
+    if (not c or [a['old_sha256'], a['new_sha256']] != [AU0, AU1] or a['complete_and_accounted'] is not True
+            or c['unaccounted_bytes'] != 0 or c['sizes']['frame_payload']['delta'] != 164
+            or [c['sizes']['frame_padding'][k] for k in ('old', 'new')] != [21570746, 21570806]
+            or c['file_size']['delta'] != 224 or deltas != [-4] * 34 + [28] * 7):
+        raise ValueError('3-11 region accounting does not reproduce plan 07 (+164 payload, 41 padding spans, 0 unaccounted)')
+    summary = {'replay_disc_sha256': AU0, 'replay_disc_witness': 'docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/sha_pre311.json',
+               'routed_only_count': 0, 'baseline_cells_missing_from_routed': 0, 'routed_changed_total': 37,
+               'region_unaccounted_bytes': 0, 'file_size_delta': 224, 'frame_payload_delta': 164,
+               'frame_padding': [21570746, 21570806], 'padding_spans': {'-4': 34, '+28': 7},
+               'plan07_record': 'docs/design/g-new-nonpayload-accounting.md'}
+    return summary, [evidence(routed_path), evidence(routed_cells_path), evidence(base_path),
+                     evidence(base_cells_path), evidence(region_path)]
+
+
+def publish(scratch, dest, au_diff=None, perth_diff=None, census=None, routed_3_11=None, region_3_11=None):
     """Publish verified small witnesses or explicit missing-evidence residuals."""
     cells, supporting = retained37(scratch)
     successor = NAME_ANCHOR / 'witnesses/successor_diff.json'
@@ -545,6 +588,17 @@ def publish(scratch, dest, au_diff=None, perth_diff=None, census=None):
         rows[0]['supporting_evidence'].append(evidence(census))
         rows[0]['census_audit'] = audit
         rows[0]['residuals'].pop()
+    if routed_3_11 or region_3_11:
+        if not (routed_3_11 and region_3_11):
+            raise ValueError('--routed-3-11 and --region-3-11 are published together')
+        summary, extra = replay_3_11(routed_3_11, region_3_11, cells)
+        rows[0]['supporting_evidence'].extend(extra)
+        rows[0]['replay_3_11'] = summary
+        rows[0]['status'] = 'replay-routed-verified'
+        rows[0]['confinement'] = ('Exactly 37 predicted L0 cells; 37/37, no extra cells; replayed 87a01b14 '
+                                  'routed diff: 0 routed-only, 0 missing.')
+        rows[0]['residuals'] = [x for x in rows[0]['residuals'] if not x.startswith(
+            ('Pre-3-11 disc and old census not located', 'Historical review carries +60 bytes'))]
     result = {'schema':1, 'disc_in_force_sha256':AU3, 'phase3_closed':False,
               'scope':'Existing signed hops; no new re-oracle. Unknown counts are null, never zero.',
               'hops':rows}
@@ -586,6 +640,8 @@ def main():
     p.add_argument('--au-diff', type=Path)
     p.add_argument('--perth-diff', type=Path)
     p.add_argument('--census', type=Path)
+    p.add_argument('--routed-3-11', type=Path)
+    p.add_argument('--region-3-11', type=Path)
     args = vars(ap.parse_args())
     command = args.pop('command')
     try:

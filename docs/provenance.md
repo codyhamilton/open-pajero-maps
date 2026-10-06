@@ -824,6 +824,15 @@ Not committed; regenerable from the in-force spool. Record: `docs/plans/34-l0-em
 - `perth_new/`: identical to `04be2f6e…`.
 - `run_p2b.{sh,log}`, `runs/*.json`: guarded heavy-run logs.
 
+### output/scratch-36/ (plan 36 hop replay, region accounting, routed proofs)
+
+Not committed; regenerable. Lasting small witnesses are copied to `docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/`.
+- `G_pre311/ALLDATA.KWI`: the pre-3-11 AU disc, rebuilt byte-exact from a throwaway worktree at `b7c7c42` with `output/extract_timing/spool` at `-j4`. sha256 `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862`, 1,731,021,568 bytes (`sha_pre311.json`). Not a protected disc; it is the historical 3-11 `from` pin.
+- `diff-3-11-au.{json,cells.tsv}`: multiset cell diff `87a01b14 → 013586b5`, 37 changed L0 cells, equal to the retained `Gnew.diff_cells.txt`.
+- `routed-3-11-au.{json,cells.tsv}`: routed diff, 0 routed-only and 0 baseline-missing cells.
+- `region-3-11-au.{json,spans.tsv}`: `region_accounting.py account`. Partition complete, 0 unaccounted bytes, +164 payload, padding 21,570,746 → 21,570,806 over the 41 plan-07 spans.
+- `run_p1_{replay,routed,region}.{sh,log}`, `runs/*.json`, `protected_{before,after}*.json`: guarded heavy-run logs and protected-disc snapshots, all unchanged.
+
 ### output/scratch-30/attic/ (plan 30 second pinned source: date-matched OSM relation snapshot)
 
 Admitted by plan 30 DESIGN Amendment 1 (Design ruling option (a), 2026-10-06). Not committed (79 MB); the pin is committed at `docs/plans/30-2-01-source-data-parity/phase2_snapshot_pin.json`.

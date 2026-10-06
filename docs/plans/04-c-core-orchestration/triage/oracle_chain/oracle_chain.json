@@ -206,7 +206,7 @@
         ]
       ],
       "changed_count": 37,
-      "confinement": "Exactly 37 predicted L0 cells; 37/37, no extra cells.",
+      "confinement": "Exactly 37 predicted L0 cells; 37/37, no extra cells; replayed 87a01b14 routed diff: 0 routed-only, 0 missing.",
       "counts_by_level": {
         "0": {
           "changed": 37
@@ -214,16 +214,32 @@
       },
       "from_sha256": "87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862",
       "region": "AU",
-      "residuals": [
-        "Pre-3-11 disc and old census not located; no fresh byte replay of this hop.",
-        "Historical review carries +60 bytes of non-payload growth without attribution."
-      ],
+      "replay_3_11": {
+        "baseline_cells_missing_from_routed": 0,
+        "file_size_delta": 224,
+        "frame_padding": [
+          21570746,
+          21570806
+        ],
+        "frame_payload_delta": 164,
+        "padding_spans": {
+          "+28": 7,
+          "-4": 34
+        },
+        "plan07_record": "docs/design/g-new-nonpayload-accounting.md",
+        "region_unaccounted_bytes": 0,
+        "replay_disc_sha256": "87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862",
+        "replay_disc_witness": "docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/sha_pre311.json",
+        "routed_changed_total": 37,
+        "routed_only_count": 0
+      },
+      "residuals": [],
       "signing_record": {
         "path": "docs/plans/04-c-core-orchestration/IMPLEMENTATION.md",
         "sha256": "8af0a631320b3fc2fc966381fad2a2df104ba3cb6299e1342656b26189824764"
       },
       "signing_unit": "3-11",
-      "status": "retained-list-verified",
+      "status": "replay-routed-verified",
       "supporting_evidence": [
         {
           "path": "output/scratch-3-11/Gnew.expected37.txt",
@@ -236,6 +252,26 @@
         {
           "path": "output/scratch-31/census-3-11.json",
           "sha256": "9e4bff14e41a60d561aaca2dc2b4b036d6f500638ee8e0165bd2585dd624a5ec"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/routed-3-11-au.json",
+          "sha256": "b4167b49198f5c05e32fdfb9c56213491a782d0309c3d41be7db954ad2c34572"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/routed-3-11-au.cells.tsv",
+          "sha256": "17be31b376e6e764375dbf42aecd2568e44c7b7f013644cd89f283cb49d25441"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/diff-3-11-au.json",
+          "sha256": "074e8cc846b16608c43e039b2848e80467f47744ee3cb0b9dcd8d543880afce2"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/diff-3-11-au.cells.tsv",
+          "sha256": "f03ebaab70a90bd4166547788ff2ee6812c99ff2ac17d73b1fa02757b94190e6"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/region-3-11-au.json",
+          "sha256": "891f6adc0e61e5d9e3bb79946dd69e12e6ecbed093e2487768428c5cbe407ac7"
         }
       ],
       "to_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
@@ -381,7 +417,7 @@
       "residuals": [],
       "signing_record": {
         "path": "docs/plans/29-k1-name-anchor-failure.md",
-        "sha256": "ca1278f821c20b09a4ff0ca77cda6b27664cebef6291d3fff312acbfc88f3b19"
+        "sha256": "7fb15a4d8630b67b3202bdea6e9dc718f8825ae01777d04b64fe590543fd86dd"
       },
       "signing_unit": "plan 29",
       "status": "committed-leaf-proof-verified",
@@ -434,7 +470,7 @@
       "supporting_evidence": [
         {
           "path": "docs/plans/29-k1-name-anchor-failure.md",
-          "sha256": "ca1278f821c20b09a4ff0ca77cda6b27664cebef6291d3fff312acbfc88f3b19"
+          "sha256": "7fb15a4d8630b67b3202bdea6e9dc718f8825ae01777d04b64fe590543fd86dd"
         }
       ],
       "to_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",

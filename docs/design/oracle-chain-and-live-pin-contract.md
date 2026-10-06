@@ -54,13 +54,19 @@ this rule. Neither contract closes plan 04 Phase 3 by itself.
 
 ## Carried follow-ups
 
-- AU 3-11 routed completeness: its 37-cell list is complete under the
-  multiset identity, but no routed run has proven it. To prove it, run
-  `oracle_chain.py routed-diff` with the 3-11 hop pins to a new scratch path.
+- AU 3-11 routed completeness: **discharged by plan 36 Phase 1.** The
+  pre-3-11 disc was replayed byte-exact (`87a01b14…`), and `routed-diff`
+  on the 3-11 pins gives 0 routed-only and 0 missing cells against the
+  37-cell list. `oracle_chain.tsv` 3-11 row: `replay-routed-verified`;
+  evidence is in `triage/oracle_chain/evidence/routed-3-11-au.json`.
 - 3-14 payload cause attribution: the AU 246,123 and Perth 795 changed cells
   are listed with no attributed causes.
-- AU 3-11's +60 B non-payload growth is unattributed. The 3-14 container,
-  index and padding scope is unmeasured.
+- AU 3-11's +60 B non-payload growth is attributed by plan 07
+  (`docs/design/g-new-nonpayload-accounting.md`) to Map Frame allocation
+  padding, 34×(−4)+7×(+28). Plan 36 Phase 1 reproduced it with
+  `triage/oracle_chain/region_accounting.py`: the same 41 spans, +164
+  payload, and 0 unaccounted bytes (`evidence/region-3-11-au.json`).
+  The 3-14 container, index and padding scope is unmeasured (plan 36 Phase 2).
 - The historical `pinned_candidates` exhaustive identity is
   unverifiable from git. It is not required for a live close while live
   failing is 0.

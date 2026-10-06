@@ -1,0 +1,47 @@
+{
+  "cells": {
+    "path": "output/scratch-36/diff-3-11-au.cells.tsv",
+    "sha256": "f03ebaab70a90bd4166547788ff2ee6812c99ff2ac17d73b1fa02757b94190e6"
+  },
+  "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes.",
+  "counts": {
+    "added": 0,
+    "changed": 37,
+    "removed": 0
+  },
+  "counts_by_level": {
+    "0": {
+      "changed": 37
+    }
+  },
+  "frame_length_fallbacks": {
+    "new": 0,
+    "old": 0
+  },
+  "kind": "cell_diff",
+  "leaf_counts": {
+    "new": 3954156,
+    "old": 3954156
+  },
+  "new": "output/scratch-3-11/G_new/ALLDATA.KWI",
+  "new_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+  "new_size": 1731021792,
+  "old": "output/scratch-36/G_pre311/ALLDATA.KWI",
+  "old_sha256": "87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862",
+  "old_size": 1731021568,
+  "protected_after_sha256": [
+    "87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862",
+    "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04"
+  ],
+  "protected_unchanged": true,
+  "residuals": [
+    "Payload causes not measured; all listed cells are unexplained.",
+    "Container/index/padding relocation is outside this cell-identity measurement."
+  ],
+  "schema": 1,
+  "unexplained_cells": {
+    "path": "output/scratch-36/diff-3-11-au.cells.tsv",
+    "selector": "all rows"
+  },
+  "unexplained_count": 37
+}

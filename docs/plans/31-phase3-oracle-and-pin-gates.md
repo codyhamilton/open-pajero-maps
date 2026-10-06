@@ -101,12 +101,21 @@ Carried in
 [docs/design/oracle-chain-and-live-pin-contract.md](../design/oracle-chain-and-live-pin-contract.md)
 § Carried follow-ups:
 
-- the AU 3-11 routed proof;
+- the AU 3-11 routed proof (discharged by plan 36 Phase 1:
+  `replay-routed-verified`, 0 routed-only and 0 missing);
 - 3-14 cause attribution;
-- the 3-11 +60 B and the 3-14 container scope;
+- the 3-14 container scope. The 3-11 +60 B was already attributed by plan 07
+  (padding, 34×(−4)+7×(+28)), and plan 36 Phase 1 reproduced it with 0
+  unaccounted bytes;
 - the historical pin identity.
 
 PSS and the Phase 3 close synthesis stay plan 04 blockers in OVERVIEW.
+
+Post-close note (plan 36 Phase 1, 2026-10-06): F1 is discharged. The 3-11
+routed proof gives 0 routed-only and 0 missing cells. The "+60 B
+unattributed" wording above is superseded: plan 07 attributed it, and plan 36
+reproduced it with 0 unaccounted bytes (`oracle_chain.tsv` 3-11 row
+`replay-routed-verified`).
 
 ## Decisions Worth Keeping
 - With live failing at 0, the Phase 3 pinned set is the live failing set on
