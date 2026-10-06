@@ -1,0 +1,119 @@
+{
+ "disc": "ALLDATA.KWI",
+ "spool": "spool",
+ "engine": "c",
+ "wall_s": 86.6,
+ "totals": {
+  "background": {
+   "checked": 174332105,
+   "failing": 1438558,
+   "worst_error_raw": 0.5
+  },
+  "background_boundary": {
+   "checked": 89546388,
+   "failing": 16549569,
+   "worst_error_raw": 0.499998
+  },
+  "completeness": {
+   "checked": 1800514,
+   "failing": 65,
+   "worst_error_raw": 0.0
+  },
+  "interior_cover": {
+   "checked": 1592016,
+   "failing": 824,
+   "worst_error_raw": 0.0
+  },
+  "name_anchor": {
+   "checked": 2317983,
+   "failing": 1,
+   "worst_error_raw": 0.499999
+  },
+  "range": {
+   "checked": 309192246,
+   "failing": 0,
+   "worst_error_raw": 0.0
+  },
+  "road_node": {
+   "checked": 42995770,
+   "failing": 0,
+   "worst_error_raw": 0.499998
+  },
+  "road_point": {
+   "checked": 0,
+   "failing": 0,
+   "worst_error_raw": 0.0
+  },
+  "step": {
+   "checked": 252444802,
+   "failing": 0,
+   "worst_error_raw": 0.0
+  }
+ },
+ "vs_3c04": {
+  "range": {
+   "checked": 309192246,
+   "ref_checked": 309192246,
+   "d_checked": 0,
+   "failing": 0,
+   "ref_failing": 0,
+   "d_failing": 0
+  },
+  "step": {
+   "checked": 252444802,
+   "ref_checked": 252444802,
+   "d_checked": 0,
+   "failing": 0,
+   "ref_failing": 0,
+   "d_failing": 0
+  },
+  "road_node": {
+   "checked": 42995770,
+   "ref_checked": 42995770,
+   "d_checked": 0,
+   "failing": 0,
+   "ref_failing": 0,
+   "d_failing": 0
+  },
+  "name_anchor": {
+   "checked": 2317983,
+   "ref_checked": 2317983,
+   "d_checked": 0,
+   "failing": 1,
+   "ref_failing": 1,
+   "d_failing": 0
+  },
+  "background": {
+   "checked": 174332105,
+   "ref_checked": 174332105,
+   "d_checked": 0,
+   "failing": 1438558,
+   "ref_failing": 1438558,
+   "d_failing": 0
+  },
+  "background_boundary": {
+   "checked": 89546388,
+   "ref_checked": 89546388,
+   "d_checked": 0,
+   "failing": 16549569,
+   "ref_failing": 16549569,
+   "d_failing": 0
+  },
+  "completeness": {
+   "checked": 1800514,
+   "ref_checked": 1800514,
+   "d_checked": 0,
+   "failing": 65,
+   "ref_failing": 752,
+   "d_failing": -687
+  },
+  "interior_cover": {
+   "checked": 1592016,
+   "ref_checked": 1592016,
+   "d_checked": 0,
+   "failing": 824,
+   "ref_failing": 824,
+   "d_failing": 0
+  }
+ }
+}

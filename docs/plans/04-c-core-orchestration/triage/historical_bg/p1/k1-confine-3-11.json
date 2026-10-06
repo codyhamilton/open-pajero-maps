@@ -1,0 +1,44 @@
+{
+ "bands": 127549,
+ "bands_with_changed_cell": 35,
+ "bands_with_delta": 35,
+ "cells_list": {
+  "path": "output/scratch-36/diff-3-11-au.cells.tsv",
+  "sha256": "f03ebaab70a90bd4166547788ff2ee6812c99ff2ac17d73b1fa02757b94190e6"
+ },
+ "confined": true,
+ "delta_in_changed_rows": {
+  "background": 839197,
+  "background_boundary": 21910,
+  "completeness": 0,
+  "interior_cover": 29,
+  "name_anchor": 0,
+  "range": 861107,
+  "road_node": 0,
+  "road_point": 0,
+  "step": 693171
+ },
+ "delta_rows_without_changed_cell": [],
+ "kind": "k1_checked_row_confinement",
+ "new_rows": {
+  "path": "output/scratch-39/rows/rows-311.tsv",
+  "sha256": "505bcf7c07966d9da385eb625a7c754aaee55652147cefb900a8511c381c7c6d"
+ },
+ "old_rows": {
+  "path": "output/scratch-39/rows/rows-pre311.tsv",
+  "sha256": "1beee83208732694c4a4b6d5016f76179421448031587925baab90679296d43e"
+ },
+ "schema": 1,
+ "tool_sha256": "19080a9c261afa73573dd80ab226fb73194fd9b14ca9b465992a672b8b84ed81",
+ "whole_delta": {
+  "background": 839197,
+  "background_boundary": 21910,
+  "completeness": 0,
+  "interior_cover": 29,
+  "name_anchor": 0,
+  "range": 861107,
+  "road_node": 0,
+  "road_point": 0,
+  "step": 693171
+ }
+}

@@ -1,0 +1,1766 @@
+{
+  "compare_excludes": [
+    "timing",
+    "wall_s"
+  ],
+  "disc": "ALLDATA.KWI",
+  "dump": {
+    "completeness": 752,
+    "interior_cover": 824,
+    "name_anchor": 1
+  },
+  "engine": "c",
+  "failing": 17989704,
+  "levels": {
+    "0": {
+      "blocks": 1858,
+      "explained": {
+        "name_anchor_halo": 311347,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 547622,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [
+        {
+          "cell": [
+            0,
+            541
+          ],
+          "error_raw": null,
+          "kind": "name_anchor",
+          "leaf_path": [
+            928
+          ],
+          "reason": "no spool record within half a raw unit",
+          "vertex": {
+            "lat": -38.727284749,
+            "lon": 90.0,
+            "raw": [
+              0,
+              370
+            ]
+          }
+        },
+        {
+          "cell": [
+            1770,
+            203
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            362
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -45.770202637,
+            "lon": 145.313446045,
+            "raw": [
+              124,
+              124
+            ]
+          }
+        },
+        {
+          "cell": [
+            1770,
+            203
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            362
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -45.76957194,
+            "lon": 145.31439209,
+            "raw": [
+              248,
+              248
+            ]
+          }
+        },
+        {
+          "cell": [
+            1770,
+            203
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            362
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -45.768941243,
+            "lon": 145.315338135,
+            "raw": [
+              372,
+              372
+            ]
+          }
+        },
+        {
+          "cell": [
+            1770,
+            203
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            362
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -45.768310547,
+            "lon": 145.31628418,
+            "raw": [
+              496,
+              496
+            ]
+          }
+        },
+        {
+          "cell": [
+            1770,
+            203
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            362
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -45.767674764,
+            "lon": 145.317237854,
+            "raw": [
+              621,
+              621
+            ]
+          }
+        },
+        {
+          "cell": [
+            1770,
+            203
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            362
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -45.767044067,
+            "lon": 145.318183899,
+            "raw": [
+              745,
+              745
+            ]
+          }
+        },
+        {
+          "cell": [
+            1770,
+            203
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            362
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -45.766413371,
+            "lon": 145.319129944,
+            "raw": [
+              869,
+              869
+            ]
+          }
+        },
+        {
+          "cell": [
+            1770,
+            203
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            362
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -45.765782674,
+            "lon": 145.320075989,
+            "raw": [
+              993,
+              993
+            ]
+          }
+        },
+        {
+          "cell": [
+            1770,
+            203
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            362
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -45.765151978,
+            "lon": 145.321022034,
+            "raw": [
+              1117,
+              1117
+            ]
+          }
+        },
+        {
+          "cell": [
+            1770,
+            203
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            362
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -45.764521281,
+            "lon": 145.321968079,
+            "raw": [
+              1241,
+              1241
+            ]
+          }
+        },
+        {
+          "cell": [
+            1726,
+            162
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            1118
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -46.625,
+            "lon": 143.9375,
+            "raw": [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "cell": [
+            1726,
+            162
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            1118
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -46.624369303,
+            "lon": 143.9375,
+            "raw": [
+              0,
+              124
+            ]
+          }
+        },
+        {
+          "cell": [
+            1726,
+            162
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            1118
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -46.623738607,
+            "lon": 143.9375,
+            "raw": [
+              0,
+              248
+            ]
+          }
+        },
+        {
+          "cell": [
+            1726,
+            162
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            1118
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -46.62310791,
+            "lon": 143.9375,
+            "raw": [
+              0,
+              372
+            ]
+          }
+        },
+        {
+          "cell": [
+            1726,
+            162
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            1118
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -46.622477214,
+            "lon": 143.9375,
+            "raw": [
+              0,
+              496
+            ]
+          }
+        },
+        {
+          "cell": [
+            1726,
+            162
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            1118
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -46.621841431,
+            "lon": 143.9375,
+            "raw": [
+              0,
+              621
+            ]
+          }
+        },
+        {
+          "cell": [
+            1726,
+            162
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            1118
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -46.621210734,
+            "lon": 143.9375,
+            "raw": [
+              0,
+              745
+            ]
+          }
+        },
+        {
+          "cell": [
+            1726,
+            162
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            1118
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -46.620580037,
+            "lon": 143.9375,
+            "raw": [
+              0,
+              869
+            ]
+          }
+        },
+        {
+          "cell": [
+            1726,
+            162
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            1118
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -46.619949341,
+            "lon": 143.9375,
+            "raw": [
+              0,
+              993
+            ]
+          }
+        },
+        {
+          "cell": [
+            1726,
+            162
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            1118
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -46.619318644,
+            "lon": 143.9375,
+            "raw": [
+              0,
+              1117
+            ]
+          }
+        },
+        {
+          "cell": [
+            1728,
+            162
+          ],
+          "kind": "interior_cover",
+          "leaf_path": [
+            1088
+          ],
+          "reason": "interior-cover centre outside every same-type spool polygon",
+          "type": 288
+        },
+        {
+          "cell": [
+            1771,
+            203
+          ],
+          "kind": "interior_cover",
+          "leaf_path": [
+            363
+          ],
+          "reason": "interior-cover centre outside every same-type spool polygon",
+          "type": 288
+        },
+        {
+          "cell": [
+            1837,
+            325
+          ],
+          "kind": "interior_cover",
+          "leaf_path": [
+            173
+          ],
+          "reason": "interior-cover centre outside every same-type spool polygon",
+          "type": 291
+        },
+        {
+          "cell": [
+            1833,
+            341
+          ],
+          "kind": "interior_cover",
+          "leaf_path": [
+            681,
+            0
+          ],
+          "reason": "interior-cover centre outside every same-type spool polygon",
+          "type": 291
+        },
+        {
+          "cell": [
+            1847,
+            353
+          ],
+          "kind": "interior_cover",
+          "leaf_path": [
+            1079
+          ],
+          "reason": "interior-cover centre outside every same-type spool polygon",
+          "type": 291
+        },
+        {
+          "cell": [
+            1854,
+            354
+          ],
+          "kind": "interior_cover",
+          "leaf_path": [
+            1118
+          ],
+          "reason": "interior-cover centre outside every same-type spool polygon",
+          "type": 291
+        },
+        {
+          "cell": [
+            1853,
+            366
+          ],
+          "kind": "interior_cover",
+          "leaf_path": [
+            1501
+          ],
+          "reason": "interior-cover centre outside every same-type spool polygon",
+          "type": 291
+        },
+        {
+          "cell": [
+            1792,
+            395
+          ],
+          "kind": "interior_cover",
+          "leaf_path": [
+            352
+          ],
+          "reason": "interior-cover centre outside every same-type spool polygon",
+          "type": 291
+        },
+        {
+          "cell": [
+            1801,
+            395
+          ],
+          "kind": "interior_cover",
+          "leaf_path": [
+            361
+          ],
+          "reason": "interior-cover centre outside every same-type spool polygon",
+          "type": 291
+        },
+        {
+          "cell": [
+            1805,
+            395
+          ],
+          "kind": "interior_cover",
+          "leaf_path": [
+            365
+          ],
+          "reason": "interior-cover centre outside every same-type spool polygon",
+          "type": 291
+        },
+        {
+          "cell": [
+            1814,
+            548
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            1709,
+            554
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 291
+        },
+        {
+          "cell": [
+            1529,
+            576
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            1530,
+            576
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            851,
+            637
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            867,
+            638
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            869,
+            638
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            870,
+            638
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            871,
+            638
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            872,
+            638
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        }
+      ],
+      "kinds": {
+        "background": {
+          "checked": 162489044,
+          "failing": 1431789,
+          "worst_error_raw": 0.5
+        },
+        "background_boundary": {
+          "checked": 89220002,
+          "failing": 16429512,
+          "worst_error_raw": 0.499998
+        },
+        "completeness": {
+          "checked": 1773724,
+          "failing": 752,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 1591996,
+          "failing": 823,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 2282817,
+          "failing": 1,
+          "worst_error_raw": 0.499999
+        },
+        "range": {
+          "checked": 294655700,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 40663837,
+          "failing": 0,
+          "worst_error_raw": 0.499998
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 240677249,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 3707027,
+      "tall_shapes": 61157
+    },
+    "10": {
+      "blocks": 6,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 0,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 119,
+          "failing": 0,
+          "worst_error_raw": 0.49975
+        },
+        "background_boundary": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "completeness": {
+          "checked": 2,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 8,
+          "failing": 0,
+          "worst_error_raw": 0.496154
+        },
+        "range": {
+          "checked": 127,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 104,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 9,
+      "tall_shapes": 0
+    },
+    "12": {
+      "blocks": 1,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 0,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 23,
+          "failing": 0,
+          "worst_error_raw": 0.491014
+        },
+        "background_boundary": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "completeness": {
+          "checked": 1,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 8,
+          "failing": 0,
+          "worst_error_raw": 0.400813
+        },
+        "range": {
+          "checked": 31,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 19,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 1,
+      "tall_shapes": 0
+    },
+    "2": {
+      "blocks": 241,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 840,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            417
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -43.51776123,
+            "lon": 146.12878418,
+            "raw": [
+              124,
+              3223
+            ]
+          }
+        },
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            417
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -43.51554362,
+            "lon": 146.132568359,
+            "raw": [
+              248,
+              3332
+            ]
+          }
+        },
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            417
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -43.513326009,
+            "lon": 146.136383057,
+            "raw": [
+              373,
+              3441
+            ]
+          }
+        },
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            417
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -43.511108398,
+            "lon": 146.140167236,
+            "raw": [
+              497,
+              3550
+            ]
+          }
+        },
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            417
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -43.506652832,
+            "lon": 146.147735596,
+            "raw": [
+              745,
+              3769
+            ]
+          }
+        },
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            417
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -43.504435221,
+            "lon": 146.151550293,
+            "raw": [
+              870,
+              3878
+            ]
+          }
+        },
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            417
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -43.502217611,
+            "lon": 146.155334473,
+            "raw": [
+              994,
+              3987
+            ]
+          }
+        },
+        {
+          "cell": [
+            458,
+            81
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            554
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -43.169189453,
+            "lon": 147.308349609,
+            "raw": [
+              1912,
+              3972
+            ]
+          }
+        },
+        {
+          "cell": [
+            458,
+            81
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            554
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -43.17171224,
+            "lon": 147.310424805,
+            "raw": [
+              1980,
+              3848
+            ]
+          }
+        },
+        {
+          "cell": [
+            458,
+            81
+          ],
+          "error_raw": null,
+          "kind": "background",
+          "leaf_path": [
+            554
+          ],
+          "reason": "not within half a raw unit of a same-type spool outline",
+          "vertex": {
+            "lat": -43.174235026,
+            "lon": 147.3125,
+            "raw": [
+              2048,
+              3724
+            ]
+          }
+        },
+        {
+          "cell": [
+            453,
+            76
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            389
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -43.583333333,
+            "lon": 146.649475098,
+            "raw": [
+              802,
+              4096
+            ]
+          }
+        },
+        {
+          "cell": [
+            453,
+            76
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            389
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -43.583333333,
+            "lon": 146.651580811,
+            "raw": [
+              871,
+              4096
+            ]
+          }
+        },
+        {
+          "cell": [
+            453,
+            76
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            389
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -43.583333333,
+            "lon": 146.652984619,
+            "raw": [
+              917,
+              4096
+            ]
+          }
+        },
+        {
+          "cell": [
+            453,
+            76
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            389
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -43.583333333,
+            "lon": 146.654449463,
+            "raw": [
+              965,
+              4096
+            ]
+          }
+        },
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            417
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -43.519185384,
+            "lon": 146.125,
+            "raw": [
+              0,
+              3153
+            ]
+          }
+        },
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            417
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -43.516784668,
+            "lon": 146.125,
+            "raw": [
+              0,
+              3271
+            ]
+          }
+        },
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            417
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -43.514383952,
+            "lon": 146.125,
+            "raw": [
+              0,
+              3389
+            ]
+          }
+        },
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            417
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -43.511983236,
+            "lon": 146.125,
+            "raw": [
+              0,
+              3507
+            ]
+          }
+        },
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            417
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -43.50958252,
+            "lon": 146.125,
+            "raw": [
+              0,
+              3625
+            ]
+          }
+        },
+        {
+          "cell": [
+            449,
+            77
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            417
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -43.507202148,
+            "lon": 146.125,
+            "raw": [
+              0,
+              3742
+            ]
+          }
+        }
+      ],
+      "kinds": {
+        "background": {
+          "checked": 9381949,
+          "failing": 6769,
+          "worst_error_raw": 0.499994
+        },
+        "background_boundary": {
+          "checked": 314060,
+          "failing": 116053,
+          "worst_error_raw": 0.499981
+        },
+        "completeness": {
+          "checked": 24403,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 19,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 30286,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "range": {
+          "checked": 11205677,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 1479382,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 9367991,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 231573,
+      "tall_shapes": 235
+    },
+    "4": {
+      "blocks": 21,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 2882,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 1946786,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "background_boundary": {
+          "checked": 7277,
+          "failing": 0,
+          "worst_error_raw": 0.499571
+        },
+        "completeness": {
+          "checked": 2006,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 3354,
+          "failing": 0,
+          "worst_error_raw": 0.499878
+        },
+        "range": {
+          "checked": 2592784,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 635367,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 1905174,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 14521,
+      "tall_shapes": 0
+    },
+    "6": {
+      "blocks": 6,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 175,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [
+        {
+          "cell": [
+            27,
+            9
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            155,
+            1
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -38.0,
+            "lon": 145.0,
+            "raw": [
+              2048,
+              0
+            ]
+          }
+        },
+        {
+          "cell": [
+            27,
+            9
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            155,
+            1
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -37.9609375,
+            "lon": 145.0,
+            "raw": [
+              2048,
+              120
+            ]
+          }
+        },
+        {
+          "cell": [
+            27,
+            9
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            155,
+            1
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -37.921549479,
+            "lon": 145.0,
+            "raw": [
+              2048,
+              241
+            ]
+          }
+        },
+        {
+          "cell": [
+            27,
+            9
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            155,
+            1
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -37.882486979,
+            "lon": 145.0,
+            "raw": [
+              2048,
+              361
+            ]
+          }
+        },
+        {
+          "cell": [
+            27,
+            9
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            155,
+            1
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -37.843098958,
+            "lon": 145.0,
+            "raw": [
+              2048,
+              482
+            ]
+          }
+        },
+        {
+          "cell": [
+            27,
+            9
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            155,
+            1
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -37.804036458,
+            "lon": 145.0,
+            "raw": [
+              2048,
+              602
+            ]
+          }
+        },
+        {
+          "cell": [
+            27,
+            9
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            155,
+            1
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -37.764648438,
+            "lon": 145.0,
+            "raw": [
+              2048,
+              723
+            ]
+          }
+        },
+        {
+          "cell": [
+            27,
+            9
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            155,
+            1
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -37.725585938,
+            "lon": 145.0,
+            "raw": [
+              2048,
+              843
+            ]
+          }
+        },
+        {
+          "cell": [
+            27,
+            9
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            155,
+            1
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -37.686197917,
+            "lon": 145.0,
+            "raw": [
+              2048,
+              964
+            ]
+          }
+        },
+        {
+          "cell": [
+            27,
+            9
+          ],
+          "error_raw": null,
+          "kind": "background_boundary",
+          "leaf_path": [
+            155,
+            1
+          ],
+          "reason": "boundary vertex outside every same-type spool polygon",
+          "vertex": {
+            "lat": -37.647135417,
+            "lon": 145.0,
+            "raw": [
+              2048,
+              1084
+            ]
+          }
+        },
+        {
+          "cell": [
+            15,
+            22
+          ],
+          "kind": "interior_cover",
+          "leaf_path": [
+            367
+          ],
+          "reason": "interior-cover centre outside every same-type spool polygon",
+          "type": 288
+        }
+      ],
+      "kinds": {
+        "background": {
+          "checked": 366528,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "background_boundary": {
+          "checked": 4921,
+          "failing": 4004,
+          "worst_error_raw": 0.497907
+        },
+        "completeness": {
+          "checked": 311,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 1,
+          "failing": 1,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 1223,
+          "failing": 0,
+          "worst_error_raw": 0.49993
+        },
+        "range": {
+          "checked": 482020,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 109348,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 354843,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 930,
+      "tall_shapes": 0
+    },
+    "8": {
+      "blocks": 6,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 11,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 147656,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "background_boundary": {
+          "checked": 128,
+          "failing": 0,
+          "worst_error_raw": 0.495834
+        },
+        "completeness": {
+          "checked": 67,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 287,
+          "failing": 0,
+          "worst_error_raw": 0.498944
+        },
+        "range": {
+          "checked": 255907,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 107836,
+          "failing": 0,
+          "worst_error_raw": 0.499981
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 139422,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 95,
+      "tall_shapes": 0
+    }
+  },
+  "pass": false,
+  "spool": "spool",
+  "timing": {
+    "c_check_s": 725.105,
+    "c_ns": 725104720315,
+    "c_stats": {
+      "calls": 2165,
+      "cells": 508493,
+      "d1_ns": 7190885637,
+      "d1_retries": 2118,
+      "failed_frames": 0,
+      "items": 309192246,
+      "leaves": 3954156,
+      "ns": 725104720315,
+      "rescues": 862877
+    },
+    "d1_decode_s": 7.191,
+    "d1_ns": 7190885637,
+    "pss_interval_s": 0.25,
+    "pss_peak_kb": 8265762,
+    "ranges": 2165,
+    "wall_s": 164.477,
+    "workers": 6
+  },
+  "tolerance_raw": 0.5,
+  "tool": "quantisation_roundtrip",
+  "totals": {
+    "background": {
+      "checked": 174332105,
+      "failing": 1438558,
+      "worst_error_raw": 0.5
+    },
+    "background_boundary": {
+      "checked": 89546388,
+      "failing": 16549569,
+      "worst_error_raw": 0.499998
+    },
+    "completeness": {
+      "checked": 1800514,
+      "failing": 752,
+      "worst_error_raw": 0.0
+    },
+    "interior_cover": {
+      "checked": 1592016,
+      "failing": 824,
+      "worst_error_raw": 0.0
+    },
+    "name_anchor": {
+      "checked": 2317983,
+      "failing": 1,
+      "worst_error_raw": 0.499999
+    },
+    "range": {
+      "checked": 309192246,
+      "failing": 0,
+      "worst_error_raw": 0.0
+    },
+    "road_node": {
+      "checked": 42995770,
+      "failing": 0,
+      "worst_error_raw": 0.499998
+    },
+    "road_point": {
+      "checked": 0,
+      "failing": 0,
+      "worst_error_raw": 0.0
+    },
+    "step": {
+      "checked": 252444802,
+      "failing": 0,
+      "worst_error_raw": 0.0
+    }
+  },
+  "wall_s": 164.5
+}

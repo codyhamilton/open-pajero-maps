@@ -1,0 +1,1120 @@
+{
+ "leaves_old": 141,
+ "leaves_new": 141,
+ "same_leaf_keys": true,
+ "elements": [
+  {
+   "leaf": [
+    872,
+    880,
+    "1544"
+   ],
+   "old_units": [
+    [
+     106,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     107,
+     2
+    ]
+   ],
+   "physical": 4202,
+   "decl_old": 106,
+   "unread_old": 4096,
+   "unread_vertices": 20740
+  },
+  {
+   "leaf": [
+    1530,
+    843,
+    "378.3"
+   ],
+   "old_units": [
+    [
+     282,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     283,
+     2
+    ]
+   ],
+   "physical": 4378,
+   "decl_old": 282,
+   "unread_old": 4096,
+   "unread_vertices": 20536
+  },
+  {
+   "leaf": [
+    1530,
+    844,
+    "410"
+   ],
+   "old_units": [
+    [
+     1987,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     1988,
+     2
+    ]
+   ],
+   "physical": 6083,
+   "decl_old": 1987,
+   "unread_old": 4096,
+   "unread_vertices": 20766
+  },
+  {
+   "leaf": [
+    1583,
+    707,
+    "111"
+   ],
+   "old_units": [
+    [
+     843,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     844,
+     2
+    ]
+   ],
+   "physical": 4939,
+   "decl_old": 843,
+   "unread_old": 4096,
+   "unread_vertices": 21774
+  },
+  {
+   "leaf": [
+    1669,
+    748,
+    "1413"
+   ],
+   "old_units": [
+    [
+     485,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     486,
+     2
+    ]
+   ],
+   "physical": 4581,
+   "decl_old": 485,
+   "unread_old": 4096,
+   "unread_vertices": 20864
+  },
+  {
+   "leaf": [
+    1672,
+    748,
+    "1416"
+   ],
+   "old_units": [
+    [
+     1106,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     1107,
+     2
+    ]
+   ],
+   "physical": 5202,
+   "decl_old": 1106,
+   "unread_old": 4096,
+   "unread_vertices": 20995
+  },
+  {
+   "leaf": [
+    1673,
+    718,
+    "457.3"
+   ],
+   "old_units": [
+    [
+     184,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     185,
+     2
+    ]
+   ],
+   "physical": 4280,
+   "decl_old": 184,
+   "unread_old": 4096,
+   "unread_vertices": 20545
+  },
+  {
+   "leaf": [
+    1673,
+    719,
+    "489.1"
+   ],
+   "old_units": [
+    [
+     1253,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     1254,
+     2
+    ]
+   ],
+   "physical": 5349,
+   "decl_old": 1253,
+   "unread_old": 4096,
+   "unread_vertices": 20646
+  },
+  {
+   "leaf": [
+    1681,
+    729,
+    "817"
+   ],
+   "old_units": [
+    [
+     2243,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     2244,
+     2
+    ]
+   ],
+   "physical": 6339,
+   "decl_old": 2243,
+   "unread_old": 4096,
+   "unread_vertices": 20782
+  },
+  {
+   "leaf": [
+    1687,
+    735,
+    "1015.3"
+   ],
+   "old_units": [
+    [
+     1207,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     1208,
+     2
+    ]
+   ],
+   "physical": 5303,
+   "decl_old": 1207,
+   "unread_old": 4096,
+   "unread_vertices": 20573
+  },
+  {
+   "leaf": [
+    1688,
+    734,
+    "984.13"
+   ],
+   "old_units": [
+    [
+     1120,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     1121,
+     2
+    ]
+   ],
+   "physical": 5216,
+   "decl_old": 1120,
+   "unread_old": 4096,
+   "unread_vertices": 20481
+  },
+  {
+   "leaf": [
+    1711,
+    729,
+    "815.0"
+   ],
+   "old_units": [
+    [
+     497,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     498,
+     2
+    ]
+   ],
+   "physical": 4593,
+   "decl_old": 497,
+   "unread_old": 4096,
+   "unread_vertices": 20486
+  },
+  {
+   "leaf": [
+    1711,
+    729,
+    "815.1"
+   ],
+   "old_units": [
+    [
+     403,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     404,
+     2
+    ]
+   ],
+   "physical": 4499,
+   "decl_old": 403,
+   "unread_old": 4096,
+   "unread_vertices": 20482
+  },
+  {
+   "leaf": [
+    1712,
+    729,
+    "816"
+   ],
+   "old_units": [
+    [
+     461,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     462,
+     2
+    ]
+   ],
+   "physical": 4557,
+   "decl_old": 461,
+   "unread_old": 4096,
+   "unread_vertices": 20768
+  },
+  {
+   "leaf": [
+    1712,
+    730,
+    "848"
+   ],
+   "old_units": [
+    [
+     1018,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     1019,
+     2
+    ]
+   ],
+   "physical": 5114,
+   "decl_old": 1018,
+   "unread_old": 4096,
+   "unread_vertices": 20811
+  },
+  {
+   "leaf": [
+    1732,
+    1493,
+    "676"
+   ],
+   "old_units": [
+    [
+     63,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     64,
+     2
+    ]
+   ],
+   "physical": 4159,
+   "decl_old": 63,
+   "unread_old": 4096,
+   "unread_vertices": 20805
+  },
+  {
+   "leaf": [
+    1755,
+    591,
+    "507.6"
+   ],
+   "old_units": [
+    [
+     2319,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     2320,
+     2
+    ]
+   ],
+   "physical": 6415,
+   "decl_old": 2319,
+   "unread_old": 4096,
+   "unread_vertices": 20593
+  },
+  {
+   "leaf": [
+    1769,
+    587,
+    "361.1"
+   ],
+   "old_units": [
+    [
+     289,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     290,
+     2
+    ]
+   ],
+   "physical": 4385,
+   "decl_old": 289,
+   "unread_old": 4096,
+   "unread_vertices": 23231
+  },
+  {
+   "leaf": [
+    1789,
+    731,
+    "893"
+   ],
+   "old_units": [
+    [
+     301,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     302,
+     2
+    ]
+   ],
+   "physical": 4397,
+   "decl_old": 301,
+   "unread_old": 4096,
+   "unread_vertices": 28931
+  },
+  {
+   "leaf": [
+    1793,
+    737,
+    "1057"
+   ],
+   "old_units": [
+    [
+     227,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     228,
+     2
+    ]
+   ],
+   "physical": 4323,
+   "decl_old": 227,
+   "unread_old": 4096,
+   "unread_vertices": 20562
+  },
+  {
+   "leaf": [
+    1794,
+    736,
+    "1026.3"
+   ],
+   "old_units": [
+    [
+     250,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     251,
+     2
+    ]
+   ],
+   "physical": 4346,
+   "decl_old": 250,
+   "unread_old": 4096,
+   "unread_vertices": 20583
+  },
+  {
+   "leaf": [
+    1795,
+    647,
+    "227"
+   ],
+   "old_units": [
+    [
+     20,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     21,
+     2
+    ]
+   ],
+   "physical": 4116,
+   "decl_old": 20,
+   "unread_old": 4096,
+   "unread_vertices": 20875
+  },
+  {
+   "leaf": [
+    1796,
+    648,
+    "260"
+   ],
+   "old_units": [
+    [
+     48,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     49,
+     2
+    ]
+   ],
+   "physical": 4144,
+   "decl_old": 48,
+   "unread_old": 4096,
+   "unread_vertices": 22633
+  },
+  {
+   "leaf": [
+    1814,
+    1467,
+    "1910.1"
+   ],
+   "old_units": [
+    [
+     634,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     635,
+     2
+    ]
+   ],
+   "physical": 4730,
+   "decl_old": 634,
+   "unread_old": 4096,
+   "unread_vertices": 20488
+  },
+  {
+   "leaf": [
+    1830,
+    1447,
+    "1254.3"
+   ],
+   "old_units": [
+    [
+     25,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     26,
+     2
+    ]
+   ],
+   "physical": 4121,
+   "decl_old": 25,
+   "unread_old": 4096,
+   "unread_vertices": 20818
+  },
+  {
+   "leaf": [
+    1842,
+    1303,
+    "754"
+   ],
+   "old_units": [
+    [
+     1021,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     1022,
+     2
+    ]
+   ],
+   "physical": 5117,
+   "decl_old": 1021,
+   "unread_old": 4096,
+   "unread_vertices": 20606
+  },
+  {
+   "leaf": [
+    1886,
+    839,
+    "254.1"
+   ],
+   "old_units": [
+    [
+     72,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     73,
+     2
+    ]
+   ],
+   "physical": 4168,
+   "decl_old": 72,
+   "unread_old": 4096,
+   "unread_vertices": 20615
+  },
+  {
+   "leaf": [
+    1903,
+    846,
+    "463"
+   ],
+   "old_units": [
+    [
+     878,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     879,
+     2
+    ]
+   ],
+   "physical": 4974,
+   "decl_old": 878,
+   "unread_old": 4096,
+   "unread_vertices": 20888
+  },
+  {
+   "leaf": [
+    1911,
+    1139,
+    "1655"
+   ],
+   "old_units": [
+    [
+     161,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     162,
+     2
+    ]
+   ],
+   "physical": 4257,
+   "decl_old": 161,
+   "unread_old": 4096,
+   "unread_vertices": 20738
+  },
+  {
+   "leaf": [
+    1915,
+    980,
+    "667.10"
+   ],
+   "old_units": [
+    [
+     1768,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     1769,
+     2
+    ]
+   ],
+   "physical": 5864,
+   "decl_old": 1768,
+   "unread_old": 4096,
+   "unread_vertices": 20479
+  },
+  {
+   "leaf": [
+    1915,
+    980,
+    "667.11"
+   ],
+   "old_units": [
+    [
+     1325,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     1326,
+     2
+    ]
+   ],
+   "physical": 5421,
+   "decl_old": 1325,
+   "unread_old": 4096,
+   "unread_vertices": 20481
+  },
+  {
+   "leaf": [
+    1915,
+    980,
+    "667.14"
+   ],
+   "old_units": [
+    [
+     670,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     671,
+     2
+    ]
+   ],
+   "physical": 4766,
+   "decl_old": 670,
+   "unread_old": 4096,
+   "unread_vertices": 20478
+  },
+  {
+   "leaf": [
+    1915,
+    980,
+    "667.15"
+   ],
+   "old_units": [
+    [
+     1062,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     1063,
+     2
+    ]
+   ],
+   "physical": 5158,
+   "decl_old": 1062,
+   "unread_old": 4096,
+   "unread_vertices": 20480
+  },
+  {
+   "leaf": [
+    1929,
+    1121,
+    "1065"
+   ],
+   "old_units": [
+    [
+     2145,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     2146,
+     2
+    ]
+   ],
+   "physical": 6241,
+   "decl_old": 2145,
+   "unread_old": 4096,
+   "unread_vertices": 20767
+  },
+  {
+   "leaf": [
+    1936,
+    1119,
+    "1008.0"
+   ],
+   "old_units": [
+    [
+     1534,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     1535,
+     2
+    ]
+   ],
+   "physical": 5630,
+   "decl_old": 1534,
+   "unread_old": 4096,
+   "unread_vertices": 20486
+  },
+  {
+   "leaf": [
+    1941,
+    1105,
+    "565.3"
+   ],
+   "old_units": [
+    [
+     74,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     75,
+     2
+    ]
+   ],
+   "physical": 4170,
+   "decl_old": 74,
+   "unread_old": 4096,
+   "unread_vertices": 20476
+  },
+  {
+   "leaf": [
+    1948,
+    1098,
+    "348"
+   ],
+   "old_units": [
+    [
+     807,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     808,
+     2
+    ]
+   ],
+   "physical": 4903,
+   "decl_old": 807,
+   "unread_old": 4096,
+   "unread_vertices": 20739
+  },
+  {
+   "leaf": [
+    1957,
+    771,
+    "101.9"
+   ],
+   "old_units": [
+    [
+     338,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     339,
+     2
+    ]
+   ],
+   "physical": 4434,
+   "decl_old": 338,
+   "unread_old": 4096,
+   "unread_vertices": 20822
+  },
+  {
+   "leaf": [
+    1969,
+    1069,
+    "1457"
+   ],
+   "old_units": [
+    [
+     1622,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     1623,
+     2
+    ]
+   ],
+   "physical": 5718,
+   "decl_old": 1622,
+   "unread_old": 4096,
+   "unread_vertices": 20694
+  },
+  {
+   "leaf": [
+    1969,
+    1070,
+    "1489"
+   ],
+   "old_units": [
+    [
+     690,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     691,
+     2
+    ]
+   ],
+   "physical": 4786,
+   "decl_old": 690,
+   "unread_old": 4096,
+   "unread_vertices": 20956
+  },
+  {
+   "leaf": [
+    2007,
+    1179,
+    "887"
+   ],
+   "old_units": [
+    [
+     517,
+     2
+    ]
+   ],
+   "new_units": [
+    [
+     4095,
+     2
+    ],
+    [
+     518,
+     2
+    ]
+   ],
+   "physical": 4613,
+   "decl_old": 517,
+   "unread_old": 4096,
+   "unread_vertices": 20634
+  }
+ ],
+ "record_bytes_identical": true,
+ "non_bg_sections_identical": true,
+ "wrapped_elements": 41,
+ "unread_records_total": 167936,
+ "unread_vertices_total": 861107,
+ "all_unread_4096": true
+}
