@@ -1,0 +1,30 @@
+{
+  "anon": 8970240,
+  "argv": [
+    "/home/codyh/workspace/open-pajero-maps-14-completeness/.venv-rp/bin/python",
+    "-B",
+    "parser/tools/quantisation_roundtrip.py",
+    "--disc",
+    "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-14/G_new/ALLDATA.KWI",
+    "--spool",
+    "/home/codyh/workspace/open-pajero-maps-14-completeness/output/extract_timing/spool",
+    "-j",
+    "4",
+    "--engine",
+    "c",
+    "--out",
+    "/home/codyh/workspace/open-pajero-maps/output/scratch-43/k1old_314.json"
+  ],
+  "cgroup": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/maps-heavy-116999.scope",
+  "cgroup_error": null,
+  "cwd": "/home/codyh/workspace/open-pajero-maps-43-k1old",
+  "exit": 1,
+  "file": 411500544,
+  "file_dirty": 16384,
+  "max_rss_kib": 4445072,
+  "memory_peak": 2427555840,
+  "pid": 117001,
+  "ppid": 117000,
+  "time_v_elapsed_s": 109.58,
+  "wall_s": 109.58599463501014
+}

@@ -1,0 +1,18 @@
+HEAD 6a65cf9e4e24adc99bcee645d4ff6b69f000f823
+run_heavy_python: unit=maps-heavy-136186 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['/home/codyh/workspace/open-pajero-maps-14-completeness/.venv-rp/bin/python', '-B', 'parser/build_alldata.py', '--spool', 'output/goldens-3C/l0_divided_trim_halo/spool', '--levels', '0', '--window', '0', '1755', '591', '1756', '592', '-j', '4', '--out', '/home/codyh/workspace/open-pajero-maps/output/scratch-43/golden/ALLDATA.KWI', '--frame-dump', '/home/codyh/workspace/open-pajero-maps/output/scratch-43/golden/frames']
+level 0: encoding ...
+level 0: out-of-span names dropped: 0
+level 0: overlap: 97 shapes shared into 97 edge + 0 interior cells, 0 overlapped cells skipped (not emitted)
+level 0: name halo added 340 neighbouring road-name records to divided sub-cells
+level 0: TRIM road: dropped 207/1,083 (19.114%) in 1 sub-cells  ** >1% BLOCKER **
+level 0: TRIM background: dropped 227/8,824 (2.573%) in 1 sub-cells  ** >1% BLOCKER **
+level 0: 16 parcels (1 parents divided), 310,268 frame bytes, max frame 131,064 bytes (threshold 131,070) [0.9s]
+assembling ALLDATA.KWI ... [encode total 0.9s]
+wrote /home/codyh/workspace/open-pajero-maps/output/scratch-43/golden/ALLDATA.KWI (332,032 bytes) [assemble 0.0s]
+wrote /home/codyh/workspace/open-pajero-maps/output/scratch-43/golden/manifest.json
+{"argv0": "/home/codyh/workspace/open-pajero-maps-14-completeness/.venv-rp/bin/python", "exit": 0, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-43/runs/golden_window.json", "max_rss_kib": 66844, "memory_peak": 87437312, "wall_s": 1.103}
+rc 0
+905d9c95b04dc59c00f6d412ec2c23766d4857afa92f0d9f7e5d182fff7755bd  /home/codyh/workspace/open-pajero-maps/output/scratch-43/golden/frames.bin
+905d9c95b04dc59c00f6d412ec2c23766d4857afa92f0d9f7e5d182fff7755bd  output/goldens-3C/l0_divided_trim_halo/frames.bin
+FRAMES_IDENTICAL

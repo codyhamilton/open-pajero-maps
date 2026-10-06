@@ -1,0 +1,155 @@
+[
+ {
+  "level": 0,
+  "type": 288,
+  "window": [
+   1769,
+   202,
+   1772,
+   205
+  ],
+  "table_fill_before": 32,
+  "table_boundary_before": 255,
+  "background_all_types": 32,
+  "background_type": 32,
+  "background_boundary_all_types": 403,
+  "background_boundary_type": 403,
+  "overlaps_37_cells": false
+ },
+ {
+  "level": 0,
+  "type": 291,
+  "window": [
+   828,
+   745,
+   831,
+   748
+  ],
+  "table_fill_before": 69,
+  "table_boundary_before": 829,
+  "background_all_types": 69,
+  "background_type": 62,
+  "background_boundary_all_types": 1224,
+  "background_boundary_type": 1224,
+  "overlaps_37_cells": false
+ },
+ {
+  "level": 0,
+  "type": 289,
+  "window": [
+   1401,
+   851,
+   1402,
+   852
+  ],
+  "table_fill_before": 32,
+  "table_boundary_before": 90,
+  "background_all_types": 64,
+  "background_type": 32,
+  "background_boundary_all_types": 356,
+  "background_boundary_type": 117,
+  "overlaps_37_cells": false
+ },
+ {
+  "level": 0,
+  "type": 578,
+  "window": [
+   1400,
+   1287,
+   1401,
+   1288
+  ],
+  "table_fill_before": 23,
+  "table_boundary_before": 60,
+  "background_all_types": 23,
+  "background_type": 23,
+  "background_boundary_all_types": 191,
+  "background_boundary_type": 191,
+  "overlaps_37_cells": false
+ },
+ {
+  "level": 2,
+  "type": 289,
+  "window": [
+   202,
+   229,
+   203,
+   230
+  ],
+  "table_fill_before": 17,
+  "table_boundary_before": 108,
+  "background_all_types": 17,
+  "background_type": 17,
+  "background_boundary_all_types": 108,
+  "background_boundary_type": 108,
+  "overlaps_37_cells": false
+ },
+ {
+  "level": 6,
+  "type": 288,
+  "window": [
+   15,
+   17,
+   16,
+   18
+  ],
+  "table_fill_before": 0,
+  "table_boundary_before": 132,
+  "background_all_types": 0,
+  "background_type": 0,
+  "background_boundary_all_types": 264,
+  "background_boundary_type": 264,
+  "overlaps_37_cells": false
+ },
+ {
+  "level": 0,
+  "type": 291,
+  "window": [
+   1792,
+   395,
+   1793,
+   396
+  ],
+  "table_fill_before": null,
+  "table_boundary_before": 196,
+  "background_all_types": 0,
+  "background_type": 0,
+  "background_boundary_all_types": 452,
+  "background_boundary_type": 452,
+  "overlaps_37_cells": false
+ },
+ {
+  "level": 0,
+  "type": 291,
+  "window": [
+   1801,
+   395,
+   1802,
+   396
+  ],
+  "table_fill_before": null,
+  "table_boundary_before": 132,
+  "background_all_types": 0,
+  "background_type": 0,
+  "background_boundary_all_types": 304,
+  "background_boundary_type": 304,
+  "overlaps_37_cells": false
+ },
+ {
+  "level": 0,
+  "type": 291,
+  "window": [
+   1805,
+   395,
+   1806,
+   396
+  ],
+  "table_fill_before": null,
+  "table_boundary_before": 120,
+  "background_all_types": 0,
+  "background_type": 0,
+  "background_boundary_all_types": 120,
+  "background_boundary_type": 120,
+  "overlaps_37_cells": false
+ }
+]

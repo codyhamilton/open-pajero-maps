@@ -1,0 +1,33 @@
+{
+ "seed": 4314,
+ "rings": 20000,
+ "parity_queries": 1594246,
+ "failures": [
+  {
+   "case": "r359",
+   "error": "size -1",
+   "size": -1
+  },
+  {
+   "case": "r8475",
+   "error": "size -1",
+   "size": -1
+  },
+  {
+   "case": "r11892",
+   "error": "size -1",
+   "size": -1
+  },
+  {
+   "case": "r14503",
+   "error": "size -1",
+   "size": -1
+  },
+  {
+   "case": "r19650",
+   "error": "size -1",
+   "size": -1
+  }
+ ],
+ "rate": 0.00025
+}

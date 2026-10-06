@@ -1,0 +1,52 @@
+{
+ "golden": "l0_divided_trim_halo",
+ "path": "output/goldens-3C/l0_divided_trim_halo",
+ "files": {
+  "frames.bin": {
+   "sha256": "905d9c95b04dc59c00f6d412ec2c23766d4857afa92f0d9f7e5d182fff7755bd",
+   "bytes": 310268
+  },
+  "frames.tsv": {
+   "sha256": "55dab87f2b17e85381cc75d8fcf6e164acd0921e88ffe4a791487f2efc1ced58",
+   "bytes": 1501
+  },
+  "golden.json": {
+   "sha256": "dfa9901552dcc52781147fbbb3fcd056291fe71556301047a096b9c52aafb89c",
+   "bytes": 2232
+  },
+  "spool/level_0.idx": {
+   "sha256": "9f19e09a91d203891e3bd389718337e4bbf267aa8e171312b73e5931f4fce4e0",
+   "bytes": 408
+  },
+  "spool/level_0.data": {
+   "sha256": "1b3911f250ecdcf795f0b681fbf3b8f00d79a897705681fc03b20359a9bbb354",
+   "bytes": 6510392
+  }
+ },
+ "golden_mtime_note": "frames.bin mtime 2026-10-03 06:36 AEST (post-3-14 recapture; review c2)",
+ "rebuild_at_master": {
+  "commit": "6a65cf9",
+  "script": "run_golden_window.sh",
+  "log": "golden_window.log",
+  "frames_sha256": "905d9c95b04dc59c00f6d412ec2c23766d4857afa92f0d9f7e5d182fff7755bd",
+  "identical_to_golden": true,
+  "trim_lines": [
+   "level 0: TRIM road: dropped 207/1,083 (19.114%) in 1 sub-cells  ** >1% BLOCKER **",
+   "level 0: TRIM background: dropped 227/8,824 (2.573%) in 1 sub-cells  ** >1% BLOCKER **"
+  ]
+ },
+ "full_au_trim_citation": {
+  "log": "output/scratch-36/run_p3_endpoints.log",
+  "log_sha256": "251132313470340647cef17b37fba0a4002e44aec00ab67e942ebdca9e457a1e",
+  "note": "plan 36 P3 endpoint rebuilds: lines 18/32/33 = E_pre314 (33006aa -> 013586b5), lines 91/105/106 = E_at314 (d35b565 -> 4ed9cd80)",
+  "lines": {
+   "18": "level 8: TRIM road: dropped 308/14,012 (2.198%) in 1 sub-cells  ** >1% BLOCKER **",
+   "32": "level 0: TRIM road: dropped 207/3,015,057 (0.007%) in 1 sub-cells",
+   "33": "level 0: TRIM background: dropped 227/11,029,580 (0.002%) in 1 sub-cells",
+   "91": "level 8: TRIM road: dropped 308/14,012 (2.198%) in 1 sub-cells  ** >1% BLOCKER **",
+   "105": "level 0: TRIM road: dropped 207/3,015,057 (0.007%) in 1 sub-cells",
+   "106": "level 0: TRIM background: dropped 227/11,029,580 (0.002%) in 1 sub-cells"
+  }
+ },
+ "scratch_3_12_G_build_log": "absent; dropped: the before-3-14 L8 road 308/14,012 line is carried by output/scratch-3-11/G_new_build.log:10 and the E_pre314 line 18 above"
+}
