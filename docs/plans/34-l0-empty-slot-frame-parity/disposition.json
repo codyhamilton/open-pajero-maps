@@ -1,195 +1,232 @@
 {
-  "cells": [
-    {
-      "cause": "Own out-of-span class-2 polygon clips to zero records; own-row existence still indexes an empty background-header frame; counted O03 name admission removes the sole name and probe-and-pad preserves its 320-byte extent",
-      "cell": [
-        0,
-        541
-      ],
-      "evidence_refs": [
-        "phase2_cause.md",
-        "witnesses/spool.json",
-        "witnesses/g_successor.json",
-        "witnesses/g_historical.json",
-        "witnesses/r.json",
-        "witnesses/summary.json",
-        "parser/build_alldata.py:_omit_outside_mask_shells",
-        "parser/kiwiw/_e2.c:kw_e2",
-        "parser/kiwiw/_cenc.c:bg_shape/enc_bg/encode_common",
-        "parser/kiwiw/alldata_writer.py:EMPTY_BMT_OFFSET/EMPTY_BMT_SIZE/build_alldata_kwi"
-      ],
-      "execute": {
-        "block_proof": null,
-        "candidate_witness": null,
-        "diff_report": null,
-        "k1_exit": null,
-        "k1_pass": null,
-        "k1_report": null,
-        "new_disc_path": "output/scratch-34/G_new/ALLDATA.KWI",
-        "new_disc_sha256": null,
-        "observed_diff_scope": null,
-        "perth_sha256": null,
-        "protected_after": null,
-        "protected_before": null,
-        "spool_fingerprint": null
-      },
-      "frame": {
-        "background_count": 0,
-        "frame_class": "leaf",
-        "leaf_path": [
-          928
-        ],
-        "length": 320,
-        "name_count": 0,
-        "offset": 197597600,
-        "payload_class": "padded_shell",
-        "road_count": 0,
-        "sha256": "967b1d86ce25c23859a17c1332e95a6301539b8790cd45960b0f2e893ba72f07"
-      },
-      "level": 0,
-      "proposed_fix": "Omit only the witnessed encoder shell after probe-and-pad; preserve any payload or unknown layout",
-      "residual": "Execute must measure the candidate successor, three-cell multiset confinement, block absence, live K1 exit 0, Perth and immutable protected inputs",
-      "source_row": 11689,
-      "verdict": "conflict-open"
-    },
-    {
-      "cause": "Own out-of-span class-2 polygon clips to zero records; own-row existence still indexes an empty background-header frame",
-      "cell": [
-        0,
-        562
-      ],
-      "evidence_refs": [
-        "phase2_cause.md",
-        "witnesses/spool.json",
-        "witnesses/g_successor.json",
-        "witnesses/g_historical.json",
-        "witnesses/r.json",
-        "witnesses/summary.json",
-        "parser/build_alldata.py:_omit_outside_mask_shells",
-        "parser/kiwiw/_e2.c:kw_e2",
-        "parser/kiwiw/_cenc.c:bg_shape/enc_bg/encode_common",
-        "parser/kiwiw/alldata_writer.py:EMPTY_BMT_OFFSET/EMPTY_BMT_SIZE/build_alldata_kwi"
-      ],
-      "execute": {
-        "block_proof": null,
-        "candidate_witness": null,
-        "diff_report": null,
-        "k1_exit": null,
-        "k1_pass": null,
-        "k1_report": null,
-        "new_disc_path": "output/scratch-34/G_new/ALLDATA.KWI",
-        "new_disc_sha256": null,
-        "observed_diff_scope": null,
-        "perth_sha256": null,
-        "protected_after": null,
-        "protected_before": null,
-        "spool_fingerprint": null
-      },
-      "frame": {
-        "background_count": 0,
-        "frame_class": "leaf",
-        "leaf_path": [
-          1600
-        ],
-        "length": 160,
-        "name_count": 0,
-        "offset": 197597920,
-        "payload_class": "padded_shell",
-        "road_count": 0,
-        "sha256": "e22e27dfc439350e6b0ecbaf8821744a99e3d91118e9d5e7127d3ebea9e8b7b9"
-      },
-      "level": 0,
-      "proposed_fix": "Omit only the witnessed encoder shell after probe-and-pad; preserve any payload or unknown layout",
-      "residual": "Execute must measure the candidate successor, three-cell multiset confinement, block absence, live K1 exit 0, Perth and immutable protected inputs",
-      "source_row": 13990,
-      "verdict": "conflict-open"
-    },
-    {
-      "cause": "Own out-of-span class-2 polygon clips to zero records; own-row existence still indexes an empty background-header frame",
-      "cell": [
-        0,
-        563
-      ],
-      "evidence_refs": [
-        "phase2_cause.md",
-        "witnesses/spool.json",
-        "witnesses/g_successor.json",
-        "witnesses/g_historical.json",
-        "witnesses/r.json",
-        "witnesses/summary.json",
-        "parser/build_alldata.py:_omit_outside_mask_shells",
-        "parser/kiwiw/_e2.c:kw_e2",
-        "parser/kiwiw/_cenc.c:bg_shape/enc_bg/encode_common",
-        "parser/kiwiw/alldata_writer.py:EMPTY_BMT_OFFSET/EMPTY_BMT_SIZE/build_alldata_kwi"
-      ],
-      "execute": {
-        "block_proof": null,
-        "candidate_witness": null,
-        "diff_report": null,
-        "k1_exit": null,
-        "k1_pass": null,
-        "k1_report": null,
-        "new_disc_path": "output/scratch-34/G_new/ALLDATA.KWI",
-        "new_disc_sha256": null,
-        "observed_diff_scope": null,
-        "perth_sha256": null,
-        "protected_after": null,
-        "protected_before": null,
-        "spool_fingerprint": null
-      },
-      "frame": {
-        "background_count": 0,
-        "frame_class": "leaf",
-        "leaf_path": [
-          1632
-        ],
-        "length": 160,
-        "name_count": 0,
-        "offset": 197598080,
-        "payload_class": "padded_shell",
-        "road_count": 0,
-        "sha256": "0126fc2dcd7acff3f718aa72a7d210bbb6aec2a913462e34d88f6b449cd69138"
-      },
-      "level": 0,
-      "proposed_fix": "Omit only the witnessed encoder shell after probe-and-pad; preserve any payload or unknown layout",
-      "residual": "Execute must measure the candidate successor, three-cell multiset confinement, block absence, live K1 exit 0, Perth and immutable protected inputs",
-      "source_row": 14169,
-      "verdict": "conflict-open"
-    }
-  ],
-  "commands": "phase2_commands.md",
-  "conflict_open_count": 3,
-  "contract_amendment_required": "Execute must explicitly note post-probe shell omission in docs/design/out-of-span-name-guard.md",
-  "expected_diff_scope": [
-    {
-      "cell": [
-        0,
-        541
-      ],
-      "change": "sole pinned record-less frame removed",
-      "level": 0
-    },
-    {
-      "cell": [
-        0,
-        562
-      ],
-      "change": "sole pinned record-less frame removed",
-      "level": 0
-    },
-    {
-      "cell": [
-        0,
-        563
-      ],
-      "change": "sole pinned record-less frame removed",
-      "level": 0
-    }
-  ],
-  "phase3_closed": false,
-  "plan29_residual_discharged": false,
-  "predecessor_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
-  "r_sha256": "8c2d20275227b9d2abb0f1802d4e0cbb6697f46545794d19e1a2024b6f169275",
-  "schema": 1,
-  "status": "implementation-ready; guarded Execute verification pending"
+ "cells": [
+  {
+   "cause": "Own out-of-span class-2 polygon clips to zero records; own-row existence still indexes an empty background-header frame; counted O03 name admission removes the sole name and probe-and-pad preserves its 320-byte extent",
+   "cell": [
+    0,
+    541
+   ],
+   "evidence_refs": [
+    "phase2_cause.md",
+    "witnesses/spool.json",
+    "witnesses/g_successor.json",
+    "witnesses/g_historical.json",
+    "witnesses/r.json",
+    "witnesses/summary.json",
+    "parser/build_alldata.py:_omit_outside_mask_shells",
+    "parser/kiwiw/_e2.c:kw_e2",
+    "parser/kiwiw/_cenc.c:bg_shape/enc_bg/encode_common",
+    "parser/kiwiw/alldata_writer.py:EMPTY_BMT_OFFSET/EMPTY_BMT_SIZE/build_alldata_kwi"
+   ],
+   "execute": {
+    "block_proof": "phase2/block_check.json",
+    "candidate_witness": "witnesses/g_successor_4e6b0de7.json",
+    "diff_report": "phase2/au_cell_diff.json",
+    "k1_exit": 0,
+    "k1_pass": true,
+    "k1_report": "phase2/k1.json",
+    "new_disc_path": "output/scratch-34/G_new/ALLDATA.KWI",
+    "new_disc_sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+    "observed_diff_scope": "5 L0 cells removed, all removed_outside_mask_empty_shell: (0,141),(0,176),(0,541),(0,562),(0,563); 0 other; all other cells whole-frame multiset identical; frames 3954159->3954154",
+    "perth_report": "phase2/perth_cell_diff.json",
+    "perth_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+    "protected_after": "phase2/protected_after.json",
+    "protected_before": "phase2/protected_before.json",
+    "r_check": "phase2/r_check.json",
+    "spool_fingerprint": "unchanged (protected_before.json == protected_after.json)",
+    "successor_oracle": "successor_oracle_4e6b0de7.json"
+   },
+   "frame": {
+    "background_count": 0,
+    "frame_class": "leaf",
+    "leaf_path": [
+     928
+    ],
+    "length": 320,
+    "name_count": 0,
+    "offset": 197597600,
+    "payload_class": "padded_shell",
+    "road_count": 0,
+    "sha256": "967b1d86ce25c23859a17c1332e95a6301539b8790cd45960b0f2e893ba72f07"
+   },
+   "level": 0,
+   "proposed_fix": "General rule (unit 2-02): omit an outside-mask cell whose final frame is the exact encoder empty shell, after probe-and-pad; inside-mask and any record/payload/unknown layout kept",
+   "residual": "none for this cell; frame absent on 4e6b0de7 and empty_slot on R",
+   "source_row": 11689,
+   "verdict": "fix-landed"
+  },
+  {
+   "cause": "Own out-of-span class-2 polygon clips to zero records; own-row existence still indexes an empty background-header frame",
+   "cell": [
+    0,
+    562
+   ],
+   "evidence_refs": [
+    "phase2_cause.md",
+    "witnesses/spool.json",
+    "witnesses/g_successor.json",
+    "witnesses/g_historical.json",
+    "witnesses/r.json",
+    "witnesses/summary.json",
+    "parser/build_alldata.py:_omit_outside_mask_shells",
+    "parser/kiwiw/_e2.c:kw_e2",
+    "parser/kiwiw/_cenc.c:bg_shape/enc_bg/encode_common",
+    "parser/kiwiw/alldata_writer.py:EMPTY_BMT_OFFSET/EMPTY_BMT_SIZE/build_alldata_kwi"
+   ],
+   "execute": {
+    "block_proof": "phase2/block_check.json",
+    "candidate_witness": "witnesses/g_successor_4e6b0de7.json",
+    "diff_report": "phase2/au_cell_diff.json",
+    "k1_exit": 0,
+    "k1_pass": true,
+    "k1_report": "phase2/k1.json",
+    "new_disc_path": "output/scratch-34/G_new/ALLDATA.KWI",
+    "new_disc_sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+    "observed_diff_scope": "5 L0 cells removed, all removed_outside_mask_empty_shell: (0,141),(0,176),(0,541),(0,562),(0,563); 0 other; all other cells whole-frame multiset identical; frames 3954159->3954154",
+    "perth_report": "phase2/perth_cell_diff.json",
+    "perth_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+    "protected_after": "phase2/protected_after.json",
+    "protected_before": "phase2/protected_before.json",
+    "r_check": "phase2/r_check.json",
+    "spool_fingerprint": "unchanged (protected_before.json == protected_after.json)",
+    "successor_oracle": "successor_oracle_4e6b0de7.json"
+   },
+   "frame": {
+    "background_count": 0,
+    "frame_class": "leaf",
+    "leaf_path": [
+     1600
+    ],
+    "length": 160,
+    "name_count": 0,
+    "offset": 197597920,
+    "payload_class": "padded_shell",
+    "road_count": 0,
+    "sha256": "e22e27dfc439350e6b0ecbaf8821744a99e3d91118e9d5e7127d3ebea9e8b7b9"
+   },
+   "level": 0,
+   "proposed_fix": "General rule (unit 2-02): omit an outside-mask cell whose final frame is the exact encoder empty shell, after probe-and-pad; inside-mask and any record/payload/unknown layout kept",
+   "residual": "none for this cell; frame absent on 4e6b0de7 and empty_slot on R",
+   "source_row": 13990,
+   "verdict": "fix-landed"
+  },
+  {
+   "cause": "Own out-of-span class-2 polygon clips to zero records; own-row existence still indexes an empty background-header frame",
+   "cell": [
+    0,
+    563
+   ],
+   "evidence_refs": [
+    "phase2_cause.md",
+    "witnesses/spool.json",
+    "witnesses/g_successor.json",
+    "witnesses/g_historical.json",
+    "witnesses/r.json",
+    "witnesses/summary.json",
+    "parser/build_alldata.py:_omit_outside_mask_shells",
+    "parser/kiwiw/_e2.c:kw_e2",
+    "parser/kiwiw/_cenc.c:bg_shape/enc_bg/encode_common",
+    "parser/kiwiw/alldata_writer.py:EMPTY_BMT_OFFSET/EMPTY_BMT_SIZE/build_alldata_kwi"
+   ],
+   "execute": {
+    "block_proof": "phase2/block_check.json",
+    "candidate_witness": "witnesses/g_successor_4e6b0de7.json",
+    "diff_report": "phase2/au_cell_diff.json",
+    "k1_exit": 0,
+    "k1_pass": true,
+    "k1_report": "phase2/k1.json",
+    "new_disc_path": "output/scratch-34/G_new/ALLDATA.KWI",
+    "new_disc_sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+    "observed_diff_scope": "5 L0 cells removed, all removed_outside_mask_empty_shell: (0,141),(0,176),(0,541),(0,562),(0,563); 0 other; all other cells whole-frame multiset identical; frames 3954159->3954154",
+    "perth_report": "phase2/perth_cell_diff.json",
+    "perth_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+    "protected_after": "phase2/protected_after.json",
+    "protected_before": "phase2/protected_before.json",
+    "r_check": "phase2/r_check.json",
+    "spool_fingerprint": "unchanged (protected_before.json == protected_after.json)",
+    "successor_oracle": "successor_oracle_4e6b0de7.json"
+   },
+   "frame": {
+    "background_count": 0,
+    "frame_class": "leaf",
+    "leaf_path": [
+     1632
+    ],
+    "length": 160,
+    "name_count": 0,
+    "offset": 197598080,
+    "payload_class": "padded_shell",
+    "road_count": 0,
+    "sha256": "0126fc2dcd7acff3f718aa72a7d210bbb6aec2a913462e34d88f6b449cd69138"
+   },
+   "level": 0,
+   "proposed_fix": "General rule (unit 2-02): omit an outside-mask cell whose final frame is the exact encoder empty shell, after probe-and-pad; inside-mask and any record/payload/unknown layout kept",
+   "residual": "none for this cell; frame absent on 4e6b0de7 and empty_slot on R",
+   "source_row": 14169,
+   "verdict": "fix-landed"
+  }
+ ],
+ "commands": "phase2_commands.md",
+ "conflict_open_count": 0,
+ "contract_amendment_required": "Done: docs/design/out-of-span-name-guard.md \u00a7 Final outside-mask empty-shell omission",
+ "expected_diff_scope": [
+  {
+   "cell": [
+    0,
+    541
+   ],
+   "change": "sole pinned record-less frame removed",
+   "level": 0
+  },
+  {
+   "cell": [
+    0,
+    562
+   ],
+   "change": "sole pinned record-less frame removed",
+   "level": 0
+  },
+  {
+   "cell": [
+    0,
+    563
+   ],
+   "change": "sole pinned record-less frame removed",
+   "level": 0
+  }
+ ],
+ "observed_diff_scope": {
+  "note": "(0,141) and (0,176) are outside the Phase 1 block census (a different L0 block) and were not in expected_diff_scope; the general rule removed them, the classified diff lists them, and r-check proves both empty_slot on R. expected_diff_scope is the pre-2-02 three-cell expectation and is kept for history.",
+  "other": [],
+  "removed_outside_mask_empty_shell": [
+   [
+    0,
+    141
+   ],
+   [
+    0,
+    176
+   ],
+   [
+    0,
+    541
+   ],
+   [
+    0,
+    562
+   ],
+   [
+    0,
+    563
+   ]
+  ]
+ },
+ "phase3_closed": false,
+ "plan29_residual_discharged": true,
+ "predecessor_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+ "r_sha256": "8c2d20275227b9d2abb0f1802d4e0cbb6697f46545794d19e1a2024b6f169275",
+ "schema": 1,
+ "status": "fix-landed; guarded Execute verification passed (run_p2b, 2026-10-06 10:00 AEST)",
+ "successor_oracle": "successor_oracle_4e6b0de7.json",
+ "successor_sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448"
 }

@@ -1,0 +1,202 @@
+{
+  "block0": {
+    "cells_empty": 2048,
+    "pass": true
+  },
+  "changed_count": 5,
+  "comparison": "whole indexed frame-byte multiset per parent cell, all levels; offsets may relocate",
+  "counts_by_level": {
+    "0": {
+      "removed_outside_mask_empty_shell": 5
+    }
+  },
+  "diff_scope": {
+    "additional_cells_beyond_phase1": [
+      [
+        0,
+        0,
+        141
+      ],
+      [
+        0,
+        0,
+        176
+      ]
+    ],
+    "phase1_cells": [
+      [
+        0,
+        0,
+        541
+      ],
+      [
+        0,
+        0,
+        562
+      ],
+      [
+        0,
+        0,
+        563
+      ]
+    ],
+    "r_empty_slot_proof": "all 5 removed cells empty_slot (absent_BMT_sentinel) on R 8c2d2027 via plan-29 hardened reader; 0 lookup_failed",
+    "removed_cells": [
+      {
+        "cell": [
+          0,
+          0,
+          141
+        ],
+        "class": "removed_outside_mask_empty_shell",
+        "new_frame_count": 0,
+        "old_frames": [
+          [
+            160,
+            "6445327e05d7574938beb5bc0ef3c69df5fe6295ed1e4d6e4a0372e46bc93f34"
+          ]
+        ]
+      },
+      {
+        "cell": [
+          0,
+          0,
+          176
+        ],
+        "class": "removed_outside_mask_empty_shell",
+        "new_frame_count": 0,
+        "old_frames": [
+          [
+            160,
+            "40f561d144a17eb5eb113431e2e2424e00672f94893df3a4601cd65743261df7"
+          ]
+        ]
+      },
+      {
+        "cell": [
+          0,
+          0,
+          541
+        ],
+        "class": "removed_outside_mask_empty_shell",
+        "new_frame_count": 0,
+        "old_frames": [
+          [
+            320,
+            "967b1d86ce25c23859a17c1332e95a6301539b8790cd45960b0f2e893ba72f07"
+          ]
+        ]
+      },
+      {
+        "cell": [
+          0,
+          0,
+          562
+        ],
+        "class": "removed_outside_mask_empty_shell",
+        "new_frame_count": 0,
+        "old_frames": [
+          [
+            160,
+            "e22e27dfc439350e6b0ecbaf8821744a99e3d91118e9d5e7127d3ebea9e8b7b9"
+          ]
+        ]
+      },
+      {
+        "cell": [
+          0,
+          0,
+          563
+        ],
+        "class": "removed_outside_mask_empty_shell",
+        "new_frame_count": 0,
+        "old_frames": [
+          [
+            160,
+            "0126fc2dcd7acff3f718aa72a7d210bbb6aec2a913462e34d88f6b449cd69138"
+          ]
+        ]
+      }
+    ],
+    "rule": "removed_outside_mask_empty_shell: cell outside its level parcel-mask rectangle whose sole frame is the exact encoder empty shell (zero padding only) is not indexed; every other cell has an identical whole-frame multiset"
+  },
+  "evidence": [
+    {
+      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/au_cell_diff.json",
+      "sha256": "95a3aaa4a63c35052f359d2b5fe750a34c37de7c43b9bb7259dbe5a82e05c1df"
+    },
+    {
+      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/r_check.json",
+      "sha256": "e5c169c10509e0e6ad78316c977c54ef155b3ff34cb1732776d516ca154ff457"
+    },
+    {
+      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/block_check.json",
+      "sha256": "4e719024e6d91cf8bd59c06357a13ffc37cb44643a73b9e542d5f51771dd76d0"
+    },
+    {
+      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/k1.json",
+      "sha256": "a00cd3a3057454dd5a0e748867b3a1cbd9337ebe58a641870c235c946449b69d"
+    },
+    {
+      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/perth_cell_diff.json",
+      "sha256": "cd8cbf49b58c0e7ef2cacbd3416f9fcfd77f435fd3fee5b8f9938842015ba1e2"
+    },
+    {
+      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/perth_sha.json",
+      "sha256": "543b4bd2856a4d1458ebe6368fade94f6875d21fae261328eeb5c35342cd814a"
+    },
+    {
+      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/successor_sha.json",
+      "sha256": "21509d3fd0b5e853c0856be7b57fcf279eb328e9779eaa44da646fa19e737b09"
+    },
+    {
+      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/successor_final_sha.json",
+      "sha256": "21509d3fd0b5e853c0856be7b57fcf279eb328e9779eaa44da646fa19e737b09"
+    },
+    {
+      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/protected_before.json",
+      "sha256": "ca604ac7168cf80dc2a9ff2de4f2b6ce485dcc6e51be7524dbb621e2699cc8b6"
+    },
+    {
+      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/protected_after.json",
+      "sha256": "ca604ac7168cf80dc2a9ff2de4f2b6ce485dcc6e51be7524dbb621e2699cc8b6"
+    },
+    {
+      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/runs.json",
+      "sha256": "6b91d7d50b7e8e9a7453f69c8a4e171e07615d6b01db0fd62f29e0b375528893"
+    },
+    {
+      "path": "docs/plans/34-l0-empty-slot-frame-parity/witnesses/g_successor_4e6b0de7.json",
+      "sha256": "4dc9d346d50d592c2629af1db25fb98138bc8f9e299709c3af7693de6e870e6e"
+    }
+  ],
+  "frame_counts": {
+    "new": 3954154,
+    "old": 3954159
+  },
+  "from_path_untouched": "output/scratch-29/G_new/ALLDATA.KWI",
+  "from_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+  "k1": {
+    "engine": "c",
+    "failing": 0,
+    "jobs": 6,
+    "pass": true
+  },
+  "kind": "successor-oracle",
+  "note": "Recorded at a new path. The plan-29 successor 2ee3456a and its oracle-chain row are not overwritten; this is its successor.",
+  "other_count": 0,
+  "perth": {
+    "pin": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+    "result": "byte-identical (new encode sha equals pin; classified diff 0 changed cells)"
+  },
+  "phase3_closed": false,
+  "predecessor_preserved": true,
+  "protected_inputs": "protected_before.json == protected_after.json byte-identical (4 discs + full spool fingerprint)",
+  "region": "AU",
+  "schema": 1,
+  "signing_unit": "plan 34 unit 2-02",
+  "status": "classified-diff-verified",
+  "to_path": "output/scratch-34/G_new/ALLDATA.KWI",
+  "to_sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+  "to_size_bytes": 1692079168
+}

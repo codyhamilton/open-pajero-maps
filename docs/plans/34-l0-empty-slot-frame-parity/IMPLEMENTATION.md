@@ -72,3 +72,45 @@ Approach open; refine skipped. Unit `briefs/2-01-root-cause-and-verdict.md`. Exe
 - **Measurement:** queued as `output/scratch-34/run_p2b.sh` (log
   `run_p2b.log`). It runs serially under the wrapper and lock, one step at a
   time.
+- **Measured (Execute, guarded; `run_p2b.log`, all 13 steps exit 0, ALLDONE
+  10:00:43 AEST):** report `reports/2-02-general-rule.md`; committed outputs
+  under `phase2/` and `witnesses/g_successor_4e6b0de7.json`.
+  - New AU successor `4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448`
+    (`output/scratch-34/G_new/ALLDATA.KWI`, 1,692,079,168 B; encode 118 s,
+    peak RSS 3.0 GiB). The final re-hash matches.
+  - Classified diff vs `2ee3456a…`: **5 changed cells, all
+    `removed_outside_mask_empty_shell`, 0 `other`**: L0 (0,141), (0,176),
+    (0,541), (0,562), (0,563). Frames 3,954,159 → 3,954,154. Every other cell's
+    whole-frame multiset is identical. (0,141) and (0,176) are not Phase 1
+    cells. They are in a different L0 block from the Phase 1 census, and they
+    are the same class, removed by the general rule.
+  - R check: 5/5 `empty_slot` (absent BMT sentinel) on `8c2d2027…`, 0 lookup
+    failures.
+  - Block 0 on the new disc: 2,048 cells empty.
+  - Live K1 `-j6 --engine c`: failing 0 for every kind, pass true.
+  - Perth: the new encode is byte-identical to `04be2f6e…`; classified diff
+    0 cells.
+  - Protected discs and the full spool fingerprint are unchanged
+    (`protected_before.json` and `protected_after.json` are byte-identical).
+- **Successor oracle:** recorded at `successor_oracle_4e6b0de7.json` with its
+  classified diff scope. `2ee3456a…` and its plan 31 oracle-chain row are not
+  overwritten.
+- **Disposition:** `disposition.json` and `.tsv` show all three cells
+  **fix-landed**, conflict-open 0, and the plan 29 residual discharged.
+- **Contract:** `docs/design/out-of-span-name-guard.md` § Final outside-mask
+  empty-shell omission. Probe-and-pad is intermediate. Confinement is proven
+  by classified cell identity.
+
+### Phase 2 verification (Execute)
+
+1. Root cause proven per cell (`phase2_cause.md`). The emission rule is general,
+   with no coordinate whitelist.
+2. Each cell is fix-landed. The new path's diff is confined to classified
+   outside-mask empty shells, each proven absent on R.
+3. Protected discs are untouched, live K1 exits 0 and Perth is unchanged.
+4. No Phase 3 close; no reseat of 170, 3-16 or 3-17.
+
+Execute implemented 2-02 itself after the Codex limit. The terminal review
+must therefore be an independent seat (Codex after the 11:19 AEST reset).
+
+**Phase 2 outcome verified.**

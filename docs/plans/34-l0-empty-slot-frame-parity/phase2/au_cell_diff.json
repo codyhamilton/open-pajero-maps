@@ -1,0 +1,187 @@
+{
+  "changed_cell_count": 5,
+  "comparison": "whole indexed frame-byte multiset per parent cell, all levels; offsets may relocate",
+  "counts_by_level": {
+    "0": {
+      "removed_outside_mask_empty_shell": 5
+    }
+  },
+  "frame_counts": {
+    "new": 3954154,
+    "old": 3954159
+  },
+  "mask": {
+    "0": [
+      576,
+      2303,
+      0,
+      2143
+    ],
+    "10": [
+      0,
+      2,
+      0,
+      2
+    ],
+    "12": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "2": [
+      144,
+      575,
+      0,
+      535
+    ],
+    "4": [
+      36,
+      143,
+      0,
+      133
+    ],
+    "6": [
+      9,
+      35,
+      0,
+      33
+    ],
+    "8": [
+      2,
+      8,
+      0,
+      8
+    ]
+  },
+  "new_sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+  "old_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+  "other_cells": [],
+  "other_count": 0,
+  "other_truncated": false,
+  "pass": true,
+  "phase1_cells": [
+    [
+      0,
+      0,
+      541
+    ],
+    [
+      0,
+      0,
+      562
+    ],
+    [
+      0,
+      0,
+      563
+    ]
+  ],
+  "phase1_cells_removed": true,
+  "removed_cells": [
+    [
+      0,
+      0,
+      141
+    ],
+    [
+      0,
+      0,
+      176
+    ],
+    [
+      0,
+      0,
+      541
+    ],
+    [
+      0,
+      0,
+      562
+    ],
+    [
+      0,
+      0,
+      563
+    ]
+  ],
+  "removed_detail": [
+    {
+      "cell": [
+        0,
+        0,
+        141
+      ],
+      "class": "removed_outside_mask_empty_shell",
+      "new_frame_count": 0,
+      "old_frames": [
+        [
+          160,
+          "6445327e05d7574938beb5bc0ef3c69df5fe6295ed1e4d6e4a0372e46bc93f34"
+        ]
+      ]
+    },
+    {
+      "cell": [
+        0,
+        0,
+        176
+      ],
+      "class": "removed_outside_mask_empty_shell",
+      "new_frame_count": 0,
+      "old_frames": [
+        [
+          160,
+          "40f561d144a17eb5eb113431e2e2424e00672f94893df3a4601cd65743261df7"
+        ]
+      ]
+    },
+    {
+      "cell": [
+        0,
+        0,
+        541
+      ],
+      "class": "removed_outside_mask_empty_shell",
+      "new_frame_count": 0,
+      "old_frames": [
+        [
+          320,
+          "967b1d86ce25c23859a17c1332e95a6301539b8790cd45960b0f2e893ba72f07"
+        ]
+      ]
+    },
+    {
+      "cell": [
+        0,
+        0,
+        562
+      ],
+      "class": "removed_outside_mask_empty_shell",
+      "new_frame_count": 0,
+      "old_frames": [
+        [
+          160,
+          "e22e27dfc439350e6b0ecbaf8821744a99e3d91118e9d5e7127d3ebea9e8b7b9"
+        ]
+      ]
+    },
+    {
+      "cell": [
+        0,
+        0,
+        563
+      ],
+      "class": "removed_outside_mask_empty_shell",
+      "new_frame_count": 0,
+      "old_frames": [
+        [
+          160,
+          "0126fc2dcd7acff3f718aa72a7d210bbb6aec2a913462e34d88f6b449cd69138"
+        ]
+      ]
+    }
+  ],
+  "removed_outside_mask_empty_shell_count": 5,
+  "require_phase1": true
+}

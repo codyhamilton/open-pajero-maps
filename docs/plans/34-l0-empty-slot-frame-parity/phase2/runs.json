@@ -1,0 +1,86 @@
+{
+  "chain": "output/scratch-34/run_p2b.sh",
+  "finished": "2026-10-06T10:00:43+10:00",
+  "log": "output/scratch-34/run_p2b.log",
+  "runs": {
+    "p2_after": {
+      "exit": 0,
+      "max_rss_kib": 25660,
+      "memory_peak": 5231349760,
+      "wall_s": 12.106794806895778
+    },
+    "p2_before": {
+      "exit": 0,
+      "max_rss_kib": 25760,
+      "memory_peak": 3436199936,
+      "wall_s": 11.289392670965753
+    },
+    "p2_block_check": {
+      "exit": 0,
+      "max_rss_kib": 53032,
+      "memory_peak": 44994560,
+      "wall_s": 2.930233163991943
+    },
+    "p2_block_witness": {
+      "exit": 0,
+      "max_rss_kib": 58480,
+      "memory_peak": 273354752,
+      "wall_s": 4.248028559028171
+    },
+    "p2_diff": {
+      "exit": 0,
+      "max_rss_kib": 147172,
+      "memory_peak": 6053187584,
+      "wall_s": 83.1835498129949
+    },
+    "p2_encode": {
+      "exit": 0,
+      "max_rss_kib": 3163504,
+      "memory_peak": 8647213056,
+      "wall_s": 118.15510480292141
+    },
+    "p2_final_sha": {
+      "exit": 0,
+      "max_rss_kib": 25592,
+      "memory_peak": 114708480,
+      "wall_s": 1.3850425399141386
+    },
+    "p2_k1": {
+      "exit": 0,
+      "max_rss_kib": 4278320,
+      "memory_peak": 7734849536,
+      "wall_s": 83.10670439701062
+    },
+    "p2_perth_diff": {
+      "exit": 0,
+      "max_rss_kib": 42100,
+      "memory_peak": 67260416,
+      "wall_s": 0.40417865791823715
+    },
+    "p2_perth_encode": {
+      "exit": 0,
+      "max_rss_kib": 3442948,
+      "memory_peak": 262160384,
+      "wall_s": 30.640196098014712
+    },
+    "p2_perth_sha": {
+      "exit": 0,
+      "max_rss_kib": 26116,
+      "memory_peak": 24453120,
+      "wall_s": 0.09204935398884118
+    },
+    "p2_r_check": {
+      "exit": 0,
+      "max_rss_kib": 41120,
+      "memory_peak": 1568686080,
+      "wall_s": 2.9879940130049363
+    },
+    "p2_sha": {
+      "exit": 0,
+      "max_rss_kib": 26184,
+      "memory_peak": 1719332864,
+      "wall_s": 1.6429006459657103
+    }
+  },
+  "wrapper": "parser/tools/run_heavy_python.py under flock output/.heavy.lock"
+}
