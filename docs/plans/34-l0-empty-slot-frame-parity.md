@@ -157,6 +157,32 @@ gate was inspected and found to be a hard gate. Low notes:
   recorded in `docs/design/out-of-span-name-guard.md`.
 - Plan 04 Phase 3 blockers (PSS, the close synthesis) stay in OVERVIEW.
 
+## Post-close regression note (2026-10-06)
+The full `parser/tests` run (plan 35 Phase 1, collected at `0f3e530`) found
+one failure that plan 34's restricted suite and its review both missed:
+`parser/tests/test_parcel_mask.py::test_fill_only_masked_and_absent_cells`.
+
+- **Bisect.** Only this file was run, in throwaway detached worktrees.
+  `5182c83^` gives 4 passed. `5182c83` (unit 2-02, the outside-mask
+  empty-shell omission) gives 1 failed / 3 passed.
+- **Root cause: a stale test, not a code defect.**
+  - The synthetic spooled cell (720, 30) carries only an out-of-span name.
+    After the name drop, its frame is exactly the encoder's empty shell
+    (`build_alldata.is_empty_shell` is True).
+  - The cell lies outside the synthetic mask `{0: (700, 702, 10, 11)}`, so
+    `_omit_outside_mask_shells` correctly omits it under this plan's rule.
+  - The test predates the rule and still asserted that (720, 30) passes
+    through, with frame count `n0 + 3`.
+- **Fix (test only; `parser/build_alldata.py` unchanged).**
+  - The test now asserts that (720, 30) is an empty shell and is omitted.
+    The frame count is `n0 + 3 filled − 1 omitted`.
+  - The test adds a cell (721, 30) outside the mask with an in-span name at
+    its centre. That cell is not a shell, and the test asserts it passes
+    through byte-stable. This keeps the original intent.
+  - `test_parcel_mask.py` + `test_l0_empty_shell.py`: 45 passed.
+- **Lesson.** A behaviour change in `build_alldata` needs the full suite,
+  not a restricted one, before close.
+
 ## Decisions Worth Keeping
 - Emission policy is fixed by a general, R-grounded rule, never a coordinate
   whitelist.
