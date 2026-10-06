@@ -588,8 +588,13 @@ def causes_account(path, start, end, row):
             or c['cells'] != row.get('changed_count') or sum(c['classes'].values()) != c['cells']
             or c['inputs']['cells_list_sha256'] != (row.get('authoritative_list') or {}).get('sha256')
             or len(c['unattributed']) != c['classes'].get('unattributed', 0)
-            or not c['mechanism'].get('eo_only_build_equals_new_disc')):
+            or not c['mechanism'].get('eo_only_build_equals_new_disc')
+            or {lv: sum(v.values()) for lv, v in c['classes_by_level'].items()}
+            != {lv: sum(v.values()) for lv, v in (row.get('counts_by_level') or {}).items()}):
         raise ValueError('3-14 cause summary does not cover this hop')
+    gz = Path(path).with_name(c['out']['path'])
+    if sha(gz) != c['out']['sha256_gz']:
+        raise ValueError('3-14 cells_causes table does not match its summary')
     if CAUSES_RESIDUAL not in row['residuals']:
         raise ValueError('3-14 payload-cause residual missing; publish order changed')
     row['residuals'] = [x for x in row['residuals'] if x != CAUSES_RESIDUAL]
@@ -600,6 +605,7 @@ def causes_account(path, start, end, row):
     row['unexplained_count'] = n_un
     row['unexplained_cells'] = c['unattributed']
     row['status'] = 'measured-identities-causes-attributed' if not n_un else 'measured-identities-partial-causes'
+    row['supporting_evidence'].append(evidence(gz))
     row['cause_classes'] = dict(evidence(path), classes=c['classes'], mechanism=c['mechanism'],
                                 non_stitch_cells=c['non_stitch_cells'])
     return row

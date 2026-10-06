@@ -11,8 +11,10 @@ Inputs (all sha-pinned in the summary):
 Mechanism (whole disc): the EO-only build (33006aa + d35b565 `_cenc.c` hunks
 1-4) is byte-identical to the 3-14 disc, so every changed cell is caused by the
 EO hunks; the chord hunk (5) adds 0 bytes when EO is present. Per cell, a class
-is assigned only when its byte predicate holds (CLASSES); the predicates are
-disjoint by construction; any cell failing all of them is `unattributed`.
+is assigned only when its byte predicate holds (CLASSES). All predicates are
+evaluated for every cell; they are disjoint by section pattern (each requires
+a different (footprints_equal, sections_changed) pair) and the tool refuses a
+cell where two hold. A cell failing all of them is `unattributed`.
 
 Usage: cells_causes.py --region AU --sections S.tsv --detail D.json --mech M.json
                        --chord-cells C.tsv --out cells_causes-au.tsv.gz --summary summary-au.json
@@ -43,7 +45,10 @@ CLASSES = {
                              'other side\'s background (len - name + name_other > 131,070).',
     'eo_division_ceiling': 'footprints differ by one quadtree step (leaf count ratio 4); the coarser side\'s largest '
                            'frame is within |delta background bytes| of 131,070; the coarser side is the side with '
-                           'fewer background bytes.',
+                           'fewer background bytes. Caveat: background sums compare different topologies (the '
+                           'finer side carries per-leaf duplication), so this bounds plausibility; it does not show '
+                           'the coarse frame crossed the ceiling. The causal link is the whole-disc EO-only '
+                           'counterfactual.',
 }
 
 
@@ -139,17 +144,19 @@ def main(argv=None) -> int:
         for r in csv.DictReader(f, delimiter='\t'):
             key = (int(r['level']), int(r['ix']), int(r['iy']))
             pat, fpe = r['sections_changed'], r['footprints_equal'] == '1'
+            # every predicate is evaluated; the detail predicates need the cell's detail record
+            c = det.get(key)
+            if pat != 'background' and c is None:
+                raise SystemExit(f'cells_causes: no detail for non-background cell {key}')
             hold = []
             if fpe and pat == 'background':
                 hold.append('eo_bg_stitch')
-            elif key in det:
-                c = det[key]
-                if fpe and pat == 'table+background' and p_ext_relocation(c):
-                    hold.append('eo_bg_stitch_ext_relocation')
-                if fpe and pat == 'background+name' and p_frame_ceiling_name(c):
-                    hold.append('eo_frame_ceiling_name')
-                if not fpe and p_division_ceiling(c):
-                    hold.append('eo_division_ceiling')
+            if c is not None and fpe and pat == 'table+background' and p_ext_relocation(c):
+                hold.append('eo_bg_stitch_ext_relocation')
+            if c is not None and fpe and pat == 'background+name' and p_frame_ceiling_name(c):
+                hold.append('eo_frame_ceiling_name')
+            if c is not None and not fpe and p_division_ceiling(c):
+                hold.append('eo_division_ceiling')
             if len(hold) > 1:
                 raise SystemExit(f'cells_causes: predicates not disjoint at {key}: {hold}')
             cls = hold[0] if hold else 'unattributed'

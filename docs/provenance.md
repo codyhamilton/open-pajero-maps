@@ -824,7 +824,7 @@ Not committed; regenerable from the in-force spool. Record: `docs/plans/34-l0-em
 - `perth_new/`: identical to `04be2f6e…`.
 - `run_p2b.{sh,log}`, `runs/*.json`: guarded heavy-run logs.
 
-### output/scratch-36/ (plan 36 hop replay, region accounting, routed proofs)
+### output/scratch-36/ (plan 36 hop replay, region accounting, routed proofs, 3-14 cause attribution)
 
 Not committed; regenerable. Lasting small witnesses are copied to `docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/`.
 - `G_pre311/ALLDATA.KWI`: the pre-3-11 AU disc, rebuilt byte-exact from a throwaway worktree at `b7c7c42` with `output/extract_timing/spool` at `-j4`. sha256 `87a01b14b612d58ba49f326542339ef4d6fc1871c9201842c7961108a2797862`, 1,731,021,568 bytes (`sha_pre311.json`). Not a protected disc; it is the historical 3-11 `from` pin.
@@ -834,6 +834,10 @@ Not committed; regenerable. Lasting small witnesses are copied to `docs/plans/04
 - `region-3-14-{au,perth}.{json,spans.tsv}` (first tool) and `r2/region-{3-11-au,3-14-au,3-14-perth}.{json,spans.tsv}` (fail-closed tool `183d0ee0…`): 3-14 hop region accounting, AU `013586b5 → 4ed9cd80` and Perth `da13a775 → 04be2f6e`. All complete, 0 unaccounted. The AU JSON is 57 MB and is summarised in `triage/oracle_chain/hop_3_14/container-au.json`.
 - `pdmdh-fields-3-14.json`: classification of the PDMDH bytes outside BMT address fields (committed copy in `hop_3_14/`).
 - `run_p1_{replay,routed,region}`, `run_p2_region`, `run_r2_region` `.{sh,log}`, `runs/*.json`, `protected_{before,after}*.json`: guarded heavy-run logs and protected-disc snapshots, all unchanged.
+- Phase 3 endpoint rebuilds (`run_p3_endpoints`): `E_pre314/ALLDATA.KWI` and `E_pre314_perth/` from a throwaway worktree `../open-pajero-maps-36-pre314` at `33006aa`; `E_at314/` and `E_at314_perth/` from `../open-pajero-maps-36-at314` at `d35b565`. Pinned spool, `-j 4`. sha256 `013586b5…` (1,731,021,792 B), `da13a775…` (31,707,680 B), `4ed9cd80…` (1,692,105,152 B), `04be2f6e…` (31,546,688 B): byte-equal to the protected discs (`sha_E_*.json`). Scratch copies, not protected.
+- Phase 3 mechanism builds (`run_p3_mech`): `M_eo{,_perth}/` from `../open-pajero-maps-36-eo-only` (`33006aa` + `hop_3_14/eo_only.patch`, worktree `_cenc.c` sha `dba9f5e6…`): sha `4ed9cd80…` / `04be2f6e…`. `M_chord{,_perth}/` from `../open-pajero-maps-36-chord-only` (`33006aa` + `hop_3_14/chord_only.patch`, `_cenc.c` `40afa697…`): sha `40c1b07dac0a13489de12333adb55625cbc4ba9663eacd791edab0cc8cb76d75` (2,064,949,952 B) / `a681efca9099f898d35216438848718849ea86b1a7bd7f38fede9ba6f0ca8349` (35,341,344 B) (`sha_M_*.json`). Reproduce: same worktree commit plus patch, `parser/build_alldata.py --spool output/extract_timing/spool [--fixture perth] -j 4`.
+- `p3/`: `full.patch` (`3dccca61…`, d35b565 `_cenc.c` diff) and the split patches; `diff-{old,eo,chord}-*-{au,perth}.{json,cells.tsv}` (`oracle_chain.py diff`, summarised with shas in `hop_3_14/mech.json`); `sections-{au,perth}.{tsv,json}` (`hop_3_14/sections.py`; tsv `f0553dcc…` / `e4b2a1b9…`); `detail-*.json` (committed copies in `hop_3_14/`); `k1/rows-{au,perth}-{old,new}.tsv` (`hop_3_14/k1_rows.py run`; `505bcf7c…`, `37325562…`, `d0d77ad2…`, `9643627b…`), `k1/k1-perth-{old,new}.json` (whole-disc K1), `k1/confine-*.json` (committed as `hop_3_14/k1-confine-*.json`).
+- `run_p3_{endpoints,mech,sections,detail,k1perth,k1au}.{sh,log}`, `runs/p3*.json`, `protected_{before,after}_p3{,m,s,k}.json`: guarded Phase 3 logs and snapshots, all unchanged. `pubcheck3/`: the pre-change publish reproduction.
 
 ### output/scratch-30/attic/ (plan 30 second pinned source: date-matched OSM relation snapshot)
 

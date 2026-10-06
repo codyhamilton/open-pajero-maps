@@ -372,11 +372,12 @@ text: `REVIEW.md` § Phase 2.
     compares per section. Entry 0–2 offsets and sizes are excluded (they move
     whenever an earlier section changes length).
   - `hop_3_14/detail.py`: per-leaf section sizes, hashes and raw entry tables
-    for every cell that is not background-only (78 AU, 3 Perth;
+    for every cell that is not background-only (82 AU, 3 Perth;
     `detail-{au,perth}.json`).
-  - `hop_3_14/cells_causes.py` (no disc reads): applies the four byte
-    predicates. They are disjoint by construction (it fails if two hold). A
-    cell with none is `unattributed`.
+  - `hop_3_14/cells_causes.py` (no disc reads): evaluates all four byte
+    predicates for every cell. They are disjoint by section pattern (each
+    needs a different `(footprints_equal, sections_changed)` pair), and the
+    tool refuses a cell where two hold. A cell with none is `unattributed`.
 - **Section patterns:** AU 246,041 background-only, 75 `table+background`,
   4 topology, 3 `background+name`. Perth 792 background-only and 3 topology.
 - **Classes** (predicates verbatim in `summary-{au,perth}.json` →
@@ -408,7 +409,13 @@ text: `REVIEW.md` § Phase 2.
 - **Not claimed:** the classes are byte predicates on the hop's own frames
   plus the whole-disc EO counterfactual. The `eo_division_ceiling` and
   `eo_frame_ceiling_name` predicates use measured lengths. They do not
-  re-run the encoder's division or name-trim decision per cell. DVD (R)
+  re-run the encoder's division or name-trim decision per cell. The
+  division predicate compares background sums across different topologies
+  (the finer side carries per-leaf duplication), so it bounds plausibility
+  and does not show the coarse frame crossed the ceiling. For those 7 cells
+  the causal link is the whole-disc EO-only counterfactual. A per-cell
+  encoder probe of the coarse-frame size under `33006aa` vs EO would be the
+  stronger proof (follow-up, not run). DVD (R)
   parity of the changed cells is not asserted (design non-goal).
 
 ### Outcome 4: per-kind K1 `checked` confinement
@@ -463,3 +470,40 @@ text: `REVIEW.md` § Phase 2.
   change); `test_oracle_chain.py` causes accept (AU, Perth), 7 tamper
   rejects, and committed gz ↔ summary. Oracle / region / pin / successor /
   hop tests: 96 passed.
+
+### Phase 3 review and remediation
+Review: an independent Claude CLI clean-context seat (disclosed; Codex is
+weekly-limited), on `af0178b`, 13:28–13:32 AEST. Full text: `REVIEW.md`
+§ Phase 3.
+
+- **Verdict: PASS_WITH_FOLLOWUPS.** All five outcomes were met (outcome 4 at
+  row-band level, cell level by code argument, judged sound for `checked`).
+  - The reviewer recomposed the patches (`_cenc.c` sha `5c43e00d…` equals
+    `d35b565`).
+  - It matched the mech shas to the run logs and recounted the classes from
+    the sections TSVs and detail JSONs.
+  - It recomputed the K1 compare from the band TSVs, and re-checked the
+    predicate margins (name trades 131,146 / 131,960 / 131,264 B; merge
+    headroom 374 / 250 / 48 B).
+- **F1:** `residuals.tsv` R-G1-1, R-G1-2 and R-G4-2 are marked discharged.
+  The `gates.tsv` G1 and G4 notes and the OVERVIEW blocker bullet are
+  updated. Plan 04 Phase 3 is not claimed.
+- **F2:** `docs/provenance.md` § `output/scratch-36/` gains the Phase 3
+  entries: discs, shas, `p3/`, run logs, snapshots and worktrees.
+- **F3:** the `eo_division_ceiling` predicate text (summary `predicates`)
+  and "Not claimed" now carry the caveat.
+- **F4:** `cells_causes.py` evaluates every predicate for every cell. A
+  non-background cell without a detail record is refused. The wording is
+  now "disjoint by section pattern".
+- **F5:** 78 → 82 detail cells.
+- **F6:** `mech.json` → `code.worktree_cenc_sha256` (EO `dba9f5e6…`, chord
+  `40afa697…`) joins the runs to the committed patches.
+- **F7:** `causes_account` also checks:
+  - the committed `cells_causes-*.tsv.gz` sha against the summary (and cites
+    the gz in `supporting_evidence`);
+  - `classes_by_level` sums against the row's `counts_by_level`.
+
+  New tamper tests: levels, gz.
+- **F8:** info, no action.
+- Summaries regenerated (counts unchanged), `oracle_chain.{tsv,json}`
+  republished. Oracle / region / pin / successor / hop tests: 98 passed.

@@ -352,7 +352,7 @@
           ]
         },
         "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/summary-au.json",
-        "sha256": "d5fa581570b588f829611fc5872aded4b43b6eeb85aa4e25b68d1583425f96d4"
+        "sha256": "b2eb7582af9dc24308960a5a36e7de42b4e50671b88bd4a5917dd11dc768daa4"
       },
       "changed_count": 246123,
       "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes.",
@@ -420,7 +420,11 @@
         },
         {
           "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/summary-au.json",
-          "sha256": "d5fa581570b588f829611fc5872aded4b43b6eeb85aa4e25b68d1583425f96d4"
+          "sha256": "b2eb7582af9dc24308960a5a36e7de42b4e50671b88bd4a5917dd11dc768daa4"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/cells_causes-au.tsv.gz",
+          "sha256": "5cf91484e38d18800a4df29bba973af20da745e8fc76aa8ec1aa6743cef03f43"
         }
       ],
       "to_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
@@ -465,7 +469,7 @@
           ]
         },
         "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/summary-perth.json",
-        "sha256": "4c8992409542517f496b3ef444d2212a9406b9467bb4901a6379f07128d8d5c2"
+        "sha256": "cc070c33c0dd2eeb88a352a0b0659bb23fc4a379760e70b582f20367e5ef7bd7"
       },
       "changed_count": 795,
       "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes.",
@@ -525,7 +529,11 @@
         },
         {
           "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/summary-perth.json",
-          "sha256": "4c8992409542517f496b3ef444d2212a9406b9467bb4901a6379f07128d8d5c2"
+          "sha256": "cc070c33c0dd2eeb88a352a0b0659bb23fc4a379760e70b582f20367e5ef7bd7"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/cells_causes-perth.tsv.gz",
+          "sha256": "9277510ed39ec7923491275171855302fa8498dc1fd52d10217dafd822b841bf"
         }
       ],
       "to_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",

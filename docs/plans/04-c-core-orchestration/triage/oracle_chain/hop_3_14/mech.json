@@ -14,7 +14,12 @@
   },
   "eo_plus_chord_equals_post_cenc": true,
   "post": "d35b56563d82bf8491960cec21960f9953f57e92",
-  "pre": "33006aa609fabdaa655656045d7b3581b23abe25"
+  "pre": "33006aa609fabdaa655656045d7b3581b23abe25",
+  "worktree_cenc_sha256": {
+   "chord_only": "40afa6973a5a4362f981c4a597ee502b83445dbffac0f9a901016d5f9dbb3fb3",
+   "eo_only": "dba9f5e63c9dc72ac145055b6716fb2531afde290be9dfe3f9258730027899cb",
+   "note": "parser/kiwiw/_cenc.c in ../open-pajero-maps-36-{eo,chord}-only (33006aa + the patch); the run logs record the worktree git-diff shas cdd2146a / cdb84c06, which differ from the committed patch files only by the post-image index line"
+  }
  },
  "kind": "hop_3_14_mechanism",
  "regions": {

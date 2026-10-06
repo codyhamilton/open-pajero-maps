@@ -25,7 +25,7 @@
   },
   "mech": {
    "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/mech.json",
-   "sha256": "a9d1db8abf2d85f3117b3c2dad5a260cd5b380d80027e253ec2862e4b044db6d"
+   "sha256": "c79b0d06237b9ccdb9a3cdeffe789f2901d3d1321bc1b8ca1d7fbd1a3d42c6d6"
   },
   "sections": {
    "path": "output/scratch-36/p3/sections-perth.tsv",
@@ -70,11 +70,11 @@
  "predicates": {
   "eo_bg_stitch": "footprints equal; only the background sub-frame bytes differ (header, region list, ext table, road, name, ext and uncovered bytes identical per leaf).",
   "eo_bg_stitch_ext_relocation": "footprints equal; background and the raw ext entry table differ; per leaf every ext entry (index >= 3) keeps its presence and size and its offset moves by exactly that leaf's background size delta; ext bytes identical.",
-  "eo_division_ceiling": "footprints differ by one quadtree step (leaf count ratio 4); the coarser side's largest frame is within |delta background bytes| of 131,070; the coarser side is the side with fewer background bytes.",
+  "eo_division_ceiling": "footprints differ by one quadtree step (leaf count ratio 4); the coarser side's largest frame is within |delta background bytes| of 131,070; the coarser side is the side with fewer background bytes. Caveat: background sums compare different topologies (the finer side carries per-leaf duplication), so this bounds plausibility; it does not show the coarse frame crossed the ceiling. The causal link is the whole-disc EO-only counterfactual.",
   "eo_frame_ceiling_name": "footprints equal; only background and name sections differ; in every leaf whose name differs both frames are within 64 B of 131,070, the name size moves opposite to the background size, and the side with more name bytes would exceed 131,070 with the other side's background (len - name + name_other > 131,070)."
  },
  "region": "Perth",
  "schema": 1,
- "tool_sha256": "dbddffcfdc4b9084ed0ba3a61286a3bab261088492d091c8f6e0bd932cf68804",
+ "tool_sha256": "cd9da29d56e2800742456512a219a9ee509093238aa79428fc40c0b2563e6f80",
  "unattributed": []
 }

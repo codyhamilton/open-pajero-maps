@@ -192,3 +192,94 @@ The padding delta splits as follows. Neither component is itemised separately in
    - The Phase 2 artefacts landed in `b10e787` under the `Workflow-Phase: …:1` trailer.
    - Phase 2 still needs its own close commit, with the `:2` trailer, the review record and fixes 1–2.
    - The full AU region JSON and spans stay uncommitted, but they are sha-pinned and listed in provenance. That is acceptable, and the summary reproduces byte-exact from them.
+
+
+## Phase 3 (Claude CLI seat, reviewed af0178b, 13:28–13:32 AEST)
+
+Verdict: PASS_WITH_FOLLOWUPS
+
+
+Reviewed: master `af0178b` (repo `open-pajero-maps-14-completeness`). Read-only; no builds, K1, diff, sections/detail/k1_rows runs.
+Tests: `test_hop_3_14_causes.py` + `test_oracle_chain.py` → **56 passed**.
+
+## Independent checks performed
+- **Patch composition:** `git show 33006aa:parser/kiwiw/_cenc.c` + `git apply eo_only.patch` + `git apply chord_only.patch` → sha `5c43e00d…` == `git show d35b565:parser/kiwiw/_cenc.c`. The chord patch also applies alone to 33006aa. The run worktrees `open-pajero-maps-36-{eo,chord}-only` are at `33006aa`. Their `_cenc.c` is byte-equal to my patch-applied files (`dba9f5e6…`, `40afa697…`). `_cenc.so` was rebuilt after the source edit (12:44:11 vs 12:42:15). The run-log diff shas (`cdd2146a`, `cdb84c06`) differ from the committed patch shas only by the post-image `index` line.
+- **Shas:** the mech.json endpoint, EO-only and chord-only shas equal `output/scratch-36/sha_{E_pre314,E_at314,M_eo,M_chord}{,_perth}.json`. `run_p3_endpoints.log` / `run_p3_mech.log`: every step `rc 0`, then `ALLDONE`. W0 = `33006aa`, W1 = `d35b565`.
+- **Cell sets:** `sections-{au,perth}.tsv` keys == `diff-old-eo-*.cells.tsv` == `scratch-31/diff-3-14-*.cells.tsv` (246,123 / 795). `diff-eo-new-*` has 0 rows. The gz rows equal the list.
+- **Class recount:** recomputed from the sections TSV plus detail JSON, with all input/gz/raw/tool shas matching the summaries:
+  - AU: 246,041 / 75 / 4 / 3, with 0 unattributed;
+  - Perth: 792 / 3, with 0 unattributed;
+  - detail cells are exactly the non-`background` rows (AU 82, Perth 3).
+- **Predicate margins:**
+  - Name trades (all three cells hold):
+
+    | cell | Δbg | Δname | larger-name side with the other bg |
+    |---|---:|---:|---:|
+    | (1739,569) | +102 | −92 | 131,146 |
+    | (1892,711) | +916 | −906 | 131,960 |
+    | (1974,820) | +202 | −202 | 131,264 |
+
+  - Division: merges leave headroom of 374 / 250 / 48 B. The split's old leaf is 131,052 B.
+- **K1:** recomputed from `p3/k1/rows-*.tsv`:
+  - band totals equal `k1_311.json`, `k1_live.json` and `k1-perth-{old,new}.json` for every kind;
+  - whole Δ equals the in-changed-band Δ;
+  - 0 delta bands lack a changed cell (AU 29,790 ⊂ 29,824; Perth 107 = 107).
+- **Code read:** `_k1.c` `kw_k1_band`, `_k1_bg.c` (around lines 600–697), `_k1_cmp.c` (around lines 499–535).
+
+## Outcomes
+1. **Met.** All four endpoint rebuilds reproduce byte-exact. Beyond the design, the EO-only build (hunks 1–4) equals `4ed9cd80` / `04be2f6e`. That makes hunks 1–4 the whole-disc cause and leaves the chord hunk at 0 bytes.
+2. **Met.** One row per cell. Each of the four classes has a stated byte predicate, and the counts are published.
+   - Disjointness is structural: each class requires a different `(footprints_equal, sections_changed)` pattern.
+   - Attributing background-only cells to "EO" is justified. Everything in hunks 1–4 sits in `bg_shape` and its helpers, and `bg_shape` emits only background records. The per-cell predicate then confirms that only the background sub-frame changed.
+   - The predicates are not tautological for the 7 special cells, but they are mode labels resting on the whole-disc counterfactual (F3).
+3. **Met.** The 7 AU and 3 Perth cells are byte-predicated: 4 + 3 division-ceiling and 3 name-ceiling, matching the historical census of 4 topology + 3 frame-ceiling. The limits are disclosed under "Not claimed".
+4. **Met (row-band empirical, cell-level by code argument).**
+   - The code argument is sound for `checked`:
+     - range, step and point kinds increment once per decoded item of the leaf's own frame;
+     - background, boundary and cover kinds count per leaf vertex or per leaf shape;
+     - spool context affects only `failing`;
+     - completeness `nreq` is spool/cell-driven, and its Δ is 0.
+   - The empirical band is coarse. AU changed bands are 32 cells wide, with a median 16% of band cells changed. Disclosed.
+5. **Met in `oracle_chain.{tsv,json}`.** Both 3-14 rows are `measured-identities-causes-attributed`, with `unexplained_count` 0 and no residuals.
+   - `causes_account` fails closed on: kind, hop shas, cell count, class sum, list sha, unattributed length, the EO flag and a missing residual.
+   - **But** the companion docs that carry the same residual were not updated (F1).
+
+## Findings
+1. **medium — stale blocker wording / missing phase surface.**
+   - Problem:
+     - `docs/OVERVIEW.md:68` still lists "3-14 per-cell payload causes (plan 36 Phase 3)" as a remaining Phase-3 blocker. OVERVIEW is a declared Phase 3 surface.
+     - `triage/phase3_synthesis/residuals.tsv` rows R-G1-1 and R-G1-2 (payload causes) and R-G4-2 (checked moves not confined) are not marked discharged. Phases 1 and 2 did mark R-G1-3, R-G1-4 and R-G10-1.
+   - Fix:
+     - Append "— DISCHARGED by plan 36 Phase 3 (2026-10-06): hop_3_14/summary-{au,perth}.json, unattributed 0" to R-G1-1 and R-G1-2.
+     - Append "— confined at row-band level: hop_3_14/k1-confine-{au,perth}.json; cell level by code argument" to R-G4-2.
+     - Change the OVERVIEW bullet to "discharged by plan 36 Phase 3". Do not claim plan 04 Phase 3 closed.
+2. **medium — BOM gap (CLAUDE.md hard rule).**
+   - Problem: `docs/provenance.md` § `output/scratch-36/` has no entries for the Phase 3 material:
+     - `E_pre314{,_perth}`, `E_at314{,_perth}`, `M_eo{,_perth}`, `M_chord{,_perth}`;
+     - `sha_E_*`, `sha_M_*`;
+     - `p3/` (diff-*, sections-*, `k1/rows-*`, `k1-perth-*`, `confine-*`, `full.patch`);
+     - `run_p3_*.{sh,log}`, `protected_*_p3*`;
+     - the throwaway worktrees `../open-pajero-maps-36-{eo,chord}-only`.
+   - Fix: add one bullet per group with sha, origin and reproduction (the commit plus the patch file).
+3. **low — division predicate is weakly discriminating.**
+   - Problem: `p_division_ceiling` compares Σ background over different topologies. The fine side includes shared-shape duplication and halo, so "coarser side has fewer bg bytes" holds for almost any 4× step, and |Δbg| is inflated by dedup. The predicate bounds plausibility. It does not show the background change crossed the ceiling, and the causal link rests on the whole-disc EO counterfactual.
+   - Location: `hop_3_14/cells_causes.py` `p_division_ceiling`.
+   - Fix (follow-up, no re-run needed now): add a one-line caveat to the `eo_division_ceiling` predicate text (or to IMPLEMENTATION "Not claimed"). Optionally, a later per-cell encoder probe could log the coarse-frame size under 33006aa vs EO for the 4 cells.
+4. **low — overstated guard.**
+   - Problem: the docstring and IMPLEMENTATION say the tool "fails if two [predicates] hold". The `if/elif` means `eo_bg_stitch` is never co-tested, so the guard can only fire among the three detail predicates, which are already pattern-exclusive.
+   - Fix: reword the claim to "disjoint by section pattern", or evaluate all four predicates unconditionally.
+5. **low — doc count error.**
+   - Problem: IMPLEMENTATION Phase 3 says detail covers "78 AU". `detail-au.json` has **82** cells (75 + 4 + 3).
+   - Fix: change 78 → 82.
+6. **low — run ↔ patch linkage.**
+   - Problem: mech.json pins the committed patch shas, but the run logged the worktree `git diff` shas (`cdd2146a…`, `cdb84c06…`), which differ by the `index` line. Nothing recorded joins the two.
+   - Fix: add `worktree_cenc_sha256` to mech.json for each variant (EO `dba9f5e6…`, chord `40afa697…`, verified here equal to the patch-applied result).
+7. **low — causes_account coverage.**
+   - Problem: publish does not check the summary's `out.sha256_gz` against the committed gz. A test covers it, but publish does not. Publish also does not check that `classes_by_level` sums to the row's `counts_by_level`.
+   - Fix: add both checks in `causes_account`, with tamper tests.
+8. **info — whole-report identity.** `k1_311.json` and `k1_live.json` carry `disc: ALLDATA.KWI` and no sha. The disc identity comes from provenance, corroborated by exact total equality with the sha-checked `k1_rows run`. No action.
+
+## Intent and ledger
+- **Assumption 2 holds.** Per-cell byte predicates sit on top of the endpoint and EO-only counterfactual, and no rule-order resolution was needed.
+- **Assumption 3 holds.** Bounded preads were used under the wrapper.
+- **Plan sufficiency:** the design was enough to place every finding. The OVERVIEW and residuals updates were implied by "Surfaces" but not by the outcome text, which is why they were missed.

@@ -447,23 +447,32 @@ def test_container_summary_rejects_wrong_size_byte(tmp_path):
     assert not out['pass'] and any('PDMDH' in e for e in out['errors'])
 
 
+LEVELS = {'au': {'0': 244060, '2': 1944, '6': 118, '8': 1}, 'perth': {'0': 784, '2': 11}}
+
+
 @pytest.mark.parametrize('name,start,end,count', [('au', chain.AU1, chain.AU2, 246123),
                                                  ('perth', chain.P0, chain.P1, 795)])
 def test_causes_account_accepts_committed_summaries(name, start, end, count):
     c = json.loads((HOP / f'summary-{name}.json').read_text())
     row = {'changed_count': count, 'residuals': [chain.CAUSES_RESIDUAL, 'other'],
-           'authoritative_list': {'sha256': c['inputs']['cells_list_sha256']}}
+           'authoritative_list': {'sha256': c['inputs']['cells_list_sha256']},
+           'counts_by_level': {lv: {'changed': n} for lv, n in LEVELS[name].items()}}
     chain.causes_account(HOP / f'summary-{name}.json', start, end, row)
+    assert row['supporting_evidence'][-1]['path'].endswith(f'cells_causes-{name}.tsv.gz')
     assert row['residuals'] == ['other'] and row['unexplained_count'] == 0 and row['unexplained_cells'] == []
     assert row['status'] == 'measured-identities-causes-attributed'
     assert sum(row['cause_classes']['classes'].values()) == count
 
 
-@pytest.mark.parametrize('mutation', ['kind', 'hop', 'count', 'cells_sha', 'unattributed', 'mechanism', 'residual'])
+@pytest.mark.parametrize('mutation', ['kind', 'hop', 'count', 'cells_sha', 'unattributed', 'mechanism', 'residual',
+                                      'levels', 'gz'])
 def test_causes_account_rejects_tampered_summary(tmp_path, mutation):
+    import shutil
     c = json.loads((HOP / 'summary-au.json').read_text())
+    shutil.copy(HOP / 'cells_causes-au.tsv.gz', tmp_path / 'cells_causes-au.tsv.gz')
     row = {'changed_count': 246123, 'residuals': [chain.CAUSES_RESIDUAL],
-           'authoritative_list': {'sha256': c['inputs']['cells_list_sha256']}}
+           'authoritative_list': {'sha256': c['inputs']['cells_list_sha256']},
+           'counts_by_level': {lv: {'changed': n} for lv, n in LEVELS['au'].items()}}
     start, end = chain.AU1, chain.AU2
     if mutation == 'kind':
         c['kind'] = 'other'
@@ -477,6 +486,12 @@ def test_causes_account_rejects_tampered_summary(tmp_path, mutation):
         c['unattributed'] = [[0, 1, 1]]
     elif mutation == 'mechanism':
         c['mechanism']['eo_only_build_equals_new_disc'] = False
+    elif mutation == 'levels':
+        row['counts_by_level']['6'] = {'changed': 117}
+        row['counts_by_level']['0'] = {'changed': 244061}
+    elif mutation == 'gz':
+        with (tmp_path / 'cells_causes-au.tsv.gz').open('ab') as f:
+            f.write(b'\0')
     else:
         row['residuals'] = []
     p = tmp_path / 'c.json'
