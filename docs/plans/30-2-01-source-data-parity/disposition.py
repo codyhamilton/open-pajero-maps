@@ -49,8 +49,12 @@ SNAPSHOT_SCHEMA = "plan30-relation-snapshot-v1"
 SNAPSHOT_PIN_SCHEMA = "plan30-relation-snapshot-pin-v1"
 REQUESTS = PLAN / "relation_requests.json"
 SNAPSHOT_PIN = PLAN / "phase2_snapshot_pin.json"
-NOTE_KINDS = ("no-area-geometry", "boundary-clip-empty", "nested-outside-windows", "snapshot-tags-members")
+NOTE_KINDS = ("no-area-geometry", "boundary-clip-empty", "nested-outside-windows", "snapshot-tags-members",
+              "antimeridian-outside-windows")
 MAX_NESTED_DEPTH = 4
+# Per-relation caps, snapshot mode only (brief 2-03 item 2, vertex-limit
+# relations): raised under the plan-25 wrapper, topology still validated.
+RELATION_CAPS = {4095122: {"vertices": 800000, "topology_checks": 400000000}}
 HALO = 1
 sys.path[:0] = [str(ROOT / "parser"), str(ROOT / "parser/tools")]
 
@@ -307,8 +311,18 @@ def successor(source, variant):
     return action + "; presence match only; validate successor G and re-oracle under a separate implement unit"
 
 
+def snapshot_backed(source):
+    """True when a source used any date-matched snapshot tags, members or ways."""
+    return source.get("tags_members") == "snapshot" or source.get("geometry_ways", {}).get("snapshot", 0) > 0
+
+
 class Accumulator:
-    """Bounded summary, with an exhaustive on-disk event log for the probes."""
+    """Bounded summary, with an exhaustive on-disk event log for the probes.
+
+    The recorded supply is the first emitting same-code source, except that a
+    pinned-PBF-only source replaces a snapshot-backed one (unit 2-03), so the
+    snapshot never displaces evidence that the pinned source already gives.
+    """
     def __init__(self, rows):
         self.rows = {key(r): {**native(r), "candidates_by_code": {}, "emitters_by_code": {},
                              "grid_coincident_by_code": {}, "same_code_nondegenerate": 0, "supply": None, "events": 0} for r in rows}
@@ -334,7 +348,8 @@ class Accumulator:
             a, b, c0, d = event["result"]["source_bbox_lat_lon"]
             if b > a and d > c0:
                 r["same_code_nondegenerate"] += 1
-            if emitting and r["supply"] is None:
+            if emitting and (r["supply"] is None or
+                             (snapshot_backed(r["supply"]["source"]) and not snapshot_backed(event["source"]))):
                 variant = emitting[0]
                 r["supply"] = {"source": event["source"], "variant": variant, "production_C": variants[variant],
                                "coords_sha256": event["result"]["coords_sha256"],
@@ -614,7 +629,7 @@ def stitch_rings(rings, vertex_limit=MAX_VERTICES):
     return result
 
 
-def validate_rings(rings, edge_limit=MAX_TOPOLOGY_EDGES):
+def validate_rings(rings, edge_limit=MAX_TOPOLOGY_EDGES, check_limit=None):
     """OSM relation roles must describe a valid polygon, before EO stitching."""
     from fractions import Fraction
 
@@ -655,7 +670,7 @@ def validate_rings(rings, edge_limit=MAX_TOPOLOGY_EDGES):
         active = [p for p in active if p[1] >= s[0]]
         for p in active:
             checks += 1
-            require(checks <= MAX_TOPOLOGY_CHECKS, "relation topology work limit")
+            require(checks <= (check_limit or MAX_TOPOLOGY_CHECKS), "relation topology work limit")
             if p[3] < s[2] or s[3] < p[2]:
                 continue
             adjacent = p[4] == s[4] and ((p[5]-s[5]) % (len(rings[s[4]][1])-1) in (1, len(rings[s[4]][1])-2))
@@ -889,13 +904,33 @@ def assemble_snapshot(rid, raw_tags, raw_members, db, writer, vocab, level_filte
         if not any(intersects(shape_box, w) for _, w in writer.windows):
             counts["relations_outside_windows"] += 1
             return
+        caps = RELATION_CAPS.get(rid, {})
+        vlimit, climit = caps.get("vertices", MAX_RELATION_VERTICES), caps.get("topology_checks", MAX_TOPOLOGY_CHECKS)
+        if caps:
+            details["raised_caps"] = {"vertices": vlimit, "topology_checks": climit}
         total = sum(len(c) for _, c in ways.values())
-        require(total <= MAX_RELATION_VERTICES, "relation vertex limit")
-        rings = join_rings(area, ways, MAX_RELATION_VERTICES)
-        validate_rings(rings, MAX_RELATION_VERTICES)
-        coords = stitch_rings(rings, MAX_RELATION_VERTICES)
+        require(total <= vlimit, "relation vertex limit")
+        rings = join_rings(area, ways, vlimit)
+        validate_rings(rings, vlimit, climit)
+        coords = stitch_rings(rings, vlimit)
         source["geometry_ways"] = origin
         source["tags_members"] = origin_tm
+        if caps:
+            source["raised_caps"] = details["raised_caps"]
+        if any(abs(p[1] - q[1]) > 180 for p, q in zip(coords, coords[1:] + coords[:1])):
+            # A ring split along +/-180 (e.g. OSM's documented Polynesian
+            # Triangle) is unambiguous in the [0, 360) longitude frame when no
+            # edge spans more than 180 degrees there. All plan-30 cells lie in
+            # 112-155 E, which that frame leaves unchanged. Otherwise the
+            # existing ambiguous-antimeridian gap stands (writer.geometry).
+            shifted = [[p[0], p[1] + 360 if p[1] < 0 else p[1]] for p in coords]
+            if not any(abs(p[1] - q[1]) > 180 for p, q in zip(shifted, shifted[1:] + shifted[:1])):
+                coords, source["longitude_frame"] = shifted, "0-360 (negative longitudes +360)"
+                shape_box = bbox(coords)
+                if not any(intersects(shape_box, w) for _, w in writer.windows):
+                    writer.note("antimeridian-outside-windows", ref, {"bbox_lat_lon_0_360": shape_box})
+                    counts["relations_outside_windows"] += 1
+                    return
         if len(coords) <= MAX_C_VERTICES:
             writer.geometry(coords, source)
         else:

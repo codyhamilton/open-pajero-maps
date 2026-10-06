@@ -671,3 +671,30 @@ def test_snapshot_inert_without_eligible_relations_and_flag_guard(tmp_path, prod
 def test_publish_rejects_unknown_note(dataset):
     with pytest.raises(ValueError, match="unknown proof note"):
         dp.ProbeWriter(dataset.output.parent / "n.jsonl", [], dp.lattice(), None).note("made-up", {}, {})
+
+
+def test_snapshot_antimeridian_split_ring_uses_0_360_frame(tmp_path, production_probe):
+    grid, row, db, path, _ = _snap_fixture(tmp_path, cache_ways=(), snap_ways=(), cache_rel=False)
+    a, b, _, _ = dp.b4(grid, 400, 600)  # same latitude as the target, so the naive bbox hits its window
+    ring = [[a, 179.], [a, -179.], [b, -179.], [b, 179.], [a, 179.]]
+    doc_json = json.loads(path.read_text())
+    doc_json["relations"]["500"]["members"] = [{"ref": 40, "role": "outer", "type": "w"}]
+    doc_json["ways"] = {"40": {"nodes": [1, 2, 3, 4, 1], "coords": ring}}
+    path.write_text(dp.packed(doc_json))
+    snap = dp.Snapshot(dp.load_snapshot(path, dp.digest(path), [500]), [500], db)
+    doc, _, _ = _assemble(tmp_path, grid, row, db, snap, production_probe)
+    assert doc["gap_counts"] == {} and doc["note_counts"] == {"antimeridian-outside-windows": 1, "snapshot-tags-members": 1}
+
+
+def test_pinned_supply_preferred_over_snapshot_backed(dataset):
+    rows, _, grid, _ = dp.context(dataset)
+    acc = dp.Accumulator(rows)
+    snap_ev = c_event(rows[0], kind="relation")
+    snap_ev["source"] = snap_ev["source"] | {"id": 1, "geometry_ways": {"cache": 1, "snapshot": 1}}
+    pinned = c_event(rows[0], kind="relation")
+    pinned["source"] = pinned["source"] | {"id": 2, "geometry_ways": {"cache": 2}}
+    later = c_event(rows[0], kind="relation")
+    later["source"] = later["source"] | {"id": 3}
+    for e in (snap_ev, pinned, later):
+        acc.accept(e)
+    assert acc.rows[dp.key(rows[0])]["supply"]["source"]["id"] == 2
