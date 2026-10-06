@@ -1,0 +1,28 @@
+{
+ "box_lat_lat_lon_lon": [
+  -31.538339857713005,
+  -31.530167018914597,
+  116.08780703895971,
+  116.09438290244654
+ ],
+ "limit": "areas with no node inside the box are not found",
+ "nodes_in_box": 3,
+ "pbf": "/home/codyh/workspace/open-pajero-maps/australia-260824.osm.pbf",
+ "r_record_sha256": "fdc96d162ac5cd1f3d3ad76e3b881fb4bb5cfd0c937d7b8fbec249c489de083a",
+ "relations": [],
+ "tagged_nodes": [],
+ "ways": [
+  {
+   "closed": false,
+   "id": 553641737,
+   "n_in_box": 3,
+   "n_nodes": 15,
+   "tags": {
+    "highway": "residential",
+    "name": "McGlew Road",
+    "source:name": "MRWA-514",
+    "surface": "unpaved"
+   }
+  }
+ ]
+}
