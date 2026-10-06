@@ -50,7 +50,7 @@ hardened reader, and every other cell's whole-frame multiset must be identical.
 Plan 34 applied this to `2ee3456a…`, producing successor
 `4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448` (five L0
 cells removed: (0,141), (0,176), (0,541), (0,562), (0,563)). See
-`docs/plans/34-l0-empty-slot-frame-parity/successor_oracle_4e6b0de7.json`.
+`docs/plans/04-c-core-orchestration/triage/l0_empty_slot/successor_oracle_4e6b0de7.json`.
 
 ## Carried follow-ups
 

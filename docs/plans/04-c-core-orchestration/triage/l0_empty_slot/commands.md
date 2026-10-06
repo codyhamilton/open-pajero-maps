@@ -7,11 +7,11 @@ verifies the complete fixed pin before reading indexes and frames. R's pin
 is cited from plan 29, not remeasured.
 
 ```bash
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-34/runs/g_successor.json -- .venv-rp/bin/python -B docs/plans/34-l0-empty-slot-frame-parity/frame_witness.py probe --disc g_successor
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-34/runs/g_historical.json -- .venv-rp/bin/python -B docs/plans/34-l0-empty-slot-frame-parity/frame_witness.py probe --disc g_historical
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-34/runs/r.json -- .venv-rp/bin/python -B docs/plans/34-l0-empty-slot-frame-parity/frame_witness.py probe --disc r
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-34/runs/spool.json -- .venv-rp/bin/python -B docs/plans/34-l0-empty-slot-frame-parity/frame_witness.py probe --spool output/extract_timing/spool
-.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-34/runs/publish.json -- .venv-rp/bin/python -B docs/plans/34-l0-empty-slot-frame-parity/frame_witness.py publish
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-34/runs/g_successor.json -- .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/l0_empty_slot/frame_witness.py probe --disc g_successor
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-34/runs/g_historical.json -- .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/l0_empty_slot/frame_witness.py probe --disc g_historical
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-34/runs/r.json -- .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/l0_empty_slot/frame_witness.py probe --disc r
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-34/runs/spool.json -- .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/l0_empty_slot/frame_witness.py probe --spool output/extract_timing/spool
+.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-34/runs/publish.json -- .venv-rp/bin/python -B docs/plans/04-c-core-orchestration/triage/l0_empty_slot/frame_witness.py publish
 ```
 
 Expected outputs: `witnesses/g_successor.json`, `g_historical.json`, `r.json`,

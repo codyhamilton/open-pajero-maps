@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import build_alldata as build
 from kiwiw import alldata_writer as aw, descriptor, frame_table as ft, volume
 
-PLAN = Path(__file__).resolve().parents[2] / 'docs/plans/34-l0-empty-slot-frame-parity'
+PLAN = Path(__file__).resolve().parents[2] / 'docs/plans/04-c-core-orchestration/triage/l0_empty_slot'
 PHASE1_CELLS = ((0, 541), (0, 562), (0, 563))
 MASK = build.load_parcel_mask()
 L0 = MASK[0]

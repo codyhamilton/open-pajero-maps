@@ -10,7 +10,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location(
-    "l0_frame_witness", ROOT / "docs/plans/34-l0-empty-slot-frame-parity/frame_witness.py")
+    "l0_frame_witness", ROOT / "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/frame_witness.py")
 w = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(w)
 

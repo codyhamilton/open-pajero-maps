@@ -122,51 +122,51 @@
   },
   "evidence": [
     {
-      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/au_cell_diff.json",
+      "path": "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2/au_cell_diff.json",
       "sha256": "95a3aaa4a63c35052f359d2b5fe750a34c37de7c43b9bb7259dbe5a82e05c1df"
     },
     {
-      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/r_check.json",
+      "path": "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2/r_check.json",
       "sha256": "e5c169c10509e0e6ad78316c977c54ef155b3ff34cb1732776d516ca154ff457"
     },
     {
-      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/block_check.json",
+      "path": "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2/block_check.json",
       "sha256": "4e719024e6d91cf8bd59c06357a13ffc37cb44643a73b9e542d5f51771dd76d0"
     },
     {
-      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/k1.json",
+      "path": "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2/k1.json",
       "sha256": "a00cd3a3057454dd5a0e748867b3a1cbd9337ebe58a641870c235c946449b69d"
     },
     {
-      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/perth_cell_diff.json",
+      "path": "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2/perth_cell_diff.json",
       "sha256": "cd8cbf49b58c0e7ef2cacbd3416f9fcfd77f435fd3fee5b8f9938842015ba1e2"
     },
     {
-      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/perth_sha.json",
+      "path": "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2/perth_sha.json",
       "sha256": "543b4bd2856a4d1458ebe6368fade94f6875d21fae261328eeb5c35342cd814a"
     },
     {
-      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/successor_sha.json",
+      "path": "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2/successor_sha.json",
       "sha256": "21509d3fd0b5e853c0856be7b57fcf279eb328e9779eaa44da646fa19e737b09"
     },
     {
-      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/successor_final_sha.json",
+      "path": "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2/successor_final_sha.json",
       "sha256": "21509d3fd0b5e853c0856be7b57fcf279eb328e9779eaa44da646fa19e737b09"
     },
     {
-      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/protected_before.json",
+      "path": "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2/protected_before.json",
       "sha256": "ca604ac7168cf80dc2a9ff2de4f2b6ce485dcc6e51be7524dbb621e2699cc8b6"
     },
     {
-      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/protected_after.json",
+      "path": "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2/protected_after.json",
       "sha256": "ca604ac7168cf80dc2a9ff2de4f2b6ce485dcc6e51be7524dbb621e2699cc8b6"
     },
     {
-      "path": "docs/plans/34-l0-empty-slot-frame-parity/phase2/runs.json",
+      "path": "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2/runs.json",
       "sha256": "6b91d7d50b7e8e9a7453f69c8a4e171e07615d6b01db0fd62f29e0b375528893"
     },
     {
-      "path": "docs/plans/34-l0-empty-slot-frame-parity/witnesses/g_successor_4e6b0de7.json",
+      "path": "docs/plans/04-c-core-orchestration/triage/l0_empty_slot/witnesses/g_successor_4e6b0de7.json",
       "sha256": "4dc9d346d50d592c2629af1db25fb98138bc8f9e299709c3af7693de6e870e6e"
     }
   ],

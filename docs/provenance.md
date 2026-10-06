@@ -806,20 +806,20 @@ Measured: exits 0, 0, 0, 1, 0, with `run_p1.sh` / `run_p1.log` in scratch-28.
 - `dump_raw` re-hashed `1a91b1c2…` before and after the run.
 - Peak memory 81 MB (produce, 57 s).
 
-### output/scratch-29/ (plan 29 K1 name-anchor failure, successor oracle)
+### output/scratch-29/ (plan 29 K1 name-anchor failure, historical successor)
 
 Not committed; regenerable from the in-force spool. Record: `docs/plans/29-k1-name-anchor-failure.md`.
-- `G_new/ALLDATA.KWI` + `manifest.json`: the **successor oracle disc in force**. sha256 `2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae`, 1,692,105,152 bytes. Built from `output/extract_timing/spool` (fingerprint unchanged) with the plan-29 route (a) assembly drop guard, `-j4`. The manifest has `out_of_span_names_dropped` L0 1, every other level 0.
+- `G_new/ALLDATA.KWI` + `manifest.json`: the plan-29 successor, now **historical** (superseded by plan 34's `4e6b0de7…`; kept and protected, never overwritten). sha256 `2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae`, 1,692,105,152 bytes. Built from `output/extract_timing/spool` (fingerprint unchanged) with the plan-29 route (a) assembly drop guard, `-j4`. The manifest has `out_of_span_names_dropped` L0 1, every other level 0.
 - `G_verify/ALLDATA.KWI`: an independent re-encode after the 2-02 accounting fix. Its sha equals `G_new`.
 - Diff against the historical oracle `scratch-14/G_new` (`4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72`, still kept and protected): 146 changed bytes, all inside the L0 (0,541) leaf [928] frame (`docs/plans/04-c-core-orchestration/triage/name_anchor/witnesses/successor_diff.json`). `4ed9cd80…` stays the historical oracle for every earlier record.
 - `k1_live.json`: live K1 `-j6` on the successor exits 0. name_anchor 2,317,055 checked / 0 failing; completeness 1,800,514 / 0. `compare_k1` passes (`runs/p2_compare_k1b.json`): name checked and range checked each fall by exactly the 1 dropped name, and every other kind is unchanged.
 - `perth_base/`, `perth_new/`: the Perth fixture at `cc96570` and with plan-29 code are identical, `04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728`.
 - `run_p2.{sh,log}`, `run_p2b.{sh,log}`, `runs/*.json`: guarded heavy-run logs (`run_heavy_python.py` + `flock output/.heavy.lock`).
 
-### output/scratch-34/ (plan 34 L0 empty-slot frame parity, successor oracle)
+### output/scratch-34/ (plan 34 L0 empty-slot frame parity, oracle disc in force)
 
-Not committed; regenerable from the in-force spool. Plan: `docs/plans/34-l0-empty-slot-frame-parity/`.
-- `G_new/ALLDATA.KWI` + `manifest.json`: successor of `2ee3456a…`, sha256 `4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448`, 1,692,079,168 bytes. Built from `output/extract_timing/spool` (fingerprint unchanged) with the plan-34 outside-mask empty-shell omission, `-j4`. Oracle record: `successor_oracle_4e6b0de7.json`.
+Not committed; regenerable from the in-force spool. Record: `docs/plans/34-l0-empty-slot-frame-parity.md`; lasting witnesses and gates: `docs/plans/04-c-core-orchestration/triage/l0_empty_slot/`.
+- `G_new/ALLDATA.KWI` + `manifest.json`: the **oracle disc in force** (protected; successor of `2ee3456a…`), sha256 `4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448`, 1,692,079,168 bytes. Built from `output/extract_timing/spool` (fingerprint unchanged) with the plan-34 outside-mask empty-shell omission, `-j4`. Oracle record: `successor_oracle_4e6b0de7.json`.
 - Classified diff vs `scratch-29/G_new`: 5 L0 cells `removed_outside_mask_empty_shell`, 0 other (`phase2/au_cell_diff.json`); R `empty_slot` for all 5 (`phase2/r_check.json`); live K1 `-j6` failing 0 (`k1.json`).
 - `perth_new/`: identical to `04be2f6e…`.
 - `run_p2b.{sh,log}`, `runs/*.json`: guarded heavy-run logs.

@@ -21,6 +21,11 @@ PROTECTED = {
               '013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04'),
     'r': (fw.DISCS['r'], fw.PINS['r']),
 }
+# Oracle disc in force after plan 34 close-out; snapshot only when present.
+ORACLE_IN_FORCE = (fw.ROOT / 'output/scratch-34/G_new/ALLDATA.KWI',
+                   '4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448')
+if ORACLE_IN_FORCE[0].exists():
+    PROTECTED['g_oracle_in_force'] = ORACLE_IN_FORCE
 PERTH_PIN = '04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728'
 
 

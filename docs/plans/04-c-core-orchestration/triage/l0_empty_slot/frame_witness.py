@@ -20,7 +20,7 @@ import struct
 import sys
 
 PLAN = Path(__file__).resolve().parent
-ROOT = PLAN.parents[2]
+ROOT = PLAN.parents[4]
 OUT = PLAN / "witnesses"
 TARGETS = ((0, 541), (0, 562), (0, 563))
 BLOCK_CELLS = tuple((x, y) for y in range(512, 576) for x in range(32))

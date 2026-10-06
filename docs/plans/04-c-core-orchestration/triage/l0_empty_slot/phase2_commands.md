@@ -11,8 +11,8 @@ new, explicitly recorded path instead. Protected inputs are read-only.
 
 ```bash
 set -euo pipefail
-G=docs/plans/34-l0-empty-slot-frame-parity/phase2_gates.py
-W=docs/plans/34-l0-empty-slot-frame-parity/frame_witness.py
+G=docs/plans/04-c-core-orchestration/triage/l0_empty_slot/phase2_gates.py
+W=docs/plans/04-c-core-orchestration/triage/l0_empty_slot/frame_witness.py
 H=".venv-rp/bin/python -B parser/tools/run_heavy_python.py"
 PY=".venv-rp/bin/python -B"
 mkdir -p output/scratch-34/runs
