@@ -20,7 +20,7 @@ bp = json.load(open(f"{S}/guard/{med_run}/bench.json"))
 ppre, ppost = json.load(open(S + "/prof/pre/bench.json")), json.load(open(S + "/guard/prof/bench.json"))
 cpre, cpost = prof(S + "/prof/pre/pf"), prof(S + "/guard/prof/pf")
 names = {1: "eo_clip stage 1: segment sweep (pair intersections)", 2: "eo_clip stage 2: eo_left per-chain side checks (residual after a95501c prefilter)",
-         3: "eo_clip stage 3: whole-ring duplicate-vertex check", 4: "eo_clip stage 4: successor tie check", 5: "eo_clip stage 5: complex EO face path",
+         3: "eo_clip stage 3: whole-ring duplicate-vertex check", 4: "eo_clip stage 4: successor tie check", 5: "eo_clip stage 5: complex EO face path (includes per-face eo_left)",
          6: "chains()"}
 d_stage = {names[k]: cpost[k] - cpre[k] for k in names}
 d_stage["bg_shape rest (outside eo_clip and chains)"] = (cpost[0] - sum(cpost[k] for k in names)) - (cpre[0] - sum(cpre[k] for k in names))
@@ -63,7 +63,7 @@ out["name_guard_in_E1"] = {"L0_per_process_s": [round(x, 3) for x in sorted(gl0)
                            "L0_py_cpu_delta_s": round(bp["levels"]["0"]["py_s"] - ppre["levels"]["0"]["py_s"], 2),
                            "L0_guard_cpu_s": round(sum(gl0), 2)}
 # Reconciled partition: the directly measured parts (E1 stage, outside encode) stay as measured; the C stage parts are
-# scaled by one common factor so the partition sums to the measured gap (the factor is the even-parallelism error).
+# scaled by one common factor so the partition sums to the measured gap (the factor absorbs the unassigned remainder: even-parallelism error, scale bias from the instrumented 33006aa pre, E2 Python/handoff and L2-L12 E1 deltas, run noise).
 pool = {k: v * scale / W for k, v in d_stage.items()}
 direct = {"L0 E1 stage: plan 29 name guard": round(e1d, 2), "outside encode": out["accounting_s"]["outside_encode delta"]}
 f = (out["gap_s"] - sum(direct.values())) / sum(pool.values())

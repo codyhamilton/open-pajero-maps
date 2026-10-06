@@ -45,7 +45,7 @@ are of each fact, is in `docs/schema/`.
 | WP4 | Remaining `IDX/` families, `HWMAP`, `INDEXDAT` | Not started; bodies undecoded |
 | WP5 | Disc stamp, coverage, image authoring, burn | Not started |
 
-Full map-layer build is about **12.2 s** median at `-j 12` (3C close / plan 04 evidence; earlier plan-02 ~32 s is historical). Heavy K1/triage jobs use `flock output/.heavy.lock` and are not that wall.
+Full map-layer build is about **12.2 s** median at `-j 12` (3C close / plan 04 evidence; earlier plan-02 ~32 s is historical). At the `-j4` encode cap the full-AU build is **37.38 s** median after plan **41**'s two byte-identical fixes (it was 113 s; pre-regression 20.27 s). Every second of the 17.10 s gap is assigned to named causes (3-14 EO stitch about 16.1 s, plan 29 name guard about 0.9 s). The budget basis (`-j4` vs `-j12`) is open with Cody ([record](plans/41-encoder-build-close-gates.md)). Heavy K1/triage jobs use `flock output/.heavy.lock` and are not that wall.
 
 The latest 3-90 record at `5c5823e4c267dd64bc986038caddb3ed4b745f60` reported repeated PSS failure, a
 determinism comparison that retained varying `wall_s`, native dumps missing
@@ -82,8 +82,9 @@ remaining Phase 3 blockers are exactly the `blocks-phase3` rows of
 - the named conditions of the 3-14 to 3-17 independent fix reviews. The
   reviews of record landed under plan **40** (all ACCEPT-WITH-CONDITIONS),
   which discharges "review missing" (R-G8-1..4). Their UNVERIFIABLE or FAIL
-  clauses (lost unit scratch; the 3-14 build wall 26 s → 90 s) are open
-  named residuals R-G8-1-a..4-d. They are not counted proven.
+  clauses (lost unit scratch; the 3-14 build wall 26 s → 90 s, since
+  measured and fixed to 37.38 s at `-j4` by plan 41, pending the budget
+  ruling) are open named residuals R-G8-1-a..4-d. They are not counted proven.
 - the encoder content trim (R-G9-3), discharged by plan **42**
   ([record](plans/42-encoder-trim-r-parity.md)) as a proven cause with
   named children:

@@ -54,7 +54,7 @@
   "eo_clip stage 2: eo_left per-chain side checks (residual after a95501c prefilter)": 11.36,
   "eo_clip stage 3: whole-ring duplicate-vertex check": 2.62,
   "eo_clip stage 4: successor tie check": 1.09,
-  "eo_clip stage 5: complex EO face path": 22.96,
+  "eo_clip stage 5: complex EO face path (includes per-face eo_left)": 22.96,
   "chains()": 5.07,
   "bg_shape rest (outside eo_clip and chains)": 0.18
  },
@@ -63,7 +63,7 @@
   "eo_clip stage 2: eo_left per-chain side checks (residual after a95501c prefilter)": 2.3,
   "eo_clip stage 3: whole-ring duplicate-vertex check": 0.53,
   "eo_clip stage 4: successor tie check": 0.22,
-  "eo_clip stage 5: complex EO face path": 4.65,
+  "eo_clip stage 5: complex EO face path (includes per-face eo_left)": 4.65,
   "chains()": 1.03,
   "bg_shape rest (outside eo_clip and chains)": 0.04
  },
@@ -141,7 +141,7 @@
    "eo_clip stage 2: eo_left per-chain side checks (residual after a95501c prefilter)": 2.32,
    "eo_clip stage 3: whole-ring duplicate-vertex check": 0.54,
    "eo_clip stage 4: successor tie check": 0.22,
-   "eo_clip stage 5: complex EO face path": 4.69,
+   "eo_clip stage 5: complex EO face path (includes per-face eo_left)": 4.69,
    "chains()": 1.03,
    "bg_shape rest (outside eo_clip and chains)": 0.04,
    "L0 E1 stage: plan 29 name guard": 0.91,

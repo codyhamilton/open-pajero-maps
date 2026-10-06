@@ -197,3 +197,22 @@ def test_vectorised_screen_matches_per_cell_scan(tmp_path):
     assert sum(slow.drops) == 2
     assert bytes(fast.data) == bytes(slow.data)
     assert fast.lengths.tolist() == slow.lengths.tolist()
+
+
+def test_unaligned_layout_fallback_matches_vectorised_screen(tmp_path, monkeypatch):
+    """Plan 41 review F5: the per-cell fallback (layout not 8-byte aligned) gives
+    the vectorised screen's drops, lengths and bytes."""
+    path = tmp_path / 'spool'
+    with SpoolWriter(str(path)) as w:
+        w.add(0, 0, 541, names=[name('outside', -38.727285888, 77.519035766),
+                                name('valid', -38.727285888, 90.01)])
+        w.add(0, 1, 541, names=[])
+        w.add(0, 3, 542, names=[name('wrap', -38.6, 90.02 + 360.0),
+                                name('south', -91.0, 90.02)])
+    fast = cenc.E1Spool(path, 0, guard_names=True)
+    monkeypatch.setattr(cenc.E1Spool, '_name_rejects', lambda self, grid: None)
+    slow = cenc.E1Spool(path, 0, guard_names=True)
+    assert slow.drops.tolist() == fast.drops.tolist()
+    assert sum(slow.drops) == 2
+    assert bytes(slow.data) == bytes(fast.data)
+    assert slow.lengths.tolist() == fast.lengths.tolist()

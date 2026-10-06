@@ -1,7 +1,7 @@
-"""Assemble docs/plans/41-encoder-build-close-gates/wall/ from output/scratch-41 (light)."""
+"""Assemble this directory (plan 41 build wall evidence) from output/scratch-41 (light)."""
 import json, glob, re, shutil, statistics
 from pathlib import Path
-S = Path('output/scratch-41'); W = Path('docs/plans/41-encoder-build-close-gates/wall'); W.mkdir(parents=True, exist_ok=True)
+S = Path('output/scratch-41'); W = Path(__file__).resolve().parent; W.mkdir(parents=True, exist_ok=True)
 SLOTS = {0: 'bg_shape total', 1: 'eo_clip stage 1: segment sweep (pair intersections)', 2: 'eo_clip stage 2: eo_left per-chain side checks',
          3: 'eo_clip stage 3: whole-ring duplicate-vertex check', 4: 'eo_clip stage 4: successor tie check',
          5: 'eo_clip stage 5: complex EO face path', 6: 'chains()'}
