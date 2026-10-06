@@ -33,4 +33,13 @@ logs `evidence/runs.json`, chain log `evidence/run_p1.log`.
 | AU rebuild `-j4` | `G_rebuild` sha256 **4e6b0de785bdf454…c448** = oracle in force |
 | Perth `-j1`, `-j4` | both **04be2f6e0e700ee6…b728** = pin and `scratch-29/perth_base` |
 | Protected | `protected_before.json` == `protected_after.json` (4e6b0de7, 2ee3456a, 4ed9cd80, 013586b5, R 8c2d2027, spool fingerprint 328c064e… over 14 files); Perth `da13a775` and `04be2f6e` also hashed at 11:35, unchanged |
-| Full `parser/tests` | pending — separate guarded step after plan 37 Phase 2 |
+| Full `parser/tests` (collected at `0f3e530`, after plan 37 unit 2-01) | **1 failed, 1365 passed, 7 skipped in 698.31s**. Wrapper exit 1, memory.peak 10,110,922,752 B. Failing: `test_parcel_mask.py::test_fill_only_masked_and_absent_cells`, introduced by plan 34 `5182c83` (bisected to that file: `5182c83^` 4 passed, `5182c83` 1 failed). `test_perf_inventory` passes. Evidence: `evidence/p1_summary.json` `full_pytest` and `evidence/pytest_failures_tail.txt` |
+
+### Phase 1 closed (outcomes 1–6 measured)
+
+- Outcomes 1–3 and 5 pass.
+- Outcome 4 is measured: the AU rebuild and Perth pass, but pytest is **not
+  green** (one plan-34 regression, named above).
+- G6 is measured as PASS. G7 is FAIL on pytest only and goes to Phase 2 as a
+  named residual.
+- No re-pin and no Phase 3 claim.

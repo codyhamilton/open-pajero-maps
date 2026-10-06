@@ -1,0 +1,25 @@
+=================================== FAILURES ===================================
+____________________ test_fill_only_masked_and_absent_cells ____________________
+
+tmp_path = PosixPath('/home/codyh/workspace/open-pajero-maps/output/scratch-35/pytest/test_fill_only_masked_and_abse0')
+
+    def test_fill_only_masked_and_absent_cells(tmp_path):
+        reader = _spool(tmp_path)
+        base, n0 = _encode(reader, None)
+        assert len(base) == 4
+        parcels, n1 = _encode(reader, {0: (700, 702, 10, 11)})
+        base_map = {(ix, iy): f for ix, iy, f in base}
+        got = {(ix, iy): f for ix, iy, f in parcels}
+        masked = {(x, y) for x in range(700, 703) for y in (10, 11)}
+>       assert set(got) == set(base_map) | masked
+E       assert {(700, 10), (...0), (702, 11)} == {(700, 10), (...702, 11), ...}
+E         
+E         Extra items in the right set:
+E         (720, 30)
+E         Use -v to get more diff
+
+parser/tests/test_parcel_mask.py:63: AssertionError
+=========================== short test summary info ============================
+FAILED parser/tests/test_parcel_mask.py::test_fill_only_masked_and_absent_cells
+1 failed, 1365 passed, 7 skipped in 698.31s (0:11:38)
+{"argv0": ".venv-rp/bin/python", "exit": 1, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-35/runs/p1_pytest.json", "max_rss_kib": 9809880, "memory_peak": 10110922752, "wall_s": 700.325}

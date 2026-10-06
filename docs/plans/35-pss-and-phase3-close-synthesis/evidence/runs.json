@@ -278,6 +278,33 @@
   "time_v_elapsed_s": 30.59,
   "wall_s": 30.600285156047903
  },
+ "p1_pytest": {
+  "anon": 17350656,
+  "argv": [
+   ".venv-rp/bin/python",
+   "-B",
+   "-m",
+   "pytest",
+   "-q",
+   "-p",
+   "no:cacheprovider",
+   "parser/tests",
+   "--basetemp",
+   "output/scratch-35/pytest"
+  ],
+  "cgroup": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/maps-heavy-2425511.scope",
+  "cgroup_error": null,
+  "cwd": "/home/codyh/workspace/open-pajero-maps-14-completeness",
+  "exit": 1,
+  "file": 3814830080,
+  "file_dirty": 999424,
+  "max_rss_kib": 9809880,
+  "memory_peak": 10110922752,
+  "pid": 2425514,
+  "ppid": 2425513,
+  "time_v_elapsed_s": 700.32,
+  "wall_s": 700.3246807879768
+ },
  "p1_sha_oracle": {
   "anon": 8957952,
   "argv": [

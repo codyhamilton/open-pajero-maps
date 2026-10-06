@@ -16,7 +16,23 @@
   },
   "every_kind_failing_zero": true
  },
- "full_pytest": "pending: separate guarded step after plan 37 Phase 2 lands",
+ "full_pytest": {
+  "collected_at": "0f3e530",
+  "command": ".venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-35/runs/p1_pytest.json -- .venv-rp/bin/python -B -m pytest -q -p no:cacheprovider parser/tests --basetemp output/scratch-35/pytest",
+  "failed": [
+   "parser/tests/test_parcel_mask.py::test_fill_only_masked_and_absent_cells"
+  ],
+  "failure_cause": "plan 34 unit 2-02 (5182c83) omits outside-mask exact empty shells; the test's synthetic (720,30) frame is an exact empty shell outside the synthetic mask. Bisect (file only): 5182c83^ 4 passed; 5182c83 1 failed / 3 passed.",
+  "pass": false,
+  "summary_line": "1 failed, 1365 passed, 7 skipped in 698.31s (0:11:38)",
+  "test_perf_inventory": "pass (plan 37 unit 2-01 at 0f3e530)",
+  "wrapper": {
+   "exit": 1,
+   "max_rss_kib": 9809880,
+   "memory_peak": 10110922752,
+   "wall_s": 700.3246807879768
+  }
+ },
  "head_at_start": "9c99dcb",
  "k1_j1": {
   "compare_excludes": [
@@ -156,6 +172,7 @@
   "p1_k1_j6_3": 0,
   "p1_perth_j1": 0,
   "p1_perth_j4": 0,
+  "p1_pytest": 1,
   "p1_sha_oracle": 0,
   "p1_sha_perth": 0,
   "p1_sha_perth_j1": 0,
