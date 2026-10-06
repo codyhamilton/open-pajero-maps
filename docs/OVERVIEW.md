@@ -73,7 +73,11 @@ remaining Phase 3 blockers are exactly the `blocks-phase3` rows of
   ([record](plans/36-3-14-cause-and-container-attribution.md));
 - the historical cause remainder: 8,739 background_boundary + 137 background
   rows (180 groups), polygon 65623 and R01 exclusivity;
-- the 3-14 to 3-17 independent fix reviews.
+- the named conditions of the 3-14 to 3-17 independent fix reviews. The
+  reviews of record landed under plan **40** (all ACCEPT-WITH-CONDITIONS),
+  which discharges "review missing" (R-G8-1..4). Their UNVERIFIABLE or FAIL
+  clauses (lost unit scratch; the 3-14 build wall 26 s → 90 s) are open
+  named residuals R-G8-1-a..4-d. They are not counted proven.
 
 Already settled:
 
