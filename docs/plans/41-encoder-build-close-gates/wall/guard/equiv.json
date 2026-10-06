@@ -1,0 +1,58 @@
+{
+ "0": {
+  "cells": 432295,
+  "drops": 1,
+  "cells_with_drops": 1,
+  "identical": true,
+  "guard_s_fast": 0.666,
+  "per_cell_scan_s": 25.005
+ },
+ "2": {
+  "cells": 27050,
+  "drops": 0,
+  "cells_with_drops": 0,
+  "identical": true,
+  "guard_s_fast": 0.225,
+  "per_cell_scan_s": 1.589
+ },
+ "4": {
+  "cells": 2125,
+  "drops": 0,
+  "cells_with_drops": 0,
+  "identical": true,
+  "guard_s_fast": 0.099,
+  "per_cell_scan_s": 0.121
+ },
+ "6": {
+  "cells": 270,
+  "drops": 0,
+  "cells_with_drops": 0,
+  "identical": true,
+  "guard_s_fast": 0.017,
+  "per_cell_scan_s": 0.016
+ },
+ "8": {
+  "cells": 33,
+  "drops": 0,
+  "cells_with_drops": 0,
+  "identical": true,
+  "guard_s_fast": 0.006,
+  "per_cell_scan_s": 0.002
+ },
+ "10": {
+  "cells": 3,
+  "drops": 0,
+  "cells_with_drops": 0,
+  "identical": true,
+  "guard_s_fast": 0.001,
+  "per_cell_scan_s": 0.0
+ },
+ "12": {
+  "cells": 1,
+  "drops": 0,
+  "cells_with_drops": 0,
+  "identical": true,
+  "guard_s_fast": 0.001,
+  "per_cell_scan_s": 0.0
+ }
+}

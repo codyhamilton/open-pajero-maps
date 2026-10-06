@@ -1,0 +1,42 @@
+{
+ "commit": "c82f92e",
+ "runs": {
+  "r1": {
+   "wall_s": 37.27,
+   "sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+   "pass": true
+  },
+  "r2": {
+   "wall_s": 37.38,
+   "sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+   "pass": true
+  },
+  "r3": {
+   "wall_s": 37.78,
+   "sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+   "pass": true
+  },
+  "perth_j1": {
+   "wall_s": 11.08,
+   "sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+   "pass": true
+  },
+  "perth_j4": {
+   "wall_s": 2.96,
+   "sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+   "pass": true
+  },
+  "prof": {
+   "wall_s": 45.59,
+   "sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+   "pass": true
+  }
+ },
+ "au_median_s": 37.38,
+ "au_spread_s": 0.51,
+ "suite": {
+  "exit": 0,
+  "wall_s": 600.9,
+  "summary": "1449 passed, 7 skipped in 598.87s (0:09:58)"
+ }
+}

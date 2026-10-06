@@ -238,3 +238,117 @@ Close gate (c) sha gate: AU 4e6b0de7 PASS (3/3), Perth 04be2f6e PASS (-j1 and -j
   - The 3-14 share of the wall is now about 17 s by subtraction.
   - Still open until the budget ruling.
 
+
+## Phase 1 continuation — name guard once per level; EO cost profiled
+
+Execute took the candidate second byte-identical fix (reversible, within
+Execute's remit) through a full gate cycle. Design asked for a direct post-fix
+profile of the remaining EO cost (stages 1, 5 and the residual stage-2 loop),
+so that the whole gap above the pre-regression wall has measured, named causes.
+The budget basis (`-j4` vs `-j12`) remains **Cody's call via Design**; this
+section measures and does not decide.
+
+### Fix landed: `c82f92e` (byte-identical)
+
+- **The change** (`parser/kiwiw/cenc.py`, `E1Spool._guard_names`): the plan 18
+  admission test now runs **once per level, vectorised over the name columns
+  only** (`_name_rejects`: cell headers and the `s_present`/`s_lat`/`s_lon`
+  columns gathered from the record layout of `spool.encode_columns`). Only cells
+  with a rejected anchor take the unchanged per-cell repack (`_guard_cell`, the old
+  loop body), which re-derives the verdict; a disagreement raises. A layout that is
+  not 8-byte aligned falls back to the per-cell scan of every cell. The wrap-around
+  loops are elementwise, so applying them to all names at once gives the per-cell
+  result.
+- **Equivalence on the pinned spool, every level** (`wall/guard/equiv.json`): the
+  private data, lengths and drop counts are identical to the per-cell scan. L0:
+  432,295 cells, 1 drop, **0.67 s vs 25.0 s** per process.
+- **Test:** `test_vectorised_screen_matches_per_cell_scan` (mixed cells, wrap,
+  out-of-span south, empty cell) in `parser/tests/test_name_drop_guard.py`.
+- **Effect:** AU median **66.56 → 37.38 s** at `-j4` (runs 37.27 / 37.38 / 37.78,
+  spread 0.51). Perth `-j1` 11.08 s, `-j4` 2.96 s (were 36.7 / 30.3 s).
+- **The measured median, 37.38 s, is below the < 60 s target at `-j4`.** Whether
+  `-j4` is the budget basis is Cody's call via Design.
+
+### Gap above pre-regression, measured (`wall/guard/gap_table.json`, `make_gap.py`)
+
+Pre-regression `33006aa` median 20.27 s; post-fix `c82f92e` median 37.38 s; **gap
+17.10 s**. Level walls and the outside-encode time are measured directly; per-stage
+C time comes from the existing `prof_patch.py` timers in a throwaway instrumented
+copy of `c82f92e` (disc sha `4e6b0de7`; instrumented wall 45.59 s), plus a
+per-process timer around the name guard.
+
+- **By level (measured walls):** L0 11.7 → 27.79 s (+16.09); L2 0.3 → 1.09 (+0.79);
+  L4 0.1 → 0.21 (+0.11); L6–L12 +0.17 together. Outside encode (assemble)
+  7.9 → 7.88 s (−0.02). Levels plus outside: +17.14 s against the 17.10 s gap
+  (0.04 s is rounding of the per-level medians).
+- **How a level's wall splits:** E1 stage (`prepass_s`: the E1 pool run plus the
+  parent's routing sort) + E2 stage. The plan 29 name guard runs **inside the E1
+  workers** (`E1Spool(guard_names=True)`, once per process per level on its first
+  E1 job), so its wall is inside the E1-stage delta. The `eo_clip` growth is in
+  `bg_shape`, inside E2.
+- **C CPU summed over the 4 workers:** instrumented 44.56 → 120.13 s;
+  uninstrumented post 105.83 s, so timer overhead scales the instrumented delta by
+  0.811. Wall-equivalent = CPU delta × 0.811 / 4.
+
+| cause | measured | wall-equivalent | reconciled share of the gap |
+|---|---|---|---|
+| `eo_clip` stage 1 segment sweep (pair intersections) | +36.18 C CPU s | 7.33 s | **7.38 s** |
+| `eo_clip` stage 5 complex EO face path | +22.96 C CPU s | 4.65 s | **4.69 s** |
+| `eo_clip` stage 2 residual `eo_left` loop (after `a95501c`; was 161.5 s) | +11.36 C CPU s | 2.30 s | **2.32 s** |
+| `chains()` (7.94 → 13.00 s) | +5.07 C CPU s | 1.03 s | 1.03 s |
+| `eo_clip` stage 3 duplicate-vertex check | +2.62 C CPU s | 0.53 s | 0.54 s |
+| `eo_clip` stage 4 successor tie check | +1.09 C CPU s | 0.22 s | 0.22 s |
+| rest of `bg_shape` | +0.18 C CPU s | 0.04 s | 0.04 s |
+| **subtotal: 3-14 EO stitch (E2 stage, all levels)** | **+79.47 C CPU s** | **16.10 s** | **16.22 s** |
+| L0 E1 stage: plan 29 name guard (1.052–1.065 s per process, the 4 run concurrently) | E1 wall 1.51 → 2.43 s | 0.91 s | 0.91 s |
+| outside encode (assemble) | 7.9 → 7.88 s | −0.02 s | −0.02 s |
+| **sum** | | **16.99 s** | **17.11 s** |
+| **residual vs the 17.10 s gap** | | **+0.11 s** | 0 (rounding) |
+
+- **Reading the table:** the E1-stage delta and the outside-encode delta are
+  direct wall measurements. The C stage rows are CPU deltas turned into wall by
+  the even-parallelism assumption; that assumption leaves +0.11 s (0.7 %)
+  unassigned. The last column scales the C rows by one common factor, 1.0066, so
+  the partition sums to the measured gap.
+- **The name guard row:** the guard's measured per-process time (1.06 s) is
+  0.15 s more than the E1-stage delta (0.91 s). The rest of E1 therefore differs
+  by −0.15 s between the two builds (run-to-run noise and the other E1 changes
+  between `33006aa` and `c82f92e`). Its CPU, 4.23 s over 4 workers, is most of
+  the L0 E1 `py_s` delta (+4.75 s).
+- **Correction to an earlier draft:** the draft added the guard twice, once as
+  `py_s`/4 (1.19 s) and again inside the E1 delta. That made the sum 18.18 s and
+  the residual −1.08 s. `make_gap.py` now adds it once.
+- **What this does not split:** the stage timers are summed over all levels, not
+  per level. L2–L12 add 1.07 s of wall; this is the same `bg_shape` growth plus the
+  L2 guard (0.04 s per process).
+- Timer counts lose at most 4,095 calls per worker (flush cadence).
+
+### Close gates (plan 41 Phase 2 rule; triggered by `parser/kiwiw/cenc.py` in `c82f92e`)
+
+Close gate (a) full suite: 1449 passed, 7 skipped in 598.87s at c82f92e
+
+Close gate (b) encode wall: median 37.38 s of 3 at -j4 (spread 0.51 s) vs baseline 66.56 s (a95501c fix median of 3, wall/fix_runs.json)
+
+Close gate (c) sha gate: AU 4e6b0de7 PASS (3/3), Perth 04be2f6e PASS (-j1 and -j4)
+
+- **(a):** `parser/tests` in full, nothing deselected, run in the `c82f92e`
+  worktree under the wrapper with `TMPDIR` on disk
+  (`output/scratch-41/guard/pytest.log`).
+- **(b), (c):** `wall/guard/guard_runs.json` (`run_guard.sh`); the instrumented
+  profile disc is also `4e6b0de7`.
+- **Protected discs:** snapshot before and after the cycle identical, all 5 entries
+  and the spool fingerprint (`wall/guard/protected_{before,after}.json`).
+- **Ordering disclosure:** plan 39 heavy jobs ran between gate steps, each taking
+  the lock in turn (never two heavy jobs at once). Short unlocked plan 39 analyses
+  (seconds each) may have overlapped some timed runs; the AU spread is 0.51 s.
+- **`close_gates.py`:** `.venv-rp/bin/python -B parser/tools/close_gates.py --base 6e12b36 --impl docs/plans/41-encoder-build-close-gates/IMPLEMENTATION.md` at head `c82f92e` gives `"trigger": true`, `"trigger_paths": ["parser/kiwiw/_cenc.c", "parser/kiwiw/cenc.py"]`, `"missing": []`, **`"pass": true`**, exit 0.
+
+### Residuals (continuation)
+
+- **R-G9-4:** measured median 37.38 s at `-j4`, below 60 s at `-j4`. Every
+  second of the 17.10 s gap above pre-regression has a measured, named cause
+  (residual +0.11 s, the even-parallelism error). Open only for Cody's budget-basis ruling
+  (via Design). Updated in `residuals.tsv`.
+- **R-G8-1-a:** the post-3-14 C stage split is now measured on current master
+  (table above) and the build is under the ~1 min budget at `-j4`. Discharge awaits
+  the same ruling; Design may reclassify. Updated in `residuals.tsv`.

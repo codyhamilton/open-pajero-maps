@@ -1,0 +1,165 @@
+{
+ "pre_commit": "33006aa",
+ "pre_wall_median_s": 20.273040379979648,
+ "post_commit": "c82f92e (guard fix on 87f78fe, contains a95501c)",
+ "post_wall_median_s": 37.37603422498796,
+ "post_runs_s": {
+  "r1": 37.27424380404409,
+  "r2": 37.37603422498796,
+  "r3": 37.78280588192865
+ },
+ "gap_s": 17.102993845008314,
+ "by_level_wall_s": {
+  "0": {
+   "pre": 11.7,
+   "post": 27.79
+  },
+  "2": {
+   "pre": 0.3,
+   "post": 1.09
+  },
+  "4": {
+   "pre": 0.1,
+   "post": 0.21
+  },
+  "6": {
+   "pre": 0.0,
+   "post": 0.07
+  },
+  "8": {
+   "pre": 0.0,
+   "post": 0.08
+  },
+  "10": {
+   "pre": 0.0,
+   "post": 0.01
+  },
+  "12": {
+   "pre": 0.0,
+   "post": 0.01
+  }
+ },
+ "outside_encode_s": {
+  "pre_assemble_median": 7.9,
+  "post": 7.88
+ },
+ "c_cpu_s": {
+  "pre_instrumented": 44.56,
+  "post_instrumented": 120.13,
+  "post_uninstrumented": 105.83,
+  "instrumentation_scale": 0.811
+ },
+ "c_cpu_delta_by_stage_instrumented_s": {
+  "eo_clip stage 1: segment sweep (pair intersections)": 36.18,
+  "eo_clip stage 2: eo_left per-chain side checks (residual after a95501c prefilter)": 11.36,
+  "eo_clip stage 3: whole-ring duplicate-vertex check": 2.62,
+  "eo_clip stage 4: successor tie check": 1.09,
+  "eo_clip stage 5: complex EO face path": 22.96,
+  "chains()": 5.07,
+  "bg_shape rest (outside eo_clip and chains)": 0.18
+ },
+ "c_wall_equiv_delta_by_stage_s": {
+  "eo_clip stage 1: segment sweep (pair intersections)": 7.33,
+  "eo_clip stage 2: eo_left per-chain side checks (residual after a95501c prefilter)": 2.3,
+  "eo_clip stage 3: whole-ring duplicate-vertex check": 0.53,
+  "eo_clip stage 4: successor tie check": 0.22,
+  "eo_clip stage 5: complex EO face path": 4.65,
+  "chains()": 1.03,
+  "bg_shape rest (outside eo_clip and chains)": 0.04
+ },
+ "python_cpu_s": {
+  "pre_L0_py": 0.45,
+  "post_L0_py": 5.21,
+  "pre_L0_prepass": 1.51,
+  "post_L0_prepass": 2.43
+ },
+ "name_guard_s_per_process": {
+  "0": [
+   1.052,
+   1.057,
+   1.059,
+   1.065
+  ],
+  "2": [
+   0.039,
+   0.039,
+   0.039,
+   0.039
+  ],
+  "4": [
+   0.005,
+   0.005,
+   0.005,
+   0.005
+  ],
+  "6": [
+   0.001,
+   0.001,
+   0.001,
+   0.002
+  ],
+  "8": [
+   0.001,
+   0.001,
+   0.002,
+   0.002
+  ],
+  "10": [
+   0.002,
+   0.002,
+   0.002,
+   0.002
+  ],
+  "12": [
+   0.001
+  ]
+ },
+ "note": "Stage CPU from CLOCK_MONOTONIC timers in an instrumented copy (bytes unchanged, sha 4e6b0de7); counts lose <=4095 calls per worker (flush cadence). Wall-equivalent assumes the -j4 pool's C time parallelises evenly; level walls and outside_encode are measured directly.",
+ "accounting_s": {
+  "C bg_shape stages (wall-equiv, E2 stage, all levels)": 16.1,
+  "L0 E1 stage delta (contains the worker name guard)": 0.91,
+  "outside_encode delta": -0.02,
+  "sum": 16.99,
+  "residual_vs_gap": 0.11
+ },
+ "name_guard_in_E1": {
+  "L0_per_process_s": [
+   1.052,
+   1.057,
+   1.059,
+   1.065
+  ],
+  "L0_mean_s": 1.058,
+  "note": "the 4 workers run it concurrently on their first L0 E1 job, so its wall share is ~ the per-process time, bounded by the measured E1-stage delta",
+  "L0_py_cpu_delta_s": 4.75,
+  "L0_guard_cpu_s": 4.23
+ },
+ "reconciled_partition_s": {
+  "pool_scale": 1.0066,
+  "parts": {
+   "eo_clip stage 1: segment sweep (pair intersections)": 7.38,
+   "eo_clip stage 2: eo_left per-chain side checks (residual after a95501c prefilter)": 2.32,
+   "eo_clip stage 3: whole-ring duplicate-vertex check": 0.54,
+   "eo_clip stage 4: successor tie check": 0.22,
+   "eo_clip stage 5: complex EO face path": 4.69,
+   "chains()": 1.03,
+   "bg_shape rest (outside eo_clip and chains)": 0.04,
+   "L0 E1 stage: plan 29 name guard": 0.91,
+   "outside encode": -0.02
+  },
+  "sum": 17.11
+ },
+ "by_level_delta_check_s": {
+  "levels": {
+   "12": 0.01,
+   "10": 0.01,
+   "8": 0.08,
+   "6": 0.07,
+   "4": 0.11,
+   "2": 0.79,
+   "0": 16.09
+  },
+  "levels_plus_outside": 17.14,
+  "gap": 17.1
+ }
+}
