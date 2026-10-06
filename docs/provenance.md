@@ -864,3 +864,14 @@ Admitted by plan 30 DESIGN Amendment 1 (Design ruling option (a), 2026-10-06). N
 - Use: in the plan 30 `pbf-cache` relation probe only. It supplies member-way and member-node geometry for those 61 relations. Brief 2-03 extended this to relation tags and members for the 5 relations never retained in the cache (4095122, 15480206, 16308779, 16308787, 16308826), with area-role children as eligible sources; no plan 30 verdict depends on that extension (plan 30 record). Nothing enters any build, spool or disc.
 - Files are read-only (`chmod a-w`) and protected like the spool.
 
+
+### output/scratch-43/ (plan 43 review conditions, light set)
+
+Not committed; ~6 MB; regenerable. Record: `docs/plans/43-review-conditions-light/IMPLEMENTATION.md`. Committed evidence and
+scripts live in `docs/plans/04-c-core-orchestration/triage/independent_reviews/3-1{4,7}/conditions/` (README in each).
+- `k1old_314.*`, `k1head_314_cwdslip.*`, `runs/`: K1 runs on `4ed9cd80` (copies committed). `golden/`: golden window rebuild
+  (`frames.bin` = golden `905d9c95…`). `c20k.out.json`: 20,000-ring stress characterisation (summary committed as `stress_20k.json`).
+- `suite_main.log` (+ two `*.killed_*` partial logs from host reboots 17:53 / 18:47 AEST): main-checkout full suite.
+- `p2/`: `dump_forced`, `dump_k1old_all`, `dump_ext43` and classify outputs; `side_forced.tsv`; `rules/`. Bytes pinned in
+  `3-17/conditions/p2_bytes.sha256`. Regenerate: `forced_zero.py`, `make_rules.py`, `run_p2.sh`, `build_ext.py`, `run_p2b.sh`.
+- Safe to delete; nothing else reads it.

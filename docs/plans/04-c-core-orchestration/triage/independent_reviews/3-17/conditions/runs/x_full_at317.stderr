@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/home/codyh/workspace/open-pajero-maps-43-cli317/parser/tools/k1_triage.py", line 576, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/home/codyh/workspace/open-pajero-maps-43-cli317/parser/tools/k1_triage.py", line 571, in main
+    return {"summary": cmd_summary, "classify": cmd_classify,
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            "enumerate": cmd_enumerate}[args.cmd](args)
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/codyh/workspace/open-pajero-maps-43-cli317/parser/tools/k1_triage.py", line 423, in cmd_classify
+    dump_io.file_rows(path, dtype.itemsize)  # validate before writing assign
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codyh/workspace/open-pajero-maps-43-cli317/parser/kiwiw/dump_io.py", line 82, in file_rows
+    raise ValueError(f'{path}: zero-row kinds are unsupported (as in the baseline)')
+ValueError: /home/codyh/workspace/open-pajero-maps/output/scratch-43/p2/dump_ext43/background.bin: zero-row kinds are unsupported (as in the baseline)

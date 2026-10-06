@@ -1,0 +1,623 @@
+{
+  "compare_excludes": [
+    "timing",
+    "wall_s"
+  ],
+  "disc": "ALLDATA.KWI",
+  "dump": {
+    "background": 0,
+    "background_boundary": 0,
+    "completeness": 776,
+    "interior_cover": 0,
+    "name_anchor": 1
+  },
+  "engine": "c",
+  "failing": 777,
+  "levels": {
+    "0": {
+      "blocks": 1858,
+      "explained": {
+        "name_anchor_halo": 310420,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 547794,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [
+        {
+          "cell": [
+            0,
+            541
+          ],
+          "error_raw": null,
+          "kind": "name_anchor",
+          "leaf_path": [
+            928
+          ],
+          "reason": "no spool record within half a raw unit",
+          "vertex": {
+            "lat": -38.727284749,
+            "lon": 90.0,
+            "raw": [
+              0,
+              370
+            ]
+          }
+        },
+        {
+          "cell": [
+            1814,
+            548
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            1709,
+            554
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 291
+        },
+        {
+          "cell": [
+            851,
+            637
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            867,
+            638
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            869,
+            638
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            870,
+            638
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            871,
+            638
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            872,
+            638
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            873,
+            638
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        },
+        {
+          "cell": [
+            875,
+            638
+          ],
+          "kind": "completeness",
+          "reason": "a spool polygon of this type meets the cell but no decoded piece of it does",
+          "type": 288
+        }
+      ],
+      "kinds": {
+        "background": {
+          "checked": 164516755,
+          "failing": 0,
+          "worst_error_raw": 0.499999
+        },
+        "background_boundary": {
+          "checked": 63912410,
+          "failing": 0,
+          "worst_error_raw": 0.499985
+        },
+        "completeness": {
+          "checked": 1773724,
+          "failing": 776,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 1590547,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 2281890,
+          "failing": 1,
+          "worst_error_raw": 0.499999
+        },
+        "range": {
+          "checked": 271374102,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 40663047,
+          "failing": 0,
+          "worst_error_raw": 0.499998
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 216281685,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 3707030,
+      "tall_shapes": 61157
+    },
+    "10": {
+      "blocks": 6,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 0,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 119,
+          "failing": 0,
+          "worst_error_raw": 0.49975
+        },
+        "background_boundary": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "completeness": {
+          "checked": 2,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 8,
+          "failing": 0,
+          "worst_error_raw": 0.496154
+        },
+        "range": {
+          "checked": 127,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 104,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 9,
+      "tall_shapes": 0
+    },
+    "12": {
+      "blocks": 1,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 0,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 23,
+          "failing": 0,
+          "worst_error_raw": 0.491014
+        },
+        "background_boundary": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "completeness": {
+          "checked": 1,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 8,
+          "failing": 0,
+          "worst_error_raw": 0.400813
+        },
+        "range": {
+          "checked": 31,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 19,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 1,
+      "tall_shapes": 0
+    },
+    "2": {
+      "blocks": 241,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 840,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 9402420,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "background_boundary": {
+          "checked": 190351,
+          "failing": 0,
+          "worst_error_raw": 0.499981
+        },
+        "completeness": {
+          "checked": 24403,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 19,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 30286,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "range": {
+          "checked": 11102439,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 1479382,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 9254656,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 231573,
+      "tall_shapes": 235
+    },
+    "4": {
+      "blocks": 21,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 2882,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 1946786,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "background_boundary": {
+          "checked": 7277,
+          "failing": 0,
+          "worst_error_raw": 0.499571
+        },
+        "completeness": {
+          "checked": 2006,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 3354,
+          "failing": 0,
+          "worst_error_raw": 0.499878
+        },
+        "range": {
+          "checked": 2592784,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 635367,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 1905174,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 14521,
+      "tall_shapes": 0
+    },
+    "6": {
+      "blocks": 6,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 175,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 372750,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "background_boundary": {
+          "checked": 880,
+          "failing": 0,
+          "worst_error_raw": 0.497907
+        },
+        "completeness": {
+          "checked": 311,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 1223,
+          "failing": 0,
+          "worst_error_raw": 0.49993
+        },
+        "range": {
+          "checked": 484201,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 109348,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 354432,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 930,
+      "tall_shapes": 0
+    },
+    "8": {
+      "blocks": 6,
+      "explained": {
+        "name_anchor_halo": 0,
+        "road_node_on_leaf_edge": 0,
+        "road_node_subcell_on_polyline": 11,
+        "road_point_on_leaf_edge": 0,
+        "road_point_subcell_on_polyline": 0
+      },
+      "failures": [],
+      "kinds": {
+        "background": {
+          "checked": 147653,
+          "failing": 0,
+          "worst_error_raw": 0.499994
+        },
+        "background_boundary": {
+          "checked": 128,
+          "failing": 0,
+          "worst_error_raw": 0.495834
+        },
+        "completeness": {
+          "checked": 67,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "interior_cover": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "name_anchor": {
+          "checked": 287,
+          "failing": 0,
+          "worst_error_raw": 0.498944
+        },
+        "range": {
+          "checked": 255904,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "road_node": {
+          "checked": 107836,
+          "failing": 0,
+          "worst_error_raw": 0.499981
+        },
+        "road_point": {
+          "checked": 0,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        },
+        "step": {
+          "checked": 139419,
+          "failing": 0,
+          "worst_error_raw": 0.0
+        }
+      },
+      "leaves": 95,
+      "tall_shapes": 0
+    }
+  },
+  "pass": false,
+  "spool": "spool",
+  "timing": {
+    "c_check_s": 379.648,
+    "c_ns": 379647755557,
+    "c_stats": {
+      "calls": 2165,
+      "cells": 508493,
+      "d1_ns": 6474046768,
+      "d1_retries": 2119,
+      "failed_frames": 0,
+      "items": 285809588,
+      "leaves": 3954159,
+      "ns": 379647755557,
+      "rescues": 862122
+    },
+    "d1_decode_s": 6.474,
+    "d1_ns": 6474046768,
+    "pss_interval_s": 0.25,
+    "pss_peak_kb": 6840546,
+    "ranges": 2165,
+    "wall_s": 101.572,
+    "workers": 4
+  },
+  "tolerance_raw": 0.5,
+  "tool": "quantisation_roundtrip",
+  "totals": {
+    "background": {
+      "checked": 176386506,
+      "failing": 0,
+      "worst_error_raw": 0.499999
+    },
+    "background_boundary": {
+      "checked": 64111046,
+      "failing": 0,
+      "worst_error_raw": 0.499985
+    },
+    "completeness": {
+      "checked": 1800514,
+      "failing": 776,
+      "worst_error_raw": 0.0
+    },
+    "interior_cover": {
+      "checked": 1590566,
+      "failing": 0,
+      "worst_error_raw": 0.0
+    },
+    "name_anchor": {
+      "checked": 2317056,
+      "failing": 1,
+      "worst_error_raw": 0.499999
+    },
+    "range": {
+      "checked": 285809588,
+      "failing": 0,
+      "worst_error_raw": 0.0
+    },
+    "road_node": {
+      "checked": 42994980,
+      "failing": 0,
+      "worst_error_raw": 0.499998
+    },
+    "road_point": {
+      "checked": 0,
+      "failing": 0,
+      "worst_error_raw": 0.0
+    },
+    "step": {
+      "checked": 227935489,
+      "failing": 0,
+      "worst_error_raw": 0.0
+    }
+  },
+  "wall_s": 101.6
+}

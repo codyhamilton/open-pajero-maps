@@ -1,0 +1,18 @@
+[quantisation_roundtrip] 2139 blocks over levels [0, 2, 4, 6, 8, 10, 12], 2165 ranges (3.1s)
+[quantisation_roundtrip] 500/2165 ranges (90.0s)
+[quantisation_roundtrip] 1000/2165 ranges (97.4s)
+[quantisation_roundtrip] 1500/2165 ranges (99.0s)
+[quantisation_roundtrip] 2000/2165 ranges (101.2s)
+[quantisation_roundtrip] 2165/2165 ranges (101.3s)
+[quantisation_roundtrip] dump: name_anchor 1, background 0, background_boundary 0, interior_cover 0, completeness 776
+[quantisation_roundtrip] range: checked 285,809,588 failing 0 worst 0.0
+[quantisation_roundtrip] step: checked 227,935,489 failing 0 worst 0.0
+[quantisation_roundtrip] road_node: checked 42,994,980 failing 0 worst 0.499998
+[quantisation_roundtrip] road_point: checked 0 failing 0 worst 0.0
+[quantisation_roundtrip] name_anchor: checked 2,317,056 failing 1 worst 0.499999
+[quantisation_roundtrip] background: checked 176,386,506 failing 0 worst 0.499999
+[quantisation_roundtrip] background_boundary: checked 64,111,046 failing 0 worst 0.499985
+[quantisation_roundtrip] interior_cover: checked 1,590,566 failing 0 worst 0.0
+[quantisation_roundtrip] completeness: checked 1,800,514 failing 776 worst 0.0
+[quantisation_roundtrip] engine c: 2165 ranges, PSS peak 6680 MiB, C check 379.648s (D1 6.474s, summed over workers)
+[quantisation_roundtrip] FAIL in 101.6s

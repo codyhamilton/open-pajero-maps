@@ -1,0 +1,4 @@
+rule_id	cause	kind	level	rows	groups
+O01	checker	completeness	0	363	363
+O04	spool	completeness	0	3	3
+O05	checker	completeness	0	102	102

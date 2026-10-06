@@ -1,0 +1,3 @@
+kind	rows_manifest	rows_assigned	rows_unclassified	cause_counts_sum
+completeness	776	468	308	468
+PARTITION FAIL

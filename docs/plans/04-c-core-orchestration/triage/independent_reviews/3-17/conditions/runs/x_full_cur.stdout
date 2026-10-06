@@ -1,0 +1,3 @@
+run_heavy_python: unit=maps-heavy-39176 lock=/home/codyh/workspace/open-pajero-maps/output/.heavy.lock
+run_heavy_python: argv=['/home/codyh/workspace/open-pajero-maps-14-completeness/.venv-rp/bin/python', '-B', 'parser/tools/k1_triage.py', 'classify', '--dump', '/home/codyh/workspace/open-pajero-maps/output/scratch-43/p2/dump_ext43', '--rules', '/home/codyh/workspace/open-pajero-maps/output/scratch-43/rules/rules_all_cur.json', '--out', '/home/codyh/workspace/open-pajero-maps/output/scratch-43/p2/x_full_cur']
+{"argv0": "/home/codyh/workspace/open-pajero-maps-14-completeness/.venv-rp/bin/python", "exit": 1, "log": "/home/codyh/workspace/open-pajero-maps/output/scratch-43/runs/x_full_cur.json", "max_rss_kib": 52720, "memory_peak": 50774016, "wall_s": 0.134}

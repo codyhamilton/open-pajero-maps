@@ -1,0 +1,7 @@
+kind	rows_manifest	rows_assigned	rows_unclassified	cause_counts_sum
+background	0	0	0	0
+background_boundary	0	0	0	0
+completeness	776	468	308	468
+interior_cover	0	0	0	0
+name_anchor	1	1	0	1
+PARTITION FAIL

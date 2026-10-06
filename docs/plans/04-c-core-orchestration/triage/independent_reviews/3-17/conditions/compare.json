@@ -1,0 +1,96 @@
+{
+ "cur": {
+  "rows": 776,
+  "rule_counts": {
+   "NO_RULE": 308,
+   "O01": 363,
+   "O04": 3,
+   "O05": 102
+  },
+  "partition": [
+   "kind\trows_manifest\trows_assigned\trows_unclassified\tcause_counts_sum",
+   "completeness\t776\t468\t308\t468",
+   "PARTITION FAIL"
+  ],
+  "cause_counts": [
+   "rule_id\tcause\tkind\tlevel\trows\tgroups",
+   "O01\tchecker\tcompleteness\t0\t363\t363",
+   "O04\tspool\tcompleteness\t0\t3\t3",
+   "O05\tchecker\tcompleteness\t0\t102\t102"
+  ],
+  "exit": 1
+ },
+ "at317": {
+  "rows": 776,
+  "rule_counts": {
+   "NO_RULE": 308,
+   "O01": 363,
+   "O04": 3,
+   "O05": 102
+  },
+  "partition": [
+   "kind\trows_manifest\trows_assigned\trows_unclassified\tcause_counts_sum",
+   "completeness\t776\t468\t308\t468",
+   "PARTITION FAIL"
+  ],
+  "cause_counts": [
+   "rule_id\tcause\tkind\tlevel\trows\tgroups",
+   "O01\tchecker\tcompleteness\t0\t363\t363",
+   "O04\tspool\tcompleteness\t0\t3\t3",
+   "O05\tchecker\tcompleteness\t0\t102\t102"
+  ],
+  "exit": 1
+ },
+ "view_cur": {
+  "rows": 776,
+  "rule_counts": {
+   "NO_RULE": 308,
+   "O01": 363,
+   "O04": 3,
+   "O05": 102
+  },
+  "partition": [
+   "kind\trows_manifest\trows_assigned\trows_unclassified\tcause_counts_sum",
+   "completeness\t776\t468\t308\t468",
+   "PARTITION FAIL"
+  ],
+  "cause_counts": [
+   "rule_id\tcause\tkind\tlevel\trows\tgroups",
+   "O01\tchecker\tcompleteness\t0\t363\t363",
+   "O04\tspool\tcompleteness\t0\t3\t3",
+   "O05\tchecker\tcompleteness\t0\t102\t102"
+  ],
+  "exit": 1
+ },
+ "view_at317": {
+  "rows": 776,
+  "rule_counts": {
+   "NO_RULE": 308,
+   "O01": 363,
+   "O04": 3,
+   "O05": 102
+  },
+  "partition": [
+   "kind\trows_manifest\trows_assigned\trows_unclassified\tcause_counts_sum",
+   "completeness\t776\t468\t308\t468",
+   "PARTITION FAIL"
+  ],
+  "cause_counts": [
+   "rule_id\tcause\tkind\tlevel\trows\tgroups",
+   "O01\tchecker\tcompleteness\t0\t363\t363",
+   "O04\tspool\tcompleteness\t0\t3\t3",
+   "O05\tchecker\tcompleteness\t0\t102\t102"
+  ],
+  "exit": 1
+ },
+ "changed_rows_vs_plan28": 34,
+ "delta_equals_plan37_34": true,
+ "delta_rule_matches_plan37_prediction": true,
+ "yardstick_317": {
+  "O01": 363,
+  "O04": 3,
+  "O05": 102,
+  "NO_RULE": 308
+ },
+ "match_317": true
+}
