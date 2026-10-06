@@ -823,3 +823,19 @@ Not committed; regenerable from the in-force spool. Record: `docs/plans/34-l0-em
 - Classified diff vs `scratch-29/G_new`: 5 L0 cells `removed_outside_mask_empty_shell`, 0 other (`phase2/au_cell_diff.json`); R `empty_slot` for all 5 (`phase2/r_check.json`); live K1 `-j6` failing 0 (`k1.json`).
 - `perth_new/`: identical to `04be2f6e…`.
 - `run_p2b.{sh,log}`, `runs/*.json`: guarded heavy-run logs.
+
+### output/scratch-30/attic/ (plan 30 second pinned source: date-matched OSM relation snapshot)
+
+Admitted by plan 30 DESIGN Amendment 1 (Design ruling option (a), 2026-10-06). Not committed (79 MB); the pin is committed at `docs/plans/30-2-01-source-data-parity/phase2_snapshot_pin.json`.
+
+- `relation_snapshot_260824.json`: sha256 `39a836ddb6a1a215abda481f11a286bc8aea63091e27f9470b2adf1447fd47c9`, 78,833,302 bytes. It is canonical JSON with these contents:
+  - 117 relations: the 61 in `relation_requests.json` plus 56 direct child relations;
+  - 32,573 member ways with node ids and coordinates;
+  - 71 member nodes.
+- Source: public Overpass API `https://overpass-api.de/api/interpreter`, as three batched POST attic queries with `[date:"2026-08-24T20:20:50Z"]`. That date equals the pinned PBF's `osmosis_replication_timestamp` (`australia-260824.osm.pbf`, sha256 `433a1da2…`). Exact query texts are `docs/plans/30-2-01-source-data-parity/attic/snap_b{1,2,3}.overpassql`.
+- Raw responses are `snap_b{1,2,3}.json`, with sha256 `8d493181…`, `6b9739e0…` and `4ef1a8bd…`. They were fetched on 2026-10-06 between 10:58 and 11:02 AEST. All 61 relations are present, no member way is missing, and the newest relation version is 2026-08-23T07:43:34Z.
+- Root-cause query: `q1_missing_ways.json` (sha256 `ffdc7732…`, query `attic/q1_missing_ways.overpassql`). The extract polygon is Geofabrik `australia.poly` (sha256 `4353c3c7…`).
+- Licence: ODbL 1.0. Data © OpenStreetMap contributors.
+- Use: only member-way and member-node geometry for those 61 relations, in the plan 30 `pbf-cache` relation probe. Nothing else enters any build, spool or disc.
+- Files are read-only (`chmod a-w`) and protected like the spool.
+

@@ -1,0 +1,62 @@
+{
+ "checks": {
+  "all_61_requested_present": true,
+  "all_relation_versions_at_or_before_attic_date": true,
+  "child_relations_missing": 0,
+  "max_relation_timestamp": "2026-08-23T07:43:34Z",
+  "member_ways_missing": 0
+ },
+ "licence": "ODbL 1.0 \u2014 data \u00a9 OpenStreetMap contributors (https://www.openstreetmap.org/copyright)",
+ "schema": "plan30-relation-snapshot-pin-v1",
+ "snapshot": {
+  "bytes": 78833302,
+  "counts": {
+   "child_relations": 56,
+   "nodes": 71,
+   "relations": 117,
+   "requested_relations": 61,
+   "ways": 32573
+  },
+  "format": "canonical JSON (sort_keys, compact): relations{id:{tags,members[{type w|n|r,ref,role}],version,timestamp}}, ways{id:{nodes,coords[[lat,lon]]}}, nodes{id:{lat,lon,tags,version,timestamp}}",
+  "path": "/home/codyh/workspace/open-pajero-maps/output/scratch-30/attic/relation_snapshot_260824.json",
+  "schema": "plan30-relation-snapshot-v1",
+  "sha256": "39a836ddb6a1a215abda481f11a286bc8aea63091e27f9470b2adf1447fd47c9"
+ },
+ "source": {
+  "attic_date": "2026-08-24T20:20:50Z",
+  "endpoint": "https://overpass-api.de/api/interpreter",
+  "fetched": "2026-10-06 10:58-11:02 AEST",
+  "method": "POST data=<query>",
+  "pbf_osmosis_replication_timestamp": "2026-08-24T20:20:50Z",
+  "queries": [
+   {
+    "path": "docs/plans/30-2-01-source-data-parity/attic/snap_b1.overpassql",
+    "sha256": "4d67889409204339cb50c138ce792622d6e8dd5c7a6e22a3ed03f37a096ef21d"
+   },
+   {
+    "path": "docs/plans/30-2-01-source-data-parity/attic/snap_b2.overpassql",
+    "sha256": "7c125b5bfb4f1382862969a4d5da3212fabe7e9e82e9b713088ae785affddd4e"
+   },
+   {
+    "path": "docs/plans/30-2-01-source-data-parity/attic/snap_b3.overpassql",
+    "sha256": "7d98ed004a29f7a0cd339abbcf1a958643e15733a5020b1fd3e6066e17318483"
+   }
+  ],
+  "query_shape": "[out:json][timeout:900][maxsize:536870912][date:\"2026-08-24T20:20:50Z\"]; relation(id:<batch of the 61>)->.r; rel(r.r)->.c; (.r;.c;)->.rels; .rels out meta; way(r.rels)->.w; .w out skel geom; node(r.rels)->.n; .n out meta;",
+  "raw_responses": [
+   {
+    "path": "output/scratch-30/attic/snap_b1.json",
+    "sha256": "8d4931811fb41f12f3cc79e1ad99eb061c8a89c7b1b5106dd16b790d82d26d3a"
+   },
+   {
+    "path": "output/scratch-30/attic/snap_b2.json",
+    "sha256": "6b9739e0ad323e619cb5e836d32946d2dbb6a495e4936e12762f96f9b67bb837"
+   },
+   {
+    "path": "output/scratch-30/attic/snap_b3.json",
+    "sha256": "4ef1a8bde1d9b99ded89b4f571ae696bc3d133bdf515827875af1ada0565545a"
+   }
+  ]
+ },
+ "use": "Supplies member-way/member-node geometry for the 61 relations only, to the plan-30 pbf-cache relation probe (DESIGN Amendment 1). Nothing else enters any build."
+}
