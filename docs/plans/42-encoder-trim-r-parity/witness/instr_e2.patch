@@ -1,0 +1,79 @@
+diff --git a/parser/kiwiw/_e2.c b/parser/kiwiw/_e2.c
+index d780c92..21faa93 100644
+--- a/parser/kiwiw/_e2.c
++++ b/parser/kiwiw/_e2.c
+@@ -1,3 +1,5 @@
++#include <stdio.h>
++#include <stdlib.h>
+ /* E2 -- the Stage 1 kernel (plan 03, 3C-07, 3C-09; DESIGN.md Contract B, "E2").
+  *
+  * One call per target row range [row_lo, row_hi) of one level. For every
+@@ -969,6 +971,34 @@ static int64_t dv_trim(dv_state *X, int cell, const dv_lists *L) {
+         X->flen[cell] = blen;
+         memcpy(X->fsz[cell], bsz, sizeof bsz);
+         int64_t dropped = n - best;
++        /* PLAN42-INSTR (throwaway worktree only): dump kept (K) and dropped (D)
++         * items of a trimmed kind, in priority order. Output bytes unchanged. */
++        if (dropped > 0 && getenv("KW_TRIM_DUMP")) {
++            FILE *tf = fopen(getenv("KW_TRIM_DUMP"), "a");
++            if (tf) {
++                for (int64_t j = 0; j < n; j++) {
++                    int32_t it = ordered[j];
++                    long par = kind == 0 ? (long)X->rr[it].par : kind == 2 ? (long)X->nm[it].par : (long)it;
++                    fprintf(tf, "%d\t%d\t%d\t%d\t%d\t%d\t%c\t%lld\t%d\t%ld\ttrim\t", X->level, X->ix, X->iy,
++                            cell % X->nx, cell / X->nx, kind, j < best ? 'K' : 'D', (long long)j, it, par);
++                    if (kind == 0) {
++                        const dv_road *q = &X->rr[it];
++                        fprintf(tf, "dc=%d|", (int)e2_i32(X->P->col[X_R_DC] + 4 * (int64_t)q->par));
++                        for (int32_t t = 0; t < q->len; t++)
++                            fprintf(tf, "%s%.9f,%.9f", t ? ";" : "", X->cpl[q->start + t], X->cpo[q->start + t]);
++                    } else if (kind == 1) {
++                        fprintf(tf, "tc=%d|", (int)e2_i32(X->P->col[X_B_TYPE] + 4 * (int64_t)it));
++                        for (int64_t t = X->boff[it]; t < X->boff[it + 1]; t++)
++                            fprintf(tf, "%s%.9f,%.9f", t > X->boff[it] ? ";" : "", e2_f64(X->P->col[X_C_LAT] + 8 * t),
++                                    e2_f64(X->P->col[X_C_LON] + 8 * t));
++                    } else if (kind == 2) {
++                        fprintf(tf, "%.9f,%.9f", X->nm[it].lat, X->nm[it].lon);
++                    }
++                    fprintf(tf, "\n");
++                }
++                fclose(tf);
++            }
++        }
+         total += dropped;
+         if (dropped > 0) { X->stats[kind] += dropped; X->stats[3 + kind]++; }
+     }
+@@ -1040,6 +1070,33 @@ static int dv_shrink(dv_state *X, int cell, const dv_lists *L) {
+     for (int kind = 0; kind < 3; kind++) {
+         int64_t d = L->n[kind] - cur.n[kind];
+         if (d > 0) { X->stats[kind] += d; X->stats[3 + kind]++; }
++        /* PLAN42-INSTR (shrink tier): kept K / dropped D in priority order */
++        if (d > 0 && getenv("KW_TRIM_DUMP")) {
++            FILE *tf = fopen(getenv("KW_TRIM_DUMP"), "a");
++            if (tf) {
++                for (int64_t j = 0; j < L->n[kind]; j++) {
++                    int32_t it = cur.v[kind][j];
++                    long par = kind == 0 ? (long)X->rr[it].par : kind == 2 ? (long)X->nm[it].par : (long)it;
++                    fprintf(tf, "%d\t%d\t%d\t%d\t%d\t%d\t%c\t%lld\t%d\t%ld\tshrink\t", X->level, X->ix, X->iy,
++                            cell % X->nx, cell / X->nx, kind, j < cur.n[kind] ? 'K' : 'D', (long long)j, it, par);
++                    if (kind == 0) {
++                        const dv_road *q = &X->rr[it];
++                        fprintf(tf, "dc=%d|", (int)e2_i32(X->P->col[X_R_DC] + 4 * (int64_t)q->par));
++                        for (int32_t t = 0; t < q->len; t++)
++                            fprintf(tf, "%s%.9f,%.9f", t ? ";" : "", X->cpl[q->start + t], X->cpo[q->start + t]);
++                    } else if (kind == 1) {
++                        fprintf(tf, "tc=%d|", (int)e2_i32(X->P->col[X_B_TYPE] + 4 * (int64_t)it));
++                        for (int64_t t = X->boff[it]; t < X->boff[it + 1]; t++)
++                            fprintf(tf, "%s%.9f,%.9f", t > X->boff[it] ? ";" : "", e2_f64(X->P->col[X_C_LAT] + 8 * t),
++                                    e2_f64(X->P->col[X_C_LON] + 8 * t));
++                    } else if (kind == 2) {
++                        fprintf(tf, "%.9f,%.9f", X->nm[it].lat, X->nm[it].lon);
++                    }
++                    fprintf(tf, "\n");
++                }
++                fclose(tf);
++            }
++        }
+     }
+     dv_release(mk);
+     return 0;
