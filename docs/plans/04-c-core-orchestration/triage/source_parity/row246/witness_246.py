@@ -34,7 +34,7 @@ from pathlib import Path
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[3]
+ROOT = next(p for p in HERE.parents if (p / "parser").is_dir() and (p / "docs").is_dir())
 sys.path[:0] = [str(ROOT / "parser"), str(ROOT / "parser/tools")]
 
 from harness import walk  # noqa: E402
@@ -169,7 +169,7 @@ def describe(pts):
 def build_probe():
     d = Path(tempfile.mkdtemp(prefix="p38probe"))
     so = d / "probe246.so"
-    subprocess.run([cbuild._find_cc(), *cbuild.CFLAGS, "-shared", str(HERE / "probe246.c"), "-lm",
+    subprocess.run([cbuild._find_cc(), *cbuild.CFLAGS, "-shared", f"-I{ROOT}", str(HERE / "probe246.c"), "-lm",
                     "-o", str(so)], check=True)
     lib = ctypes.CDLL(str(so))
     fn = lib.probe246

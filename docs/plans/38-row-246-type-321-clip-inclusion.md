@@ -1,4 +1,64 @@
-# Implementation — 38 row 246 (type 321, L0 (834,886)) clip-inclusion hypothesis
+# Plan 30 row 246: type-321 record in L0 (834,886) — proven cause H3-other-feature
+
+Plan 38 closed in two phases with a **proven cause**. The clip-inclusion
+hypothesis (H1) is rejected; the verdict is **H3-other-feature**.
+
+- **R's record:** a 28-vertex interior park ring (type 321, area2 +621,301,
+  0 edge contacts, about 324 × 608 m, near −31.534, 116.091).
+- **No match:** it matches no clip of the spool demander.
+- **Source:** no geometry in the pinned 2026-08-24 OSM extract can produce
+  it. No OSM object has a node in R's box except McGlew Road. None of the
+  284 code-321 candidates has in-cell geometry.
+- **Cause class:** "source-data: R feature absent from pinned OSM extract".
+- **Changes:** no encoder change, so no successor oracle; the oracle in force
+  stays `4e6b0de7`.
+- **Records:**
+  - Plan 30 row 246 has an append-only correction row in
+    `triage/source_parity/disposition.tsv`.
+  - `residuals.tsv` R-G9-1 is discharged.
+- **Witness:** kept at
+  `docs/plans/04-c-core-orchestration/triage/source_parity/row246/`.
+- **Review:** the P1 review is by a Claude CLI clean-context seat
+  (disclosed; Codex is weekly-limited).
+
+Plan 04 Phase 3 is **not** claimed closed.
+
+## Intent
+User request, verbatim (DESIGN):
+> Cody's standing rule (2026-10-05, hard): Maps is complete only when end-to-end generation matches the original DVD in every aspect that can be verified, every claim, assumption, and implementation aspect is verified and proven, and there are no unexplained deviations — each has a root cause.
+
+Plan 38: plan 30 row 246. Byte-decode R's in-cell 321 record, match it to the kept edge-touching 321 relation, and test the clip-inclusion-rule hypothesis (R keeps boundary-touching or degenerate clips; our encoder drops them). The outcome is either a fix where no other cell or kind changes (K1 0 everywhere; disc diff confined; new successor oracle recorded) or a proven cause. Never a relabel. Oracle `4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448` or later. Heavy work only under `flock output/.heavy.lock` plus `run_heavy_python.py`, bounded or streamed. Master direct. No plan 04 Phases 4–6. Do not run the 3-90 brief.
+
+## Why This Existed
+Plan 30 is closing at 341 supply-path / 0 unfixable / 1 carried. Row 246 is the carried row: `residuals.tsv` R-G9-1, `maps-parity-carried`.
+
+**Ground (master `b10e787`):**
+
+| Fact | Value | Source |
+| --- | --- | --- |
+| Row key | L0 (834,886), code 321, p0..p6 = 0, dump_row 246, plan 28 rule O05 | `30-2-01-source-data-parity/fingerprint.tsv` |
+| R | 11 polygons of type 321 near the cell. **1 is cell-local** (meet branch a, leaf_path [1730], 28 coords). Normalised local signature spans the full 0–1 range on both axes | fingerprint `R_cell_local_meets`, `R_local_signatures`; `output/scratch-14/cell_local/proofs/246.json` |
+| G | 0 type-321 records in the cell on `4ed9cd80` and `2ee3456a`. `4e6b0de7` differs only in 5 empty shells | fingerprint `G_*_type_count`; plan 34 |
+| Spool demander | background ordinal 15 of source cell (0,834,885), branch b, 58 coords. Spool offset 2,806,410,336, length 34,248. Trigger vertex at cell_raw (4021.43, 2.39), lat/lon (−31.5416545, 116.0931811), on the shared edge | fingerprint `spool_demander_identity`; `output/scratch-14/witnesses/0246_requirement.json` |
+| Clip | `clipped_ring_q` 2, `clipped_ring_area2` 0, `encoder_emits` False, mechanism `encoder_drops_clipped_source_sliver` | fingerprint |
+| Supply search | PBF gap-free. 284 code-321 candidates reach the windows (natural=wood 274, scrub 10). Every one gives 0 in-cell records under original, clipped and unit-mult | `open_rows_account.md` (r4) |
+| Related science | Plan 14 / 3-15: 188 + 86 completeness demands are sub-unit slivers that `rint` annihilates (`checker:repaired-not-representable`). K1 completeness now demands only representable footprints (`a890662`, `0dc5cac`) | `completeness_3-15_cell_local.md` L18 |
+
+**Tension to resolve, not assume.** A 28-coord R polygon whose local signature spans the cell is not obviously a degenerate edge clip. The hypothesis is only true if R's record decodes to a boundary-hugging or zero/near-zero-area ring that matches our clipped sliver. If R's polygon has real interior area, the cause is elsewhere: different source geometry, or a different feature.
+
+## What Landed
+
+Master direct; no `parser/` change.
+- **Phase 1:** R record decode, G control, spool demander clip through the
+  production `bg_shape`, fixed predicate, and a streamed PBF box scan under
+  the heavy lock. Verdict H3; the review follow-ups F1–F7 are applied.
+- **Phase 2:** proven-cause disposition (correction row), R-G9-1
+  discharged, R-G9-2 owner clarified, OVERVIEW updated.
+- **Close-out:**
+  - The witness was moved to `triage/source_parity/row246/`.
+  - Its repo-root lookup and probe include are made path-independent.
+  - It was re-run at the new path and gives byte-identical
+    `row246_witness.json`.
 
 Master direct. The oracle in force is `4e6b0de7…` (no successor landed).
 Phase 1 is light: it uses bounded leaf preads and one spool-cell pread by
@@ -7,7 +67,7 @@ taking 486 s with 215 MiB RSS.
 
 ## Phase 1 — R record decoded and matched; verdict
 
-**Witness** (`witness/`):
+**Witness** (now `docs/plans/04-c-core-orchestration/triage/source_parity/row246/`):
 
 - **`witness_246.py`:** bounded R/G leaf-slot decode through
   `RReader`/`LeafIndex`, plus one spool pread. It writes
@@ -179,7 +239,7 @@ Not done in Phase 1: any encoder change (non-goal).
 ### Phase 1 review
 
 Claude CLI clean-context seat (disclosed; Codex is weekly-limited):
-**PASS_WITH_FOLLOWUPS**. The text is kept as `reviews/p1-REVIEW.md`.
+**PASS_WITH_FOLLOWUPS**. The text is kept as `triage/source_parity/row246/reviews/p1-REVIEW.md`.
 
 - **F1:** the any-type reach and the G full-cell 288 enclosers are now in the
   witness, and the text is corrected.
@@ -218,3 +278,19 @@ The witness was re-run after the fixes; the verdict is unchanged.
   geometry that could produce R's ring.
 - **Witness:** at close it moves to `triage/source_parity/row246/`.
 
+## Commits
+
+- `7848ac8` — P1 witness and verdict (`:1`).
+- `10e6dbe` — P1 review follow-ups (`:1`).
+- `d67a7a9` — P2 proven cause, disposition correction, residuals and
+  OVERVIEW (`:2`).
+- Close-out (`:done`).
+
+## Not done
+
+- The R-side feature is not identified as an OSM object: R's source vintage
+  is unknown, and no external history query was authorised.
+- R-G9-2 (341 supply-path rows) is out of scope (DESIGN non-goal) and stays
+  with the successor implement unit (Design).
+- The terminal review is the same disclosed Claude CLI seat. Codex
+  confirmation waits for the Codex reset (2026-10-10 11:50 AEST).
