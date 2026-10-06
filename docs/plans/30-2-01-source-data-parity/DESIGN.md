@@ -165,6 +165,55 @@ Treat the 342 rows as a **DVD presence parity** set. For each row, either (a) pr
 - **Depends on:** Phase 1.
 - **Refine:** skipped (short candidate comparison recorded in the plan record only).
 
+## Amendment 1 — date-matched relation snapshot as a second pinned source (Design ruling, 2026-10-06)
+
+Design ruled on the 4 conflict-open rows (dump_row 246, 396, 397, 775) left
+after unit 2-02 (338 / 0 / 4 at `f1a1368`). It chose option (a) with
+conditions and rejected option (b), "rule the rows unfixable-proven because
+the supply evidence lies outside the pinned source".
+
+1. **Root cause first.** Before the snapshot is used, prove that the member
+   ways missing from the 29 class-1 relations existed in OSM at the pinned
+   PBF's replication timestamp (`2026-08-24T20:20:50Z`, Geofabrik
+   australia-260824). That makes the gap extract clipping, not missing
+   upstream data. The proof is recorded in `open_rows_account.md`.
+2. **Second pinned source.** This is a date-matched snapshot of exactly the
+   61 relations in `relation_requests.json`, taken from OSM history at that
+   timestamp and never from current OSM.
+   - **Route:** the public Overpass API with a
+     `[date:"2026-08-24T20:20:50Z"]` attic query, sent as few, batched
+     requests; no full-history planet download.
+   - **Pin:** the snapshot file's sha256, the source URL, the exact query,
+     the timestamp and the ODbL licence, all recorded in `docs/provenance.md`
+     before use.
+   - **Scope of use:** it only supplies member-way (and member-node)
+     geometry for those 61 relations to the plan 30 PBF relation probe.
+     Nothing else enters the build: no spool, encoder, vocabulary, selection
+     or disc input changes, and no R coordinates.
+3. **Execution.** The snapshot's ways are merged into the relation assembly
+   of the existing `pbf-cache` probe as a declared, hash-pinned
+   supplementary input. The original PBF and the retained cache
+   `output/scratch-30/p2_pbf_cache_01` stay read-only and are re-hashed
+   unchanged. Every heavy step (cache replay, inventory, publish) runs
+   serially, one at a time, under `flock output/.heavy.lock` plus
+   `parser/tools/run_heavy_python.py`, with bounded/streamed loads
+   (plan 25). The fetch is network I/O only and is not a heavy step.
+4. **Verdict rule after (a).**
+   - A row with a positive production-C supply witness is `supply-path`.
+   - A row with no supply stays `conflict-open` until a proof shows that no
+     feature of the demanded type, from the date-matched source, reaches
+     its cell. That proof is what makes it `unfixable-proven` (under an
+     allowed cause class).
+   - Option (b) is not available.
+5. **Disc.** Phase 2 needs no disc change. If one ever results, it is
+   recorded as a new successor oracle with a classified diff, and
+   `4e6b0de7…`, the oracle disc in force after plan 34, is never
+   overwritten.
+
+Decisions §6 is read with this amendment: G checks cite the disc in force
+(`4e6b0de7…`). Phase 1 evidence measured on `2ee3456a…` stays valid, because
+plan 34 changed only five outside-mask L0 empty shells and no 2-01 cell.
+
 ## Provenance
 
 - Ground tip: `origin/master` `5ff9eb0759c0dc2b38f9167682d99435cbd66fb7` ("plan 28 close-out: record, per_rule_ evidence in plan 04 triage, contract promoted"). Box checkout `/workspace/open-pajero-maps` fast-forwarded from `0dc5cac`.
