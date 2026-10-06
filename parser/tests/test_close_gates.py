@@ -53,3 +53,60 @@ def test_plan34_close_is_missing_gates():
     r = cg.run('9fb00da', '4ab27e8', 'docs/plans/34-l0-empty-slot-frame-parity/IMPLEMENTATION.md', '4ab27e8')
     assert r['trigger'] and 'parser/build_alldata.py' in r['trigger_paths']
     assert 'a' in r['missing'] and not r['pass']
+
+
+@pytest.mark.parametrize('bad', [
+    'Close gate (a) full suite: 53 passed, 1317 deselected at abc1234',
+    'Close gate (a) pytest parser/tests/test_x.py -> 53 passed at abc1234',
+    'Close gate (a) pytest parser/tests -k parcel -> 53 passed at abc1234',
+    'Close gate (a) 1370 passed on 20261006',
+])
+def test_gate_a_rejects_restricted_or_shaless(bad):
+    assert not cg.check_text(bad)['a']['present']
+
+
+@pytest.mark.parametrize('bad', ['Close gate (c) sha gate: AU 4e6b0de7 FAIL, Perth 04be2f6e MISMATCH',
+                                 'Close gate (c) AU 4e6b0de7 PASS, Perth 04be2f6e differs'])
+def test_gate_c_rejects_failure(bad):
+    assert not cg.check_text(bad)['c']['present']
+
+
+@pytest.mark.parametrize('bad', ['Close gate (b) median 58 s at -j4 (spread TBD) vs baseline TBD',
+                                 'Close gate (b) median 58.2 s of 1 at -j4 (spread 0 s) vs baseline 116 s'])
+def test_gate_b_needs_values_and_three_runs(bad):
+    assert not cg.check_text(bad)['b']['present']
+
+
+def test_phrasing_freedom_and_last_line_wins():
+    text = GOOD.replace('58.2 s of 3 at -j4', '58.2 sec of 3').replace('encode wall:', 'encode wall at -j4:')
+    text = text.replace('AU 4e6b0de7 PASS, Perth', 'au 4e6b0de7 pass, perth')
+    text = 'Close gate (a) full suite: 1 failed, 1369 passed at abc1234\n' + text  # red then green
+    g = cg.check_text(text)
+    assert all(v['present'] for v in g.values()), g
+    g = cg.check_text(GOOD + 'Close gate (a) full suite: 1 failed, 1369 passed at abc1234\n')  # green then red
+    assert not g['a']['present']
+
+
+def test_sha_resolution_and_stale(tmp_path, monkeypatch):
+    def sh(*a):
+        return subprocess.run(['git', '-c', 'user.name=t', '-c', 'user.email=t@t', *a], cwd=tmp_path,
+                              check=True, capture_output=True, text=True).stdout.strip()
+    sh('init', '-q')
+    (tmp_path / 'docs').mkdir()
+    (tmp_path / 'docs/D.md').write_text('d\n'); sh('add', '.'); sh('commit', '-qm', 'base')
+    base = sh('rev-parse', 'HEAD')
+    (tmp_path / 'docs/I.md').write_text('i\n'); sh('add', '.'); sh('commit', '-qm', 'early')
+    early = sh('rev-parse', '--short', 'HEAD')
+    (tmp_path / 'parser').mkdir()
+    (tmp_path / 'parser/build_alldata.py').write_text('x\n'); sh('add', '.'); sh('commit', '-qm', 'enc')
+    enc = sh('rev-parse', '--short', 'HEAD')
+    monkeypatch.setattr(cg, 'ROOT', tmp_path)
+
+    def at(sha):
+        (tmp_path / 'docs/I.md').write_text(GOOD.replace('abc1234', sha))
+        return cg.run(base, 'HEAD', 'docs/I.md')
+    r = at(early)
+    assert r['trigger'] and not r['pass'] and r['gates']['a']['why'].startswith('stale')
+    r = at('abc1234')
+    assert not r['pass'] and 'resolve' in r['gates']['a']['why']
+    assert at(enc)['pass']

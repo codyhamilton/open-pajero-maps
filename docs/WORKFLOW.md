@@ -190,19 +190,27 @@ production code") is a separate Workflow System Manager item.
   - `parser/kiwiw/disc.py`;
   - `parser/tests/fixtures/goldens/`.
 - **Required before the phase-closing commit.** IMPLEMENTATION quotes all
-  three gates as marker lines:
+  three gates as marker lines, and `close_gates.py` (below) exits 0 for the
+  plan, with its JSON `pass` quoted in IMPLEMENTATION:
   - `Close gate (a) full suite: <the full parser/tests pytest summary line> at <HEAD sha>`.
-    No failures or errors. A known failure is fixed or bisected first;
-    it is never quoted as green.
+    The whole suite: no failures or errors, nothing deselected, no file or
+    `-k` filter. The sha is a commit at or after the plan's last
+    trigger-surface change. A known failure is fixed or bisected first; it
+    is never quoted as green.
   - `Close gate (b) encode wall: median <x> s of 3 at -j4 (spread <y> s) vs baseline <z> s (<source>)`.
     This is the full-AU encode, under the wrapper and lock. A rise above the
     spread names its mechanism: the plan 04 Contract H regression rule, made
     operational.
   - `Close gate (c) sha gate: AU <sha> <result>, Perth <sha> <result>`.
+    A FAIL, MISMATCH or "differs" result is not a gate.
+  - Field order is free; the last marker line per gate is the one judged.
 - **Checker.** Light, no lock:
   `.venv-rp/bin/python -B parser/tools/close_gates.py --base <design-land sha> --impl docs/plans/<NN-slug>/IMPLEMENTATION.md`.
-  - It exits 1 when the trigger fires and a gate line is missing (or line (a)
-    shows failures or errors).
+  - It exits 1 when the trigger fires and a gate is missing or rejected:
+    line (a) shows failures, errors, deselection or a filter, or its sha does
+    not resolve, lies outside base..HEAD, or predates the last
+    trigger-surface commit (`stale`); line (b) lacks a numeric median, `of 3`
+    (or more), spread or baseline; line (c) shows a failure.
   - Use `--head REV --impl-rev REV` for a past close.
 - **Why.** Plan 34 changed encoder emission (`5182c83`) and closed on 53
   restricted tests. Its terminal review missed `test_parcel_mask` (fixed in
