@@ -55,3 +55,35 @@ Gaps common to all four rows: 39; union: 47.
 - (b) rule these rows `unfixable-proven` because their supply evidence lies outside the pinned source (not authorised by the current DESIGN).
 
 Execute fetched no external data. Plan 30 stays open.
+
+## Root cause of the class-1 gaps: extract clipping (proven 2026-10-06)
+
+The 29 class-1 relations (missing relation member ways) have **3,619
+distinct member ways** (3,988 relation–way pairs) that are absent from the
+pinned PBF `australia-260824.osm.pbf`. Its sha256 is `433a1da2…`, and its
+header gives `osmosis_replication_timestamp` 2026-08-24T20:20:50Z
+(re-read from the PBF header with pyosmium).
+
+- **Existed upstream at the timestamp.** One Overpass attic query,
+  `[date:"2026-08-24T20:20:50Z"] way(id:…); out meta geom;` sent to
+  `https://overpass-api.de/api/interpreter` (query text:
+  `attic/q1_missing_ways.overpassql`), returned **all 3,619 ways**. The newest
+  version timestamp is 2026-08-24T04:53:50Z, before the PBF timestamp, and no
+  way is missing from the response.
+- **Clipped by the extract.**
+  - 3,386 of the ways lie wholly outside the PBF header bbox
+    (68.133419, −57.092814, 169.001567, −8.809565).
+  - The other 233 touch the bbox, but none of their nodes is inside the
+    Geofabrik `australia.poly` extract polygon (1 ring, 22 vertices; same
+    bbox as the header).
+  - An osmium `complete_ways` extract keeps every way with a node inside the
+    polygon, so these ways were dropped by the extract boundary.
+- **Conclusion:** the class-1 gap is extract clipping, not missing upstream
+  data. The relations are complete in OSM at the pinned timestamp.
+
+Evidence: `missing_way_attic_proof.json`, with per-relation counts, query
+and response sha256 (the 17 MB response stays at
+`output/scratch-30/attic/q1_missing_ways.json`, sha `ffdc7732…`) and the
+polygon sha. `attic/missing_ways.json` holds the requested id list. The
+polygon is Geofabrik's current file, fetched 2026-10-06; its bbox matches the
+PBF header.

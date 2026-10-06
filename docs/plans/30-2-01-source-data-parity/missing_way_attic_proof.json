@@ -1,0 +1,189 @@
+{
+ "all_versions_at_or_before_timestamp": true,
+ "extract_clipping": {
+  "polygon": {
+   "note": "current Geofabrik polygon (fetched 2026-10-06), 1 ring, 22 vertices; consistent with the PBF header bbox",
+   "sha256": "4353c3c77dac728a575aa5d170c5d2315dd588bccfc3b7e47b668491da98b08e",
+   "url": "https://download.geofabrik.de/australia-oceania/australia.poly"
+  },
+  "touching_header_bbox": 233,
+  "touching_with_any_node_inside_geofabrik_polygon": 0,
+  "wholly_outside_header_bbox": 3386
+ },
+ "max_returned_timestamp": "2026-08-24T04:53:50Z",
+ "pbf": {
+  "header_bbox": [
+   68.133419,
+   -57.092814,
+   169.001567,
+   -8.809565
+  ],
+  "osmosis_replication_timestamp": "2026-08-24T20:20:50Z",
+  "path": "australia-260824.osm.pbf",
+  "sha256": "433a1da21d4b39bdbbb79cb6ee5865e9ade308bae62226a4398d5fe3a3ec99c0"
+ },
+ "per_relation": {
+  "10342563": {
+   "max_way_timestamp": "2025-07-30T20:07:28Z",
+   "missing_ways": 5,
+   "present_at_timestamp": 5
+  },
+  "11741662": {
+   "max_way_timestamp": "2026-08-17T19:10:06Z",
+   "missing_ways": 18,
+   "present_at_timestamp": 18
+  },
+  "19269186": {
+   "max_way_timestamp": "2026-08-14T03:45:50Z",
+   "missing_ways": 459,
+   "present_at_timestamp": 459
+  },
+  "19269193": {
+   "max_way_timestamp": "2026-08-18T02:22:27Z",
+   "missing_ways": 531,
+   "present_at_timestamp": 531
+  },
+  "19285282": {
+   "max_way_timestamp": "2025-12-26T17:25:52Z",
+   "missing_ways": 29,
+   "present_at_timestamp": 29
+  },
+  "19285354": {
+   "max_way_timestamp": "2026-06-12T23:31:35Z",
+   "missing_ways": 73,
+   "present_at_timestamp": 73
+  },
+  "20827987": {
+   "max_way_timestamp": "2026-07-17T02:25:49Z",
+   "missing_ways": 7,
+   "present_at_timestamp": 7
+  },
+  "2177258": {
+   "max_way_timestamp": "2025-07-30T20:07:28Z",
+   "missing_ways": 19,
+   "present_at_timestamp": 19
+  },
+  "2186658": {
+   "max_way_timestamp": "2026-03-23T17:33:18Z",
+   "missing_ways": 16,
+   "present_at_timestamp": 16
+  },
+  "2202162": {
+   "max_way_timestamp": "2026-08-24T04:53:50Z",
+   "missing_ways": 1746,
+   "present_at_timestamp": 1746
+  },
+  "2647601": {
+   "max_way_timestamp": "2023-01-29T09:26:05Z",
+   "missing_ways": 924,
+   "present_at_timestamp": 924
+  },
+  "2647638": {
+   "max_way_timestamp": "2024-01-02T21:40:10Z",
+   "missing_ways": 16,
+   "present_at_timestamp": 16
+  },
+  "307866": {
+   "max_way_timestamp": "2025-12-24T15:36:50Z",
+   "missing_ways": 37,
+   "present_at_timestamp": 37
+  },
+  "311776": {
+   "max_way_timestamp": "2025-12-24T15:36:50Z",
+   "missing_ways": 22,
+   "present_at_timestamp": 22
+  },
+  "3411897": {
+   "max_way_timestamp": "2019-04-24T16:20:37Z",
+   "missing_ways": 8,
+   "present_at_timestamp": 8
+  },
+  "3778630": {
+   "max_way_timestamp": "2026-03-29T15:29:36Z",
+   "missing_ways": 42,
+   "present_at_timestamp": 42
+  },
+  "6063092": {
+   "max_way_timestamp": "2016-03-18T23:52:46Z",
+   "missing_ways": 1,
+   "present_at_timestamp": 1
+  },
+  "6063105": {
+   "max_way_timestamp": "2019-04-24T16:20:33Z",
+   "missing_ways": 2,
+   "present_at_timestamp": 2
+  },
+  "8425531": {
+   "max_way_timestamp": "2018-09-06T12:43:23Z",
+   "missing_ways": 4,
+   "present_at_timestamp": 4
+  },
+  "8444293": {
+   "max_way_timestamp": "2018-09-06T12:43:14Z",
+   "missing_ways": 1,
+   "present_at_timestamp": 1
+  },
+  "8444294": {
+   "max_way_timestamp": "2018-09-06T12:43:14Z",
+   "missing_ways": 3,
+   "present_at_timestamp": 3
+  },
+  "8444307": {
+   "max_way_timestamp": "2018-09-06T12:43:14Z",
+   "missing_ways": 4,
+   "present_at_timestamp": 4
+  },
+  "8448061": {
+   "max_way_timestamp": "2018-09-06T12:43:18Z",
+   "missing_ways": 1,
+   "present_at_timestamp": 1
+  },
+  "8601871": {
+   "max_way_timestamp": "2018-09-06T12:43:18Z",
+   "missing_ways": 1,
+   "present_at_timestamp": 1
+  },
+  "8602049": {
+   "max_way_timestamp": "2018-09-06T12:43:22Z",
+   "missing_ways": 2,
+   "present_at_timestamp": 2
+  },
+  "8602089": {
+   "max_way_timestamp": "2018-09-06T12:43:23Z",
+   "missing_ways": 3,
+   "present_at_timestamp": 3
+  },
+  "8602092": {
+   "max_way_timestamp": "2018-09-06T12:43:23Z",
+   "missing_ways": 3,
+   "present_at_timestamp": 3
+  },
+  "8602094": {
+   "max_way_timestamp": "2024-01-02T21:40:10Z",
+   "missing_ways": 3,
+   "present_at_timestamp": 3
+  },
+  "9299402": {
+   "max_way_timestamp": "2019-04-24T16:20:37Z",
+   "missing_ways": 8,
+   "present_at_timestamp": 8
+  }
+ },
+ "query": {
+  "attic_date": "2026-08-24T20:20:50Z",
+  "endpoint": "https://overpass-api.de/api/interpreter",
+  "fetched": "2026-10-06T10:57+10:00",
+  "licence": "ODbL (www.openstreetmap.org)",
+  "osm3s_timestamp_osm_base": "2026-10-06T00:56:20Z",
+  "text_path": "output/scratch-30/attic/q1_missing_ways.overpassql",
+  "text_sha256": "b38bb51c4d47118619617375f57d90add62dfc332e5ff4bcd4bfea0be6823392"
+ },
+ "requested_ways": 3619,
+ "response": {
+  "bytes": 17299752,
+  "path": "output/scratch-30/attic/q1_missing_ways.json",
+  "sha256": "ffdc77328e139b11f05224b35fffd797805546f8d4df4035eed4f094d3322430"
+ },
+ "returned_ways": 3619,
+ "schema": "plan30-missing-way-attic-proof-v1"
+}
