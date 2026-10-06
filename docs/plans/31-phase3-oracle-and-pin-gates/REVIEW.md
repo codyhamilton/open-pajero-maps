@@ -238,3 +238,191 @@ weaker multiset metric. No nonexistent supplemental command is asserted.
   `output/scratch-31/review/` only.
 
 No code, tests, OVERVIEW, other plan surfaces or protected inputs were edited.
+
+---
+
+# Re-review 2 — remediation 01 (R1 routed completeness, R2 OVERVIEW)
+
+Date: 2026-10-06. Independent seat; did not build this plan and did not write the
+remediation.
+Seat: opencode `deepseek/deepseek-flash`, a clean context (Codex and Claude were at
+usage limits until 11:19 / 11:20 AEST); this note was added by Execute.
+
+Verdict: **PASS_WITH_FOLLOWUPS**
+
+Reviewed SHA: `7913160af77dd05f829e37d8786070cba8e1c88` (detached master, ≥ the
+named `4ab27e8`; contains the remediation results `452dcdd` and code `c2cc6dc`).
+Reviewed the prior review, the plan-31 folder, the two named test files, the
+committed `evidence/routed-3-14-{au,perth}.json`, and retained
+`output/scratch-31/rem01/` output (read-only). Interleaved plans 30/32/33/34 are
+outside this review. Implementation was by Execute (Grok Bot) after the Codex
+usage limit, as disclosed; that does not change the assessment. Changes left
+uncommitted.
+
+## R1 — resolved in review
+
+The R1 finding was that unordered per-cell frame multisets cannot prove routed
+completeness of the 3-14 changed-cell lists: a divided-leaf payload swap (or a
+subdivision-footprint change) preserves the multiset while changing routed cell
+contents. The remediation's `routed_diff` closes it.
+
+- `iter_frames(..., routed=True)` carries each leaf's exact absolute footprint
+  (`x:y:w:h`, base-cell units, rational strings) via
+  `tree_leaves(..., footprint=True)` and routes it to its owning integer base
+  cell (`oracle_chain.py:87-173`).
+- `routed_signatures` (`oracle_chain.py:188-202`) signs the sorted
+  `(footprint, length, SHA-256)` triples per base cell, so which footprint routes
+  to which whole frame is preserved; offsets and sector padding are excluded.
+- `routed_diff` (`oracle_chain.py:295-388`) verifies the baseline hop pins, the
+  baseline list SHA-256 and count, recomputes the routed changed set, and gates on
+  zero baseline cells missing and zero routed-only cells
+  (`multiset_list_complete_under_routing = not routed_only and not missing`).
+  Routed-only is exactly the change class the multiset metric hides; a missing
+  baseline cell raises `ValueError`.
+
+Because the routed identity is strictly finer than the multiset signature,
+`routed ⊇ multiset` always; both hops measure the two sets as equal, so the
+retained multiset lists are exactly the routed changed-cell lists. The
+counterexample is excluded for these hops (SHA-256 collision aside). Within a
+base cell the routed signature is the full function footprint → (length, hash),
+so any routed-content change alters at least one triple; a cell whose multiset
+is unchanged but whose routing changed appears as routed-only. No false negative
+remains for these two hops.
+
+Evidence verified read-only (claim → actual):
+
+| Item | Claim | Verified |
+| --- | --- | --- |
+| AU routed list sha | `9910056f…7a2a0` | match |
+| Perth routed list sha | `6fab0975…28516` | match |
+| AU multiset list sha / rows | `77ff1d86…8544f` / 246,123 | match / 246,123 |
+| Perth multiset list sha / rows | `af26b6b4…8355f` / 795 | match / 795 |
+| AU baseline JSON sha | `4e5f1b31…6fe04` | match |
+| Perth baseline JSON sha | `51dd2ab8…5770d` | match |
+| committed evidence JSON | byte-identical to `rem01/routed-3-14-{au,perth}.json` | match |
+| AU routed run | changed 246,123, added 0, removed 0 | match |
+| Perth routed run | changed 795, added 0, removed 0 | match |
+| AU/Perth `in_multiset_list == 0` rows | 0 | none found |
+| `routed_only_count` / missing | 0 / 0 | match |
+| `multiset_list_complete_under_routing` | true | match |
+| `protected_unchanged` | true | match |
+| run log | exit 0 / `ALLDONE`, wall 226.07 s / 0.43 s | match |
+
+The five tests added in `c2cc6dc` are meaningful, not vacuous, and exercise the
+R1 contract directly (all pass): `test_routed_diff_detects_divided_payload_swap_
+missed_by_multiset` (multiset 0 changes, routed-only 1, complete flag false),
+`test_routed_diff_contains_every_multiset_change` (both detect, routed-only 0),
+`test_routed_diff_invariant_under_relocation_and_padding`,
+`test_routed_signature_detects_changed_footprint`, and
+`test_routed_diff_rejects_wrong_or_tampered_baseline`. The permitted suites ran
+49 passed (20 oracle + 29 pin, incl. parametrizations); no failures.
+
+## R2 — resolved (OVERVIEW now accurate)
+
+The current plan-31 sentence (`docs/OVERVIEW.md:62`, unchanged by later commits)
+names the evidence types instead of an unrestricted claim: the retained
+SHA-pinned AU 3-11 37-cell list; measured AU 3-14 246,123 / Perth 3-14 795
+changed cells, complete under both the whole-frame multiset and the routed
+footprint identity (0 routed-only cells); and the committed plan-29 L0 (0,541)
+leaf-928 byte proof. It keeps all 3-14 payload causes unattributed and carries
+AU 3-11's +60 B non-payload growth plus the unmeasured 3-14
+container/index/padding scope as residuals. Each clause matches the verified
+evidence. No corrections required. The removal of "measured … every … hop"
+correctly stops describing the 3-11 retained list and the plan-29 reused proof
+as fresh measurements.
+
+## Phase outcome assessment update
+
+- Phase 1 — **met for the routed-completeness claim**. Outcome 1's identity
+  proof for the two 3-14 hops is now routing-aware and gated; Outcome 2's named
+  unexplained cells are preserved. Outcomes 3–5 remain as in the original
+  review. Previously "partial" solely because of R1; R1 is resolved.
+- Phase 2 — **met** (unchanged; no regression). The pin contract and historical
+  disposition are untouched by the remediation.
+- No Plan 04 Phase 3 close is claimed (`phase3_closed: false` in both generated
+  artifacts; OVERVIEW still says "plan 04 Phase 3 is not closed"). PSS remains a
+  listed blocker. No tolerance/checker change, no relabel, no reseat, no
+  protected-input mutation. R3's temporal clarification is intact.
+
+## Findings by severity (re-review)
+
+### High
+
+**R1 — resolved in review.** See above. Evidence hashes, counts, run log and
+synthetic controls all confirm routed-only = 0 and missing = 0 on the two 3-14
+hops; the multiset lists are complete under the finer routed identity. No brief
+or re-review of R1 is required.
+
+### Medium
+
+**R2 — resolved in review.** The narrowed OVERVIEW sentence is accurate; no
+corrections. (Original R2 was a documentation correction, not a code defect.)
+
+### Low
+
+**R3 — remains resolved** (original review; no action).
+
+**F1 — follow-up, non-blocking:** the routed-identity completeness proof was run
+only for the AU/Perth 3-14 hops. The AU 3-11 changed-cell list is retained and
+corroborated by a count-split scan, but its completeness under the finer routed
+identity is not re-proven by remediation-01, so in principle the same
+divided-leaf false-negative class is not excluded for that hop. The OVERVIEW
+wording correctly limits "complete under … the routed footprint identity" to the
+3-14 hops, so this does not affect the R1/R2 discharge. If a future close
+package wants a uniform routing-aware proof, run `routed-diff` for the 3-11 hop
+(or record the count-split scan as its routing-level witness). Listed as a
+residual; no brief raised.
+
+No blocker-severity findings. No new structural finding requiring
+`briefs/remediation-02.md` — none is written.
+
+## Intent and ledger assessment
+
+The remediation follows the honesty/identity intent: it adds a strictly finer
+identity without re-signing a hop, does not touch the recorded lists/digests/
+counts/labels, does not promote historical causes to measurement, and keeps the
+named-unexplained cells and prior residuals. The previously **unproven**
+implementation assumption ("unordered frame membership is sufficient to
+establish unchanged routed cell contents") is now discharged for the two 3-14
+hops by direct evidence; ledger entries 1–4 still hold.
+
+## Plan-sufficiency judgment
+
+The design remains sufficient. Its prior gap — no defined identity contract for
+what a "changed cell" proof must preserve — was the root of R1; remediation-01
+supplied that contract (footprint + whole-frame identity) for the two measured
+hops. A future 3-11 routing-aware proof and the separated payload-cause work are
+the only design-level leftovers, both already named as residuals.
+
+## Residual risks
+
+- F1: AU 3-11 routed-identity completeness not independently re-proven.
+- All 246,123 AU / 795 Perth 3-14 payload causes remain unmeasured; AU 3-11's
+  +60 B non-payload growth and the unmeasured 3-14 container/index/padding scope
+  remain open (now carried in OVERVIEW).
+- R1's original claims relied on retained baseline lists; that is disclosed and
+  hash-pinned, not freshly recomputed in rem01.
+- PSS, future close verification and other plans remain outside this slice.
+
+## Validation and execution boundary
+
+Only the permitted suites were run:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 .venv-rp/bin/python -B -m pytest -q -p no:cacheprovider parser/tests/test_oracle_chain.py parser/tests/test_pin_contract.py --basetemp output/scratch-31/rereview/tests
+```
+
+**49 passed** (0.66 s). Evidence checks reread only committed JSON/TSV and the
+retained `output/scratch-31/` routed lists/logs read-only (streamed for hashing
+and counting). No ALLDATA.KWI, R disc or spool was opened; no K1, diff, encode or
+full suite was run. No protected 170 / 3-16 / 3-17 reseat, no 3-90 re-run.
+
+## Files changed by this re-review
+
+- `REVIEW.md` — this appended re-review section (original review preserved).
+- Runtime test outputs under `output/scratch-31/rereview/` only.
+
+No code, tests, OVERVIEW, other plan surfaces or protected inputs were edited.
+The follow-up command for a future 3-11 routing proof is the existing
+`oracle_chain.py routed-diff` subcommand with the 3-11 hop pins and new scratch
+paths; it is not run here.
