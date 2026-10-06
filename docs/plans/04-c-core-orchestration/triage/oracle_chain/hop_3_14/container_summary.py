@@ -70,7 +70,11 @@ def summarise(region, spans, cells, cell_diff, pdmdh, name):
     rows = pf['outside_bytes']
     size_changed = {r['old']['key'] for r in pf['bmt_entries_size_changed']}
     if ({r['offset'] for r in rows} != outside
-            or any(r['field_offset_in_entry'] not in (4, 5) or r['old']['key'] not in size_changed for r in rows)):
+            or any(r['field_offset_in_entry'] not in (4, 5) or r['old']['key'] not in size_changed
+                   or r['old']['entry_len'] != 6 or r['field_offset_in_entry'] >= r['old']['entry_len']
+                   or r['old_byte'] != (r['old']['size_sectors'] >> 8 * (5 - r['field_offset_in_entry'])) & 0xFF
+                   or r['new_byte'] != (r['new']['size_sectors'] >> 8 * (5 - r['field_offset_in_entry'])) & 0xFF
+                   for r in rows)):
         errors.append('PDMDH non-address bytes not all BMT size fields of size-changed PMR blocks')
     pmr_keys = set(c['pmr']['masked_content_differs_keys'])
     if pmr_keys != size_changed or c['pmr']['buffer_size_changed'] != len(size_changed):
@@ -81,6 +85,16 @@ def summarise(region, spans, cells, cell_diff, pdmdh, name):
     rec_delta = sum(r['new']['record_bytes'] - r['old']['record_bytes'] for r in pf['bmt_entries_size_changed'])
     if rec_delta != c['sizes']['pmr_records']['delta']:
         errors.append('PMR record delta not explained by the size-changed blocks')
+    ls = a['old']['logical_sector_size']
+    tail_delta = sum((r['new']['size_sectors'] * ls - r['new']['record_bytes'])
+                     - (r['old']['size_sectors'] * ls - r['old']['record_bytes']) for r in pf['bmt_entries_size_changed'])
+    if tail_delta != c['sizes']['pmr_tails']['delta'] or any(
+            not 0 <= r[s]['size_sectors'] * ls - r[s]['record_bytes'] < ls
+            for r in pf['bmt_entries_size_changed'] for s in ('old', 'new')):
+        errors.append('PMR tail delta not explained by the size-changed blocks (or a tail reaches a sector)')
+    tool = Path(__file__).resolve().parent.parent / 'region_accounting.py'
+    if a['tool_sha256'] != sha(tool):
+        errors.append('region accounting was produced by a different region_accounting.py than the committed one')
     hist = Counter()
     with open(spans) as f:
         for r in csv.DictReader(f, delimiter='\t'):
@@ -115,6 +129,7 @@ def summarise(region, spans, cells, cell_diff, pdmdh, name):
                   'outside_bytes': rows},
         'fixed_and_inline': {'fixed': c['fixed'], 'inline': c['inline']},
         'nonzero_padding_or_tail': {'frame_pad_nonzero': [a['old']['frame_pad_nonzero'], a['new']['frame_pad_nonzero']],
+                                    'frame_pad_oversize': [a['old'].get('frame_pad_oversize'), a['new'].get('frame_pad_oversize')],
                                     'pmr_tail_nonzero': [a['old']['pmr_tail_nonzero'], a['new']['pmr_tail_nonzero']]},
         'inputs': {p: {'path': label(v), 'sha256': sha(v)} for p, v in
                    (('region', region), ('spans', spans), ('cells', cells), ('cell_diff', cell_diff), ('pdmdh', pdmdh))},

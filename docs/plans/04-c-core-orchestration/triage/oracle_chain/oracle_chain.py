@@ -565,11 +565,13 @@ def container_account(path, start, end, row):
             or [c['old_sha256'], c['new_sha256']] != [start, end] or c['unaccounted_bytes'] != 0
             or not c['payload_vs_cells']['equal']
             or c['payload_vs_cells']['changed_cells'] != row.get('changed_count')
-            or sum(c['region_deltas'].values()) != c['file_size']['delta']):
+            or sum(c['region_deltas'].values()) != c['file_size']['delta']
+            or c['inputs']['cells']['sha256'] != (row.get('authoritative_list') or {}).get('sha256')):
         raise ValueError('3-14 container account does not name every byte for this hop')
     if CONTAINER_RESIDUAL not in row['residuals']:
         raise ValueError('3-14 container residual missing; publish order changed')
     row['residuals'] = [x for x in row['residuals'] if x != CONTAINER_RESIDUAL]
+    row.setdefault('supporting_evidence', []).append(evidence(path))
     row['container_account'] = dict(evidence(path), file_size_delta=c['file_size']['delta'],
                                     region_deltas=c['region_deltas'], unaccounted_bytes=0,
                                     payload_equals_sum_cell_deltas=True)

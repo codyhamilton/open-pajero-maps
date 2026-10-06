@@ -66,7 +66,8 @@ this rule. Neither contract closes plan 04 Phase 3 by itself.
   padding, 34×(−4)+7×(+28). Plan 36 Phase 1 reproduced it with
   `triage/oracle_chain/region_accounting.py`: the same 41 spans, +164
   payload, and 0 unaccounted bytes (`evidence/region-3-11-au.json`).
-  The 3-14 container, index and padding scope is unmeasured (plan 36 Phase 2).
+  The 3-14 container, index and padding scope is accounted by plan 36 Phase 2
+  (`triage/oracle_chain/hop_3_14/container-{au,perth}.json`, 0 unaccounted).
 - The historical `pinned_candidates` exhaustive identity is
   unverifiable from git. It is not required for a live close while live
   failing is 0.

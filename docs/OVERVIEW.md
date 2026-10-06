@@ -65,8 +65,9 @@ ends on the **residual branch**: plan 04 Phase 3 is **not closed**. The
 remaining Phase 3 blockers are exactly the `blocks-phase3` rows of
 [`residuals.tsv`](plans/04-c-core-orchestration/triage/phase3_synthesis/residuals.tsv):
 
-- 3-14 per-cell payload causes and 3-14 container accounting (plan **36**).
-  The 3-11 routed proof (R-G1-4) is discharged by plan 36 Phase 1;
+- 3-14 per-cell payload causes (plan **36** Phase 3). The 3-11 routed proof
+  (R-G1-4) and the 3-14 container accounting (R-G1-3) are discharged by
+  plan 36 Phases 1–2;
 - `checked` move explanation for the 3-11 and 3-14 hops;
 - the historical cause remainder: 8,739 background_boundary + 137 background
   rows (180 groups), polygon 65623 and R01 exclusivity;

@@ -59,3 +59,136 @@ Reviewer: independent clean-context seat (Claude CLI, disclosed; Codex weekly-li
 ## Residual risks
 
 - Finding 1 matters for Phase 2, where content changes are expected and the tool's region labels become the attribution.
+
+## Phase 2 (Claude CLI clean-context seat, reviewed b10e787, 12:40–12:44 AEST)
+
+Verdict: PASS_WITH_FOLLOWUPS
+
+# Plan 36 Phase 2 review: 3-14 container/index/padding accounted
+
+**Seat:** Claude CLI, clean context, disclosed (Codex is weekly-limited).
+**Reviewed:** master `b10e787`. No repo files were modified.
+**Scratch outputs:** `output/scratch-36/review-p2/`.
+
+## Phase 1 remediation (REVIEW.md F1–F5) in `b10e787`: verified
+
+- **F1.** `ok` now also requires these three counts to be 0 on both sides: `frame_pad_nonzero`, `pmr_tail_nonzero` and the new `frame_pad_oversize` (`(fa-fpay) >= ls`).
+  - See `region_accounting.py` around L224 and L353.
+  - The committed tool sha is `183d0ee0…`. This equals `tool_sha256` in all `r2/` outputs.
+- **F2.** Account-level tests cover a trailing gap, a nonzero pad byte, refusal of an existing output, and the relocation path.
+- **F3.** `replay_3_11` checks the spans row by row:
+  - against the `plan07_spans()` parse of the ledger, and against the spans TSV;
+  - the `sha_pre311.json` witness must equal `AU0`;
+  - three new evidence pins were added.
+- **F4.** Plan 31 L92 and gates.tsv G1/G10 now carry post-close notes. The plan 31 edit is now stale for 3-14: see finding 2.
+- **F5.** The inline compare now iterates the union of old and new indexes.
+
+**Tests:** `pytest test_region_accounting.py test_oracle_chain.py` gives **46 passed**.
+
+## Phase 2 outcomes: all met
+
+Each check below is my own recomputation.
+
+**1. Region accounting committed, with 0 unaccounted.** Met.
+- I ran `container_summary.py` again on the `r2/` inputs into `review-p2/`. Both `container-au.json` and `container-perth.json` are **byte-identical** to the committed files, and both pass.
+- From `r2/region-3-14-{au,perth}.json`:
+  - **AU:** Σ of named region deltas = −38,913,410 − 3,198 − 12 − 20 = **−38,916,640** = file delta.
+  - **Perth:** −161,380 + 388 + 16 − 16 = **−160,992** = file delta.
+  - Partition: complete on both sides, gap 0, overlap 0.
+  - `frame_pad_nonzero`, `frame_pad_oversize`, `pmr_tail_nonzero` and `frame_bad_extent` are all 0 on both sides.
+
+**2. Payload delta = Σ per-cell deltas.** Met.
+- I summed `new_bytes − old_bytes` from `scratch-31/diff-3-14-{au,perth}.cells.tsv`:
+  - AU: 246,123 rows, **−38,913,410**;
+  - Perth: 795 rows, **−161,380**.
+- Both equal `frame_payload.delta`.
+- The cells TSV shas (`77ff1d86…`, `af26b6b4…`) match the cell-diff records and the oracle row lists.
+- This is a real cross-check: two independent tools, the plan 31 multiset diff and the region partition, give the same figure.
+
+**3. Residual replaced by evidence.** Met in JSON; partial in TSV (finding 1).
+- `oracle_chain.json` 3-14 rows carry `container_account` (sha-pinned summary, region deltas, unaccounted 0). Only the payload-causes residual remains.
+
+**PDMDH size fields.** Each BMT entry is 6 bytes (4-byte address + 2-byte big-endian size), so entry offset 5 is the size's low byte. I checked every outside byte:
+
+| Block | Size (sectors) | Low byte |
+| --- | --- | --- |
+| AU 23/16 | 386 (0x182) → 385 (0x181) | 130 → 129 |
+| 51/9 | 426 (0x1AA) → 424 (0x1A8) | 170 → 168 |
+| 51/10 | 395 (0x18B) → 397 (0x18D) | 139 → 141 |
+
+- Perth has the same two 51/9 and 51/10 bytes, at entry offsets 7338 and 7344.
+- The high bytes (offset 4) are unchanged, as expected. That gives 3 (AU) and 2 (Perth) non-address bytes, and all of them are explained.
+
+**PMR records and tails.** With `ls` = 32, each `size` equals `ceil(rec/32)`.
+- Record deltas: −28, −56 and +72, so Σ AU −12 and Σ Perth +16. Both are correct.
+- Tails (old → new):
+  - 23/16: 4 → 0;
+  - 51/9: 20 → 12;
+  - 51/10: 24 → 16.
+- Σ AU −20 and Σ Perth −16, both correct. Every tail is below 32.
+- Buffer sectors: AU −1 sector = −32 B = −12 − 20. Perth 0 = +16 − 16.
+
+**Topology keys.**
+- The only-old/only-new frames sit entirely in the size-changed PMR blocks:
+  - AU: 12 old / 15 new;
+  - Perth: 8 old / 14 new;
+  - 23/16:1285, 51/9:988 and 51/9:1211 each merge 4 children into 1 leaf;
+  - 51/10:768 gains children /4…/15.
+- PMR `masked_content_differs_keys` equals exactly the size-changed set.
+
+**Is the "frame_padding" / "pmr_tails" naming honest?** Yes, given the F1 gates:
+- every padding and tail byte is proven zero;
+- frame padding is proven to be under one logical sector, so it is fully determined by `ceil(payload/32)*32`;
+- the tails of the changed blocks follow exactly from record size → sector count, as recomputed above.
+
+The padding delta splits as follows. Neither component is itemised separately in the summary, but both are implied:
+
+| Hop | Common-frame spans | Added/removed topology frames | Total |
+| --- | --- | --- | --- |
+| AU | −3,302 | +104 | −3,198 |
+| Perth | +264 | +124 | +388 |
+
+## Findings
+
+1. **low: the TSV rows drop the residual without citing the evidence.**
+   - **Evidence:** `oracle_chain.tsv` AU/Perth 3-14 rows. `supporting_evidence` is empty, and `container_account` exists only in `oracle_chain.json` (`oracle_chain.py` `container_account`).
+   - **Fix:** in `container_account`, also append `evidence(path)` to `row['supporting_evidence']` (creating the list if needed). Then re-run `publish` so that the TSV row cites `hop_3_14/container-{au,perth}.json` with its sha.
+
+2. **low: stale "3-14 container unmeasured" wording.**
+   - **Evidence:**
+     - `docs/design/oracle-chain-and-live-pin-contract.md:69`;
+     - `docs/plans/31-phase3-oracle-and-pin-gates.md:92-93` (rewritten in this same commit);
+     - `triage/phase3_synthesis/residuals.tsv:4` (R-G1-3, still `blocks-phase3`);
+     - `gates.tsv` G1 note;
+     - OVERVIEW L68 ("3-14 container accounting (plan 36)").
+   - **Fix:** in the Phase 2 close commit:
+     - change these to "3-14 container accounted: plan 36 P2, `hop_3_14/container-{au,perth}.json`, 0 unaccounted";
+     - mark R-G1-3 `discharged`, mirroring the P1 treatment of R-G1-4 and R-G10-1.
+
+3. **low: the PDMDH check in `container_summary` accepts any byte at entry offset 4/5 of a size-changed block, without checking its value.**
+   - **Evidence:** `hop_3_14/container_summary.py` (the `field_offset_in_entry not in (4, 5)` test). In `pdmdh_fields.py`, `max(k for k in oblk if k <= off)` is unbounded by `entry_len`. An offset after the last entry would still map to it.
+   - The values are correct today: I verified them above.
+   - **Fix:**
+     - require `field_offset_in_entry < entry_len == 6`;
+     - require `old_byte == (old.size_sectors >> 8*(5-fo)) & 0xFF`, and the same for `new`.
+
+4. **low: the tails and padding totals are gated only through the generic `ok`.**
+   - **Evidence:**
+     - `region_accounting.py` has no `pmr_tail_oversize` (tail ≥ `ls`) check, the counterpart of `frame_pad_oversize`.
+     - `container_summary.py` does not reconcile `pmr_tails.delta` with the size-changed blocks (it does for records).
+     - It does not gate `region_tool_sha256` to the fail-closed tool.
+     - It omits `frame_pad_oversize` from `nonzero_padding_or_tail`.
+   - **Fix:**
+     - add `pmr_tail_oversize = sum(len-rec >= ls)` to `scan` and `ok`;
+     - in the summary, check `Σ(new.size*ls − new.rec) − Σ(old.size*ls − old.rec) == pmr_tails.delta` over the size-changed blocks;
+     - record `frame_pad_oversize`;
+     - fail if `tool_sha256` ≠ the committed `region_accounting.py` sha.
+
+5. **low: `container_account` does not tie the summary's cell list to the row.**
+   - **Evidence:** `oracle_chain.py` `container_account`. It checks the `changed_cells` count only. The shas match today: `77ff1d86` / `af26b6b4`.
+   - **Fix:** require `c['inputs']['cells']['sha256'] == row['authoritative_list']['sha256']`, and add a tamper test.
+
+6. **note: workflow.**
+   - The Phase 2 artefacts landed in `b10e787` under the `Workflow-Phase: …:1` trailer.
+   - Phase 2 still needs its own close commit, with the `:2` trailer, the review record and fixes 1–2.
+   - The full AU region JSON and spans stay uncommitted, but they are sha-pinned and listed in provenance. That is acceptable, and the summary reproduces byte-exact from them.

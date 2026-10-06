@@ -354,15 +354,19 @@ HOP = PLAN / 'hop_3_14'
 @pytest.mark.parametrize('name,start,end,count', [('au', chain.AU1, chain.AU2, 246123),
                                                  ('perth', chain.P0, chain.P1, 795)])
 def test_container_account_accepts_committed_summaries(name, start, end, count):
-    row = {'changed_count': count, 'residuals': [chain.CONTAINER_RESIDUAL, 'other']}
+    c = json.loads((HOP / f'container-{name}.json').read_text())
+    row = {'changed_count': count, 'residuals': [chain.CONTAINER_RESIDUAL, 'other'],
+           'authoritative_list': {'sha256': c['inputs']['cells']['sha256']}}
     chain.container_account(HOP / f'container-{name}.json', start, end, row)
     assert row['residuals'] == ['other'] and row['container_account']['unaccounted_bytes'] == 0
+    assert row['supporting_evidence'][0]['path'].endswith(f'container-{name}.json')
 
 
-@pytest.mark.parametrize('mutation', ['pass', 'hop', 'payload', 'count'])
+@pytest.mark.parametrize('mutation', ['pass', 'hop', 'payload', 'count', 'cells_sha'])
 def test_container_account_rejects_tampered_summary(tmp_path, mutation):
     c = json.loads((HOP / 'container-au.json').read_text())
-    row = {'changed_count': 246123, 'residuals': [chain.CONTAINER_RESIDUAL]}
+    row = {'changed_count': 246123, 'residuals': [chain.CONTAINER_RESIDUAL],
+           'authoritative_list': {'sha256': c['inputs']['cells']['sha256']}}
     start, end = chain.AU1, chain.AU2
     if mutation == 'pass':
         c['pass'] = False
@@ -370,6 +374,8 @@ def test_container_account_rejects_tampered_summary(tmp_path, mutation):
         start = chain.AU0
     elif mutation == 'payload':
         c['payload_vs_cells']['equal'] = False
+    elif mutation == 'cells_sha':
+        row['authoritative_list'] = {'sha256': '0' * 64}
     else:
         row['changed_count'] = 1
     p = tmp_path / 'c.json'
@@ -386,15 +392,17 @@ def _container_inputs(tmp_path, cell_new=110):
     cells.write_text('level\tix\tiy\tstatus\told_bytes\tnew_bytes\n0\t1\t1\tchanged\t100\t%d\n' % cell_new)
     blk = {'key': 'L0 1/0', 'entry_offset': 10, 'entry_len': 6, 'size_sectors': 1, 'record_bytes': 20}
     blk2 = dict(blk, size_sectors=2, record_bytes=40)
-    pd = {'x': {'outside_bytes': [{'offset': 15, 'field_offset_in_entry': 5, 'old': blk, 'new': blk2}],
+    pd = {'x': {'outside_bytes': [{'offset': 15, 'field_offset_in_entry': 5, 'old_byte': 1, 'new_byte': 2,
+                                   'old': blk, 'new': blk2}],
                 'bmt_entries_size_changed': [{'old': blk, 'new': blk2}]}}
     region = {'kind': 'region_accounting', 'complete_and_accounted': True, 'old_sha256': 'a', 'new_sha256': 'b',
-              'tool_sha256': 't', 'old': {'partition': {}, 'frame_pad_nonzero': 0, 'pmr_tail_nonzero': 0},
+              'tool_sha256': chain.sha(PLAN / 'region_accounting.py'),
+              'old': {'partition': {}, 'frame_pad_nonzero': 0, 'pmr_tail_nonzero': 0, 'logical_sector_size': 32},
               'new': {'partition': {}, 'frame_pad_nonzero': 0, 'pmr_tail_nonzero': 0},
-              'compare': {'unaccounted_bytes': 0, 'file_size': {'delta': 42},
+              'compare': {'unaccounted_bytes': 0, 'file_size': {'delta': 40},
                           'sizes': {'partition_gaps': {'old': 0, 'new': 0, 'delta': 0},
                                     'frame_payload': {'delta': 10}, 'frame_padding': {'delta': -2},
-                                    'pmr_records': {'delta': 20}, 'pmr_tails': {'delta': 14}},
+                                    'pmr_records': {'delta': 20}, 'pmr_tails': {'delta': 12}},
                           'frames': {'old': 1, 'new': 2, 'common': 1, 'only_old': 0, 'only_new': 1,
                                      'only_old_keys': [], 'only_new_keys': ['L0 1/0: 3'], 'payload_changed': 1,
                                      'payload_delta_changed_frames': 10, 'payload_delta_unchanged_frames': 0,
@@ -428,3 +436,12 @@ def test_container_summary_rejects_payload_not_equal_cell_deltas(tmp_path):
     cs, p, spans, cells = _container_inputs(tmp_path, cell_new=111)
     out = cs.summarise(p['region'], spans, cells, p['diff'], p['pdmdh'], 'x')
     assert not out['pass'] and any('payload delta' in e for e in out['errors'])
+
+
+def test_container_summary_rejects_wrong_size_byte(tmp_path):
+    cs, p, spans, cells = _container_inputs(tmp_path)
+    pd = json.loads(p['pdmdh'].read_text())
+    pd['x']['outside_bytes'][0]['new_byte'] = 3
+    p['pdmdh'].write_text(json.dumps(pd))
+    out = cs.summarise(p['region'], spans, cells, p['diff'], p['pdmdh'], 'x')
+    assert not out['pass'] and any('PDMDH' in e for e in out['errors'])

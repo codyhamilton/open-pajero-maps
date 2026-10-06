@@ -278,3 +278,51 @@ weekly-limited), on `0cb872e`. Full text: `REVIEW.md` § Phase 1.
 - **Tests:** container_account accept (AU, Perth) and 4 tamper rejects;
   container_summary synthetic pass and payload-mismatch fail. Oracle /
   region / pin / successor tests: 77 passed.
+
+### Phase 2 review and remediation
+Review: an independent Claude CLI clean-context seat, on `b10e787`. Full
+text: `REVIEW.md` § Phase 2.
+
+- **Verdict: PASS_WITH_FOLLOWUPS.** All three Phase 2 outcomes were met.
+  - The reviewer re-ran `container_summary.py` and got byte-identical
+    summaries.
+  - It recomputed the region-delta sums, the per-cell payload sums
+    (−38,913,410 / −161,380), the BMT size-field bytes and the PMR record
+    and tail deltas.
+  - It judged the padding and tail naming honest under the F1 zero and
+    oversize gates.
+- **F1:** `container_account` now appends the summary to the row's
+  `supporting_evidence`, so the TSV cites `hop_3_14/container-{au,perth}.json`
+  with its sha.
+- **F2:** "3-14 container unmeasured" is replaced in four places:
+  - the oracle-chain contract;
+  - plan 31's Residual Risks (as a post-close note);
+  - OVERVIEW;
+  - the `gates.tsv` G1 note.
+
+  `residuals.tsv` R-G1-3 is `discharged`, leaving 12 `blocks-phase3` rows.
+- **F3:** each outside-address PDMDH byte must have:
+  - entry length 6;
+  - field offset below the entry length;
+  - old and new byte values equal to the corresponding byte of
+    `size_sectors`.
+
+  `pdmdh_fields.py` was not re-run: the lock is held by the Phase 3 encode,
+  and its output for these in-range offsets is unchanged. The summary now
+  enforces the bounds independently.
+- **F4 (partly):**
+  - Done:
+    - the summary reconciles `pmr_tails.delta` with the size-changed blocks
+      and requires each of their tails to be below one sector;
+    - it requires `tool_sha256` to equal the committed
+      `region_accounting.py`;
+    - it records `frame_pad_oversize`.
+  - Not done: a whole-disc `pmr_tail_oversize` in `region_accounting.py`.
+    - Unchanged blocks have identical buffers on both sides (masked hash
+      equal) with zero tails, so this would be a writer-wide property, not
+      a hop delta.
+    - Disclosed as a follow-up, so the region runs did not need re-running.
+- **F5:** `container_account` requires the summary's cell-list sha to equal
+  the row's `authoritative_list` sha. A tamper test is added.
+- **Tests:** a synthetic wrong-size-byte reject is added. Oracle / region /
+  pin / successor tests: 79 passed.

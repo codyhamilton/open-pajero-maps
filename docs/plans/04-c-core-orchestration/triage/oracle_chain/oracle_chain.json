@@ -314,7 +314,7 @@
           "pmr_records": -12,
           "pmr_tails": -20
         },
-        "sha256": "e5622b0590bc85d56a47f416d016e078ff41644a87766be4b370c9950577817d",
+        "sha256": "a5a1333a16719be43a8ee6a17e23318da7d1310247c68a3279278410e128af7c",
         "unaccounted_bytes": 0
       },
       "counts_by_level": {
@@ -356,6 +356,12 @@
       },
       "signing_unit": "3-14",
       "status": "measured-identities-residual-causes",
+      "supporting_evidence": [
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/container-au.json",
+          "sha256": "a5a1333a16719be43a8ee6a17e23318da7d1310247c68a3279278410e128af7c"
+        }
+      ],
       "to_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
       "unexplained_cells": {
         "path": "output/scratch-31/diff-3-14-au.cells.tsv",
@@ -387,7 +393,7 @@
           "pmr_records": 16,
           "pmr_tails": -16
         },
-        "sha256": "4d56bdd2b7fadd2ffa00bea36dae08c7b47d98dcaf8d63e89ca40b23a4744452",
+        "sha256": "f3f00e739be3564e7dc5829c83f709aba45afaaddb87fd0d5ff77afbadd0bc39",
         "unaccounted_bytes": 0
       },
       "counts_by_level": {
@@ -421,6 +427,12 @@
       },
       "signing_unit": "3-14",
       "status": "measured-identities-residual-causes",
+      "supporting_evidence": [
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/oracle_chain/hop_3_14/container-perth.json",
+          "sha256": "f3f00e739be3564e7dc5829c83f709aba45afaaddb87fd0d5ff77afbadd0bc39"
+        }
+      ],
       "to_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
       "unexplained_cells": {
         "path": "output/scratch-31/diff-3-14-perth.cells.tsv",
