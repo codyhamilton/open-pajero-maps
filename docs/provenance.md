@@ -930,3 +930,5 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - `output/scratch-59/` — plan 59 finalize-run wrappers/results + Flash review logs (regenerable).
 
 - `output/scratch-54/` — plan 54 Flash review logs (regenerable).
+
+- `output/scratch-55/` — plan 55 K1 dump-failures on G_pre311 (`87a01b14`) + dual-basis census/Flash review (regenerable; committed proof JSON under 3-14/conditions/).

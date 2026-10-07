@@ -19,7 +19,7 @@ Not a HEAD-checker bug. The 3-13 table’s Boundary-before integers are a **half
 
 ## Evidence
 
-- `output/scratch-55/runs/dual_basis_proof.json`
+- `window_before_dual_basis_proof.json` (committed census; regenerable dump under `output/scratch-55/dump_pre311/`)
 - `output/scratch-55/runs/predicate_census.json`
 - Regenerated dump: `output/scratch-55/dump_pre311/` (regenerable; not required in git)
 

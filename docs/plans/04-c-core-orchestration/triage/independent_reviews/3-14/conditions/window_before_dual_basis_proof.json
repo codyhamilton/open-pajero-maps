@@ -1,0 +1,209 @@
+{
+  "disc": "output/scratch-36/G_pre311/ALLDATA.KWI",
+  "disc_sha256_prefix": "87a01b14",
+  "dump": "output/scratch-55/dump_pre311",
+  "predicate_table_boundary": "K1 dump-failures background_boundary rows with level==L, code==window_type, leaf (ix,iy) in half-open rectangle [x0,x1)\u00d7[y0,y1) (i.e. x0<=ix<x1, y0<=iy<y1). Reproduced from regenerated 87a01b14 dump; matches causes_rootcause.md Boundary-before column for all 9 windows.",
+  "predicate_window_before_json": "Same dump kind/level/type filters, but INCLUSIVE rectangle [x0,x1]\u00d7[y0,y1] as implemented by window_before.py (ix/iy <= x1/y1). Matches committed window_before.json background_boundary_* exactly.",
+  "root_cause_class": "explained-dual-basis",
+  "note": "causes_rootcause.md labels windows \"inclusive source cells\"; the Boundary-before integers match half-open leaf-cell bounds on the HEAD dump, not inclusive. Fill-before usually matches inclusive dump census (all-types or type). R-G8-1-b after-0 supersession unaffected.",
+  "windows": [
+    {
+      "level": 0,
+      "type": 288,
+      "window": [
+        1769,
+        202,
+        1772,
+        205
+      ],
+      "table_boundary_before": 255,
+      "table_fill_before": 32,
+      "inclusive_boundary_type": 403,
+      "half_open_boundary_type": 255,
+      "inclusive_boundary_all_types": 403,
+      "half_open_boundary_all_types": 255,
+      "inclusive_fill_all_types": 32,
+      "inclusive_fill_type": 32,
+      "half_open_fill_all_types": 32,
+      "half_open_fill_type": 32,
+      "boundary_half_open_matches_table": true,
+      "fill_match": "incl_all"
+    },
+    {
+      "level": 0,
+      "type": 291,
+      "window": [
+        828,
+        745,
+        831,
+        748
+      ],
+      "table_boundary_before": 829,
+      "table_fill_before": 69,
+      "inclusive_boundary_type": 1224,
+      "half_open_boundary_type": 829,
+      "inclusive_boundary_all_types": 1224,
+      "half_open_boundary_all_types": 829,
+      "inclusive_fill_all_types": 69,
+      "inclusive_fill_type": 62,
+      "half_open_fill_all_types": 69,
+      "half_open_fill_type": 62,
+      "boundary_half_open_matches_table": true,
+      "fill_match": "incl_all"
+    },
+    {
+      "level": 0,
+      "type": 289,
+      "window": [
+        1401,
+        851,
+        1402,
+        852
+      ],
+      "table_boundary_before": 90,
+      "table_fill_before": 32,
+      "inclusive_boundary_type": 117,
+      "half_open_boundary_type": 90,
+      "inclusive_boundary_all_types": 356,
+      "half_open_boundary_all_types": 90,
+      "inclusive_fill_all_types": 64,
+      "inclusive_fill_type": 32,
+      "half_open_fill_all_types": 32,
+      "half_open_fill_type": 32,
+      "boundary_half_open_matches_table": true,
+      "fill_match": "incl_type"
+    },
+    {
+      "level": 0,
+      "type": 578,
+      "window": [
+        1400,
+        1287,
+        1401,
+        1288
+      ],
+      "table_boundary_before": 60,
+      "table_fill_before": 23,
+      "inclusive_boundary_type": 191,
+      "half_open_boundary_type": 60,
+      "inclusive_boundary_all_types": 191,
+      "half_open_boundary_all_types": 60,
+      "inclusive_fill_all_types": 23,
+      "inclusive_fill_type": 23,
+      "half_open_fill_all_types": 23,
+      "half_open_fill_type": 23,
+      "boundary_half_open_matches_table": true,
+      "fill_match": "incl_all"
+    },
+    {
+      "level": 2,
+      "type": 289,
+      "window": [
+        202,
+        229,
+        203,
+        230
+      ],
+      "table_boundary_before": 108,
+      "table_fill_before": 17,
+      "inclusive_boundary_type": 108,
+      "half_open_boundary_type": 108,
+      "inclusive_boundary_all_types": 108,
+      "half_open_boundary_all_types": 108,
+      "inclusive_fill_all_types": 17,
+      "inclusive_fill_type": 17,
+      "half_open_fill_all_types": 17,
+      "half_open_fill_type": 17,
+      "boundary_half_open_matches_table": true,
+      "fill_match": "incl_all"
+    },
+    {
+      "level": 6,
+      "type": 288,
+      "window": [
+        15,
+        17,
+        16,
+        18
+      ],
+      "table_boundary_before": 132,
+      "table_fill_before": 0,
+      "inclusive_boundary_type": 264,
+      "half_open_boundary_type": 132,
+      "inclusive_boundary_all_types": 264,
+      "half_open_boundary_all_types": 132,
+      "inclusive_fill_all_types": 0,
+      "inclusive_fill_type": 0,
+      "half_open_fill_all_types": 0,
+      "half_open_fill_type": 0,
+      "boundary_half_open_matches_table": true,
+      "fill_match": "incl_all"
+    },
+    {
+      "level": 0,
+      "type": 291,
+      "window": [
+        1792,
+        395,
+        1793,
+        396
+      ],
+      "table_boundary_before": 196,
+      "table_fill_before": null,
+      "inclusive_boundary_type": 452,
+      "half_open_boundary_type": 196,
+      "inclusive_boundary_all_types": 452,
+      "half_open_boundary_all_types": 196,
+      "inclusive_fill_all_types": 0,
+      "inclusive_fill_type": 0,
+      "half_open_fill_all_types": 0,
+      "half_open_fill_type": 0,
+      "boundary_half_open_matches_table": true,
+      "fill_match": "n/a"
+    },
+    {
+      "level": 0,
+      "type": 291,
+      "window": [
+        1801,
+        395,
+        1802,
+        396
+      ],
+      "table_boundary_before": 132,
+      "table_fill_before": null,
+      "inclusive_boundary_type": 304,
+      "half_open_boundary_type": 132,
+      "inclusive_boundary_all_types": 304,
+      "half_open_boundary_all_types": 132,
+      "inclusive_fill_all_types": 0,
+      "inclusive_fill_type": 0,
+      "half_open_fill_all_types": 0,
+      "half_open_fill_type": 0,
+      "boundary_half_open_matches_table": true,
+      "fill_match": "n/a"
+    },
+    {
+      "level": 0,
+      "type": 291,
+      "window": [
+        1805,
+        395,
+        1806,
+        396
+      ],
+      "table_boundary_before": 120,
+      "table_fill_before": null,
+      "inclusive_boundary_type": 120,
+      "half_open_boundary_type": 120,
+      "inclusive_boundary_all_types": 120,
+      "half_open_boundary_all_types": 120,
+      "inclusive_fill_all_types": 0,
+      "inclusive_fill_type": 0,
+      "half_open_fill_all_types": 0,
+      "half_open_fill_type": 0,
+      "boundary_half_open_matches_table": true,
+      "fill_match": "n/a"
+    }
+  ]
+}
