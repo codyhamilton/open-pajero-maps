@@ -1,0 +1,55 @@
+{
+ "seed": 4314,
+ "n_rings": 20000,
+ "declines": {
+  "r359": {
+   "size": -1,
+   "tags": [
+    885
+   ],
+   "face_walk_guard_hit": true,
+   "propagates_via_951": false,
+   "rc": 0
+  },
+  "r8475": {
+   "size": -1,
+   "tags": [
+    885
+   ],
+   "face_walk_guard_hit": true,
+   "propagates_via_951": false,
+   "rc": 0
+  },
+  "r11892": {
+   "size": null,
+   "tags": [],
+   "face_walk_guard_hit": false,
+   "propagates_via_951": false,
+   "rc": -11
+  },
+  "r14503": {
+   "size": -1,
+   "tags": [
+    885
+   ],
+   "face_walk_guard_hit": true,
+   "propagates_via_951": false,
+   "rc": 0
+  },
+  "r19650": {
+   "size": null,
+   "tags": [],
+   "face_walk_guard_hit": false,
+   "propagates_via_951": false,
+   "rc": -11
+  }
+ },
+ "locus": "_cenc.c:885 (eo_clip face-walk guard: g_eh[h].used || np >= ne; arms not split)",
+ "propagates_via": "_cenc.c:951 (eo_clip return -1 -> kw__bg_shape)",
+ "build_error_cites": [
+  "_cenc.c:1070 (enc_bg decline)",
+  "_e2.c:48 (declined row is a build error)"
+ ],
+ "note": "Decline site for the three rings that complete under instrumentation is _cenc.c:885. r11892 and r19650 segfault (SIGSEGV, rc -11) under the fprintf instrumentation but return size -1 in the uninstrumented stress test (stress_20k.json); their site is therefore not pinned by this artefact. Arms of the :885 guard (used vs np>=ne) are not split. Why the walk meets a used half-edge is not established (plan 48).",
+ "uninstrumented_declines_all_five": "stress_20k.json (size -1 for all five rings)"
+}

@@ -867,11 +867,15 @@ Admitted by plan 30 DESIGN Amendment 1 (Design ruling option (a), 2026-10-06). N
 
 ### output/scratch-43/ (plan 43 review conditions, light set)
 
-Not committed; ~6 MB; regenerable. Record: `docs/plans/43-review-conditions-light/IMPLEMENTATION.md`. Committed evidence and
+Not committed; ~6 MB; regenerable. Record: `docs/plans/43-review-conditions-light.md` (plan 43 close-out). Committed evidence and
 scripts live in `docs/plans/04-c-core-orchestration/triage/independent_reviews/3-1{4,7}/conditions/` (README in each).
+Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `compare.py` (regenerate scratch before re-running them).
 - `k1old_314.*`, `k1head_314_cwdslip.*`, `runs/`: K1 runs on `4ed9cd80` (copies committed). `golden/`: golden window rebuild
   (`frames.bin` = golden `905d9c95…`). `c20k.out.json`: 20,000-ring stress characterisation (summary committed as `stress_20k.json`).
-- `suite_main.log` (+ two `*.killed_*` partial logs from host reboots 17:53 / 18:47 AEST): main-checkout full suite.
+- `suite_main.log` (+ two `*.killed_*` partial logs from host reboots 17:53 / 18:47 AEST; one filename says `shutdown`, both were reboots): main-checkout full suite.
 - `p2/`: `dump_forced`, `dump_k1old_all`, `dump_ext43` and classify outputs; `side_forced.tsv`; `rules/`. Bytes pinned in
-  `3-17/conditions/p2_bytes.sha256`. Regenerate: `forced_zero.py`, `make_rules.py`, `run_p2.sh`, `build_ext.py`, `run_p2b.sh`.
-- Safe to delete; nothing else reads it.
+  `3-17/conditions/p2_bytes.sha256` (paths relative to the main checkout root). `k1old_all.sha256` paths are relative to `/home/codyh/workspace`.
+  Regenerate: `forced_zero.py`, `make_rules.py`, `run_p2.sh`, `build_ext.py`, `run_p2b.sh`.
+- Also present: `probe.so`, `charact.py` (identical to committed `stress_characterise_20k.py`), `res_p1.py` (one-shot residuals editor),
+  `tmp/`, and the shared `output/tmp-agent` used as TMPDIR. `review/` holds the terminal REVIEW.md and its prompt/log.
+- Safe to delete after the committed evidence is in place; recreate before re-running the hard-coded scripts.

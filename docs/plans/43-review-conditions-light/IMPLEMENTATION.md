@@ -81,3 +81,30 @@ Evidence folder: `docs/plans/04-c-core-orchestration/triage/independent_reviews/
 ### Carried
 
 1. R-G8-2-f-a: listed for Cody's rule (never-committed file; no regeneration path).
+
+## Review follow-ups (terminal review PASS_WITH_FOLLOWUPS, Claude CLI, 2026-10-06 19:23 AEST)
+
+Applied 2026-10-07. Findings F1–F7:
+
+1. **F1 (medium):** opened **R-G8-1-b-a** for the window_before vs 3-13 boundary count mismatch (HEAD-checker dump rows vs 3-13 counting; root cause not named). The after-0 supersession is unaffected. Fill sentence restated below to a single column: `background_type` for fill (matches the 3-13 table for every window that has a fill figure; the 0/291 window's type-291 fill is 62 and all-types 69 = 62 + 7 type-288 R01, as the 3-13 text notes).
+2. **F2 (low):** R-G8-1-d-a reworded to "decline site located (`:885`; arms not split)". Committed `decline_locus.py` / `decline_locus.json` (3/5 rings pin `:885` under instrumentation; all 5 size -1 uninstrumented). Build-error cites `_cenc.c:1070`, `_e2.c:48`. "No AU input" scoped to built spools.
+3. **F3 (low):** R-G8-2-f reworded to "plan 37 identity re-executed through the classify CLI; consistent". R-G8-4-a notes "premise shared with R-G8-2-f-a".
+4. **F4 (low):** `build_ext.py` and this record cite `cause_table.md:36` as the source of byte 6; S2e verifies CLI on an inferred byte.
+5. **F5 (low):** 3-14 conditions README notes the k1head rename, the misleading `W` line, the inferred `6a65cf9`, and the single post-both-runs disc hash (17:42).
+6. **F6 (low):** stress-test docstring records that the "guard" is the child timeout and that eo_connect's connection branch is not separately asserted.
+7. **F7 (low):** provenance and P2 deviations updated below.
+
+### Fill sentence (restated, F1)
+
+Per-window fill from `window_before.json`, column `background_type` (the window's target type code): 32, 62, 32, 23, 17, 0; the three S05 windows 0. The 0/291 window's `background_all_types` is 69 (= 62 type 291 + 7 type 288 R01), matching the 3-13 table's fill 69. Boundary counts remain unreconciled (R-G8-1-b-a).
+
+### P2 deviations (F4, F7)
+
+- Original 3-17 `dump_ext` lost; `dump_ext43` rebuilt (as above).
+- S2e name_anchor byte 6 is inferred from `cause_table.md:36` + unchanged cell + extension inherit rule; not recovered 3-17 bytes. The run verifies CLI/rule semantics on that byte.
+- Four early `run_p2.sh` steps (full CLI and name_anchor view on the 144-byte K1 dump) exited 2 on missing extension columns; superseded by `run_p2b.sh` on `dump_ext43`. Recorded in the 3-17 conditions README; kept here as a deviation.
+
+## Terminal review
+
+- Seat: Claude CLI clean-context (disclosed; Codex weekly-limited). Verdict: **PASS_WITH_FOLLOWUPS** (`output/scratch-43/review/REVIEW.md`, kept under `triage/independent_reviews/3-14/conditions/review-REVIEW.md` at close-out).
+- No blocker or high findings. Follow-ups applied above.

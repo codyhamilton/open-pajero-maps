@@ -2,9 +2,11 @@
 + residual_crossing_verified@146) on 4ed9cd80, for the full-CLI (R-G8-4-b) and kind-view (R-G8-4-a, S2e) runs.
 - completeness: the 776 rows of dump_forced (dump_join other_mechanism output, mechanism forced to 0 on 3-14 changed cells);
   its 144 native bytes are checked equal to K1@1cf40f8's fresh completeness.bin (itself sha-equal to dump_raw 1a91b1c2).
-- name_anchor: K1@1cf40f8's one row. other_mechanism = 6 (O03 spool), inherited as the 3-14 extension did on byte-unchanged
-  cells: identity checked against the plan 29 record (L0 (0,541), leaf [928], raw (0,370), lat -38.7272..) and the
-  3-08 review item 7 (Ile Saint-Paul); cell (0,0,541) is NOT in plan 31's 3-14 changed-cell list.
+- name_anchor: K1@1cf40f8's one row. other_mechanism = 6 (O03 spool), the value fixed by the committed pre-3-14
+  classification at cause_table.md:36 (O03 / one source name at L0 home(0,541)); inherited as the 3-14 extension
+  did on byte-unchanged cells (rebaseline_3-17_9064.md:112). Row identity checked against plan 29 (L0 (0,541),
+  leaf [928], raw (0,370), lat -38.7272..) and 3-08 review item 7 (Ile Saint-Paul); cell (0,0,541) is NOT in
+  plan 31's 3-14 changed-cell list. S2e verifies CLI behaviour on this inferred byte, not recovered 3-17 bytes.
 - background, background_boundary, interior_cover: zero rows (as in 3-17's dump_ext)."""
 import json, sys
 from pathlib import Path
