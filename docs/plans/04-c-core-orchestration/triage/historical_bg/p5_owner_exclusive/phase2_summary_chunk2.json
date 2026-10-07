@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "locked_R": 8,
+  "n_work": 95059,
+  "n_decisions": 65059,
+  "n_leaves": 2652,
+  "class_counts": {
+    "build:eo_bg_stitch": 55992,
+    "producer_ambiguous": 2127,
+    "producer_home_outside_R_cap": 6408,
+    "skip_divided_leaf": 197,
+    "disagree_no_oe": 42,
+    "disagree_source_removed": 293
+  },
+  "out": "docs/plans/04-c-core-orchestration/triage/historical_bg/p5_owner_exclusive/phase2_decisions_chunk2.tsv.gz",
+  "inventory_925_joined_all": true
+}

@@ -1,0 +1,322 @@
+{
+  "schema": 1,
+  "n_widen_recovers": 4042,
+  "n_matched_outside": 4042,
+  "n_stitch": 3866,
+  "n_disagree_no_oe": 0,
+  "n_disagree_source_removed": 176,
+  "n_skip": 0,
+  "n_fe_skip": 0,
+  "n_updates": 4042,
+  "class_counts_after": {
+    "build:eo_bg_stitch": 87743,
+    "skip_divided_leaf": 541,
+    "producer_ambiguous": 2972,
+    "producer_home_outside_R_cap": 3216,
+    "disagree_no_oe": 118,
+    "disagree_source_removed": 469
+  },
+  "updates_sample": [
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    },
+    {
+      "cell": [
+        0,
+        1728,
+        535
+      ],
+      "shape": 2,
+      "decision": "build:eo_bg_stitch",
+      "recover_r": 16
+    }
+  ],
+  "new_disc": "/home/codyh/workspace/open-pajero-maps/output/scratch-48/G_new/ALLDATA.KWI"
+}

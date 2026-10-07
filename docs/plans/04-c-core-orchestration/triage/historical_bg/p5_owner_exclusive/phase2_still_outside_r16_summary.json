@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "r_widen": 16,
+  "n_still_outside": 3216,
+  "n_cells": 122,
+  "pct_of_decided": 0.033832,
+  "pct_of_outside_targets": 0.443097,
+  "re_escalate_5pct": false,
+  "named_residual": "producer_home_outside_R_cap max_radius=16",
+  "residual_tsv": "docs/plans/04-c-core-orchestration/triage/historical_bg/p5_owner_exclusive/phase2_residuals_still_outside_r16.tsv"
+}

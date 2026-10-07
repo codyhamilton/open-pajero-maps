@@ -94,3 +94,58 @@ Units (orchestrator-direct; one brief each, committed before work):
 - Patched `mass_decide.py` `--resume-from` + `--cache-clear-every` (clear spool caches every 50 leaves) and `leaf_io.clear_spool_caches` for chunked resume without OOM.
 - **Blocker:** Design ruling on stop_for_design (367 recovers at r>8 on partial outside set). Phase 2 close / R-G5-4-a/b discharge blocked until (a) Design answer and (b) remaining ~65059 rows decided under chunked resume.
 - Snapshot: `output/scratch-44/runs/phase2_decisions_partial_30k.tsv.gz`, `widen16_mass_partial_result.json`.
+
+
+### Unit 4d — mass chunk2 MASS_OK + stitch (2026-10-07 ~19:44 / 22:30 AEST)
+
+- Chunk2 under flock: **65059/65059** decisions; class_counts in `phase2_summary_chunk2.json` (eo_bg_stitch 55992, outside_R_cap 6408, ambiguous 2127, disagree_source_removed 293, skip_divided 197, disagree_no_oe 42). Peak RSS ~2 GiB.
+- Stitched `phase2_decisions_full.tsv.gz` = 30k + chunk2 = **95059** rows. Combined class_counts: eo_bg_stitch 83877, outside_R_cap **7258**, ambiguous 2972, skip_divided 541, disagree_no_oe 118, disagree_source_removed 293 (`phase2_summary_full.json`).
+- Design option (c): standing widen@16 on all 7258 outside (`--stop-threshold` huge); proven_fixed_recovers path; still-outside@16 named residual. **Queued** — heavy lock held by other lane at stitch time.
+
+
+### Unit 4e — standing widen@16 option (c) WIDEN_OK (2026-10-07 ~22:55–23:45 AEST)
+
+- `widen_outside.py --from-decisions phase2_decisions_full.tsv.gz --r-widen 16 --stop-threshold 999999 --cache-clear-every 20` under flock+wrapper.
+- Result `widen16_full_result.json`: **n_targets=7258**, **n_recovered=4042**, **n_still_outside=3216**, **n_ambiguous=0**, **n_recover_radius_gt8=3917**, **`stop_for_design=false`**.
+- by_recover_r: {1:125, 9:754, 10:577, 11:502, 12:634, 13:363, 14:455, 15:450, 16:182}.
+- Wrapper: exit 0, wall≈3025s, max_rss≈3.0 GiB, memory.peak≈3.17 GiB. Logs: `output/scratch-44/runs/widen16_full.{stdout,json}`.
+- Still-outside inventory: `phase2_residuals_still_outside_r16.tsv` (3216 rows / 122 cells); `phase2_still_outside_r16_summary.json` — **3.38% of decided** (<5% re-escalate gate).
+
+### Unit 4f — proven-fixed recovers PROVEN_FIXED_OK (2026-10-08 ~00:09 AEST)
+
+- Fixed `proven_fixed_recovers.py` to match `leaf_io.frames(path, cellset)` / `leaf_records(fh, ent)` (prior draft had wrong API).
+- Restored `output/scratch-14/G_new` → symlink to tip `scratch-48/G_new` (cleanup had removed scratch-14).
+- Under flock: 4042 widen recovers → **3866 `build:eo_bg_stitch`**, **176 `disagree_source_removed`**, **0 `disagree_no_oe`**, 0 skip. Wall≈1222s, max_rss≈1.3 GiB.
+- Canonical decisions after promote: `phase2_decisions_full.tsv.gz` / `phase2_decisions.tsv.gz` class_counts: eo_bg_stitch **87743**, outside_R_cap **3216**, ambiguous 2972, disagree_source_removed 469, disagree_no_oe 118, skip_divided 541.
+
+### Phase 2 CLOSED — Design option (c) complete (2026-10-08)
+
+Option (c) outcomes met:
+1. Mass default **R=8** retained (95059/95059 decided).
+2. Standing widen@16 on all outside; no ≥20 escalate stop (`stop_for_design=false`).
+3. Widen recovers through proven-fixed OE/new-disc path (3866 stitch + 176 source_removed).
+4. Still-outside@16 named residual (`producer_home_outside_R_cap` max_radius=16, n=3216, 122 cells) — **not** re-escalated (3.38% < 5%).
+5. Other classes unchanged as named residuals: ambiguous / skip_divided / disagree_no_oe / disagree_source_removed.
+
+**Not discharged:** R-G5-4-a/b remain open as residual parents for still-outside@16 + ambiguous + OE fails; maps-parity-carried items unchanged. No invent beyond (c). No R bump. No oracle change from this plan.
+
+**Flash review:** see below.
+
+
+### Flash review (Phase 2 option (c) close) — 2026-10-08 ~00:15 AEST
+
+- Seat: OpenCode DeepSeek Flash (`opencode run -m deepseek/deepseek-flash`).
+- Verdict: **PASS-WITH-CONCERNS** (LAND after conditions).
+- Numbers reconcile: 7258=4042+3216; 83877+3866=87743; 293+176=469; classes sum 95059; still-outside 3.38%<5%.
+- Conditions addressed in this land:
+  1. Commit option-(c) artifacts + scripts on master (this commit).
+  2. `docs/provenance.md` scratch-44 option-(c) BOM entry.
+  3. `disagree_source_removed` from proven-fixed justified as mass_decide excl `sz<=0` limb (176 rows).
+  4. `by_recover_r` includes **125 at r=1** (unique-fragment): widen re-probe found producer at Chebyshev 1; remaining **3917 at 9..16**. Stitch records actual `recover_r`.
+  5. Canonical residual TSV = `phase2_residuals_still_outside_r16.tsv`; `phase2_residuals_outside_R_cap.tsv` kept as byte-identical alias.
+- Transcript: `output/scratch-44/runs/flash_p2_option_c.stdout`.
+
+### Plan 44 CLOSED (Phase 2 option (c))
+
+Phase 1 Gates A+B previously closed; Phase 2 closed under Design option (c) with named residuals above. Tip lands with this close-out commit. Follow-ons: R-G5-4 residual children for still-outside@16 / ambiguous / OE / source_removed as Design opens; memory band plans 56–59 separate.
+

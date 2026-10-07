@@ -32,6 +32,7 @@ from bg_owner_exclusive import (  # noqa: E402
 )
 from leaf_io import (  # noqa: E402
     cell_b4,
+    clear_spool_caches,
     frames,
     leaf_records,
     leaf_rect_raw,
@@ -87,6 +88,8 @@ def main() -> int:
                     help="Phase 2 phase2_decisions.tsv.gz; selects producer_home_outside_R_cap")
     ap.add_argument("--r-widen", type=int, default=16)
     ap.add_argument("--stop-threshold", type=int, default=20)
+    ap.add_argument("--cache-clear-every", type=int, default=20,
+                    help="Clear spool caches every N leaves (bound RSS; 0=never)")
     ap.add_argument("--out-json", type=Path, default=OUT / "widen16_result.json")
     args = ap.parse_args()
     r_widen = int(args.r_widen)
@@ -161,6 +164,8 @@ def main() -> int:
 
     results = []
     recover_gt8 = 0
+    n_leaves_done = 0
+    cache_every = int(args.cache_clear_every)
 
     with open(OLD_DISC, "rb") as fo:
         for lk, rows in by_leaf_rows.items():
@@ -217,6 +222,10 @@ def main() -> int:
                 return cands_by_r[radius]
 
             print(f"  leaf {lk} rows={len(rows)} widen≤{r_widen}…", flush=True)
+            n_leaves_done += 1
+            if cache_every and n_leaves_done % cache_every == 0:
+                clear_spool_caches()
+                print(f"  cache_clear after {n_leaves_done} leaves", flush=True)
             for r in rows:
                 shape, code = r["shape"], r["code"]
                 base = {k: r[k] for k in ("level", "ix", "iy", "shape", "vert", "code")}

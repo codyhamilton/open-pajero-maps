@@ -900,3 +900,11 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - AU `-j4` census: sha `4e6b0de7…` unchanged, guard_hits=0, declines_walk=0, entries 30,831,653. Evidence `triage/independent_reviews/3-14/conditions/eo_decline/census/au_*.json`.
 - Perth `-j4` census: sha `04be2f6e…` unchanged, guard_hits=0. Evidence `…/census/perth_*.json`.
 - Single-run AU wall 38.04 s (plan 41 median 37.38 s, spread 0.51 s); P3 gate uses median of 5.
+
+## `output/scratch-44/` — plan 44 owner-exclusive / option (c)
+
+- **What:** run logs, probes, Flash transcripts, Design ruling copies, and heavy-wrapper JSON for plan 44 (mass_decide, widen@16, proven_fixed). Committed evidence lives under `docs/plans/04-c-core-orchestration/triage/historical_bg/p5_owner_exclusive/` (`phase2_decisions.tsv.gz`, `widen16_full_result.json`, `proven_fixed_full_result.json`, residual TSVs, summaries). Scratch holds regenerable stdout/time/RSS logs only.
+- **Why not committed (scratch):** large regenerable wrapper logs and probe `.so` builds; Design ruling text also mirrored in IMPLEMENTATION.
+- **Reproduce:** under flock + `parser/tools/run_heavy_python.py` from tip, with `G_pre311` at `output/scratch-36/G_pre311/ALLDATA.KWI`, `G_new` at `output/scratch-14/G_new` → `scratch-48/G_new`, spool `output/extract_timing/spool`, probes `_cenc_33006aa.c` / `_cenc_d35b565.c` under `output/scratch-44/probes/`. Scripts: `mass_decide.py`, `widen_outside.py`, `proven_fixed_recovers.py` in `p5_owner_exclusive/`.
+- **Option (c) ruling:** keep R=8; standing widen@16 no ≥20 escalate; proven-fixed path; still-outside@16 named residual; re-escalate only if still-outside ≳5% (actual 3.38%).
+
