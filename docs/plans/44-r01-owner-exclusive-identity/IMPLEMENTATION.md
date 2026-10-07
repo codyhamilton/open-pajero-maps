@@ -50,3 +50,13 @@ Units (orchestrator-direct; one brief each, committed before work):
 - Control rewrite `2e936e4`: per-row expanding Moore 1→R_cap=8 until unique-byte|unique-fragment; Gate A (OE≥99% among resolved); Gate B (100% class coverage with RC incl. `producer_home_outside_R_cap`); `offset_census.json`.
 - Smoke + stratified n=200 under expanding search next; Phase 1 closes only when Gate A and Gate B both pass. Propose R in IMPLEMENTATION after census for Design confirm before Phase 2.
 - Do **not** hardcode neighbourhood=1 or "enable 3×3" (nb=1 already was Assump-1; recovered 0/48).
+
+
+### Unit 3d — Phase 1 CLOSED (Gates A+B); proposed R=8 for Design confirm
+
+- Stratified control n=200 seed=44 `--r-cap 8`: Gate A **191/191 OE (rate 1.0)**; Gate B **198/198** (73 unique-byte, 118 unique-fragment, 7 `producer_home_outside_R_cap`).
+- Offset census: max recovering radius **8**; by_radius 1→150, 2→16, 3→9, 4→6, 5→6, 6→3, 8→1.
+- **Proposed Phase 2 default R = 8** (max recovering radius among unique-* per DESIGN Decision 5). Awaiting Design confirm before Phase 2 mass run.
+- 7 outside-R_cap rows listed in `triage/historical_bg/p5_owner_exclusive/phase2_residuals_outside_R_cap.tsv` → named Phase 2 residuals / R-G5-4 children.
+- R-G5-4-a/b still open.
+- Designs 45/46: wait for Design confirm of R.

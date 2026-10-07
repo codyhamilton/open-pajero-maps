@@ -65,3 +65,54 @@ CONTROL_OK both gates:
 - Gate A: resolved_unique=11, oe_pass=11, oe_fail=0, rate=1.0 PASS
 - Gate B: ok=12, bad=0 PASS — classes unique-fragment=6, unique-byte=5, producer_home_outside_R_cap=1
 - Stratified n=200 seed=44 queued next.
+
+
+## Stratified n=200 seed=44 expanding search ≤R_cap=8 — Gate A+B PASS
+
+`CONTROL_OK` tip artifacts after `6b628f9` smoke + this run.
+
+| Gate | Result |
+| --- | --- |
+| **Gate A** | resolved_unique=**191**, oe_pass=**191**, oe_fail=**0**, rate=**1.0** PASS (≥99%) |
+| **Gate B** | ok=**198**, bad=**0** PASS — unique-byte=**73**, unique-fragment=**118**, producer_home_outside_R_cap=**7**, producer_ambiguous=**0** |
+
+Skip=2 (unevaluable). Cover definition unchanged.
+
+### Offset census (191 recovering unique-*)
+
+| recovering Moore radius | count |
+| ---: | ---: |
+| 1 | 150 |
+| 2 | 16 |
+| 3 | 9 |
+| 4 | 6 |
+| 5 | 6 |
+| 6 | 3 |
+| 8 | 1 |
+
+- max recovering radius = **8** (equals R_cap; 1 row)
+- p50=1, p90=3, p95=4, p99=6
+- Top offsets: `(0,0)`=84, `(-1,0)`=13, `(0,1)`=12, `(0,-1)`=9, `(1,0)`=9 (Moore-1 neighbourhood dominates)
+
+Full census: `offset_census.json`.
+
+### Proposed R for Phase 2 (Design confirm required)
+
+**Propose R = 8** = max recovering radius among unique-* in this stratified sample (DESIGN Decision 5). Proof: 191/191 resolved rows recover at radius ≤8; the single max is radius 8. Setting R&lt;8 (e.g. p99=6) would leave that one sample row as an additional outside residual without census justification under the max rule.
+
+### Phase 2 residuals (named)
+
+7× `producer_home_outside_R_cap` → `phase2_residuals_outside_R_cap.tsv` (children of R-G5-4 or named Phase 2 residuals; never silent):
+
+- `0/1610/657` code=288 shape=0 spool=1 clips=0 ib=78 uncovered=78
+- `0/866/905` code=578 shape=3 spool=4 clips=1 ib=85 uncovered=85
+- `0/1469/1728` code=289 shape=0 spool=1 clips=0 ib=96 uncovered=96
+- `0/1674/718` code=578 shape=33 spool=32 clips=32 ib=34 uncovered=34
+- `0/963/919` code=578 shape=1 spool=1 clips=0 ib=36 uncovered=36
+- `0/1276/1754` code=289 shape=3 spool=2 clips=1 ib=64 uncovered=64
+- `0/1749/1708` code=288 shape=1 spool=2 clips=1 ib=22 uncovered=22
+
+### Phase 1 status
+
+**CLOSED** on Gate A + Gate B. Do **not** start Phase 2 mass run until Design confirms proposed R=8.
+Designs 45/46 remain blocked on that confirm.
