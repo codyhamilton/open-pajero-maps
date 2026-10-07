@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "phase": "mass_decide",
+  "label": "stand-in",
+  "argv": [
+    ".venv-rp/bin/python",
+    "-B",
+    "docs/plans/04-c-core-orchestration/triage/historical_bg/p5_owner_exclusive/mass_decide.py",
+    "--r",
+    "8",
+    "--smoke-leaves",
+    "20",
+    "--cache-clear-every",
+    "10",
+    "--out",
+    "output/scratch-56/runs/mass_smoke20_decisions.tsv.gz",
+    "--summary",
+    "output/scratch-56/runs/mass_smoke20_summary.json"
+  ],
+  "wall_s": 83.51843511800689,
+  "max_rss_kib": 1232364,
+  "memory_peak": 1257132032,
+  "memory_stat": {
+    "anon": 8966144,
+    "file": 2400256,
+    "file_dirty": 12288
+  },
+  "tree_peak_mb": null,
+  "residency": [
+    {
+      "class": "process_rss_peak",
+      "evidence": "wrapper_max_rss_kib",
+      "kib": 1232364,
+      "live_at_peak": true
+    },
+    {
+      "class": "cgroup_memory_peak",
+      "evidence": "wrapper_memory_peak",
+      "kib": 1227668,
+      "live_at_peak": true
+    },
+    {
+      "class": "anon",
+      "evidence": "cgroup_memory_stat",
+      "kib": 8756,
+      "live_at_peak": true
+    },
+    {
+      "class": "file",
+      "evidence": "cgroup_memory_stat",
+      "kib": 2344,
+      "live_at_peak": true
+    }
+  ],
+  "inter_phase_boundary": null,
+  "notes": [
+    "smoke-leaves=20; co-residency detail beyond anon/file still unknown \u2014 spool/disc frames not size-accounted this run"
+  ],
+  "wrapper_log": "output/scratch-56/runs/mass_smoke20.json"
+}

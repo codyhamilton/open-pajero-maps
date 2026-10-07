@@ -1,0 +1,100 @@
+{
+  "schema": 1,
+  "phase": "encode",
+  "label": "stand-in",
+  "argv": [
+    "/home/codyh/workspace/open-pajero-maps-14-completeness/.venv-rp/bin/python",
+    "-B",
+    "parser/tools/bench_build.py",
+    "--out",
+    "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-56/runs/encode_perth/bench.json",
+    "--",
+    "/home/codyh/workspace/open-pajero-maps-14-completeness/.venv-rp/bin/python",
+    "-B",
+    "parser/build_alldata.py",
+    "--fixture",
+    "perth",
+    "--spool",
+    "output/extract_timing/spool",
+    "--out",
+    "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-56/runs/encode_perth/ALLDATA.KWI",
+    "-j",
+    "4",
+    "--bench",
+    "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-56/runs/encode_perth/encode_bench.json"
+  ],
+  "wall_s": 3.061033026999212,
+  "max_rss_kib": 3412576,
+  "memory_peak": 1366241280,
+  "memory_stat": {
+    "anon": 9097216,
+    "file": 54419456,
+    "file_dirty": 31567872
+  },
+  "tree_peak_mb": 13962.9,
+  "residency": [
+    {
+      "class": "process_rss_peak",
+      "evidence": "wrapper_max_rss_kib",
+      "kib": 3412576,
+      "live_at_peak": true
+    },
+    {
+      "class": "cgroup_memory_peak",
+      "evidence": "wrapper_memory_peak",
+      "kib": 1334220,
+      "live_at_peak": true
+    },
+    {
+      "class": "anon",
+      "evidence": "cgroup_memory_stat",
+      "kib": 8884,
+      "live_at_peak": true
+    },
+    {
+      "class": "file",
+      "evidence": "cgroup_memory_stat",
+      "kib": 53144,
+      "live_at_peak": true
+    },
+    {
+      "class": "file_dirty",
+      "evidence": "cgroup_memory_stat",
+      "kib": 30828,
+      "live_at_peak": true
+    },
+    {
+      "class": "encode_process_tree_peak",
+      "evidence": "sampler",
+      "kib": 13962900,
+      "live_at_peak": true,
+      "note": "bench_build.py /proc tree RSS; workers=4 co-resident with parent"
+    },
+    {
+      "class": "worker_pool_j4",
+      "evidence": "size_accounting",
+      "kib": null,
+      "live_at_peak": true,
+      "note": "-j4 worker Pool children co-resident at encode peak (tree sampler)"
+    }
+  ],
+  "inter_phase_boundary": {
+    "after_phase": "dump_extend",
+    "before_phase": "encode",
+    "action": "clear_spool_caches+gc",
+    "meminfo_kib": {
+      "MemTotal": 31697516,
+      "MemFree": 3683604,
+      "MemAvailable": 21189620,
+      "Cached": 11989188,
+      "AnonPages": 8880308,
+      "Mapped": 1443704
+    }
+  },
+  "notes": [
+    "fresh Perth --fixture perth -j4 under flock+wrapper; cite_prior plan48 retained as secondary",
+    "bench.json tree_peak_mb=13962.9"
+  ],
+  "wrapper_log": "output/scratch-56/runs/encode_perth.json",
+  "bench_json": "output/scratch-56/runs/encode_perth/bench.json"
+}

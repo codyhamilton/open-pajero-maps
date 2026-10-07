@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "phase": "encode",
+  "label": "cite_prior",
+  "argv": [
+    "bench_build.py",
+    "# plan48 P2 AU/Perth"
+  ],
+  "wall_s": null,
+  "max_rss_kib": null,
+  "memory_peak": null,
+  "memory_stat": {
+    "anon": null,
+    "file": null,
+    "file_dirty": null
+  },
+  "tree_peak_mb": 15240.1,
+  "residency": [
+    {
+      "class": "encode_tree_peak_AU",
+      "evidence": "plan48_bench_build_peak_rss_tree_mb",
+      "kib": 15605862,
+      "live_at_peak": true
+    },
+    {
+      "class": "encode_tree_peak_Perth",
+      "evidence": "plan48_bench_build_peak_rss_tree_mb",
+      "kib": 14140928,
+      "live_at_peak": true
+    }
+  ],
+  "inter_phase_boundary": null,
+  "notes": [
+    "cite_prior tree peaks only \u2014 no phase-tagged co-residency; fresh encode measure queued"
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "schema": 1,
+  "phase": "dump_extend",
+  "label": "stand-in",
+  "argv": [
+    "/home/codyh/workspace/open-pajero-maps-14-completeness/.venv-rp/bin/python",
+    "-B",
+    "parser/tools/bench_dump_memory.py",
+    "finalize-run",
+    "--out",
+    "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-56/runs/dump_finalize_results.json"
+  ],
+  "wall_s": 9.204430069003138,
+  "max_rss_kib": 473352,
+  "memory_peak": 357117952,
+  "memory_stat": {
+    "anon": 8962048,
+    "file": 144060416,
+    "file_dirty": 36864
+  },
+  "tree_peak_mb": null,
+  "residency": [
+    {
+      "class": "process_rss_peak",
+      "evidence": "wrapper_max_rss_kib",
+      "kib": 473352,
+      "live_at_peak": true
+    },
+    {
+      "class": "cgroup_memory_peak",
+      "evidence": "wrapper_memory_peak",
+      "kib": 348748,
+      "live_at_peak": true
+    },
+    {
+      "class": "anon",
+      "evidence": "cgroup_memory_stat",
+      "kib": 8752,
+      "live_at_peak": true
+    },
+    {
+      "class": "file",
+      "evidence": "cgroup_memory_stat",
+      "kib": 140684,
+      "live_at_peak": true
+    },
+    {
+      "class": "file_dirty",
+      "evidence": "cgroup_memory_stat",
+      "kib": 36,
+      "live_at_peak": true
+    },
+    {
+      "class": "finalize_controller_record",
+      "evidence": "size_accounting",
+      "kib": null,
+      "live_at_peak": true,
+      "record_keys": [
+        "baseline_runs",
+        "baseline_source_sha256",
+        "candidate_runs",
+        "failed",
+        "fixture_input_sha256",
+        "gates",
+        "numpy",
+        "pairs",
+        "parts",
+        "python",
+        "rows",
+        "seed",
+        "time_utc"
+      ]
+    },
+    {
+      "class": "finalize_kind_array_fixture",
+      "evidence": "sampler",
+      "kib": 473352,
+      "live_at_peak": true,
+      "note": "plan-05 finalize-run fixture; kind array co-resident at peak (ARCHITECTURE deferred out-of-core \u2192 plan 59)"
+    }
+  ],
+  "inter_phase_boundary": {
+    "after_phase": "representability",
+    "before_phase": "dump_extend",
+    "action": "clear_spool_caches+gc",
+    "meminfo_kib": {
+      "MemTotal": 31697516,
+      "MemFree": 3970652,
+      "MemAvailable": 21338628,
+      "Cached": 11841716,
+      "AnonPages": 8867296,
+      "Mapped": 1431472
+    }
+  },
+  "notes": [
+    "fixture finalize-run via bench_dump_memory.py (plan 05 path)"
+  ],
+  "wrapper_log": "output/scratch-56/runs/dump_finalize.json",
+  "controller_out": "output/scratch-56/runs/dump_finalize_results.json"
+}

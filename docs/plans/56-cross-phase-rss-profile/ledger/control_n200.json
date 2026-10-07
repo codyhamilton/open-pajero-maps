@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "phase": "control",
+  "label": "stand-in",
+  "argv": [
+    ".venv-rp/bin/python",
+    "-B",
+    "docs/plans/04-c-core-orchestration/triage/historical_bg/p5_owner_exclusive/control.py",
+    "-n",
+    "200",
+    "--seed",
+    "44",
+    "--r-cap",
+    "8"
+  ],
+  "wall_s": 126.91047283800435,
+  "max_rss_kib": 1585996,
+  "memory_peak": 1626054656,
+  "memory_stat": {
+    "anon": 8966144,
+    "file": 8740864,
+    "file_dirty": 8192
+  },
+  "tree_peak_mb": null,
+  "residency": [
+    {
+      "class": "process_rss_peak",
+      "evidence": "wrapper_max_rss_kib",
+      "kib": 1585996,
+      "live_at_peak": true
+    },
+    {
+      "class": "cgroup_memory_peak",
+      "evidence": "wrapper_memory_peak",
+      "kib": 1587944,
+      "live_at_peak": true
+    },
+    {
+      "class": "anon",
+      "evidence": "cgroup_memory_stat",
+      "kib": 8756,
+      "live_at_peak": true
+    }
+  ],
+  "inter_phase_boundary": {
+    "after_phase": "mass_decide",
+    "before_phase": "control",
+    "action": "clear_spool_caches+gc",
+    "meminfo_kib": {
+      "MemFree": 3233996,
+      "MemAvailable": 20547200,
+      "Cached": 11821012,
+      "AnonPages": 9440780,
+      "Mapped": 1671456
+    },
+    "note": "clear_spool_caches between mass stand-in and control under separate wrapper scopes (serial flock)"
+  },
+  "notes": [
+    "stratified n=200 seed=44 r-cap=8"
+  ],
+  "wrapper_log": "output/scratch-56/runs/control_n200.json"
+}

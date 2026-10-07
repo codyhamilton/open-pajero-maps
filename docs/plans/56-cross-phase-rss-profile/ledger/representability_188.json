@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "phase": "representability",
+  "label": "stand-in",
+  "argv": [
+    "/home/codyh/workspace/open-pajero-maps-14-completeness/.venv-rp/bin/python",
+    "-B",
+    "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-15/conditions/representability/run_representability_region.py",
+    "--set",
+    "188",
+    "--workers",
+    "1"
+  ],
+  "wall_s": 67.48351865900622,
+  "max_rss_kib": 715728,
+  "memory_peak": 772370432,
+  "memory_stat": {
+    "anon": 8966144,
+    "file": 43683840,
+    "file_dirty": 4096
+  },
+  "tree_peak_mb": null,
+  "residency": [
+    {
+      "class": "process_rss_peak",
+      "evidence": "wrapper_max_rss_kib",
+      "kib": 715728,
+      "live_at_peak": true
+    },
+    {
+      "class": "cgroup_memory_peak",
+      "evidence": "wrapper_memory_peak",
+      "kib": 754268,
+      "live_at_peak": true
+    },
+    {
+      "class": "anon",
+      "evidence": "cgroup_memory_stat",
+      "kib": 8756,
+      "live_at_peak": true
+    },
+    {
+      "class": "file",
+      "evidence": "cgroup_memory_stat",
+      "kib": 42660,
+      "live_at_peak": true
+    },
+    {
+      "class": "file_dirty",
+      "evidence": "cgroup_memory_stat",
+      "kib": 4,
+      "live_at_peak": true
+    },
+    {
+      "class": "spool_reader_plus_tall_L0",
+      "evidence": "sampler",
+      "kib": 715728,
+      "live_at_peak": true,
+      "note": "stand-in: Region+_required_cells + k1_representable on historic_188; tall L0 co-resident with SpoolReader"
+    }
+  ],
+  "inter_phase_boundary": {
+    "after_phase": "control",
+    "before_phase": "representability",
+    "action": "clear_spool_caches+gc",
+    "meminfo_kib": {
+      "MemTotal": 31697516,
+      "MemFree": 3902576,
+      "MemAvailable": 21281644,
+      "Cached": 11796304,
+      "AnonPages": 8940004,
+      "Mapped": 1408896
+    },
+    "note": "separate wrapper scopes; free-then-reenter between control and representability"
+  },
+  "notes": [
+    "stand-in: --set 188 --workers 1 (K1\u2264-j6); full-AU K1 not seated",
+    "entrypoint run_representability_region.py \u2192 k1_representable"
+  ],
+  "wrapper_log": "output/scratch-56/runs/representability_188.json"
+}

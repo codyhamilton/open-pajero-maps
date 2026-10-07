@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "phase": "mass_decide",
+  "label": "cite_prior",
+  "argv": [
+    "mass_decide.py",
+    "--r",
+    "8",
+    "# plan44 Unit4c/4d"
+  ],
+  "wall_s": null,
+  "max_rss_kib": 17900000,
+  "memory_peak": null,
+  "memory_stat": {
+    "anon": null,
+    "file": null,
+    "file_dirty": null
+  },
+  "tree_peak_mb": null,
+  "residency": [
+    {
+      "class": "host_rss_at_30k_oom_stop",
+      "evidence": "plan44_IMPLEMENTATION_Unit4c",
+      "kib": 17900000,
+      "live_at_peak": true
+    },
+    {
+      "class": "chunk2_peak_rss_approx",
+      "evidence": "plan44_IMPLEMENTATION_Unit4d",
+      "kib": 2100000,
+      "live_at_peak": true
+    }
+  ],
+  "inter_phase_boundary": null,
+  "notes": [
+    "cite_prior \u2014 not re-measured this session; stand-in smoke20 is the fresh measure"
+  ]
+}
