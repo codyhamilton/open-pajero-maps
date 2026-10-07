@@ -121,7 +121,7 @@ applicable, growth and wall bounds). Delete large scratch trees under
 | Surface | Command |
 |---|---|
 | Residual extension (Phase 1) | `flock output/.heavy.lock .venv-rp/bin/python parser/tools/bench_dump_memory.py --out output/scratch-5-01/results.json` |
-| K1 `_finalize_dump` (plan 05/59) | `.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-59/runs/finalize_run_wrapper.json -- .venv-rp/bin/python -B parser/tools/bench_dump_memory.py finalize-run --out output/scratch-59/runs/finalize_results.json` (wrapper takes the lock — no outer `flock`) |
+| K1 `_finalize_dump` (plan 05/59) | `.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-59/runs/finalize_run_wrapper2.json -- .venv-rp/bin/python -B parser/tools/bench_dump_memory.py finalize-run --out output/scratch-59/runs/finalize_results2.json` (wrapper takes the lock — no outer `flock`) |
 | 3-07 extension (Phase 3) | `flock output/.heavy.lock .venv-rp/bin/python parser/tools/bench_dump_memory.py s07-run --out output/scratch-5-03/s07_results.json` |
 | Triage summary/classify/enumerate (Phase 3) | `flock output/.heavy.lock .venv-rp/bin/python parser/tools/bench_dump_memory.py triage-run --out output/scratch-5-03/triage_results.json` |
 

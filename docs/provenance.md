@@ -926,3 +926,5 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - **What:** regenerable Perth/AU encode benches + wrapper logs under `runs/` (baseline_perth, cut_perth, au*). Committed evidence: `docs/plans/58-encode-level-residency-drop/` + `parser/tests/test_e1spool_level_release.py`.
 - **Why not committed (scratch):** large regenerable ALLDATA + RSS logs.
 - **Reproduce:** wrapper (no outer flock) + `bench_build.py` + `build_alldata.py --fixture perth|-j4` per PHASE2/IMPLEMENTATION.
+
+- `output/scratch-59/` — plan 59 finalize-run wrappers/results + Flash review logs (regenerable).
