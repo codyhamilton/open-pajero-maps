@@ -1,4 +1,7 @@
-"""Plan 43 P1 R-G8-1-b context: pre-3-14 failing rows per committed 3-13 CF window (causes_rootcause.md L60-77), counted
+"""Plan 43 P1 R-G8-1-b context (plan 55: Boundary-before vs these counts are explained-dual-basis —
+see window_before_basis.md: table = half-open leaf window; this script = inclusive):
+
+Plan 43 P1 R-G8-1-b context: pre-3-14 failing rows per committed 3-13 CF window (causes_rootcause.md L60-77), counted
 from plan 39's keyed per-row arrays (output/scratch-39/keep/, 87a01b14 basis; identical to 013586b5 outside the 37 3-11
 cells, which are flagged). Window = inclusive cell range at the level, type = the window's target type code. Context only:
 the after-0 claim is carried by the whole-disc K1 on 4ed9cd80."""

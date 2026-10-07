@@ -70,7 +70,7 @@ remaining rows is in
 **Discharged gate bands (not live blockers):** all **G1** and **G4** rows (plans **36** /
 **39**); parent R-G5-3 / R-G5-4 / R-G9-1 / R-G9-3 / R-G8-5 / R-G10-1 and the plan **40**
 review-of-record parents; plan **43** light set; plan **47** completeness evidence set;
-plan **49** discharged **R-G8-2-f-a**; plan **48** discharged **R-G8-1-d-a** and accepted
+plan **49** discharged **R-G8-2-f-a**; plan **55** discharged **R-G8-1-b-a** (explained-dual-basis); plan **48** discharged **R-G8-1-d-a** and accepted
 live oracle `88bd7852…` (Perth `04be2f6e…`).
 
 **Live `blocks-phase3` ownership** (rows still open in `residuals.tsv`):
@@ -80,7 +80,6 @@ live oracle `88bd7852…` (Perth `04be2f6e…`).
 | Plan **44** (closed) | R-G5-4-a, R-G5-4-b | Closed owner; residual parents still `blocks-phase3` (still-outside@16 / named children) |
 | Plan **45** (Design on tip) | R-G5-4-c, R-G8-1-f | Designed owner |
 | Plan **46** (Design on tip) | R-G5-1, R-G5-2, R-G8-4-c | Designed owner |
-| Design (window-before count basis; plan **55** when numbered) | R-G8-1-b-a | `residuals.tsv` still `unowned → Design` |
 | Cody via Design (no waiver) | R-G8-1-a | Budget basis (with R-G9-4) |
 
 **`maps-parity-carried` ownership** (not Phase 3 product-close blockers):

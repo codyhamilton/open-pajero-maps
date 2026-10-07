@@ -66,6 +66,8 @@ Original builds byte-match G_new in every window; C build uses j4, K1j1, seriali
 | 2/289 | [202, 229, 203, 230] | 1 | 17→0 | 108→0 | 0/0 |
 | 6/288 | [15, 17, 16, 18] | 3 | 0→0 | 132→0 | 0/0 |
 
+Plan **55** (2026-10-08): the Boundary-before integers above match a **half-open** leaf-cell window `[x0,x1)×[y0,y1)` on the `87a01b14` K1 `background_boundary` dump (type-filtered); `window_before.json` counts the same dump with an **inclusive** `[x0,x1]×[y0,y1]` — both correct (explained-dual-basis; see `triage/independent_reviews/3-14/conditions/window_before_basis.md`). R-G8-1-b after-0 is unchanged.
+
 Type291 window has7 remaining raw fill rows, all unrelated type288 with in_eo_same1 (R01). Dedicated original-spool small before/after dumps census them: original type291 fill62=31 interior checker +31 outside; repaired type291 fill0 and boundary0; type288 interior7 remain. Thus the31 old R01 type291 rows disappearing are not credited as build attribution; Sonnet finding 3: this shows R01 may partly overlap build and was **not tested beyond this window**. Repairing all34 P sources explains the previous589 boundary remainder from repairing only one source. L6 fill before0 is explicitly vacuous, not a positive fill witness.
 
 S05 complete windows add11 rings:
