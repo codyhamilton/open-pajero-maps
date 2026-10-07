@@ -225,9 +225,10 @@ Whole-file patterns that drove that pressure:
 - A whole-file read-write `np.memmap` that touches every row keeps touched pages
   in the process page tables across the scan (RSS grows with the file) and keeps
   the destination hot.
-- Holding multiple full arrays (K1 `_finalize_dump` concatenating parts, then
-  `tobytes()` of the sorted rows) creates a multi-GiB anonymous spike after the
-  plan04 PSS sampler has already stopped.
+- Historical: holding multiple full arrays (pre–plan-05 K1 `_finalize_dump`
+  concatenating parts then `tobytes()` of the sorted rows) created a multi-GiB
+  anonymous spike after the plan04 PSS sampler had already stopped. Plan 05/59
+  removed that path; finalize peak now tracks largest part + merge cursors.
 
 Measurement therefore gates **both** max RSS (KiB) and the worker's cgroup v2
 `memory.peak`, records `memory.stat` (`anon`, `file`, `file_dirty`,
@@ -235,18 +236,22 @@ Measurement therefore gates **both** max RSS (KiB) and the worker's cgroup v2
 `systemd-run --user --scope -p MemoryAccounting=yes` process. Operational lock,
 commands, and metric guidance: `docs/WORKFLOW.md` (Heavy jobs).
 
-### Deferred: out-of-core dump finalizer
+### Dump finalizer residency (plan 59)
 
-Phase 2 removed the redundant full-array copies from
-`parser/tools/quantisation_roundtrip.py` `_finalize_dump` (preallocate +
-`readinto`, release parts as consumed, stable `argsort(order=DUMP_ORDER)`,
-chunked write by permutation — no `tobytes()` of the full sorted array). Bytes,
-canonical order, manifest, counts, and part deletion are unchanged.
+Plan 05 removed redundant full-array copies from
+`parser/tools/quantisation_roundtrip.py` `_finalize_dump` (stable
+`argsort(order=DUMP_ORDER)`, chunked write — no `tobytes()` of the full sorted
+array). Plan **59** replaced the remaining one-full-kind-array finalize with
+**per-part stable sort + k-way merge** on order-preserving packed keys: peak
+anonymous memory tracks the **largest part** (+ its key rows), not one full kind
+array. Bytes, canonical `DUMP_ORDER`, manifest, counts, and part deletion are
+unchanged vs the tip finalize candidate. Kinds finalize **sequentially** with
+`gc.collect()` between kinds (no multi-kind co-residency). See
+`docs/plans/59-dump-finalize-out-of-core.md` and WORKFLOW Heavy jobs.
 
-An **external-sort / out-of-core** rewrite of `_finalize_dump` remains a **known
-limitation**, not live plan work. Peak anonymous memory for finalization still
-scales with one full in-memory kind array. Do not treat Phase 2 as a bound on
-arbitrarily large kinds without further design.
+Residual: external merge wall is slightly above in-core argsort on the plan-05
+fixture (finalize-run median ratio ~1.4× still under the 2× gate). Live extend
+stays on windowed `dump_join` — no whole-file extend revival.
 
 ## Open questions
 

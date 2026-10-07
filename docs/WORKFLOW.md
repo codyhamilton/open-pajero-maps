@@ -121,7 +121,7 @@ applicable, growth and wall bounds). Delete large scratch trees under
 | Surface | Command |
 |---|---|
 | Residual extension (Phase 1) | `flock output/.heavy.lock .venv-rp/bin/python parser/tools/bench_dump_memory.py --out output/scratch-5-01/results.json` |
-| K1 `_finalize_dump` (Phase 2) | `TMPDIR=output/scratch-5-02/tmp flock output/.heavy.lock .venv-rp/bin/python parser/tools/bench_dump_memory.py finalize-run --out output/scratch-5-02/finalize_results.json` |
+| K1 `_finalize_dump` (plan 05/59) | `.venv-rp/bin/python -B parser/tools/run_heavy_python.py --log output/scratch-59/runs/finalize_run_wrapper.json -- .venv-rp/bin/python -B parser/tools/bench_dump_memory.py finalize-run --out output/scratch-59/runs/finalize_results.json` (wrapper takes the lock — no outer `flock`) |
 | 3-07 extension (Phase 3) | `flock output/.heavy.lock .venv-rp/bin/python parser/tools/bench_dump_memory.py s07-run --out output/scratch-5-03/s07_results.json` |
 | Triage summary/classify/enumerate (Phase 3) | `flock output/.heavy.lock .venv-rp/bin/python parser/tools/bench_dump_memory.py triage-run --out output/scratch-5-03/triage_results.json` |
 
@@ -172,7 +172,7 @@ seeded 1,000,013-row fixtures (fresh scoped workers):
 Limitations carried forward: high-cardinality triage 1M RSS pair not separately
 re-measured after Phase 3 (unit artifact identity + fixed-cardinality 50% gates
 stand in); `memory.peak` baseline spread widens under concurrent load; out-of-core
-`_finalize_dump` remains deferred (see Architecture).
+`_finalize_dump` out-of-core landed in plan 59 (see Architecture); multi-kind free recipe in `docs/plans/59-dump-finalize-out-of-core.md`.
 
 ## Encoder/build close gates (plan 41)
 

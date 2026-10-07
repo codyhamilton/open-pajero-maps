@@ -1388,47 +1388,149 @@ def _write_dump_parts(dump_dir, kind_index, tidx, rows, kinds):
             sel.tofile(Path(dump_dir) / f"part_{tidx:05d}_{name}.bin")
 
 
+def _sortable_dump_keys(arr, order_fields):
+    """uint8 key rows whose lexicographic order matches np.argsort(arr, order=order_fields).
+
+    Signed ints XOR the sign bit; IEEE floats use the usual total-order map; unsigned
+    fields are big-endian. Used by the plan-59 k-way merge so comparisons stay in C-ish
+    bytes rather than 20-field Python tuples.
+    """
+    parts = []
+    for f in order_fields:
+        col = np.ascontiguousarray(arr[f])
+        t = col.dtype
+        if t.kind == 'f':
+            if t.itemsize == 8:
+                u = col.copy().view(np.uint64)
+                sign = u >> np.uint64(63)
+                u ^= np.where(sign == 1, np.uint64(0xFFFFFFFFFFFFFFFF),
+                              np.uint64(0x8000000000000000))
+                be = u.astype('>u8').view(np.uint8).reshape(-1, 8)
+            elif t.itemsize == 4:
+                u = col.copy().view(np.uint32)
+                sign = u >> np.uint32(31)
+                u ^= np.where(sign == 1, np.uint32(0xFFFFFFFF), np.uint32(0x80000000))
+                be = u.astype('>u4').view(np.uint8).reshape(-1, 4)
+            else:
+                raise ValueError(f'unsupported float width {t.itemsize} for {f}')
+            parts.append(be)
+        elif t.kind == 'i':
+            if t.itemsize == 4:
+                u = col.copy().view(np.uint32) ^ np.uint32(0x80000000)
+                be = u.astype('>u4').view(np.uint8).reshape(-1, 4)
+            elif t.itemsize == 2:
+                u = col.copy().view(np.uint16) ^ np.uint16(0x8000)
+                be = u.astype('>u2').view(np.uint8).reshape(-1, 2)
+            elif t.itemsize == 1:
+                u = col.copy().view(np.uint8) ^ np.uint8(0x80)
+                be = u.reshape(-1, 1)
+            else:
+                raise ValueError(f'unsupported int width {t.itemsize} for {f}')
+            parts.append(be)
+        elif t.kind == 'u':
+            be = col.astype(t.newbyteorder('>')).view(np.uint8).reshape(-1, t.itemsize)
+            parts.append(be)
+        else:
+            raise ValueError(f'unsupported dtype {t} for {f}')
+    return np.concatenate(parts, axis=1)
+
+
 def _finalize_dump(dump_dir, kinds, ntasks, log):
     """Concatenate the per-task parts per kind, order them canonically (independent of
     the band split), write `DIR/<kind>.bin`, delete the parts and write the manifest;
-    return `{kind: rows}` for the report."""
+    return `{kind: rows}` for the report.
+
+    Plan 59: per-part stable sort + k-way merge on order-preserving packed keys so peak
+    anonymous memory tracks the largest part (+ its key rows), not one full kind array.
+    Bytes / DUMP_ORDER / counts / part deletion match the tip finalize candidate.
+    """
+    import heapq
     from kiwiw import cenc
     dump_dir = Path(dump_dir)
     fields = [{"name": n, "type": t} for n, t in cenc.K1_DUMP_FIELDS]
     row_size = cenc.K1_DUMP_DTYPE.itemsize
     counts = {}
+    order_fields = DUMP_ORDER
+    out_buf_rows = 65536
+
     for name in kinds:
-        paths, sizes = [], []
+        sorted_paths = []
+        key_paths = []
+        total = 0
+        key_width = None
         for i in range(ntasks):
             p = dump_dir / f"part_{i:05d}_{name}.bin"
-            if p.exists():
-                paths.append(p)
-                sizes.append(p.stat().st_size // row_size)
-        total = sum(sizes)
-        arr = np.empty(total, dtype=cenc.K1_DUMP_DTYPE) if total else np.zeros(0, cenc.K1_DUMP_DTYPE)
-        off = 0
-        for p, n in zip(paths, sizes):
-            if n:
-                with open(p, "rb") as fh:
-                    if fh.readinto(arr[off:off + n]) != n * row_size:
-                        raise OSError(f"short read of dump part: {p}")
+            if not p.exists():
+                continue
+            n = p.stat().st_size // row_size
+            if n == 0:
+                p.unlink(missing_ok=True)
+                continue
+            part = np.fromfile(p, dtype=cenc.K1_DUMP_DTYPE)
             p.unlink()
-            off += n
-        del paths, sizes
+            if len(part) > 1:
+                part = part[np.argsort(part, order=order_fields, kind="stable")]
+            sp = dump_dir / f".sorted_{i:05d}_{name}.bin"
+            part.tofile(sp)
+            keys = _sortable_dump_keys(part, order_fields)
+            if key_width is None:
+                key_width = int(keys.shape[1])
+            kp = dump_dir / f".key_{i:05d}_{name}.bin"
+            keys.tofile(kp)
+            total += len(part)
+            del part, keys
+            sorted_paths.append(sp)
+            key_paths.append(kp)
+
         out_path = dump_dir / f"{name}.bin"
-        if len(arr) > 1:
-            order = np.argsort(arr, order=DUMP_ORDER, kind="stable")
-            # Write in sorted order in bounded slices — identical bytes to
-            # `arr[order].tofile`, without materialising a second full copy.
-            _chunk = 65536
-            with open(out_path, "wb") as fh:
-                for start in range(0, len(order), _chunk):
-                    arr[order[start:start + _chunk]].tofile(fh)
-            del order
-        else:
-            arr.tofile(out_path)
-        counts[name] = int(len(arr))
-        del arr
+        if total == 0:
+            np.zeros(0, cenc.K1_DUMP_DTYPE).tofile(out_path)
+            counts[name] = 0
+            continue
+        if len(sorted_paths) == 1:
+            sorted_paths[0].replace(out_path)
+            key_paths[0].unlink(missing_ok=True)
+            counts[name] = total
+            continue
+
+        data_files = [open(sp, "rb") for sp in sorted_paths]
+        key_files = [open(kp, "rb") for kp in key_paths]
+        try:
+            heap = []
+            for pi, kf in enumerate(key_files):
+                kb = kf.read(key_width)
+                if len(kb) != key_width:
+                    continue
+                heapq.heappush(heap, (kb, pi))
+            with open(out_path, "wb") as out:
+                buf = bytearray()
+                flush_at = out_buf_rows * row_size
+                written = 0
+                while heap:
+                    _kb, pi = heapq.heappop(heap)
+                    buf += data_files[pi].read(row_size)
+                    written += 1
+                    if len(buf) >= flush_at:
+                        out.write(buf)
+                        buf.clear()
+                    nkb = key_files[pi].read(key_width)
+                    if len(nkb) == key_width:
+                        heapq.heappush(heap, (nkb, pi))
+                if buf:
+                    out.write(buf)
+            if written != total:
+                raise OSError(f"finalize merge wrote {written} rows, expected {total}")
+        finally:
+            for fh in data_files + key_files:
+                fh.close()
+            for sp in sorted_paths:
+                sp.unlink(missing_ok=True)
+            for kp in key_paths:
+                kp.unlink(missing_ok=True)
+        counts[name] = total
+        # Plan 59 P3: release per-kind temps before the next kind starts.
+        gc.collect()
+
     manifest = {"tool": "quantisation_roundtrip", "engine": "c", "row_size": row_size,
                 "fields": fields,
                 "kinds": {n: {"rows": counts[n], "row_size": row_size,
@@ -1437,6 +1539,7 @@ def _finalize_dump(dump_dir, kinds, ntasks, log):
         json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     log("dump: " + ", ".join(f"{n} {counts[n]:,}" for n in kinds))
     return counts
+
 
 
 def _k1_rows(res, kind):
