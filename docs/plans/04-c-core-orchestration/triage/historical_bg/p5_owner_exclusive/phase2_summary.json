@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "locked_R": 8,
+  "status": "partial_oom_stop",
+  "stop_reason": "host_memory_pressure at ~30k/95059: RSS~17.1GiB, MemAvailable~3.2GiB, SwapUsed~6/8GiB; SIGTERM (exit 143) to avoid OOM. gzip recovered from truncated stream.",
+  "n_work_target": 95059,
+  "n_decisions": 30000,
+  "fraction_complete": 0.3156,
+  "class_counts": {
+    "build:eo_bg_stitch": 27885,
+    "skip_divided_leaf": 344,
+    "producer_ambiguous": 845,
+    "producer_home_outside_R_cap": 850,
+    "disagree_no_oe": 76
+  },
+  "out": "docs/plans/04-c-core-orchestration/triage/historical_bg/p5_owner_exclusive/phase2_decisions.tsv.gz",
+  "recovered_from": "output/scratch-44/runs/phase2_decisions_partial_30k.tsv.gz",
+  "stop_rss_kb": 17912472,
+  "wall_s": 3833.407,
+  "exit": 143,
+  "inventory_925_joined_all": true,
+  "note": "Mass incomplete. Resume remaining rows in a later chunked run; do not treat as Phase 2 close."
+}

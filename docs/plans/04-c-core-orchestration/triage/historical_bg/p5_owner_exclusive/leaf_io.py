@@ -104,6 +104,12 @@ def latlon_to_raw(lat, lon, b4, cr):
 _SPOOL_KEY_CACHE: dict[tuple[int, str], list[tuple[int, int]]] = {}
 _SPOOL_CELL_CACHE: dict[tuple[int, str, int, int], dict] = {}
 
+def clear_spool_caches() -> None:
+    """Drop spool cell/key caches (mass runs: call every N leaves to bound RSS)."""
+    _SPOOL_KEY_CACHE.clear()
+    _SPOOL_CELL_CACHE.clear()
+
+
 
 def _spool_keys(spool: SpoolReader, level: int) -> list[tuple[int, int]]:
     """Cached sorted (ix, iy) keys for a level (ascending iy, ix)."""

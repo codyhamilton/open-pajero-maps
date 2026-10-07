@@ -36,6 +36,7 @@ from bg_owner_exclusive import (  # noqa: E402
 )
 from leaf_io import (  # noqa: E402
     cell_b4,
+    clear_spool_caches,
     frames,
     leaf_records,
     leaf_rect_raw,
@@ -91,6 +92,10 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0, help="Debug: first N rows only (0=all)")
     ap.add_argument("--smoke-leaves", type=int, default=0,
                     help="Debug: process only N distinct leaves")
+    ap.add_argument("--resume-from", type=Path, default=None,
+                    help="Skip leaf keys already present in a prior decisions.tsv.gz")
+    ap.add_argument("--cache-clear-every", type=int, default=50,
+                    help="Clear spool caches every N leaves (bound RSS; 0=never)")
     ap.add_argument("--out", type=Path, default=OUT / "phase2_decisions.tsv.gz")
     ap.add_argument("--summary", type=Path, default=OUT / "phase2_summary.json")
     args = ap.parse_args()
@@ -151,6 +156,30 @@ def main() -> int:
     by_leaf = defaultdict(list)
     for r in work:
         by_leaf[leaf_key(r)].append(r)
+    if args.resume_from and args.resume_from.exists():
+        done_rows = set()
+        with gzip.open(args.resume_from, "rt") as rf:
+            rh = rf.readline().rstrip("\n").split("\t")
+            for line in rf:
+                d = dict(zip(rh, line.rstrip("\n").split("\t")))
+                done_rows.add((int(d["level"]), int(d["ix"]), int(d["iy"]),
+                               int(d["shape"]), int(d["vert"]), int(d["code"])))
+        before_leaves = len(by_leaf)
+        before_rows = sum(len(v) for v in by_leaf.values())
+        new_by = defaultdict(list)
+        for lk, rows in by_leaf.items():
+            kept = [r for r in rows
+                    if (r["level"], r["ix"], r["iy"], r["shape"], r["vert"], r["code"]) not in done_rows]
+            if kept:
+                new_by[lk] = kept
+        by_leaf = new_by
+        print(
+            f"resume-from {args.resume_from}: done_rows={len(done_rows)} "
+            f"leaves {before_leaves}->{len(by_leaf)} "
+            f"rows {before_rows}->{sum(len(v) for v in by_leaf.values())}",
+            flush=True,
+        )
+
     r01_by_leaf = defaultdict(list)
     for r in r01_in:
         r01_by_leaf[leaf_key(r)].append(r)
@@ -166,6 +195,8 @@ def main() -> int:
                     "producer_class\trecover_r\tdx\tdy\tn_excl\tn_ib\textra\n")
         for lk, rows in by_leaf.items():
             n_leaves += 1
+            if args.cache_clear_every and n_leaves % args.cache_clear_every == 0:
+                clear_spool_caches()
             level, ix, iy, path = lk
             cell = (level, ix, iy)
 

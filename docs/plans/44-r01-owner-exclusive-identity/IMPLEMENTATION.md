@@ -82,3 +82,15 @@ Units (orchestrator-direct; one brief each, committed before work):
 
 ### Unit 4b — Phase 2 mass smoke (3 leaves) — 2026-10-07 ~15:17 AEST
 - `mass_decide.py --r 8 --smoke-leaves 3`: 84/84 rows → `build:eo_bg_stitch`. Full mass (95059) next.
+
+### Unit 4c — Phase 2 mass PARTIAL OOM stop + widen STOP_FOR_DESIGN (2026-10-07 ~16:42 AEST)
+
+- Full mass `mass_decide --r 8` under flock reached **30000/95059** (31.6%) after ~63 min wall.
+- **Stopped cleanly (SIGTERM, exit 143)** on host memory pressure: RSS ~17.1 GiB, MemAvailable ~3.2 GiB, SwapUsed ~6/8 GiB. Parent flock PIDs idle was misleading — child 1379318 was ~99% CPU.
+- Recovered truncated gzip → valid `phase2_decisions.tsv.gz` (30000 rows) + `phase2_summary.json` (`status=partial_oom_stop`).
+- Class counts @30k: `build:eo_bg_stitch` 27885, `producer_home_outside_R_cap` 850, `producer_ambiguous` 845, `skip_divided_leaf` 344, `disagree_no_oe` 76.
+- Widen@16 on the 850 outside set: **n_recovered=399, n_still_outside=451, n_recover_radius_gt8=367 ≥20 → `stop_for_design: true`**. Keep mass default **R=8**; do **not** bump R. Ask Design.
+  - by_recover_r: {1:32, 9:92, 10:34, 11:31, 12:42, 13:87, 14:32, 15:17, 16:32}
+- Patched `mass_decide.py` `--resume-from` + `--cache-clear-every` (clear spool caches every 50 leaves) and `leaf_io.clear_spool_caches` for chunked resume without OOM.
+- **Blocker:** Design ruling on stop_for_design (367 recovers at r>8 on partial outside set). Phase 2 close / R-G5-4-a/b discharge blocked until (a) Design answer and (b) remaining ~65059 rows decided under chunked resume.
+- Snapshot: `output/scratch-44/runs/phase2_decisions_partial_30k.tsv.gz`, `widen16_mass_partial_result.json`.

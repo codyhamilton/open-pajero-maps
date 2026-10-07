@@ -81,27 +81,60 @@ def load_fe():
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--from-control", type=Path, default=OUT / "control_result.json")
+    ap.add_argument("--from-control", type=Path, default=None,
+                    help="Phase 1 control_result.json (mutually exclusive with --from-decisions)")
+    ap.add_argument("--from-decisions", type=Path, default=None,
+                    help="Phase 2 phase2_decisions.tsv.gz; selects producer_home_outside_R_cap")
     ap.add_argument("--r-widen", type=int, default=16)
     ap.add_argument("--stop-threshold", type=int, default=20)
+    ap.add_argument("--out-json", type=Path, default=OUT / "widen16_result.json")
     args = ap.parse_args()
     r_widen = int(args.r_widen)
 
-    ctrl = json.loads(args.from_control.read_text())
-    target_keys = {
-        (int(r["level"]), int(r["ix"]), int(r["iy"]),
-         int(r["shape"]), int(r["vert"]), int(r["code"]))
-        for r in ctrl["details"]
-        if r.get("verdict") == "producer_home_outside_R_cap"
-    }
-    print(f"target_keys={len(target_keys)} r_widen={r_widen}", flush=True)
+    if args.from_decisions:
+        sample = []
+        with gzip.open(args.from_decisions, "rt") as f:
+            hdr = f.readline().rstrip("\n").split("\t")
+            for line in f:
+                d = dict(zip(hdr, line.rstrip("\n").split("\t")))
+                if d.get("decision") != "producer_home_outside_R_cap":
+                    continue
+                sample.append({
+                    "level": int(d["level"]), "ix": int(d["ix"]), "iy": int(d["iy"]),
+                    "depth": int(d["depth"]), "p0": int(d.get("p0", 0) or 0),
+                    "p1": int(d.get("p1", 0) or 0), "p2": int(d.get("p2", 0) or 0),
+                    "shape": int(d["shape"]), "vert": int(d["vert"]), "code": int(d["code"]),
+                })
+        # depth path fields: mass_decide writes depth but not p0.. in decisions?
+        # Re-load full row keys from weak+none by (level,ix,iy,shape,vert,code)
+        target_keys = {
+            (r["level"], r["ix"], r["iy"], r["shape"], r["vert"], r["code"])
+            for r in sample
+        }
+        pool = []
+        for name in ("rows_weak.tsv.gz", "rows_none.tsv.gz", "rows_identity_proven.tsv.gz"):
+            pool.extend(load_tsv(OUT / name))
+        sample = [r for r in pool
+                  if (r["level"], r["ix"], r["iy"], r["shape"], r["vert"], r["code"]) in target_keys]
+        print(f"from_decisions target_keys={len(target_keys)} matched={len(sample)} "
+              f"r_widen={r_widen}", flush=True)
+    else:
+        ctrl_path = args.from_control or (OUT / "control_result.json")
+        ctrl = json.loads(ctrl_path.read_text())
+        target_keys = {
+            (int(r["level"]), int(r["ix"]), int(r["iy"]),
+             int(r["shape"]), int(r["vert"]), int(r["code"]))
+            for r in ctrl["details"]
+            if r.get("verdict") == "producer_home_outside_R_cap"
+        }
+        print(f"target_keys={len(target_keys)} r_widen={r_widen}", flush=True)
 
-    pool = load_tsv(IDENTITY)
-    sample = [r for r in pool
-              if (r["level"], r["ix"], r["iy"], r["shape"], r["vert"], r["code"]) in target_keys]
-    print(f"matched_identity_rows={len(sample)}", flush=True)
-    if len(sample) != len(target_keys):
-        print(f"WARN: matched {len(sample)} of {len(target_keys)}", flush=True)
+        pool = load_tsv(IDENTITY)
+        sample = [r for r in pool
+                  if (r["level"], r["ix"], r["iy"], r["shape"], r["vert"], r["code"]) in target_keys]
+        print(f"matched_identity_rows={len(sample)}", flush=True)
+        if len(sample) != len(target_keys):
+            print(f"WARN: matched {len(sample)} of {len(target_keys)}", flush=True)
 
     fe = load_fe()
     PROBE_DIR.mkdir(parents=True, exist_ok=True)
@@ -268,7 +301,7 @@ def main() -> int:
         "by_recover_r": dict(Counter(r.get("recover_r") for r in recovered)),
         "results": results,
     }
-    (OUT / "widen16_result.json").write_text(json.dumps(out, indent=2) + "\n")
+    args.out_json.write_text(json.dumps(out, indent=2) + "\n")
     # Update residual TSV for still-outside with max_radius=16
     lines = ["level\tix\tiy\tshape\tvert\tcode\tmax_radius\tn_spool\tn_clips\tn_ib\tn_ib_uncovered\n"]
     for r in still:
