@@ -1,4 +1,4 @@
-"""Plan 48 Phase 1: decline mechanism naming from EO_DIAG dumps."""
+"""Plan 48 Phase 1: decline mechanism naming from EO_DIAG dumps + xfail fixtures."""
 from __future__ import annotations
 
 import json
@@ -14,6 +14,8 @@ DECLINE = (
     / "3-14/conditions/eo_decline"
 )
 CASES = ("r359", "r8475", "r11892", "r14503", "r19650")
+H2 = ("r359", "r8475", "r19650")
+H1 = ("r11892", "r14503")
 
 
 def test_mechanisms_json_names_all_five():
@@ -41,12 +43,30 @@ def test_dumps_parse_and_match_decline_site():
         assert d["decline"]["bound"] == 0
 
 
-@pytest.mark.xfail(strict=True, reason="plan 48 P3: H2 equal-angle ties still declines")
-def test_xfail_h2_rings_until_robust_walk():
-    """Fixture placeholder: r359 class remains known decline until Phase 3 fix."""
-    assert False, "robust walk not landed"
+def test_primary_partition_h1_h2():
+    m = json.loads((DECLINE / "mechanisms.json").read_text())
+    for c in H2:
+        assert m[c]["primary"] == "H2_equal_angle_ties"
+    for c in H1:
+        assert m[c]["primary"] == "H1_rounding_non_planarity"
 
 
-@pytest.mark.xfail(strict=True, reason="plan 48 P3: H1 rounding non-planarity still declines")
-def test_xfail_h1_rings_until_robust_walk():
-    assert False, "robust walk not landed"
+@pytest.fixture(scope="module")
+def decline_rings():
+    return json.loads((DECLINE / "decline_rings.json").read_text())
+
+
+@pytest.mark.parametrize("case", H2)
+@pytest.mark.xfail(strict=True, reason="plan 48 P3: H2 equal-angle ties still declines at :885")
+def test_xfail_h2_ring_passes_after_robust_walk(probe, decline_rings, case):
+    from test_bg_eo_stitch import probe_output
+    size, _nr, _blob = probe_output(probe, decline_rings[case], [0, 0, 4096, 4096])
+    assert size >= 0, f"{case} still declines size={size}"
+
+
+@pytest.mark.parametrize("case", H1)
+@pytest.mark.xfail(strict=True, reason="plan 48 P3: H1 rounding non-planarity still declines at :885")
+def test_xfail_h1_ring_passes_after_robust_walk(probe, decline_rings, case):
+    from test_bg_eo_stitch import probe_output
+    size, _nr, _blob = probe_output(probe, decline_rings[case], [0, 0, 4096, 4096])
+    assert size >= 0, f"{case} still declines size={size}"
