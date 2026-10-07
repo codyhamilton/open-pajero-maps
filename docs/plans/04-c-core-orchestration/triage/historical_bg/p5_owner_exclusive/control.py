@@ -43,9 +43,13 @@ from bg_owner_exclusive import (  # noqa: E402
 )
 from leaf_io import (  # noqa: E402
     cell_b4,
+    clear_spool_caches,
     frames,
     leaf_records,
     leaf_rect_raw,
+    set_refuse_whole_level,
+    set_spool_cell_cache_max,
+    spool_cache_stats,
     spool_candidates,
 )
 from kiwiw.spool import SpoolReader  # noqa: E402
@@ -103,9 +107,15 @@ def main() -> int:
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--r-cap", type=int, default=8,
                     help="Design R_cap: max Moore radius for expanding search (17×17 at 8)")
+    ap.add_argument("--cache-clear-every", type=int, default=50,
+                    help="Clear spool caches every N leaves (bound RSS; 0=never)")
+    ap.add_argument("--cache-max-cells", type=int, default=4096,
+                    help="Max _SPOOL_CELL_CACHE entries before auto-clear (0=unbounded)")
     args = ap.parse_args()
     n = 12 if args.smoke else args.n
     r_cap = int(args.r_cap)
+    set_refuse_whole_level(True)
+    set_spool_cell_cache_max(int(args.cache_max_cells))
 
     os.environ.setdefault("TMPDIR", str(ROOT / "output/tmp-agent"))
     Path(os.environ["TMPDIR"]).mkdir(parents=True, exist_ok=True)
@@ -162,9 +172,18 @@ def main() -> int:
 
     # Offset census accumulators
     recover_offsets = []  # (dx, dy, radius, class, level, ix, iy, shape, code)
+    n_leaves = 0
+    print(
+        f"cache_clear_every={args.cache_clear_every} cache_max_cells={args.cache_max_cells} "
+        f"stats0={spool_cache_stats()}",
+        flush=True,
+    )
 
     with open(OLD_DISC, "rb") as fo, open(NEW_DISC, "rb") as fn:
         for lk, rows in by_leaf_rows.items():
+            n_leaves += 1
+            if args.cache_clear_every and n_leaves % args.cache_clear_every == 0:
+                clear_spool_caches()
             level, ix, iy, path = lk
             cell = (level, ix, iy)
             if fe.get(cell, ("", "0"))[1] != "1":

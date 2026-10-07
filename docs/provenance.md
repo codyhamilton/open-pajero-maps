@@ -914,3 +914,9 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - **Why not committed (scratch):** large regenerable RSS/time logs and Perth ALLDATA rebuild; Flash transcript likewise regenerable.
 - **Reproduce:** from tip with flock + `parser/tools/run_heavy_python.py` per `docs/plans/56-cross-phase-rss-profile/RECIPE.md`. Driver used this session: `output/scratch-56/runs/phase2_continue.py` (representability → dump → Perth encode) after earlier mass_smoke20/control partial. Spool: `output/extract_timing/spool`. Encode: `parser/tools/bench_build.py` → `parser/build_alldata.py --fixture perth -j 4`.
 - **Gitignore:** worktree `output` → shared `/home/codyh/workspace/open-pajero-maps/output` (untracked wholesale); no separate scratch-56 rule required beyond existing output ignore.
+
+## `output/scratch-57/` — plan 57 mass/control spool residency
+
+- **What:** regenerable heavy-wrapper JSON/time logs and mass smoke harness decisions under `runs/` + `harness/` (baseline/cut/resume). Committed evidence: `docs/plans/57-mass-control-spool-residency/` (DESIGN, PHASE1/2, RECIPE-FREE-BETWEEN, IMPLEMENTATION) + `parser/tests/test_leaf_io_spool_cache_bound.py`.
+- **Why not committed (scratch):** regenerable RSS/time logs and smoke decision TSVs.
+- **Reproduce:** tip + wrapper (no outer flock) per `RECIPE-FREE-BETWEEN.md` / `PHASE2.md` harness arms.

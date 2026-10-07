@@ -40,6 +40,9 @@ from leaf_io import (  # noqa: E402
     frames,
     leaf_records,
     leaf_rect_raw,
+    set_refuse_whole_level,
+    set_spool_cell_cache_max,
+    spool_cache_stats,
     spool_candidates,
 )
 from kiwiw.spool import SpoolReader  # noqa: E402
@@ -96,6 +99,8 @@ def main() -> int:
                     help="Skip leaf keys already present in a prior decisions.tsv.gz")
     ap.add_argument("--cache-clear-every", type=int, default=50,
                     help="Clear spool caches every N leaves (bound RSS; 0=never)")
+    ap.add_argument("--cache-max-cells", type=int, default=4096,
+                    help="Max _SPOOL_CELL_CACHE entries before auto-clear (0=unbounded)")
     ap.add_argument("--out", type=Path, default=OUT / "phase2_decisions.tsv.gz")
     ap.add_argument("--summary", type=Path, default=OUT / "phase2_summary.json")
     args = ap.parse_args()
@@ -104,7 +109,13 @@ def main() -> int:
     os.environ.setdefault("TMPDIR", str(ROOT / "output/tmp-agent"))
     Path(os.environ["TMPDIR"]).mkdir(parents=True, exist_ok=True)
 
-    print(f"compile probes… R={R}", flush=True)
+    set_refuse_whole_level(True)
+    set_spool_cell_cache_max(int(args.cache_max_cells))
+    print(
+        f"compile probes… R={R} cache_clear_every={args.cache_clear_every} "
+        f"cache_max_cells={args.cache_max_cells} stats0={spool_cache_stats()}",
+        flush=True,
+    )
     so_prod = compile_probe(CENC_PROD, PROBE_DIR / "probe_flex_prod_33006aa.so")
     so_excl = compile_probe(CENC_EXCL, PROBE_DIR / "probe_flex_excl_d35b565.so")
     probe_prod = load_probe(so_prod)

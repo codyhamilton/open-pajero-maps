@@ -103,12 +103,43 @@ def latlon_to_raw(lat, lon, b4, cr):
 
 _SPOOL_KEY_CACHE: dict[tuple[int, str], list[tuple[int, int]]] = {}
 _SPOOL_CELL_CACHE: dict[tuple[int, str, int, int], dict] = {}
+# 0 = unbounded (callers still use clear-every). >0 clears cell cache when over.
+_SPOOL_CELL_CACHE_MAX: int = 0
+# When True, spool_level_cells raises (mass/control hot path must stay cell-keyed).
+_SPOOL_REFUSE_WHOLE_LEVEL: bool = False
+
+
+def set_spool_cell_cache_max(n: int) -> None:
+    """Bound _SPOOL_CELL_CACHE entries; 0 disables the max-entries lever."""
+    global _SPOOL_CELL_CACHE_MAX
+    _SPOOL_CELL_CACHE_MAX = max(0, int(n))
+
+
+def set_refuse_whole_level(refuse: bool = True) -> None:
+    """Refuse spool_level_cells (whole-level load) on mass/control hot paths."""
+    global _SPOOL_REFUSE_WHOLE_LEVEL
+    _SPOOL_REFUSE_WHOLE_LEVEL = bool(refuse)
+
+
+def spool_cache_stats() -> dict[str, int]:
+    """Entry counts for tests / harness (not KiB — entry count lever)."""
+    return {
+        "key_entries": len(_SPOOL_KEY_CACHE),
+        "cell_entries": len(_SPOOL_CELL_CACHE),
+        "cell_max": int(_SPOOL_CELL_CACHE_MAX),
+    }
+
 
 def clear_spool_caches() -> None:
     """Drop spool cell/key caches (mass runs: call every N leaves to bound RSS)."""
     _SPOOL_KEY_CACHE.clear()
     _SPOOL_CELL_CACHE.clear()
 
+
+def _maybe_bound_cell_cache() -> None:
+    """If max-entries set and exceeded, drop cell cache (keys kept — small)."""
+    if _SPOOL_CELL_CACHE_MAX and len(_SPOOL_CELL_CACHE) > _SPOOL_CELL_CACHE_MAX:
+        _SPOOL_CELL_CACHE.clear()
 
 
 def _spool_keys(spool: SpoolReader, level: int) -> list[tuple[int, int]]:
@@ -137,17 +168,23 @@ def _spool_cell(spool: SpoolReader, level: int, ix: int, iy: int):
     i = bisect.bisect_left(yx_keys, pair)
     if i >= len(yx_keys) or yx_keys[i] != pair:
         _SPOOL_CELL_CACHE[ck] = None
+        _maybe_bound_cell_cache()
         return None
     # iter_cells start=i stop=i+1
     content = None
     for _x, _y, content in spool.iter_cells(level, i, i + 1):
         break
     _SPOOL_CELL_CACHE[ck] = content
+    _maybe_bound_cell_cache()
     return content
 
 
 def spool_level_cells(spool: SpoolReader, level: int) -> dict[tuple[int, int], dict]:
     """Legacy whole-level cache (avoid in hot paths; prefer _spool_cell)."""
+    if _SPOOL_REFUSE_WHOLE_LEVEL:
+        raise RuntimeError(
+            "spool_level_cells refused under mass/control (plan 57); use _spool_cell"
+        )
     key = ("all", level, str(spool.spool_dir))
     if key not in _SPOOL_CELL_CACHE:
         _SPOOL_CELL_CACHE[key] = {(ix, iy): c for ix, iy, c in spool.iter_level(level)}
