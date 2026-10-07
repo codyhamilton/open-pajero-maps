@@ -32,12 +32,12 @@ Plan 36's residual risk: for these cells the causal link is the whole-disc EO-on
 - **Contract:**
   1. **Windows:** for each of the 4 cells, the smallest L0 source window that reproduces the cell's frames byte-exact (control: frames equal `013586b5` at `33006aa` and `4ed9cd80` at `d35b565`). Throwaway worktrees, `-j4`, under the lock.
   2. **Source-tag sidecar:** a debug-only build path at each commit records, per emitted background record, its spool source identity (level, home cell, record ordinal) and leaf path. The control requires frames with tags enabled to be byte-equal to frames without tags. If tagging changes bytes, it is rejected.
-  3. **Item identity across topology:** for each of the 80 rows, the old record carrying the failing vertex gets its source from the `33006aa` tags (or, if tags are rejected, from design 44's producer: **unique-byte or unique-fragment** as defined in revised design 44). A row is **proven-fixed (`build:eo_bg_stitch`)** only when all of the following hold:
+  3. **Item identity across topology:** for each of the 80 rows, the old record carrying the failing vertex gets its source from the `33006aa` tags (or, if tags are rejected, from design 44's producer: **unique-byte or unique-fragment** under design 44's **revised candidate set** — bbox-meet ∪ Moore neighbourhood of radius R around the leaf home; R locked after design 44's offset census, or expanding search ≤R_cap=8 while census is open; not Assump-1-only bbox-meet / nb=1). A row is **proven-fixed (`build:eo_bg_stitch`)** only when all of the following hold:
      - (a) at `d35b565`, records from the same source exist in the new leaves covering the old leaf's area;
-     - (b) the same-source record holds at least one owner-exclusive vertex (design 44's definition: no other source's clip into that leaf produces it, and it is not on the exact leaf rectangle edge; producer of the old record is unique-byte or unique-fragment per revised design 44);
+     - (b) the same-source record holds at least one owner-exclusive vertex (design 44's definition: no other source's clip into that leaf produces it, and it is not on the exact leaf rectangle edge; producer of the old record is unique-byte or unique-fragment per design 44's second revision);
      - (c) window K1 against the original spool reports the row's vertex position, and every vertex of that source's new records in the cell, as non-failing.
 
-     Otherwise the row is a named residual with the failing clause (`removed` if the source emits nothing in the cell; `producer_none` / `producer-ambiguous` if offline producer attribution fails under design 44's classes).
+     Otherwise the row is a named residual with the failing clause (`removed` if the source emits nothing in the cell; design 44 Gate-B classes `producer_home_outside_R_cap` / `producer_ambiguous`, or pre-census `producer_none` only until promoted with RC).
   4. The per-row table is committed. `assignment.tsv` and `residuals.tsv` are updated (R-G5-4-c discharged, or the exact remaining rows).
 - **Non-goals:** changing encoder output; other R01 rows (design 44).
 
@@ -52,9 +52,9 @@ Plan 36's residual risk: for these cells the causal link is the whole-disc EO-on
 ## Decisions
 
 1. Plan number 45. Master direct. Two phases (the ceiling rows; the determinism window). Both known.
-2. Identity standard matches design 44's owner-exclusive test (revised: producer is **unique-byte or unique-fragment**; OE limb unchanged), so all R01 children are judged by one rule.
+2. Identity standard matches design 44's owner-exclusive test (second revision: producer is **unique-byte or unique-fragment** under expanding Moore search / post-census R; cover unchanged; OE limb unchanged; Gate A+B close design 44 Phase 1), so all R01 children are judged by one rule.
 3. Window builds only; no full-AU encode.
-4. Design 44's producer was revised for EO fragments after the Phase 1 control stop at `0551ed2` (byte-equal-only yielded systematic `producer_none`). This design cites the revised classes; phase counts and non-goals are unchanged.
+4. Design 44 stopped twice: `0551ed2` (byte-equal-only → unique-fragment) and `8ee2559` (Assump-1 window understates producer homes → expanding Moore / Gates A+B). This design cites the **second** revision; phase counts and non-goals are unchanged. See `maps-design-drafts/44-r01-owner-exclusive-identity/REVISION-NOTE.md` (second).
 
 ## Assumption ledger
 
@@ -63,14 +63,14 @@ Plan 36's residual risk: for these cells the causal link is the whole-disc EO-on
 - **Question:** Can a source-tag sidecar be added without changing bytes?
 - **Answer chosen:** Yes, behind a debug flag that only writes a side file. Byte-equality is the gate.
 - **Rationale:** Plan 42 used a bounded instrumentation hook the same way.
-- **If wrong:** source identity is computed offline by design 44's producer method (unique-byte or unique-fragment via the `bg_shape` / `bg_owner_exclusive` probe at each commit) instead.
+- **If wrong:** source identity is computed offline by design 44's producer method (unique-byte or unique-fragment via the `bg_shape` / `bg_owner_exclusive` probe at each commit, under expanding Moore / post-census R) instead.
 
 ### Assumption 2
 
-- **Question:** Does design 44's revised producer (unique-fragment for EO cover pieces) apply across topology change in ceiling cells?
-- **Answer chosen:** Yes. The old-record → S attribution uses the same unique-byte / unique-fragment classes; owner-exclusive vertices are evaluated in the new leaves. Fragment records are expected, not treated as full-leaf clips.
-- **Rationale:** Lockstep with revised design 44 after the `0551ed2` control stop.
-- **If wrong:** rows that flip under a widened supplier set are reported; no waiver.
+- **Question:** Does design 44's revised producer (unique-fragment for EO cover pieces; candidate set bbox-meet ∪ Moore(R)) apply across topology change in ceiling cells?
+- **Answer chosen:** Yes. The old-record → S attribution uses the same unique-byte / unique-fragment classes under design 44's expanding Moore search / post-census R (not Assump-1-only bbox-meet); owner-exclusive vertices are evaluated in the new leaves. Fragment records are expected, not treated as full-leaf clips. Bare `producer_none` without a named RC does not close.
+- **Rationale:** Lockstep with design 44 second revision after the `8ee2559` control stop (`diag_nbhd`: Assump-1 / nb=1 recovered 0 of 48; recovery at nb≥2).
+- **If wrong:** rows that flip under a further-widened supplier set or remain `producer_home_outside_R_cap` are reported as named residuals; no waiver.
 
 ## Open questions
 
@@ -82,7 +82,7 @@ Plan 36's residual risk: for these cells the causal link is the whole-disc EO-on
 
 - **Outcome:** a per-row table of 80 rows, each `build:eo_bg_stitch` with evidence or a named residual. Windows byte-controlled. `residuals.tsv` R-G5-4-c updated.
 - **Surfaces:** `triage/historical_bg/p4_ceiling/`; debug tag path in `parser/kiwiw/_cenc.c` (behind a flag, byte-neutral) with a test; `assignment.tsv`; `residuals.tsv`; `parser/perf_inventory.json` if a new module is added.
-- **Approach:** known. **Depends on:** design 44 Phase 1 owner-exclusive definition under the revised producer contract (or its own copy of the same rule). **Refine:** skipped.
+- **Approach:** known. **Depends on:** design 44 Phase 1 under the second-revision contract (Gates A+B; expanding Moore / post-census R) or its own copy of the same rule. **Refine:** skipped.
 
 ### Phase 2: Window determinism regenerated
 
@@ -98,5 +98,6 @@ Plan 36's residual risk: for these cells the causal link is the whole-disc EO-on
   - plan 39 record and `p2/assignment.tsv`;
   - 3-14 REVIEW b5 and L69 (closes with `-j1 == -j4` at the current tip);
   - `IMPLEMENTATION.md` L228 (window and full sha `c4965442effea2ea…`);
-  - design 44 revision after `0551ed2` (unique-byte / unique-fragment producer; `control_analysis.md`).
+  - design 44 first revision after `0551ed2` (unique-byte / unique-fragment);
+  - design 44 **second revision** after `8ee2559` (Assump-1 wrong; expanding Moore / R_cap=8; Gates A+B; `diag_nbhd`; REVISION-NOTE second).
 - Box draft only.
