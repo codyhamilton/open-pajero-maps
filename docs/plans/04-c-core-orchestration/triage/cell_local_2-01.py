@@ -77,7 +77,7 @@ G_DISC = ROOT / "output/scratch-14/G_new"
 SPOOL = ROOT / "output/extract_timing/spool"
 SCRATCH = ROOT / "output/scratch-14/cell_local"
 PROOFS = SCRATCH / "proofs"
-G_SHA = "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72"
+G_SHA = "88bd7852115988fc60441109bf44707c3156321fab47057443e0794b987f3b43"  # plan 48 successor / live
 
 NATIVE = ("level", "ix", "iy", "code", "p0", "p1", "p2", "p3", "p4", "p5", "p6",
           "shape", "vert")
@@ -324,6 +324,14 @@ def main(argv=None) -> int:
                     help="Override proofs output directory (harness isolation)")
     args = ap.parse_args(argv)
 
+    # Plan 25 / plan 58 suite: refuse uncapped before disc I/O so the argv
+    # guard does not depend on the live G oracle pin.
+    if not args.all_seeds and args.max_seeds is None:
+        raise SystemExit(
+            "plan25: refuse uncapped cell_local run — pass --max-seeds N "
+            "or explicit --all-seeds (see docs/plans/25-oom-memory-rca/)"
+        )
+
     gdisc = G_DISC / "ALLDATA.KWI"
     rdisc = R_DISC / "ALLDATA.KWI"
     assert digest(gdisc) == G_SHA, "G disc sha mismatch"
@@ -347,11 +355,6 @@ def main(argv=None) -> int:
             ap.error("pass only one of --all-seeds / --max-seeds")
         seeds = seeds_all[args.seed_offset:]
     else:
-        if args.max_seeds is None:
-            raise SystemExit(
-                "plan25: refuse uncapped cell_local run — pass --max-seeds N "
-                "or explicit --all-seeds (see docs/plans/25-oom-memory-rca/)"
-            )
         if args.max_seeds < 1:
             ap.error("--max-seeds must be >= 1")
         seeds = seeds_all[args.seed_offset: args.seed_offset + args.max_seeds]
