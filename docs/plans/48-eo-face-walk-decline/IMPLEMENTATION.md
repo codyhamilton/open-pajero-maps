@@ -25,3 +25,9 @@
   - r11892, r14503 → **H1_rounding_non_planarity**
 - All declines: site `used=1` (already-used half-edge), not `np≥ne`.
 - Next: commit dumps + mechanisms; add xfails; successor_non_injective always co-present (verify); Phase 2 census.
+
+## Phase 1 CLOSE-READY (2026-10-07 ~14:57 AEST)
+- All 5 rings named with witnesses (`mechanisms.json`).
+- EO_DIAG dumps committed; production builds omit `-DEO_DIAG`.
+- Regression xfails: 3 passed + 5 strict xfails invoking real probe declines.
+- Awaiting Flash review before marking Phase 1 discharged; Phase 2 census next.
