@@ -32,6 +32,17 @@ Incidental rewrite of plan-47 `representability/summary.json` (set=188 only) res
 
 See `SUMMARY.md`. Handoff pointers to 57/58/59; unknowns labelled; no claim optim acceptance proven.
 
-## Flash review
+## Flash review (Phases 2+3) — 2026-10-08 ~00:26–00:30 AEST
 
-(queued after ledger publish)
+- Seat: OpenCode DeepSeek Flash (`opencode run -m deepseek/deepseek-flash`).
+- Verdict: **PASS-WITH-CONCERNS**.
+- All five Primary phases ledgered; headline numbers verified exact vs ledger JSON; inter-phase boundaries ≥1; scope docs-only; SUMMARY handoff correct (no 57–59 acceptance claim).
+- Concerns addressed this close:
+  1. Added `docs/provenance.md` entry for `output/scratch-56/`.
+  2. Corrected fail-closed wording: wrapper fail-closed **guard present** (`run_heavy_python.py` exits 2 on missing `memory.peak`); every plan-56 wrapper run recorded peak (exit 0) — guard **not exercised** this session.
+  3. Perth sha / match_3_15_188 remain in run artifacts (noted); ledger carries peaks/argv.
+- Log: `output/scratch-56/runs/flash_p2p3.stdout` (prompt: `flash_p2p3_prompt.md`).
+
+## CLOSE-OUT — 2026-10-08 ~00:30 AEST
+
+Plan 56 Phases 1–3 complete under Flash PASS-WITH-CONCERNS. Measurement ledger published; optim plans 57–59 may treat Phase-1 acceptance as evidence-ready. Tip at close: see git log.

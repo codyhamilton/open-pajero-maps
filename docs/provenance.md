@@ -908,3 +908,9 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - **Reproduce:** under flock + `parser/tools/run_heavy_python.py` from tip, with `G_pre311` at `output/scratch-36/G_pre311/ALLDATA.KWI`, `G_new` at `output/scratch-14/G_new` → `scratch-48/G_new`, spool `output/extract_timing/spool`, probes `_cenc_33006aa.c` / `_cenc_d35b565.c` under `output/scratch-44/probes/`. Scripts: `mass_decide.py`, `widen_outside.py`, `proven_fixed_recovers.py` in `p5_owner_exclusive/`.
 - **Option (c) ruling:** keep R=8; standing widen@16 no ≥20 escalate; proven-fixed path; still-outside@16 named residual; re-escalate only if still-outside ≳5% (actual 3.38%).
 
+## `output/scratch-56/` — plan 56 cross-phase RSS profile
+
+- **What:** regenerable heavy-wrapper JSON/time logs, boundary meminfo samples, mass smoke decisions, dump finalize-run controller out, Perth encode bench/ALLDATA under `runs/` (and `runs/encode_perth/`). Committed evidence is the ledger JSON + SUMMARY under `docs/plans/56-cross-phase-rss-profile/`.
+- **Why not committed (scratch):** large regenerable RSS/time logs and Perth ALLDATA rebuild; Flash transcript likewise regenerable.
+- **Reproduce:** from tip with flock + `parser/tools/run_heavy_python.py` per `docs/plans/56-cross-phase-rss-profile/RECIPE.md`. Driver used this session: `output/scratch-56/runs/phase2_continue.py` (representability → dump → Perth encode) after earlier mass_smoke20/control partial. Spool: `output/extract_timing/spool`. Encode: `parser/tools/bench_build.py` → `parser/build_alldata.py --fixture perth -j 4`.
+- **Gitignore:** worktree `output` → shared `/home/codyh/workspace/open-pajero-maps/output` (untracked wholesale); no separate scratch-56 rule required beyond existing output ignore.

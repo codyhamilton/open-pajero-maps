@@ -6,7 +6,7 @@ Published for Design handoff to plans **57–59**. Measurement-only; no optim la
 
 - Serial `flock` + `run_heavy_python.py`; encode `-j4`; representability workers=1 (≤ `-j6`).
 - No run hit RSS clean-stop ≳17.5 GiB or MemAvailable ≲3 GiB.
-- Every wrapper run recorded `memory.peak` (fail-closed satisfied).
+- Every wrapper run recorded `memory.peak` (fail-closed **guard present** in `run_heavy_python.py`; not exercised — no missing-peak run).
 - Inter-phase free-then-reenter samples: mass→control; control→representability; representability→dump; dump→encode (`clear_spool_caches+gc` + meminfo).
 
 ## Peak table (evidence-backed)
@@ -46,3 +46,8 @@ Ledger JSON: `docs/plans/56-cross-phase-rss-profile/ledger/`. Wrapper logs: `out
 - **59** dump finalize out-of-core — dominant evidence: finalize-run kind-array fixture peaks ~0.45 GiB baseline.
 
 This summary does **not** claim 57–59 acceptance proven — only that Phase-1 design acceptance has a coherent cross-phase ledger.
+
+## Flash close
+
+PASS-WITH-CONCERNS (2026-10-08 ~00:30 AEST). Provenance + fail-closed wording addressed in close-out commit. Plan 56 closed.
+
