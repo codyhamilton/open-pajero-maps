@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Plan 44 Phase 1 control: re-test plan 39 identity-proven sample with owner-exclusive.
 
-≥99% of evaluable samples must agree (unique 33006aa producer + ≥1 owner-exclusive
-vertex of that source under d35b565 present on 4ed9cd80, or byte-equal d35b565 clip).
+≥99% of evaluable samples must agree under revised producer (unique-byte or
+unique-fragment at 33006aa) then OE/new-disc (d35b565 exclusive vert or byte-equal clip).
 Every disagreement is reported; systematic disagreement stops the phase.
 
 Vertices come from old-disc leaf records (dump_pre311 is not retained on host).
@@ -213,12 +213,15 @@ def main() -> int:
                     continue
                 status, pid = find_producer(
                     probe_prod, wire, cands, rect=rect, tc=code, b4=b4_enc, cr=float(cr),
+                    record_verts=old_verts,
+                    failing=failing.get((shape, code), set()),
                 )
-                if status != "unique":
+                if status not in ("unique-byte", "unique-fragment"):
                     disagree += 1
                     details.append((*_rid(r), f"disagree_producer_{status}"))
                     continue
                 ring = next(rng for cid, rng in cands if cid == pid)
+                prod_class = status
                 sz, _nrec, blob_e = clip_ring(
                     probe_excl, ring, rect=rect, tc=code, b4=b4_enc, cr=float(cr),
                 )
@@ -244,7 +247,7 @@ def main() -> int:
                 if byte_hit or vert_hit:
                     agree += 1
                     details.append((*_rid(r),
-                                    f"agree_excl={len(excl)}_byte={int(byte_hit)}_vert={int(vert_hit)}"))
+                                    f"agree_{prod_class}_excl={len(excl)}_byte={int(byte_hit)}_vert={int(vert_hit)}"))
                 else:
                     disagree += 1
                     details.append((*_rid(r), f"disagree_no_oe_excl={len(excl)}"))

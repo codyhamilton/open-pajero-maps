@@ -176,6 +176,25 @@ def owner_exclusive_vertices(
     return out
 
 
+def identity_bearing_vertices(
+    record_verts: Sequence[tuple[int, int]],
+    rect: Sequence[float],
+    failing: Optional[set[tuple[int, int]]] = None,
+) -> list[tuple[int, int]]:
+    """Old-record verts that are not on `rect` boundary and not R01-failing.
+
+    Used by unique-fragment producer matching (revised design 44 after 0551ed2).
+    """
+    fail = failing or set()
+    out = []
+    for x, y in record_verts:
+        pt = (int(x), int(y))
+        if pt in fail or on_rect_boundary(pt[0], pt[1], rect):
+            continue
+        out.append(pt)
+    return out
+
+
 def find_producer(
     probe,
     record_bytes: bytes,
@@ -185,22 +204,48 @@ def find_producer(
     tc: int | None = None,
     b4: Sequence[float] | None = None,
     cr: float | None = None,
+    record_verts: Optional[Sequence[tuple[int, int]]] = None,
+    failing: Optional[set[tuple[int, int]]] = None,
 ) -> tuple[str, Optional[object]]:
-    """Return ('unique', id) | ('producer-ambiguous', None) | ('none', None).
+    """Return producer class under revised design 44.
 
-    `candidates` is [(id, ring_xy), ...]. A match is byte-equality of the clip
-    output with `record_bytes`.
+    unique-byte | unique-fragment | producer-ambiguous | producer_none.
+    Pass `record_verts` (disc record vertices) to enable unique-fragment.
     """
-    hits = []
+    clips: list[tuple[object, set[tuple[int, int]], bytes]] = []
+    byte_hits: list[object] = []
     for cid, ring in candidates:
-        size, nrec, blob = clip_ring(probe, ring, rect=rect, tc=tc, b4=b4, cr=cr)
-        if size > 0 and blob == record_bytes:
-            hits.append(cid)
-    if len(hits) == 1:
-        return "unique", hits[0]
-    if len(hits) > 1:
+        size, _nrec, blob = clip_ring(probe, ring, rect=rect, tc=tc, b4=b4, cr=cr)
+        if size <= 0:
+            continue
+        vset = {(int(x), int(y)) for x, y in wire_vertices(blob)}
+        clips.append((cid, vset, blob))
+        if blob == record_bytes:
+            byte_hits.append(cid)
+    if len(byte_hits) == 1:
+        return "unique-byte", byte_hits[0]
+    if len(byte_hits) > 1:
         return "producer-ambiguous", None
-    return "none", None
+
+    if record_verts is None:
+        return "producer_none", None
+    ib = identity_bearing_vertices(record_verts, rect, failing=failing)
+    if not ib:
+        return "producer_none", None
+    cover = [cid for cid, vset, _ in clips if all(v in vset for v in ib)]
+    if len(cover) > 1:
+        return "producer-ambiguous", None
+    if len(cover) == 0:
+        return "producer_none", None
+    cid = cover[0]
+    others: set[tuple[int, int]] = set()
+    for oid, oset, _ in clips:
+        if oid == cid:
+            continue
+        others |= oset
+    if any(v not in others for v in ib):
+        return "unique-fragment", cid
+    return "producer_none", None
 
 
 def bbox_meets_rect(ring_xy: Sequence[tuple[float, float]], rect: Sequence[float]) -> bool:
