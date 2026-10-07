@@ -38,3 +38,10 @@ Units:
   2. 3-14 native-order half: recorded in `native_order_verify.json` (188/188 via `keys_776.dump_row_original`).
   3. 776 provenance via committed `keys_776.tsv` (= per_rule 776); scratch path cited only as decode source.
 - Log: `output/scratch-47/runs/flash_p1.stdout`.
+
+
+## Phase 2 — representability (Region+_required_cells) — 2026-10-07 ~15:17 AEST
+- Engine: `run_representability_region.py` (Region ∪ tall + `_required_cells` + `k1_representable`).
+- Historic 188: **faces 885 / meets 189 / in_cell 205 / representable 0** — **exact match** to 3-15 (`match_3_15_188: true`).
+- Added 89: meets 90 / faces 625 / in_cell 137 / repr 0 (no 3-15 face target for 89; all not-representable).
+- R-G8-2-a / R-G8-2-d regenerable from tables. Next: legacy-contract R-G8-2-c; Phase 3 r89.

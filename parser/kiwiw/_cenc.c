@@ -614,6 +614,34 @@ typedef struct { Pt a, b; int64_t first; int frame; } EoSeg;
 typedef struct { long double t; int64_t v, next; } EoCut;
 typedef struct { int64_t a, b; int parity, frame; } EoEdge;
 typedef struct { int64_t a, b, next; double angle; int used; } EoHalf;
+
+/* Plan 48 Phase 2: output-neutral EO census (sidecar only; disc bytes unchanged). */
+typedef struct {
+    int64_t eo_clip_entries;
+    int64_t eo_clip_complex;
+    int64_t decline_intersect;
+    int64_t decline_cut;
+    int64_t decline_connect;
+    int64_t decline_walk_used;   /* :885-class already-used half-edge */
+    int64_t decline_walk_bound;  /* np >= ne */
+    int64_t decline_walk_nobest;
+    int64_t decline_grow;
+    int64_t walk_starts;
+    double walk_min_margin;      /* min (best_angle - second) seen; -1 if none */
+} EoStats;
+static __thread EoStats g_eo_stats;
+static __thread int g_eo_stats_margin_init;
+
+static void eo_stats_note_margin(double best, double second) {
+    double m = (second < 0) ? best : (second - best);
+    if (!g_eo_stats_margin_init) {
+        g_eo_stats.walk_min_margin = m;
+        g_eo_stats_margin_init = 1;
+    } else if (m < g_eo_stats.walk_min_margin) {
+        g_eo_stats.walk_min_margin = m;
+    }
+}
+
 static __thread EoSeg *g_es;
 static __thread EoCut *g_ec;
 static __thread EoEdge *g_ee;
@@ -874,6 +902,7 @@ static void eo_diag_dump(int64_t start, int64_t h, int64_t np, int64_t ne,
  * g_por has the clipped source segments from chains(), even for whole rings. */
 static int eo_clip(Emit *e, int64_t n, int64_t m, int whole) {
     const double *R = e->R;
+    g_eo_stats.eo_clip_entries++;
     g_es_n = g_ec_n = g_ee_n = g_ev_n = 0;
     if (grow((void **)&g_es, &g_es_cap, n+4, sizeof(EoSeg))) return -1;
     for (int64_t i = 0; i < n; i++) if (g_por[i].ok &&
@@ -915,6 +944,7 @@ static int eo_clip(Emit *e, int64_t n, int64_t m, int whole) {
         }
     }
     if (!complex) return 0;
+    g_eo_stats.eo_clip_complex++;
     for (int k = 0; k < 4; k++) {
         Pt c[4] = {{R[0],R[1],KCO},{R[2],R[1],KCO},{R[2],R[3],KCO},{R[0],R[3],KCO}};
         g_es[g_es_n++] = (EoSeg){c[k],c[(k+1)%4],-1,1};
@@ -953,9 +983,12 @@ static int eo_clip(Emit *e, int64_t n, int64_t m, int whole) {
     }
     for (int64_t start = 0; start < ne; start++) {
         if (g_eh[start].used) continue;
+        g_eo_stats.walk_starts++;
         int64_t h = start, np = 0; long double area = 0;
         do {
             if (g_eh[h].used || np >= ne) {
+                if (g_eh[h].used) g_eo_stats.decline_walk_used++;
+                else g_eo_stats.decline_walk_bound++;
                 EO_DIAG_DECLINE(start, h, np, ne, g_eh[h].used, np >= ne);
                 return -1; /* never close a partial walk with a chord */
             }
@@ -969,7 +1002,7 @@ static int eo_clip(Emit *e, int64_t n, int64_t m, int whole) {
                 if (turn <= 0) turn += 2 * M_PI;
                 if (best < 0 || turn < best_angle) { best = k; best_angle = turn; }
             }
-            if (best < 0) return -1;
+            if (best < 0) { g_eo_stats.decline_walk_nobest++; return -1; }
             h = best;
         } while (h != start);
         if (np >= 3 && area > 0 && eo_left(g_pc[0],g_pc[1],n))
@@ -1473,6 +1506,33 @@ int64_t kw__probe(const uint8_t *rec, int64_t rec_len, int level, int64_t ix, in
  * contiguous lat / lon double arrays, against b4 and rect4 at range `cr`.
  * Writes the shape's records to `out` and returns their length (*nrec
  * records); -2 when `room` is too small, -1 for anything unmodelled. */
+/* Plan 48: read/reset per-worker EO census (does not affect encoding).
+ * Default visibility so the test probe can call them; production E2 does not
+ * need them exported via the ctypes ABI (cbuild can dlsym). */
+__attribute__((visibility("default")))
+void kw__eo_stats_reset(void) {
+    memset(&g_eo_stats, 0, sizeof(g_eo_stats));
+    g_eo_stats.walk_min_margin = -1.0;
+    g_eo_stats_margin_init = 0;
+}
+__attribute__((visibility("default")))
+void kw__eo_stats_get(int64_t *entries, int64_t *complex_,
+                      int64_t *d_intersect, int64_t *d_cut, int64_t *d_connect,
+                      int64_t *d_walk_used, int64_t *d_walk_bound, int64_t *d_walk_nobest,
+                      int64_t *d_grow, int64_t *walk_starts, double *min_margin) {
+    if (entries) *entries = g_eo_stats.eo_clip_entries;
+    if (complex_) *complex_ = g_eo_stats.eo_clip_complex;
+    if (d_intersect) *d_intersect = g_eo_stats.decline_intersect;
+    if (d_cut) *d_cut = g_eo_stats.decline_cut;
+    if (d_connect) *d_connect = g_eo_stats.decline_connect;
+    if (d_walk_used) *d_walk_used = g_eo_stats.decline_walk_used;
+    if (d_walk_bound) *d_walk_bound = g_eo_stats.decline_walk_bound;
+    if (d_walk_nobest) *d_walk_nobest = g_eo_stats.decline_walk_nobest;
+    if (d_grow) *d_grow = g_eo_stats.decline_grow;
+    if (walk_starts) *walk_starts = g_eo_stats.walk_starts;
+    if (min_margin) *min_margin = g_eo_stats_margin_init ? g_eo_stats.walk_min_margin : -1.0;
+}
+
 __attribute__((visibility("hidden")))
 int64_t kw__bg_shape(const double *lat, const double *lon, int64_t nc, int closed, int64_t mc,
                      int64_t tc, int64_t fl, const double *b4, const double *rect4, double cr,

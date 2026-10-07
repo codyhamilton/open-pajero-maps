@@ -1,5 +1,5 @@
 {
-  "neighbourhood": 32,
+  "engine": "Region+_required_cells",
   "target_3_15_188": {
     "faces": 885,
     "meets": 189,
@@ -8,20 +8,22 @@
   },
   "188": {
     "keys": 188,
-    "meets": 173,
-    "faces": 828,
-    "in_cell": 189,
+    "meets": 189,
+    "faces": 885,
+    "in_cell": 205,
     "representable_keys": 0,
-    "representable_meets": 0
+    "representable_meets": 0,
+    "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-15/conditions/representability/table_188.tsv"
   },
+  "match_3_15_188": true,
   "89": {
     "keys": 89,
-    "meets": 80,
-    "faces": 587,
-    "in_cell": 126,
+    "meets": 90,
+    "faces": 625,
+    "in_cell": 137,
     "representable_keys": 0,
-    "representable_meets": 0
+    "representable_meets": 0,
+    "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-15/conditions/representability/table_89.tsv"
   },
-  "note": "nb=32 closer to 3-15 but still short: 188 faces 828/885 meets 173/189 in_cell 189/205 repr 0/0. Tall/far demanders remain outside Moore-32. Region+_required_cells still needed for exact 3-15 match.",
-  "match_3_15_188": false
+  "note": "Region+_required_cells exact match to 3-15 historic 188 (885/189/205/0). Prior Moore-nb undercount retired."
 }

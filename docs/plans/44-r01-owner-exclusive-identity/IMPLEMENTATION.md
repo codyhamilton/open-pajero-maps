@@ -78,3 +78,7 @@ Units (orchestrator-direct; one brief each, committed before work):
 - Right-censor protocol (Flash concern): before final residual classification of the 7 `producer_home_outside_R_cap` (and any new from mass run), one-shot widen probe **R_widen=16** on that residual set only. If ≥20 new recovers at radius >8 → STOP for Design. Still-failing at 16 keep `producer_home_outside_R_cap` with max_radius=16 + counts.
 - Phase 2 mass run: R-G5-4-a (94,134) + joined R-G5-4-b (925) under locked R=8. Cover/OE unchanged.
 - Designs 45/46 may use locked R=8.
+
+
+### Unit 4b — Phase 2 mass smoke (3 leaves) — 2026-10-07 ~15:17 AEST
+- `mass_decide.py --r 8 --smoke-leaves 3`: 84/84 rows → `build:eo_bg_stitch`. Full mass (95059) next.

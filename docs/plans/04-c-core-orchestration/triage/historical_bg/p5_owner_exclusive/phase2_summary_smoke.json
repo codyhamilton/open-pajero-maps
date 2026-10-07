@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "locked_R": 8,
+  "n_work": 84,
+  "n_decisions": 84,
+  "n_leaves": 3,
+  "class_counts": {
+    "build:eo_bg_stitch": 84
+  },
+  "out": "docs/plans/04-c-core-orchestration/triage/historical_bg/p5_owner_exclusive/phase2_decisions_smoke.tsv.gz",
+  "inventory_925_joined_all": true
+}

@@ -39,3 +39,8 @@
 - Mechanisms independently recomputed; causal ties to decline site confirmed for all 5.
 - Conditions to carry: (1) make dumps reproducible via real `-DEO_DIAG` invoke in `eo_walk_diag.py`; (2) fix `:885`→actual EO_DIAG site in README; (3) note H2 ties are equal atan2 doubles not exact-collinear for Phase 3.
 - Transcript: `output/scratch-48/flash.stdout`.
+
+## Phase 2 — census (in progress)
+- `eo_stats` thread-local counters in `_cenc.c` + `kw__eo_stats_get/reset` (default visibility).
+- `parser/tools/eo_guard_census.py` + `test_eo_guard_census.py` (r359 walk_used≥1; clean square 0).
+- Next: wire cbuild sidecar; AU/Perth builds at -j4 proving guard hits=0, sha unchanged.
