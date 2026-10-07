@@ -158,3 +158,30 @@ Live ownership (tip `residuals.tsv` after plans 36–53 / 44 / 48–49; docs syn
 
 Authoritative table: `docs/plans/04-c-core-orchestration/triage/phase3_synthesis/residuals.tsv`.
 OVERVIEW Phase-3 blocker prose matches this map.
+
+## Post-close residual ownership refresh (plan 60 — 2026-10-08)
+
+The plan-35 synthesis and the plan-54 block above are unchanged as history. Live state at tip
+`b5c9ff9` (after plans 45, 50–53, 55):
+
+- **Phase 3 still not closed.** No plan 04 P4–6. No 3-90. No reseat 170 / 3-16 / 3-17.
+- **Oracle in force:** AU `0c22b266…` (plan **53**, encoder `dv_assign` lon-wrap fix), over
+  `aeae426c…` (plan **50**), over `88bd7852…` (plan **48**). Perth in force `5b86d33e…`
+  (plan 53; `04be2f6e…` historical). All earlier oracles are historical and protected.
+- **Discharged since plan 54:** R-G9-2 (plan **50**), R-G8-1-f (plan **45**), R-G9-3-d
+  (plan **53**). R-G8-1-b-a (plan **55**) and R-G8-1-d-a (plan **48**) stay discharged.
+- **Live `blocks-phase3` owners:** plan **44** (closed) for R-G5-4-a/b, with the
+  still-outside@16 children going to Design (plan **62** is a box draft, not landed);
+  plan **46** for R-G5-1/2 and R-G8-4-c, in progress (Execute) with nothing landed;
+  Cody via Design (no waiver) for R-G8-1-a.
+- **`maps-parity-carried`:** R-G5-4-c (plan 45: 80/80 `producer_home_outside_R_cap` at R=8;
+  still-outside@16 is plan 62's scope, box draft); R-G9-3-a (plan 51: emission proven-cause;
+  volume goes to Cody, F6 / kind-order); R-G9-3-b (plan 52: piece-count residual); R-G9-3-c
+  (plan 52: volume goes to Cody, L8 selection expand); R-G9-3-d-rem (plan 53: 128 links); and
+  the Cody holds R-G5-5 and R-G9-4. **Carried is not closed for parity.** These rows are
+  named deviations that still count against end-to-end parity. They are only exempt from
+  blocking the Phase 3 product close.
+- No waivers, and no F6 / kind-order / L8-expand drafts (Cody open). Plans 56–59 are closed
+  ops work, not residual owners. Plans 61 and 62 are box drafts only.
+
+The authoritative table is still `residuals.tsv`; OVERVIEW matches this map.
