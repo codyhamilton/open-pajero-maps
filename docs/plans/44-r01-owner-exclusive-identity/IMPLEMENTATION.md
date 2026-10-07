@@ -42,3 +42,11 @@ Units (orchestrator-direct; one brief each, committed before work):
 - Stratified control n=200 seed=44 under revised producer: **rate 0.757576** (150/198 evaluable); CONTROL_FAIL vs ≥0.99.
 - Agree: 91 unique-fragment + 59 unique-byte. All 48 disagrees `producer_none` (no-cover under nbhd=1; see `control_analysis.md`).
 - Phase 1 not closed. Phase 2 not started. Design escalated with no-cover diagnosis.
+
+
+### Unit 3c — DESIGN revision 2 (Gates A+B; expanding Moore)
+
+- Second DESIGN revision landed at `92cd35f` (cascade 45/46). Assump-1 marked wrong; full-set ≥99% agreement-rate retired.
+- Control rewrite `2e936e4`: per-row expanding Moore 1→R_cap=8 until unique-byte|unique-fragment; Gate A (OE≥99% among resolved); Gate B (100% class coverage with RC incl. `producer_home_outside_R_cap`); `offset_census.json`.
+- Smoke + stratified n=200 under expanding search next; Phase 1 closes only when Gate A and Gate B both pass. Propose R in IMPLEMENTATION after census for Design confirm before Phase 2.
+- Do **not** hardcode neighbourhood=1 or "enable 3×3" (nb=1 already was Assump-1; recovered 0/48).

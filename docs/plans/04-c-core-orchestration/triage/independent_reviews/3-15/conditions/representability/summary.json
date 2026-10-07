@@ -1,0 +1,29 @@
+{
+  "neighbourhood": 3,
+  "target_3_15_188": {
+    "faces": 885,
+    "meets": 189,
+    "in_cell": 205,
+    "representable": 0
+  },
+  "188": {
+    "keys": 188,
+    "meets": 61,
+    "faces": 281,
+    "in_cell": 67,
+    "representable_keys": 0,
+    "representable_meets": 0,
+    "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-15/conditions/representability/table_188.tsv"
+  },
+  "89": {
+    "keys": 89,
+    "meets": 27,
+    "faces": 250,
+    "in_cell": 50,
+    "representable_keys": 0,
+    "representable_meets": 0,
+    "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-15/conditions/representability/table_89.tsv"
+  },
+  "note": "nb=3 undercount vs 3-15 885/189/205/0 (281/61/67/0). Meet sources often outside Moore-3 (tall homes). Rerun with --neighbourhood 32 queued; prefer Region+_required_cells if still short.",
+  "match_3_15_188": false
+}

@@ -34,3 +34,26 @@ Neighbourhood sweep (1/2/3/5) queued to test whether Assumption-1 search width r
 ## Gate
 
 Phase 1 **not closed**. Systematic `producer_none` remains. Phase 2 not started. Escalate to Design with this diagnosis (fragment limb helps but does not reach ≥99%; remaining misses are no-cover under nbhd=1).
+
+
+## DESIGN revision 2 (after `8ee2559`) — Gates A+B
+
+Root cause of second stop: Assump-1 candidate window understates true producer homes (`diag_nbhd`: 16/25/37 of 48 recover at Moore 2/3/5, including unique-byte). Full-set ≥99% agreement-rate conflated search-window understatement with OE failure — **retired**.
+
+Contract (box draft → `92cd35f`):
+- Candidates = bbox-meet ∪ Moore(R); R not preset to 1.
+- Phase 1 control: **expanding search** radius 1→R_cap=8 per row until unique-byte|unique-fragment (or residual); log recovering radius.
+- **Gate A:** among rows that resolve unique-*, ≥99% OE/new-disc pass.
+- **Gate B:** 100% class coverage with RC — unique-byte | unique-fragment | `producer_home_outside_R_cap` | `producer_ambiguous`. Bare `producer_none` does not close.
+- Cover definition unchanged. Offset census → `offset_census.json` / this file before locking Phase 2 default R.
+
+`diag_nbhd` table (48 prior `producer_none` under nb=1):
+
+| Moore radius | recovered of 48 |
+| ---: | ---: |
+| 1 (3×3) | 0 |
+| 2 (5×5) | 16 |
+| 3 (7×7) | 25 |
+| 5 (11×11) | 37 |
+
+Expanding-search control + census in flight (`2e936e4`).
