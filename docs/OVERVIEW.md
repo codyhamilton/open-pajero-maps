@@ -39,7 +39,7 @@ are of each fact, is in `docs/schema/`.
 
 | Package | Scope | State |
 |---|---|---|
-| WP1 | Map layer (`ALLDATA.KWI`) and the evaluation harness | Build and harness exist (plans 01–02); map parity is unfinished. Plan **04** C-core Phases 1–2 are closed; Phase 3 is not closed: plan **35**'s synthesis (residual branch) lists the blocking residuals after 3-14–3-17 landed. Phases 4–6 depend on that close. Plan **03** content phases remain frozen until 04 Phase 6. Heavy-job memory (05), padding attribution (07), classify fixes (08–09), the carried assembly-loader error (10), recorded triage summary determinism failures (11), carried density wording (12), the recorded fixture way precheck (13), SADSR SRMX STFG (15), and K1 determinism `wall_s` strip (16) are finished; records are under `docs/plans/`. Plan **14** completeness root-cause closed out at `3fb5a35`; record: `docs/plans/14-completeness-root-cause.md`. Plan **29** fixed the K1 name_anchor failure (verdict A: the original disc lacks the out-of-span O03 name). Its assembly drop guard produced successor `2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae` (`output/scratch-29/G_new`), whose diff from `4ed9cd80…` is confined to the L0 (0,541) frame. Record: `docs/plans/29-k1-name-anchor-failure.md`. [Plan **34**](plans/34-l0-empty-slot-frame-parity.md) removed the remaining L0 empty-slot frames with a general outside-mask empty-shell rule. Its successor is the **oracle disc in force**: `4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448` (`output/scratch-34/G_new`; [oracle record](plans/04-c-core-orchestration/triage/l0_empty_slot/successor_oracle_4e6b0de7.json)). Its classified diff vs `2ee3456a…` removes 5 L0 outside-mask empty shells ((0,141), (0,176), (0,541), (0,562), (0,563)), all `empty_slot` on R. Every other cell has an identical whole-frame multiset (offsets may relocate), live K1 `-j6` fails 0 in every kind, and Perth stays `04be2f6e…`. `2ee3456a…` and `4ed9cd80…` are historical and kept protected. |
+| WP1 | Map layer (`ALLDATA.KWI`) and the evaluation harness | Build and harness exist (plans 01–02); map parity is unfinished. Plan **04** C-core Phases 1–2 are closed; Phase 3 is not closed: plan **35**'s synthesis (residual branch) lists the blocking residuals after 3-14–3-17 landed. Phases 4–6 depend on that close. Plan **03** content phases remain frozen until 04 Phase 6. Heavy-job memory (05), padding attribution (07), classify fixes (08–09), the carried assembly-loader error (10), recorded triage summary determinism failures (11), carried density wording (12), the recorded fixture way precheck (13), SADSR SRMX STFG (15), and K1 determinism `wall_s` strip (16) are finished; records are under `docs/plans/`. Plan **14** completeness root-cause closed out at `3fb5a35`; record: `docs/plans/14-completeness-root-cause.md`. Plan **29** fixed the K1 name_anchor failure (verdict A: the original disc lacks the out-of-span O03 name). Its assembly drop guard produced successor `2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae` (`output/scratch-29/G_new`), whose diff from `4ed9cd80…` is confined to the L0 (0,541) frame. Record: `docs/plans/29-k1-name-anchor-failure.md`. [Plan **34**](plans/34-l0-empty-slot-frame-parity.md) removed the remaining L0 empty-slot frames with a general outside-mask empty-shell rule and produced historical successor `4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448` (`output/scratch-34/G_new`; [oracle record](plans/04-c-core-orchestration/triage/l0_empty_slot/successor_oracle_4e6b0de7.json)). Its classified diff vs `2ee3456a…` removes 5 L0 outside-mask empty shells ((0,141), (0,176), (0,541), (0,562), (0,563)), all `empty_slot` on R. Plan **48** ([record](plans/48-eo-face-walk-decline.md)) then promoted the **oracle disc in force** to `88bd7852115988fc60441109bf44707c3156321fab47057443e0794b987f3b43` (`output/scratch-48/G_new`; [oracle record](plans/04-c-core-orchestration/triage/independent_reviews/3-14/conditions/eo_decline/p3_fix/successor_oracle_88bd7852.json)) after R-DVD no-worse on two L0 cells; Perth stays `04be2f6e…`. `4e6b0de7…`, `2ee3456a…`, and `4ed9cd80…` are historical and kept protected. |
 | WP2 | Route planning frames and ext frames | Not started; first-pass writer exists |
 | WP3 | Address and POI search | Not started (plan 26: offline seven-state search fixtures/tests only — ≠ WP3 complete ≠ Australia-wide MMCS proof) |
 | WP4 | Remaining `IDX/` families, `HWMAP`, `INDEXDAT` | Not started; bodies undecoded |
@@ -61,41 +61,43 @@ within the held ceiling. `-j 1` is deterministic, and the AU rebuild and Perth
 reproduce their pins.
 
 Plan 35's close synthesis (`docs/plans/04-c-core-orchestration/triage/phase3_synthesis/gates.tsv`)
-ends on the **residual branch**: plan 04 Phase 3 is **not closed**. The
-remaining Phase 3 blockers are exactly the `blocks-phase3` rows of
-[`residuals.tsv`](plans/04-c-core-orchestration/triage/phase3_synthesis/residuals.tsv):
+ends on the **residual branch**: plan 04 Phase 3 is **not closed**. Live ownership of the
+remaining rows is in
+[`residuals.tsv`](plans/04-c-core-orchestration/triage/phase3_synthesis/residuals.tsv)
+(post–plans 36–53 / 44 / 48–49; docs sync plan **54**). Do **not** read undifferentiated
+"G1 / G4 / G5 / G8 / G9 still open" — name the child rows and their owners.
 
-- the 3-14 hop's
-  per-cell payload causes (R-G1-1/2: every changed cell classed, 0
-  unattributed; the EO-only build equals the 3-14 disc), its `checked` move
-  confinement (R-G4-2), the 3-11 routed proof (R-G1-4) and the 3-14
-  container accounting (R-G1-3) are discharged by plan **36**
-  ([record](plans/36-3-14-cause-and-container-attribution.md));
-- the historical cause remainder: the row identities of 8,739
-  background_boundary + 137 background rows (180 groups; side-column producers
-  not regenerable), and the R01 rows whose build fix is not proven
-  (R-G5-4-a/b/c: 94,134 weak identity, 925 untraceable, 80 untested). Plan
-  **39** proved 825,634 R01 rows fixed by the 3-14 build change; their cause is
-  `build:eo_bg_stitch`, with R01 superseded per Design's ruling. It also
-  discharged R-G4-1 (the 3-11 checked moves are the 167,936 records the count
-  wrap hid) and polygon 65623 (it produces no failing item)
-  ([record](plans/39-historical-bg-cause-counterfactual-ledger.md));
-- the named conditions of the 3-14 to 3-17 independent fix reviews. The
-  reviews of record landed under plan **40** (all ACCEPT-WITH-CONDITIONS),
-  which discharges "review missing" (R-G8-1..4). Their UNVERIFIABLE or FAIL
-  clauses (lost unit scratch; the 3-14 build wall 26 s → 90 s, since
-  measured and fixed to 37.38 s at `-j4` by plan 41, pending the budget
-  ruling) are open named residuals (plan 43 closed the light set R-G8-1-b/c/d/e/h, R-G8-2-f, R-G8-4-a/b; children R-G8-1-b-a, R-G8-1-d-a, R-G8-2-f-a opened). They are not counted proven.
-- the encoder content trim (R-G9-3), discharged by plan **42**
-  ([record](plans/42-encoder-trim-r-parity.md)) as a proven cause with
-  named children:
-  - R-G9-3-a: L0 (1755,591)(2,1) draws 0 roads where R has 3.7k raw, under
-    type-288 over-emission and the shrink kind order;
-  - R-G9-3-b: L8 fragmentation;
-  - R-G9-3-c: L8 road under-selection;
-  - R-G9-3-d: 5 degenerate L0 links.
+**Discharged gate bands (not live blockers):** all **G1** and **G4** rows (plans **36** /
+**39**); parent R-G5-3 / R-G5-4 / R-G9-1 / R-G9-3 / R-G8-5 / R-G10-1 and the plan **40**
+review-of-record parents; plan **43** light set; plan **47** completeness evidence set;
+plan **49** discharged **R-G8-2-f-a**; plan **48** discharged **R-G8-1-d-a** and accepted
+live oracle `88bd7852…` (Perth `04be2f6e…`).
 
-  The L8 "2.198% > 1% BLOCKER" stubs are sub-quantum at R's resolution.
+**Live `blocks-phase3` ownership** (rows still open in `residuals.tsv`):
+
+| Owner | Rows | Status |
+| --- | --- | --- |
+| Plan **44** (closed) | R-G5-4-a, R-G5-4-b | Closed owner; residual parents still `blocks-phase3` (still-outside@16 / named children) |
+| Plan **45** (Design on tip) | R-G5-4-c, R-G8-1-f | Designed owner |
+| Plan **46** (Design on tip) | R-G5-1, R-G5-2, R-G8-4-c | Designed owner |
+| Plan **55** (Design) | R-G8-1-b-a | Window-before count-basis child |
+| Cody via Design (no waiver) | R-G8-1-a | Budget basis (with R-G9-4) |
+
+**`maps-parity-carried` ownership** (not Phase 3 product-close blockers):
+
+| Owner | Rows |
+| --- | --- |
+| Plan **50** (Design) | R-G9-2 (341 supply-path) |
+| Plan **51** (Design) | R-G9-3-a |
+| Plan **52** (Design) | R-G9-3-b, R-G9-3-c |
+| Plan **53** (Design) | R-G9-3-d |
+| Cody via Design (no waiver) | R-G5-5, R-G9-4 |
+
+Plan **39** proved 825,634 R01 rows fixed by the 3-14 build change (`build:eo_bg_stitch`);
+plan **42** discharged parent R-G9-3 with the named children above. Memory-band plans
+**56–59** are closed ops residency work — they are **not** residual-row owners.
+
+No later phase is released below; the signed phase outcome remains in plan 04.
 
 Already settled:
 
@@ -104,8 +106,8 @@ Already settled:
   plus plan **34**'s successor record. AU 3-11's +60 B non-payload growth is
   attributed by plan **07** to Map Frame allocation padding,
   34×(−4)+7×(+28).
-- **Pin contract:** ∅ = ∅ (`pin_contract.tsv`, re-applied on `4e6b0de7…` by
-  plan 35). Historical `pinned_candidates.tsv` is
+- **Pin contract:** ∅ = ∅ (`pin_contract.tsv`, re-applied on then-oracle `4e6b0de7…` by
+  plan 35; live oracle is now `88bd7852…` per plan 48). Historical `pinned_candidates.tsv` is
   residual-not-required-for-live-close.
 - **Other-kind classify joins:** discharged under
   [plan **32**](plans/32-other-kind-classify-joins.md).

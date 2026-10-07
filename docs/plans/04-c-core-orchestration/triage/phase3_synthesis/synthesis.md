@@ -82,3 +82,26 @@ These are the `blocks-phase3` rows of `residuals.tsv`; OVERVIEW points here.
 - No brief 3-90 was run. No reseat of 170, 3-16 or 3-17.
 - Codex confirmation reviews of plans 31/33/34 are pending the Codex reset.
   They are not part of G8: each of those plans already has a terminal review.
+
+## Post-close residual ownership (plan 54 — 2026-10-08)
+
+Historical synthesis above is unchanged: at plan-35 close time, G1/G4/G5/G8/G9 were
+RESIDUAL and Phase 3 was not closed. **That verdict stands as history.**
+
+Live ownership (tip `residuals.tsv` after plans 36–53 / 44 / 48–49; docs sync **54**):
+
+- **Phase 3 still not closed.** No plan 04 P4–6. No 3-90. No reseat 170 / 3-16 / 3-17.
+- **Oracle in force:** `88bd7852…` (plan **48** Design-accepted; Perth `04be2f6e…`).
+  `4e6b0de7…` is historical (plan 34), protected.
+- **G1 / G4 rows discharged** (plans 36 / 39) — not live undifferentiated blockers.
+- **Closed residual work:** plans **43** (light set), **47** (completeness evidence),
+  **49** (R-G8-2-f-a), **48** (R-G8-1-d-a + live oracle).
+- **Live `blocks-phase3` owners:** plan **44** closed owner of R-G5-4-a/b (rows still
+  open); plan **45** → R-G5-4-c, R-G8-1-f; plan **46** → R-G5-1/2, R-G8-4-c;
+  plan **55** (Design) → R-G8-1-b-a; Cody via Design (no waiver) → R-G8-1-a.
+- **`maps-parity-carried` owners:** plan **50** → R-G9-2; **51** → R-G9-3-a;
+  **52** → R-G9-3-b/c; **53** → R-G9-3-d; Cody via Design (no waiver) → R-G5-5, R-G9-4.
+- Plans **56–59** (memory band) are closed ops work, not residual-row owners.
+
+Authoritative table: `docs/plans/04-c-core-orchestration/triage/phase3_synthesis/residuals.tsv`.
+OVERVIEW Phase-3 blocker prose matches this map.
