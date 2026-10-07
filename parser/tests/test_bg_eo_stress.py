@@ -26,11 +26,8 @@ sys.path[:0] = [str(HERE.parent), str(HERE), str(HERE / 'fixtures/harness')]
 SEED = 4314
 N_RINGS = 1000
 TIMEOUT_S = 600
-# Plan 43 finding (residual R-G8-1-d-a): seeded ring 359 makes the EO face walk
-# meet an already-used half-edge, so the clipper declines (-1, guard at the
-# "never close a partial walk with a chord" check in eo_clip). It terminates; a
-# production build treats a decline as an error. Recorded, not fixed here.
-KNOWN_DECLINES = {'r359'}
+# Plan 48 P3: face-walk declines fixed (T-junction split + total-order CW neighbor).
+KNOWN_DECLINES = set()
 
 
 def _proper_cross(p, q, r, s):
@@ -149,8 +146,8 @@ def test_seeded_self_crossing_stress(probe_so, tmp_path):
     assert all(f['error'] == 'size -1' for f in res['failures'])
 
 
-@pytest.mark.xfail(strict=True, reason='R-G8-1-d-a: EO face walk declines on seeded ring 359')
-def test_known_decline_ring_359(probe_so, tmp_path):
+def test_known_decline_ring_359_now_passes(probe_so, tmp_path):
+    """Plan 48 P3: former R-G8-1-d-a decline r359 now clips with valid parity."""
     res = _run_cases(probe_so, tmp_path, {'r359': seeded_rings()[359]})
     assert res['failures'] == []
 

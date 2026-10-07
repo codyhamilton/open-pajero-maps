@@ -34,6 +34,7 @@ as a new row or successor record.
 Later successors follow the same discipline. Plan 34 recorded successor
 `4e6b0de7…` from `2ee3456a…` with a classified per-cell diff
 (`docs/plans/04-c-core-orchestration/triage/l0_empty_slot/successor_oracle_4e6b0de7.json`).
+Plan 48 recorded successor `88bd7852…` from `4e6b0de7…` with a classified per-cell diff (`docs/plans/04-c-core-orchestration/triage/independent_reviews/3-14/conditions/eo_decline/p3_fix/successor_oracle_88bd7852.json`).
 
 ## Live pin contract
 

@@ -1,5 +1,5 @@
 {
-  "disc_in_force_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+  "disc_in_force_sha256": "88bd7852115988fc60441109bf44707c3156321fab47057443e0794b987f3b43",
   "hops": [
     {
       "authoritative_list": {
@@ -638,6 +638,64 @@
       "to_sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
       "unexplained_cells": [],
       "unexplained_count": 0
+    },
+    {
+      "region": "AU",
+      "signing_unit": "plan 48 P3",
+      "from_sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+      "to_sha256": "88bd7852115988fc60441109bf44707c3156321fab47057443e0794b987f3b43",
+      "status": "classified-diff-verified",
+      "changed_count": 2,
+      "counts_by_level": {
+        "0": {
+          "changed": 2
+        }
+      },
+      "authoritative_list": {
+        "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-14/conditions/eo_decline/p3_fix/CHANGED_CELLS.md",
+        "sha256": "09e78b16366cdfaf14f4f08e9fd4fd4cb2bfd943731c39a623894d0533c3fcb6"
+      },
+      "signing_record": {
+        "path": "docs/plans/48-eo-face-walk-decline/IMPLEMENTATION.md",
+        "sha256": "1c14e19c716fc3b31928e390be72309d9f1f46f031275ad316c856a02c26c9be"
+      },
+      "supporting_evidence": [
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-14/conditions/eo_decline/p3_fix/successor_oracle_88bd7852.json",
+          "sha256": "7c0fa8e05b4b332de36439a14f987ed825fc53dc908278ba4778f5ea4aa69e38"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-14/conditions/eo_decline/p3_fix/R_DVD_COMPARE.md",
+          "sha256": "bb687415870cc7257ff7862d16fc206b693ea5ebf68ed186fdb337c143d4ac21"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-14/conditions/eo_decline/p3_fix/CHANGED_CELLS.md",
+          "sha256": "09e78b16366cdfaf14f4f08e9fd4fd4cb2bfd943731c39a623894d0533c3fcb6"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-14/conditions/eo_decline/p3_fix/r_coverage.json",
+          "sha256": "9cd0cdf9e3be533f5cf360022b80aad65f345bdd31f1fc3cb2a907075a8d2afd"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-14/conditions/eo_decline/p3_fix/summary.json",
+          "sha256": "4992fe9b1bbfdb3e48994ba0a438963b1af7dc9f8404f8a7ba7f5109971d3a53"
+        },
+        {
+          "path": "docs/plans/48-eo-face-walk-decline/P3-ORACLE-ACCEPT.md",
+          "sha256": "f1de4362b7c5f24734b5e24ba0d47ef12b4ab9042e69130407267cfb0e270b8c"
+        }
+      ],
+      "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes.",
+      "unexplained_count": 0,
+      "unexplained_cells": [],
+      "residuals": [
+        "Input-ring IDs soft residual (not a land gate)",
+        "Wall median-of-5 deferred"
+      ],
+      "recorded_changed_count": 2,
+      "recorded_counts_by_level": {
+        "0": 2
+      }
     }
   ],
   "phase3_closed": false,

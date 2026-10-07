@@ -129,7 +129,7 @@ def test_name_drop_probe_and_pad_precedes_omission(tmp_path, monkeypatch):
     with monkeypatch.context() as m:
         m.setattr(build, '_SPILL', {})
         job = ('unused', 0, b'', (541, 542), None, str(tmp_path), True, False, True, None, L0)
-        spill, rec, stats, lines, bench, dump = build._e2_job(job)
+        spill, rec, stats, lines, bench, dump, _eo = build._e2_job(job)
         assert calls == [guarded, original]
         assert len(rec) == 0 and lines == dump == []
         assert stats['total'] == {'road': 0, 'background': 0, 'name': 0}

@@ -24,15 +24,17 @@ def census_lib(tmp_path_factory):
     return eg.load_stats_api(so)
 
 
-def test_r359_hits_walk_used_guard(census_lib):
+def test_former_declines_now_pass(census_lib):
+    """Plan 48 P3: all five seeded declines clip without walk_used."""
     lib, fn = census_lib
     rings = json.loads(DECLINE.read_text())
-    lib.kw__eo_stats_reset()
-    size, _ = eg.run_ring(fn, rings["r359"])
-    st = eg.read_stats(lib)
-    assert size < 0
-    assert st["decline_walk_used"] >= 1
-    assert st["declines_total"] >= 1
+    for name, ring in rings.items():
+        lib.kw__eo_stats_reset()
+        size, _ = eg.run_ring(fn, ring)
+        st = eg.read_stats(lib)
+        assert size > 0, (name, size, st)
+        assert st["decline_walk_used"] == 0, (name, st)
+        assert st["declines_total"] == 0, (name, st)
 
 
 def test_clean_square_zero_declines(census_lib):

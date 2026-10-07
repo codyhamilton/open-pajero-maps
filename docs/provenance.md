@@ -819,10 +819,18 @@ Not committed; regenerable from the in-force spool. Record: `docs/plans/29-k1-na
 ### output/scratch-34/ (plan 34 L0 empty-slot frame parity, oracle disc in force)
 
 Not committed; regenerable from the in-force spool. Record: `docs/plans/34-l0-empty-slot-frame-parity.md`; lasting witnesses and gates: `docs/plans/04-c-core-orchestration/triage/l0_empty_slot/`.
-- `G_new/ALLDATA.KWI` + `manifest.json`: the **oracle disc in force** (protected; successor of `2ee3456a…`), sha256 `4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448`, 1,692,079,168 bytes. Built from `output/extract_timing/spool` (fingerprint unchanged) with the plan-34 outside-mask empty-shell omission, `-j4`. Oracle record: `successor_oracle_4e6b0de7.json`.
+- `G_new/ALLDATA.KWI` + `manifest.json`: the plan-34 successor, now **historical** (superseded by plan 48's `88bd7852…`; kept and protected, never overwritten), sha256 `4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448`, 1,692,079,168 bytes. Built from `output/extract_timing/spool` (fingerprint unchanged) with the plan-34 outside-mask empty-shell omission, `-j4`. Oracle record: `successor_oracle_4e6b0de7.json`.
 - Classified diff vs `scratch-29/G_new`: 5 L0 cells `removed_outside_mask_empty_shell`, 0 other (`phase2/au_cell_diff.json`); R `empty_slot` for all 5 (`phase2/r_check.json`); live K1 `-j6` failing 0 (`k1.json`).
 - `perth_new/`: identical to `04be2f6e…`.
 - `run_p2b.{sh,log}`, `runs/*.json`: guarded heavy-run logs.
+
+
+
+### output/scratch-48/ (plan 48 eo_split_on_vertices, oracle disc in force)
+
+- `G_new/ALLDATA.KWI` (+ hardlink `census_builds/au_p3/`): the **oracle disc in force** (protected; successor of `4e6b0de7…`), sha256 `88bd7852115988fc60441109bf44707c3156321fab47057443e0794b987f3b43`, 1,692,079,168 bytes. Built from `output/extract_timing/spool` with plan-48 `eo_split_on_vertices`, `-j4`. Oracle record: `docs/plans/04-c-core-orchestration/triage/independent_reviews/3-14/conditions/eo_decline/p3_fix/successor_oracle_88bd7852.json`.
+- Classified diff vs `scratch-34/G_new` (`4e6b0de7…`): 2 L0 cells changed `(1768,573)` and `(1817,726)`, 0 added, 0 removed; R-coverage equal (no worse) on both (`R_DVD_COMPARE.md`). Perth pin `04be2f6e…` unchanged. `eo_census.json` guard_hits=0.
+- Predecessor `output/scratch-34/G_new` (`4e6b0de7…`) kept and protected (historical).
 
 ### output/scratch-36/ (plan 36 hop replay, region accounting, routed proofs, 3-14 cause attribution)
 

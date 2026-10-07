@@ -779,6 +779,40 @@ static int eo_edge(int64_t a, int64_t b, int frame) {
     g_ee[g_ee_n++] = (EoEdge){a,b,!frame,frame};
     return 0;
 }
+/* Plan 48 P3: split edges that have an existing vertex in their open interior
+ * (T-junction / equal-atan2 remnant). Remove the parent, XOR-add the two
+ * sub-edges via eo_edge so an existing shorter collinear edge cancels. */
+static int eo_split_on_vertices(const double *R) {
+    double eps = 32 * DBL_EPSILON * fmax(1, fmax(fabs(R[2]), fabs(R[3])));
+    for (int round = 0; round < 16; round++) {
+        int did = 0;
+        for (int64_t i = 0; i < g_ee_n; i++) {
+            int64_t a = g_ee[i].a, b = g_ee[i].b;
+            double ax = g_ev[a].x, ay = g_ev[a].y, bx = g_ev[b].x, by = g_ev[b].y;
+            double abx = bx - ax, aby = by - ay;
+            double ab2 = abx * abx + aby * aby;
+            if (ab2 == 0) continue;
+            double scale = (fabs(abx) + fabs(aby) + 1) * eps;
+            for (int64_t v = 0; v < g_ev_n; v++) {
+                if (v == a || v == b) continue;
+                double vx = g_ev[v].x - ax, vy = g_ev[v].y - ay;
+                double cross = abx * vy - aby * vx;
+                if (fabs(cross) > scale) continue;
+                double t = (abx * vx + aby * vy) / ab2;
+                if (t <= 1e-15 || t >= 1 - 1e-15) continue;
+                int frame = g_ee[i].frame;
+                g_ee[i] = g_ee[--g_ee_n];
+                if (eo_edge(a, v, frame) || eo_edge(v, b, frame)) return -1;
+                did = 1;
+                break;
+            }
+            if (did) break;
+        }
+        if (!did) return 0;
+    }
+    return 0;
+}
+
 static int64_t eo_root(int64_t v) {
     while (g_ep[v] != v) { g_ep[v] = g_ep[g_ep[v]]; v = g_ep[v]; }
     return v;
@@ -971,6 +1005,10 @@ static int eo_clip(Emit *e, int64_t n, int64_t m, int whole) {
     int64_t ne = 0;
     for (int64_t i = 0; i < g_ee_n; i++) if (g_ee[i].parity || g_ee[i].frame) g_ee[ne++] = g_ee[i];
     g_ee_n = ne;
+    if (eo_split_on_vertices(R)) return -1;
+    ne = 0;
+    for (int64_t i = 0; i < g_ee_n; i++) if (g_ee[i].parity || g_ee[i].frame) g_ee[ne++] = g_ee[i];
+    g_ee_n = ne;
     if (eo_connect(R)) return -1;
     ne = g_ee_n * 2;
     if (grow((void **)&g_eh,&g_eh_cap,ne,sizeof(EoHalf)) ||
@@ -996,14 +1034,27 @@ static int eo_clip(Emit *e, int64_t n, int64_t m, int whole) {
             Pt a = g_ev[g_eh[h].a], b = g_ev[g_eh[h].b];
             if (grow((void **)&g_pc,&g_cap_pc,np+1,sizeof(Pt))) return -1;
             g_pc[np++] = a; area += (long double)a.x*b.y-(long double)b.x*a.y;
-            double reverse = g_eh[h^1].angle, best_angle = 0; int64_t best = -1;
-            for (int64_t k = g_ei[g_eh[h].b]; k >= 0; k = g_eh[k].next) {
-                double turn = reverse - g_eh[k].angle;
-                if (turn <= 0) turn += 2 * M_PI;
-                if (best < 0 || turn < best_angle) { best = k; best_angle = turn; }
+            /* Plan 48 P3: min CW turn (legacy); T-junctions fixed by eo_split_on_vertices. */
+            {
+                double reverse = g_eh[h ^ 1].angle, best_angle = 0; int64_t best = -1;
+                for (int64_t k = g_ei[g_eh[h].b]; k >= 0; k = g_eh[k].next) {
+                    double turn = reverse - g_eh[k].angle;
+                    if (turn <= 0) turn += 2 * M_PI;
+                    if (best < 0 || turn < best_angle) { best = k; best_angle = turn; }
+                }
+                if (best < 0) { g_eo_stats.decline_walk_nobest++; return -1; }
+                {
+                    double second = -1;
+                    for (int64_t k = g_ei[g_eh[h].b]; k >= 0; k = g_eh[k].next) {
+                        if (k == best) continue;
+                        double t = reverse - g_eh[k].angle;
+                        if (t <= 0) t += 2 * M_PI;
+                        if (second < 0 || t < second) second = t;
+                    }
+                    eo_stats_note_margin(best_angle, second);
+                }
+                h = best;
             }
-            if (best < 0) { g_eo_stats.decline_walk_nobest++; return -1; }
-            h = best;
         } while (h != start);
         if (np >= 3 && area > 0 && eo_left(g_pc[0],g_pc[1],n))
             if (emit_piece(e,g_pc,np)) return -1;

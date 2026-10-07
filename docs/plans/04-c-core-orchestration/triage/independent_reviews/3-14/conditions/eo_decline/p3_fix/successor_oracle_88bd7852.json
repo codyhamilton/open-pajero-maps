@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "signing_unit": "plan-48-P3",
+  "from_sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+  "to_sha256": "88bd7852115988fc60441109bf44707c3156321fab47057443e0794b987f3b43",
+  "status": "classified-diff-verified-Design-accepted",
+  "changed_count": 2,
+  "counts_by_level": {
+    "0": {
+      "changed": 2
+    }
+  },
+  "cells_tsv": "level\tix\tiy\tstatus\told_bytes\tnew_bytes\told_cell_sha256\tnew_cell_sha256\told_leaves\tnew_leaves\n0\t1768\t573\tchanged\t108466\t108466\taf1b728e5c0207f11cc3b5904f7304be2f436160d912724750b8cd9a1e0958b6\t253a10fcf1fc71477bccc1245fa8a8bb0454f0a1116f79959428dc9c6b13d711\t1\t1\n0\t1817\t726\tchanged\t3266\t3278\ta5fb735b41ea6496d349f0a0c737501e6dcb4037d365d2456f7ae3caec1c1404\t9b4e5ddd0a973fda6d2addceccf139fedc914a4476ccf24a89831c87bfa9d7f8\t1\t1\n",
+  "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes.",
+  "mechanism": "eo_split_on_vertices T-junction / vertex-on-edge before eo_connect",
+  "perth_unchanged_sha256_prefix": "04be2f6e",
+  "residuals": [
+    "Input-ring IDs for eo_split_on_vertices not instrumented (soft; Design: not a land gate)",
+    "Wall median-of-5 deferred (single-run 37.49s within 0.51s noise of plan-41 median 37.38)"
+  ],
+  "diff_json_path": "output/scratch-48/oracle_p3/diff.json",
+  "r_dvd": {
+    "all_cells_accept_no_worse_R_coverage": true,
+    "artifact": "r_coverage.json",
+    "land": "Design_ACCEPT_pending_Flash"
+  },
+  "to_path": "output/scratch-48/G_new/ALLDATA.KWI",
+  "to_size_bytes": 1692079168,
+  "kind": "successor-oracle",
+  "region": "AU",
+  "predecessor_preserved": true,
+  "from_path_untouched": "output/scratch-34/G_new/ALLDATA.KWI",
+  "flash": {
+    "verdict": "PASS-WITH-CONCERNS",
+    "land": "LAND",
+    "transcript": "output/scratch-48/runs/flash_p3_accept.stdout",
+    "when": "2026-10-07T22:41+10"
+  },
+  "design_accept": {
+    "path": "docs/plans/48-eo-face-walk-decline/P3-ORACLE-ACCEPT.md",
+    "ruling": "ACCEPT",
+    "when": "2026-10-07T22:29+10"
+  }
+}

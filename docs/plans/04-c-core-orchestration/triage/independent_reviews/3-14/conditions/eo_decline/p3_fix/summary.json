@@ -1,0 +1,77 @@
+{
+  "phase": "48-P3",
+  "fix": "eo_split_on_vertices \u2014 after parity filter, before eo_connect: if an existing vertex lies in the open interior of an edge, remove the parent and XOR-add the two sub-edges via eo_edge (existing shorter collinear remnant cancels). Legacy min-turn walk unchanged.",
+  "mechanisms_addressed": {
+    "H2_equal_angle_ties": "T-junction: shorter dest on longer same-atan2 edge; split removes equal-angle pair",
+    "H1_rounding_non_planarity": "vertex-on-edge splits restore planarity for walk"
+  },
+  "gates": {
+    "stress_1k": {
+      "nfail": 0,
+      "KNOWN_DECLINES": []
+    },
+    "stress_20k": {
+      "n": 20000,
+      "queries": 1594711,
+      "nfail": 0,
+      "failures": []
+    },
+    "five_seeded_declines": {
+      "r359": "pass",
+      "r8475": "pass",
+      "r11892": "pass",
+      "r14503": "pass",
+      "r19650": "pass"
+    },
+    "perth_sha": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+    "perth_expect_prefix": "04be2f6e",
+    "perth_match": true,
+    "au_old_sha": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+    "au_new_sha": "88bd7852115988fc60441109bf44707c3156321fab47057443e0794b987f3b43",
+    "au_byte_identical": false,
+    "au_oracle_diff": {
+      "changed": 2,
+      "added": 0,
+      "removed": 0,
+      "cells": [
+        {
+          "level": 0,
+          "ix": 1768,
+          "iy": 573,
+          "old_bytes": 108466,
+          "new_bytes": 108466,
+          "cause": "eo_split_on_vertices T-junction / equal-atan2 remnant in EO arrangement"
+        },
+        {
+          "level": 0,
+          "ix": 1817,
+          "iy": 726,
+          "old_bytes": 3266,
+          "new_bytes": 3278,
+          "cause": "eo_split_on_vertices T-junction / equal-atan2 remnant in EO arrangement"
+        }
+      ],
+      "diff_json": "output/scratch-48/oracle_p3/diff.json",
+      "cells_tsv": "output/scratch-48/oracle_p3/cells.sqlite"
+    },
+    "au_census_guard_hits": 0,
+    "au_wall_s_single": 37.30108539300272,
+    "wall_ref_median_plan41": 37.38,
+    "wall_noise_band": 0.51
+  },
+  "successor_oracle_required": true,
+  "note": "AU confined 2-cell successor of 4e6b0de7; Perth unchanged. R-DVD no-worse. Design ACCEPT + Flash PASS-WITH-CONCERNS LAND.",
+  "r_dvd": {
+    "measured_at": "2026-10-07T17:43+10",
+    "r_mount": "/run/media/codyh/464210-8480",
+    "method": "plan42_R_coverage_by_G",
+    "all_cells_accept_no_worse": true,
+    "artifact": "r_coverage.json",
+    "witness": "R_DVD_COMPARE.md",
+    "land": "LANDED"
+  },
+  "flash": {
+    "verdict": "PASS-WITH-CONCERNS",
+    "land": "LAND"
+  }
+}

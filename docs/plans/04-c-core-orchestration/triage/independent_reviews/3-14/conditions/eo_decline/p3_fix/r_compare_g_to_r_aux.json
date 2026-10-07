@@ -1,0 +1,1351 @@
+{
+  "all_cells_accept_no_worse": false,
+  "cells": [
+    {
+      "R": {
+        "bg_frame_size": 690,
+        "bg_type_hist": {
+          "321": 13,
+          "578": 1
+        },
+        "bounds": {
+          "lat_hi": -38.04166666666666,
+          "lat_lo": -38.06249999999999,
+          "lon_hi": 145.28125,
+          "lon_lo": 145.25
+        },
+        "divided": false,
+        "frame_len": 160,
+        "frame_len_fallback": false,
+        "leaf_path": [
+          1960
+        ],
+        "n_bg": 14,
+        "n_bg_coords": 200,
+        "n_road": 451,
+        "n_road_pts": 1859,
+        "off": 208045504,
+        "ptype": 0,
+        "range": 4096,
+        "road_dc_hist": {
+          "3": 2,
+          "7": 373,
+          "9": 30,
+          "10": 46
+        },
+        "road_frame_size": 42746,
+        "sector_len": 52544,
+        "sha256": "2133d8a9ad6972b926888eb74aa67adc3d9719ab08f975dabf50ac3a2d9288ac",
+        "status": "ok"
+      },
+      "accept_geom_no_worse": false,
+      "accept_len_no_worse": true,
+      "accept_no_worse_vs_R": false,
+      "bg_geom_new_vs_R": {
+        "any_type": {
+          "frac_le_1": 0.004383527813792677,
+          "frac_le_10": 0.015743656232635673,
+          "frac_le_100": 0.1337902080632216,
+          "frac_le_2": 0.0055565845526949435,
+          "frac_le_20": 0.03204297092054084,
+          "frac_le_200": 0.26245601037229116,
+          "frac_le_5": 0.0086435759708588,
+          "frac_le_50": 0.06834598999814781,
+          "frac_le_500": 0.6501203926653084,
+          "mean": 414.56778698840185,
+          "min": 0.0,
+          "n_verts": 16197,
+          "p50": 374.04922585810704,
+          "p90": 781.3671326017552
+        },
+        "n_shapes": 1641,
+        "same_type": {
+          "frac_le_1": 0.0014200160523553744,
+          "frac_le_10": 0.007779218373772921,
+          "frac_le_100": 0.01599061554608878,
+          "frac_le_2": 0.0020991541643514233,
+          "frac_le_20": 0.012471445329381985,
+          "frac_le_200": 0.017657590911897263,
+          "frac_le_5": 0.0038896091868864603,
+          "frac_le_50": 0.014632339322096684,
+          "frac_le_500": 0.0402543680928567,
+          "mean": Infinity,
+          "min": 0.0,
+          "n_verts": 16197,
+          "p50": Infinity,
+          "p90": NaN
+        },
+        "shapes_far_same_p50_gt_50": [
+          {
+            "d_any_med": 77.2576951365764,
+            "d_any_min": 1.2719974556943598,
+            "d_same_med": 77.2576951365764,
+            "d_same_min": 1.2719974556943598,
+            "i": 0,
+            "key": 321,
+            "n": 42
+          },
+          {
+            "d_any_med": 166.07285888805086,
+            "d_any_min": 0.648293581393454,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 1,
+            "key": 288,
+            "n": 45
+          },
+          {
+            "d_any_med": 17.15583327936336,
+            "d_any_min": 5.300176135087744,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 2,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 181.80211949143293,
+            "d_any_min": 4.503508460640458,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 5,
+            "key": 288,
+            "n": 20
+          },
+          {
+            "d_any_med": 680.478126024263,
+            "d_any_min": 633.8020195615667,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 6,
+            "key": 288,
+            "n": 10
+          },
+          {
+            "d_any_med": 499.1686428373374,
+            "d_any_min": 428.06541556163904,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 7,
+            "key": 288,
+            "n": 22
+          },
+          {
+            "d_any_med": 637.1946327457566,
+            "d_any_min": 611.7556701834623,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 8,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 701.8208071589178,
+            "d_any_min": 586.1228540165173,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 9,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 639.5811129163401,
+            "d_any_min": 558.1979935466256,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 10,
+            "key": 288,
+            "n": 6
+          },
+          {
+            "d_any_med": 597.6502518210716,
+            "d_any_min": 515.6372756115262,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 11,
+            "key": 288,
+            "n": 22
+          },
+          {
+            "d_any_med": 590.0415239633732,
+            "d_any_min": 536.3478348986163,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 12,
+            "key": 288,
+            "n": 13
+          },
+          {
+            "d_any_med": 865.9405291357416,
+            "d_any_min": 853.2901030715709,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 13,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 628.8163483879688,
+            "d_any_min": 607.8697892095186,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 14,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 678.2042465216233,
+            "d_any_min": 656.2994743257957,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 15,
+            "key": 288,
+            "n": 7
+          },
+          {
+            "d_any_med": 82.0,
+            "d_any_min": 0.0,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 16,
+            "key": 290,
+            "n": 35
+          },
+          {
+            "d_any_med": 490.6495694479978,
+            "d_any_min": 464.66331897321794,
+            "d_same_med": 490.6495694479978,
+            "d_same_min": 464.66331897321794,
+            "i": 18,
+            "key": 321,
+            "n": 5
+          },
+          {
+            "d_any_med": 182.72657168533038,
+            "d_any_min": 168.92894099859984,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 19,
+            "key": 288,
+            "n": 9
+          },
+          {
+            "d_any_med": 215.57842045276385,
+            "d_any_min": 5.3334935872856475,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 20,
+            "key": 288,
+            "n": 156
+          },
+          {
+            "d_any_med": 604.3988362589744,
+            "d_any_min": 403.3584596153243,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 21,
+            "key": 288,
+            "n": 26
+          },
+          {
+            "d_any_med": 631.03792265188,
+            "d_any_min": 510.9051198321658,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 22,
+            "key": 288,
+            "n": 14
+          }
+        ],
+        "worst_same_med": Infinity
+      },
+      "bg_geom_old_vs_R": {
+        "any_type": {
+          "frac_le_1": 0.004383527813792677,
+          "frac_le_10": 0.015743656232635673,
+          "frac_le_100": 0.1337902080632216,
+          "frac_le_2": 0.0055565845526949435,
+          "frac_le_20": 0.03204297092054084,
+          "frac_le_200": 0.26245601037229116,
+          "frac_le_5": 0.0086435759708588,
+          "frac_le_50": 0.06834598999814781,
+          "frac_le_500": 0.6501821324936716,
+          "mean": 414.564367111728,
+          "min": 0.0,
+          "n_verts": 16197,
+          "p50": 374.04922585810704,
+          "p90": 781.3671326017552
+        },
+        "n_shapes": 1641,
+        "same_type": {
+          "frac_le_1": 0.0014200160523553744,
+          "frac_le_10": 0.007779218373772921,
+          "frac_le_100": 0.01599061554608878,
+          "frac_le_2": 0.0020991541643514233,
+          "frac_le_20": 0.012471445329381985,
+          "frac_le_200": 0.017657590911897263,
+          "frac_le_5": 0.0038896091868864603,
+          "frac_le_50": 0.014632339322096684,
+          "frac_le_500": 0.0402543680928567,
+          "mean": Infinity,
+          "min": 0.0,
+          "n_verts": 16197,
+          "p50": Infinity,
+          "p90": NaN
+        },
+        "shapes_far_same_p50_gt_50": [
+          {
+            "d_any_med": 77.2576951365764,
+            "d_any_min": 1.2719974556943598,
+            "d_same_med": 77.2576951365764,
+            "d_same_min": 1.2719974556943598,
+            "i": 0,
+            "key": 321,
+            "n": 42
+          },
+          {
+            "d_any_med": 166.07285888805086,
+            "d_any_min": 0.648293581393454,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 1,
+            "key": 288,
+            "n": 45
+          },
+          {
+            "d_any_med": 17.15583327936336,
+            "d_any_min": 5.300176135087744,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 2,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 181.80211949143293,
+            "d_any_min": 4.503508460640458,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 5,
+            "key": 288,
+            "n": 20
+          },
+          {
+            "d_any_med": 680.478126024263,
+            "d_any_min": 633.8020195615667,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 6,
+            "key": 288,
+            "n": 10
+          },
+          {
+            "d_any_med": 499.1686428373374,
+            "d_any_min": 428.06541556163904,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 7,
+            "key": 288,
+            "n": 22
+          },
+          {
+            "d_any_med": 637.1946327457566,
+            "d_any_min": 611.7556701834623,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 8,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 701.8208071589178,
+            "d_any_min": 586.1228540165173,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 9,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 639.5811129163401,
+            "d_any_min": 558.1979935466256,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 10,
+            "key": 288,
+            "n": 6
+          },
+          {
+            "d_any_med": 597.6502518210716,
+            "d_any_min": 515.6372756115262,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 11,
+            "key": 288,
+            "n": 22
+          },
+          {
+            "d_any_med": 590.0415239633732,
+            "d_any_min": 536.3478348986163,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 12,
+            "key": 288,
+            "n": 13
+          },
+          {
+            "d_any_med": 865.9405291357416,
+            "d_any_min": 853.2901030715709,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 13,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 628.8163483879688,
+            "d_any_min": 607.8697892095186,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 14,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 678.2042465216233,
+            "d_any_min": 656.2994743257957,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 15,
+            "key": 288,
+            "n": 7
+          },
+          {
+            "d_any_med": 82.0,
+            "d_any_min": 0.0,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 16,
+            "key": 290,
+            "n": 35
+          },
+          {
+            "d_any_med": 490.6495694479978,
+            "d_any_min": 464.66331897321794,
+            "d_same_med": 490.6495694479978,
+            "d_same_min": 464.66331897321794,
+            "i": 18,
+            "key": 321,
+            "n": 5
+          },
+          {
+            "d_any_med": 182.72657168533038,
+            "d_any_min": 168.92894099859984,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 19,
+            "key": 288,
+            "n": 9
+          },
+          {
+            "d_any_med": 215.57842045276385,
+            "d_any_min": 5.3334935872856475,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 20,
+            "key": 288,
+            "n": 156
+          },
+          {
+            "d_any_med": 604.3988362589744,
+            "d_any_min": 403.3584596153243,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 21,
+            "key": 288,
+            "n": 26
+          },
+          {
+            "d_any_med": 631.03792265188,
+            "d_any_min": 510.9051198321658,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 22,
+            "key": 288,
+            "n": 14
+          }
+        ],
+        "worst_same_med": Infinity
+      },
+      "first_diff_byte": 87249,
+      "frame_len_abs_delta_vs_R": {
+        "new": 108306,
+        "old": 108306,
+        "verdict": "equal"
+      },
+      "ix": 1768,
+      "iy": 573,
+      "level": 0,
+      "metric_verdicts_new_vs_old_relative_to_R": {
+        "bg_any_frac_le_10": "equal",
+        "bg_any_frac_le_50": "equal",
+        "bg_any_mean": "worse",
+        "bg_any_p50": "equal",
+        "bg_same_p50": "equal",
+        "road_any_frac_le_10": "equal",
+        "road_any_p50": "equal"
+      },
+      "new": {
+        "bg_frame_size": 48816,
+        "bg_type_hist": {
+          "288": 1593,
+          "290": 4,
+          "291": 1,
+          "321": 38,
+          "322": 3,
+          "578": 2
+        },
+        "bounds": {
+          "lat_hi": -38.04166666666666,
+          "lat_lo": -38.06249999999999,
+          "lon_hi": 145.28125,
+          "lon_lo": 145.25
+        },
+        "divided": false,
+        "frame_len": 108466,
+        "frame_len_fallback": false,
+        "leaf_path": [
+          1960
+        ],
+        "n_bg": 1641,
+        "n_bg_coords": 16197,
+        "n_road": 693,
+        "n_road_pts": 5209,
+        "off": 289334976,
+        "ptype": 0,
+        "range": 4096,
+        "road_dc_hist": {
+          "0": 63,
+          "2": 141,
+          "3": 25,
+          "4": 26,
+          "7": 320,
+          "9": 118
+        },
+        "road_frame_size": 42402,
+        "sector_len": 108480,
+        "sha256": "c37cc79f13bc410088f9ea7d387b60649d40181514e4285e0d843e5eaec97aaf",
+        "status": "ok"
+      },
+      "old": {
+        "bg_frame_size": 48816,
+        "bg_type_hist": {
+          "288": 1593,
+          "290": 4,
+          "291": 1,
+          "321": 38,
+          "322": 3,
+          "578": 2
+        },
+        "bounds": {
+          "lat_hi": -38.04166666666666,
+          "lat_lo": -38.06249999999999,
+          "lon_hi": 145.28125,
+          "lon_lo": 145.25
+        },
+        "divided": false,
+        "frame_len": 108466,
+        "frame_len_fallback": false,
+        "leaf_path": [
+          1960
+        ],
+        "n_bg": 1641,
+        "n_bg_coords": 16197,
+        "n_road": 693,
+        "n_road_pts": 5209,
+        "off": 289334976,
+        "ptype": 0,
+        "range": 4096,
+        "road_dc_hist": {
+          "0": 63,
+          "2": 141,
+          "3": 25,
+          "4": 26,
+          "7": 320,
+          "9": 118
+        },
+        "road_frame_size": 42402,
+        "sector_len": 108480,
+        "sha256": "3d289dce4063bcadbe1bb4363412f0d34828388c0b6a5e605e1584d8e6fe3311",
+        "status": "ok"
+      },
+      "old_vs_new_hamming": {
+        "comparable": true,
+        "diff_bytes": 47,
+        "frac": 0.0004333155090074309,
+        "nbytes": 108466
+      },
+      "road_geom_new_vs_R": {
+        "any_type": {
+          "frac_le_1": 0.15396429257055097,
+          "frac_le_10": 0.6571318871184488,
+          "frac_le_100": 0.8942215396429257,
+          "frac_le_2": 0.2683816471491649,
+          "frac_le_20": 0.7394893453637934,
+          "frac_le_200": 0.9602610865809177,
+          "frac_le_5": 0.48185832213476676,
+          "frac_le_50": 0.8243424841620273,
+          "frac_le_500": 0.998272221155692,
+          "mean": 33.09156893859398,
+          "min": 0.0,
+          "n_verts": 5209,
+          "p50": 5.258966479752388,
+          "p90": 102.56134993251221
+        },
+        "n_shapes": 693,
+        "same_type": {
+          "frac_le_1": 0.09809944327126127,
+          "frac_le_10": 0.41101938951814165,
+          "frac_le_100": 0.5135342676137454,
+          "frac_le_2": 0.17392973699366482,
+          "frac_le_20": 0.4582453445958917,
+          "frac_le_200": 0.5715108466116338,
+          "frac_le_5": 0.3023612977538875,
+          "frac_le_50": 0.48627375695910924,
+          "frac_le_500": 0.6252639662123248,
+          "mean": Infinity,
+          "min": 0.0,
+          "n_verts": 5209,
+          "p50": 73.15131840684637,
+          "p90": NaN
+        },
+        "worst_same_med": Infinity
+      },
+      "road_geom_old_vs_R": {
+        "any_type": {
+          "frac_le_1": 0.15396429257055097,
+          "frac_le_10": 0.6571318871184488,
+          "frac_le_100": 0.8942215396429257,
+          "frac_le_2": 0.2683816471491649,
+          "frac_le_20": 0.7394893453637934,
+          "frac_le_200": 0.9602610865809177,
+          "frac_le_5": 0.48185832213476676,
+          "frac_le_50": 0.8243424841620273,
+          "frac_le_500": 0.998272221155692,
+          "mean": 33.09156893859398,
+          "min": 0.0,
+          "n_verts": 5209,
+          "p50": 5.258966479752388,
+          "p90": 102.56134993251221
+        },
+        "n_shapes": 693,
+        "same_type": {
+          "frac_le_1": 0.09809944327126127,
+          "frac_le_10": 0.41101938951814165,
+          "frac_le_100": 0.5135342676137454,
+          "frac_le_2": 0.17392973699366482,
+          "frac_le_20": 0.4582453445958917,
+          "frac_le_200": 0.5715108466116338,
+          "frac_le_5": 0.3023612977538875,
+          "frac_le_50": 0.48627375695910924,
+          "frac_le_500": 0.6252639662123248,
+          "mean": Infinity,
+          "min": 0.0,
+          "n_verts": 5209,
+          "p50": 73.15131840684637,
+          "p90": NaN
+        },
+        "worst_same_med": Infinity
+      },
+      "shape_identity_diff_bg": {
+        "added": 1,
+        "added_sample": [
+          {
+            "n_pts": 6,
+            "sc": 2,
+            "tc": 288
+          }
+        ],
+        "identical_multiset": false,
+        "n_new": 1641,
+        "n_old": 1641,
+        "removed": 1,
+        "removed_sample": [
+          {
+            "n_pts": 6,
+            "sc": 2,
+            "tc": 288
+          }
+        ]
+      }
+    },
+    {
+      "R": {
+        "bg_frame_size": 2618,
+        "bg_type_hist": {
+          "289": 8,
+          "291": 5
+        },
+        "bounds": {
+          "lat_hi": -34.83333333333333,
+          "lat_lo": -34.916666666666664,
+          "lon_hi": 146.875,
+          "lon_lo": 146.75
+        },
+        "divided": false,
+        "frame_len": 160,
+        "frame_len_fallback": false,
+        "leaf_path": [
+          729
+        ],
+        "n_bg": 13,
+        "n_bg_coords": 1171,
+        "n_road": 6,
+        "n_road_pts": 341,
+        "off": 279995712,
+        "ptype": 0,
+        "range": 16384,
+        "road_dc_hist": {
+          "2": 6
+        },
+        "road_frame_size": 1284,
+        "sector_len": 5440,
+        "sha256": "808d63383542b6a6c1e36e026d6ae7576ece31df94179a11566ff28a06ad470c",
+        "status": "ok"
+      },
+      "accept_geom_no_worse": false,
+      "accept_len_no_worse": false,
+      "accept_no_worse_vs_R": false,
+      "bg_geom_new_vs_R": {
+        "any_type": {
+          "frac_le_1": 0.0,
+          "frac_le_10": 0.005376344086021506,
+          "frac_le_100": 0.06144393241167435,
+          "frac_le_2": 0.0015360983102918587,
+          "frac_le_20": 0.01228878648233487,
+          "frac_le_200": 0.10599078341013825,
+          "frac_le_5": 0.0038402457757296467,
+          "frac_le_50": 0.0314900153609831,
+          "frac_le_500": 0.23886328725038403,
+          "mean": 1303.21220426538,
+          "min": 1.043891220521559,
+          "n_verts": 1302,
+          "p50": 1391.6152209019288,
+          "p90": 2522.3951503040503
+        },
+        "n_shapes": 32,
+        "same_type": {
+          "frac_le_1": 0.0,
+          "frac_le_10": 0.0007680491551459293,
+          "frac_le_100": 0.010752688172043012,
+          "frac_le_2": 0.0007680491551459293,
+          "frac_le_20": 0.002304147465437788,
+          "frac_le_200": 0.019969278033794162,
+          "frac_le_5": 0.0007680491551459293,
+          "frac_le_50": 0.005376344086021506,
+          "frac_le_500": 0.043010752688172046,
+          "mean": Infinity,
+          "min": 1.043891220521559,
+          "n_verts": 1302,
+          "p50": Infinity,
+          "p90": NaN
+        },
+        "shapes_far_same_p50_gt_50": [
+          {
+            "d_any_med": 1741.2446697688792,
+            "d_any_min": 993.86166039306,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 0,
+            "key": 288,
+            "n": 109
+          },
+          {
+            "d_any_med": 454.2733628942816,
+            "d_any_min": 5.143886469281598,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 1,
+            "key": 288,
+            "n": 133
+          },
+          {
+            "d_any_med": 472.30709081112934,
+            "d_any_min": 361.79522312775714,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 2,
+            "key": 288,
+            "n": 19
+          },
+          {
+            "d_any_med": 418.3061080113261,
+            "d_any_min": 91.80288247528921,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 3,
+            "key": 288,
+            "n": 17
+          },
+          {
+            "d_any_med": 1936.9597790269506,
+            "d_any_min": 1880.112677778486,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 4,
+            "key": 288,
+            "n": 7
+          },
+          {
+            "d_any_med": 512.4929244016837,
+            "d_any_min": 1.0726562965689421,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 5,
+            "key": 288,
+            "n": 134
+          },
+          {
+            "d_any_med": 223.8759047047951,
+            "d_any_min": 3.873448926610496,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 6,
+            "key": 288,
+            "n": 18
+          },
+          {
+            "d_any_med": 1517.5399227405264,
+            "d_any_min": 544.1741990369985,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 7,
+            "key": 288,
+            "n": 76
+          },
+          {
+            "d_any_med": 327.86393743133965,
+            "d_any_min": 3.7280905992561064,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 8,
+            "key": 288,
+            "n": 59
+          },
+          {
+            "d_any_med": 336.44161901537115,
+            "d_any_min": 5.8584871453940295,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 9,
+            "key": 288,
+            "n": 54
+          },
+          {
+            "d_any_med": 885.981462026735,
+            "d_any_min": 810.0598743301517,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 10,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 761.7276416145841,
+            "d_any_min": 724.7537512838375,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 11,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 1470.4613446950268,
+            "d_any_min": 1401.7608375086315,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 12,
+            "key": 288,
+            "n": 12
+          },
+          {
+            "d_any_med": 1898.7933010203108,
+            "d_any_min": 1110.8915338591833,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 13,
+            "key": 288,
+            "n": 43
+          },
+          {
+            "d_any_med": 1967.0491451520486,
+            "d_any_min": 1504.2473200907127,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 14,
+            "key": 288,
+            "n": 34
+          },
+          {
+            "d_any_med": 1833.9814654373563,
+            "d_any_min": 1110.8915338591833,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 15,
+            "key": 288,
+            "n": 40
+          },
+          {
+            "d_any_med": 1956.0404270061363,
+            "d_any_min": 1473.711301442643,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 16,
+            "key": 288,
+            "n": 42
+          },
+          {
+            "d_any_med": 2817.7854873930064,
+            "d_any_min": 2715.91770862075,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 17,
+            "key": 288,
+            "n": 24
+          },
+          {
+            "d_any_med": 884.7349885698026,
+            "d_any_min": 883.8489689984418,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 18,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 1066.6257085122868,
+            "d_any_min": 1062.9665373360822,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 19,
+            "key": 288,
+            "n": 4
+          }
+        ],
+        "worst_same_med": Infinity
+      },
+      "bg_geom_old_vs_R": {
+        "any_type": {
+          "frac_le_1": 0.0,
+          "frac_le_10": 0.005380476556495004,
+          "frac_le_100": 0.061491160645657184,
+          "frac_le_2": 0.0015372790161414297,
+          "frac_le_20": 0.012298232129131437,
+          "frac_le_200": 0.10607225211375865,
+          "frac_le_5": 0.003843197540353574,
+          "frac_le_50": 0.03151421983089931,
+          "frac_le_500": 0.23904688700999233,
+          "mean": 1303.5410714444001,
+          "min": 1.043891220521559,
+          "n_verts": 1301,
+          "p50": 1391.9098390341621,
+          "p90": 2523.6863909764293
+        },
+        "n_shapes": 31,
+        "same_type": {
+          "frac_le_1": 0.0,
+          "frac_le_10": 0.0007686395080707148,
+          "frac_le_100": 0.010760953112990008,
+          "frac_le_2": 0.0007686395080707148,
+          "frac_le_20": 0.0023059185242121443,
+          "frac_le_200": 0.019984627209838585,
+          "frac_le_5": 0.0007686395080707148,
+          "frac_le_50": 0.005380476556495004,
+          "frac_le_500": 0.04304381245196003,
+          "mean": Infinity,
+          "min": 1.043891220521559,
+          "n_verts": 1301,
+          "p50": Infinity,
+          "p90": NaN
+        },
+        "shapes_far_same_p50_gt_50": [
+          {
+            "d_any_med": 1741.2446697688792,
+            "d_any_min": 993.86166039306,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 0,
+            "key": 288,
+            "n": 109
+          },
+          {
+            "d_any_med": 454.2733628942816,
+            "d_any_min": 5.143886469281598,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 1,
+            "key": 288,
+            "n": 133
+          },
+          {
+            "d_any_med": 472.30709081112934,
+            "d_any_min": 361.79522312775714,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 2,
+            "key": 288,
+            "n": 19
+          },
+          {
+            "d_any_med": 418.3061080113261,
+            "d_any_min": 91.80288247528921,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 3,
+            "key": 288,
+            "n": 17
+          },
+          {
+            "d_any_med": 1936.9597790269506,
+            "d_any_min": 1880.112677778486,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 4,
+            "key": 288,
+            "n": 7
+          },
+          {
+            "d_any_med": 512.4929244016837,
+            "d_any_min": 1.0726562965689421,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 5,
+            "key": 288,
+            "n": 134
+          },
+          {
+            "d_any_med": 223.8759047047951,
+            "d_any_min": 3.873448926610496,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 6,
+            "key": 288,
+            "n": 18
+          },
+          {
+            "d_any_med": 1517.5399227405264,
+            "d_any_min": 544.1741990369985,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 7,
+            "key": 288,
+            "n": 76
+          },
+          {
+            "d_any_med": 327.86393743133965,
+            "d_any_min": 3.7280905992561064,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 8,
+            "key": 288,
+            "n": 59
+          },
+          {
+            "d_any_med": 336.44161901537115,
+            "d_any_min": 5.8584871453940295,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 9,
+            "key": 288,
+            "n": 54
+          },
+          {
+            "d_any_med": 885.981462026735,
+            "d_any_min": 810.0598743301517,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 10,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 761.7276416145841,
+            "d_any_min": 724.7537512838375,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 11,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 1470.4613446950268,
+            "d_any_min": 1401.7608375086315,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 12,
+            "key": 288,
+            "n": 12
+          },
+          {
+            "d_any_med": 1898.7933010203108,
+            "d_any_min": 1110.8915338591833,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 13,
+            "key": 288,
+            "n": 43
+          },
+          {
+            "d_any_med": 1967.0491451520486,
+            "d_any_min": 1504.2473200907127,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 14,
+            "key": 288,
+            "n": 34
+          },
+          {
+            "d_any_med": 1833.9814654373563,
+            "d_any_min": 1110.8915338591833,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 15,
+            "key": 288,
+            "n": 40
+          },
+          {
+            "d_any_med": 1956.0404270061363,
+            "d_any_min": 1473.711301442643,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 16,
+            "key": 288,
+            "n": 42
+          },
+          {
+            "d_any_med": 2817.7854873930064,
+            "d_any_min": 2715.91770862075,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 17,
+            "key": 288,
+            "n": 24
+          },
+          {
+            "d_any_med": 884.7349885698026,
+            "d_any_min": 883.8489689984418,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 18,
+            "key": 288,
+            "n": 5
+          },
+          {
+            "d_any_med": 1066.6257085122868,
+            "d_any_min": 1062.9665373360822,
+            "d_same_med": Infinity,
+            "d_same_min": Infinity,
+            "i": 19,
+            "key": 288,
+            "n": 4
+          }
+        ],
+        "worst_same_med": Infinity
+      },
+      "first_diff_byte": null,
+      "frame_len_abs_delta_vs_R": {
+        "new": 3118,
+        "old": 3106,
+        "verdict": "worse"
+      },
+      "ix": 1817,
+      "iy": 726,
+      "level": 0,
+      "metric_verdicts_new_vs_old_relative_to_R": {
+        "bg_any_frac_le_10": "worse",
+        "bg_any_frac_le_50": "worse",
+        "bg_any_mean": "better",
+        "bg_any_p50": "better",
+        "bg_same_p50": "equal",
+        "road_any_frac_le_10": "equal",
+        "road_any_p50": "equal"
+      },
+      "new": {
+        "bg_frame_size": 2936,
+        "bg_type_hist": {
+          "288": 30,
+          "291": 2
+        },
+        "bounds": {
+          "lat_hi": -34.85416666666666,
+          "lat_lo": -34.87499999999999,
+          "lon_hi": 146.8125,
+          "lon_lo": 146.78125
+        },
+        "divided": false,
+        "frame_len": 3278,
+        "frame_len_fallback": false,
+        "leaf_path": [
+          729
+        ],
+        "n_bg": 32,
+        "n_bg_coords": 1302,
+        "n_road": 1,
+        "n_road_pts": 20,
+        "off": 548026944,
+        "ptype": 0,
+        "range": 4096,
+        "road_dc_hist": {
+          "9": 1
+        },
+        "road_frame_size": 186,
+        "sector_len": 3296,
+        "sha256": "4730f87b73e585f06f2a0a1c8e422fa37aa0938d16408d6811a624682c2e65be",
+        "status": "ok"
+      },
+      "old": {
+        "bg_frame_size": 2924,
+        "bg_type_hist": {
+          "288": 29,
+          "291": 2
+        },
+        "bounds": {
+          "lat_hi": -34.85416666666666,
+          "lat_lo": -34.87499999999999,
+          "lon_hi": 146.8125,
+          "lon_lo": 146.78125
+        },
+        "divided": false,
+        "frame_len": 3266,
+        "frame_len_fallback": false,
+        "leaf_path": [
+          729
+        ],
+        "n_bg": 31,
+        "n_bg_coords": 1301,
+        "n_road": 1,
+        "n_road_pts": 20,
+        "off": 548026944,
+        "ptype": 0,
+        "range": 4096,
+        "road_dc_hist": {
+          "9": 1
+        },
+        "road_frame_size": 186,
+        "sector_len": 3296,
+        "sha256": "1e976eece3dc599113c1f56e24ecbffcbfef2de900e3d89f7f49f31373dcaf63",
+        "status": "ok"
+      },
+      "old_vs_new_hamming": {
+        "comparable": false,
+        "len_a": 3266,
+        "len_b": 3278
+      },
+      "road_geom_new_vs_R": {
+        "any_type": {
+          "frac_le_1": 0.0,
+          "frac_le_10": 0.0,
+          "frac_le_100": 0.0,
+          "frac_le_2": 0.0,
+          "frac_le_20": 0.0,
+          "frac_le_200": 0.0,
+          "frac_le_5": 0.0,
+          "frac_le_50": 0.0,
+          "frac_le_500": 0.0,
+          "mean": 7103.520894466844,
+          "min": 6631.854416375262,
+          "n_verts": 20,
+          "p50": 6798.244256753809,
+          "p90": 7820.232477363038
+        },
+        "n_shapes": 1,
+        "same_type": {
+          "frac_le_1": 0.0,
+          "frac_le_10": 0.0,
+          "frac_le_100": 0.0,
+          "frac_le_2": 0.0,
+          "frac_le_20": 0.0,
+          "frac_le_200": 0.0,
+          "frac_le_5": 0.0,
+          "frac_le_50": 0.0,
+          "frac_le_500": 0.0,
+          "mean": Infinity,
+          "min": Infinity,
+          "n_verts": 20,
+          "p50": Infinity,
+          "p90": NaN
+        },
+        "worst_same_med": Infinity
+      },
+      "road_geom_old_vs_R": {
+        "any_type": {
+          "frac_le_1": 0.0,
+          "frac_le_10": 0.0,
+          "frac_le_100": 0.0,
+          "frac_le_2": 0.0,
+          "frac_le_20": 0.0,
+          "frac_le_200": 0.0,
+          "frac_le_5": 0.0,
+          "frac_le_50": 0.0,
+          "frac_le_500": 0.0,
+          "mean": 7103.520894466844,
+          "min": 6631.854416375262,
+          "n_verts": 20,
+          "p50": 6798.244256753809,
+          "p90": 7820.232477363038
+        },
+        "n_shapes": 1,
+        "same_type": {
+          "frac_le_1": 0.0,
+          "frac_le_10": 0.0,
+          "frac_le_100": 0.0,
+          "frac_le_2": 0.0,
+          "frac_le_20": 0.0,
+          "frac_le_200": 0.0,
+          "frac_le_5": 0.0,
+          "frac_le_50": 0.0,
+          "frac_le_500": 0.0,
+          "mean": Infinity,
+          "min": Infinity,
+          "n_verts": 20,
+          "p50": Infinity,
+          "p90": NaN
+        },
+        "worst_same_med": Infinity
+      },
+      "shape_identity_diff_bg": {
+        "added": 2,
+        "added_sample": [
+          {
+            "n_pts": 4,
+            "sc": 2,
+            "tc": 288
+          },
+          {
+            "n_pts": 4,
+            "sc": 2,
+            "tc": 288
+          }
+        ],
+        "identical_multiset": false,
+        "n_new": 32,
+        "n_old": 31,
+        "removed": 1,
+        "removed_sample": [
+          {
+            "n_pts": 7,
+            "sc": 2,
+            "tc": 288
+          }
+        ]
+      }
+    }
+  ],
+  "kind": "r_dvd_per_cell_p3",
+  "new_disc": "output/scratch-48/census_builds/au_p3",
+  "new_sha256_prefix": "88bd7852",
+  "old_disc": "output/scratch-48/census_builds/au",
+  "old_sha256_prefix": "4e6b0de7",
+  "r_disc": "/run/media/codyh/464210-8480",
+  "schema": 1
+}

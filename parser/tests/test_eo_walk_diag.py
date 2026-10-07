@@ -60,16 +60,16 @@ def decline_rings():
 
 
 @pytest.mark.parametrize("case", H2)
-@pytest.mark.xfail(strict=True, reason="plan 48 P3: H2 equal-angle ties still declines at :885")
-def test_xfail_h2_ring_passes_after_robust_walk(probe, decline_rings, case):
+def test_h2_ring_passes_after_robust_walk(probe, decline_rings, case):
+    """Plan 48 P3: former H2 declines now clip."""
     from test_bg_eo_stitch import probe_output
     size, _nr, _blob = probe_output(probe, decline_rings[case], [0, 0, 4096, 4096])
     assert size >= 0, f"{case} still declines size={size}"
 
 
 @pytest.mark.parametrize("case", H1)
-@pytest.mark.xfail(strict=True, reason="plan 48 P3: H1 rounding non-planarity still declines at :885")
-def test_xfail_h1_ring_passes_after_robust_walk(probe, decline_rings, case):
+def test_h1_ring_passes_after_robust_walk(probe, decline_rings, case):
+    """Plan 48 P3: former H1 declines now clip."""
     from test_bg_eo_stitch import probe_output
     size, _nr, _blob = probe_output(probe, decline_rings[case], [0, 0, 4096, 4096])
     assert size >= 0, f"{case} still declines size={size}"

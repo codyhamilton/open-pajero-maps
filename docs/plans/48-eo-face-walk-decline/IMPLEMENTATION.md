@@ -65,3 +65,45 @@
 - AU/Perth sha gates + guard_hits=0 verified; unit tests green.
 - Concerns carried: (1) 4 decline-site counters never incremented + `eo_stats_note_margin` unused (walk-class evidence still solid); (2) wall single-run Δ=+0.66 s > 0.51 s noise — P3 requires median-of-5; (3) provenance.md census note pending.
 - Log: `output/scratch-48/runs/flash_p2.stdout`.
+
+## Phase 3 — robust walk (2026-10-07 ~17:12 AEST)
+
+- **Fix:** `eo_split_on_vertices` (Design (ii)-class: vertex-on-edge / T-junction split before `eo_connect`). Legacy min-turn walk kept; exact-angular and cyclic-order experiments rejected (parity fail on r359 without split; cyclic+split equivalent to split-only for gates).
+- **Seeded declines:** all five size>0, walk_used=0.
+- **Stress:** 1k nfail=0; **20k nfail=0** (seed 4314); `KNOWN_DECLINES=∅`; r359 xfail flipped to pass.
+- **Perth `-j4`:** sha `04be2f6e…` unchanged; guard_hits=0.
+- **AU `-j4`:** sha **changed** `4e6b0de7…` → `88bd7852…`; oracle_chain diff **2 changed / 0 added / 0 removed** L0 cells `(1768,573)`, `(1817,726)`; guard_hits=0; wall single-run ~37.49 s (plan-41 median 37.38, noise 0.51).
+- Evidence: `triage/.../eo_decline/p3_fix/`; oracle `output/scratch-48/oracle_p3/`.
+- **Next:** Flash P3; record successor oracle hop; median-of-5 wall optional confirm; then close Phase 3 / plan 48.
+
+## Close gates (Phase 3) — 2026-10-07
+
+Encoder/build surfaces touched (`parser/kiwiw/_cenc.c`). Gates:
+
+(a) full `parser/tests`: **1478 passed, 10 skipped** in 414.59s at worktree tip parent `094b11f` (P3 uncommitted); log `output/scratch-48/runs/p3_full_suite2.txt`. Restamp with land sha on commit.
+
+(b) AU encode wall at `-j4`: single run wall_s≈37.49 s (encode_bench.json); plan-41 median baseline 37.38 s; noise band 0.51 s. Median-of-3 deferred until flock free after mass chunk2 (≤ -j4 under run_heavy_python).
+
+(c) AU / Perth sha gate: Perth `04be2f6e…` MATCH (byte-identical). AU `4e6b0de7…` → successor `88bd7852…` (NOT byte-identical; Design successor-oracle path). oracle_chain diff: 2 changed / 0 added / 0 removed L0 cells (1768,573) and (1817,726). Evidence: `eo_decline/p3_fix/`, `output/scratch-48/oracle_p3/diff.json`. guard_hits=0 both discs.
+
+
+## Design ACCEPT successor 88bd7852 — 2026-10-07 ~22:29 AEST
+
+- Ruling: `P3-ORACLE-ACCEPT.md` (Design). HOLD lifted. Soft residual (input ring IDs) is **not** a land gate.
+- R-DVD: `all_cells_accept_no_worse_R_coverage=true` on L0 (1768,573) and (1817,726); equal coverage metrics; witnesses in `eo_decline/p3_fix/R_DVD_COMPARE.md`.
+- **Next:** Flash comprehensive review of P3 (`_cenc.c` `eo_split_on_vertices` + tests + p3_fix). On PASS: commit P3 + evidence + promote oracle `88bd7852` (protect `output/scratch-48/census_builds/au_p3` as disc in force; predecessor `4e6b0de7` at scratch-34 kept); provenance + target-disc note; terminal review + close-out.
+- Plan 44 stitch: `phase2_decisions_full.tsv.gz` 95059 rows (outside_R_cap=7258). Standing widen@16 queued for heavy-lock free (option c; `--stop-threshold` huge).
+
+
+## Flash review (Phase 3 land) — 2026-10-07 ~22:41 AEST
+- Seat: OpenCode DeepSeek Flash (`opencode run -m deepseek/deepseek-flash`).
+- Verdict: **PASS-WITH-CONCERNS**; land recommendation **LAND**.
+- Checklist A–E met; F partially (suite log at pre-land tip; wall median-of-5 deferred; successor promotion done in land commit).
+- Non-blocking concerns: wall median deferred; `eo_split_on_vertices` silent after 16 rounds; `diff.json unexplained_count=2` explained in prose.
+- Transcript: `output/scratch-48/runs/flash_p3_accept.stdout`.
+
+## Phase 3 LANDED — successor oracle 88bd7852
+- Design ACCEPT (`P3-ORACLE-ACCEPT.md`) + Flash LAND.
+- Disc in force: `output/scratch-48/G_new/ALLDATA.KWI` (hardlink of `census_builds/au_p3`), sha `88bd7852…`. Predecessor `4e6b0de7…` at `scratch-34/G_new` kept.
+- `oracle_chain.{tsv,json}` AU hop `plan 48 P3`; `successor_oracle_88bd7852.json` status classified-diff-verified-Design-accepted.
+- Soft residual: input-ring IDs (not a land gate). Wall median-of-5 deferred under flock.
