@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "plan": 49,
+  "phase": 1,
+  "recorded_at": "2026-10-07 14:07:31 AEST",
+  "hop": "3-14",
+  "old": {
+    "path": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-3-11/G_new/ALLDATA.KWI",
+    "sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+    "size": 1731021792,
+    "producer_commit_expected": "33006aa",
+    "pin_prefix": "013586b5",
+    "status": "located_sha_match"
+  },
+  "new": {
+    "path": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-14/G_new/ALLDATA.KWI",
+    "sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+    "size": 1692105152,
+    "producer_commit_expected": "d35b565",
+    "pin_prefix": "4ed9cd80",
+    "status": "located_sha_match"
+  },
+  "plan31_reference": {
+    "path": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-31/diff-3-14-au.cells.tsv",
+    "sha256": "77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f",
+    "size": 40041214,
+    "n_cells_expected": 246123,
+    "status": "located_sha_match"
+  },
+  "rebuild_needed": false
+}
