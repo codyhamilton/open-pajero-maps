@@ -20,3 +20,17 @@ See `RECIPE-FREE-BETWEEN.md`. Fresh wrapper scopes control→mass; resume semant
 ## Close
 
 Pending Codex review after land commits.
+
+## Codex review (close) — 2026-10-08 ~00:47 AEST
+
+- Seat: Codex CLI 0.160.0 (`codex exec -s read-only`), model gpt-6-sol. Soft-move off Flash (CHM).
+- Verdict: **PASS-WITH-CONCERNS**; close recommendation **LAND**.
+- Checklist A–F all **met** (see `output/scratch-57/runs/codex_review.out.txt`).
+- Concerns addressed:
+  1. Cache unit tests cover clear/max levers directly; control every-N wiring verified by source + argparse (mass harness already proves the leaf-loop clear path). Accepted — not a land blocker.
+  2. Recipe wording fixed: exited-process caches are freed by process exit; optional new-interpreter clear is host hygiene only.
+- Prompt/log: `output/scratch-57/runs/codex_review_{prompt.md,out.txt,stdout,stderr}`.
+
+## CLOSE-OUT — 2026-10-08 ~00:48 AEST
+
+Plan 57 Phases 1–3 complete under Codex PASS-WITH-CONCERNS / LAND. Tip at close: see git log. Do not start plan 58 until after this close (Design queue next).

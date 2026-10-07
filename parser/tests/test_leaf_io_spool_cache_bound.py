@@ -77,3 +77,19 @@ def test_refuse_whole_level(leaf_io):
 
     with pytest.raises(RuntimeError, match="refused under mass/control"):
         leaf_io.spool_level_cells(_Fake(), 0)
+
+
+def test_control_and_mass_expose_cache_flags():
+    """Plan 57: control/mass argparse advertise clear-every + max-cells (wiring smoke)."""
+    import ast
+    from pathlib import Path
+
+    p5 = (
+        Path(__file__).resolve().parents[1].parent
+        / "docs/plans/04-c-core-orchestration/triage/historical_bg/p5_owner_exclusive"
+    )
+    for name in ("control.py", "mass_decide.py"):
+        src = (p5 / name).read_text()
+        assert "--cache-clear-every" in src, name
+        assert "--cache-max-cells" in src, name
+        ast.parse(src)

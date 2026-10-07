@@ -13,15 +13,7 @@ Wrapper takes `output/.heavy.lock` itself — do **not** wrap with an outer `flo
      docs/plans/04-c-core-orchestration/triage/historical_bg/p5_owner_exclusive/control.py \
      -n 200 --seed 44 --r-cap 8 --cache-clear-every 50 --cache-max-cells 4096
    ```
-2. **Exit the process** (wrapper scope ends). Optional host hygiene between phases:
-   ```bash
-   .venv-rp/bin/python -c "
-   import sys; sys.path[:0]=['docs/plans/04-c-core-orchestration/triage/historical_bg/p5_owner_exclusive']
-   from leaf_io import clear_spool_caches; clear_spool_caches()
-   import gc; gc.collect()
-   "
-   ```
-   Plan 56 inter-phase samples used `clear_spool_caches+gc` between separate wrapper scopes; MemAvailable stayed ~20–21 GiB.
+2. **Exit the process** (wrapper scope ends). In-process spool caches die with that interpreter — a follow-up `clear_spool_caches()` in a *new* Python cannot clear the exited process (Codex review note). Optional: sample MemAvailable / run `gc` only as host hygiene. Plan 56 inter-phase samples used `clear_spool_caches+gc` between separate wrapper scopes; MemAvailable stayed ~20–21 GiB.
 3. **Start mass** under a **fresh** `run_heavy_python.py` scope (new cgroup / new peak log):
    ```bash
    .venv-rp/bin/python -B parser/tools/run_heavy_python.py \
