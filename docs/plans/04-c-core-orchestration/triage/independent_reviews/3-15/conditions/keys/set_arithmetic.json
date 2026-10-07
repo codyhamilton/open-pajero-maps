@@ -58,6 +58,7 @@
     "source_table": "docs/plans/04-c-core-orchestration/triage/rebaseline_3-17_9064.md",
     "historic_188_keys": 188,
     "matched_3_12_native_row_via_dump_row_original": 188,
+    "matched_3_14_native_row_via_keys_776_dump_row_original": 188,
     "mismatches": 0,
     "symdiff_vs_note_table": 0
   }

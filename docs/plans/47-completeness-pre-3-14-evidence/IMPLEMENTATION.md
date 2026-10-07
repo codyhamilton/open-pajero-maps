@@ -28,3 +28,13 @@ Units:
 - Native order: 188/188 `dump_row_original` match 3-17 note table 3-12 native rows (`native_order_verify.json`).
 - Residuals R-G8-2-b, R-G8-3-a, R-G8-4-d discharged (plan 47 Phase 1).
 
+
+### Flash review (Phase 1)
+
+- Seat: OpenCode DeepSeek Flash (`opencode run -m deepseek/deepseek-flash`), 2026-10-07 ~13:57–14:00 AEST.
+- Verdict: **PASS-WITH-CONCERNS**. All four Phase 1 claims independently verified.
+- Concerns addressed / noted:
+  1. R-G8-2-b identity rewrite: DESIGN close-text is key-list + set-diff (C2b/C2c). G2b stitch/frame-artifact limbs were not Phase 1 surfaces; left named in 3-15 REVIEW / residual close-text history; not re-proven here.
+  2. 3-14 native-order half: recorded in `native_order_verify.json` (188/188 via `keys_776.dump_row_original`).
+  3. 776 provenance via committed `keys_776.tsv` (= per_rule 776); scratch path cited only as decode source.
+- Log: `output/scratch-47/runs/flash_p1.stdout`.
