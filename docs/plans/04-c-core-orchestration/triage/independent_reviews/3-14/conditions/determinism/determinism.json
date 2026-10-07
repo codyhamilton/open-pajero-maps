@@ -1,0 +1,14 @@
+{
+  "d35_j1": "c4965442effea2ea9a7cb1aca7b8f5abe4db050e968ff05572626ac9c2d21da5",
+  "d35_j4": "c4965442effea2ea9a7cb1aca7b8f5abe4db050e968ff05572626ac9c2d21da5",
+  "expected_c4965442": "c4965442effea2ea9a7cb1aca7b8f5abe4db050e968ff05572626ac9c2d21da5",
+  "d35_j1_eq_j4": true,
+  "d35_reproduces_c496": true,
+  "tip_j1": "c4965442effea2ea9a7cb1aca7b8f5abe4db050e968ff05572626ac9c2d21da5",
+  "tip_j4": "c4965442effea2ea9a7cb1aca7b8f5abe4db050e968ff05572626ac9c2d21da5",
+  "tip_j1_eq_j4": true,
+  "j12": "unverifiable:cap",
+  "live_au_oracle": "0c22b266e7b406bb0cabeee814c9f0cfeebebad6071e131252357f1d3e1aa25a",
+  "spool_tip": "output/scratch-50/spool_overlay",
+  "spool_d35": "output/extract_timing/spool"
+}

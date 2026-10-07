@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "n_rows": 80,
+  "locked_R": 8,
+  "class_counts": {
+    "producer_home_outside_R_cap": 80
+  },
+  "proven_fixed": 0,
+  "ref_old_sha": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+  "ref_new_sha": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+  "window_control": "ALL_OK",
+  "source_tag": "rejected_offline_producer_path",
+  "widen16": {
+    "n": 80,
+    "n_recovered": 0,
+    "n_still_outside": 80,
+    "by_recover_r": {},
+    "n_recover_radius_gt8": 0,
+    "stop_for_design": false,
+    "note": "At R=8, Moore neighbourhood already returns the full bbox-meeting candidate set for these cells (cands@8 == cands@16 == 1483..3533). Expanding to R=16 cannot add producers. All 80 remain producer_home_outside_R_cap. Assumption 2 residual path.",
+    "phase1_class": "producer_home_outside_R_cap",
+    "background_k1_on_d35_windows": "failing 0 (completeness noise only); clause (c) would pass if producer resolved"
+  },
+  "disposition": "all_80_producer_home_outside_R_cap"
+}

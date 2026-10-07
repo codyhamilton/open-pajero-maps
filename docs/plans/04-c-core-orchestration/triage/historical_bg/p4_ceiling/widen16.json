@@ -1,0 +1,11 @@
+{
+  "n": 80,
+  "n_recovered": 0,
+  "n_still_outside": 80,
+  "by_recover_r": {},
+  "n_recover_radius_gt8": 0,
+  "stop_for_design": false,
+  "note": "At R=8, Moore neighbourhood already returns the full bbox-meeting candidate set for these cells (cands@8 == cands@16 == 1483..3533). Expanding to R=16 cannot add producers. All 80 remain producer_home_outside_R_cap. Assumption 2 residual path.",
+  "phase1_class": "producer_home_outside_R_cap",
+  "background_k1_on_d35_windows": "failing 0 (completeness noise only); clause (c) would pass if producer resolved"
+}
