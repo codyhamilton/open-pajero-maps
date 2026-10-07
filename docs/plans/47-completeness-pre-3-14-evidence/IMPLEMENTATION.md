@@ -45,3 +45,13 @@ Units:
 - Historic 188: **faces 885 / meets 189 / in_cell 205 / representable 0** — **exact match** to 3-15 (`match_3_15_188: true`).
 - Added 89: meets 90 / faces 625 / in_cell 137 / repr 0 (no 3-15 face target for 89; all not-representable).
 - R-G8-2-a / R-G8-2-d regenerable from tables. Next: legacy-contract R-G8-2-c; Phase 3 r89.
+
+## Phase 2 close (legacy contract) — 2026-10-07 ~15:34 AEST
+- R-G8-2-a / R-G8-2-d: regenerable from `representability/table_{188,89}.tsv` (exact 885/189/205/0).
+- R-G8-2-c: **unverifiable:producer_deleted** — see `representability/legacy_contract_r_g8_2_c.json`. Arithmetic 363+132+56+188=739 holds; no tracked producer.
+
+## Phase 3 — r89 baseline + cause — 2026-10-07 ~15:34 AEST
+- Baseline half R-G8-3-b: **89/89** padded-frame sha match vs disc `4ed9cd80…` (`r89/baseline_match.json`).
+- Cause labels (`r89/cause_labels.json`): **89/89 chord-artefact** — legacy IB vertices lie outside the TSV-named source EO interior (xor pip); consistent with 3-16 0/89 counterfactual. No `valid-lost` / build-regression keys.
+- R-DVD limb: `unverifiable:reference_disc_not_mounted`.
+- Next: update residuals end-states; Flash review; close-out.

@@ -1,0 +1,9 @@
+{
+  "residual": "R-G8-2-c",
+  "claim": "legacy contract 739 = 363 / 132 / 56 / 188",
+  "end_state": "unverifiable:producer_deleted",
+  "rationale": "No tracked legacy-contract producer exists at a cited commit. The 3-08/3-15 probe that measured the 363/132/56/188 partition lived only in deleted scratch-3-15/. Arithmetic 363+132+56+188=739 holds; plan 14 representability (faces/meets/in-cell) does not recompute the O01/O05/O04/unattr partition, so superseded-by-proof does not apply. Matches 3-15 REVIEW G3c UNVERIFIABLE (measurement).",
+  "arithmetic_check": {"o01": 363, "o05": 132, "o04_or_mid": 56, "unattr_historic": 188, "sum": 739},
+  "plan": 47,
+  "phase": 2
+}

@@ -317,7 +317,7 @@ def _e2_job(job):
     process's spill file. E2 divides, retiles, trims and adds the name halo
     itself (C); every frame, whole or divided, is written by it.
 
-    Returns `(spill_path, rec, stats, digest_lines, bench, dump_recs)`: `rec`
+    Returns `(spill_path, rec, stats, digest_lines, bench, dump_recs, eo_census)`: `rec`
     is a `frame_table.FRAME_DTYPE` array in canonical order (stable on the
     cell key, so a divided parent's sub-frames keep their order), so no frame
     bytes are pickled back unless `want_dump` (small windowed captures only).
@@ -332,12 +332,14 @@ def _e2_job(job):
         sp = _SPILL[spill_dir] = (os.getpid(), ft.ChunkSpill(spill_dir))
     spill = sp[1]
     s0 = cenc.e2_stats()
+    cenc.eo_census_reset()
     spool = _e1spool(spool_dir, level)
     index, declined, cnt = cenc.e2(desc, spool, rows, lo, hi,
                                    spill._fd, spill.end)
     spill.end += cnt["frame_bytes"]
     # Production E2 stats end here: the drop probe below is not a build range.
     s1 = cenc.e2_stats()
+    eo = cenc.eo_census_stats()  # snapshot before name-drop re-encode
     if spool.name_drops(lo, hi, cell_range):
         # Preserve original chunk topology/extents for the name guard.
         # Plan 34's outside-mask empty-shell omission runs after this comparison;
@@ -405,7 +407,7 @@ def _e2_job(job):
         e2c, e2h = s1["c_s"] - s0["c_s"], s1["handoff_s"] - s0["handoff_s"]
         bench = {"py_s": max(0.0, time.perf_counter() - t0 - e2c - e2h), "c_s": e2c,
                  "handoff_s": e2h, "e2_c_s": e2c, "calls": {"e2": s1["ranges"] - s0["ranges"]}}
-    return spill.path, rec, stats, lines, bench, dump_recs
+    return spill.path, rec, stats, lines, bench, dump_recs, eo
 
 
 def _merge_bench(dst: dict, src: dict) -> None:
@@ -438,8 +440,10 @@ def _encode_level(level: int, reader: SpoolReader, fixture, threshold_bytes: int
     """Encode one level: E1 then E2, once per row range (Contract B).
 
     Returns `(FrameTable, n_parcels, total_frame_bytes, n_divided_parents,
-    max_frame, overlap_counters, level_bench)`. Output and counters equal
+    max_frame, overlap_counters, level_bench, eo_census)`. Output and counters equal
     the serial run's for any `jobs`: ranges are consumed in row order."""
+    from kiwiw import cbuild as _cbuild
+    eo_acc = _cbuild.empty_eo_stats()
     spool_dir = str(reader.spool_dir)
     kl = kind_limits or {}
     desc = descriptor.build_for_spool(
@@ -485,7 +489,7 @@ def _encode_level(level: int, reader: SpoolReader, fixture, threshold_bytes: int
             _merge_bench(level_bench, {"py_s": d["py_s"], "c_s": d["c_s"],
                                        "handoff_s": d["handoff_s"], "e1_c_s": d["c_s"],
                                        "calls": {"e1": d["ranges"], "e1_ctypes": d["calls"]}})
-    for path, rec, st, lines, chunk_bench, dump_recs in e2_out:
+    for path, rec, st, lines, chunk_bench, dump_recs, eo in e2_out:
         tables.append((path, rec))
         if digest_fh is not None:
             digest_fh.writelines(lines)
@@ -495,6 +499,7 @@ def _encode_level(level: int, reader: SpoolReader, fixture, threshold_bytes: int
         if level_bench is not None and chunk_bench is not None:
             _merge_bench(level_bench, chunk_bench)
         _merge_stats(trim_stats, st)
+        _cbuild.merge_eo_stats(eo_acc, eo)
     if level_bench is not None:
         level_bench["ranges"] = len(chunks)
         level_bench["workers"] = jobs if pool is not None else 1
@@ -505,7 +510,7 @@ def _encode_level(level: int, reader: SpoolReader, fixture, threshold_bytes: int
     div = rec[rec["pt"] != 0]
     n_div_parents = len(np.unique((div["ix"].astype(np.int64) << 32) | div["iy"].astype(np.int64))) if len(div) else 0
     max_frame = int(rec["len"].max()) if n_parcels else 0
-    return table, n_parcels, n_bytes, n_div_parents, max_frame, ov, level_bench
+    return table, n_parcels, n_bytes, n_div_parents, max_frame, ov, level_bench, eo_acc
 
 
 def _chunk_weights(reader: SpoolReader, level: int, chunks) -> list[float]:
@@ -582,6 +587,8 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     trimmed_items: dict[str, dict] = {}
     halo_names: dict[str, int] = {}
     overlap_stats: dict[str, dict] = {}
+    from kiwiw import cbuild as _cbuild
+    eo_acc_total = _cbuild.empty_eo_stats()
     name_drops = {str(level): 0 for level in levels}
     bench_levels: dict[str, dict] = {}
 
@@ -619,12 +626,13 @@ def run(spool_dir: str, out_path: str, levels: list[int],
         # manifest's `overlap` block. `--window`/`--fixture` narrow only the
         # receiving (emitted) cells -- source shapes come from the whole level.
         (table, n_parcels, n_bytes, n_divided_parents, max_frame, ov_stats,
-         level_bench) = _encode_level(
+         level_bench, level_eo) = _encode_level(
             level, reader, fixture, threshold_bytes, mask, kind_budgets.get(level) or None,
             trim_stats, (level in NAME_HALO_LEVELS), spill_dir, digest_fh=digest_fh,
             pool=pool, jobs=workers, window_rect=window_rect,
             bench=bench_path is not None, dump=dump)
         overlap_stats[str(level)] = ov_stats
+        _cbuild.merge_eo_stats(eo_acc_total, level_eo)
         name_drops[str(level)] = ov_stats.pop("out_of_span_names_dropped")
         print(f"level {level}: out-of-span names dropped: {name_drops[str(level)]:,}",
               flush=True)
@@ -699,6 +707,16 @@ def run(spool_dir: str, out_path: str, levels: list[int],
     with open(manifest_path, "w") as fh:
         json.dump(manifest, fh, indent=2)
     print(f"wrote {manifest_path}", flush=True)
+
+    # Plan 48 Phase 2: EO census sidecar (output-neutral; disc bytes unchanged).
+    eo_sidecar = os.path.join(os.path.dirname(out_path) or ".", "eo_census.json")
+    _cbuild.write_eo_census_sidecar(
+        eo_sidecar, eo_acc_total,
+        meta={"out": out_path, "sha256": sha256, "workers": workers,
+              "fixture": fixture, "levels": list(levels)})
+    print(f"wrote {eo_sidecar} guard_hits={eo_acc_total.get('guard_hits', 0)} "
+          f"declines={eo_acc_total.get('declines_total', 0)} "
+          f"entries={eo_acc_total.get('eo_clip_entries', 0)}", flush=True)
 
     if dump is not None:
         dump.close()

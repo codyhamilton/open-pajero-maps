@@ -156,3 +156,86 @@ def build_test_bin(ctest_dir: Path = CTEST_DIR, out: Path = CTEST_BIN,
     cc = _find_cc()
     _compile([cc, *flags, *(str(s) for s in compiled), "-lm"], out, hashed, flags)
     return out
+
+
+# ---------------------------------------------------------------- Plan 48 Phase 2
+# Output-neutral EO census: counters live in worker TLS inside `_cenc.c`.
+# Production builds dlsym these symbols from the shared object and write a
+# sidecar JSON beside ALLDATA (disc bytes unchanged).
+
+
+EO_STATS_KEYS: tuple[str, ...] = (
+    "eo_clip_entries", "eo_clip_complex",
+    "decline_intersect", "decline_cut", "decline_connect",
+    "decline_walk_used", "decline_walk_bound", "decline_walk_nobest",
+    "decline_grow", "walk_starts",
+)
+
+
+def bind_eo_stats(lib) -> None:
+    """Bind `kw__eo_stats_get` / `kw__eo_stats_reset` on a loaded CDLL (idempotent)."""
+    import ctypes
+    if getattr(lib, "_eo_stats_bound", False):
+        return
+    lib.kw__eo_stats_reset.argtypes = []
+    lib.kw__eo_stats_reset.restype = None
+    lib.kw__eo_stats_get.argtypes = (
+        [ctypes.POINTER(ctypes.c_int64)] * 10 + [ctypes.POINTER(ctypes.c_double)]
+    )
+    lib.kw__eo_stats_get.restype = None
+    lib._eo_stats_bound = True
+
+
+def eo_stats_reset(lib) -> None:
+    bind_eo_stats(lib)
+    lib.kw__eo_stats_reset()
+
+
+def eo_stats_get(lib) -> dict:
+    """Snapshot the calling thread/process's EO census counters."""
+    import ctypes
+    bind_eo_stats(lib)
+    vals = [ctypes.c_int64() for _ in range(10)]
+    margin = ctypes.c_double()
+    lib.kw__eo_stats_get(*[ctypes.byref(v) for v in vals], ctypes.byref(margin))
+    out = {k: int(v.value) for k, v in zip(EO_STATS_KEYS, vals)}
+    out["walk_min_margin"] = float(margin.value)
+    out["declines_total"] = sum(out[k] for k in EO_STATS_KEYS if k.startswith("decline_"))
+    out["guard_hits"] = int(out["decline_walk_used"])  # :885-class already-used
+    return out
+
+
+def merge_eo_stats(dst: dict, src: dict) -> None:
+    """Sum additive EO census fields; keep the minimum walk_min_margin (>0 preferred)."""
+    for k in EO_STATS_KEYS:
+        dst[k] = int(dst.get(k, 0)) + int(src.get(k, 0))
+    dst["declines_total"] = sum(dst[k] for k in EO_STATS_KEYS if k.startswith("decline_"))
+    dst["guard_hits"] = int(dst["decline_walk_used"])
+    sm = float(src.get("walk_min_margin", -1.0))
+    dm = float(dst.get("walk_min_margin", -1.0))
+    if sm < 0:
+        pass
+    elif dm < 0 or sm < dm:
+        dst["walk_min_margin"] = sm
+    else:
+        dst["walk_min_margin"] = dm
+
+
+def empty_eo_stats() -> dict:
+    out = {k: 0 for k in EO_STATS_KEYS}
+    out["walk_min_margin"] = -1.0
+    out["declines_total"] = 0
+    out["guard_hits"] = 0
+    return out
+
+
+def write_eo_census_sidecar(path: Path | str, stats: dict, *, meta: dict | None = None) -> Path:
+    """Write `eo_census.json` beside a build product. Does not touch disc bytes."""
+    import json
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"eo_census": dict(stats)}
+    if meta:
+        payload["meta"] = meta
+    path.write_text(json.dumps(payload, indent=2) + "\n")
+    return path

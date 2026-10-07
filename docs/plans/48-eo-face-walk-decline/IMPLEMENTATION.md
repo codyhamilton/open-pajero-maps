@@ -44,3 +44,10 @@
 - `eo_stats` thread-local counters in `_cenc.c` + `kw__eo_stats_get/reset` (default visibility).
 - `parser/tools/eo_guard_census.py` + `test_eo_guard_census.py` (r359 walk_used≥1; clean square 0).
 - Next: wire cbuild sidecar; AU/Perth builds at -j4 proving guard hits=0, sha unchanged.
+
+## Phase 2 — census sidecar wiring — 2026-10-07 ~15:30 AEST
+- `cbuild.py`: `bind/get/reset/merge/empty_eo_stats` + `write_eo_census_sidecar`.
+- `cenc.e2`: harvests TLS eo_stats into process-local census; resets after each range.
+- `build_alldata.py`: per-worker snapshot (pre name-drop probe), merge across levels, write `eo_census.json` beside ALLDATA (disc bytes untouched).
+- Unit tests `test_eo_guard_census.py`: 2 passed.
+- Next: AU/Perth `-j4` under flock proving guard_hits=0, sha unchanged (queued behind plan 44 mass).

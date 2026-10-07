@@ -317,6 +317,9 @@ _e2_lib = None
 _e2_stats = {"ranges": 0, "cells": 0, "frames": 0, "declined": 0,
              "py_s": 0.0, "c_s": 0.0, "handoff_s": 0.0}
 
+# Plan 48 Phase 2: process-local EO census (summed across e2 calls in this process).
+_eo_census = cbuild.empty_eo_stats()
+
 
 class E2Error(RuntimeError):
     """E2 rejected its input (descriptor, spool, rows) or could not write."""
@@ -386,6 +389,13 @@ def e2(desc: bytes, spool: E1Spool, rows, row_lo: int | None, row_hi: int | None
     s["c_s"] += c_s
     s["handoff_s"] += max(0.0, wall - c_s)
     s["py_s"] += max(0.0, (time.perf_counter() - t0) - wall)
+    # Plan 48: harvest EO census (output-neutral; does not affect frames).
+    try:
+        st = cbuild.eo_stats_get(lib)
+        cbuild.merge_eo_stats(_eo_census, st)
+        cbuild.eo_stats_reset(lib)
+    except AttributeError:
+        pass  # older .so without kw__eo_stats_* (rebuild will add them)
     return index, declined, {k: int(cnt[i]) for i, k in enumerate(E2_COUNTERS)}
 
 
@@ -393,6 +403,21 @@ def e2_stats() -> dict:
     """Process-local E2 totals: ranges, cells, frames, declined, and the
     Python / C / handoff time split."""
     return dict(_e2_stats)
+
+
+def eo_census_stats() -> dict:
+    """Process-local EO face-walk census totals (Plan 48 Phase 2)."""
+    return dict(_eo_census)
+
+
+def eo_census_reset() -> None:
+    """Clear process-local EO census (e.g. at worker start)."""
+    global _eo_census
+    _eo_census = cbuild.empty_eo_stats()
+    try:
+        cbuild.eo_stats_reset(_load_e2())
+    except Exception:
+        pass
 
 
 # ---------------------------------------------------------------- D1 (2-01)

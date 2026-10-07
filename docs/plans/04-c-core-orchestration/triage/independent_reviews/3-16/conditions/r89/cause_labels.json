@@ -1,0 +1,2072 @@
+{
+  "summary": {
+    "n_keys": 89,
+    "counts": {
+      "chord-artefact": 89,
+      "valid-lost": 0,
+      "residual": 0
+    },
+    "baseline_match": "see baseline_match.json (89/89)",
+    "r_dvd_limb": "unverifiable:reference_disc_not_mounted",
+    "residuals_targeted": [
+      "R-G8-2-e",
+      "R-G8-3-b"
+    ],
+    "legacy_disc": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-36/E_pre314/ALLDATA.KWI",
+    "spool": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/extract_timing/spool"
+  },
+  "rows": [
+    {
+      "ordinal": 0,
+      "level": 0,
+      "ix": 906,
+      "iy": 1225,
+      "code": 291,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 134,
+      "n_inside": 0,
+      "n_outside": 134,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          907,
+          1225,
+          5
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 1,
+      "level": 0,
+      "ix": 962,
+      "iy": 780,
+      "code": 291,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 134,
+      "n_inside": 2,
+      "n_outside": 132,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          962,
+          779,
+          2
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 2,
+      "level": 0,
+      "ix": 1075,
+      "iy": 790,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1075,
+          792,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 3,
+      "level": 0,
+      "ix": 1109,
+      "iy": 1122,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 202,
+      "n_inside": 0,
+      "n_outside": 202,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1109,
+          1193,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 4,
+      "level": 0,
+      "ix": 1109,
+      "iy": 1127,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 202,
+      "n_inside": 0,
+      "n_outside": 202,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1109,
+          1193,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 5,
+      "level": 0,
+      "ix": 1109,
+      "iy": 1133,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 202,
+      "n_inside": 0,
+      "n_outside": 202,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1109,
+          1193,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 6,
+      "level": 0,
+      "ix": 1109,
+      "iy": 1139,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 203,
+      "n_inside": 0,
+      "n_outside": 203,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1109,
+          1193,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 7,
+      "level": 0,
+      "ix": 1126,
+      "iy": 1561,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 125,
+      "n_inside": 0,
+      "n_outside": 125,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1126,
+          1565,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 8,
+      "level": 0,
+      "ix": 1126,
+      "iy": 1562,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 203,
+      "n_inside": 0,
+      "n_outside": 203,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1126,
+          1565,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 9,
+      "level": 0,
+      "ix": 1126,
+      "iy": 1563,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 203,
+      "n_inside": 0,
+      "n_outside": 203,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1126,
+          1565,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 10,
+      "level": 0,
+      "ix": 1126,
+      "iy": 1564,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 139,
+      "n_inside": 0,
+      "n_outside": 139,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1126,
+          1565,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 11,
+      "level": 0,
+      "ix": 1126,
+      "iy": 1565,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 125,
+      "n_inside": 0,
+      "n_outside": 125,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1126,
+          1565,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 12,
+      "level": 0,
+      "ix": 1126,
+      "iy": 1566,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 203,
+      "n_inside": 8,
+      "n_outside": 195,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1126,
+          1565,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 13,
+      "level": 0,
+      "ix": 1126,
+      "iy": 1567,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 138,
+      "n_inside": 0,
+      "n_outside": 138,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1126,
+          1565,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 14,
+      "level": 0,
+      "ix": 1126,
+      "iy": 1570,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 125,
+      "n_inside": 0,
+      "n_outside": 125,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1126,
+          1565,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 15,
+      "level": 0,
+      "ix": 1248,
+      "iy": 883,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 129,
+      "n_inside": 0,
+      "n_outside": 129,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          889,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 16,
+      "level": 0,
+      "ix": 1248,
+      "iy": 921,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          910,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 17,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1126,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 130,
+      "n_inside": 0,
+      "n_outside": 130,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1136,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 18,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1145,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 136,
+      "n_inside": 0,
+      "n_outside": 136,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1136,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 19,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1147,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1136,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 20,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1154,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1196,
+          5
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 21,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1240,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 69,
+      "n_inside": 0,
+      "n_outside": 69,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1196,
+          5
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 22,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1279,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 69,
+      "n_inside": 0,
+      "n_outside": 69,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1284,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 23,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1281,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1284,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 24,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1283,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1284,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 25,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1285,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1284,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 26,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1296,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1313,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 27,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1298,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1313,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 28,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1301,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1313,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 29,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1314,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1313,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 30,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1352,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 69,
+      "n_inside": 0,
+      "n_outside": 69,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1364,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 31,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1355,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1364,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 32,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1357,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1364,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 33,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1359,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1364,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 34,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1393,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1397,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 35,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1396,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1397,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 36,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1404,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 37,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1406,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 38,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1409,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 39,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1411,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 40,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1413,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 41,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1417,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 42,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1432,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 43,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1435,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 44,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1437,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 45,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1465,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 69,
+      "n_inside": 0,
+      "n_outside": 69,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 46,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1467,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 47,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1469,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 48,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1471,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 49,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1473,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 200,
+      "n_inside": 0,
+      "n_outside": 200,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 50,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1476,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 166,
+      "n_inside": 0,
+      "n_outside": 166,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1444,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 51,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1493,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 165,
+      "n_inside": 0,
+      "n_outside": 165,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1494,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 52,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1504,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 70,
+      "n_inside": 0,
+      "n_outside": 70,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1513,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 53,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1506,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 166,
+      "n_inside": 0,
+      "n_outside": 166,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1513,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 54,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1517,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 203,
+      "n_inside": 0,
+      "n_outside": 203,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1513,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 55,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1519,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 202,
+      "n_inside": 0,
+      "n_outside": 202,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1513,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 56,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1521,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 202,
+      "n_inside": 0,
+      "n_outside": 202,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1513,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 57,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1523,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 167,
+      "n_inside": 0,
+      "n_outside": 167,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1513,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 58,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1525,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 203,
+      "n_inside": 0,
+      "n_outside": 203,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1536,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 59,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1527,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 202,
+      "n_inside": 0,
+      "n_outside": 202,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1536,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 60,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1530,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 203,
+      "n_inside": 0,
+      "n_outside": 203,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1536,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 61,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1532,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 203,
+      "n_inside": 0,
+      "n_outside": 203,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1536,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 62,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1540,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 70,
+      "n_inside": 0,
+      "n_outside": 70,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1536,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 63,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1543,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 167,
+      "n_inside": 0,
+      "n_outside": 167,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1536,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 64,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1571,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 203,
+      "n_inside": 0,
+      "n_outside": 203,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1572,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 65,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1573,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 202,
+      "n_inside": 0,
+      "n_outside": 202,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1572,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 66,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1601,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 162,
+      "n_inside": 1,
+      "n_outside": 161,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1608,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 67,
+      "level": 0,
+      "ix": 1248,
+      "iy": 1674,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 69,
+      "n_inside": 0,
+      "n_outside": 69,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1248,
+          1671,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 68,
+      "level": 0,
+      "ix": 1285,
+      "iy": 1527,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 147,
+      "n_inside": 0,
+      "n_outside": 147,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1291,
+          1527,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 69,
+      "level": 0,
+      "ix": 1287,
+      "iy": 1527,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 142,
+      "n_inside": 0,
+      "n_outside": 142,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1291,
+          1527,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 70,
+      "level": 0,
+      "ix": 1290,
+      "iy": 1527,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 148,
+      "n_inside": 0,
+      "n_outside": 148,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1291,
+          1527,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 71,
+      "level": 0,
+      "ix": 1292,
+      "iy": 1527,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 107,
+      "n_inside": 0,
+      "n_outside": 107,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1291,
+          1527,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 72,
+      "level": 0,
+      "ix": 1294,
+      "iy": 1527,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 107,
+      "n_inside": 0,
+      "n_outside": 107,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1291,
+          1527,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 73,
+      "level": 0,
+      "ix": 1295,
+      "iy": 1527,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1291,
+          1527,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 74,
+      "level": 0,
+      "ix": 1296,
+      "iy": 1527,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 147,
+      "n_inside": 0,
+      "n_outside": 147,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1291,
+          1527,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 75,
+      "level": 0,
+      "ix": 1298,
+      "iy": 1527,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 147,
+      "n_inside": 0,
+      "n_outside": 147,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1291,
+          1527,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 76,
+      "level": 0,
+      "ix": 1332,
+      "iy": 1236,
+      "code": 291,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 133,
+      "n_inside": 2,
+      "n_outside": 131,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1331,
+          1235,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 77,
+      "level": 0,
+      "ix": 1345,
+      "iy": 1152,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 136,
+      "n_inside": 35,
+      "n_outside": 101,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1360,
+          1152,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 78,
+      "level": 0,
+      "ix": 1350,
+      "iy": 1152,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 129,
+      "n_inside": 0,
+      "n_outside": 129,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1360,
+          1152,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 79,
+      "level": 0,
+      "ix": 1360,
+      "iy": 1609,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 201,
+      "n_inside": 0,
+      "n_outside": 201,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1360,
+          1614,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 80,
+      "level": 0,
+      "ix": 1364,
+      "iy": 1649,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 133,
+      "n_inside": 2,
+      "n_outside": 131,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1367,
+          1649,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 81,
+      "level": 0,
+      "ix": 1401,
+      "iy": 1139,
+      "code": 291,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 134,
+      "n_inside": 0,
+      "n_outside": 134,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1402,
+          1139,
+          4
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 82,
+      "level": 0,
+      "ix": 1404,
+      "iy": 1814,
+      "code": 291,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 133,
+      "n_inside": 2,
+      "n_outside": 131,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1406,
+          1819,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 83,
+      "level": 0,
+      "ix": 1505,
+      "iy": 1315,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 133,
+      "n_inside": 0,
+      "n_outside": 133,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1509,
+          1315,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 84,
+      "level": 0,
+      "ix": 1512,
+      "iy": 1152,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 134,
+      "n_inside": 0,
+      "n_outside": 134,
+      "n_sources": 2,
+      "sources_used": [
+        [
+          1494,
+          1152,
+          0
+        ],
+        [
+          1523,
+          1152,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 85,
+      "level": 0,
+      "ix": 1544,
+      "iy": 1531,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 134,
+      "n_inside": 0,
+      "n_outside": 134,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1544,
+          1532,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 86,
+      "level": 0,
+      "ix": 1695,
+      "iy": 699,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 194,
+      "n_inside": 0,
+      "n_outside": 194,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1695,
+          699,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 87,
+      "level": 0,
+      "ix": 1846,
+      "iy": 1008,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 202,
+      "n_inside": 70,
+      "n_outside": 132,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1842,
+          1008,
+          0
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 2,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    },
+    {
+      "ordinal": 88,
+      "level": 0,
+      "ix": 1915,
+      "iy": 1030,
+      "code": 288,
+      "label": "chord-artefact",
+      "reason": "legacy_ib_vertex_outside_source_eo",
+      "n_legacy_verts": 134,
+      "n_inside": 0,
+      "n_outside": 134,
+      "n_sources": 1,
+      "sources_used": [
+        [
+          1914,
+          1031,
+          1
+        ]
+      ],
+      "baseline_target_records": 0,
+      "legacy_spool_degree_records_max": 1,
+      "r_dvd": "unverifiable:reference_disc_not_mounted"
+    }
+  ]
+}
