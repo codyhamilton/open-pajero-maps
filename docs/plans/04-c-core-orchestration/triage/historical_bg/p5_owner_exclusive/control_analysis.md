@@ -1,25 +1,36 @@
-# Plan 44 Phase 1 control analysis (stopped)
+# Plan 44 Phase 1 control analysis
 
-## Smoke (`--smoke`, n=12, seed=44)
+## Prior stop (byte-equal-only) — `0551ed2`
 
-`agree=3 disagree=9 skip=0 rate=0.25` → `CONTROL_FAIL`.
+- Smoke n=12 rate 0.25; home-with-bg n=60 rate 0.3167.
+- All disagrees `prod_none` / `disagree_producer_none`.
+- OE limb 100% whenever a unique `33006aa` producer existed.
+- Root cause: identity-proven R01 shapes are often EO fragments / cover pieces — disc bytes ≠ full-leaf `33006aa` clip of the geometric source.
+- Design revised producer to unique-byte | unique-fragment (`1b839e3`).
 
-## Home-with-backgrounds diagnostic (n=60, seed=44)
+## Revised-contract re-run — tip `ef00c12` / `3073566`
 
-`agree=19 disagree=41 rate=0.3167`. Every disagreement was `prod_none`. Every unique-producer row then passed the owner-exclusive / new-disc check (`agree` path). So the OE limb works when a byte-exact `33006aa` producer exists; the control population does not supply one often enough.
+- Stratified n=200 seed=44 (plan 39 identity-proven; codes 288/289/291/578 ×50).
+- Result: agree=150 disagree=48 skip=2 rate=**0.757576** — **CONTROL_FAIL** (gate ≥0.99).
+- Artifact: `control_result.json`, `control_result.txt`; run log `output/scratch-44/runs/control_n200.*`.
+- Agree split: 91 unique-fragment + 59 unique-byte. Fragment recovery is real (rate 0.25→0.76).
+- All 48 disagrees are still `disagree_producer_producer_none` (systematic class).
+- Zero `producer-ambiguous`, zero `disagree_no_oe`, zero `disagree_source_removed`.
 
-## Why identity-proven rows miss producers
+### Diagnosis of the 48 `producer_none` (diag_none)
 
-On cell `(0,1980,896)` leaf `(28,)`: 20 class>0 records → 13 unique producers, 7 none. **All** R01 `identity_proven` rows in that cell sit on shapes 1 and 2 (the producer-none shapes). Shape 1 shares Jaccard 0.65 with home spool bg 1, but clip sizes differ (220 B probe vs 140 B disc) — same source ring, non-byte-identical fragment (edge-heavy: 20/65 verts on the leaf boundary). Shape 2 similarly fragments against the same bg.
+Every row: no bbox-meeting spool candidate's `33006aa` clip into L contains all identity-bearing verts of the disc record (`no_cover`).
 
-So plan 39's identity-proven set is biased toward records that are **not** byte-exact `kw__bg_shape` outputs into the full leaf rect. DESIGN's producer rule (byte-equal clip at `33006aa`) therefore systematically disagrees with that population.
+| bucket | n |
+|--------|--:|
+| zero spool candidates (nbhd=1) | 18 |
+| few clips (1–5) but incomplete IB cover | 20 |
+| many clips (≥6) but incomplete IB cover | 10 |
 
-## Neighbourhood widening
+No empty-IB rows; no single-cover-without-exclusive rows in this sample.
 
-`neighbourhood=2..3` recovered 1/9 smoke disagreements. Not sufficient.
+Neighbourhood sweep (1/2/3/5) queued to test whether Assumption-1 search width recovers any; leaf_io notes `neighbourhood=1` is the 3×3 Assumption-1 window.
 
-## DESIGN gate
+## Gate
 
-> Control: … ≥ 99% must agree … A systematic disagreement stops the phase.
-
-Rate ≪ 0.99 with a single dominant disagreement class (`producer_none` on R01-carrying shapes) → **Phase 1 stopped**. Phase 2 not started. Needs Design revision (producer definition for EO fragments / cover pieces) or a proven alternate control population.
+Phase 1 **not closed**. Systematic `producer_none` remains. Phase 2 not started. Escalate to Design with this diagnosis (fragment limb helps but does not reach ≥99%; remaining misses are no-cover under nbhd=1).

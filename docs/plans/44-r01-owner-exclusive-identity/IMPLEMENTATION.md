@@ -35,9 +35,10 @@ Units (orchestrator-direct; one brief each, committed before work):
 - R-G9-4 / R-G8-1-a Cody-pending (no waiver). R-G5-5 maps-parity-carried.
 
 
-### Unit 3b — Fragment-producer + revised-contract control (in flight)
+### Unit 3b — Fragment-producer + revised-contract control (stopped)
 
 - Design revision landed at `1b839e3` (unique-byte | unique-fragment; cascade 45/46).
 - Tool commit `ef00c12`: `identity_bearing_vertices`, unique-fragment; synthetic tests 9 passed.
-- Control accepts unique-byte|unique-fragment. Spot-check `(0,1980,896)` shapes 1–2 → unique-fragment.
-- Stratified control re-run under flock next; Phase 1 closes only on ≥99%.
+- Stratified control n=200 seed=44 under revised producer: **rate 0.757576** (150/198 evaluable); CONTROL_FAIL vs ≥0.99.
+- Agree: 91 unique-fragment + 59 unique-byte. All 48 disagrees `producer_none` (no-cover under nbhd=1; see `control_analysis.md`).
+- Phase 1 not closed. Phase 2 not started. Design escalated with no-cover diagnosis.
