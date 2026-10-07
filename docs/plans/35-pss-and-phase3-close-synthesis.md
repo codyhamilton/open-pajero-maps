@@ -151,7 +151,7 @@ Live ownership (tip `residuals.tsv` after plans 36–53 / 44 / 48–49; docs syn
   **49** (R-G8-2-f-a), **48** (R-G8-1-d-a + live oracle).
 - **Live `blocks-phase3` owners:** plan **44** closed owner of R-G5-4-a/b (rows still
   open); plan **45** → R-G5-4-c, R-G8-1-f; plan **46** → R-G5-1/2, R-G8-4-c;
-  plan **55** (Design) → R-G8-1-b-a; Cody via Design (no waiver) → R-G8-1-a.
+  Design (window-before count basis; plan **55** when numbered) → R-G8-1-b-a; Cody via Design (no waiver) → R-G8-1-a.
 - **`maps-parity-carried` owners:** plan **50** → R-G9-2; **51** → R-G9-3-a;
   **52** → R-G9-3-b/c; **53** → R-G9-3-d; Cody via Design (no waiver) → R-G5-5, R-G9-4.
 - Plans **56–59** (memory band) are closed ops work, not residual-row owners.

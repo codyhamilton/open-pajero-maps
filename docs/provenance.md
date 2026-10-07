@@ -928,3 +928,5 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - **Reproduce:** wrapper (no outer flock) + `bench_build.py` + `build_alldata.py --fixture perth|-j4` per PHASE2/IMPLEMENTATION.
 
 - `output/scratch-59/` — plan 59 finalize-run wrappers/results + Flash review logs (regenerable).
+
+- `output/scratch-54/` — plan 54 Flash review logs (regenerable).
