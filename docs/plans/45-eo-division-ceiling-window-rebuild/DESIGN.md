@@ -32,12 +32,12 @@ Plan 36's residual risk: for these cells the causal link is the whole-disc EO-on
 - **Contract:**
   1. **Windows:** for each of the 4 cells, the smallest L0 source window that reproduces the cell's frames byte-exact (control: frames equal `013586b5` at `33006aa` and `4ed9cd80` at `d35b565`). Throwaway worktrees, `-j4`, under the lock.
   2. **Source-tag sidecar:** a debug-only build path at each commit records, per emitted background record, its spool source identity (level, home cell, record ordinal) and leaf path. The control requires frames with tags enabled to be byte-equal to frames without tags. If tagging changes bytes, it is rejected.
-  3. **Item identity across topology:** for each of the 80 rows, the old record carrying the failing vertex gets its source from the `33006aa` tags. A row is **proven-fixed (`build:eo_bg_stitch`)** only when all of the following hold:
+  3. **Item identity across topology:** for each of the 80 rows, the old record carrying the failing vertex gets its source from the `33006aa` tags (or, if tags are rejected, from design 44's producer: **unique-byte or unique-fragment** as defined in revised design 44). A row is **proven-fixed (`build:eo_bg_stitch`)** only when all of the following hold:
      - (a) at `d35b565`, records from the same source exist in the new leaves covering the old leaf's area;
-     - (b) the same-source record holds at least one owner-exclusive vertex (design 44's definition: no other source's clip into that leaf produces it, and it is not on the exact leaf rectangle edge);
+     - (b) the same-source record holds at least one owner-exclusive vertex (design 44's definition: no other source's clip into that leaf produces it, and it is not on the exact leaf rectangle edge; producer of the old record is unique-byte or unique-fragment per revised design 44);
      - (c) window K1 against the original spool reports the row's vertex position, and every vertex of that source's new records in the cell, as non-failing.
 
-     Otherwise the row is a named residual with the failing clause (`removed` if the source emits nothing in the cell).
+     Otherwise the row is a named residual with the failing clause (`removed` if the source emits nothing in the cell; `producer_none` / `producer-ambiguous` if offline producer attribution fails under design 44's classes).
   4. The per-row table is committed. `assignment.tsv` and `residuals.tsv` are updated (R-G5-4-c discharged, or the exact remaining rows).
 - **Non-goals:** changing encoder output; other R01 rows (design 44).
 
@@ -52,8 +52,9 @@ Plan 36's residual risk: for these cells the causal link is the whole-disc EO-on
 ## Decisions
 
 1. Plan number 45. Master direct. Two phases (the ceiling rows; the determinism window). Both known.
-2. Identity standard matches design 44's owner-exclusive test, so all R01 children are judged by one rule.
+2. Identity standard matches design 44's owner-exclusive test (revised: producer is **unique-byte or unique-fragment**; OE limb unchanged), so all R01 children are judged by one rule.
 3. Window builds only; no full-AU encode.
+4. Design 44's producer was revised for EO fragments after the Phase 1 control stop at `0551ed2` (byte-equal-only yielded systematic `producer_none`). This design cites the revised classes; phase counts and non-goals are unchanged.
 
 ## Assumption ledger
 
@@ -62,7 +63,14 @@ Plan 36's residual risk: for these cells the causal link is the whole-disc EO-on
 - **Question:** Can a source-tag sidecar be added without changing bytes?
 - **Answer chosen:** Yes, behind a debug flag that only writes a side file. Byte-equality is the gate.
 - **Rationale:** Plan 42 used a bounded instrumentation hook the same way.
-- **If wrong:** source identity is computed offline by exact producer matching with the `bg_shape` probe at each commit (design 44's method) instead.
+- **If wrong:** source identity is computed offline by design 44's producer method (unique-byte or unique-fragment via the `bg_shape` / `bg_owner_exclusive` probe at each commit) instead.
+
+### Assumption 2
+
+- **Question:** Does design 44's revised producer (unique-fragment for EO cover pieces) apply across topology change in ceiling cells?
+- **Answer chosen:** Yes. The old-record → S attribution uses the same unique-byte / unique-fragment classes; owner-exclusive vertices are evaluated in the new leaves. Fragment records are expected, not treated as full-leaf clips.
+- **Rationale:** Lockstep with revised design 44 after the `0551ed2` control stop.
+- **If wrong:** rows that flip under a widened supplier set are reported; no waiver.
 
 ## Open questions
 
@@ -74,7 +82,7 @@ Plan 36's residual risk: for these cells the causal link is the whole-disc EO-on
 
 - **Outcome:** a per-row table of 80 rows, each `build:eo_bg_stitch` with evidence or a named residual. Windows byte-controlled. `residuals.tsv` R-G5-4-c updated.
 - **Surfaces:** `triage/historical_bg/p4_ceiling/`; debug tag path in `parser/kiwiw/_cenc.c` (behind a flag, byte-neutral) with a test; `assignment.tsv`; `residuals.tsv`; `parser/perf_inventory.json` if a new module is added.
-- **Approach:** known. **Depends on:** design 44 Phase 1 owner-exclusive definition (or its own copy of the same rule). **Refine:** skipped.
+- **Approach:** known. **Depends on:** design 44 Phase 1 owner-exclusive definition under the revised producer contract (or its own copy of the same rule). **Refine:** skipped.
 
 ### Phase 2: Window determinism regenerated
 
@@ -89,5 +97,6 @@ Plan 36's residual risk: for these cells the causal link is the whole-disc EO-on
   - plan 36 record L110, L167 and `hop_3_14/cells_causes-au.tsv.gz`;
   - plan 39 record and `p2/assignment.tsv`;
   - 3-14 REVIEW b5 and L69 (closes with `-j1 == -j4` at the current tip);
-  - `IMPLEMENTATION.md` L228 (window and full sha `c4965442effea2ea…`).
+  - `IMPLEMENTATION.md` L228 (window and full sha `c4965442effea2ea…`);
+  - design 44 revision after `0551ed2` (unique-byte / unique-fragment producer; `control_analysis.md`).
 - Box draft only.
