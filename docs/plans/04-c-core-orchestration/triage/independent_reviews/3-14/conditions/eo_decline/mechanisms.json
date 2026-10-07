@@ -1,0 +1,277 @@
+{
+  "r359": {
+    "mechanisms": [
+      {
+        "name": "H2_equal_angle_ties",
+        "witnesses": [
+          {
+            "vid": 1,
+            "a": [
+              -462.2222222222222,
+              594.2857142857142,
+              1
+            ],
+            "b": [
+              -398.2222222222222,
+              512,
+              24
+            ]
+          }
+        ]
+      },
+      {
+        "name": "successor_non_injective",
+        "witnesses": [
+          {
+            "dst": 4,
+            "srcs": [
+              "0",
+              "25"
+            ]
+          }
+        ]
+      }
+    ],
+    "primary": "H2_equal_angle_ties",
+    "decline_site": {
+      "start": 0,
+      "h": 4,
+      "np": 15,
+      "ne": 56,
+      "used": 1,
+      "bound": 0
+    },
+    "status": "named",
+    "ring_n": 12
+  },
+  "r8475": {
+    "mechanisms": [
+      {
+        "name": "H2_equal_angle_ties",
+        "witnesses": [
+          {
+            "vid": 6,
+            "a": [
+              805.1288102261555,
+              1771.2833824975419,
+              20
+            ],
+            "b": [
+              768,
+              1689.6,
+              22
+            ]
+          }
+        ]
+      },
+      {
+        "name": "successor_non_injective",
+        "witnesses": [
+          {
+            "dst": 17,
+            "srcs": [
+              "21",
+              "23"
+            ]
+          }
+        ]
+      }
+    ],
+    "primary": "H2_equal_angle_ties",
+    "decline_site": {
+      "start": 1,
+      "h": 17,
+      "np": 8,
+      "ne": 36,
+      "used": 1,
+      "bound": 0
+    },
+    "status": "named",
+    "ring_n": 7
+  },
+  "r11892": {
+    "mechanisms": [
+      {
+        "name": "H1_rounding_non_planarity",
+        "witnesses": [
+          {
+            "i": 14,
+            "j": 17,
+            "a": [
+              663.2727272727273,
+              4096
+            ],
+            "b": [
+              809.7458033573142,
+              873.5923261390888
+            ],
+            "c": [
+              704,
+              3200
+            ],
+            "d": [
+              895.7451327433628,
+              3236.2761061946903
+            ]
+          }
+        ]
+      },
+      {
+        "name": "H2_equal_angle_ties",
+        "witnesses": [
+          {
+            "vid": 18,
+            "a": [
+              -146.47307608458698,
+              3222.407673860911,
+              29
+            ],
+            "b": [
+              -105.74580335731423,
+              2326.407673860911,
+              31
+            ]
+          }
+        ]
+      },
+      {
+        "name": "H2_atan2_order_mismatch",
+        "witnesses": [
+          {
+            "vid": 18,
+            "i0": [
+              -809.7458033573142,
+              -603.6286897754524,
+              19
+            ],
+            "i1": [
+              462.25419664268577,
+              344.5894920427295,
+              16
+            ]
+          }
+        ]
+      },
+      {
+        "name": "successor_non_injective",
+        "witnesses": [
+          {
+            "dst": 16,
+            "srcs": [
+              "28",
+              "30"
+            ]
+          }
+        ]
+      }
+    ],
+    "primary": "H1_rounding_non_planarity",
+    "decline_site": {
+      "start": 10,
+      "h": 16,
+      "np": 11,
+      "ne": 64,
+      "used": 1,
+      "bound": 0
+    },
+    "status": "named",
+    "ring_n": 11
+  },
+  "r14503": {
+    "mechanisms": [
+      {
+        "name": "H1_rounding_non_planarity",
+        "witnesses": [
+          {
+            "i": 10,
+            "j": 32,
+            "a": [
+              2496,
+              1472
+            ],
+            "b": [
+              1984,
+              1908.148148148148
+            ],
+            "c": [
+              2048,
+              768
+            ],
+            "d": [
+              2693.796226415094,
+              1782.822641509434
+            ]
+          }
+        ]
+      },
+      {
+        "name": "successor_non_injective",
+        "witnesses": [
+          {
+            "dst": 67,
+            "srcs": [
+              "65",
+              "66"
+            ]
+          }
+        ]
+      }
+    ],
+    "primary": "H1_rounding_non_planarity",
+    "decline_site": {
+      "start": 0,
+      "h": 67,
+      "np": 16,
+      "ne": 92,
+      "used": 1,
+      "bound": 0
+    },
+    "status": "named",
+    "ring_n": 12
+  },
+  "r19650": {
+    "mechanisms": [
+      {
+        "name": "H2_equal_angle_ties",
+        "witnesses": [
+          {
+            "vid": 4,
+            "a": [
+              -2123.427154370738,
+              -1317.9892682301133,
+              10
+            ],
+            "b": [
+              -1280,
+              -794.4827586206898,
+              26
+            ]
+          }
+        ]
+      },
+      {
+        "name": "successor_non_injective",
+        "witnesses": [
+          {
+            "dst": 30,
+            "srcs": [
+              "11",
+              "27"
+            ]
+          }
+        ]
+      }
+    ],
+    "primary": "H2_equal_angle_ties",
+    "decline_site": {
+      "start": 10,
+      "h": 30,
+      "np": 8,
+      "ne": 32,
+      "used": 1,
+      "bound": 0
+    },
+    "status": "named",
+    "ring_n": 5
+  }
+}

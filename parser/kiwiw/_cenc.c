@@ -24,6 +24,7 @@
 #include <float.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -797,6 +798,78 @@ static int eo_connect(const double *R) {
     }
 }
 
+
+#ifdef EO_DIAG
+/* Test-only: dump arrangement at face-walk decline to getenv("EO_DIAG_OUT").
+ * Absent from production builds (probe compiled without -DEO_DIAG). */
+static void eo_diag_dump(int64_t start, int64_t h, int64_t np, int64_t ne,
+                         int site_used, int site_bound) {
+    const char *path = getenv("EO_DIAG_OUT");
+    FILE *f;
+    int first;
+    int64_t i, k, best;
+    double reverse, best_angle, turn, dx, dy;
+    Pt A, B;
+    if (!path || !*path) return;
+    f = fopen(path, "w");
+    if (!f) return;
+    fprintf(f, "{\"decline\":{\"start\":%lld,\"h\":%lld,\"np\":%lld,\"ne\":%lld,"
+            "\"used\":%d,\"bound\":%d},\n\"vertices\":[",
+            (long long)start, (long long)h, (long long)np, (long long)ne,
+            site_used, site_bound);
+    for (i = 0; i < g_ev_n; i++) {
+        if (i) fputc(',', f);
+        fprintf(f, "{\"id\":%lld,\"x\":%.17g,\"y\":%.17g}",
+                (long long)i, g_ev[i].x, g_ev[i].y);
+    }
+    fprintf(f, "],\n\"edges\":[");
+    for (i = 0; i < g_ee_n; i++) {
+        if (i) fputc(',', f);
+        A = g_ev[g_ee[i].a]; B = g_ev[g_ee[i].b];
+        fprintf(f, "{\"a\":[%.17g,%.17g],\"b\":[%.17g,%.17g],\"parity\":%d,\"frame\":%d,"
+                "\"a_id\":%lld,\"b_id\":%lld}",
+                A.x, A.y, B.x, B.y, g_ee[i].parity, g_ee[i].frame,
+                (long long)g_ee[i].a, (long long)g_ee[i].b);
+    }
+    fprintf(f, "],\n\"half_edges\":[");
+    for (i = 0; i < ne; i++) {
+        if (i) fputc(',', f);
+        dx = g_ev[g_eh[i].b].x - g_ev[g_eh[i].a].x;
+        dy = g_ev[g_eh[i].b].y - g_ev[g_eh[i].a].y;
+        fprintf(f, "{\"id\":%lld,\"origin\":%lld,\"dest\":%lld,\"next\":%lld,"
+                "\"angle\":%.17g,\"used\":%d,\"dx\":%.17g,\"dy\":%.17g}",
+                (long long)i, (long long)g_eh[i].a, (long long)g_eh[i].b,
+                (long long)g_eh[i].next, g_eh[i].angle, g_eh[i].used, dx, dy);
+    }
+    fprintf(f, "],\n\"successor\":{");
+    first = 1;
+    for (i = 0; i < ne; i++) {
+        reverse = g_eh[i ^ 1].angle; best_angle = 0; best = -1;
+        for (k = g_ei[g_eh[i].b]; k >= 0; k = g_eh[k].next) {
+            turn = reverse - g_eh[k].angle;
+            if (turn <= 0) turn += 2 * M_PI;
+            if (best < 0 || turn < best_angle) { best = k; best_angle = turn; }
+        }
+        if (best < 0) continue;
+        if (!first) fputc(',', f);
+        first = 0;
+        fprintf(f, "\"%lld\":%lld", (long long)i, (long long)best);
+    }
+    fprintf(f, "},\n\"walk\":[");
+    for (i = 0; i < np; i++) {
+        if (i) fputc(',', f);
+        fprintf(f, "[%.17g,%.17g]", g_pc[i].x, g_pc[i].y);
+    }
+    fprintf(f, "]}\n");
+    fclose(f);
+}
+#define EO_DIAG_DECLINE(start,h,np,ne,used,bound) do { \
+    eo_diag_dump((start),(h),(np),(ne),(used),(bound)); \
+} while (0)
+#else
+#define EO_DIAG_DECLINE(start,h,np,ne,used,bound) ((void)0)
+#endif
+
 /* 0 means the legacy path is safe, 1 means EO faces were emitted, -1 error.
  * g_por has the clipped source segments from chains(), even for whole rings. */
 static int eo_clip(Emit *e, int64_t n, int64_t m, int whole) {
@@ -882,7 +955,10 @@ static int eo_clip(Emit *e, int64_t n, int64_t m, int whole) {
         if (g_eh[start].used) continue;
         int64_t h = start, np = 0; long double area = 0;
         do {
-            if (g_eh[h].used || np >= ne) return -1; /* never close a partial walk with a chord */
+            if (g_eh[h].used || np >= ne) {
+                EO_DIAG_DECLINE(start, h, np, ne, g_eh[h].used, np >= ne);
+                return -1; /* never close a partial walk with a chord */
+            }
             g_eh[h].used = 1;
             Pt a = g_ev[g_eh[h].a], b = g_ev[g_eh[h].b];
             if (grow((void **)&g_pc,&g_cap_pc,np+1,sizeof(Pt))) return -1;

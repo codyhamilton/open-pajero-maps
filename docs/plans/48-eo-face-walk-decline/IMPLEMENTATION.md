@@ -16,3 +16,12 @@
 
 ## Carried
 - Heavy lock shared with SC/garcia; EO_DIAG compile/tests queue behind plan 44 smoke + 47 representability + 49 regen.
+
+## Phase 1 progress (2026-10-07 ~14:21 AEST)
+- `EO_DIAG` hook landed in `_cenc.c` (compile-time `-DEO_DIAG`; production omit).
+- Dumps for all 5 declines under `eo_decline/dumps/`.
+- `eo_walk_diag.py` named mechanisms:
+  - r359, r8475, r19650 → **H2_equal_angle_ties**
+  - r11892, r14503 → **H1_rounding_non_planarity**
+- All declines: site `used=1` (already-used half-edge), not `np≥ne`.
+- Next: commit dumps + mechanisms; add xfails; successor_non_injective always co-present (verify); Phase 2 census.
