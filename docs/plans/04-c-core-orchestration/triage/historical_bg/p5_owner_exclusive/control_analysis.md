@@ -57,3 +57,11 @@ Contract (box draft → `92cd35f`):
 | 5 (11×11) | 37 |
 
 Expanding-search control + census in flight (`2e936e4`).
+
+
+## Expanding-search smoke (`--smoke --r-cap 8`, after `27f6e5b` fix)
+
+CONTROL_OK both gates:
+- Gate A: resolved_unique=11, oe_pass=11, oe_fail=0, rate=1.0 PASS
+- Gate B: ok=12, bad=0 PASS — classes unique-fragment=6, unique-byte=5, producer_home_outside_R_cap=1
+- Stratified n=200 seed=44 queued next.

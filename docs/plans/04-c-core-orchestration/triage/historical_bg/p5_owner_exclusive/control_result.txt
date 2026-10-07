@@ -1,13 +1,13 @@
-agree=3 disagree=9 skip=0 rate=0.250000 n=12 seed=44
-0	813	899	5	31	289	disagree_producer_none
-0	1776	394	13	126	578	agree_excl=11_byte=0_vert=1
-0	1988	1176	5	154	288	disagree_producer_none
-0	1696	556	1	13	291	disagree_producer_none
-0	1992	1209	10	34	578	disagree_producer_none
-0	1526	778	1	93	289	disagree_producer_none
-0	1797	692	1	11	578	disagree_producer_none
-0	1892	922	2	68	291	disagree_producer_none
-0	1840	1455	0	144	289	agree_excl=84_byte=0_vert=1
-0	1929	843	2	97	291	disagree_producer_none
-0	1762	664	0	136	288	agree_excl=71_byte=0_vert=1
-0	1464	1812	3	156	288	disagree_producer_none
+gate_a_rate=1.000000 gate_a=True gate_b=True evaluable=12 skip=0 n=12 seed=44 r_cap=8
+0	813	899	5	31	289	agree_unique-fragment_r6_excl=54_byte=0_vert=1
+0	1776	394	13	126	578	agree_unique-byte_r1_excl=11_byte=0_vert=1
+0	1988	1176	5	154	288	agree_unique-byte_r2_excl=47_byte=0_vert=1
+0	1696	556	1	13	291	agree_unique-fragment_r1_excl=92_byte=0_vert=1
+0	1992	1209	10	34	578	agree_unique-fragment_r1_excl=47_byte=0_vert=1
+0	1526	778	1	93	289	agree_unique-fragment_r1_excl=105_byte=0_vert=1
+0	1797	692	1	11	578	producer_home_outside_R_cap
+0	1892	922	2	68	291	agree_unique-fragment_r3_excl=33_byte=0_vert=1
+0	1840	1455	0	144	289	agree_unique-byte_r1_excl=84_byte=0_vert=1
+0	1929	843	2	97	291	agree_unique-fragment_r2_excl=106_byte=0_vert=1
+0	1762	664	0	136	288	agree_unique-byte_r1_excl=71_byte=0_vert=1
+0	1464	1812	3	156	288	agree_unique-byte_r5_excl=69_byte=0_vert=1

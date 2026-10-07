@@ -1,5 +1,5 @@
 {
-  "neighbourhood": 3,
+  "neighbourhood": 32,
   "target_3_15_188": {
     "faces": 885,
     "meets": 189,
@@ -8,22 +8,20 @@
   },
   "188": {
     "keys": 188,
-    "meets": 61,
-    "faces": 281,
-    "in_cell": 67,
+    "meets": 173,
+    "faces": 828,
+    "in_cell": 189,
     "representable_keys": 0,
-    "representable_meets": 0,
-    "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-15/conditions/representability/table_188.tsv"
+    "representable_meets": 0
   },
   "89": {
     "keys": 89,
-    "meets": 27,
-    "faces": 250,
-    "in_cell": 50,
+    "meets": 80,
+    "faces": 587,
+    "in_cell": 126,
     "representable_keys": 0,
-    "representable_meets": 0,
-    "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-15/conditions/representability/table_89.tsv"
+    "representable_meets": 0
   },
-  "note": "nb=3 undercount vs 3-15 885/189/205/0 (281/61/67/0). Meet sources often outside Moore-3 (tall homes). Rerun with --neighbourhood 32 queued; prefer Region+_required_cells if still short.",
+  "note": "nb=32 closer to 3-15 but still short: 188 faces 828/885 meets 173/189 in_cell 189/205 repr 0/0. Tall/far demanders remain outside Moore-32. Region+_required_cells still needed for exact 3-15 match.",
   "match_3_15_188": false
 }
