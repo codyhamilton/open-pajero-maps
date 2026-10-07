@@ -234,8 +234,21 @@ class E1Spool:
         return int(drops.sum())
 
     def close(self) -> None:
-        self.idx = self.data = None
+        """Drop views and close underlying memmaps (plan 58: free between levels)."""
+        for name in ("idx", "data"):
+            m = getattr(self, name, None)
+            if m is None:
+                continue
+            # numpy.memmap: close the mmap handle before dropping the array.
+            mm = getattr(m, "_mmap", None)
+            if mm is not None:
+                try:
+                    mm.close()
+                except BufferError:
+                    pass
+            setattr(self, name, None)
         self.xs = self.ys = self.offsets = self.lengths = None
+        self.drops = None
 
 
 _E1_I64_MIN, _E1_I64_MAX = -(1 << 63), (1 << 63) - 1

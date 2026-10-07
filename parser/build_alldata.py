@@ -225,12 +225,44 @@ _SPILL: dict = {}
 
 
 def _e1spool(spool_dir: str, level: int) -> cenc.E1Spool:
-    """This process's memory-mapped spool for `level` (one per level)."""
+    """This process's memory-mapped spool for `level` (one per level).
+
+    Plan 58: closing the previous level's E1Spool before opening the next
+    drops private COW memmaps so they do not accumulate across the Pool's
+    long-lived workers.
+    """
+    key = (os.getpid(), spool_dir, level)
     sp = _WORKER.get("e1spool")
-    if sp is None or sp[0] != (os.getpid(), spool_dir, level):
-        sp = _WORKER["e1spool"] = ((os.getpid(), spool_dir, level),
-                                   cenc.E1Spool(spool_dir, level, guard_names=True))
-    return sp[1]
+    if sp is not None and sp[0] == key:
+        return sp[1]
+    if sp is not None:
+        try:
+            sp[1].close()
+        except Exception:
+            pass
+        _WORKER.pop("e1spool", None)
+    spool = cenc.E1Spool(spool_dir, level, guard_names=True)
+    _WORKER["e1spool"] = (key, spool)
+    return spool
+
+
+def _release_worker_encode_caches(_ignored=None) -> dict:
+    """Pool/post-level: close cached E1Spool in this worker (plan 58).
+
+    Spill files stay open until assemble (FrameTable offsets). Returns a small
+    status dict for the parent (pid + whether a spool was closed).
+    """
+    import gc
+    closed = False
+    sp = _WORKER.pop("e1spool", None)
+    if sp is not None:
+        try:
+            sp[1].close()
+            closed = True
+        except Exception:
+            pass
+    gc.collect()
+    return {"pid": os.getpid(), "e1spool_closed": closed}
 
 
 def _e1_job(job):
@@ -472,6 +504,9 @@ def _encode_level(level: int, reader: SpoolReader, fixture, threshold_bytes: int
     ov["out_of_span_names_dropped"] = sum(
         c["out_of_span_names_dropped"] for _r, c, _d in e1_out)
     prepass_s = time.monotonic() - t_e1
+    # Keep only bench splits from e1_out; drop large row arrays before E2.
+    e1_bench_parts = [d for _r, _c, d in e1_out] if bench else None
+    del e1_out
 
     # Stage 2: E2 per range.
     e2_out = _run_ranges(pool, _e2_job, [
@@ -485,7 +520,7 @@ def _encode_level(level: int, reader: SpoolReader, fixture, threshold_bytes: int
         level_bench = {"prepass_s": prepass_s, "py_s": 0.0, "c_s": 0.0, "handoff_s": 0.0,
                        "e1_c_s": 0.0, "e2_c_s": 0.0,
                        "calls": {"e1": 0, "e1_ctypes": 0}}
-        for _r, _c, d in e1_out:
+        for d in (e1_bench_parts or []):
             _merge_bench(level_bench, {"py_s": d["py_s"], "c_s": d["c_s"],
                                        "handoff_s": d["handoff_s"], "e1_c_s": d["c_s"],
                                        "calls": {"e1": d["ranges"], "e1_ctypes": d["calls"]}})
@@ -669,6 +704,17 @@ def run(spool_dir: str, out_path: str, levels: list[int],
               f"{n_bytes:,} frame bytes, max frame {max_frame:,} bytes "
               f"(threshold {threshold_bytes:,}) [{time.monotonic() - t_level:.1f}s]",
               flush=True)
+        # Plan 58: drop finished-level E1Spool in every worker (and parent).
+        import gc
+        if pool is not None:
+            try:
+                pool.map(_release_worker_encode_caches, range(workers))
+            except Exception as exc:
+                print(f"level {level}: warn release_worker_encode_caches: {exc}",
+                      flush=True)
+        else:
+            _release_worker_encode_caches()
+        gc.collect()
 
     if digest_fh is not None:
         digest_fh.close()
