@@ -3,9 +3,13 @@ background clipper (`kw__bg_shape` via the test-only probe).
 
 Replaces the lost scratch-only `review_stress.py` (3-14 review b2) and covers
 review F7's gaps: termination, capacity bounds and degenerate rings. The probe
-runs in a child process with a timeout, so a non-terminating case fails the
-test instead of hanging the suite. This is a test, not a fix: a failing case is
-a finding against the encoder.
+runs in a child process with a 600 s timeout (the "guard" is this external timeout,
+not an iteration bound inside eo_connect's for(;;)), so a non-terminating case
+fails the test instead of hanging the suite. eo_connect runs on every eo_clip;
+the island_hole_island case relies on collinear connector edges cancelling by
+parity to produce separate components (the connection branch v>=0 is not
+separately asserted). This is a test, not a fix: a failing case is a finding
+against the encoder.
 """
 from __future__ import annotations
 
