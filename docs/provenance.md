@@ -950,3 +950,11 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - Residual R-G9-3-a: emission proven-cause; volume loss remains maps-parity-carried pending Cody F6/kind-order.
 - Scratch: `output/scratch-51/` (regenerable).
 
+## Plan 52 — L8 road fragmentation / under-selection (2026-10-08)
+
+- Tip re-measure on `aeae426c…`: G 2979 dc12; R 929 (801 dc10+128 dc12); plan 42 counts valid.
+- R-G9-3-b proven-cause: extract-short-motorway-ways; R dc12 coverage 100% @1 parent-raw (threshold 0.95 pre-committed); 308 shrink stubs sub-quantum.
+- R-G9-3-c proven-cause: selection.json L8 highway=[motorway] only; dc10 never admitted; volume residual open for Cody.
+- Evidence: `triage/trim_r_parity/l8_frag/`; record `docs/plans/52-l8-road-fragmentation-underselect.md`.
+- No oracle/code change. No F6/kind-order (steering). Scratch `output/scratch-52/`.
+

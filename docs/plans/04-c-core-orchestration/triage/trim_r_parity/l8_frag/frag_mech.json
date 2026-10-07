@@ -1,0 +1,337 @@
+{
+  "coord_model": "divided-leaf nodes are parent-frame 0..4096; lon_is_x=True",
+  "dc10_mapping": {
+    "G_parent_dc": {
+      "12": 2979
+    },
+    "R_parent_dc": {
+      "10": 801,
+      "12": 128
+    },
+    "deliberate_subset": true,
+    "drop_stage": "extract selection.json L8",
+    "rule_citation": "parser/refdata/selection.json levels==8 highway=[\"motorway\"]",
+    "selection_L8": "highway=[motorway] only",
+    "vocab_L2_8": {
+      "motorway": 12,
+      "primary": 4,
+      "secondary_and_below": 10,
+      "trunk": 0
+    }
+  },
+  "local_raw_compare": {
+    "G": {
+      "2": {
+        "bytes": 6112,
+        "dc": {
+          "12": 41
+        },
+        "local_raw": 224.919,
+        "n": 41
+      },
+      "3": {
+        "bytes": 131072,
+        "dc": {
+          "12": 2109
+        },
+        "local_raw": 5373.314,
+        "n": 2109
+      },
+      "7": {
+        "bytes": 54400,
+        "dc": {
+          "12": 829
+        },
+        "local_raw": 3002.654,
+        "n": 829
+      },
+      "11": {
+        "bytes": 896,
+        "dc": {},
+        "local_raw": 0.0,
+        "n": 0
+      },
+      "14": {
+        "bytes": 1408,
+        "dc": {},
+        "local_raw": 0.0,
+        "n": 0
+      },
+      "15": {
+        "bytes": 768,
+        "dc": {},
+        "local_raw": 0.0,
+        "n": 0
+      }
+    },
+    "R": {
+      "0": {
+        "bytes": 6176,
+        "dc": {
+          "10": 30
+        },
+        "local_raw": 5531.804,
+        "n": 30
+      },
+      "1": {
+        "bytes": 106400,
+        "dc": {
+          "10": 622,
+          "12": 128
+        },
+        "local_raw": 16683.046,
+        "n": 750
+      },
+      "2": {
+        "bytes": 12448,
+        "dc": {
+          "10": 25
+        },
+        "local_raw": 6079.465,
+        "n": 25
+      },
+      "3": {
+        "bytes": 31104,
+        "dc": {
+          "10": 124
+        },
+        "local_raw": 6615.648,
+        "n": 124
+      }
+    }
+  },
+  "r_quantum_coverage": {
+    "R_covered_raw_length": 5946.513,
+    "R_total_raw_length": 34909.964,
+    "coverage_fraction": 0.170339,
+    "dc10_covered": 2896.622,
+    "dc10_fraction": 0.090917,
+    "dc10_total": 31860.073,
+    "dc12_covered": 3049.891,
+    "dc12_fraction": 1.0,
+    "dc12_total": 3049.891,
+    "meets_threshold": false,
+    "method": "R segment covered if endpoint/midpoint within 1 parent-raw of a G vertex (parent-frame lat/lon)",
+    "threshold_committed_before_measure": 0.95,
+    "tol_parent_raw": 1.0
+  },
+  "schema": "plan52-l8-frag-mech-v3",
+  "short2_spool": {
+    "edge_both_parent_geo": 0,
+    "edge_one_parent_geo": 0,
+    "interior": 1089,
+    "max_pieces_per_way": 1,
+    "mechanism_detail": "Each spool piece has a unique r_way_id (no intra-cell split duplicates). 1089/3281 pieces are already 2-vertex in the spool (all interior to parent geo). p50 length ~46 m (\u226a 1 L8 parent-raw \u2248145\u2013195 m). The 308 shrink drops are a subset of these short motorway/motorway_link ways; union geometry at 1-raw is evaluated below.",
+    "mechanism_name": "extract-short-motorway-ways",
+    "meters_min_p50_p90_max": [
+      0.8125967617151522,
+      46.01774171535569,
+      154.82390026369563,
+      958.204022075014
+    ],
+    "n": 1089,
+    "sub_leaf_all": {
+      "2": 41,
+      "3": 2412,
+      "7": 828
+    },
+    "sub_leaf_short2": {
+      "2": 10,
+      "3": 805,
+      "7": 274
+    },
+    "unique_way_per_piece": true
+  },
+  "underselect_all_g_leaves": [
+    {
+      "R_covered_in_leaf": 47.15,
+      "R_dc10_raw_in_leaf": 4442.679,
+      "R_dc12_raw_in_leaf": 0,
+      "R_raw_in_leaf": 4442.679,
+      "bounds": [
+        -28.666666666666664,
+        -27.33333333333333,
+        150.0,
+        152.0
+      ],
+      "g_dc": {
+        "12": 41
+      },
+      "g_leaf": 2,
+      "g_n": 41,
+      "g_raw": 224.919
+    },
+    {
+      "R_covered_in_leaf": 3937.957,
+      "R_dc10_raw_in_leaf": 3692.908,
+      "R_dc12_raw_in_leaf": 2695.517,
+      "R_raw_in_leaf": 6388.426,
+      "bounds": [
+        -28.666666666666664,
+        -27.33333333333333,
+        152.0,
+        154.0
+      ],
+      "g_dc": {
+        "12": 2109
+      },
+      "g_leaf": 3,
+      "g_n": 2109,
+      "g_raw": 5373.314
+    },
+    {
+      "R_covered_in_leaf": 1961.406,
+      "R_dc10_raw_in_leaf": 3020.603,
+      "R_dc12_raw_in_leaf": 354.373,
+      "R_raw_in_leaf": 3374.976,
+      "bounds": [
+        -27.33333333333333,
+        -25.999999999999993,
+        152.0,
+        154.0
+      ],
+      "g_dc": {
+        "12": 829
+      },
+      "g_leaf": 7,
+      "g_n": 829,
+      "g_raw": 3002.654
+    },
+    {
+      "R_covered_in_leaf": 0,
+      "R_dc10_raw_in_leaf": 846.368,
+      "R_dc12_raw_in_leaf": 0,
+      "R_raw_in_leaf": 846.368,
+      "bounds": [
+        -25.999999999999996,
+        -24.666666666666664,
+        152.0,
+        154.0
+      ],
+      "g_dc": {},
+      "g_leaf": 11,
+      "g_n": 0,
+      "g_raw": 0.0
+    },
+    {
+      "R_covered_in_leaf": 0,
+      "R_dc10_raw_in_leaf": 3205.133,
+      "R_dc12_raw_in_leaf": 0,
+      "R_raw_in_leaf": 3205.133,
+      "bounds": [
+        -24.666666666666664,
+        -23.33333333333333,
+        150.0,
+        152.0
+      ],
+      "g_dc": {},
+      "g_leaf": 14,
+      "g_n": 0,
+      "g_raw": 0.0
+    },
+    {
+      "R_covered_in_leaf": 0,
+      "R_dc10_raw_in_leaf": 0,
+      "R_dc12_raw_in_leaf": 0,
+      "R_raw_in_leaf": 0,
+      "bounds": [
+        -24.666666666666664,
+        -23.33333333333333,
+        152.0,
+        154.0
+      ],
+      "g_dc": {},
+      "g_leaf": 15,
+      "g_n": 0,
+      "g_raw": 0.0
+    }
+  ],
+  "underselect_spatial_focus": [
+    {
+      "R_covered_in_leaf": 47.15,
+      "R_dc10_raw_in_leaf": 4442.679,
+      "R_dc12_raw_in_leaf": 0,
+      "R_raw_in_leaf": 4442.679,
+      "bounds": [
+        -28.666666666666664,
+        -27.33333333333333,
+        150.0,
+        152.0
+      ],
+      "g_dc": {
+        "12": 41
+      },
+      "g_leaf": 2,
+      "g_n": 41,
+      "g_raw": 224.919
+    },
+    {
+      "R_covered_in_leaf": 3937.957,
+      "R_dc10_raw_in_leaf": 3692.908,
+      "R_dc12_raw_in_leaf": 2695.517,
+      "R_raw_in_leaf": 6388.426,
+      "bounds": [
+        -28.666666666666664,
+        -27.33333333333333,
+        152.0,
+        154.0
+      ],
+      "g_dc": {
+        "12": 2109
+      },
+      "g_leaf": 3,
+      "g_n": 2109,
+      "g_raw": 5373.314
+    },
+    {
+      "R_covered_in_leaf": 1961.406,
+      "R_dc10_raw_in_leaf": 3020.603,
+      "R_dc12_raw_in_leaf": 354.373,
+      "R_raw_in_leaf": 3374.976,
+      "bounds": [
+        -27.33333333333333,
+        -25.999999999999993,
+        152.0,
+        154.0
+      ],
+      "g_dc": {
+        "12": 829
+      },
+      "g_leaf": 7,
+      "g_n": 829,
+      "g_raw": 3002.654
+    },
+    {
+      "R_covered_in_leaf": 0,
+      "R_dc10_raw_in_leaf": 846.368,
+      "R_dc12_raw_in_leaf": 0,
+      "R_raw_in_leaf": 846.368,
+      "bounds": [
+        -25.999999999999996,
+        -24.666666666666664,
+        152.0,
+        154.0
+      ],
+      "g_dc": {},
+      "g_leaf": 11,
+      "g_n": 0,
+      "g_raw": 0.0
+    },
+    {
+      "R_covered_in_leaf": 0,
+      "R_dc10_raw_in_leaf": 3205.133,
+      "R_dc12_raw_in_leaf": 0,
+      "R_raw_in_leaf": 3205.133,
+      "bounds": [
+        -24.666666666666664,
+        -23.33333333333333,
+        150.0,
+        152.0
+      ],
+      "g_dc": {},
+      "g_leaf": 14,
+      "g_n": 0,
+      "g_raw": 0.0
+    }
+  ]
+}
