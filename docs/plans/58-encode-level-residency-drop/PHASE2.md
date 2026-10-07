@@ -23,3 +23,13 @@ Logs: `output/scratch-58/runs/{baseline_perth,cut_perth}/` + `*_wrapper.json`.
 ## Tests
 
 `parser/tests/test_e1spool_level_release.py` — close nulls views; cache closes previous level.
+
+## Post-review fix (Codex HOLD)
+
+`pool.map(release, range(workers))` does not guarantee one task per worker.
+Replaced with **pool close/join + fresh fork Pool** after each level so every
+worker process dies and frees its E1Spool. Spill files on disk retained via
+FrameTable paths.
+
+Re-measure Perth (`cut_perth_recycle`): tree **13113.3** MB; max_rss **3200832** KiB;
+memory.peak **1681948672**; sha `04be2f6e…` unchanged. Still below baseline.

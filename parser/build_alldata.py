@@ -704,14 +704,17 @@ def run(spool_dir: str, out_path: str, levels: list[int],
               f"{n_bytes:,} frame bytes, max frame {max_frame:,} bytes "
               f"(threshold {threshold_bytes:,}) [{time.monotonic() - t_level:.1f}s]",
               flush=True)
-        # Plan 58: drop finished-level E1Spool in every worker (and parent).
+        # Plan 58: drop finished-level residency. Primary close is in `_e1spool`
+        # on the next level key change; to *guarantee* every worker frees its
+        # E1Spool (Pool.map does not pin one task per worker), recycle the
+        # fork pool after each level. Spill *files* on disk stay (FrameTable
+        # paths); only worker FDs/process state die with the pool.
         import gc
+        import multiprocessing as mp
         if pool is not None:
-            try:
-                pool.map(_release_worker_encode_caches, range(workers))
-            except Exception as exc:
-                print(f"level {level}: warn release_worker_encode_caches: {exc}",
-                      flush=True)
+            pool.close()
+            pool.join()
+            pool = mp.get_context("fork").Pool(workers)
         else:
             _release_worker_encode_caches()
         gc.collect()
