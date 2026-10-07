@@ -165,3 +165,8 @@ None blocking. Offset census + expanding search ≤R_cap=8, Gate A, and Gate B a
 - **First revision (box draft):** producer contract revised after `0551ed2` — unique-byte and unique-fragment replace byte-equal-only; `producer_none` named; Assumption 2 revised.
 - **Second revision (box draft):** Assump-1 chosen answer marked **wrong**; candidate set = bbox-meet ∪ Moore(R); R not preset; offset census + expanding search ≤R_cap=8; control gates replaced by Gate A (OE ≥99% among resolved) + Gate B (100% class coverage with RC); full-set ≥99% agreement-rate retired; `8ee2559` rates + `diag_nbhd` recorded as DESIGN-stop evidence under Assump-1 window; cover unchanged; no waivers. Designs 45 and 46 cite expanding Moore search / post-census R in lockstep (not Assump-1-only bbox-meet).
 - Box draft only.
+
+
+## Decision 5 lock (Execute 2026-10-07 15:09 AEST)
+
+Design confirmed Phase 2 default **R=8** after Phase 1 Gate A+B close (`64120f6`) and offset census (max recovering radius among unique-* = 8). Right-censor protocol: residual-only widen to R_widen=16 before final `producer_home_outside_R_cap` classification; ≥20 recovers at radius >8 stops for Design. Cover and OE limbs unchanged.

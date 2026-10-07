@@ -116,3 +116,29 @@ Full census: `offset_census.json`.
 
 **CLOSED** on Gate A + Gate B. Do **not** start Phase 2 mass run until Design confirms proposed R=8.
 Designs 45/46 remain blocked on that confirm.
+
+
+## Right-censor widen R_widen=16 (Design confirm protocol)
+
+One-shot probe on the 7 Phase 1 `producer_home_outside_R_cap` rows only (not full 95k).
+
+| Metric | Value |
+| --- | ---: |
+| recovered unique-* | **5** |
+| still outside at 16 | **2** |
+| recover radius >8 | **5** |
+| stop_for_design (≥20) | **False** |
+| by_recover_r | {'16': 2, '15': 1, '9': 2} |
+
+Recoveries (attribute at recovering radius; **do not bump mass-run R=8**):
+- `0/1674/718` shape=33 code=578 → **unique-fragment** r=16 home=[1672, 734]
+- `0/866/905` shape=3 code=578 → **unique-byte** r=15 home=[868, 920]
+- `0/963/919` shape=1 code=578 → **unique-fragment** r=16 home=[979, 919]
+- `0/1469/1728` shape=0 code=289 → **unique-byte** r=9 home=[1472, 1737]
+- `0/1276/1754` shape=3 code=289 → **unique-fragment** r=9 home=[1285, 1755]
+
+Still `producer_home_outside_R_cap` (max_radius=16):
+- `0/1610/657` shape=0 code=288 spool=2 clips=0 ib=78 uncovered=78
+- `0/1749/1708` shape=1 code=288 spool=2 clips=1 ib=22 uncovered=22
+
+Mass-run default remains **R=8**. New outside_R_cap from mass run get the same widen-16 before final classification.

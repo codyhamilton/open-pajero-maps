@@ -1,0 +1,144 @@
+{
+  "schema": 1,
+  "r_widen": 16,
+  "n_targets": 7,
+  "n_matched": 7,
+  "n_recovered": 5,
+  "n_still_outside": 2,
+  "n_ambiguous": 0,
+  "n_recover_radius_gt8": 5,
+  "stop_for_design": false,
+  "stop_threshold": 20,
+  "by_recover_r": {
+    "16": 2,
+    "15": 1,
+    "9": 2
+  },
+  "results": [
+    {
+      "level": 0,
+      "ix": 1610,
+      "iy": 657,
+      "shape": 0,
+      "vert": 121,
+      "code": 288,
+      "verdict": "producer_home_outside_R_cap",
+      "max_radius": 16,
+      "r_widen": 16,
+      "n_spool": 2,
+      "n_clips": 0,
+      "n_ib": 78,
+      "n_ib_uncovered": 78
+    },
+    {
+      "level": 0,
+      "ix": 1674,
+      "iy": 718,
+      "shape": 33,
+      "vert": 39,
+      "code": 578,
+      "verdict": "unique-fragment",
+      "recover_r": 16,
+      "dx": -2,
+      "dy": 16,
+      "producer_home": [
+        1672,
+        734
+      ],
+      "r_widen": 16,
+      "n_cands": 33,
+      "n_ib": 34
+    },
+    {
+      "level": 0,
+      "ix": 866,
+      "iy": 905,
+      "shape": 3,
+      "vert": 121,
+      "code": 578,
+      "verdict": "unique-byte",
+      "recover_r": 15,
+      "dx": 2,
+      "dy": 15,
+      "producer_home": [
+        868,
+        920
+      ],
+      "r_widen": 16,
+      "n_cands": 5,
+      "n_ib": 85
+    },
+    {
+      "level": 0,
+      "ix": 963,
+      "iy": 919,
+      "shape": 1,
+      "vert": 41,
+      "code": 578,
+      "verdict": "unique-fragment",
+      "recover_r": 16,
+      "dx": 16,
+      "dy": 0,
+      "producer_home": [
+        979,
+        919
+      ],
+      "r_widen": 16,
+      "n_cands": 4,
+      "n_ib": 36
+    },
+    {
+      "level": 0,
+      "ix": 1749,
+      "iy": 1708,
+      "shape": 1,
+      "vert": 37,
+      "code": 288,
+      "verdict": "producer_home_outside_R_cap",
+      "max_radius": 16,
+      "r_widen": 16,
+      "n_spool": 2,
+      "n_clips": 1,
+      "n_ib": 22,
+      "n_ib_uncovered": 22
+    },
+    {
+      "level": 0,
+      "ix": 1469,
+      "iy": 1728,
+      "shape": 0,
+      "vert": 161,
+      "code": 289,
+      "verdict": "unique-byte",
+      "recover_r": 9,
+      "dx": 3,
+      "dy": 9,
+      "producer_home": [
+        1472,
+        1737
+      ],
+      "r_widen": 16,
+      "n_cands": 2,
+      "n_ib": 96
+    },
+    {
+      "level": 0,
+      "ix": 1276,
+      "iy": 1754,
+      "shape": 3,
+      "vert": 85,
+      "code": 289,
+      "verdict": "unique-fragment",
+      "recover_r": 9,
+      "dx": 9,
+      "dy": 1,
+      "producer_home": [
+        1285,
+        1755
+      ],
+      "r_widen": 16,
+      "n_cands": 3,
+      "n_ib": 64
+    }
+  ]
+}

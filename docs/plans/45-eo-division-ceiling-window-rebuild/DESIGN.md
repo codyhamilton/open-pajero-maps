@@ -101,3 +101,7 @@ Plan 36's residual risk: for these cells the causal link is the whole-disc EO-on
   - design 44 first revision after `0551ed2` (unique-byte / unique-fragment);
   - design 44 **second revision** after `8ee2559` (Assump-1 wrong; expanding Moore / R_cap=8; Gates A+B; `diag_nbhd`; REVISION-NOTE second).
 - Box draft only.
+
+## Locked R (from design 44 Decision 5)
+
+Phase 2 default **R=8** confirmed after design 44 Phase 1 Gate A+B. Expanding search ≤R_cap=8 retired for mass runs; use Moore(R=8) ∪ bbox-meet.

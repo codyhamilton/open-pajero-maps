@@ -70,3 +70,11 @@ Units (orchestrator-direct; one brief each, committed before work):
 - Proposed R=8 **ACCEPT** (max recovering radius among unique-*).
 - Concerns: R=8 equals R_cap (right-censored); outside_R_cap RC is search-bound not existence proof. Flag for Design when confirming R.
 - Transcript: `output/scratch-44/runs/flash_p1.stdout`.
+
+
+### Unit 4 — Design confirmed R=8; Phase 2 open (2026-10-07 15:09 AEST)
+
+- Design confirmed locked Phase 2 default **R=8** (Decision 5; max recovering radius among unique-* in Phase 1 census).
+- Right-censor protocol (Flash concern): before final residual classification of the 7 `producer_home_outside_R_cap` (and any new from mass run), one-shot widen probe **R_widen=16** on that residual set only. If ≥20 new recovers at radius >8 → STOP for Design. Still-failing at 16 keep `producer_home_outside_R_cap` with max_radius=16 + counts.
+- Phase 2 mass run: R-G5-4-a (94,134) + joined R-G5-4-b (925) under locked R=8. Cover/OE unchanged.
+- Designs 45/46 may use locked R=8.
