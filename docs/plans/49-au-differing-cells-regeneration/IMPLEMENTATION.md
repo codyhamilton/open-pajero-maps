@@ -4,9 +4,9 @@
 - Tool: Grok Bot (maps executor)
 - Start: 2026-10-07 ~14:06 AEST
 - Worktree: open-pajero-maps-14-completeness (master-direct)
-- Tip at Phase 1 open: see git log
+- Close tip: see git log (`42dcd89` Phase 2 discharge)
 
-## Phase 1 — pinned inputs
+## Phase 1 — pinned inputs — DONE
 - Located retained discs under this worktree's `output/scratch-3-11/G_new` and `output/scratch-14/G_new`.
 - sha256sum:
   - old `013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04` (pin `013586b5`) — MATCH
@@ -14,12 +14,14 @@
 - Plan 31 reference `output/scratch-31/diff-3-14-au.cells.tsv` sha `77ff1d86…` — MATCH (246,123 cells expected).
 - Rebuild not needed. Recorded in `triage/independent_reviews/3-15/conditions/differing_cells/inputs.json`.
 
-## Phase 2 — regenerate + compare (in flight / queued)
-- Tool: tracked `oracle_chain.py diff` with `--old-sha` / `--new-sha` enforced.
-- Fresh scratch under `output/scratch-49/regen-*` (must not exist beforehand).
-- Commit `AU.differing_cells.tsv` (gz if large) + `regen.json` + `compare.py` → `compare.json` + README.
-- Compare to plan 31 sha `77ff1d86…`; consistency checks per DESIGN.
-- Residual R-G8-2-f-a → regenerated / named-diff / unverifiable per DESIGN.
+## Phase 2 — regenerate + compare — DONE (2026-10-07 ~14:49 AEST)
+- `oracle_chain.py diff` under flock → `output/scratch-49/regen-20261007-140744/`.
+- Regenerated `AU.differing_cells.tsv` sha **`77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f`** — **literal equal** to plan 31.
+- counts: changed=246123, added=0, removed=0.
+- Committed as `AU.differing_cells.tsv.gz`; `regen.json` + `compare.json` + README.
+- Perth shared cells `0/828/862`, `0/827/869`, `0/832/856` present in regen.
+- Residual **R-G8-2-f-a → discharged (regenerated: literal equal)**.
 
 ## Carried
-- Heavy lock contended (SC plan 98, garcia-music PW/builds). Diff queued behind plan 44 expand smoke + plan 47 representability nb=32.
+- Flash review still required for plan close-out.
+- forced_zero re-apply consistency check optional (DESIGN §4); deferred if lock-contended.
