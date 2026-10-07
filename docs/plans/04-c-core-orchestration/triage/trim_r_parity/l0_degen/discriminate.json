@@ -1,0 +1,760 @@
+{
+  "d1_degen_coincident": 6,
+  "decode_region_coord_u16_for_4096": [
+    4096,
+    8192
+  ],
+  "oracle": "output/scratch-50/G_new",
+  "oracle_sha_prefix": "aeae426c",
+  "outside_leaf_rect": 5,
+  "parent": {
+    "ix": 1755,
+    "iy": 591,
+    "level": 0
+  },
+  "schema": "plan53-l0-degen-discriminate-v1",
+  "spool_all_on_east_lon_n": 0,
+  "spool_all_on_east_lon_sample": [],
+  "verdict": "encoder-defect",
+  "verdict_detail": "Independent bit-level decode of link raw_bytes shows every node absolute sx u16 already decodes via decode_region_coord to xc=4096 (and yc collapsed). D1 does not invent the collapse \u2014 encoded deltas/absolutes produce it.",
+  "witnesses": [
+    {
+      "all_sx_decode_to_4096": true,
+      "dc": 12,
+      "encoded_coords_are_collapsed": true,
+      "file_off": 352236288,
+      "frame_len": 4480,
+      "indep": {
+        "hdr": 2490376,
+        "nnodes": 10,
+        "nodes": [
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 619,
+            "xc": 4096,
+            "yc": 619
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 619,
+            "xc": 4096,
+            "yc": 619
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 619,
+            "xc": 4096,
+            "yc": 619
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 619,
+            "xc": 4096,
+            "yc": 619
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 619,
+            "xc": 4096,
+            "yc": 619
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 619,
+            "xc": 4096,
+            "yc": 619
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 619,
+            "xc": 4096,
+            "yc": 619
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 619,
+            "xc": 4096,
+            "yc": 619
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 619,
+            "xc": 4096,
+            "yc": 619
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 619,
+            "xc": 4096,
+            "yc": 619
+          }
+        ]
+      },
+      "indep_sx_unique": [
+        8192
+      ],
+      "indep_sy_unique": [
+        619
+      ],
+      "indep_xc_unique": [
+        4096
+      ],
+      "indep_yc_unique": [
+        619
+      ],
+      "leaf_i": 0,
+      "leaf_rect_parent_raw": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "link_i": 20,
+      "lpath": [
+        507,
+        0
+      ],
+      "n_nodes": 10,
+      "osm_way_id": null,
+      "outside_leaf_rect": true,
+      "point": [
+        4096,
+        619
+      ],
+      "raw_bytes_hex": "00260008000a0000000000000000000000002000026b00002000026b00002000026b00002000026b00002000026b00002000026b00002000026b00002000026b00002000026b00002000026b",
+      "raw_bytes_len": 76,
+      "raw_bytes_sha256": "541ccb9c97ba2a5f7f6e9bb70c9581ae9369610e2a4fe1431d4f6d3be8a009e5",
+      "raw_offset": 1638
+    },
+    {
+      "all_sx_decode_to_4096": false,
+      "dc": 4,
+      "encoded_coords_are_collapsed": true,
+      "file_off": 352253344,
+      "frame_len": 12032,
+      "indep": {
+        "hdr": 1900552,
+        "nnodes": 7,
+        "nodes": [
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 2567,
+            "sy": 1024,
+            "xc": 2567,
+            "yc": 1024
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 2567,
+            "sy": 1024,
+            "xc": 2567,
+            "yc": 1024
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 2567,
+            "sy": 1024,
+            "xc": 2567,
+            "yc": 1024
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 2567,
+            "sy": 1024,
+            "xc": 2567,
+            "yc": 1024
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 2567,
+            "sy": 1024,
+            "xc": 2567,
+            "yc": 1024
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 2567,
+            "sy": 1024,
+            "xc": 2567,
+            "yc": 1024
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 2567,
+            "sy": 1024,
+            "xc": 2567,
+            "yc": 1024
+          }
+        ]
+      },
+      "indep_sx_unique": [
+        2567
+      ],
+      "indep_sy_unique": [
+        1024
+      ],
+      "indep_xc_unique": [
+        2567
+      ],
+      "indep_yc_unique": [
+        1024
+      ],
+      "leaf_i": 2,
+      "leaf_rect_parent_raw": [
+        2048,
+        0,
+        3072,
+        1024
+      ],
+      "link_i": 48,
+      "lpath": [
+        507,
+        2
+      ],
+      "n_nodes": 7,
+      "osm_way_id": null,
+      "outside_leaf_rect": false,
+      "point": [
+        2567,
+        1024
+      ],
+      "raw_bytes_hex": "001d000800070000000000000000700000000a07040000000a07040000000a07040000000a07040000000a07040000000a07040000000a070400",
+      "raw_bytes_len": 58,
+      "raw_bytes_sha256": "8de335e65abf61d13fb5a91fe9542d1d7fa08472f2476e2704246b3ebc13ea94",
+      "raw_offset": 4484
+    },
+    {
+      "all_sx_decode_to_4096": true,
+      "dc": 2,
+      "encoded_coords_are_collapsed": true,
+      "file_off": 352270400,
+      "frame_len": 7840,
+      "indep": {
+        "hdr": 2293768,
+        "nnodes": 9,
+        "nodes": [
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1625,
+            "xc": 4096,
+            "yc": 1625
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1625,
+            "xc": 4096,
+            "yc": 1625
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1625,
+            "xc": 4096,
+            "yc": 1625
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1625,
+            "xc": 4096,
+            "yc": 1625
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1625,
+            "xc": 4096,
+            "yc": 1625
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1625,
+            "xc": 4096,
+            "yc": 1625
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1625,
+            "xc": 4096,
+            "yc": 1625
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1625,
+            "xc": 4096,
+            "yc": 1625
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1625,
+            "xc": 4096,
+            "yc": 1625
+          }
+        ]
+      },
+      "indep_sx_unique": [
+        8192
+      ],
+      "indep_sy_unique": [
+        1625
+      ],
+      "indep_xc_unique": [
+        4096
+      ],
+      "indep_yc_unique": [
+        1625
+      ],
+      "leaf_i": 4,
+      "leaf_rect_parent_raw": [
+        0,
+        1024,
+        1024,
+        2048
+      ],
+      "link_i": 4,
+      "lpath": [
+        507,
+        4
+      ],
+      "n_nodes": 9,
+      "osm_way_id": null,
+      "outside_leaf_rect": true,
+      "point": [
+        4096,
+        1625
+      ],
+      "raw_bytes_hex": "00230008000900000000000000009000000020000659000020000659000020000659000020000659000020000659000020000659000020000659000020000659000020000659",
+      "raw_bytes_len": 70,
+      "raw_bytes_sha256": "cb9c1bef73a8c69f9a9f662d0722d3380bacd36789f3469ae53aaedb26e4a73f",
+      "raw_offset": 514
+    },
+    {
+      "all_sx_decode_to_4096": true,
+      "dc": 7,
+      "encoded_coords_are_collapsed": true,
+      "file_off": 352270400,
+      "frame_len": 7840,
+      "indep": {
+        "hdr": 1703944,
+        "nnodes": 6,
+        "nodes": [
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1766,
+            "xc": 4096,
+            "yc": 1766
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1766,
+            "xc": 4096,
+            "yc": 1766
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1766,
+            "xc": 4096,
+            "yc": 1766
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1766,
+            "xc": 4096,
+            "yc": 1766
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1766,
+            "xc": 4096,
+            "yc": 1766
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1766,
+            "xc": 4096,
+            "yc": 1766
+          }
+        ]
+      },
+      "indep_sx_unique": [
+        8192
+      ],
+      "indep_sy_unique": [
+        1766
+      ],
+      "indep_xc_unique": [
+        4096
+      ],
+      "indep_yc_unique": [
+        1766
+      ],
+      "leaf_i": 4,
+      "leaf_rect_parent_raw": [
+        0,
+        1024,
+        1024,
+        2048
+      ],
+      "link_i": 44,
+      "lpath": [
+        507,
+        4
+      ],
+      "n_nodes": 6,
+      "osm_way_id": null,
+      "outside_leaf_rect": true,
+      "point": [
+        4096,
+        1766
+      ],
+      "raw_bytes_hex": "001a00080006000000000000000060000000200006e60000200006e60000200006e60000200006e60000200006e60000200006e6",
+      "raw_bytes_len": 52,
+      "raw_bytes_sha256": "be4545f836a6c20d9b5a87d94dd66de859861355bbb69b9923f47766f5c09d57",
+      "raw_offset": 3736
+    },
+    {
+      "all_sx_decode_to_4096": true,
+      "dc": 7,
+      "encoded_coords_are_collapsed": true,
+      "file_off": 352270400,
+      "frame_len": 7840,
+      "indep": {
+        "hdr": 2097160,
+        "nnodes": 8,
+        "nodes": [
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1274,
+            "xc": 4096,
+            "yc": 1274
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1274,
+            "xc": 4096,
+            "yc": 1274
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1274,
+            "xc": 4096,
+            "yc": 1274
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1274,
+            "xc": 4096,
+            "yc": 1274
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1274,
+            "xc": 4096,
+            "yc": 1274
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1274,
+            "xc": 4096,
+            "yc": 1274
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1274,
+            "xc": 4096,
+            "yc": 1274
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 1274,
+            "xc": 4096,
+            "yc": 1274
+          }
+        ]
+      },
+      "indep_sx_unique": [
+        8192
+      ],
+      "indep_sy_unique": [
+        1274
+      ],
+      "indep_xc_unique": [
+        4096
+      ],
+      "indep_yc_unique": [
+        1274
+      ],
+      "leaf_i": 4,
+      "leaf_rect_parent_raw": [
+        0,
+        1024,
+        1024,
+        2048
+      ],
+      "link_i": 45,
+      "lpath": [
+        507,
+        4
+      ],
+      "n_nodes": 8,
+      "osm_way_id": null,
+      "outside_leaf_rect": true,
+      "point": [
+        4096,
+        1274
+      ],
+      "raw_bytes_hex": "002000080008000000000000000060000000200004fa0000200004fa0000200004fa0000200004fa0000200004fa0000200004fa0000200004fa0000200004fa",
+      "raw_bytes_len": 64,
+      "raw_bytes_sha256": "a81585d447a78944c769130ff04b71d0e88bf3bcb3ef064e29afaf6f68338266",
+      "raw_offset": 3788
+    },
+    {
+      "all_sx_decode_to_4096": true,
+      "dc": 7,
+      "encoded_coords_are_collapsed": true,
+      "file_off": 352453920,
+      "frame_len": 21632,
+      "indep": {
+        "hdr": 2490376,
+        "nnodes": 10,
+        "nodes": [
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 2193,
+            "xc": 4096,
+            "yc": 2193
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 2193,
+            "xc": 4096,
+            "yc": 2193
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 2193,
+            "xc": 4096,
+            "yc": 2193
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 2193,
+            "xc": 4096,
+            "yc": 2193
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 2193,
+            "xc": 4096,
+            "yc": 2193
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 2193,
+            "xc": 4096,
+            "yc": 2193
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 2193,
+            "xc": 4096,
+            "yc": 2193
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 2193,
+            "xc": 4096,
+            "yc": 2193
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 2193,
+            "xc": 4096,
+            "yc": 2193
+          },
+          {
+            "deltas": [],
+            "nip": 0,
+            "nodeattr": 0,
+            "sx": 8192,
+            "sy": 2193,
+            "xc": 4096,
+            "yc": 2193
+          }
+        ]
+      },
+      "indep_sx_unique": [
+        8192
+      ],
+      "indep_sy_unique": [
+        2193
+      ],
+      "indep_xc_unique": [
+        4096
+      ],
+      "indep_yc_unique": [
+        2193
+      ],
+      "leaf_i": 8,
+      "leaf_rect_parent_raw": [
+        0,
+        2048,
+        1024,
+        3072
+      ],
+      "link_i": 128,
+      "lpath": [
+        507,
+        8
+      ],
+      "n_nodes": 10,
+      "osm_way_id": null,
+      "outside_leaf_rect": true,
+      "point": [
+        4096,
+        2193
+      ],
+      "raw_bytes_hex": "00260008000a00000000000000006000000020000891000020000891000020000891000020000891000020000891000020000891000020000891000020000891000020000891000020000891",
+      "raw_bytes_len": 76,
+      "raw_bytes_sha256": "9cb43baa5ec8a264c5cac08a076bfc6a7d9ebe413139dea7103461087ed645d0",
+      "raw_offset": 9336
+    }
+  ]
+}

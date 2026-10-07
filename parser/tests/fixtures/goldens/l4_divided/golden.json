@@ -11,11 +11,11 @@
  "frame_sha256": [
   "f518983bb1efb1de64f4e919b7be2a22e26ec4468854550492ac0f3464d29512",
   "25d425d1c3015b208098a2c3aeca138de2cd386fe31507a1dc6665cb9c93147f",
-  "08ef69e215975e5e8a77452af2467af19cfac103f339815392d7b85d23a8784d",
+  "11a4f2046807b420e5cd8d52f20e1a92040e14055413cbba958152f13dd60929",
   "cd799e121f97bc631efbadb2b9830302d18cb03118a23f0122266aee8934436a"
  ],
- "total_sha256": "f8df1bcb1b7364bcea3fe4af75b9dd25232229325c6f4f69bbd938c6e158e319",
- "frame_bytes": 138530,
+ "total_sha256": "85bca2e8b6d98871c648de19779ad91c300b974f90d95847eaa85a03359a4cb6",
+ "frame_bytes": 138668,
  "fixture_spool_bytes": 1124520,
  "source_cells": [
   [
@@ -47,5 +47,6 @@
    }
   }
  },
- "capture_build_s": 0.7
+ "capture_build_s": 0.7,
+ "recapture_note": "plan 53: dv_assign no longer wraps lon past lon_span into opposite sub-cell"
 }

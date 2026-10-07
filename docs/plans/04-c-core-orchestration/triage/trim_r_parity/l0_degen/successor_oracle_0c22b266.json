@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "signing_unit": "plan-53",
+  "from_sha256": "aeae426cc62b183a9f041418a0a9980ba596ef43cc9123e0c4ef30dbfb591221",
+  "to_sha256": "0c22b266e7b406bb0cabeee814c9f0cfeebebad6071e131252357f1d3e1aa25a",
+  "status": "classified-diff-verified",
+  "changed_count": 565,
+  "added": 0,
+  "removed": 0,
+  "counts_by_level": {
+    "0": {
+      "changed": 553
+    },
+    "2": {
+      "changed": 1
+    },
+    "4": {
+      "changed": 7
+    },
+    "6": {
+      "changed": 2
+    },
+    "8": {
+      "changed": 2
+    }
+  },
+  "confinement": "Whole-Map-Frame multiset cell diff. All 534 L0 parents that carried all-vertices-on-parent-edge-outside-leaf-rect links (pre-fix census) are in the changed set; +19 L0 and +12 higher-level cells are halo/trim/neighbour fallout of removing those wrong-leaf chains. Mechanism: dv_assign no longer wraps lon past lon_span into the opposite sub-cell (R-G9-3-d).",
+  "perth_sha256": "5b86d33ed5976e7bd4208fb46c4fdde14747c7f31d1d40d819e9e9b2bf5f00d9",
+  "perth_predecessor_prefix": "04be2f6e",
+  "encode_wall_s_j4_median_of_3": 29.339553159006755,
+  "encode_wall_s_j4_spread": 1.7060155360086355,
+  "encode_wall_baseline_s": "plan50 tip encode single-run 44.23s (same spool_overlay)",
+  "k1_failing": 0,
+  "to_path": "output/scratch-53/G_new/ALLDATA.KWI",
+  "kind": "successor-oracle",
+  "region": "AU"
+}

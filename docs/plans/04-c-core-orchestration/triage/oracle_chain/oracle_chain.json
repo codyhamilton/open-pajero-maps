@@ -1,5 +1,5 @@
 {
-  "disc_in_force_sha256": "aeae426cc62b183a9f041418a0a9980ba596ef43cc9123e0c4ef30dbfb591221",
+  "disc_in_force_sha256": "0c22b266e7b406bb0cabeee814c9f0cfeebebad6071e131252357f1d3e1aa25a",
   "hops": [
     {
       "authoritative_list": {
@@ -748,6 +748,76 @@
         }
       ],
       "to_sha256": "aeae426cc62b183a9f041418a0a9980ba596ef43cc9123e0c4ef30dbfb591221",
+      "unexplained_cells": [],
+      "unexplained_count": 0
+    },
+    {
+      "authoritative_list": {
+        "path": "docs/plans/04-c-core-orchestration/triage/trim_r_parity/l0_degen/cells_aeae426c_to_0c22b266.tsv",
+        "sha256": "2a3df3e616ad4798ff7890219adc85e07c2de6d3f746fe2efa772edd72258d3b"
+      },
+      "changed_count": 565,
+      "confinement": "Whole-Map-Frame multiset differences by cell. All 534 L0 parents with pre-fix outside-edge coincident roads are changed; +19 L0 +12 higher-level from halo/trim fallout of removing wrong-leaf chains. Mechanism: dv_assign lon-wrap fix (plan 53).",
+      "counts_by_level": {
+        "0": {
+          "changed": 553
+        },
+        "2": {
+          "changed": 1
+        },
+        "4": {
+          "changed": 7
+        },
+        "6": {
+          "changed": 2
+        },
+        "8": {
+          "changed": 2
+        }
+      },
+      "from_sha256": "aeae426cc62b183a9f041418a0a9980ba596ef43cc9123e0c4ef30dbfb591221",
+      "recorded_changed_count": 565,
+      "recorded_counts_by_level": {
+        "0": 553,
+        "2": 1,
+        "4": 7,
+        "6": 2,
+        "8": 2
+      },
+      "region": "AU",
+      "residuals": [
+        "Remaining 128 outside-edge coincident links (not lon-wrap) named R-G9-3-d-rem",
+        "Perth tip sha 5b86d33ed5976e7b\u2026 (predecessor 04be2f6e\u2026); fixture has 49 divided parents"
+      ],
+      "signing_record": {
+        "path": "docs/plans/04-c-core-orchestration/triage/trim_r_parity/l0_degen/successor_oracle_0c22b266.json",
+        "sha256": "c09f0dc5007f1a0f84925cfa226a46a73e069d07baf23a564a746fd301000dfd"
+      },
+      "signing_unit": "plan 53",
+      "status": "classified-diff-verified",
+      "supporting_evidence": [
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/trim_r_parity/l0_degen/successor_oracle_0c22b266.json",
+          "sha256": "c09f0dc5007f1a0f84925cfa226a46a73e069d07baf23a564a746fd301000dfd"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/trim_r_parity/l0_degen/cells_aeae426c_to_0c22b266.tsv",
+          "sha256": "2a3df3e616ad4798ff7890219adc85e07c2de6d3f746fe2efa772edd72258d3b"
+        },
+        {
+          "path": "output/scratch-53/oracle_diff/diff.json",
+          "sha256": "7fe23291fd0719ec627664dfd8d6f819fa0399fd88ff0a56224a0a34b2645455"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/trim_r_parity/l0_degen/census.json",
+          "sha256": "dbd5bd10fb836302a54508f2d0d056d9e11adda9935a84dddf4da955d62eeacf"
+        },
+        {
+          "path": "docs/plans/04-c-core-orchestration/triage/trim_r_parity/l0_degen/census_after.json",
+          "sha256": "86de7f67c31196c48c5232eb9187eb7bd2286cb0fd581148db598371f14f9b8e"
+        }
+      ],
+      "to_sha256": "0c22b266e7b406bb0cabeee814c9f0cfeebebad6071e131252357f1d3e1aa25a",
       "unexplained_cells": [],
       "unexplained_count": 0
     }

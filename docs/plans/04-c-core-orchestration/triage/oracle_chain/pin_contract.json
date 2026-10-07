@@ -1,6 +1,6 @@
 {
   "disc_binding": "Plan-29 signed record and successor diff pin; plan-32 wrapper argv names that recorded successor path. Report and manifest contain no disc digest; no fresh byte attestation is claimed.",
-  "disc_in_force_sha256": "2ee3456a9aeb8607b88be4edd989a2034dd7fdd6f7846369d9dbc4c8ff20e6ae",
+  "disc_in_force_sha256": "0c22b266e7b406bb0cabeee814c9f0cfeebebad6071e131252357f1d3e1aa25a",
   "dump_bins": [
     {
       "bytes": 0,

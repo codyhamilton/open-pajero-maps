@@ -8,7 +8,7 @@ design_id:
 
 Cody's standing rule (2026-10-05, hard): Maps is complete only when end-to-end generation matches the original DVD in every aspect that can be verified, every claim, assumption, and implementation aspect is verified and proven, and there are no unexplained deviations — each has a root cause.
 
-Close R-G9-3-d: plan 42 found 5 G L0 road links in parent (1755,591) leaves 0/4/4/4/8 with 6–10 vertices all at x=4096 (parent east edge), outside their sub-cell rect by up to 3,072 raw. Whether this is a D1 decode artefact or an encoder defect in oracle `4e6b0de7` was not determined.
+Close R-G9-3-d: plan 42 found 5 G L0 road links in parent (1755,591) leaves 0/4/4/4/8 with 6–10 vertices all at x=4096 (parent east edge), outside their sub-cell rect by up to 3,072 raw. Whether this is a D1 decode artefact or an encoder defect in oracle `aeae426c` (live tip; DESIGN draft cited historical `4e6b0de7`) was not determined.
 
 flock + wrapper, `-j4`. Master direct. Never relabel. No plan 04 P4–6. No 3-90. No waivers.
 
@@ -24,7 +24,7 @@ flock + wrapper, `-j4`. Master direct. Never relabel. No plan 04 P4–6. No 3-90
 
 - **Owns:** `triage/trim_r_parity/l0_degen/`.
 - **Contract:**
-  1. Re-extract the 5 items' encoded bytes from `4e6b0de7` (frame pread) and decode with the production D1 and with an independent bit-level reader.
+  1. Re-extract the 5 items' encoded bytes from live tip oracle `aeae426c` (draft cited `4e6b0de7`) (frame pread) and decode with the production D1 and with an independent bit-level reader.
   2. Compare to the E2 input geometry (trim dump / spool) for the same `(level, kind, row)` keys.
   3. Verdicts:
      - **D1 artefact:** encoded bytes are a normal in-rect chain; only D1 places them at x=4096. Fix or quarantine D1; oracle unchanged if encode is clean.
@@ -65,5 +65,5 @@ None blocking.
 
 ## Provenance
 
-- Master `607e5b6`. Plan 42 L160–170 region; `trim_witness.json`; residuals R-G9-3-d.
+- Master tip at plan-53 start `f3b1aa9` (DESIGN draft cited `607e5b6`). Plan 42 L160–170 region; `trim_witness.json`; residuals R-G9-3-d.
 - Box draft only.

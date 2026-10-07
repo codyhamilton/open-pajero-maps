@@ -9,13 +9,13 @@
  "covers": "divided L0 parent with name halo",
  "frames": 4,
  "frame_sha256": [
-  "4a8382b019eb8e4a944c8de10fb8a9d99b1522aebc8518764f24cf8b9be10893",
+  "5ae5ef4986be60ed2acd58a1745f8b4599042366f39fabc462ea9aededd15ae4",
   "03d4268dae56afb83f6398203f24366d40f47293b73971d664aba00da33a6175",
-  "4fcac52a949aade6aef59b3eb7eec74407127bbd0d49854c3fecb805ea20d718",
+  "746ae091dc541e454bb2f79a520add0103db0db948bf743142503f2c23d4a91f",
   "8f428aed02ed319b069286f39bdf3468a32dfaa40e51d170a13121a29ba6fdfb"
  ],
- "total_sha256": "64bab429468ff06a70f6a94d278dc15185ded90ecee9339c381f795eb7f46497",
- "frame_bytes": 160268,
+ "total_sha256": "3a3d239b2c9e680060076c11f22b39cc850942d72da86cad74ac3b5b491da0e6",
+ "frame_bytes": 160190,
  "fixture_spool_bytes": 1880928,
  "source_cells": [
   [
@@ -70,12 +70,13 @@
   },
   "overlap": {
    "0": {
-    "shared_shapes": 182,
-    "edge_cells": 5619,
-    "interior_cells": 73581,
-    "skipped_missing_cells": 2063
+    "shared_shapes": 51,
+    "edge_cells": 49,
+    "interior_cells": 2,
+    "skipped_missing_cells": 0
    }
   }
  },
- "capture_build_s": 0.9
+ "capture_build_s": 0.9,
+ "recapture_note": "plan 53: dv_assign no longer wraps lon past lon_span into opposite sub-cell"
 }

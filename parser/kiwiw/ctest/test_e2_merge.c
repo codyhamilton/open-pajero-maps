@@ -149,9 +149,10 @@ static void e2t_case_div_assign(void) {
              dv_assign(&X, 10.0, 100.0) == 0 &&   /* the lower edge belongs to the cell */
              dv_assign(&X, 12.0, 101.0) == -1 &&  /* dlat == span: outside */
              dv_assign(&X, 9.9, 101.0) == -1 &&
-             dv_assign(&X, 11.5, 104.0) == 3 &&   /* delta == span is not wrapped; clamped */
-             dv_assign(&X, 10.5, 460.0) == 0 &&   /* delta 360 wraps to 0 */
-             dv_assign(&X, 10.5, 99.0) == 0;      /* delta -1 -> 359 -> -1, clamped to 0 */
+             dv_assign(&X, 11.5, 104.0) == 3 &&   /* delta == span: east edge stays in last col */
+             dv_assign(&X, 10.5, 460.0) == 0 &&   /* delta 360 normalizes to 0 */
+             dv_assign(&X, 10.5, 99.0) == -1 &&   /* west of parent: outside (plan 53) */
+             dv_assign(&X, 10.5, 104.0 + 1e-9) == -1; /* epsilon past east: outside, not wrap west */
     e2t_report("e2_div_assign", ok, "assign_to_parcel cell index differs");
 }
 

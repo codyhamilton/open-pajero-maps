@@ -463,11 +463,18 @@ static inline int dv_clamp(double v, int n) { return v >= (double)n ? n - 1 : v 
 /* assign_to_parcel against the sub-grid scoped to the parent's bounds;
  * the cell index sub_iy * nx + sub_ix, or -1 (None) */
 static int dv_assign(const dv_state *X, double lat, double lon) {
+    /* Sub-cell index for (lat, lon) inside the parent, or -1 if outside.
+     * Lon is brought into [0, 360) relative to the west edge so an
+     * antimeridian-spanning parent still works, but a point that remains
+     * outside [0, lon_span] after that normalize must NOT wrap into the
+     * opposite side of the cell (plan 53: epsilon past the east edge was
+     * wrapping to sx=0 while encode clamped x to 4096 — R-G9-3-d). */
     double dlat = lat - X->b4[0];
     if (dlat < 0.0 || dlat >= X->lat_span) return -1;
     double delta = lon - X->b4[2];
     while (delta < 0.0) delta += 360.0;
-    while (delta > X->lon_span) delta -= 360.0;
+    while (delta >= 360.0) delta -= 360.0;
+    if (delta > X->lon_span) return -1;
     int sx = dv_clamp(delta / X->cell_lon, X->nx), sy = dv_clamp(dlat / X->cell_lat, X->nx);
     return sy * X->nx + sx;
 }
