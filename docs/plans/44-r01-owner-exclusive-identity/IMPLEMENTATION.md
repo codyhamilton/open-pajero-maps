@@ -33,3 +33,11 @@ Units (orchestrator-direct; one brief each, committed before work):
 
 - Drafts 48–53 staged at `output/scratch-44/maps-drafts-48-53/` (read at `607e5b6`; sha256 in `META.txt`). Land after 44 unblocks / after 48–49 per queue.
 - R-G9-4 / R-G8-1-a Cody-pending (no waiver). R-G5-5 maps-parity-carried.
+
+
+### Unit 3b — Fragment-producer + revised-contract control (in flight)
+
+- Design revision landed at `1b839e3` (unique-byte | unique-fragment; cascade 45/46).
+- Tool commit `ef00c12`: `identity_bearing_vertices`, unique-fragment; synthetic tests 9 passed.
+- Control accepts unique-byte|unique-fragment. Spot-check `(0,1980,896)` shapes 1–2 → unique-fragment.
+- Stratified control re-run under flock next; Phase 1 closes only on ≥99%.
