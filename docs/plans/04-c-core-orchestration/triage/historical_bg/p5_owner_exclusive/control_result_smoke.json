@@ -1,0 +1,120 @@
+{
+ "sampled": 12,
+ "agree": 3,
+ "disagree": 9,
+ "skip": 0,
+ "rate": 0.25,
+ "seed": 44,
+ "n": 12,
+ "smoke": true,
+ "details": [
+  {
+   "level": 0,
+   "ix": 813,
+   "iy": 899,
+   "shape": 5,
+   "vert": 31,
+   "code": 289,
+   "verdict": "disagree_producer_none"
+  },
+  {
+   "level": 0,
+   "ix": 1776,
+   "iy": 394,
+   "shape": 13,
+   "vert": 126,
+   "code": 578,
+   "verdict": "agree_excl=11_byte=0_vert=1"
+  },
+  {
+   "level": 0,
+   "ix": 1988,
+   "iy": 1176,
+   "shape": 5,
+   "vert": 154,
+   "code": 288,
+   "verdict": "disagree_producer_none"
+  },
+  {
+   "level": 0,
+   "ix": 1696,
+   "iy": 556,
+   "shape": 1,
+   "vert": 13,
+   "code": 291,
+   "verdict": "disagree_producer_none"
+  },
+  {
+   "level": 0,
+   "ix": 1992,
+   "iy": 1209,
+   "shape": 10,
+   "vert": 34,
+   "code": 578,
+   "verdict": "disagree_producer_none"
+  },
+  {
+   "level": 0,
+   "ix": 1526,
+   "iy": 778,
+   "shape": 1,
+   "vert": 93,
+   "code": 289,
+   "verdict": "disagree_producer_none"
+  },
+  {
+   "level": 0,
+   "ix": 1797,
+   "iy": 692,
+   "shape": 1,
+   "vert": 11,
+   "code": 578,
+   "verdict": "disagree_producer_none"
+  },
+  {
+   "level": 0,
+   "ix": 1892,
+   "iy": 922,
+   "shape": 2,
+   "vert": 68,
+   "code": 291,
+   "verdict": "disagree_producer_none"
+  },
+  {
+   "level": 0,
+   "ix": 1840,
+   "iy": 1455,
+   "shape": 0,
+   "vert": 144,
+   "code": 289,
+   "verdict": "agree_excl=84_byte=0_vert=1"
+  },
+  {
+   "level": 0,
+   "ix": 1929,
+   "iy": 843,
+   "shape": 2,
+   "vert": 97,
+   "code": 291,
+   "verdict": "disagree_producer_none"
+  },
+  {
+   "level": 0,
+   "ix": 1762,
+   "iy": 664,
+   "shape": 0,
+   "vert": 136,
+   "code": 288,
+   "verdict": "agree_excl=71_byte=0_vert=1"
+  },
+  {
+   "level": 0,
+   "ix": 1464,
+   "iy": 1812,
+   "shape": 3,
+   "vert": 156,
+   "code": 288,
+   "verdict": "disagree_producer_none"
+  }
+ ]
+}

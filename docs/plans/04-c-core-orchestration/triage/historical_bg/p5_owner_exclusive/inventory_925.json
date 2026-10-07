@@ -1,0 +1,29 @@
+{
+ "rows": 925,
+ "assignment_tsv_expected": 925,
+ "count_match": true,
+ "guard_code": 22,
+ "basis": "87a01b14 R01 (assign_background.u16 == 0) & guard == 22",
+ "not_proofs": [
+  "R01 predicate in_eo_same == 1 (rule membership, not a per-row independence proof)",
+  "rules_bg.json R01 note '200/200 valid' (3-07 stratified sample witness)"
+ ],
+ "r01_rule_note_excerpt": "Under 3-07 Amendment 4, a fill vertex is valid inside a same-type level polygon. K1 instead demands proximity to an outline. Independent all-level witness: 200/200 valid; 920786 rows on G_new (920773 on the old disc). R01 exclusivity vs the build defect is unproven (review_3-13 finding 3; causes_roo",
+ "tsv_scanned": [
+  "docs/plans/04-c-core-orchestration/triage/historical_bg/p2/assignment.tsv",
+  "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-17/conditions/runs/cls_completeness_at317.cause_counts.tsv",
+  "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-17/conditions/runs/cls_completeness_cur.cause_counts.tsv",
+  "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-17/conditions/runs/x_full_cur.cause_counts.tsv",
+  "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-17/conditions/runs/x_view_completeness_at317.cause_counts.tsv",
+  "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-17/conditions/runs/x_view_completeness_cur.cause_counts.tsv",
+  "docs/plans/04-c-core-orchestration/triage/o04_seven/disposition.tsv",
+  "docs/plans/04-c-core-orchestration/triage/per_rule_classify_assignment.tsv",
+  "docs/plans/04-c-core-orchestration/triage/per_rule_phase2_discriminators.tsv",
+  "docs/plans/04-c-core-orchestration/triage/per_rule_phase2_join.tsv",
+  "docs/plans/04-c-core-orchestration/triage/phase3_synthesis/gates.tsv",
+  "docs/plans/04-c-core-orchestration/triage/phase3_synthesis/residuals.tsv"
+ ],
+ "keeping_checker_with_proof": [],
+ "joining_owner_exclusive_test": 925,
+ "citations_keeping_checker": []
+}

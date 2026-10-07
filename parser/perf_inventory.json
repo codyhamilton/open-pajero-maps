@@ -623,6 +623,12 @@
    "class": "orchestration",
    "phase": null,
    "reason": "Tests are not production paths; deliberate narrowing of 'every module', the only glob"
+  },
+  {
+   "path": "parser/tools/bg_owner_exclusive.py",
+   "class": "triage",
+   "phase": null,
+   "reason": "Plan 44 owner-exclusive identity: compiles a throwaway probe.so from a pinned _cenc.c and clips rings against a leaf rect; used by the R-G5-4-a/b residual scan. No disc/spool open in the library itself; callers stream under the heavy lock."
   }
  ]
 }
