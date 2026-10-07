@@ -1,0 +1,294 @@
+{
+  "G_bg_type_hist": {
+    "288": 8777,
+    "290": 2,
+    "291": 3,
+    "321": 137,
+    "322": 13,
+    "640": 13
+  },
+  "G_per_leaf": {
+    "0": {
+      "frame_bytes": 4480,
+      "lpath": [
+        507,
+        0
+      ],
+      "n288": 35,
+      "n_roads": 21
+    },
+    "1": {
+      "frame_bytes": 12576,
+      "lpath": [
+        507,
+        1
+      ],
+      "n288": 389,
+      "n_roads": 25
+    },
+    "10": {
+      "frame_bytes": 6272,
+      "lpath": [
+        507,
+        10
+      ],
+      "n288": 18,
+      "n_roads": 40
+    },
+    "11": {
+      "frame_bytes": 3840,
+      "lpath": [
+        507,
+        11
+      ],
+      "n288": 36,
+      "n_roads": 14
+    },
+    "12": {
+      "frame_bytes": 14912,
+      "lpath": [
+        507,
+        12
+      ],
+      "n288": 122,
+      "n_roads": 76
+    },
+    "13": {
+      "frame_bytes": 19296,
+      "lpath": [
+        507,
+        13
+      ],
+      "n288": 96,
+      "n_roads": 164
+    },
+    "14": {
+      "frame_bytes": 3072,
+      "lpath": [
+        507,
+        14
+      ],
+      "n288": 7,
+      "n_roads": 8
+    },
+    "15": {
+      "frame_bytes": 2848,
+      "lpath": [
+        507,
+        15
+      ],
+      "n288": 15,
+      "n_roads": 7
+    },
+    "2": {
+      "frame_bytes": 12032,
+      "lpath": [
+        507,
+        2
+      ],
+      "n288": 195,
+      "n_roads": 56
+    },
+    "3": {
+      "frame_bytes": 5024,
+      "lpath": [
+        507,
+        3
+      ],
+      "n288": 67,
+      "n_roads": 22
+    },
+    "4": {
+      "frame_bytes": 7840,
+      "lpath": [
+        507,
+        4
+      ],
+      "n288": 66,
+      "n_roads": 48
+    },
+    "5": {
+      "frame_bytes": 38528,
+      "lpath": [
+        507,
+        5
+      ],
+      "n288": 991,
+      "n_roads": 225
+    },
+    "6": {
+      "frame_bytes": 131072,
+      "lpath": [
+        507,
+        6
+      ],
+      "n288": 6401,
+      "n_roads": 0
+    },
+    "7": {
+      "frame_bytes": 6080,
+      "lpath": [
+        507,
+        7
+      ],
+      "n288": 67,
+      "n_roads": 30
+    },
+    "8": {
+      "frame_bytes": 21632,
+      "lpath": [
+        507,
+        8
+      ],
+      "n288": 190,
+      "n_roads": 156
+    },
+    "9": {
+      "frame_bytes": 20992,
+      "lpath": [
+        507,
+        9
+      ],
+      "n288": 82,
+      "n_roads": 216
+    }
+  },
+  "R_bg_type_hist": {
+    "1024": 19,
+    "291": 1,
+    "321": 1
+  },
+  "classification": {
+    "classes": {
+      "encoder-synthesised": 0,
+      "land-local": 8629,
+      "marine-share-in": 0,
+      "overlap-share-in": 148,
+      "unknown": 0
+    },
+    "dominant_fraction": 0.9831377463825909,
+    "dominant_mechanism": "land-local-catchall-emission",
+    "dominant_meets_95pct": true,
+    "fractions_of_parent_288": {
+      "encoder-synthesised": 0.0,
+      "land-local": 0.9831377463825909,
+      "marine-share-in": 0.0,
+      "overlap-share-in": 0.01686225361740914,
+      "unknown": 0.0
+    },
+    "method": "Aggregate provenance (no per-G-record OSM id on disc). land-local = type-288 count in pinned spool cell (1755,591). overlap-share-in = G_parent_288 - spool_local_288 (lower bound of shapes shared in by overlap). marine-share-in = 0: vocab rule for 288 is L0 catch-all match{} (bg_type.json), not a marine-specific class; marine parks that map to 288 are a subset of catch-all, not separable without OSM tags on disc. encoder-synthesised = 0 under this method (no evidence of inventing 288 without spool).",
+    "note_vs_design_assumption_1": "DESIGN Assumption 1 expected mostly marine-relation spill. Re-measure shows 98.3138% of parent type-288 is already present as local spool catch-all ways; only 148 (1.6862%) are overlap share-ins. Marine-specific spill is not the dominant class."
+  },
+  "counts": {
+    "G_parent_bg_total": 8945,
+    "G_parent_type288": 8777,
+    "G_sub_frame_bytes": 131072,
+    "G_sub_kept_type288": 6401,
+    "G_sub_roads_kept": 0,
+    "G_topology_leaves": 16,
+    "R_parent_bg_total": 21,
+    "R_parent_roads": 179,
+    "R_parent_type288": 0,
+    "R_topology_leaves": 1,
+    "overlap_share_in_lower_bound": 148,
+    "spool_local_bg_total": 8727,
+    "spool_local_roads": 1083,
+    "spool_local_type288": 8629,
+    "trim_dump_sub_drop_288": 227,
+    "trim_dump_sub_drop_road": 207,
+    "trim_dump_sub_keep_288": 6401,
+    "trim_dump_sub_keep_road": 0,
+    "trim_dump_sub_pre_shrink_288_est": 6628
+  },
+  "kind_order_pressure": {
+    "bg288_dropped_by_shrink": 227,
+    "bytes_freed_if_288_absent_estimate": {
+      "288_share_of_288_plus_dropped_road_verts": 0.946331,
+      "dropped_road_count": 207,
+      "dropped_road_verts": 1930,
+      "method": "Vertex-count proxy from plan-42 trim dump for sub (2,1). Type-288 accounts for nearly all geometry verts in the overflowing sub; sibling leaves with roads and far fewer 288 fit well under the frame cap. Counterfactual: absent the pre-shrink 6,628 type-288 items, the 207 roads would not trigger dv_shrink fallback (frame would be comparable to other sub-leaves that retain roads).",
+      "pre_shrink_288_count": 6628,
+      "pre_shrink_288_verts": 34031,
+      "sibling_leaf_13_roads_frame": {
+        "frame_bytes": 19296,
+        "lpath": [
+          507,
+          13
+        ],
+        "n288": 96,
+        "n_roads": 164
+      },
+      "sub_frame_bytes_at_cap": 131072
+    },
+    "bytes_pressure_proxy": {
+      "sub_drop_288_count": 227,
+      "sub_kept_288_count": 6401,
+      "sub_pre_shrink_288_est": 6628,
+      "verts_288_drop_in_trim_dump": 1170,
+      "verts_288_kept_in_trim_dump": 32861,
+      "verts_road_drop_in_trim_dump": 1930
+    },
+    "counterfactual": "If type-288 backgrounds were absent from this sub-cell, dv_shrink would not need to cut the 207 roads to free capacity (plan 42 proven cause chain). Kind-order only matters because catch-all 288 fills the frame first.",
+    "frame_cap_bytes": 131070,
+    "overflow": true,
+    "plan42_counts_still_valid": {
+      "drop_bg288_227": true,
+      "drop_road_207": true,
+      "parent_288": true,
+      "sub_pre_shrink_288": true
+    },
+    "roads_dropped_by_shrink": 207,
+    "roads_kept_in_sub": 0,
+    "shrink_kind_order": "road \u2192 background \u2192 name (fixed)",
+    "sub_frame_bytes": 131072
+  },
+  "neighbour_spool_type288": {
+    "1754,590": 326,
+    "1754,591": 241,
+    "1754,592": 117,
+    "1755,590": 668,
+    "1755,592": 117,
+    "1756,590": 1187,
+    "1756,591": 517,
+    "1756,592": 326
+  },
+  "oracle_disc": "output/scratch-50/G_new",
+  "oracle_sha256_prefix": "aeae426c",
+  "parent": {
+    "ix": 1755,
+    "iy": 591,
+    "level": 0
+  },
+  "phase2_disposition": {
+    "open_questions_escalated": [
+      "Cody/Design: implement F6 (explicit bg mapping + unmapped drop) as successor work?",
+      "Cody: if only lever meanwhile is kind-order, prefer roads when R has roads and 0\u00d7288?"
+    ],
+    "path": "proven-cause",
+    "rule_citation": [
+      "parser/refdata/selection.json L0 background_all:true (admits every non-road ring)",
+      "parser/refdata/vocab/bg_type.json L0 match:{} \u2192 288 catch-all",
+      "docs/design/osm-vocabulary-mapping.md: choosing 288 as catch-all is a decision, not a spec fact",
+      "docs/schema/map-background.md: 288 catch-all is the cause of excess building shapes (Melbourne CBD)",
+      "docs/plans/03-map-layer-parity-remediation/FINDINGS.md F6: replace catch-all with explicit mapping + unmapped\u2192drop"
+    ],
+    "why_not_confined_fix_now": "Dominant class is land-local catch-all emission (98.31%), not marine spill. Removing background_all / catch-all is the F6 product fix and would rebuild AU nationally (R carries 2,203,680\u00d7288 at L0); not a cell-local patch. Kind-order road\u2192bg\u2192name flip needs Cody (DESIGN open question 1). No waiver; volume loss remains named residual under current policy."
+  },
+  "plan50_targets_include_parent": false,
+  "schema": "plan51-l0-288-census-v1",
+  "spool_bg_type_hist": {
+    "288": 8629,
+    "290": 1,
+    "321": 88,
+    "322": 9
+  },
+  "sub": {
+    "leaf_index": 6,
+    "sub_x": 2,
+    "sub_y": 1
+  },
+  "vocab": {
+    "not_marine_specific": true,
+    "type_288_rule": "L0 catch-all: match {} \u2192 288 (parser/refdata/vocab/bg_type.json)"
+  }
+}

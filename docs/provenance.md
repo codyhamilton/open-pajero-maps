@@ -941,3 +941,12 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - `output/scratch-54/` — plan 54 Flash review logs (regenerable).
 
 - `output/scratch-55/` — plan 55 K1 dump-failures on G_pre311 (`87a01b14`) + dual-basis census/Flash review (regenerable; committed proof JSON under 3-14/conditions/).
+
+## Plan 51 — L0 type-288 road trim / R-G9-3-a (2026-10-08)
+
+- Phase 1 census on tip oracle `aeae426c…`: parent type-288 **8777** (plan 42 still valid; plan 50 did not touch this cell); dominant **land-local-catchall-emission** 98.31% (8629 spool-local); Assumption 1 (marine spill) wrong.
+- Phase 2 **proven-cause** (no code/oracle change): `selection.json` L0 `background_all` + `bg_type.json` `match{}→288`; F6 national successor / kind-order left as Cody open questions (no silent flip).
+- Evidence: `docs/plans/04-c-core-orchestration/triage/trim_r_parity/l0_288/{census.json,README.md}`; record `docs/plans/51-l0-type288-road-trim.md`.
+- Residual R-G9-3-a: emission proven-cause; volume loss remains maps-parity-carried pending Cody F6/kind-order.
+- Scratch: `output/scratch-51/` (regenerable).
+
