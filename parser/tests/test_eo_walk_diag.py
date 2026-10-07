@@ -17,6 +17,9 @@ CASES = ("r359", "r8475", "r11892", "r14503", "r19650")
 H2 = ("r359", "r8475", "r19650")
 H1 = ("r11892", "r14503")
 
+# Pull the production-style probe fixture from the stitch suite.
+pytest_plugins = ["test_bg_eo_stitch"]
+
 
 def test_mechanisms_json_names_all_five():
     m = json.loads((DECLINE / "mechanisms.json").read_text())
