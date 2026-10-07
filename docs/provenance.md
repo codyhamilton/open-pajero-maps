@@ -975,3 +975,10 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - Residuals: R-G5-4-c maps-parity-carried (Gate-B); R-G8-1-f discharged-plan-45.
 - Evidence: `triage/historical_bg/p4_ceiling/`; `…/determinism/`; record `docs/plans/45-eo-division-ceiling-window-rebuild.md`.
 - Scratch: `output/scratch-45/` (regenerable).
+
+## Plan 60 — docs oracle + residual-ownership sync (2026-10-08)
+
+- Docs-only: OVERVIEW WP1 oracle cell + ownership section; dated plan-60 block in plan 35 / `phase3_synthesis/synthesis.md`.
+- Oracle in force AU `0c22b266…` (53) / Perth `5b86d33e…`; `residuals.tsv` not edited.
+- Record `docs/plans/60-docs-oracle-residual-sync.md`.
+- Scratch: `output/scratch-60/` (Flash review prompt/logs; regenerable).

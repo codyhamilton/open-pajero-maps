@@ -108,8 +108,8 @@ OVERVIEW Phase-3 blocker prose matches this map.
 
 ## Post-close residual ownership refresh (plan 60 — 2026-10-08)
 
-The plan-35 synthesis and the plan-54 block above are unchanged as history. Live state at tip
-`b5c9ff9` (after plans 45, 50–53, 55):
+The plan-35 synthesis and the plan-54 block above are unchanged as history. Live state at base
+`b5c9ff9`, the parent of the plan-60 commits (after plans 45, 50–53, 55):
 
 - **Phase 3 still not closed.** No plan 04 P4–6. No 3-90. No reseat 170 / 3-16 / 3-17.
 - **Oracle in force:** AU `0c22b266…` (plan **53**, encoder `dv_assign` lon-wrap fix), over
