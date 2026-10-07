@@ -55,3 +55,16 @@ Units:
 - Cause labels (`r89/cause_labels.json`): **89/89 chord-artefact** — legacy IB vertices lie outside the TSV-named source EO interior (xor pip); consistent with 3-16 0/89 counterfactual. No `valid-lost` / build-regression keys.
 - R-DVD limb: `unverifiable:reference_disc_not_mounted`.
 - Next: update residuals end-states; Flash review; close-out.
+
+## Flash review (Phases 2+3) — 2026-10-07 ~15:38 AEST
+- Seat: OpenCode DeepSeek Flash (`opencode run -m deepseek/deepseek-flash`).
+- Verdict: **PASS-WITH-CONCERNS**.
+- All eight claimed outcomes verified against artifacts (representability tables, r89 baseline 89/89, chord×89, residual end-states including R-G8-1-g).
+- Concerns carried:
+  1. R-G8-3-c: DESIGN says face table regenerated via k1_representable; residual records regenerable/unverifiable rather than a committed 34-ring/156-face table. Outcome met; regeneration step not demonstrated as a separate artifact.
+  2. IMPLEMENTATION relative-path citation ambiguity (low); residuals carry full paths.
+  3. Independent re-run not performed (spool/disc ~4.5 GB); internal consistency verified.
+- Log: `output/scratch-47/runs/flash_p2p3.stdout`.
+
+## CLOSE-OUT — 2026-10-07 ~15:38 AEST
+Plan 47 Phases 1–3 complete under Flash PASS / PASS-WITH-CONCERNS. Residuals R-G8-2-* / R-G8-3-* / R-G8-1-g all have end states. Tip at close: see git log.
