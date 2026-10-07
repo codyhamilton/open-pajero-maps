@@ -1,0 +1,64 @@
+{
+  "old_dump_311_completeness_sha256": "c4d68769423f265d15c09e9dca234db1d81955ebb1c946e087655e430c398f3b",
+  "old_dump_311_manifest_sha256": "b7485982d707cc7ae97be57a70a183bba85fb3658225a6723019f3677b07df0d",
+  "old_dump_311_rows": 739,
+  "old_dump_311_row_size": 144,
+  "keys_739_canonical": 739,
+  "keys_776_source": "/home/codyh/workspace/open-pajero-maps-14-completeness/output/scratch-14/dump_ext/completeness.bin",
+  "keys_776_canonical": 776,
+  "cleared_739_minus_776": 52,
+  "added_776_minus_739": 89,
+  "common": 687,
+  "identity_check": {
+    "739_minus_52_plus_89": 776,
+    "equals_776": true,
+    "cleared_union_common": true,
+    "added_union_common": true
+  },
+  "sets_json_host": {
+    "A": 739,
+    "B": 52,
+    "P": 776,
+    "F": 52,
+    "F_minus_B": [],
+    "B_minus_F": [],
+    "B_and_P": []
+  },
+  "historic_188": {
+    "per_rule_count": 188,
+    "in_739": 188,
+    "missing_from_739": 0,
+    "intersection_cleared": 0,
+    "subset_of_739": true
+  },
+  "added_89": {
+    "per_rule_count": 89,
+    "setdiff_added": 89,
+    "equal_to_setdiff": true,
+    "symmetric_diff": 0
+  },
+  "per_rule_vs_776": {
+    "per_rule_n": 776,
+    "equal_set776": true,
+    "symdiff": 0
+  },
+  "fresh_k1": {
+    "tip": "1cf40f8",
+    "disc": "013586b5",
+    "disc_full_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+    "out_json": "output/scratch-47/k1old_739.json",
+    "fresh_dump_dir": "output/scratch-47/fresh_dump_311",
+    "completeness_failing": 739,
+    "fresh_sha256": "c4d68769423f265d15c09e9dca234db1d81955ebb1c946e087655e430c398f3b",
+    "byte_equal_vs_old_dump_311": true,
+    "canonical_sort_needed": false,
+    "wall_s_approx": 212.9
+  },
+  "native_order_3_17": {
+    "source_table": "docs/plans/04-c-core-orchestration/triage/rebaseline_3-17_9064.md",
+    "historic_188_keys": 188,
+    "matched_3_12_native_row_via_dump_row_original": 188,
+    "mismatches": 0,
+    "symdiff_vs_note_table": 0
+  }
+}
