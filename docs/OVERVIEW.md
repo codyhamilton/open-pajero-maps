@@ -85,7 +85,7 @@ remaining Phase 3 blockers are exactly the `blocks-phase3` rows of
   which discharges "review missing" (R-G8-1..4). Their UNVERIFIABLE or FAIL
   clauses (lost unit scratch; the 3-14 build wall 26 s → 90 s, since
   measured and fixed to 37.38 s at `-j4` by plan 41, pending the budget
-  ruling) are open named residuals R-G8-1-a..4-d. They are not counted proven.
+  ruling) are open named residuals (plan 43 closed the light set R-G8-1-b/c/d/e/h, R-G8-2-f, R-G8-4-a/b; children R-G8-1-b-a, R-G8-1-d-a, R-G8-2-f-a opened). They are not counted proven.
 - the encoder content trim (R-G9-3), discharged by plan **42**
   ([record](plans/42-encoder-trim-r-parity.md)) as a proven cause with
   named children:
