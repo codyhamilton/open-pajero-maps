@@ -1,0 +1,56 @@
+{
+  "cells": {
+    "path": "output/scratch-49/regen-20261007-140744/AU.differing_cells.tsv",
+    "sha256": "77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f"
+  },
+  "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes.",
+  "counts": {
+    "added": 0,
+    "changed": 246123,
+    "removed": 0
+  },
+  "counts_by_level": {
+    "0": {
+      "changed": 244060
+    },
+    "2": {
+      "changed": 1944
+    },
+    "6": {
+      "changed": 118
+    },
+    "8": {
+      "changed": 1
+    }
+  },
+  "frame_length_fallbacks": {
+    "new": 0,
+    "old": 0
+  },
+  "kind": "cell_diff",
+  "leaf_counts": {
+    "new": 3954159,
+    "old": 3954156
+  },
+  "new": "/home/codyh/workspace/open-pajero-maps/output/scratch-14/G_new/ALLDATA.KWI",
+  "new_sha256": "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72",
+  "new_size": 1692105152,
+  "old": "/home/codyh/workspace/open-pajero-maps/output/scratch-3-11/G_new/ALLDATA.KWI",
+  "old_sha256": "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+  "old_size": 1731021792,
+  "protected_after_sha256": [
+    "013586b58490873fec623a854ed16b6bea8afd3aab20565b83d65275ad595f04",
+    "4ed9cd801bdd70992a9b7bd090803ffae349515f87546f044b21157e68e99d72"
+  ],
+  "protected_unchanged": true,
+  "residuals": [
+    "Payload causes not measured; all listed cells are unexplained.",
+    "Container/index/padding relocation is outside this cell-identity measurement."
+  ],
+  "schema": 1,
+  "unexplained_cells": {
+    "path": "output/scratch-49/regen-20261007-140744/AU.differing_cells.tsv",
+    "selector": "all rows"
+  },
+  "unexplained_count": 246123
+}

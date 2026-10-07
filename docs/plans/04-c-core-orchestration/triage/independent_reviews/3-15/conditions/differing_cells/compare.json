@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "regen_sha256": "77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f",
+  "plan31_sha256": "77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f",
+  "plan31_sha_matches_expected": true,
+  "literal_equal": true,
+  "n_regen": 246123,
+  "n_plan31": 246123,
+  "n_only_regen": 0,
+  "n_only_plan31": 0,
+  "n_sha_diffs": 0,
+  "only_regen_sample": [],
+  "only_plan31_sample": [],
+  "sha_diff_sample": [],
+  "perth_shared_cells_present_in_regen": {
+    "0/828/862": true,
+    "0/827/869": true,
+    "0/832/856": true
+  }
+}
