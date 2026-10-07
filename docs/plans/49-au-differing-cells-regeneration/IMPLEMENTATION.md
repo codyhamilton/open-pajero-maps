@@ -23,5 +23,13 @@
 - Residual **R-G8-2-f-a → discharged (regenerated: literal equal)**.
 
 ## Carried
-- Flash review still required for plan close-out.
 - forced_zero re-apply consistency check optional (DESIGN §4); deferred if lock-contended.
+
+## Flash review — 2026-10-07 ~15:00 AEST
+- Seat: OpenCode DeepSeek Flash.
+- Verdict: **PASS-WITH-CONCERNS**.
+- Literal equality `77ff1d86…` independently re-hashed (regen / plan31 / gz decompress).
+- R-G8-2-f-a discharge confirmed.
+- Concerns: forced_zero re-apply not run (deferred; logically guaranteed by byte-identity); `docs/provenance.md` now has BOM entry (addressed in `e652811`).
+- Transcript: `output/scratch-49/runs/flash.stdout`.
+
