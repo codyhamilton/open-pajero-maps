@@ -60,3 +60,13 @@ Units (orchestrator-direct; one brief each, committed before work):
 - 7 outside-R_cap rows listed in `triage/historical_bg/p5_owner_exclusive/phase2_residuals_outside_R_cap.tsv` → named Phase 2 residuals / R-G5-4 children.
 - R-G5-4-a/b still open.
 - Designs 45/46: wait for Design confirm of R.
+
+
+### Flash review (Phase 1 close) — 2026-10-07 ~15:00 AEST
+- Seat: OpenCode DeepSeek Flash (`opencode run -m deepseek/deepseek-flash`).
+- Verdict: **PASS-WITH-CONCERNS**.
+- Gate A confirmed 191/191 OE rate 1.0 (re-ran control byte-identical).
+- Gate B confirmed 198/198 (73/118/7); cover unchanged.
+- Proposed R=8 **ACCEPT** (max recovering radius among unique-*).
+- Concerns: R=8 equals R_cap (right-censored); outside_R_cap RC is search-bound not existence proof. Flag for Design when confirming R.
+- Transcript: `output/scratch-44/runs/flash_p1.stdout`.

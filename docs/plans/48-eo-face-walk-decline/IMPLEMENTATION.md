@@ -31,3 +31,11 @@
 - EO_DIAG dumps committed; production builds omit `-DEO_DIAG`.
 - Regression xfails: 3 passed + 5 strict xfails invoking real probe declines.
 - Awaiting Flash review before marking Phase 1 discharged; Phase 2 census next.
+
+
+## Flash review (Phase 1) — 2026-10-07 ~15:00 AEST
+- Seat: OpenCode DeepSeek Flash.
+- Verdict: **APPROVE Phase 1 discharge** (PASS-WITH-CONCERNS equivalent).
+- Mechanisms independently recomputed; causal ties to decline site confirmed for all 5.
+- Conditions to carry: (1) make dumps reproducible via real `-DEO_DIAG` invoke in `eo_walk_diag.py`; (2) fix `:885`→actual EO_DIAG site in README; (3) note H2 ties are equal atan2 doubles not exact-collinear for Phase 3.
+- Transcript: `output/scratch-48/flash.stdout`.

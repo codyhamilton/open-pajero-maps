@@ -134,11 +134,23 @@ def main():
     for name, ring in rings.items():
         dump_path = args.dumps_dir / f"{name}.json"
         if args.probe_so and args.probe_so.exists():
-            # Placeholder: child runner will write EO_DIAG_OUT when hook lands.
-            env = os.environ.copy()
-            env["EO_DIAG_OUT"] = str(dump_path)
-            # Actual ctypes probe invoke lands with EO_DIAG; until then require dumps.
-            print(f"{name}: EO_DIAG invoke pending hook; expecting dump at {dump_path}", flush=True)
+            import ctypes
+            import numpy as np
+            env_path = str(dump_path.resolve())
+            os.environ["EO_DIAG_OUT"] = env_path
+            lib = ctypes.CDLL(str(args.probe_so))
+            fn = lib.probe_bg
+            fn.restype = ctypes.c_int64
+            fn.argtypes = [ctypes.c_void_p]*2 + [ctypes.c_int64] + [ctypes.c_void_p]*2 + [
+                ctypes.c_int64, ctypes.c_void_p]
+            lat = np.array([y for x, y in ring], "f8")
+            lon = np.array([x for x, y in ring], "f8")
+            rect = np.array([0, 0, 4096, 4096], "f8")
+            out = np.zeros(1 << 20, "u1")
+            nr = ctypes.c_int64()
+            size = fn(lat.ctypes.data, lon.ctypes.data, len(ring), rect.ctypes.data,
+                      out.ctypes.data, 1 << 20, ctypes.byref(nr))
+            print(f"{name}: probe size={size} dump={dump_path.exists()}", flush=True)
         if not dump_path.exists():
             results[name] = {"status": "dump_missing", "ring_n": len(ring)}
             continue

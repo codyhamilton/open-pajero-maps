@@ -879,3 +879,9 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - Also present: `probe.so`, `charact.py` (identical to committed `stress_characterise_20k.py`), `res_p1.py` (one-shot residuals editor),
   `tmp/`, and the shared `output/tmp-agent` used as TMPDIR. `review/` holds the terminal REVIEW.md and its prompt/log.
 - Safe to delete after the committed evidence is in place; recreate before re-running the hard-coded scripts.
+
+## Plan 49 — AU.differing_cells regenerated (2026-10-07)
+- `docs/plans/04-c-core-orchestration/triage/independent_reviews/3-15/conditions/differing_cells/AU.differing_cells.tsv.gz`
+- Uncompressed sha256 `77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f` (literal equal to plan 31 `diff-3-14-au.cells.tsv`)
+- Inputs: `013586b5` ← scratch-3-11/G_new; `4ed9cd80` ← scratch-14/G_new; tool `oracle_chain.py diff`
+- Residual R-G8-2-f-a discharged (regenerated equal)
