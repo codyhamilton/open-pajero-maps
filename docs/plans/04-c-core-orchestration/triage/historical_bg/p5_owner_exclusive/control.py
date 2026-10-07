@@ -266,7 +266,9 @@ def main() -> int:
                     clips = 0
                     uncovered = 0
                     if ib and cands:
-                        from bg_owner_exclusive import clip_ring, wire_vertices
+                        # clip_ring / wire_vertices already imported at module scope;
+                        # do not re-import here (makes them function-local → UnboundLocalError
+                        # on the unique-* OE limb below).
                         cover_count = Counter()
                         for cid, ring in cands:
                             sz, _, blob = clip_ring(
