@@ -967,3 +967,11 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - Residuals: R-G9-3-d discharged-plan-53; **R-G9-3-d-rem** (128) maps-parity-carried.
 - Evidence: `triage/trim_r_parity/l0_degen/`; record `docs/plans/53-l0-degenerate-east-edge-roads.md`.
 - Scratch: `output/scratch-53/` (regenerable).
+
+## Plan 45 — eo_division_ceiling window + determinism (2026-10-08)
+
+- Phase 1: window control ALL_OK; 80/80 `producer_home_outside_R_cap` at R=8 (saturated @16); 0 proven-fixed.
+- Phase 2: `c4965442…` -j1==-j4 at d35b565 and tip; -j12 unverifiable:cap.
+- Residuals: R-G5-4-c maps-parity-carried (Gate-B); R-G8-1-f discharged-plan-45.
+- Evidence: `triage/historical_bg/p4_ceiling/`; `…/determinism/`; record `docs/plans/45-eo-division-ceiling-window-rebuild.md`.
+- Scratch: `output/scratch-45/` (regenerable).
