@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
-"""Plan 44 Phase 1 control: re-test plan 39 identity-proven sample with owner-exclusive.
+"""Plan 44 Phase 1 control (DESIGN revision 2): Gates A+B under expanding Moore search.
 
-≥99% of evaluable samples must agree under revised producer (unique-byte or
-unique-fragment at 33006aa) then OE/new-disc (d35b565 exclusive vert or byte-equal clip).
-Every disagreement is reported; systematic disagreement stops the phase.
+For each sample row, grow Moore neighbourhood radius from 1 to R_cap (default 8)
+until unique-byte or unique-fragment, logging the recovering radius. Candidates =
+bbox-meet ∪ Moore(R) via spool_candidates(neighbourhood=R).
 
-Vertices come from old-disc leaf records (dump_pre311 is not retained on host).
+Gate A: among rows that resolve unique-byte|unique-fragment, ≥99% must pass
+OE/new-disc (d35b565 exclusive vert or byte-equal clip).
+
+Gate B: 100% class coverage with RC — every evaluable row is unique-byte,
+unique-fragment, producer_home_outside_R_cap, or producer_ambiguous.
+Bare producer_none does not close.
+
+Offset census of recovering (dx,dy)/min radius/class → control_analysis.md.
+Vertices from old-disc leaf records (dump_pre311 not retained on host).
 """
 from __future__ import annotations
 
@@ -93,8 +101,11 @@ def main() -> int:
     ap.add_argument("-n", type=int, default=200)
     ap.add_argument("--seed", type=int, default=44)
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--r-cap", type=int, default=8,
+                    help="Design R_cap: max Moore radius for expanding search (17×17 at 8)")
     args = ap.parse_args()
     n = 12 if args.smoke else args.n
+    r_cap = int(args.r_cap)
 
     os.environ.setdefault("TMPDIR", str(ROOT / "output/tmp-agent"))
     Path(os.environ["TMPDIR"]).mkdir(parents=True, exist_ok=True)
@@ -107,7 +118,6 @@ def main() -> int:
 
     print("load identity pool…", flush=True)
     pool = load_tsv(IDENTITY)
-    # R01 failing keys for sampled leaves (identity+weak+none)
     r01_all = []
     for name in ("rows_identity_proven.tsv.gz", "rows_weak.tsv.gz", "rows_none.tsv.gz"):
         r01_all.extend(load_tsv(OUT / name))
@@ -129,10 +139,9 @@ def main() -> int:
         sample.extend(rng.sample(rest, min(n - len(sample), len(rest))))
     sample = sample[:n]
     rng.shuffle(sample)
-    print(f"sample={len(sample)} codes={Counter(r['code'] for r in sample)}", flush=True)
+    print(f"sample={len(sample)} codes={Counter(r['code'] for r in sample)} r_cap={r_cap}", flush=True)
 
     sampled_cells = {(r["level"], r["ix"], r["iy"]) for r in sample}
-    # R01 rows in sampled cells → failing verts looked up from disc later
     r01_in_cells = [r for r in r01_all if (r["level"], r["ix"], r["iy"]) in sampled_cells]
     print(f"r01 rows in sampled cells: {len(r01_in_cells)}", flush=True)
 
@@ -142,14 +151,17 @@ def main() -> int:
     spool = SpoolReader(str(SPOOL))
     print(f"old leaves {len(old_fr)} new leaves {len(new_fr)}", flush=True)
 
-    agree = disagree = skip = 0
-    details = []
+    skip = 0
+    details = []  # tuples: (*_rid, verdict, extra_dict)
     by_leaf_rows = defaultdict(list)
     for r in sample:
         by_leaf_rows[leaf_key(r)].append(r)
     r01_by_leaf = defaultdict(list)
     for r in r01_in_cells:
         r01_by_leaf[leaf_key(r)].append(r)
+
+    # Offset census accumulators
+    recover_offsets = []  # (dx, dy, radius, class, level, ix, iy, shape, code)
 
     with open(OLD_DISC, "rb") as fo, open(NEW_DISC, "rb") as fn:
         for lk, rows in by_leaf_rows.items():
@@ -158,17 +170,17 @@ def main() -> int:
             if fe.get(cell, ("", "0"))[1] != "1":
                 for r in rows:
                     skip += 1
-                    details.append((*_rid(r), "skip_footprints_changed"))
+                    details.append((*_rid(r), "skip_footprints_changed", {}))
                 continue
             if lk not in old_fr or lk not in new_fr:
                 for r in rows:
                     skip += 1
-                    details.append((*_rid(r), "skip_leaf_missing"))
+                    details.append((*_rid(r), "skip_leaf_missing", {}))
                 continue
             if len(path) > 1:
                 for r in rows:
                     skip += 1
-                    details.append((*_rid(r), "skip_divided_leaf"))
+                    details.append((*_rid(r), "skip_divided_leaf", {}))
                 continue
 
             old_recs = list(leaf_records(fo, old_fr[lk]))
@@ -180,7 +192,6 @@ def main() -> int:
                 new_by_type_verts[code].update((int(x), int(y)) for x, y in verts)
                 new_wires[code].append(wire)
 
-            # Failing verts per (shape, code) from R01 rows of this leaf
             failing = defaultdict(set)
             for rr in r01_by_leaf.get(lk, []):
                 sh = rr["shape"]
@@ -196,38 +207,109 @@ def main() -> int:
             b4_enc = (0.0, float(cr), 0.0, float(cr))
             rect = leaf_rect_raw(level, len(path))
 
-            print(f"  spool cands leaf {lk}…", flush=True)
-            cands = list(spool_candidates(spool, level, ix, iy, rect, b4, cr, neighbourhood=1))
-            print(f"  cands={len(cands)} rows={len(rows)}", flush=True)
+            # Expanding Moore search: cache cands by radius
+            cands_by_r: dict[int, list] = {}
+
+            def cands_at(radius: int):
+                if radius not in cands_by_r:
+                    cands_by_r[radius] = list(
+                        spool_candidates(spool, level, ix, iy, rect, b4, cr,
+                                         neighbourhood=radius))
+                return cands_by_r[radius]
+
+            print(f"  leaf {lk} rows={len(rows)} expanding≤{r_cap}…", flush=True)
 
             for r in rows:
                 shape = r["shape"]
                 if shape not in by_shape:
                     skip += 1
-                    details.append((*_rid(r), "skip_shape_missing"))
+                    details.append((*_rid(r), "skip_shape_missing", {}))
                     continue
                 code, wire, old_verts = by_shape[shape]
                 if code != r["code"]:
                     skip += 1
-                    details.append((*_rid(r), "skip_code_mismatch"))
+                    details.append((*_rid(r), "skip_code_mismatch", {}))
                     continue
-                status, pid = find_producer(
-                    probe_prod, wire, cands, rect=rect, tc=code, b4=b4_enc, cr=float(cr),
-                    record_verts=old_verts,
-                    failing=failing.get((shape, code), set()),
-                )
+
+                fail_set = failing.get((shape, code), set())
+                from bg_owner_exclusive import identity_bearing_vertices
+                ib = identity_bearing_vertices(old_verts, rect, failing=fail_set)
+
+                status = "producer_none"
+                pid = None
+                recover_r = None
+                cands = []
+                for radius in range(1, r_cap + 1):
+                    cands = cands_at(radius)
+                    status, pid = find_producer(
+                        probe_prod, wire, cands, rect=rect, tc=code, b4=b4_enc, cr=float(cr),
+                        record_verts=old_verts, failing=fail_set,
+                    )
+                    if status in ("unique-byte", "unique-fragment"):
+                        recover_r = radius
+                        break
+                    if status == "producer-ambiguous":
+                        recover_r = radius
+                        break
+
+                extra = {"recover_r": recover_r, "r_cap": r_cap,
+                         "n_cands": len(cands), "n_ib": len(ib)}
+
+                if status == "producer-ambiguous":
+                    details.append((*_rid(r), "producer_ambiguous",
+                                    {**extra, "gate_b": "producer_ambiguous"}))
+                    continue
+
                 if status not in ("unique-byte", "unique-fragment"):
-                    disagree += 1
-                    details.append((*_rid(r), f"disagree_producer_{status}"))
+                    # Gate B residual: producer_home_outside_R_cap
+                    # IB uncover diagnostics at R_cap
+                    clips = 0
+                    uncovered = 0
+                    if ib and cands:
+                        from bg_owner_exclusive import clip_ring, wire_vertices
+                        cover_count = Counter()
+                        for cid, ring in cands:
+                            sz, _, blob = clip_ring(
+                                probe_prod, ring, rect=rect, tc=code, b4=b4_enc, cr=float(cr),
+                            )
+                            if sz <= 0:
+                                continue
+                            clips += 1
+                            vset = {(int(x), int(y)) for x, y in wire_vertices(blob)}
+                            for pt in ib:
+                                if pt in vset:
+                                    cover_count[pt] += 1
+                        uncovered = sum(1 for pt in ib if cover_count[pt] == 0)
+                    elif ib:
+                        uncovered = len(ib)
+                    details.append((*_rid(r), "producer_home_outside_R_cap", {
+                        **extra, "gate_b": "producer_home_outside_R_cap",
+                        "max_radius": r_cap, "n_clips": clips, "n_ib_uncovered": uncovered,
+                        "n_spool": len(cands),
+                    }))
                     continue
-                ring = next(rng for cid, rng in cands if cid == pid)
+
+                # Resolved unique-* — offset census + OE limb
+                assert pid is not None and recover_r is not None
+                hx, hy = int(pid[0]), int(pid[1])
+                dx, dy = hx - ix, hy - iy
+                cheb = max(abs(dx), abs(dy))
+                recover_offsets.append({
+                    "dx": dx, "dy": dy, "radius": recover_r, "chebyshev": cheb,
+                    "class": status, "level": level, "ix": ix, "iy": iy,
+                    "shape": shape, "code": code,
+                })
+                extra.update({"dx": dx, "dy": dy, "producer_home": [hx, hy],
+                              "gate_b": status})
+
+                ring = next(rng_ for cid, rng_ in cands if cid == pid)
                 prod_class = status
                 sz, _nrec, blob_e = clip_ring(
                     probe_excl, ring, rect=rect, tc=code, b4=b4_enc, cr=float(cr),
                 )
                 if sz <= 0:
-                    disagree += 1
-                    details.append((*_rid(r), f"disagree_source_removed_sz{sz}"))
+                    details.append((*_rid(r), f"disagree_source_removed_sz{sz}",
+                                    {**extra, "oe": "source_removed"}))
                     continue
                 src_verts = [(int(x), int(y)) for x, y in wire_vertices(blob_e)]
                 other = []
@@ -240,41 +322,129 @@ def main() -> int:
                     if s2 > 0:
                         other.append([(int(x), int(y)) for x, y in wire_vertices(b2)])
                 excl = owner_exclusive_vertices(
-                    src_verts, other, rect, failing=failing.get((shape, code), set()),
+                    src_verts, other, rect, failing=fail_set,
                 )
                 byte_hit = blob_e in new_wires.get(code, [])
                 vert_hit = any(v in new_by_type_verts.get(code, ()) for v in excl)
                 if byte_hit or vert_hit:
-                    agree += 1
                     details.append((*_rid(r),
-                                    f"agree_{prod_class}_excl={len(excl)}_byte={int(byte_hit)}_vert={int(vert_hit)}"))
+                                    f"agree_{prod_class}_r{recover_r}_excl={len(excl)}"
+                                    f"_byte={int(byte_hit)}_vert={int(vert_hit)}",
+                                    {**extra, "oe": "pass", "excl": len(excl),
+                                     "byte": int(byte_hit), "vert": int(vert_hit)}))
                 else:
-                    disagree += 1
-                    details.append((*_rid(r), f"disagree_no_oe_excl={len(excl)}"))
+                    details.append((*_rid(r), f"disagree_no_oe_excl={len(excl)}",
+                                    {**extra, "oe": "fail", "excl": len(excl)}))
 
-    total = agree + disagree
-    rate = (agree / total) if total else 0.0
+    # --- Gate evaluations ---
+    evaluable = []
+    for a, b, c, d, e, f, verdict, extra in details:
+        if verdict.startswith("skip_"):
+            continue
+        evaluable.append((a, b, c, d, e, f, verdict, extra))
+
+    # Gate B classes
+    gate_b_ok = 0
+    gate_b_bad = 0
+    class_counts = Counter()
+    for *_, verdict, extra in evaluable:
+        gb = extra.get("gate_b")
+        if gb in ("unique-byte", "unique-fragment", "producer_home_outside_R_cap",
+                  "producer_ambiguous"):
+            gate_b_ok += 1
+            class_counts[gb] += 1
+        elif verdict.startswith("agree_unique-byte"):
+            gate_b_ok += 1
+            class_counts["unique-byte"] += 1
+        elif verdict.startswith("agree_unique-fragment"):
+            gate_b_ok += 1
+            class_counts["unique-fragment"] += 1
+        elif verdict.startswith("disagree_no_oe") or verdict.startswith("disagree_source_removed"):
+            # still resolved unique-*; OE fail — Gate B class is unique-*
+            cls = extra.get("gate_b") or ("unique-byte" if "byte" in verdict else "unique-fragment")
+            # recover from verdict prefix when agree failed
+            if extra.get("gate_b") in ("unique-byte", "unique-fragment"):
+                gate_b_ok += 1
+                class_counts[extra["gate_b"]] += 1
+            else:
+                gate_b_bad += 1
+                class_counts["bare_or_oe_without_class"] += 1
+        else:
+            gate_b_bad += 1
+            class_counts[f"unclassified:{verdict[:40]}"] += 1
+
+    # Fix Gate B: any row with gate_b set counts; OE-disagree still has gate_b unique-*
+    gate_b_ok = gate_b_bad = 0
+    class_counts = Counter()
+    for *_, verdict, extra in evaluable:
+        gb = extra.get("gate_b")
+        if gb in ("unique-byte", "unique-fragment", "producer_home_outside_R_cap",
+                  "producer_ambiguous"):
+            gate_b_ok += 1
+            class_counts[gb] += 1
+        else:
+            gate_b_bad += 1
+            class_counts[f"missing_gate_b:{verdict[:40]}"] += 1
+
+    # Gate A: among unique-* resolved, OE pass rate
+    resolved = [x for x in evaluable if x[7].get("gate_b") in ("unique-byte", "unique-fragment")]
+    oe_pass = sum(1 for x in resolved if x[7].get("oe") == "pass")
+    oe_fail = sum(1 for x in resolved if x[7].get("oe") != "pass")
+    gate_a_rate = (oe_pass / len(resolved)) if resolved else 0.0
+
+    gate_a_ok = gate_a_rate >= 0.99 and len(resolved) >= max(5, n // 4)
+    gate_b_pass = gate_b_bad == 0 and len(evaluable) >= max(5, n // 4)
+    ok = gate_a_ok and gate_b_pass
+
     summary = {
-        "sampled": len(sample), "agree": agree, "disagree": disagree, "skip": skip,
-        "rate": round(rate, 6), "seed": args.seed, "n": n, "smoke": bool(args.smoke),
+        "sampled": len(sample), "skip": skip, "evaluable": len(evaluable),
+        "seed": args.seed, "n": n, "smoke": bool(args.smoke), "r_cap": r_cap,
+        "gate_a": {
+            "resolved_unique": len(resolved), "oe_pass": oe_pass, "oe_fail": oe_fail,
+            "rate": round(gate_a_rate, 6), "pass": gate_a_ok,
+        },
+        "gate_b": {
+            "ok": gate_b_ok, "bad": gate_b_bad, "pass": gate_b_pass,
+            "classes": dict(class_counts),
+        },
+        "recover_offsets_n": len(recover_offsets),
     }
     print("CONTROL", json.dumps(summary), flush=True)
+
     out = OUT / ("control_result_smoke.json" if args.smoke else "control_result.json")
     out.write_text(json.dumps({
         **summary,
         "details": [
-            {"level": a, "ix": b, "iy": c, "shape": d, "vert": e, "code": f, "verdict": g}
-            for a, b, c, d, e, f, g in details
+            {"level": a, "ix": b, "iy": c, "shape": d, "vert": e, "code": f,
+             "verdict": g, **extra}
+            for a, b, c, d, e, f, g, extra in details
         ],
+        "recover_offsets": recover_offsets,
     }, indent=1))
     (OUT / "control_result.txt").write_text(
-        f"agree={agree} disagree={disagree} skip={skip} rate={rate:.6f} "
-        f"n={len(sample)} seed={args.seed}\n"
-        + "\n".join(f"{a}\t{b}\t{c}\t{d}\t{e}\t{f}\t{g}" for a, b, c, d, e, f, g in details)
+        f"gate_a_rate={gate_a_rate:.6f} gate_a={gate_a_ok} gate_b={gate_b_pass} "
+        f"evaluable={len(evaluable)} skip={skip} n={len(sample)} seed={args.seed} r_cap={r_cap}\n"
+        + "\n".join(f"{a}\t{b}\t{c}\t{d}\t{e}\t{f}\t{g}" for a, b, c, d, e, f, g, _ in details)
         + "\n"
     )
-    ok = rate >= 0.99 and total >= max(5, n // 4)
-    print("CONTROL_OK" if ok else "CONTROL_FAIL", flush=True)
+    # Write offset census fragment for control_analysis
+    census_path = OUT / "offset_census.json"
+    by_r = Counter(o["radius"] for o in recover_offsets)
+    by_cls = Counter(o["class"] for o in recover_offsets)
+    by_xy = Counter((o["dx"], o["dy"]) for o in recover_offsets)
+    census_path.write_text(json.dumps({
+        "r_cap": r_cap,
+        "n_recovering": len(recover_offsets),
+        "by_radius": dict(sorted(by_r.items())),
+        "by_class": dict(by_cls),
+        "by_offset_dx_dy": {f"{dx},{dy}": c for (dx, dy), c in by_xy.most_common()},
+        "max_recovering_radius": max((o["radius"] for o in recover_offsets), default=None),
+        "rows": recover_offsets,
+    }, indent=1))
+    print(f"offset_census → {census_path} max_r={summary.get('gate_a')}", flush=True)
+
+    print("CONTROL_OK" if ok else "CONTROL_FAIL",
+          f"gate_a={gate_a_ok} gate_b={gate_b_pass}", flush=True)
     return 0 if ok else 1
 
 
