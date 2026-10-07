@@ -656,13 +656,13 @@
         "sha256": "09e78b16366cdfaf14f4f08e9fd4fd4cb2bfd943731c39a623894d0533c3fcb6"
       },
       "signing_record": {
-        "path": "docs/plans/48-eo-face-walk-decline/IMPLEMENTATION.md",
-        "sha256": "1c14e19c716fc3b31928e390be72309d9f1f46f031275ad316c856a02c26c9be"
+        "path": "docs/plans/48-eo-face-walk-decline.md",
+        "sha256": "44c505c3d69950360397a1d64cc989d83f2f216463baecf7fe2da4c0f30d2570"
       },
       "supporting_evidence": [
         {
           "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-14/conditions/eo_decline/p3_fix/successor_oracle_88bd7852.json",
-          "sha256": "7c0fa8e05b4b332de36439a14f987ed825fc53dc908278ba4778f5ea4aa69e38"
+          "sha256": "031f54b9f8acfcb52620394068110191e68286688bcf2bb72cf57cac497ef4bf"
         },
         {
           "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-14/conditions/eo_decline/p3_fix/R_DVD_COMPARE.md",
@@ -681,7 +681,7 @@
           "sha256": "4992fe9b1bbfdb3e48994ba0a438963b1af7dc9f8404f8a7ba7f5109971d3a53"
         },
         {
-          "path": "docs/plans/48-eo-face-walk-decline/P3-ORACLE-ACCEPT.md",
+          "path": "docs/plans/04-c-core-orchestration/triage/independent_reviews/3-14/conditions/eo_decline/p3_fix/P3-ORACLE-ACCEPT.md",
           "sha256": "f1de4362b7c5f24734b5e24ba0d47ef12b4ab9042e69130407267cfb0e270b8c"
         }
       ],
