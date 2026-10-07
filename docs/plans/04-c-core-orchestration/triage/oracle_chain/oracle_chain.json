@@ -720,8 +720,8 @@
         "Narrow 16-way attic pin used in place of full 39a836dd snapshot"
       ],
       "signing_record": {
-        "path": "docs/plans/50-supply-path-successor-implement/IMPLEMENTATION.md",
-        "sha256": "9de00443bd05268e4ad9fc308db10a49b32fc3fcb103722acfdfe6eab7a45664"
+        "path": "docs/plans/50-supply-path-successor-implement.md",
+        "sha256": "6df2dba5c379e38978019b8c6dec4c19e76ecb61e8bb38c739bca95164a13839"
       },
       "signing_unit": "plan 50",
       "status": "classified-diff-verified",
@@ -731,8 +731,8 @@
           "sha256": "2bc15e6895dffe984682e6785920a4f2aa602095d6a610b065602a2001ae03eb"
         },
         {
-          "path": "docs/plans/50-supply-path-successor-implement/IMPLEMENTATION.md",
-          "sha256": "9de00443bd05268e4ad9fc308db10a49b32fc3fcb103722acfdfe6eab7a45664"
+          "path": "docs/plans/50-supply-path-successor-implement.md",
+          "sha256": "6df2dba5c379e38978019b8c6dec4c19e76ecb61e8bb38c739bca95164a13839"
         },
         {
           "path": "output/scratch-50/oracle_diff/diff.json",

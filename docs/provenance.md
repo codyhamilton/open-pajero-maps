@@ -834,7 +834,7 @@ Not committed; regenerable from the in-force spool. Record: `docs/plans/34-l0-em
 
 ### output/scratch-50/ (plan 50 supply-path successor implement)
 
-Not committed; regenerable. Record: `docs/plans/50-supply-path-successor-implement/IMPLEMENTATION.md`.
+Not committed; regenerable. Record: `docs/plans/50-supply-path-successor-implement.md`.
 - `G_new/ALLDATA.KWI`: successor oracle sha256 `aeae426cc62b183a9f041418a0a9980ba596ef43cc9123e0c4ef30dbfb591221`, 1,692,145,696 bytes. Built from overlay spool `spool_overlay/` (L0 rewrite; L2–12 symlink to `extract_timing/spool`) at `-j4`. Diff vs live tip oracle `88bd7852…`: 341 changed / 0 added / 0 removed L0 cells (exact target set).
 - `attic/r2647638_snapshot_ways_16.json`: sha256 `2ad438fcf3c145727717dac01470c6950781c29a3fdfba2b28da755db2871356` — 16 missing member ways of r2647638 at attic date 2026-08-24T20:20:50Z (ODbL). Pin: `triage/source_parity/implement/snapshot_ways_pin.json`. Equivalent to the authorised plan-30 snapshot `39a836dd…` for those 16 ways only (full snapshot was not on disk).
 - `spool_overlay/`: private; protect like the pinned spool. Never write the pinned extract.
