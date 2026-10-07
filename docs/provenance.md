@@ -885,3 +885,10 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - Uncompressed sha256 `77ff1d86ee9ca9d41e2d5137d304e0f52dee093cf2ccc2c0911d085eb448544f` (literal equal to plan 31 `diff-3-14-au.cells.tsv`)
 - Inputs: `013586b5` ← scratch-3-11/G_new; `4ed9cd80` ← scratch-14/G_new; tool `oracle_chain.py diff`
 - Residual R-G8-2-f-a discharged (regenerated equal)
+
+## Plan 48 Phase 2 — EO census sidecar (2026-10-07)
+
+- `_cenc.c` thread-local `eo_stats`; `cbuild.write_eo_census_sidecar`; `build_alldata.py` writes `eo_census.json` beside ALLDATA (disc-neutral).
+- AU `-j4` census: sha `4e6b0de7…` unchanged, guard_hits=0, declines_walk=0, entries 30,831,653. Evidence `triage/independent_reviews/3-14/conditions/eo_decline/census/au_*.json`.
+- Perth `-j4` census: sha `04be2f6e…` unchanged, guard_hits=0. Evidence `…/census/perth_*.json`.
+- Single-run AU wall 38.04 s (plan 41 median 37.38 s, spread 0.51 s); P3 gate uses median of 5.

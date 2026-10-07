@@ -1,0 +1,32 @@
+{
+  "eo_census": {
+    "eo_clip_entries": 2065269,
+    "eo_clip_complex": 21442,
+    "decline_intersect": 0,
+    "decline_cut": 0,
+    "decline_connect": 0,
+    "decline_walk_used": 0,
+    "decline_walk_bound": 0,
+    "decline_walk_nobest": 0,
+    "decline_grow": 0,
+    "walk_starts": 92816,
+    "walk_min_margin": -1.0,
+    "declines_total": 0,
+    "guard_hits": 0
+  },
+  "meta": {
+    "out": "output/scratch-48/census_builds/perth/ALLDATA.KWI",
+    "sha256": "04be2f6e0e700ee6d1022e370c2dffeba183c1d3c9299147d2238eeb920fb728",
+    "workers": 4,
+    "fixture": "perth",
+    "levels": [
+      12,
+      10,
+      8,
+      6,
+      4,
+      2,
+      0
+    ]
+  }
+}

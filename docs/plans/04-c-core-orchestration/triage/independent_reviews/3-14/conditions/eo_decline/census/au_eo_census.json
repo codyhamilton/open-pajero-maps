@@ -1,0 +1,32 @@
+{
+  "eo_census": {
+    "eo_clip_entries": 30831653,
+    "eo_clip_complex": 981002,
+    "decline_intersect": 0,
+    "decline_cut": 0,
+    "decline_connect": 0,
+    "decline_walk_used": 0,
+    "decline_walk_bound": 0,
+    "decline_walk_nobest": 0,
+    "decline_grow": 0,
+    "walk_starts": 4483050,
+    "walk_min_margin": -1.0,
+    "declines_total": 0,
+    "guard_hits": 0
+  },
+  "meta": {
+    "out": "output/scratch-48/census_builds/au/ALLDATA.KWI",
+    "sha256": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+    "workers": 4,
+    "fixture": null,
+    "levels": [
+      12,
+      10,
+      8,
+      6,
+      4,
+      2,
+      0
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "sha": "4e6b0de785bdf454fbe928c53310c46a9861ad298f24539ba1e5ea3b6e19c448",
+  "expect_prefix": "4e6b0de7",
+  "match_full": true,
+  "eo_census": {
+    "eo_clip_entries": 30831653,
+    "eo_clip_complex": 981002,
+    "decline_intersect": 0,
+    "decline_cut": 0,
+    "decline_connect": 0,
+    "decline_walk_used": 0,
+    "decline_walk_bound": 0,
+    "decline_walk_nobest": 0,
+    "decline_grow": 0,
+    "walk_starts": 4483050,
+    "walk_min_margin": -1.0,
+    "declines_total": 0,
+    "guard_hits": 0
+  },
+  "bench": {
+    "cmd": [
+      ".venv-rp/bin/python",
+      "-B",
+      "parser/build_alldata.py",
+      "--spool",
+      "output/extract_timing/spool",
+      "--out",
+      "output/scratch-48/census_builds/au/ALLDATA.KWI",
+      "-j",
+      "4",
+      "--bench",
+      "output/scratch-48/census_builds/au/encode_bench.json"
+    ],
+    "exit": 0,
+    "wall_s": 38.04,
+    "peak_rss_tree_mb": 15240.1
+  }
+}

@@ -51,3 +51,17 @@
 - `build_alldata.py`: per-worker snapshot (pre name-drop probe), merge across levels, write `eo_census.json` beside ALLDATA (disc bytes untouched).
 - Unit tests `test_eo_guard_census.py`: 2 passed.
 - Next: AU/Perth `-j4` under flock proving guard_hits=0, sha unchanged (queued behind plan 44 mass).
+
+## Phase 2 — AU/Perth census builds — 2026-10-07 ~16:47 AEST
+- AU `-j4`: sha **4e6b0de7…** byte-identical; `eo_census.json` guard_hits=0 declines=0 entries=30,831,653 complex=981,002.
+- Perth `-j4`: sha **04be2f6e…** byte-identical; guard_hits=0 declines=0 entries=2,065,269.
+- Wall (single run, not median-of-5): AU bench tree 38.04 s (encode 37.74 s) vs plan-41 median 37.38 s (Δ=+0.66 s; noise band 0.51 s). Note for P3 gate: re-measure median of 5.
+- Evidence: `triage/independent_reviews/3-14/conditions/eo_decline/census/`.
+- Next: Flash P2; Phase 3 minimal robust-walk fix (20k pass, sha gate, wall gate).
+
+## Flash review (Phase 2) — 2026-10-07 ~16:49 AEST
+- Seat: OpenCode DeepSeek Flash.
+- Verdict: **PASS-WITH-CONCERNS**.
+- AU/Perth sha gates + guard_hits=0 verified; unit tests green.
+- Concerns carried: (1) 4 decline-site counters never incremented + `eo_stats_note_margin` unused (walk-class evidence still solid); (2) wall single-run Δ=+0.66 s > 0.51 s noise — P3 requires median-of-5; (3) provenance.md census note pending.
+- Log: `output/scratch-48/runs/flash_p2.stdout`.
