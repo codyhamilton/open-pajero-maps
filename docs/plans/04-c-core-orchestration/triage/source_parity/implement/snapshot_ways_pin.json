@@ -1,0 +1,19 @@
+{
+  "schema": "plan50-r2647638-missing-ways-pin-v1",
+  "attic_date": "2026-08-24T20:20:50Z",
+  "licence": "ODbL 1.0 — data © OpenStreetMap contributors (https://www.openstreetmap.org/copyright)",
+  "relation_id": 2647638,
+  "way_ids": [607401022, 607401024, 620213839, 620248887, 620248892, 623059839, 623434673, 623434674, 623434676, 623434678, 623434687, 623434688, 623434693, 623434696, 623434708, 623434711],
+  "snapshot": {
+    "path": "output/scratch-50/attic/r2647638_snapshot_ways_16.json",
+    "sha256": "2ad438fcf3c145727717dac01470c6950781c29a3fdfba2b28da755db2871356",
+    "bytes": 60253,
+    "note": "Equivalent extract of the 16 r2647638 member ways absent from Geofabrik australia-260824.osm.pbf. Authorised by plan-30 DESIGN Amendment 1 / plan-50 DESIGN decision 2 (date-matched attic). Full 61-relation snapshot 39a836dd was not on disk at plan-50 start; this narrow pin covers the only rows that need it (396/397/775)."
+  },
+  "source": {
+    "endpoint": "https://overpass.kumi.systems/api/interpreter",
+    "query": "output/scratch-50/attic/r2647638_missing_16.overpassql",
+    "raw_response": "output/scratch-50/attic/r2647638_missing_16.json"
+  },
+  "use": "Supplies the 16 missing member ways of r2647638 to parser/tools/supply_path_assembler.py only. Nothing else enters the live extract."
+}

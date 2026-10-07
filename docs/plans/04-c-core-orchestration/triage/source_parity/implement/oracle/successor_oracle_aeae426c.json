@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "signing_unit": "plan-50",
+  "from_sha256": "88bd7852115988fc60441109bf44707c3156321fab47057443e0794b987f3b43",
+  "to_sha256": "aeae426cc62b183a9f041418a0a9980ba596ef43cc9123e0c4ef30dbfb591221",
+  "status": "classified-diff-verified",
+  "changed_count": 341,
+  "counts_by_level": {"0": {"changed": 341}},
+  "confinement": "Whole-Map-Frame multiset differences by cell on independent layouts; excludes sector padding and container/index bytes. Changed set equals the 341 plan-30 supply-path target cells.",
+  "mechanism": "plan 50 overlay assembler: cell-clipped code-288 BackgroundShapes for 10 supply relations (Geofabrik PBF + 16 attic ways of r2647638)",
+  "perth_unchanged_sha256_prefix": "04be2f6e",
+  "residuals": [
+    "Wall median-of-5 not run; single-run wall 44.23s at -j4 reported only (Cody hold ≪60s not claimed)",
+    "Full 61-relation snapshot 39a836dd absent at start; narrow 16-way equivalent pin 2ad438fc used for r2647638"
+  ],
+  "diff_json_path": "output/scratch-50/oracle_diff/diff.json",
+  "to_path": "output/scratch-50/G_new/ALLDATA.KWI",
+  "to_size_bytes": 1692145696,
+  "kind": "successor-oracle",
+  "region": "AU",
+  "predecessor_preserved": true,
+  "from_path_untouched": "output/scratch-48/G_new/ALLDATA.KWI",
+  "presence": {"demanded_code": 288, "targets": 341, "present_on_G": 341},
+  "encode_wall_s_j4": 44.227545118003036,
+  "k1_failing": 0
+}

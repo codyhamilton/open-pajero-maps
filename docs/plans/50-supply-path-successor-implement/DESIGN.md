@@ -10,7 +10,7 @@ Cody's standing rule (2026-10-05, hard): Maps is complete only when end-to-end g
 
 Close R-G9-2: plan 30 left 341 rows at `verdict=supply-path` with a production-C witness and a per-row `successor_implement_path`. Plan 38 closed only row 246. This design is the successor implement unit.
 
-Oracle `4e6b0de7…`. Heavy work only under flock plus `run_heavy_python.py`, at `-j4` or lower. Master direct. Never relabel. No plan 04 Phases 4–6. Do not run the 3-90 brief. Design grants no waivers.
+Oracle `88bd7852…` (live tip; DESIGN draft cited historical `4e6b0de7…`). Heavy work only under flock plus `run_heavy_python.py`, at `-j4` or lower. Master direct. Never relabel. No plan 04 Phases 4–6. Do not run the 3-90 brief. Design grants no waivers.
 
 ## Problem
 
@@ -39,7 +39,7 @@ G omits all 341 cells. Each row demands code 288 (stratum `288-template`). Plan 
 
 - **Owns:** a recorded successor oracle row; K1 and suite gates.
 - **Contract:**
-  1. Re-oracle under flock at `-j4`. New AU sha recorded in `oracle_chain.tsv` with the cell diff against `4e6b0de7`.
+  1. Re-oracle under flock at `-j4`. New AU sha recorded in `oracle_chain.tsv` with the cell diff against `88bd7852`.
   2. K1 failing 0 for kinds that the change can affect (background family at minimum); other kinds unexplained rises are residuals.
   3. Full `parser/tests` green; `close_gates.py` pass.
   4. Wall: not required to meet the ≪ 60 s budget (R-G9-4 / R-G8-1-a are Cody questions). Report the median at `-j4`.
@@ -81,5 +81,5 @@ G omits all 341 cells. Each row demands code 288 (stratum `288-template`). Plan 
 
 ## Provenance
 
-- Master `607e5b6`. Sources: plan 30 record; `disposition.tsv`; `open_rows_account.md`; plan 38 (row 246 closed, 341 non-goal); `residuals.tsv` R-G9-2.
+- Master tip at plan-50 start `a5a96d2` (DESIGN draft cited `607e5b6`). Sources: plan 30 record; `disposition.tsv`; `open_rows_account.md`; plan 38 (row 246 closed, 341 non-goal); `residuals.tsv` R-G9-2.
 - Box draft only.

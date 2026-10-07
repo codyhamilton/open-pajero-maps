@@ -832,6 +832,15 @@ Not committed; regenerable from the in-force spool. Record: `docs/plans/34-l0-em
 - Classified diff vs `scratch-34/G_new` (`4e6b0de7…`): 2 L0 cells changed `(1768,573)` and `(1817,726)`, 0 added, 0 removed; R-coverage equal (no worse) on both (`R_DVD_COMPARE.md`). Perth pin `04be2f6e…` unchanged. `eo_census.json` guard_hits=0.
 - Predecessor `output/scratch-34/G_new` (`4e6b0de7…`) kept and protected (historical).
 
+### output/scratch-50/ (plan 50 supply-path successor implement)
+
+Not committed; regenerable. Record: `docs/plans/50-supply-path-successor-implement/IMPLEMENTATION.md`.
+- `G_new/ALLDATA.KWI`: successor oracle sha256 `aeae426cc62b183a9f041418a0a9980ba596ef43cc9123e0c4ef30dbfb591221`, 1,692,145,696 bytes. Built from overlay spool `spool_overlay/` (L0 rewrite; L2–12 symlink to `extract_timing/spool`) at `-j4`. Diff vs live tip oracle `88bd7852…`: 341 changed / 0 added / 0 removed L0 cells (exact target set).
+- `attic/r2647638_snapshot_ways_16.json`: sha256 `2ad438fcf3c145727717dac01470c6950781c29a3fdfba2b28da755db2871356` — 16 missing member ways of r2647638 at attic date 2026-08-24T20:20:50Z (ODbL). Pin: `triage/source_parity/implement/snapshot_ways_pin.json`. Equivalent to the authorised plan-30 snapshot `39a836dd…` for those 16 ways only (full snapshot was not on disk).
+- `spool_overlay/`: private; protect like the pinned spool. Never write the pinned extract.
+- **Oracle disc in force** is now `output/scratch-50/G_new` (`aeae426c…`). Historical tip `output/scratch-48/G_new` (`88bd7852…`) kept and protected.
+
+
 ### output/scratch-36/ (plan 36 hop replay, region accounting, routed proofs, 3-14 cause attribution)
 
 Not committed; regenerable. Lasting small witnesses are copied to `docs/plans/04-c-core-orchestration/triage/oracle_chain/evidence/`.

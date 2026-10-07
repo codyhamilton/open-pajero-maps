@@ -1,0 +1,4110 @@
+[
+  {
+    "dump_row": 2,
+    "level": 0,
+    "ix": 851,
+    "iy": 637,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d7f20823b0d1a9e303b55a4bbf93a5d1f6b6e5dd80d4e87127f84030d24f0957",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 3,
+    "level": 0,
+    "ix": 867,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "17dbf8a1b9fe048d88e85d5c620eb7c3ee541586a35a4b904494d74904ee9226",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 4,
+    "level": 0,
+    "ix": 869,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "e39fdd98c3f3057dd8a6f2f080de5df6b422c18b2194e592c1de6ceb7a9174ef",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 5,
+    "level": 0,
+    "ix": 870,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "14330f5df5547073aa7b09085b248f72725338792e0932a9fd898adfd1af54ff",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 6,
+    "level": 0,
+    "ix": 871,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "b13648e839566a41f54949f26be5fe69b668c53f3ac8d630bb11133ebac22ad3",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 7,
+    "level": 0,
+    "ix": 872,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "b8c9683fa7e3ba2fd15820eef9f5780639476329aaaf1a4ee392c4c4fd831d83",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 8,
+    "level": 0,
+    "ix": 873,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "dbbbc00aa6276b45a75ff6384f7ade1533b2b148bcd67a6383acf77942abfed0",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 9,
+    "level": 0,
+    "ix": 875,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "314ac639c9048efb1f1f72775d7b4e8a13b7c5fbd0f17ede90a9d4de248746ec",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 10,
+    "level": 0,
+    "ix": 876,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "5e2e636f75d0bdc7b799ffcdccb3e64d3e8d3b9c7e75ff9b5e36550c065dcc01",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 11,
+    "level": 0,
+    "ix": 877,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "7a6ff19387f8e46ff3832d141c50762fdc94d71411b34e3ed58fa44573a577bf",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 12,
+    "level": 0,
+    "ix": 878,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "f79ca38d4b41f5384d990a660ef0fd24acf6539d665ceee23d93935ad2a6e239",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 13,
+    "level": 0,
+    "ix": 880,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d46db2ecccab5fb44b1f8a4f606db8e957fed2e3f14d9b81bde8d25fbd86ef5a",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 14,
+    "level": 0,
+    "ix": 881,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "75da12c3ae6842a8804cebb724213e55ce9c40f7f654edaba51dadd1eda220d6",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 15,
+    "level": 0,
+    "ix": 882,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "fdc8af3501992d39793083e9fd2a4044fcd473493941b82e955ac39502c352f8",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 16,
+    "level": 0,
+    "ix": 883,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "c8edcd930b2729b779f681026461d7e0f19b00686492cbef1a58fc99692651a8",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 17,
+    "level": 0,
+    "ix": 885,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "7b260760bb67adce09558052dce3ede2ee5f67585505c3818049ed4750747f80",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 18,
+    "level": 0,
+    "ix": 886,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "4354b92a3e24f915f82d33835249d7cd12ed67a19145e662f30b8e82af3a2131",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 19,
+    "level": 0,
+    "ix": 887,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "56f7c45c580cdecaf2ca133d1896d306f2e94a4a7b2478201b4fe9d680720084",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 20,
+    "level": 0,
+    "ix": 888,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "cdcc74b98f99cb7d24b3514a81ed79f54f98d3b2d878d16aa9bf3559b4da842d",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 21,
+    "level": 0,
+    "ix": 890,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "40a3632e438144a79f2c7154f88ff3ab0bee2baa678cf180d9bd5d33f29a7e20",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 22,
+    "level": 0,
+    "ix": 892,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d9f05f499b1b6d3d4637cc21504aca4ecdce563db328ecd1671d37a63f4fb707",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 23,
+    "level": 0,
+    "ix": 893,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "51f35dbad9ce9edfad7656e394dc955e9a4f50c1d67fea5bf79acab77787fdd2",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 24,
+    "level": 0,
+    "ix": 894,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "1af883a07942c2ed07977f89fe51104f0aff97689592a251afed19e29b33c7fb",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 25,
+    "level": 0,
+    "ix": 895,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "f51872ec7fdc65f0b5f6ef47931c42fc4ea63ad20fff8784331e49a74d660fdf",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 26,
+    "level": 0,
+    "ix": 897,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "967c2e4a28a35a281748219a26fd5d2f094fd758fae48f0a25d4f3c821f1193e",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 27,
+    "level": 0,
+    "ix": 899,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "e01c4a8a987f407f67a782b12c2b060700e70bf95f444fb2beec5d3ef5e6b23b",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 28,
+    "level": 0,
+    "ix": 900,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "8fb8d1dc78185da8be81854d1ff11e6caa481fa1ba6016e0e61847724462e547",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 29,
+    "level": 0,
+    "ix": 901,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "9eb7ba128d1d7775131bd2478ddcb2999c004eef1011c2d1e176aac70cef86fd",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 30,
+    "level": 0,
+    "ix": 902,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "cc905adcad1a40d161c14f2ce7bf25b086719efeecc170bc275a2bf5b1e36cdb",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 31,
+    "level": 0,
+    "ix": 904,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "7758176fa9342be754d2dd618e699fa282d094a1c521a5375204264d86160c3c",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 32,
+    "level": 0,
+    "ix": 905,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "1c6cf1da8cf4d365176a1b88b801a03aef66f2bf2e9779d24b628ec8c8778ad5",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 33,
+    "level": 0,
+    "ix": 906,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "919f7c92863e486e6fedc025c4e03ce1ff977b576418c86020a09d2e6aef4911",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 34,
+    "level": 0,
+    "ix": 907,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "1350309c400370ba692eaec39da5802f4fb4ee5ca52e720d814894c073f97fcb",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 35,
+    "level": 0,
+    "ix": 908,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "21b8000c917454dd6cad9d3ecc63ba620f9f9a1fa3bb5a941931d8b24e3c6a1b",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 36,
+    "level": 0,
+    "ix": 910,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "087c550600173381692d2fd1b7ad4c9f40c8c6bf3817b1d3cb20b654b8086fd3",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 37,
+    "level": 0,
+    "ix": 911,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "13f6a19f478b9b1f0b47b040ba0899318508e99899243c63d12e179ed148f3a9",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 38,
+    "level": 0,
+    "ix": 912,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "7a858c6e95627223e03abfa7d8b400b54009440272e0a0b35c83788d81f6daca",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 39,
+    "level": 0,
+    "ix": 913,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "f10ba8cca49bceb608333cab69c2689328bc6ab2b365ab9d1e9ddd831f7fa58f",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 40,
+    "level": 0,
+    "ix": 915,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d2ca79b85f9e325219214f467121bf3c72163bdc4d25d8cf840b48c0349299a2",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 41,
+    "level": 0,
+    "ix": 916,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "fa86e13a9350d416a77c2bcfbf230bd859fa50cac404144c034f071a9a5957b0",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 42,
+    "level": 0,
+    "ix": 918,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "989ede4e4091d66d597954c40e50834fcd3988693aeff574ccaed8e1f3c5678d",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 43,
+    "level": 0,
+    "ix": 919,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "ffa892dacb3f8273468fc5991323ca426997aac6a037c83d4517df917f7656b3",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 44,
+    "level": 0,
+    "ix": 920,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "e9de781f78bce1776fa489f9af9ccc79be238a5e53e0f02e05b7feab796d0f0d",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 45,
+    "level": 0,
+    "ix": 921,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "2f23f21350f68d84c791f74e15a5c03c2c151a63cd589266e7395e45e07c1ebf",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 46,
+    "level": 0,
+    "ix": 922,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "77dab5b4590a2af9503f77a273653c46eabb4e5980e765f0e12f0e088923a4ad",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 47,
+    "level": 0,
+    "ix": 923,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "bcfb9065643ac7af56316868866ba9d7b8590fa8b4c9f5c96a15bcdc117e3ed3",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 48,
+    "level": 0,
+    "ix": 925,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "578cfb87740e7a65bfaf145a60c59f33ed587fa7c27e17ad88f9989e749b04ad",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 49,
+    "level": 0,
+    "ix": 927,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "a30ae45fc4506d6254dc71370c8220ab562a5cc9fcf6c786efabaf975cb14dcf",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 50,
+    "level": 0,
+    "ix": 928,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "b94bd0f5ebc60acb807f27b99a9db53c5b01803501a67d06f6d3335a803d5a3a",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 51,
+    "level": 0,
+    "ix": 929,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "3b8ad646a2d26be3a3a1818da573cf64c839c5676564d27c5938d99e702a2e13",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 52,
+    "level": 0,
+    "ix": 930,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "ab8b7e7c2c0270ee077377d4695d25be609b265bc7b4c0800d90a2bbcd658a95",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 53,
+    "level": 0,
+    "ix": 931,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "a58e7c9a1d52b3f1ecc4dbf0d653a6db17ce61da186e580029556e5ba5be219e",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 54,
+    "level": 0,
+    "ix": 933,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "5f94d176e87d38baa590611f793e78fb710c077e60f834962460b753317b8655",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 55,
+    "level": 0,
+    "ix": 934,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "f301e145d4a8175e1d01380cf4563777b05ab182058d2f9a382ec402567b6e95",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 56,
+    "level": 0,
+    "ix": 935,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "966f69fd20b7445955432de7d10871de42af8ffdbeead0c18513c01573b30e9c",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 57,
+    "level": 0,
+    "ix": 937,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "f58a1d1c372ccb8ef665f296e587761a40296c0e3464b796a61af2d1af2e21e9",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 58,
+    "level": 0,
+    "ix": 938,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "30d278b92cd0f37900bc9c57a600cdd3fa1cb7031e35405062bfa09d8e210d77",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 59,
+    "level": 0,
+    "ix": 939,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "a363f7a27759240184b1d7891679d4a533c37fc407badb0ab09e81ef6060f44f",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 60,
+    "level": 0,
+    "ix": 940,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "716772ec743ecdb1d93b889a86c3b33308546acf5548a1d9f43be0d8721fcdf4",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 61,
+    "level": 0,
+    "ix": 942,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "c64bfe3384c27e1d0dac7ca1c3974a7e658dab09c049ec570a6823fde14b01a0",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 62,
+    "level": 0,
+    "ix": 943,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "f98e37916266817c5ac2866cbb16637975f661efcd16ea355510421289b97973",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 63,
+    "level": 0,
+    "ix": 944,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "7f2d4a498a0e908b1f90974261d0c1f6286e1cb241bb721a4a273da2a83f2e5d",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 64,
+    "level": 0,
+    "ix": 945,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "05746d2dcefba4c0303d64df83e7494a97b1bcab0fb9d041463cc027a085d604",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 65,
+    "level": 0,
+    "ix": 946,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "2f9eaeb850c4df42673dc404847b3db08162d240f38530d011c56cacedfcebe4",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 66,
+    "level": 0,
+    "ix": 948,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "83d91bf69a9226cc67bad1a2d67227e56f9a6b988b91ccc9404a2064a30a5407",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 67,
+    "level": 0,
+    "ix": 949,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "855715cefd5faf1b81261efbbf071dfb136f721d1f16375cf0dda5fe3172fb2e",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 68,
+    "level": 0,
+    "ix": 950,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "2d0a6aa5101e23366815595e5676b5b9612ecd494910f366c7aad533d8b11a2b",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 69,
+    "level": 0,
+    "ix": 951,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "c55d49bbd7ae98ab37ba082bc91ed9c61f654ebe60756a141b210577811cd02b",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 70,
+    "level": 0,
+    "ix": 953,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "603d499e83e6835325f95c5bcd30c4d29f60e72ef859d952c19bb643d01368cd",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 71,
+    "level": 0,
+    "ix": 954,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "1431fad971fceba7e17693d3917bbbee267671d819072845966a6e344ee7666a",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 72,
+    "level": 0,
+    "ix": 955,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "52c75c60fb063e0fb27cde534da794846ee09e1e9a7ca8fffb38f429d7bb42c7",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 73,
+    "level": 0,
+    "ix": 956,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "ea8f357fe08c0d8a0fe91d24eaf1d18d97fd4d1c06679ad53fe44fc74088d477",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 74,
+    "level": 0,
+    "ix": 957,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "dcf71500628210f6a43cfae53c17a29870e9c724b89e697e3c1c14652eb332b4",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 75,
+    "level": 0,
+    "ix": 958,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "23ed21bf26c18c6770bdfb93adc4b25507c7ee7ca7081118dd80ac7a3b7d4ff2",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 76,
+    "level": 0,
+    "ix": 960,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "f47e8892b9eee47baab5bee4982ca51232cb6a595ca6fbd35664567f8223fc83",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 77,
+    "level": 0,
+    "ix": 962,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "b156aceec01192abdb4ed519086e6f09cc4ac9dfb75d7684cd3cce823f99187d",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 78,
+    "level": 0,
+    "ix": 963,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "6ebcb0ad0e9a8990a4846868e3767f25b62a6a360e5eb8af8efaa8bd0b614eab",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 79,
+    "level": 0,
+    "ix": 965,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "0a6d44d2193af0def9b4c81a8d44aaed36159e5f3195aaf5fb2cef956e0525d1",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 80,
+    "level": 0,
+    "ix": 967,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "9af0272b445c50ce862293e6f931893bb097c17d6103629c2ecba297c3fac7c2",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 81,
+    "level": 0,
+    "ix": 968,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "41bd7625a5867c73f3ae5eb747baee5ea52270489315611977f47c7ba9faf32e",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 82,
+    "level": 0,
+    "ix": 969,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "1a10548d478c574c4deb039e0ed26de38d0ea3cf1c52b0b01f571039ebcf240d",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 83,
+    "level": 0,
+    "ix": 970,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "698d677dbfb5300dbea30f70c99a7dc4e84a0b0920e573ca3444194ce85317e2",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 84,
+    "level": 0,
+    "ix": 971,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "13339bb5da9b9b397c9429e222ede53ed0c3a42e5d28a4ef2ae4f4887f1fc21c",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 85,
+    "level": 0,
+    "ix": 973,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "5d8cc59f706d8101600d137196a3353573c098e5cd007a92224a23dd929bbf96",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 86,
+    "level": 0,
+    "ix": 975,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "a63cb069b602436e352183fc10d983f29a500321e07fccf75fe4d7cb2ab6b7cb",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 87,
+    "level": 0,
+    "ix": 976,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "80af1892131a41dfe3629d38c6352314c1fe78072e31bd65978f8370c3968ad2",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 88,
+    "level": 0,
+    "ix": 978,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "648326fec9d1ecc3ab25c9361d6fbceab7a7440989d578f8b5baa1cd8c0295ec",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 89,
+    "level": 0,
+    "ix": 980,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "12291ee0d0e7b66f1c0c8d4e11fe600367cc43450ba64f3122af893ceb5bdc3b",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 90,
+    "level": 0,
+    "ix": 982,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "7f30e363b90b0c53ae3bdf5a420e3ed19b711966a850065b59ef35803377abdd",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 91,
+    "level": 0,
+    "ix": 983,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "28f898c015e584ebf3b567d712785339d8782cecc8fe9f5bae076cd71cc832b9",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 92,
+    "level": 0,
+    "ix": 985,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "94deb91f04a5d7d903d9e98f8fce9b1ee01cac3e28b508aa7a520b385ff18c2c",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 93,
+    "level": 0,
+    "ix": 986,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "3233f7174f5e0a427e9817b409196a335878b9fe8c5a04f775518dadc38044f7",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 94,
+    "level": 0,
+    "ix": 988,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "b64cd84cdba5f1e18a72f9e0085e953ca8a0d8f6a43c28dc6b3a1ceba4f68208",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 95,
+    "level": 0,
+    "ix": 989,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d9a51cccb85341f2b1a4c13c9e5c54379951f9352176cf627ef7dc64197aaada",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 96,
+    "level": 0,
+    "ix": 991,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "e19cd7ec6090919ca07a55bc37dd1c21e654255ae6308125a04084e033b573ea",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 97,
+    "level": 0,
+    "ix": 992,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "8e9c7703b221b23e42590749c8b3a09b19e92ecbce24645772488038da4badad",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 98,
+    "level": 0,
+    "ix": 993,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "abd522ae0c67f1281e539bf77da820fea051aedd5fb453bebaeebca1f8466770",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 99,
+    "level": 0,
+    "ix": 995,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "7c7c5a595f5bfa034f1213f2ed433c801022ef14240cca07baee611e51d2f6d4",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 100,
+    "level": 0,
+    "ix": 996,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "91e6c025acfc983180def800e6bc6572cf732cd7dc3764467bc8a24bc6c1292f",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 101,
+    "level": 0,
+    "ix": 997,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "317e06adf99120b0b3872aa8bcc24b0ae4c384515f168139ed4c11e7ad7a6258",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 102,
+    "level": 0,
+    "ix": 998,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "e9ad6b10abd2660b46dc88cb8d8937c6e8834cda9ec58b19672ad353bfb6a94a",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 103,
+    "level": 0,
+    "ix": 1000,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d4baf1c2e9d50441053d30bfccaf4c2eabc13dd18df7eacd5ed6777369002f50",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 104,
+    "level": 0,
+    "ix": 1001,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "6f22b4a6a6a237037ab766d8227627f0498be3806a49ff7aec74b196685a25d2",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 105,
+    "level": 0,
+    "ix": 1003,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "298dfa1f632802c57b50bf331ebb07daa056649f2072f91b2400fb5dd774ec95",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 106,
+    "level": 0,
+    "ix": 1004,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d27387ec156af7af50d1357f78b3b36cb4770635ed4fda0f088ef0a4c39038bc",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 107,
+    "level": 0,
+    "ix": 1006,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "5728999678d76971acce3e1e09a4d243d2a66d7beffb84c39a4254b3ae20fa4a",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 108,
+    "level": 0,
+    "ix": 1007,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "493f339cb7379c555a543d23f8a2298bd7be6e18cf0f89d0ea171d88f5810781",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 109,
+    "level": 0,
+    "ix": 1008,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "cc10bd886ac3cad668962d62850d0a7af8f51727ec257cd3511ae77dfa3c4daa",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 110,
+    "level": 0,
+    "ix": 1009,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "1963bc2418fc6f318dfa7360b1f39ffed72bc8868cebfe34fed340598171065f",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 111,
+    "level": 0,
+    "ix": 1011,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "0fb38353306b9ce05a76bcc843c575fae9269dbcf72ec1f196693c312ed2b1ce",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 112,
+    "level": 0,
+    "ix": 1012,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "0ceb0428311d2a9a4f1291354d6061c577021e124614b36cb8009598b23319f2",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 113,
+    "level": 0,
+    "ix": 1013,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "a6119231426f8e75543045ca2f89008737bc4137db74a18828a747bad2b0b61b",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 114,
+    "level": 0,
+    "ix": 1015,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "4052696cf399c01ba90886680802d0153dd2981b66787625d772c4195d394e31",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 115,
+    "level": 0,
+    "ix": 1016,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "adc1724d6e9127dcf7345627584c4623468ce4baf5c61e130c408709f091a7b6",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 116,
+    "level": 0,
+    "ix": 1018,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "7f1ed402f84913723f5577b2f7d0aa0a278f6ba969671ed55e8eebe73e700449",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 117,
+    "level": 0,
+    "ix": 1019,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "e489d3ca3028be071ee03f4433af73bba80acdf066a1140c7463c63e5b466fd2",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 118,
+    "level": 0,
+    "ix": 1021,
+    "iy": 638,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "923cbdd4d399404e5a30d49a6dddc22a88e86b0ebdda571f8ef43c5e1db54a7a",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 119,
+    "level": 0,
+    "ix": 851,
+    "iy": 639,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "87b644ca46ffa6d447fd7cc20c95e1624aec435728423751fec936534805de4a",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 120,
+    "level": 0,
+    "ix": 980,
+    "iy": 639,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "b2ba092f00b328af9e65152e34ef438c9888e103c82b2a82ee4f67e80a38e630",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 128,
+    "level": 0,
+    "ix": 855,
+    "iy": 695,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d38e6fd52995f16336e3d5dacce5001bef0dd26bfe46454140151e1f4a54e67e",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 129,
+    "level": 0,
+    "ix": 856,
+    "iy": 695,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "4bdf46c6b212bc2c038da55fcedb0c39a5176f810bf124d6a5265f8579230a70",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 130,
+    "level": 0,
+    "ix": 857,
+    "iy": 695,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "2edda4c286082c2cae12fc1ff6e26dfa2f9a52019fbfaab5cfe6811392ba8163",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 131,
+    "level": 0,
+    "ix": 858,
+    "iy": 695,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "82559b1d28cd140bdeb25918c20fee45c875c331969d5c211b32f94c97c245d9",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 132,
+    "level": 0,
+    "ix": 859,
+    "iy": 695,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "ba7ffc853f0614ff2909a28fff19a6fcba9a2cfaebf0a587a4ff7d9bfe0fce69",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 133,
+    "level": 0,
+    "ix": 860,
+    "iy": 695,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "8dde1c87b2e5cac12113ff962aa8ff3fb7531b993437840e6886b5e12a19e439",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 134,
+    "level": 0,
+    "ix": 862,
+    "iy": 695,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "b7a2bb3f937b0b448d5bc2a4d6a7cd68414889edb16e71ea0255a695686e0360",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 135,
+    "level": 0,
+    "ix": 863,
+    "iy": 695,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "6edf855024ef737c6e1dd7fb5069d1a95aa107cc35f44ca0f93ed54af9266dbc",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 136,
+    "level": 0,
+    "ix": 865,
+    "iy": 695,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "75238e4a92ef48dacc8d2c8286ea030469a10c3400f8025d8ee867396ff46467",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 137,
+    "level": 0,
+    "ix": 867,
+    "iy": 695,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "c25936a4aadf080c7da8edbf5b9431b8d4948d29814c8f51eb96303a9b694af3",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 140,
+    "level": 0,
+    "ix": 694,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "20332fa51981c0704ffdc6185aa9bbd210d08b771c5df9b4954089e9f8dffc5c",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 141,
+    "level": 0,
+    "ix": 695,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "e38cced195537e47ce6510c0150a1704bf8c407ccfe00c789794317f384d1b09",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 142,
+    "level": 0,
+    "ix": 696,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "13053911108509a01cc54048b3ee42d10c3325d72c4ed5906abec4434b0bc846",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 143,
+    "level": 0,
+    "ix": 697,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d81f7de6b667e9ca186af2ba5c075b683e387875b121054c578879b0d701736f",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 144,
+    "level": 0,
+    "ix": 699,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "5acd22889ea130c8c33058a953f9cf350c7329804d1786ec04ac4529d185a3a2",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 145,
+    "level": 0,
+    "ix": 700,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "18acf1614230a0dadaa7c68809ac754606306aab8444ba3cfd4f893c6e74981a",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 146,
+    "level": 0,
+    "ix": 702,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d12fe8889d510781fd84c5b5fe5f39ee14d48c51910ab12ef29636a66de6ee5b",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 147,
+    "level": 0,
+    "ix": 703,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d3f0d990fbd541c1309d6d377c7e01d8567b7954ca6854706c3114b265078cc9",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 148,
+    "level": 0,
+    "ix": 705,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "78923844d7d3f5e05a675961cf384a787d0be0336c7940dc3582face007309a4",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 149,
+    "level": 0,
+    "ix": 706,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "7631464dad099707491ecd58df9330458b9275b9263ead1907b7d2c11fb0879a",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 150,
+    "level": 0,
+    "ix": 707,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "e10f40cc626ace0d8fb08bab12cd2b639367cfd39b4606983ccd17da33aa3b11",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 151,
+    "level": 0,
+    "ix": 708,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "4590d9c13a59561e6c97fda8cd4045c4b8cf49ae948d97c1354ce656f775a12f",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 152,
+    "level": 0,
+    "ix": 710,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "32390d768fa250c0b87859ec372a155e0c24ddf946bcf6989ec2517ad8a1f99e",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 153,
+    "level": 0,
+    "ix": 711,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "87c7ea66e3b83d2a22bb36848a4510d6ac0db896d37e45f5d7babe2cf8ca87df",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 154,
+    "level": 0,
+    "ix": 712,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "3db869fe3797f8cd12be228dd3ec98acfb59bc1265d0a4dc1a0f038b300ee188",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 155,
+    "level": 0,
+    "ix": 714,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "71a7c8e81e82274ff31402ae06279a760e7af2511c11530bd0b86ab827ba4634",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 156,
+    "level": 0,
+    "ix": 715,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "fcfda3ad73542ef590e95c199b40a5d344cc434a27e46104c8ecb18da6af9269",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 157,
+    "level": 0,
+    "ix": 717,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "858d8a91b972387e89f403aad67fc0de42c103c6b12c4cdab6b571523f52bb22",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 158,
+    "level": 0,
+    "ix": 718,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "82edd63c6d1f3b9460ddc4d35da2a76eda70c535698d48c78a771f27e300f8eb",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 159,
+    "level": 0,
+    "ix": 719,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "2a552264cce5c23036e1f76e8ba9416f7bcddd7279a8f01e465e5068dd354844",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 160,
+    "level": 0,
+    "ix": 721,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "3d8aedf3acff6bec38b01454f9daa2f453a61ad005cda45aa6a0cbaf1acd9ce5",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 161,
+    "level": 0,
+    "ix": 722,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "521c677e49f8aef1225e94921dcef17f401e0aca2edc7602c6879287fbbdbcca",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 162,
+    "level": 0,
+    "ix": 723,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "2e20cd6ab56f82b34315809c64d4628f532817259bdb6e8528292163874613b3",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 163,
+    "level": 0,
+    "ix": 724,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "05c2fe51f76c9c2dcd261e394366f0ef28d1c0bb26b598bf203a439e83968dc1",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 164,
+    "level": 0,
+    "ix": 726,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d6f1a65b2bde1f794d2989be2a8cf1130a5f80cee0cc9d971b8a98c9b0f0e9b1",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 165,
+    "level": 0,
+    "ix": 727,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "9061dde3e8a6e22b98dd6330da1c85611b32ee555afb32363e6a636ea1fb0892",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 166,
+    "level": 0,
+    "ix": 729,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "c5ff744e54d517c8f980c90beac37d560f25b4a14080cc0a3fed22e6b058e897",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 167,
+    "level": 0,
+    "ix": 730,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "76f0b27f1861bb8cbac81eff6cc73eed4e47b813a807a4979dfe1a0166e377ed",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 168,
+    "level": 0,
+    "ix": 732,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "365e6c4e5d0dbaea59ec5e21010ccce1a508911592e7bc653be97a7fce8b2d4e",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 169,
+    "level": 0,
+    "ix": 733,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "f9bf0ec150e7979d7024e6d59297ed9b2d78af721356a205d597435c9ab8946f",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 170,
+    "level": 0,
+    "ix": 734,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "cce9630b6c88054a40ac1bba66e96201193a18a3ae612cc4742b6f7d4a37d890",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 171,
+    "level": 0,
+    "ix": 736,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "55c6891a6ad68f0f368b172ddf575c82922b51130e2436222c5e8cd1a5466701",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 172,
+    "level": 0,
+    "ix": 737,
+    "iy": 710,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "e227c8e655e8ad20ed3f9b587137602d0c6d560af11dd999bb59f79a9965b629",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 176,
+    "level": 0,
+    "ix": 1066,
+    "iy": 733,
+    "code": 288,
+    "relation_id": 8426745,
+    "coords_sha256": "f624d2ba94985934722015ba72319e8e4cef664518d060281e32ebbd9ad8be5c",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 177,
+    "level": 0,
+    "ix": 1068,
+    "iy": 733,
+    "code": 288,
+    "relation_id": 8426745,
+    "coords_sha256": "f624d2ba94985934722015ba72319e8e4cef664518d060281e32ebbd9ad8be5c",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 178,
+    "level": 0,
+    "ix": 1069,
+    "iy": 733,
+    "code": 288,
+    "relation_id": 8426745,
+    "coords_sha256": "f624d2ba94985934722015ba72319e8e4cef664518d060281e32ebbd9ad8be5c",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 179,
+    "level": 0,
+    "ix": 1070,
+    "iy": 733,
+    "code": 288,
+    "relation_id": 8426745,
+    "coords_sha256": "f624d2ba94985934722015ba72319e8e4cef664518d060281e32ebbd9ad8be5c",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 180,
+    "level": 0,
+    "ix": 1072,
+    "iy": 733,
+    "code": 288,
+    "relation_id": 8426745,
+    "coords_sha256": "f624d2ba94985934722015ba72319e8e4cef664518d060281e32ebbd9ad8be5c",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 181,
+    "level": 0,
+    "ix": 1073,
+    "iy": 733,
+    "code": 288,
+    "relation_id": 8426745,
+    "coords_sha256": "f624d2ba94985934722015ba72319e8e4cef664518d060281e32ebbd9ad8be5c",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 182,
+    "level": 0,
+    "ix": 1075,
+    "iy": 733,
+    "code": 288,
+    "relation_id": 8426745,
+    "coords_sha256": "f624d2ba94985934722015ba72319e8e4cef664518d060281e32ebbd9ad8be5c",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 183,
+    "level": 0,
+    "ix": 1076,
+    "iy": 733,
+    "code": 288,
+    "relation_id": 8426745,
+    "coords_sha256": "f624d2ba94985934722015ba72319e8e4cef664518d060281e32ebbd9ad8be5c",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 184,
+    "level": 0,
+    "ix": 1077,
+    "iy": 733,
+    "code": 288,
+    "relation_id": 8426745,
+    "coords_sha256": "f624d2ba94985934722015ba72319e8e4cef664518d060281e32ebbd9ad8be5c",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 185,
+    "level": 0,
+    "ix": 1078,
+    "iy": 733,
+    "code": 288,
+    "relation_id": 8426745,
+    "coords_sha256": "f624d2ba94985934722015ba72319e8e4cef664518d060281e32ebbd9ad8be5c",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 186,
+    "level": 0,
+    "ix": 1066,
+    "iy": 734,
+    "code": 288,
+    "relation_id": 8426745,
+    "coords_sha256": "f624d2ba94985934722015ba72319e8e4cef664518d060281e32ebbd9ad8be5c",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 188,
+    "level": 0,
+    "ix": 766,
+    "iy": 760,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "1fac1decfeecb01fdf5266441548c0160820f7789220cce140712cc493c74e3d",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 189,
+    "level": 0,
+    "ix": 768,
+    "iy": 760,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "d3b3660e81e89cc70acb591cafae927794b2cb5f480b282ebbd6ca666e11238d",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 190,
+    "level": 0,
+    "ix": 770,
+    "iy": 760,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "c1551eac80cdb31665bca751a644a4b204014d93f42792030b986de11ac0852c",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 191,
+    "level": 0,
+    "ix": 771,
+    "iy": 760,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "91e1e3d20d41a6e02f47db6dc374fb9205cedd714f6131ece35a1a06a43b61d6",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 192,
+    "level": 0,
+    "ix": 772,
+    "iy": 760,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "325d3c3300d5c5918d326bc8a5f70762276e9a382c0b15c548cd3ddc8f402ec3",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 193,
+    "level": 0,
+    "ix": 773,
+    "iy": 760,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "53ab09cce85f421d544bead737667c0f9d02d3a2817657e95225594680c3f0a7",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 194,
+    "level": 0,
+    "ix": 774,
+    "iy": 760,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "1ec7aca0485f0c9520e78d520466336f767af8b3d908e829b7e217b72a0e6290",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 195,
+    "level": 0,
+    "ix": 775,
+    "iy": 760,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "ef9f0c691b652fb75c4e23b8a23a9a68ef6efadc8ff95b9c37f815f6a20f2654",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 196,
+    "level": 0,
+    "ix": 776,
+    "iy": 760,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "606b452caaa8a9b6697b6b8a7dba38967963868d5426815a6a3da84bdf581ea1",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 197,
+    "level": 0,
+    "ix": 778,
+    "iy": 760,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "814e55b89ea3a22757ede175c770a16e5af5578db68aa04baf5525a73f0c308a",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 210,
+    "level": 0,
+    "ix": 694,
+    "iy": 790,
+    "code": 288,
+    "relation_id": 8426743,
+    "coords_sha256": "ae0ea43edbfe8df8cc156ad20de19965f88c74177b21e92491545f90c58e98ff",
+    "geometry_ways": {
+      "cache": 42
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 252,
+    "level": 0,
+    "ix": 2132,
+    "iy": 945,
+    "code": 288,
+    "relation_id": 8602037,
+    "coords_sha256": "ed02abdcc199ca2c431edd1043b41817ed4d728920594cd7706e23f7f2234902",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 262,
+    "level": 0,
+    "ix": 637,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 263,
+    "level": 0,
+    "ix": 640,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 264,
+    "level": 0,
+    "ix": 645,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 265,
+    "level": 0,
+    "ix": 650,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 266,
+    "level": 0,
+    "ix": 655,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 267,
+    "level": 0,
+    "ix": 660,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 268,
+    "level": 0,
+    "ix": 665,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 269,
+    "level": 0,
+    "ix": 670,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 270,
+    "level": 0,
+    "ix": 675,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 271,
+    "level": 0,
+    "ix": 680,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 272,
+    "level": 0,
+    "ix": 685,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 273,
+    "level": 0,
+    "ix": 690,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 274,
+    "level": 0,
+    "ix": 695,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 275,
+    "level": 0,
+    "ix": 700,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 276,
+    "level": 0,
+    "ix": 705,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 277,
+    "level": 0,
+    "ix": 710,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 278,
+    "level": 0,
+    "ix": 718,
+    "iy": 1017,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 339,
+    "level": 0,
+    "ix": 622,
+    "iy": 1142,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 340,
+    "level": 0,
+    "ix": 626,
+    "iy": 1142,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 341,
+    "level": 0,
+    "ix": 630,
+    "iy": 1142,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 342,
+    "level": 0,
+    "ix": 634,
+    "iy": 1142,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 343,
+    "level": 0,
+    "ix": 639,
+    "iy": 1142,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 344,
+    "level": 0,
+    "ix": 643,
+    "iy": 1142,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 345,
+    "level": 0,
+    "ix": 647,
+    "iy": 1142,
+    "code": 288,
+    "relation_id": 8602593,
+    "coords_sha256": "c47553ab55447db7f2388f242ce53a03d0d4ad490df74d5b75d749f224d93079",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 396,
+    "level": 0,
+    "ix": 2049,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 2647638,
+    "coords_sha256": "4d1bf19be6f2a757f7831b1fb8b8f0a1377153f4f615e7868b713b1e1d89f230",
+    "geometry_ways": {
+      "cache": 131,
+      "snapshot": 16
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 397,
+    "level": 0,
+    "ix": 2050,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 2647638,
+    "coords_sha256": "ff81957a95c84842d4bcb146502d01742afe1614fc18d180ab88949bb4c52b4c",
+    "geometry_ways": {
+      "cache": 131,
+      "snapshot": 16
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 398,
+    "level": 0,
+    "ix": 2053,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 399,
+    "level": 0,
+    "ix": 2055,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 400,
+    "level": 0,
+    "ix": 2056,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 401,
+    "level": 0,
+    "ix": 2058,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 402,
+    "level": 0,
+    "ix": 2059,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 403,
+    "level": 0,
+    "ix": 2060,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 404,
+    "level": 0,
+    "ix": 2062,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 405,
+    "level": 0,
+    "ix": 2063,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 406,
+    "level": 0,
+    "ix": 2065,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 407,
+    "level": 0,
+    "ix": 2066,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 408,
+    "level": 0,
+    "ix": 2068,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 409,
+    "level": 0,
+    "ix": 2069,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 410,
+    "level": 0,
+    "ix": 2070,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 411,
+    "level": 0,
+    "ix": 2072,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 412,
+    "level": 0,
+    "ix": 2073,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 413,
+    "level": 0,
+    "ix": 2075,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 414,
+    "level": 0,
+    "ix": 2076,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 415,
+    "level": 0,
+    "ix": 2078,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 416,
+    "level": 0,
+    "ix": 2079,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 417,
+    "level": 0,
+    "ix": 2080,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 418,
+    "level": 0,
+    "ix": 2096,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 419,
+    "level": 0,
+    "ix": 2098,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 420,
+    "level": 0,
+    "ix": 2099,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 421,
+    "level": 0,
+    "ix": 2100,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 422,
+    "level": 0,
+    "ix": 2102,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 423,
+    "level": 0,
+    "ix": 2103,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 424,
+    "level": 0,
+    "ix": 2105,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 425,
+    "level": 0,
+    "ix": 2106,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 426,
+    "level": 0,
+    "ix": 2108,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 427,
+    "level": 0,
+    "ix": 2109,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 428,
+    "level": 0,
+    "ix": 2110,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 429,
+    "level": 0,
+    "ix": 2112,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 430,
+    "level": 0,
+    "ix": 2113,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 431,
+    "level": 0,
+    "ix": 2115,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 432,
+    "level": 0,
+    "ix": 2116,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 433,
+    "level": 0,
+    "ix": 2118,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 434,
+    "level": 0,
+    "ix": 2119,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 435,
+    "level": 0,
+    "ix": 2120,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 436,
+    "level": 0,
+    "ix": 2122,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 437,
+    "level": 0,
+    "ix": 2123,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 438,
+    "level": 0,
+    "ix": 2125,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 439,
+    "level": 0,
+    "ix": 2126,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 440,
+    "level": 0,
+    "ix": 2128,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 441,
+    "level": 0,
+    "ix": 2129,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 442,
+    "level": 0,
+    "ix": 2130,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 443,
+    "level": 0,
+    "ix": 2132,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 444,
+    "level": 0,
+    "ix": 2133,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 445,
+    "level": 0,
+    "ix": 2135,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 446,
+    "level": 0,
+    "ix": 2136,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 447,
+    "level": 0,
+    "ix": 2138,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 448,
+    "level": 0,
+    "ix": 2139,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 449,
+    "level": 0,
+    "ix": 2140,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 450,
+    "level": 0,
+    "ix": 2142,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 451,
+    "level": 0,
+    "ix": 2143,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 452,
+    "level": 0,
+    "ix": 2145,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 453,
+    "level": 0,
+    "ix": 2146,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 454,
+    "level": 0,
+    "ix": 2148,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 455,
+    "level": 0,
+    "ix": 2149,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 456,
+    "level": 0,
+    "ix": 2150,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 457,
+    "level": 0,
+    "ix": 2152,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 458,
+    "level": 0,
+    "ix": 2153,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 459,
+    "level": 0,
+    "ix": 2155,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 460,
+    "level": 0,
+    "ix": 2156,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 461,
+    "level": 0,
+    "ix": 2158,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 462,
+    "level": 0,
+    "ix": 2159,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 463,
+    "level": 0,
+    "ix": 2160,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 464,
+    "level": 0,
+    "ix": 2162,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 465,
+    "level": 0,
+    "ix": 2163,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 466,
+    "level": 0,
+    "ix": 2165,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 467,
+    "level": 0,
+    "ix": 2166,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 468,
+    "level": 0,
+    "ix": 2168,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 469,
+    "level": 0,
+    "ix": 2169,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 470,
+    "level": 0,
+    "ix": 2170,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 471,
+    "level": 0,
+    "ix": 2172,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 472,
+    "level": 0,
+    "ix": 2173,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 473,
+    "level": 0,
+    "ix": 2175,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 474,
+    "level": 0,
+    "ix": 2176,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 475,
+    "level": 0,
+    "ix": 2178,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 476,
+    "level": 0,
+    "ix": 2179,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 477,
+    "level": 0,
+    "ix": 2180,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 478,
+    "level": 0,
+    "ix": 2182,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 479,
+    "level": 0,
+    "ix": 2183,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 480,
+    "level": 0,
+    "ix": 2185,
+    "iy": 1224,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 534,
+    "level": 0,
+    "ix": 644,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 535,
+    "level": 0,
+    "ix": 646,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 536,
+    "level": 0,
+    "ix": 649,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 537,
+    "level": 0,
+    "ix": 653,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 538,
+    "level": 0,
+    "ix": 656,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 539,
+    "level": 0,
+    "ix": 659,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 540,
+    "level": 0,
+    "ix": 663,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 541,
+    "level": 0,
+    "ix": 666,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 542,
+    "level": 0,
+    "ix": 671,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 543,
+    "level": 0,
+    "ix": 674,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 544,
+    "level": 0,
+    "ix": 677,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 545,
+    "level": 0,
+    "ix": 680,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 546,
+    "level": 0,
+    "ix": 684,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 547,
+    "level": 0,
+    "ix": 687,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 548,
+    "level": 0,
+    "ix": 690,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 549,
+    "level": 0,
+    "ix": 693,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 550,
+    "level": 0,
+    "ix": 697,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 551,
+    "level": 0,
+    "ix": 700,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 552,
+    "level": 0,
+    "ix": 703,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 553,
+    "level": 0,
+    "ix": 707,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 554,
+    "level": 0,
+    "ix": 710,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 555,
+    "level": 0,
+    "ix": 715,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 556,
+    "level": 0,
+    "ix": 719,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 557,
+    "level": 0,
+    "ix": 722,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 558,
+    "level": 0,
+    "ix": 728,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 559,
+    "level": 0,
+    "ix": 732,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 560,
+    "level": 0,
+    "ix": 735,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 561,
+    "level": 0,
+    "ix": 738,
+    "iy": 1312,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 567,
+    "level": 0,
+    "ix": 1904,
+    "iy": 1350,
+    "code": 288,
+    "relation_id": 80500,
+    "coords_sha256": "251637ba4142ef5dc556891f24ab09c49cce6039e336a42bb33f98d7e872ee25",
+    "geometry_ways": {
+      "cache": 80
+    },
+    "variant": "original"
+  },
+  {
+    "dump_row": 598,
+    "level": 0,
+    "ix": 660,
+    "iy": 1406,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 599,
+    "level": 0,
+    "ix": 665,
+    "iy": 1406,
+    "code": 288,
+    "relation_id": 8426822,
+    "coords_sha256": "e3bda5c30bd26e8f4f62d54e012c16a72707651cf475360f0fe51015856238f5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 617,
+    "level": 0,
+    "ix": 1961,
+    "iy": 1471,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 618,
+    "level": 0,
+    "ix": 1962,
+    "iy": 1471,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 619,
+    "level": 0,
+    "ix": 1964,
+    "iy": 1471,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 620,
+    "level": 0,
+    "ix": 1965,
+    "iy": 1471,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 621,
+    "level": 0,
+    "ix": 1966,
+    "iy": 1471,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 622,
+    "level": 0,
+    "ix": 1967,
+    "iy": 1471,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 623,
+    "level": 0,
+    "ix": 1969,
+    "iy": 1471,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 624,
+    "level": 0,
+    "ix": 1971,
+    "iy": 1471,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 625,
+    "level": 0,
+    "ix": 1972,
+    "iy": 1471,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 626,
+    "level": 0,
+    "ix": 1974,
+    "iy": 1471,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 627,
+    "level": 0,
+    "ix": 1975,
+    "iy": 1471,
+    "code": 288,
+    "relation_id": 8601872,
+    "coords_sha256": "d77ba7cadd39b1edf1b051a84a47d236c909398a8674f13bd45ee7ed737bc7b9",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 711,
+    "level": 0,
+    "ix": 950,
+    "iy": 1585,
+    "code": 288,
+    "relation_id": 8390145,
+    "coords_sha256": "0df00fac714c4580f3c17891403c25e1aeb5bab3411236714ed8c142ac82eccf",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 772,
+    "level": 0,
+    "ix": 1256,
+    "iy": 1856,
+    "code": 288,
+    "relation_id": 8602093,
+    "coords_sha256": "d0e569a0f7a8adc5811d7b28bdba246d54fcb48da0724142bb8cf435be4f15a5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 773,
+    "level": 0,
+    "ix": 1256,
+    "iy": 1857,
+    "code": 288,
+    "relation_id": 8602093,
+    "coords_sha256": "d0e569a0f7a8adc5811d7b28bdba246d54fcb48da0724142bb8cf435be4f15a5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 774,
+    "level": 0,
+    "ix": 1256,
+    "iy": 1878,
+    "code": 288,
+    "relation_id": 8602093,
+    "coords_sha256": "d0e569a0f7a8adc5811d7b28bdba246d54fcb48da0724142bb8cf435be4f15a5",
+    "geometry_ways": null,
+    "variant": "original"
+  },
+  {
+    "dump_row": 775,
+    "level": 0,
+    "ix": 1363,
+    "iy": 1958,
+    "code": 288,
+    "relation_id": 2647638,
+    "coords_sha256": "9b9fd44197639b61929853ff921d467bab6fd8169e10b35c11e63ba703dddcea",
+    "geometry_ways": {
+      "cache": 131,
+      "snapshot": 16
+    },
+    "variant": "original"
+  }
+]
