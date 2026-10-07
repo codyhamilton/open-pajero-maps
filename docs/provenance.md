@@ -958,3 +958,12 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - Evidence: `triage/trim_r_parity/l8_frag/`; record `docs/plans/52-l8-road-fragmentation-underselect.md`.
 - No oracle/code change. No F6/kind-order (steering). Scratch `output/scratch-52/`.
 
+
+## Plan 53 — L0 degenerate east-edge roads / R-G9-3-d (2026-10-08)
+
+- Phase 1: encoder defect (not D1) on tip `aeae426c…`; independent decode sx=8192→xc=4096 for all 5 (1755,591) degenerates.
+- Phase 2 fix: `dv_assign` lon-wrap (`_e2.c`); AU outside-edge coincident **5969→128**; parent 5→0.
+- Successor AU **`0c22b266…`** (565 changed); Perth **`5b86d33e…`** (was `04be2f6e…`); disc_in_force pinned.
+- Residuals: R-G9-3-d discharged-plan-53; **R-G9-3-d-rem** (128) maps-parity-carried.
+- Evidence: `triage/trim_r_parity/l0_degen/`; record `docs/plans/53-l0-degenerate-east-edge-roads.md`.
+- Scratch: `output/scratch-53/` (regenerable).
