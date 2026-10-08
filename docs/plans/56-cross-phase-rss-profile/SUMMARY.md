@@ -20,6 +20,7 @@ Published for Design handoff to plans **57–59**. Measurement-only; no optim la
 | encode | stand-in Perth `-j4` | wrapper 3.25 GiB; **tree 13.96 GiB** | 1.27 GiB (scope) | **13962.9 MB** | worker Pool j=4 + parent (bench_build tree sampler); Perth sha `04be2f6e…` | **58** |
 | encode | cite_prior plan48 | — | — | AU 15240.1 / Perth 13809.5 MB | tree peak only (no phase tags) | **58** |
 | dump/extend | finalize-run fixture | 0.45 GiB (baseline max 473352 KiB) | 0.33 GiB | — | finalize kind array (1 000 013 rows × parts); gates all pass | **59** |
+| triage (plan 46) | bg producer scan v5, 4 shards | wrapper 4.39 GiB; **max shard RssAnon 928.6 MiB** (cap 3072) | 4.36 GiB (incl. file pages) | — | LRU 4096 numpy ring cache + tiled leaf order; spool/disc memmap file pages; follow-on gate_repro 6.10 GiB max RSS / 5.36 GiB peak | — (post-56 addendum, `ledger/bg_producer_scan_plan46.json`) |
 
 Ledger JSON: `docs/plans/56-cross-phase-rss-profile/ledger/`. Wrapper logs: `output/scratch-56/runs/` (gitignored).
 

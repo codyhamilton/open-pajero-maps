@@ -1,0 +1,17 @@
+{
+  "rows": 8876,
+  "by_kind_verdict": {
+    "background|build:eo_bg_stitch": 119,
+    "background|producer_ambiguous": 18,
+    "background_boundary|build:eo_bg_stitch": 4095,
+    "background_boundary|producer_ambiguous": 4594,
+    "background_boundary|source-removed": 50
+  },
+  "old_disc_sha": "013586b58490873f",
+  "new_disc_sha": "4ed9cd801bdd7099",
+  "cenc_excl_sha": "5c43e00dd0c62151",
+  "R": 8,
+  "file": "docs/plans/04-c-core-orchestration/triage/historical_bg/p6_producer/verdicts.tsv.gz",
+  "sha256": "ca4a555a35bf3b1509445a0075408074ffe8342ce1e34a2a33afeccb073cec96",
+  "content_sha256": "775ac6c0d0dc9a1f37850145d1b0058c3bf07a313a81e399b8bd9d65629f4b81"
+}

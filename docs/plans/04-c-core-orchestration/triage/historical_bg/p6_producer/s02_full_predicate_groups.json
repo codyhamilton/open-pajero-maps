@@ -1,0 +1,13 @@
+{
+  "what": "S = full-predicate S02 group set (Design ruling 2026-10-08 option b): status==1 & rows>0 in gate_repro --s02-scope full side table, sorted by full group key",
+  "generator": "p6_producer/s02_list.py <gatework_full> s02_full_predicate_groups.tsv.gz",
+  "groups": 145954,
+  "rows": 11127333,
+  "tsv_sha256": "ae2ce38586717d3606b80eac35c002a12bd89fb3b17c2f46f1f29460a7428d04",
+  "gz_sha256": "7ab5a029fb0d71bdf44e0e906d69a7e09e21036415c90af3905a0285f3dd42fa",
+  "gz_bytes": 912601,
+  "double_run": "identical (gatework_full_a from scan v5; gatework_full_b from independent scan gate_b)",
+  "scope_groups": 145960,
+  "scope_rows": 11127845,
+  "scope_minus_predicate": {"groups": 6, "rows": 512, "cause": "producer_ambiguous (2 same-type byte-hit candidates); see ties.json"}
+}

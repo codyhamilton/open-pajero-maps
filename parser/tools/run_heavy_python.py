@@ -119,8 +119,12 @@ def _outer(args: argparse.Namespace, child_argv: list[str]) -> int:
     ]
     scoped = [
         "systemd-run", "--user", "--scope", "--quiet",
-        "-p", "MemoryAccounting=yes", f"--unit={unit}", "--",
+        "-p", "MemoryAccounting=yes", f"--unit={unit}",
     ]
+    if getattr(args, "memory_max", None):
+        # Hard cgroup ceiling: a regression is OOM-killed inside the scope, not the host.
+        scoped += ["-p", f"MemoryMax={args.memory_max}", "-p", "MemorySwapMax=0"]
+    scoped += ["--"]
     if args.no_flock:
         cmd = scoped + inner_cmd
     else:
@@ -138,6 +142,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--log", required=True, help="JSON log path (argv + peaks)")
     p.add_argument("--cwd", default=None, help="Child working directory (default: repo root)")
     p.add_argument("--lock", default=str(DEFAULT_LOCK), help="flock path")
+    p.add_argument("--memory-max", default=None,
+                   help="optional cgroup MemoryMax for the scope (e.g. 12G); swap disabled")
     p.add_argument("--no-flock", action="store_true", help="Skip flock (tests only)")
     p.add_argument("--inner", action="store_true", help=argparse.SUPPRESS)
     p.add_argument("command", nargs=argparse.REMAINDER, help="Command after --")

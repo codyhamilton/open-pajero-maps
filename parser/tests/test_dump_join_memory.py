@@ -234,6 +234,18 @@ def test_layout_validation():
         J.layout_dtype([f for f in fields if f["name"] != "shape"] + [dict(name="zz", type="i32")])
 
 
+def test_appended_flag_must_land_at_byte146(tmp_path):
+    """Plan 46: without a byte-145 field the appended flag would be declared at 145."""
+    fields = [dict(f) for f in B.FIELDS if f["name"] != "other_mechanism"]
+    assert J.layout_dtype(fields).itemsize == 152  # padding makes the source layout valid
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "dump_manifest.json").write_text(json.dumps({"fields": fields, "kinds": {}}))
+    with pytest.raises(ValueError, match="byte-145 field"):
+        J.extend_residual(src, tmp_path, tmp_path, tmp_path / "dst", tmp_path / "c.json")
+    assert not (tmp_path / "dst").exists()
+
+
 def test_verify_mode_and_corruption(allcases):
     root = fresh(allcases, "verify")
     r = B.run_candidate(root, "--verify", "--window-rows", "500")

@@ -127,3 +127,35 @@ def test_unique_fragment_vs_full_leaf_and_ambiguous(probe):
         probe, blob_full, [("S0", full), ("S1", other)], RECT, record_verts=frag_verts,
     )
     assert status == "unique-byte" and pid == "S0"
+
+
+def test_find_producer_clip_cache_is_transparent(probe):
+    """Plan 46: leaf-scoped clip_cache gives the same verdict as uncached, and is reused."""
+    full = [(400, 400), (3700, 400), (3700, 3700), (400, 3700)]
+    other = [(2000, 2000), (3800, 2000), (3800, 3800), (2000, 3800)]
+    _s, _, blob_full = oe.clip_ring(probe, full, RECT)
+    cands = [("S0", full), ("S1", other), ("S2", [(100, 100), (200, 100), (200, 200)])]
+    cache = {}
+    for rec in (blob_full, b"\x00none\x00"):
+        a = oe.find_producer(probe, rec, cands, RECT)
+        b = oe.find_producer(probe, rec, cands, RECT, clip_cache=cache)
+        c = oe.find_producer(probe, rec, cands, RECT, clip_cache=cache)  # warm
+        assert a == b == c
+    assert len(cache) == 3
+
+
+def test_find_producer_piecewise_matches_one_clip_piece(probe):
+    """Plan 46: a clip emitting two pieces byte-matches each piece only when piecewise."""
+    u = [(1000, 3000), (1000, 5000), (3000, 5000), (3000, 3000),
+         (2500, 3000), (2500, 4500), (1500, 4500), (1500, 3000)]
+    size, nrec, blob = oe.clip_ring(probe, u, RECT)
+    pieces = oe.wire_records(blob)
+    assert nrec == 2 and len(pieces) == 2 and b"".join(pieces) == blob
+    cands = [("U", u), ("far", [(100, 100), (200, 100), (200, 200), (100, 200)])]
+    for piece in pieces:
+        assert oe.find_producer(probe, piece, cands, RECT) == ("producer_none", None)
+        assert oe.find_producer(probe, piece, cands, RECT, piecewise=True) == ("unique-byte", "U")
+    # whole blob still matches in both modes; duplicate producer is ambiguous
+    assert oe.find_producer(probe, blob, cands, RECT, piecewise=True) == ("unique-byte", "U")
+    assert oe.find_producer(probe, pieces[0], cands + [("U2", u)], RECT,
+                            piecewise=True) == ("producer-ambiguous", None)

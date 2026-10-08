@@ -982,3 +982,11 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - Oracle in force AU `0c22b266…` (53) / Perth `5b86d33e…`; `residuals.tsv` not edited.
 - Record `docs/plans/60-docs-oracle-residual-sync.md`.
 - Scratch: `output/scratch-60/` (Flash review prompt/logs; regenerable).
+
+## Plan 46 — tracked background producer scan (2026-10-08)
+
+- Scan on 3C-04 / `013586b5` with the 33006aa encoder (`parser/tools/bg_producer_scan.py`, root causes RC0–RC6); S-independent gate figures exact (remainder 137 / 8,739).
+- S02 re-baselined on the full predicate (Design ruling b): `historical_bg/p6_producer/s02_full_predicate_groups.tsv.gz` (145,954 / 11,127,333; generator `s02_list.py`); double run byte-identical.
+- Identities `p6_producer/identity_remainder.tsv.gz` (8,876; R-G8-4-c discharged); verdicts `p6_producer/verdicts.tsv.gz` (4,214 build:eo_bg_stitch; children R-G5-1-a 4,594, R-G5-1-b 50, R-G5-2-a 18).
+- Scratch: `output/scratch-46/` (scans `gate/`, `gate_b/`, gate work dirs, probes, run logs; regenerable from the committed tools).
+

@@ -138,3 +138,10 @@ This is stop(b), not an assertion of complete attribution. No nontrivial valid o
 The dump side-table extension is recorded in [docs/provenance.md](../../../provenance.md). `extend.py` copies the current 152-byte dump and populates previously padding byte 146; every other byte is compared against the original. `dump_ext/dump_manifest.json` records the new column and original extension. Committed rules require these uncommitted recorded side tables/dump; original manifest-only classify cannot use S02/new fields. Scratch scripts and evidence are gitignored. `rules_all.json` combines updated bg rules with unchanged other rules, with no catch-alls.
 
 All heavy jobs ran serially under `flock output/.heavy.lock`; cbuild was serial, window builds used 1/4 workers, K1 controls used 1 (never beyond 6); no cache drops, pgrep waits, code fixes, commits, Phase 4 or writes outside the repository. Protected scratch-2-07, scratch-3-06 and old scratch-3-11/G stayed read-only. About 2.3GiB free remains, so no second full-disc dump/build was made. Existing modified spool copies were read-only reused for the controls. The mandatory Sonnet 5.5 review has **not** been completed; provide this result and ask the reviewer to choose an independent sample and rerun the witness, under the same lock. Native partition remains FAIL and Phase 3 sign-off is not justified.
+
+**Plan 46 note (2026-10-08).** The 180 groups / 8,876 rows above now have committed row identities from the tracked producer scan (`historical_bg/p6_producer/identity_remainder.tsv.gz`, R-G8-4-c discharged). Per-row verdicts are in `historical_bg/p6_producer/verdicts.tsv.gz`:
+- build:eo_bg_stitch: 4,214 rows / 81 groups (119 background, 4,095 boundary);
+- producer_ambiguous: 4,612 rows / 98 groups (R-G5-2-a 18, R-G5-1-a 4,594). This is the same 98-group "2+ candidate rings" class as the table above;
+- source-removed: 50 rows / 1 group (R-G5-1-b).
+
+The historical tables in this file are unchanged as history. See `residuals.tsv` and `docs/plans/46-bg-producer-scan-rebuild.md`.

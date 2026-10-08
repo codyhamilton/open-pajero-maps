@@ -75,14 +75,15 @@ plan **48** discharged **R-G8-1-d-a**; plan **49** discharged **R-G8-2-f-a**; pl
 discharged **R-G8-1-b-a** (explained-dual-basis); plan **50** discharged **R-G9-2** (341/341
 overlay; successor `aeae426c…`); plan **45** discharged **R-G8-1-f** (determinism
 regenerated); plan **53** discharged **R-G9-3-d** (encoder lon-wrap fix; successor
-`0c22b266…`, the live oracle; Perth `5b86d33e…`).
+`0c22b266…`, the live oracle; Perth `5b86d33e…`). Plan **46** discharged **R-G8-4-c** (8,876 identities committed)
+and the proven part of R-G5-1 / R-G5-2 (4,214 rows build:eo_bg_stitch).
 
 **Live `blocks-phase3` ownership** (rows still open in `residuals.tsv`):
 
 | Owner | Rows | Status |
 | --- | --- | --- |
 | Plan **44** (closed) | R-G5-4-a, R-G5-4-b | Closed owner; residual parents still `blocks-phase3` (still-outside@16 / named children → Design; plan **62** is a box draft only, not landed) |
-| Plan **46** | R-G5-1, R-G5-2, R-G8-4-c | Live owner; in progress (Execute) — nothing landed yet |
+| Design (plan **46** children) | R-G5-1-a (4,594 producer_ambiguous), R-G5-1-b (50 source-removed), R-G5-2-a (18 producer_ambiguous) | Exact named children from plan 46's per-row decisions; no waiver |
 | Cody via Design (no waiver) | R-G8-1-a | Budget basis (with R-G9-4) |
 
 **`maps-parity-carried` ownership** (not Phase 3 product-close blockers — but **carried is

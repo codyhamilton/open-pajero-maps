@@ -1,0 +1,645 @@
+{
+ "leaves": [
+  {
+   "leaf": [
+    0,
+    1481,
+    1288,
+    [
+     265
+    ]
+   ],
+   "ptype": 0,
+   "rect": [
+    0,
+    0,
+    4096,
+    4096
+   ],
+   "records": [
+    {
+     "shape": 0,
+     "code": 291,
+     "rows_record_sha256": "6fd577485ec8798cee48c1c6af04e905bfea0cd94b56f69fb3d680b4ea4a6a7c",
+     "n_hits": 2,
+     "hits": [
+      {
+       "cid": [
+        1485,
+        1280,
+        0,
+        291
+       ],
+       "n_ring": 177,
+       "ring_sha256": "8cac92dd91ac2f3ae1ff3e0ed2a3a391b5f43f1da862f58079613e8c17a21f72",
+       "ll_sha256": "c5e441222f6642f8b1fe58b17babbfc5a4dd2b097080a9fab4c79b5299a52f96",
+       "clip_blob_sha256": "629a18e257f36282a70c809075c624dfaa2be825ef675cdc8a3da88539732192",
+       "clip_pieces": 2,
+       "piece_sha256": [
+        "6fd577485ec8798cee48c1c6af04e905bfea0cd94b56f69fb3d680b4ea4a6a7c",
+        "4eca77a3d59316976ed469b93898b55201a3f81b8dc7801a09aa40cc4d959d0b"
+       ],
+       "piece_leaf_shapes": [
+        [
+         0,
+         2
+        ],
+        [
+         1
+        ]
+       ],
+       "stats": {
+        "closed": 1,
+        "closing": 175,
+        "longest": 175,
+        "closing_is_longest": 1,
+        "crossings": 6
+       },
+       "all_pieces_on_disc": true
+      },
+      {
+       "cid": [
+        1486,
+        1280,
+        0,
+        291
+       ],
+       "n_ring": 149,
+       "ring_sha256": "a9dc8c3d67b657a461f6cb59711a7b775d1ae31a243d8e1a3bd8477452347ea0",
+       "ll_sha256": "a271057b54170eec040dcba0edfd51794c37e1e26e8d1564f90a58e8fb15ad5e",
+       "clip_blob_sha256": "a48329ae128f08d48a37dfc1942f326a81f5a77488ffcf69b9faa30318c1902d",
+       "clip_pieces": 2,
+       "piece_sha256": [
+        "6fd577485ec8798cee48c1c6af04e905bfea0cd94b56f69fb3d680b4ea4a6a7c",
+        "6519a9785b46902e4fbd411ece53bd89c2141a2af23bf5387eca9a3444495ede"
+       ],
+       "piece_leaf_shapes": [
+        [
+         0,
+         2
+        ],
+        [
+         3
+        ]
+       ],
+       "stats": {
+        "closed": 1,
+        "closing": 147,
+        "longest": 147,
+        "closing_is_longest": 1,
+        "crossings": 1
+       },
+       "all_pieces_on_disc": true
+      }
+     ],
+     "clip_blob_identical": false,
+     "source_ring_identical": false,
+     "piece_multiset_identical": false,
+     "candidates_with_all_pieces_on_disc": [
+      [
+       1485,
+       1280,
+       0,
+       291
+      ],
+      [
+       1486,
+       1280,
+       0,
+       291
+      ]
+     ],
+     "verdict": "open-rc-owed",
+     "tie_break_lowest_key": [
+      1485,
+      1280,
+      0,
+      291
+     ]
+    },
+    {
+     "shape": 2,
+     "code": 291,
+     "rows_record_sha256": "6fd577485ec8798cee48c1c6af04e905bfea0cd94b56f69fb3d680b4ea4a6a7c",
+     "n_hits": 2,
+     "hits": [
+      {
+       "cid": [
+        1485,
+        1280,
+        0,
+        291
+       ],
+       "n_ring": 177,
+       "ring_sha256": "8cac92dd91ac2f3ae1ff3e0ed2a3a391b5f43f1da862f58079613e8c17a21f72",
+       "ll_sha256": "c5e441222f6642f8b1fe58b17babbfc5a4dd2b097080a9fab4c79b5299a52f96",
+       "clip_blob_sha256": "629a18e257f36282a70c809075c624dfaa2be825ef675cdc8a3da88539732192",
+       "clip_pieces": 2,
+       "piece_sha256": [
+        "6fd577485ec8798cee48c1c6af04e905bfea0cd94b56f69fb3d680b4ea4a6a7c",
+        "4eca77a3d59316976ed469b93898b55201a3f81b8dc7801a09aa40cc4d959d0b"
+       ],
+       "piece_leaf_shapes": [
+        [
+         0,
+         2
+        ],
+        [
+         1
+        ]
+       ],
+       "stats": {
+        "closed": 1,
+        "closing": 175,
+        "longest": 175,
+        "closing_is_longest": 1,
+        "crossings": 6
+       },
+       "all_pieces_on_disc": true
+      },
+      {
+       "cid": [
+        1486,
+        1280,
+        0,
+        291
+       ],
+       "n_ring": 149,
+       "ring_sha256": "a9dc8c3d67b657a461f6cb59711a7b775d1ae31a243d8e1a3bd8477452347ea0",
+       "ll_sha256": "a271057b54170eec040dcba0edfd51794c37e1e26e8d1564f90a58e8fb15ad5e",
+       "clip_blob_sha256": "a48329ae128f08d48a37dfc1942f326a81f5a77488ffcf69b9faa30318c1902d",
+       "clip_pieces": 2,
+       "piece_sha256": [
+        "6fd577485ec8798cee48c1c6af04e905bfea0cd94b56f69fb3d680b4ea4a6a7c",
+        "6519a9785b46902e4fbd411ece53bd89c2141a2af23bf5387eca9a3444495ede"
+       ],
+       "piece_leaf_shapes": [
+        [
+         0,
+         2
+        ],
+        [
+         3
+        ]
+       ],
+       "stats": {
+        "closed": 1,
+        "closing": 147,
+        "longest": 147,
+        "closing_is_longest": 1,
+        "crossings": 1
+       },
+       "all_pieces_on_disc": true
+      }
+     ],
+     "clip_blob_identical": false,
+     "source_ring_identical": false,
+     "piece_multiset_identical": false,
+     "candidates_with_all_pieces_on_disc": [
+      [
+       1485,
+       1280,
+       0,
+       291
+      ],
+      [
+       1486,
+       1280,
+       0,
+       291
+      ]
+     ],
+     "verdict": "open-rc-owed",
+     "tie_break_lowest_key": [
+      1485,
+      1280,
+      0,
+      291
+     ]
+    }
+   ]
+  },
+  {
+   "leaf": [
+    0,
+    1753,
+    1158,
+    [
+     217
+    ]
+   ],
+   "ptype": 0,
+   "rect": [
+    0,
+    0,
+    4096,
+    4096
+   ],
+   "records": [
+    {
+     "shape": 1,
+     "code": 291,
+     "rows_record_sha256": "e5b7534e5183ac4663836d16bba47a9032374c4f90e151bc4ac1b13c91aacc58",
+     "n_hits": 2,
+     "hits": [
+      {
+       "cid": [
+        1755,
+        1157,
+        1,
+        291
+       ],
+       "n_ring": 240,
+       "ring_sha256": "588e569f318ff9ba7e433b5c81d5002c11be7224dfeb8e9d8d1a1344ff3f4fde",
+       "ll_sha256": "2b70ac85255cfbb8ba89d6c26a274d8757a5c4050683011e512789aa87d92ee2",
+       "clip_blob_sha256": "e5b7534e5183ac4663836d16bba47a9032374c4f90e151bc4ac1b13c91aacc58",
+       "clip_pieces": 1,
+       "piece_sha256": [
+        "e5b7534e5183ac4663836d16bba47a9032374c4f90e151bc4ac1b13c91aacc58"
+       ],
+       "piece_leaf_shapes": [
+        [
+         1,
+         2
+        ]
+       ],
+       "stats": {
+        "closed": 1,
+        "closing": 238,
+        "longest": 238,
+        "closing_is_longest": 1,
+        "crossings": 3
+       },
+       "all_pieces_on_disc": true
+      },
+      {
+       "cid": [
+        1755,
+        1157,
+        2,
+        291
+       ],
+       "n_ring": 375,
+       "ring_sha256": "5e3d777880a0ef27a7c256c91e99b38811ab7d51cf1796b084615308f17a0a3e",
+       "ll_sha256": "035850783e97654ce20a46fa952f51b2e409b6498158a50965a1a55c681760cc",
+       "clip_blob_sha256": "e5b7534e5183ac4663836d16bba47a9032374c4f90e151bc4ac1b13c91aacc58",
+       "clip_pieces": 1,
+       "piece_sha256": [
+        "e5b7534e5183ac4663836d16bba47a9032374c4f90e151bc4ac1b13c91aacc58"
+       ],
+       "piece_leaf_shapes": [
+        [
+         1,
+         2
+        ]
+       ],
+       "stats": {
+        "closed": 1,
+        "closing": 373,
+        "longest": 373,
+        "closing_is_longest": 1,
+        "crossings": 3
+       },
+       "all_pieces_on_disc": true
+      }
+     ],
+     "clip_blob_identical": true,
+     "source_ring_identical": false,
+     "piece_multiset_identical": true,
+     "candidates_with_all_pieces_on_disc": [
+      [
+       1755,
+       1157,
+       1,
+       291
+      ],
+      [
+       1755,
+       1157,
+       2,
+       291
+      ]
+     ],
+     "verdict": "proven-producer-tied",
+     "tie_break_lowest_key": [
+      1755,
+      1157,
+      1,
+      291
+     ]
+    },
+    {
+     "shape": 2,
+     "code": 291,
+     "rows_record_sha256": "e5b7534e5183ac4663836d16bba47a9032374c4f90e151bc4ac1b13c91aacc58",
+     "n_hits": 2,
+     "hits": [
+      {
+       "cid": [
+        1755,
+        1157,
+        1,
+        291
+       ],
+       "n_ring": 240,
+       "ring_sha256": "588e569f318ff9ba7e433b5c81d5002c11be7224dfeb8e9d8d1a1344ff3f4fde",
+       "ll_sha256": "2b70ac85255cfbb8ba89d6c26a274d8757a5c4050683011e512789aa87d92ee2",
+       "clip_blob_sha256": "e5b7534e5183ac4663836d16bba47a9032374c4f90e151bc4ac1b13c91aacc58",
+       "clip_pieces": 1,
+       "piece_sha256": [
+        "e5b7534e5183ac4663836d16bba47a9032374c4f90e151bc4ac1b13c91aacc58"
+       ],
+       "piece_leaf_shapes": [
+        [
+         1,
+         2
+        ]
+       ],
+       "stats": {
+        "closed": 1,
+        "closing": 238,
+        "longest": 238,
+        "closing_is_longest": 1,
+        "crossings": 3
+       },
+       "all_pieces_on_disc": true
+      },
+      {
+       "cid": [
+        1755,
+        1157,
+        2,
+        291
+       ],
+       "n_ring": 375,
+       "ring_sha256": "5e3d777880a0ef27a7c256c91e99b38811ab7d51cf1796b084615308f17a0a3e",
+       "ll_sha256": "035850783e97654ce20a46fa952f51b2e409b6498158a50965a1a55c681760cc",
+       "clip_blob_sha256": "e5b7534e5183ac4663836d16bba47a9032374c4f90e151bc4ac1b13c91aacc58",
+       "clip_pieces": 1,
+       "piece_sha256": [
+        "e5b7534e5183ac4663836d16bba47a9032374c4f90e151bc4ac1b13c91aacc58"
+       ],
+       "piece_leaf_shapes": [
+        [
+         1,
+         2
+        ]
+       ],
+       "stats": {
+        "closed": 1,
+        "closing": 373,
+        "longest": 373,
+        "closing_is_longest": 1,
+        "crossings": 3
+       },
+       "all_pieces_on_disc": true
+      }
+     ],
+     "clip_blob_identical": true,
+     "source_ring_identical": false,
+     "piece_multiset_identical": true,
+     "candidates_with_all_pieces_on_disc": [
+      [
+       1755,
+       1157,
+       1,
+       291
+      ],
+      [
+       1755,
+       1157,
+       2,
+       291
+      ]
+     ],
+     "verdict": "proven-producer-tied",
+     "tie_break_lowest_key": [
+      1755,
+      1157,
+      1,
+      291
+     ]
+    }
+   ]
+  },
+  {
+   "leaf": [
+    0,
+    1754,
+    1158,
+    [
+     218
+    ]
+   ],
+   "ptype": 0,
+   "rect": [
+    0,
+    0,
+    4096,
+    4096
+   ],
+   "records": [
+    {
+     "shape": 1,
+     "code": 291,
+     "rows_record_sha256": "87a97998c6ece31c611eb59b0d6cb986ee1e293a9b48c01cc581cec2eb3dd7e4",
+     "n_hits": 2,
+     "hits": [
+      {
+       "cid": [
+        1755,
+        1157,
+        1,
+        291
+       ],
+       "n_ring": 240,
+       "ring_sha256": "40502760c29940d210214d432d10642d3e86f7371fea50abd4277abc9e6517a4",
+       "ll_sha256": "2b70ac85255cfbb8ba89d6c26a274d8757a5c4050683011e512789aa87d92ee2",
+       "clip_blob_sha256": "87949d44b5d19b2c09b37c18dcf81a9f855b39c78a646fc0f2272d93468565f3",
+       "clip_pieces": 2,
+       "piece_sha256": [
+        "87a97998c6ece31c611eb59b0d6cb986ee1e293a9b48c01cc581cec2eb3dd7e4",
+        "d30c396ca85f3df3df870d09decaa598f0bef972a6de0d54d513667c9d43a14b"
+       ],
+       "piece_leaf_shapes": [
+        [
+         1,
+         3
+        ],
+        [
+         2
+        ]
+       ],
+       "stats": {
+        "closed": 1,
+        "closing": 238,
+        "longest": 238,
+        "closing_is_longest": 1,
+        "crossings": 3
+       },
+       "all_pieces_on_disc": true
+      },
+      {
+       "cid": [
+        1755,
+        1157,
+        2,
+        291
+       ],
+       "n_ring": 375,
+       "ring_sha256": "09605312d315f808fdc977f4c172a7fc08f1501ccb8ee160f04d28e6b289d7d3",
+       "ll_sha256": "035850783e97654ce20a46fa952f51b2e409b6498158a50965a1a55c681760cc",
+       "clip_blob_sha256": "8bc560d69223ac1340964f89a38f7044a0503026aa91f26561541a1e5d63afd9",
+       "clip_pieces": 2,
+       "piece_sha256": [
+        "87a97998c6ece31c611eb59b0d6cb986ee1e293a9b48c01cc581cec2eb3dd7e4",
+        "80d1097b2e3a892e7d2a483384c0e80279bcfd6fd894ac352a3fccebab62a0d4"
+       ],
+       "piece_leaf_shapes": [
+        [
+         1,
+         3
+        ],
+        [
+         4
+        ]
+       ],
+       "stats": {
+        "closed": 1,
+        "closing": 373,
+        "longest": 373,
+        "closing_is_longest": 1,
+        "crossings": 3
+       },
+       "all_pieces_on_disc": true
+      }
+     ],
+     "clip_blob_identical": false,
+     "source_ring_identical": false,
+     "piece_multiset_identical": false,
+     "candidates_with_all_pieces_on_disc": [
+      [
+       1755,
+       1157,
+       1,
+       291
+      ],
+      [
+       1755,
+       1157,
+       2,
+       291
+      ]
+     ],
+     "verdict": "open-rc-owed",
+     "tie_break_lowest_key": [
+      1755,
+      1157,
+      1,
+      291
+     ]
+    },
+    {
+     "shape": 3,
+     "code": 291,
+     "rows_record_sha256": "87a97998c6ece31c611eb59b0d6cb986ee1e293a9b48c01cc581cec2eb3dd7e4",
+     "n_hits": 2,
+     "hits": [
+      {
+       "cid": [
+        1755,
+        1157,
+        1,
+        291
+       ],
+       "n_ring": 240,
+       "ring_sha256": "40502760c29940d210214d432d10642d3e86f7371fea50abd4277abc9e6517a4",
+       "ll_sha256": "2b70ac85255cfbb8ba89d6c26a274d8757a5c4050683011e512789aa87d92ee2",
+       "clip_blob_sha256": "87949d44b5d19b2c09b37c18dcf81a9f855b39c78a646fc0f2272d93468565f3",
+       "clip_pieces": 2,
+       "piece_sha256": [
+        "87a97998c6ece31c611eb59b0d6cb986ee1e293a9b48c01cc581cec2eb3dd7e4",
+        "d30c396ca85f3df3df870d09decaa598f0bef972a6de0d54d513667c9d43a14b"
+       ],
+       "piece_leaf_shapes": [
+        [
+         1,
+         3
+        ],
+        [
+         2
+        ]
+       ],
+       "stats": {
+        "closed": 1,
+        "closing": 238,
+        "longest": 238,
+        "closing_is_longest": 1,
+        "crossings": 3
+       },
+       "all_pieces_on_disc": true
+      },
+      {
+       "cid": [
+        1755,
+        1157,
+        2,
+        291
+       ],
+       "n_ring": 375,
+       "ring_sha256": "09605312d315f808fdc977f4c172a7fc08f1501ccb8ee160f04d28e6b289d7d3",
+       "ll_sha256": "035850783e97654ce20a46fa952f51b2e409b6498158a50965a1a55c681760cc",
+       "clip_blob_sha256": "8bc560d69223ac1340964f89a38f7044a0503026aa91f26561541a1e5d63afd9",
+       "clip_pieces": 2,
+       "piece_sha256": [
+        "87a97998c6ece31c611eb59b0d6cb986ee1e293a9b48c01cc581cec2eb3dd7e4",
+        "80d1097b2e3a892e7d2a483384c0e80279bcfd6fd894ac352a3fccebab62a0d4"
+       ],
+       "piece_leaf_shapes": [
+        [
+         1,
+         3
+        ],
+        [
+         4
+        ]
+       ],
+       "stats": {
+        "closed": 1,
+        "closing": 373,
+        "longest": 373,
+        "closing_is_longest": 1,
+        "crossings": 3
+       },
+       "all_pieces_on_disc": true
+      }
+     ],
+     "clip_blob_identical": false,
+     "source_ring_identical": false,
+     "piece_multiset_identical": false,
+     "candidates_with_all_pieces_on_disc": [
+      [
+       1755,
+       1157,
+       1,
+       291
+      ],
+      [
+       1755,
+       1157,
+       2,
+       291
+      ]
+     ],
+     "verdict": "open-rc-owed",
+     "tie_break_lowest_key": [
+      1755,
+      1157,
+      1,
+      291
+     ]
+    }
+   ]
+  }
+ ]
+}

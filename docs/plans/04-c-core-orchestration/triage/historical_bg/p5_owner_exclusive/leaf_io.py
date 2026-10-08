@@ -23,7 +23,9 @@ _spec_sec.loader.exec_module(sec)
 U16 = lambda b, o: int.from_bytes(b[o:o+2], "big")
 
 
-def frames(path, cellset):
+def frames(path, cellset, ptype_out=None):
+    """Leaf frame entries. ptype_out (plan 46, opt-in): filled with the parcel_type of the
+    record that directly holds each leaf (0 normal, 1..3 pardiv) for divided-leaf clip rects."""
     out = {}
     with open(path, "rb") as f:
         hdr = volume.parse_volume_header(oc.read_exact(f, 0, volume.DATAVOL_SIZE))
@@ -44,6 +46,11 @@ def frames(path, cellset):
                 for x, y, leaf, entry in oc.tree_leaves(root, lm):
                     if (lm.level, bx + x, by + y) not in cellset: continue
                     out[(lm.level, bx + x, by + y, tuple(leaf))] = (entry.dsa, entry.size, ss, ls)
+                    if ptype_out is not None:
+                        rec = root
+                        for i in leaf[:-1]:
+                            rec = rec.entries[i].subrecord
+                        ptype_out[(lm.level, bx + x, by + y, tuple(leaf))] = int(rec.parcel_type)
     return out
 
 

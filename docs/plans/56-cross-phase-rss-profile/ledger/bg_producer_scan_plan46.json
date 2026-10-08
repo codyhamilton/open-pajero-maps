@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "phase": "triage",
+  "label": "plan46_bg_producer_scan_v5",
+  "argv": [
+    "run_heavy_python.py",
+    "--memory-max",
+    "12G",
+    "--",
+    "bash",
+    "output/scratch-46/runs/scan_lib.sh",
+    "0",
+    "output/scratch-46/gate",
+    "background",
+    "background_boundary",
+    "# 4 shards, bg_producer_scan.py --max-rss-mib 3072"
+  ],
+  "wall_s": 1425.7,
+  "max_rss_kib": 4603056,
+  "memory_peak": 4685336576,
+  "memory_stat": {
+    "anon": 8986624,
+    "file": 3132690432,
+    "file_dirty": 4313088
+  },
+  "tree_peak_mb": null,
+  "residency": [
+    {
+      "class": "max_shard_rss_anon_sampled",
+      "evidence": "plan46_IMPLEMENTATION_v5_scan (shard watchdog RssAnon samples)",
+      "kib": 950886,
+      "live_at_peak": true
+    },
+    {
+      "class": "cgroup_memory_peak_includes_file_pages",
+      "evidence": "output/scratch-46/runs/full_scan_v5.json",
+      "kib": 4575524,
+      "live_at_peak": true
+    }
+  ],
+  "inter_phase_boundary": null,
+  "notes": [
+    "Max shard RssAnon 928.6 MiB (watchdog cap 3072 MiB, not hit); memory.peak counts spool/disc file pages.",
+    "Follow-on gate_repro (v5 pinstop): max_rss_kib 6395748, memory_peak 5753118720, wall 436 s (runs/gate_repro5.json)."
+  ]
+}

@@ -204,6 +204,13 @@ def extend_residual(src_dir, side_dir, assign_dir, dst_dir, counts_path, window_
     kd = np.dtype([(k, dt[k]) for k in GROUP])
     man = json.loads(json.dumps(man))
     man['fields'].append({'name': 'residual_crossing_verified', 'type': 'u8'})
+    # Plan 46: the bytes go to FLAG_OFFSET; the manifest must declare them there, otherwise
+    # classify reads another byte (e.g. 145 when no byte-145 field exists) and S03/S04 match 0.
+    new_dt = np.dtype([(f['name'], TS[f['type']]) for f in man['fields']], align=True)
+    if new_dt.fields['residual_crossing_verified'][1] != FLAG_OFFSET or new_dt.itemsize != ROW_SIZE:
+        raise ValueError(f"appended residual_crossing_verified lands at byte "
+                         f"{new_dt.fields['residual_crossing_verified'][1]}, not {FLAG_OFFSET}; "
+                         f"source manifest needs a named byte-145 field")
     plan = _plan(man, src_dir, side_dir, assign_dir, dst_dir, dt, need_assign=not verify_only)
     if verify_only:
         for kind, info, src, dest, side_path, _a, rows in plan:

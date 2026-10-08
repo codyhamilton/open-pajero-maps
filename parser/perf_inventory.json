@@ -647,6 +647,18 @@
       "path": "parser/tools/supply_path_assembler.py",
       "phase": null,
       "reason": "Plan 50 supply-path overlay assembler: builds clipped code-288 backgrounds for 341 target cells offline; not on the encode hot path"
+    },
+    {
+      "class": "orchestration",
+      "path": "parser/tools/bg_producer_scan.py",
+      "phase": null,
+      "reason": "Plan 46 tracked producer scan; streams dump rows by leaf; clips via pinned _cenc shim; Moore R=8 candidate set (design 44)."
+    },
+    {
+      "class": "orchestration",
+      "path": "parser/tools/_bg_producer_scan.c",
+      "phase": null,
+      "reason": "Plan 46 C shim (clip + ring stats) compiled from pinned _cenc.c; no full-AU loop in C itself."
     }
   ]
 }

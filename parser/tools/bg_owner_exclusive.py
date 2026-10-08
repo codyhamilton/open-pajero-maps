@@ -72,7 +72,9 @@ def compile_probe(cenc_c: Path | str | None = None, out: Path | str | None = Non
         tmp = Path(tmp)
         (tmp / "kiwiw").mkdir()
         (tmp / "kiwiw" / "_cenc.c").write_bytes(cenc_c.read_bytes())
-        for hdr in (_PARSER / "kiwiw").glob("*.h"):
+        # Headers / sibling sources pinned with cenc_c when present (else in-tree).
+        _src_dir = cenc_c.parent if any(cenc_c.parent.glob("*.h")) else _PARSER / "kiwiw"
+        for hdr in list(_src_dir.glob("*.h")) + [s for s in _src_dir.glob("_*.c") if s.name != "_cenc.c"]:
             (tmp / "kiwiw" / hdr.name).write_bytes(hdr.read_bytes())
         cenc_path = tmp / "kiwiw" / "_cenc.c"
         probe = tmp / "probe_flex.c"
@@ -126,6 +128,21 @@ def clip_ring(probe, ring_xy: Sequence[tuple[float, float]], rect=(0.0, 0.0, 409
         size = int(probe(lat.ctypes.data, lon.ctypes.data, len(ring_xy),
                          r.ctypes.data, out.ctypes.data, room, ctypes.byref(nr)))
     return size, int(nr.value), out[:max(0, size)].tobytes()
+
+
+def wire_records(blob: bytes) -> list[bytes]:
+    """Split a kw__bg_shape wire blob into its per-record byte strings."""
+    import struct
+    out, pos = [], 0
+    while pos < len(blob):
+        size = (struct.unpack_from(">H", blob, pos)[0] & 4095) * 2
+        if size <= 0:
+            raise ValueError(f"wire record of size 0 at {pos}")
+        out.append(blob[pos:pos + size])
+        pos += size
+    if pos != len(blob):
+        raise ValueError(f"wire blob length mismatch: consumed {pos} of {len(blob)}")
+    return out
 
 
 def wire_vertices(blob: bytes) -> list[tuple[int, int]]:
@@ -206,21 +223,35 @@ def find_producer(
     cr: float | None = None,
     record_verts: Optional[Sequence[tuple[int, int]]] = None,
     failing: Optional[set[tuple[int, int]]] = None,
+    clip_cache: Optional[dict] = None,
+    piecewise: bool = False,
 ) -> tuple[str, Optional[object]]:
     """Return producer class under revised design 44.
 
     unique-byte | unique-fragment | producer-ambiguous | producer_none.
     Pass `record_verts` (disc record vertices) to enable unique-fragment.
+    piecewise=True (plan 46): a byte hit is the record equal to ANY one record of the
+    clip blob (a clip may emit several pieces; each is its own leaf record). Default
+    False keeps the design-44/45 whole-blob comparison unchanged.
     """
     clips: list[tuple[object, set[tuple[int, int]], bytes]] = []
     byte_hits: list[object] = []
     for cid, ring in candidates:
-        size, _nrec, blob = clip_ring(probe, ring, rect=rect, tc=tc, b4=b4, cr=cr)
+        # clip_cache: caller-scoped memo keyed (cid, tc); valid only while rect/b4/cr
+        # are fixed (one leaf). Results are identical to an uncached clip.
+        ck = (cid, tc)
+        hit = clip_cache.get(ck) if clip_cache is not None else None
+        if hit is None:
+            size, _nrec, blob = clip_ring(probe, ring, rect=rect, tc=tc, b4=b4, cr=cr)
+            vset = {(int(x), int(y)) for x, y in wire_vertices(blob)} if size > 0 else None
+            hit = (size, blob, vset)
+            if clip_cache is not None:
+                clip_cache[ck] = hit
+        size, blob, vset = hit
         if size <= 0:
             continue
-        vset = {(int(x), int(y)) for x, y in wire_vertices(blob)}
         clips.append((cid, vset, blob))
-        if blob == record_bytes:
+        if blob == record_bytes or (piecewise and record_bytes and record_bytes in wire_records(blob)):
             byte_hits.append(cid)
     if len(byte_hits) == 1:
         return "unique-byte", byte_hits[0]
