@@ -82,8 +82,8 @@ and the proven part of R-G5-1 / R-G5-2 (4,214 rows build:eo_bg_stitch).
 
 | Owner | Rows | Status |
 | --- | --- | --- |
-| Plan **44** (closed) | R-G5-4-a, R-G5-4-b | Closed owner; residual parents still `blocks-phase3` (still-outside@16 / named children → Design; plan **62** is a box draft only, not landed) |
-| Design (plan **46** children) | R-G5-1-a (4,594 producer_ambiguous), R-G5-1-b (50 source-removed), R-G5-2-a (18 producer_ambiguous) | Exact named children from plan 46's per-row decisions; no waiver |
+| Plan **44** (closed) | R-G5-4-a, R-G5-4-b | Closed owner; 87,743 rows proven-fixed but not discharged; residual parents still `blocks-phase3` (7,316 rows) → Design: plan **62** (in Execute) |
+| Design (plan **46** children) → Design drafts **63** (R-G5-1-a, R-G5-2-a) / **64** (R-G5-1-b) | R-G5-1-a (4,594 producer_ambiguous), R-G5-1-b (50 source-removed), R-G5-2-a (18 producer_ambiguous) | Exact named children from plan 46's per-row decisions; no waiver |
 | Cody via Design (no waiver) | R-G8-1-a | Budget basis (with R-G9-4) |
 
 **`maps-parity-carried` ownership** (not Phase 3 product-close blockers — but **carried is
@@ -92,7 +92,7 @@ stands against end-to-end parity until fixed or proven non-deviation):
 
 | Owner | Rows | State |
 | --- | --- | --- |
-| Plan **45** (closed) → Design | R-G5-4-c | 80/80 R01 rows `producer_home_outside_R_cap` at R=8 (widen@16 saturated); still-outside@16 is plan **62**'s scope (box draft, not landed) |
+| Plan **45** (closed) → Design | R-G5-4-c | 80/80 R01 rows `producer_home_outside_R_cap` at R=8 (widen@16 saturated); in plan **62**'s scope (re-decide under the plan-46 producer); carried is not closed |
 | Plan **51** (closed) → Cody | R-G9-3-a | Emission proven-cause (land-local catch-all); road volume open on Cody F6 / kind-order |
 | Plan **52** (closed) → Design | R-G9-3-b | Fragmentation proven-cause; piece-count residual open |
 | Plan **52** (closed) → Cody | R-G9-3-c | Under-selection proven-cause (L8 motorway-only); volume open on Cody L8 selection expand |
