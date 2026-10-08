@@ -990,3 +990,9 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - Identities `p6_producer/identity_remainder.tsv.gz` (8,876; R-G8-4-c discharged); verdicts `p6_producer/verdicts.tsv.gz` (4,214 build:eo_bg_stitch; children R-G5-1-a 4,594, R-G5-1-b 50, R-G5-2-a 18).
 - Scratch: `output/scratch-46/` (scans `gate/`, `gate_b/`, gate work dirs, probes, run logs; regenerable from the committed tools).
 
+## Plan 65 — R-G5-4-a/b/c owner wording sync (2026-10-08)
+
+- Docs-only: `residuals.tsv` R-G5-4-a/b/c owner/evidence text synced to plan 44's record (no discharge); OVERVIEW L85/L86/L95.
+- Record `docs/plans/65-r01-owner-wording-sync.md`.
+- Scratch: `output/scratch-65/` (Flash review prompt/logs; regenerable).
+
