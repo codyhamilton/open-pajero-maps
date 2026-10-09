@@ -1,4 +1,26 @@
-# Plan 68 — implementation log
+# BG duplicate-record dedup (R-G5-6 / R-G5-4-a-1): R-side truth, rule scoring — closed at Phase 2 as a findings plan
+
+## Intent
+Plan 63 opened R-G5-6: G emits byte-identical same-type class>0 background records in one leaf. Plan 68 was to establish what R does where G has duplicates (one copy at an emission position, merged, or absent) on a committed sample with a hash-fixed holdout, accept a dedup rule at 100 % on derivation and holdout, land it in the encoder and promote a successor oracle; Phase 1 also decided R-G5-4-a-1.
+
+Design: box draft `68-bg-duplicate-record-dedup/DESIGN.md` (sha256 `f6372e2a…`, re-copied fresh 2026-10-09 ~15:45 AEST), base `61d2fe8`, worked at `c5d329c`. Seat: Codex; Flash for the re-review (CHM seat change 19:21).
+
+## Outcome
+- **Commits:** P1a `f8b572d`; P1 checkpoint `1f7a7be`; P1 close + P2 `00a021a`; reader re-audit `451cf60`; review-1 fixes + ruling `cc3fcbb`; review-2 fixes + close-out (this record).
+- **R-G5-4-a-1 (222 rows / 8 groups): discharged-plan-68**, all build:eo_bg_stitch (`p10_bg_dedup/a1_verdicts.json`).
+- **Finding:** plan 63's "R holds 0 duplicates" was a reader artefact (the `frame[:U16(frame,0)*2]` cut drops every R record). Read whole, R holds 486 duplicate classes in 258 leaves. Reader re-audit: this is the only conclusion that changes; every G-side claim of plans 63 / 64 / 68 stands (cut lossless on all three G discs), and plan 64's "R has 0 type-288 polygons in the 23 cells" stands.
+- **No dedup rule accepted** (`rules.json`): 0 R-one-byte / R-one-geom classes in the committed sample and in the 2,164 national framing-equal classes. Where R is comparable it mostly has nothing of that type (R-absent) or another type (type-set).
+- **Closed at Phase 2 (Design ruling 2026-10-09 17:23).** P3/P4 cancelled; drop-all not implemented; no encoder or oracle change (`0c22b266…` / `5b86d33e…` stay in force).
+- **Phase 4 gate withdrawn and rewritten** (the draft's gate — "`dup_census.py` on the successor reports **0** leaves with byte-identical same-type class>0 duplicates at every level" and the Phase 4 outcome's "(0 duplicates; …)" — no longer applies): R itself holds 486 such classes, so "0 duplicates" is not R parity. Any future successor gate for this class reads: *G duplicate classes where R holds no copy → 0 (per the R-G5-6-a / -b remedy), and R's own duplicate classes (R-G5-6-c) reproduced where G and R frames are comparable; neither side measured through the truncating cut.* The draft copy is removed with the plan folder; this record is the plan text of record.
+- **R-G5-6 split:** R-G5-6-a (L0 type 288 content; 338,038 G duplicate classes + 98.5 % of 18,859,711 G AU D-class pairs; Cody with F6 and the plan-64 open-ways finding), R-G5-6-b (527 non-288 G duplicate classes + drop-all mismatches 10/135, 8/149; Design), R-G5-6-c (R's own 486 classes / 258 leaves; Design).
+- **Recorded process deviation (accepted by Design):** the Phase 2 scoring read (33 MB, 0.07 s, committed inputs) ran outside the flock wrapper; every heavy run was under flock + `--memory-max 12G`.
+- Peaks (56 ledger `bg_dedup_plan68.json`): review-1 rerun max RSS 3,742,820 KiB / memory.peak 11.19 GB incl. file pages, 4,968 s; P1a 3,580,680 KiB / 8.52 GB; P1c 3,742,280 KiB / 4.73 GB; P1d/e 1,583,952 KiB / 4.59 GB; reader re-audit 317,276 KiB / 4.04 GB.
+
+## Review
+Codex (read-only), review 1: **FIX** — five findings (crossing rings in `near()`, one-way D-contain, missing tests / double runs, "never" overstated, 98.9 % → 98.5 %). Fixed in `cc3fcbb` with reruns (A == B).
+Codex re-review attempt 19:32 aborted (Codex usage limit); re-review on OpenCode DeepSeek Flash (read-only `plan` agent): **FIX** — (1) P4 gate text still "0 duplicates" in the draft copy → withdrawn and rewritten above, draft copy removed with the folder; (2) artefact hashes pre-fix → updated; (3) per-type "Next:" D-class figures pre-fix → updated; (4) ledger top-level peak understated → set to the rerun; (5) citations of this record file dangling → resolved by this record. Fixed in this close-out.
+
+## Implementation log (collapsed from IMPLEMENTATION.md)
 
 Seat: Codex on codyh-ubuntu (master direct). Draft re-copied fresh from the box `/workspace/maps-design-drafts/68-bg-duplicate-record-dedup/DESIGN.md` at start (2026-10-09 ~15:45 AEST, sha256 `f6372e2a…`). Base: `origin/master` `c5d329c` (plan 64 close-out; the draft grounds at `61d2fe8`, and `61d2fe8..c5d329c` touches docs and triage tools only, no encoder change). Live oracle AU `0c22b266…`, Perth `5b86d33e…`, both built from `output/scratch-50/spool_overlay` (manifest `output/scratch-53/G_new/manifest.json`).
 
@@ -55,12 +77,12 @@ Seat note: CHM 15:54 — Codex at its 5 h limit until 17:14; any new harness sea
 | G Perth `5b86d33e` | 1,949 | 1,571 | 1,480,848 | 35,692 | 113 |
 | R `8c2d2027` (whole frames) | 482,473 | 14,657 | 5,500 | 40,888 | 9 |
 
-- G AU by type: L0/288 carries 17,569,839 contain + 996,128 overlap + 2,190 rot (98.5 % of all D pairs, 18,568,157 / 18,859,377; review 1 finding 5 — superseded by the review-fix rerun: 18,568,441 / 18,859,711 = 98.5 %); R has **no type-288 D pair at any level**. Next: L0/291 G 135,069 / 66,195 vs R 1,611 / 21,250; L0/321 G 41,781 / 6,999 vs R 402 / 78; L0/578 G 11,603 / 15,729 vs R 48 / 292. Per level / type counts in `dclass_{au,perth,R}.json`, first 20,000 example rows per class in the tsv.gz.
+- G AU by type: L0/288 carries 17,569,839 contain + 996,128 overlap + 2,190 rot (98.5 % of all D pairs, 18,568,157 / 18,859,377; review 1 finding 5 — superseded by the review-fix rerun: 18,568,441 / 18,859,711 = 98.5 %); R has **no type-288 D pair at any level**. Next (post-review-fix values, committed json): L0/291 G 135,071 / 66,195 vs R 1,627 / 21,247; L0/321 G 41,794 / 6,999 vs R 403 / 78; L0/578 G 11,605 / 15,729 vs R 48 / 292. (The table above is the pre-review-fix run; post-fix totals in Review 1.) Per level / type counts in `dclass_{au,perth,R}.json`, first 20,000 example rows per class in the tsv.gz.
 - **Reading:** G's D-classes exceed R by orders of magnitude and are concentrated in type 288 (the F6 catch-all→288 type, Cody-held, out of scope here). No D-class RC is attempted in this plan: Phase 2's D-class RC requirement is routed to Design with the Phase 2 stop below.
 
 ### P1 artefacts (committed, `p10_bg_dedup/`)
 
-- `r_correspondence.{tsv.gz,json}` (sample, run A; `fe38eabb…`, run B byte-identical); `r_correspondence_national.{tsv.gz,json}` (`867e12ce…`); `r_census.{tsv.gz,json}` (`c8ef0707…`, run B byte-identical); `a1_verdicts.json` (`3a307345…`, run B byte-identical); `dclass_{au,perth,R}.{json,tsv.gz}` (`d8b579f4…`, `375d42ca…`, `b7110e08…`); with P1a's census and `sample.json`.
+- `r_correspondence.{tsv.gz,json}` (sample; pre-fix `fe38eabb…`, post-review-fix `ccb1e9f9…` / json `7c0b5524…`, runs A == B); `r_correspondence_national.{tsv.gz,json}` (`867e12ce…`); `r_census.{tsv.gz,json}` (`c8ef0707…`, run B byte-identical); `a1_verdicts.json` (`3a307345…`, run B byte-identical); `dclass_{au,perth,R}.{json,tsv.gz}` (tsv.gz pre-fix `d8b579f4…`, `375d42ca…`, `b7110e08…`; post-review-fix `8c67f7f7…`, `a33171c0…`, `0bfc8772…`, runs A == B); with P1a's census and `sample.json`.
 - `residuals.tsv`: R-G5-4-a-1 → discharged-plan-68 (222 rows / 8 groups build:eo_bg_stitch); R-G5-6 text corrected (R holds 486 duplicate classes; plan 63's R count was a reader artefact) and the correspondence / D-class results added; status unchanged (blocks-phase3, Design).
 - Ledger `docs/plans/56-cross-phase-rss-profile/ledger/bg_dedup_plan68.json` + SUMMARY rows.
 
@@ -74,7 +96,7 @@ Seat note: CHM 15:54 — Codex at its 5 h limit until 17:14; any new harness sea
 
 ## Phase 2 — Dedup rule; D-class RCs (STOPPED for Design, 17:21 AEST)
 
-- `p10_bg_dedup/rules.py` → `rules.json` (`a4d3d4ae…`; run A == run B byte-identical; light, 33 MB RSS, 0.07 s; run without the wrapper because the heavy lock was held by other plans' jobs and this read of two committed tsv.gz files is not heavy work).
+- `p10_bg_dedup/rules.py` → `rules.json` (pre-fix `a4d3d4ae…`, post-review-fix `4f1a4736…` — only the input sha changed; run A == run B byte-identical; light, 33 MB RSS, 0.07 s; run without the wrapper because the heavy lock was held by other plans' jobs and this read of two committed tsv.gz files is not heavy work).
 - Candidates: keep-first, keep-last, keep-own-cell-first, merge-sources, drop-all. Design set = R-one-byte ∪ R-one-geom classes: **0 in derivation, 0 in holdout** (and 0 nationally among the 2,164 framing-equal classes). No rule can reach "100 % on derivation and holdout" on an empty set, so none is accepted.
 - Measured only (not an acceptance): on the comparable set (R-absent + R-merged + R-other), drop-all matches R in 125/135 derivation and 141/149 holdout classes (R-absent); merge-sources 1/135 and 0/149; keep-* 0.
 - **Outcome: "no rule accepted" — the plan stops for Design** (Phase 2 outcome text). D-class RCs not attempted (see P1d reading). Phase 3/4 not started; no encoder change, no oracle change.

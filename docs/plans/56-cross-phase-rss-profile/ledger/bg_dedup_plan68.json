@@ -8,30 +8,30 @@
   "12G",
   "--",
   "bash",
-  "output/scratch-68/p1/p1a.sh",
-  "# sidecar AU+Perth encodes (-j4) + census.py national; peak run of plan 68"
+  "output/scratch-68/rerun/rerun.sh",
+  "# review-1 rerun: sidecar AU+Perth encodes -j4, census B, r_corr A/B, dclass R/Perth/AU A/B -j4 (peak run of plan 68)"
  ],
- "wall_s": 169.8,
- "max_rss_kib": 3580680,
- "memory_peak": 8517537792,
+ "wall_s": 4967.9,
+ "max_rss_kib": 3742820,
+ "memory_peak": 11189379072,
  "memory_stat": null,
  "tree_peak_mb": null,
  "residency": [
   {
    "class": "phase1a_sidecar_encode_and_census",
-   "evidence": "docs/plans/68-bg-duplicate-record-dedup/IMPLEMENTATION.md (P1a)",
+   "evidence": "docs/plans/68-bg-duplicate-record-dedup.md (P1a)",
    "kib": 3580680,
    "live_at_peak": true
   },
   {
    "class": "phase1c_r_correspondence_and_a1",
-   "evidence": "docs/plans/68-bg-duplicate-record-dedup/IMPLEMENTATION.md (P1c)",
+   "evidence": "docs/plans/68-bg-duplicate-record-dedup.md (P1c)",
    "kib": 3742280,
    "live_at_peak": true
   },
   {
    "class": "phase1d_dclass_R_and_AU",
-   "evidence": "docs/plans/68-bg-duplicate-record-dedup/IMPLEMENTATION.md (P1d)",
+   "evidence": "docs/plans/68-bg-duplicate-record-dedup.md (P1d)",
    "kib": 1583952,
    "live_at_peak": true
   },
@@ -50,6 +50,7 @@
  ],
  "inter_phase_boundary": null,
  "notes": [
+  "Top-level peak fields = the review-1 rerun (the plan's highest memory.peak). P1a (first peak run): max RSS 3,580,680 KiB / memory.peak 8.52 GB, 170 s.",
   "P1a (p1a.sh): 33006aa-sidecar-patched c5d329c encodes of AU and Perth at -j4 (sha-equal to 0c22b266 / 5b86d33e) + national census: max RSS 3,580,680 KiB / memory.peak 8.52 GB (incl. file pages), 170 s.",
   "P1b r_census.py on R (whole frames): max RSS 75,828 KiB / 68 MB, 38 s.",
   "P1c rcorr_a (sample correspondence): max RSS 2,348,276 KiB / 2.78 GB, 143 s; p1c.sh (rcorr_b + national + a1 windows + r_census_b): max RSS 3,742,280 KiB / 4.73 GB, 346 s.",
