@@ -1,0 +1,49 @@
+{
+ "by_level_code": {
+  "0/288": 338038,
+  "0/289": 17,
+  "0/290": 12,
+  "0/291": 364,
+  "0/321": 110,
+  "0/322": 5,
+  "0/578": 10,
+  "0/640": 3,
+  "2/290": 6
+ },
+ "disc_sha256_16": "0c22b266e7b406bb",
+ "levels": {
+  "0": {
+   "dup_classes": 338559,
+   "extra_copies": 444928,
+   "leaves": 3707037,
+   "leaves_with_dup": 336132
+  },
+  "10": {
+   "leaves": 9
+  },
+  "12": {
+   "leaves": 1
+  },
+  "2": {
+   "dup_classes": 6,
+   "extra_copies": 6,
+   "leaves": 231573,
+   "leaves_with_dup": 3
+  },
+  "4": {
+   "leaves": 14521
+  },
+  "6": {
+   "leaves": 930
+  },
+  "8": {
+   "leaves": 94
+  }
+ },
+ "total": {
+  "dup_classes": 338565,
+  "extra_copies": 444934,
+  "leaves": 3954165,
+  "leaves_with_dup": 336135
+ }
+}

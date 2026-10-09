@@ -1,0 +1,260 @@
+{
+  "historical": {
+    "s02_rows": 1939053,
+    "s02_groups": 25772,
+    "res_entries": 425416,
+    "res_fill_groups": 30558,
+    "res_bnd_groups": 216488,
+    "res_cover_groups": 3,
+    "res_rings": 70999,
+    "rem_fill": 137,
+    "rem_bnd": 8739
+  },
+  "measured": {
+    "s02_rows": 11127845,
+    "s02_groups": 145960,
+    "res_bg_status1_groups": 30547,
+    "res_bb_status1_groups": 203954,
+    "res_fill_groups": 30558,
+    "res_bnd_groups": 204121,
+    "res_entries_fill_bnd": 305225,
+    "res_cover_groups": null,
+    "res_rings_fill_bnd": 70861,
+    "rem_fill": 137,
+    "rem_fill_groups": 11,
+    "cls2_background_R01": 920786,
+    "cls2_background_S03": 517648,
+    "rem_bnd": 8227,
+    "rem_bnd_groups": 167,
+    "cls2_background_boundary_S02": 11127845,
+    "cls2_background_boundary_S04": 5413971,
+    "rem_groups_combined": 178
+  },
+  "notes": [
+    "interior_cover not dumped (non-goal: non-background kinds); cover groups (3) and their entries/rings are not measured -> named difference, not absorbed"
+  ],
+  "s02_scope": "full",
+  "s02_pinstop_replay": {
+    "visited_groups": {
+      "hist": 25775,
+      "measured": 29248,
+      "match": false
+    },
+    "qualified_groups": {
+      "hist": 25772,
+      "measured": 29248,
+      "match": false
+    },
+    "qualified_rows": {
+      "hist": 1939053,
+      "measured": 2288266,
+      "match": false
+    },
+    "nomatch_groups": {
+      "hist": 3,
+      "measured": 0,
+      "match": false
+    },
+    "nomatch_rows": {
+      "hist": 319,
+      "measured": 0,
+      "match": false
+    },
+    "distinct_rings": {
+      "hist": 10001,
+      "measured": 10001,
+      "match": true
+    },
+    "unvisited_groups": {
+      "hist": 120185,
+      "measured": 116712,
+      "match": false
+    },
+    "unvisited_rows": {
+      "hist": 9188473,
+      "measured": 8839579,
+      "match": false
+    }
+  },
+  "s02_candidates": {
+    "scope_groups": {
+      "hist_old_disc": 145960,
+      "measured": 145960
+    },
+    "scope_rows": {
+      "hist_old_disc": 11127845,
+      "measured": 11127845
+    }
+  },
+  "s02_full_predicate": {
+    "scope_groups": 145960,
+    "scope_rows": 11127845,
+    "qualified_groups": 145960,
+    "qualified_rows": 11127845
+  },
+  "s02_resolution": {
+    "path": "docs/plans/04-c-core-orchestration/triage/historical_bg/p7_producer_tie/s02_resolution.tsv.gz",
+    "sha256": "7b79ca5fafaa021cab9f6f62e43352b5915c819f103dc9ea8746a11040e91c97",
+    "groups": 6,
+    "set_to_1": 6,
+    "applied": [
+      {
+        "level": 0,
+        "ix": 1481,
+        "iy": 1288,
+        "code": 291,
+        "p0": 265,
+        "p1": 0,
+        "p2": 0,
+        "p3": 0,
+        "p4": 0,
+        "p5": 0,
+        "p6": 0,
+        "shape": 0,
+        "s02_was": 0,
+        "s02": 1
+      },
+      {
+        "level": 0,
+        "ix": 1481,
+        "iy": 1288,
+        "code": 291,
+        "p0": 265,
+        "p1": 0,
+        "p2": 0,
+        "p3": 0,
+        "p4": 0,
+        "p5": 0,
+        "p6": 0,
+        "shape": 2,
+        "s02_was": 0,
+        "s02": 1
+      },
+      {
+        "level": 0,
+        "ix": 1753,
+        "iy": 1158,
+        "code": 291,
+        "p0": 217,
+        "p1": 0,
+        "p2": 0,
+        "p3": 0,
+        "p4": 0,
+        "p5": 0,
+        "p6": 0,
+        "shape": 1,
+        "s02_was": 0,
+        "s02": 1
+      },
+      {
+        "level": 0,
+        "ix": 1753,
+        "iy": 1158,
+        "code": 291,
+        "p0": 217,
+        "p1": 0,
+        "p2": 0,
+        "p3": 0,
+        "p4": 0,
+        "p5": 0,
+        "p6": 0,
+        "shape": 2,
+        "s02_was": 0,
+        "s02": 1
+      },
+      {
+        "level": 0,
+        "ix": 1754,
+        "iy": 1158,
+        "code": 291,
+        "p0": 218,
+        "p1": 0,
+        "p2": 0,
+        "p3": 0,
+        "p4": 0,
+        "p5": 0,
+        "p6": 0,
+        "shape": 1,
+        "s02_was": 0,
+        "s02": 1
+      },
+      {
+        "level": 0,
+        "ix": 1754,
+        "iy": 1158,
+        "code": 291,
+        "p0": 218,
+        "p1": 0,
+        "p2": 0,
+        "p3": 0,
+        "p4": 0,
+        "p5": 0,
+        "p6": 0,
+        "shape": 3,
+        "s02_was": 0,
+        "s02": 1
+      }
+    ]
+  },
+  "compare": {
+    "s02_rows": {
+      "hist": 1939053,
+      "measured": 11127845,
+      "match": false
+    },
+    "s02_groups": {
+      "hist": 25772,
+      "measured": 145960,
+      "match": false
+    },
+    "res_entries": {
+      "hist": 425416,
+      "measured": 305225,
+      "match": false
+    },
+    "res_fill_groups": {
+      "hist": 30558,
+      "measured": 30558,
+      "match": true
+    },
+    "res_bnd_groups": {
+      "hist": 216488,
+      "measured": 204121,
+      "match": false
+    },
+    "res_cover_groups": {
+      "hist": 3,
+      "measured": null,
+      "match": false
+    },
+    "res_rings": {
+      "hist": 70999,
+      "measured": 70861,
+      "match": false
+    },
+    "rem_fill": {
+      "hist": 137,
+      "measured": 137,
+      "match": true
+    },
+    "rem_bnd": {
+      "hist": 8739,
+      "measured": 8227,
+      "match": false
+    }
+  },
+  "cover_bound": {
+    "entries_gap": 120191,
+    "entries_gap_allowed": [
+      3,
+      6
+    ],
+    "entries_ok": false,
+    "rings_gap": 138,
+    "rings_gap_allowed": [
+      0,
+      3
+    ],
+    "rings_ok": false
+  }
+}

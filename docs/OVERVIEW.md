@@ -82,8 +82,9 @@ and the proven part of R-G5-1 / R-G5-2 (4,214 rows build:eo_bg_stitch).
 
 | Owner | Rows | Status |
 | --- | --- | --- |
-| Design (plan **62** children) → Design drafts **63** (R-G5-4-a-1) / **64** (R-G5-4-a-2, R-G5-4-b-1) | R-G5-4-a-1 (222 producer_ambiguous), R-G5-4-a-2 (32 source-removed), R-G5-4-b-1 (545 source-removed) | Plan 62 re-decided the plan-44/45 R01 residual under the plan-46 producer: parents R-G5-4-a/b/c discharged (6,597 more rows proven-fixed, RC-attributed); these exact children remain; no waiver |
-| Design (plan **46** children) → Design drafts **63** (R-G5-1-a, R-G5-2-a) / **64** (R-G5-1-b) | R-G5-1-a (4,594 producer_ambiguous), R-G5-1-b (50 source-removed), R-G5-2-a (18 producer_ambiguous) | Exact named children from plan 46's per-row decisions; no waiver |
+| Design (plan **62** children) → R-G5-4-a-1 (plan 63 rule available, not applied: 63 non-goal) / **64** (R-G5-4-a-2, R-G5-4-b-1) | R-G5-4-a-1 (222 producer_ambiguous), R-G5-4-a-2 (32 source-removed), R-G5-4-b-1 (545 source-removed) | Plan 62 re-decided the plan-44/45 R01 residual under the plan-46 producer: parents R-G5-4-a/b/c discharged (6,597 more rows proven-fixed, RC-attributed); these exact children remain; no waiver |
+| Design (plan **46** child) → Design draft **64** (R-G5-1-b) | R-G5-1-b (50 source-removed) | Plan 63 discharged R-G5-1-a / R-G5-2-a (4,612 rows build:eo_bg_stitch, sidecar-proven producer per copy); no waiver |
+| Design (plan **63** new row) | R-G5-6 (duplicate-emission parity: G 336,329 leaves with byte-identical same-type duplicates, R 0) | Named deviation from R with mechanism; not fixed by plan 63 |
 | Cody via Design (no waiver) | R-G8-1-a | Budget basis (with R-G9-4) |
 
 **`maps-parity-carried` ownership** (not Phase 3 product-close blockers — but **carried is

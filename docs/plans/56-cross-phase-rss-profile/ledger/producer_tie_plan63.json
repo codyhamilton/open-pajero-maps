@@ -12,7 +12,7 @@
     "# tie_census.py over 98 groups / 47 leaves, run A then B, cmp"
   ],
   "wall_s": 38.9,
-  "max_rss_kib": 3900776,
+  "max_rss_kib": 7278648,
   "memory_peak": 679624704,
   "memory_stat": null,
   "tree_peak_mb": null,
@@ -40,11 +40,24 @@
       "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 2)",
       "kib": 431328,
       "live_at_peak": true
+    },
+    {
+      "class": "phase3_p2_reproduction",
+      "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 3)",
+      "kib": 3892836,
+      "live_at_peak": true
+    },
+    {
+      "class": "phase3_dup_census_R_0c22_and_gate_repro_resolved",
+      "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 3)",
+      "kib": 7278648,
+      "live_at_peak": true
     }
   ],
   "inter_phase_boundary": null,
   "notes": [
     "Phase 1: FarHomes(L0) index dominates; 19 s per run.",
-    "Phase 2: 386 sidecar window builds at 33006aa (-j4, serial) max RSS 1.07 GiB / memory.peak 0.35 GiB, 79 s + 278 s; provenance.py A+B max RSS 3.71 GiB / memory.peak 1.11 GiB, 231 s / 223 s (FarHomes L0); dup census 013586b5 max RSS 0.41 GiB / memory.peak 1.94 GiB incl. file pages, 104 s."
+    "Phase 2: 386 sidecar window builds at 33006aa (-j4, serial) max RSS 1.07 GiB / memory.peak 0.35 GiB, 79 s + 278 s; provenance.py A+B max RSS 3.71 GiB / memory.peak 1.11 GiB, 231 s / 223 s (FarHomes L0); dup census 013586b5 max RSS 0.41 GiB / memory.peak 1.94 GiB incl. file pages, 104 s.",
+    "Phase 3: P2 reproduction max RSS 3.71 GiB / memory.peak 1.26 GiB, 824 s; dup census R + 0c22b266 + gate_repro --s02-scope full --s02-resolve max RSS 6.94 GiB / memory.peak 6.34 GiB, 533 s (gate_repro dominates)."
   ]
 }

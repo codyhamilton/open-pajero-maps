@@ -24,6 +24,7 @@ Published for Design handoff to plans **57–59**. Measurement-only; no optim la
 | triage (plan 62) | R01 residual re-decide + RC ablation + audit, run A+B | wrapper max RSS 3.88 GiB (VmHWM A 3.84 / B 3.88 GiB) | 4.52 GiB (incl. file pages) | — | FarHomes(L0) + LRU 4096 ring cache; per-leaf caches; companion phase23 decide 3.84 GiB max RSS / 6.10 GiB peak incl. file pages | — (post-56 addendum, `ledger/r01_residual_plan62.json`) |
 | triage (plan 63) | producer-tie census P1, run A+B | wrapper max RSS 3.72 GiB | 0.63 GiB | — | FarHomes(L0) + 47 leaves | — (post-56 addendum, `ledger/producer_tie_plan63.json`) |
 | triage (plan 63) | P2 sidecar window builds (386) + provenance/rules A+B + 013586b5 dup census | wrapper max RSS 3.71 GiB (provenance) / 1.07 GiB (builds) / 0.41 GiB (census) | 1.94 GiB (census, incl. file pages) | — | FarHomes(L0); builds serial -j4 | — (post-56 addendum, `ledger/producer_tie_plan63.json`) |
+| triage (plan 63) | P3 P2-reproduction + dup census R/0c22b266 + gate_repro (S′ opt-in) | wrapper max RSS 6.94 GiB (gate_repro) / 3.71 GiB (reproduction) | 6.34 GiB | — | dump_join/K1 classify; serial | — (post-56 addendum, `ledger/producer_tie_plan63.json`) |
 
 Ledger JSON: `docs/plans/56-cross-phase-rss-profile/ledger/`. Wrapper logs: `output/scratch-56/runs/` (gitignored).
 

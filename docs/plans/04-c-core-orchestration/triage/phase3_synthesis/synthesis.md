@@ -139,3 +139,9 @@ longer `maps-parity-carried`. The exact children are `blocks-phase3`:
 - R-G5-4-a-1 (222 producer_ambiguous), owned by plan **63**;
 - R-G5-4-a-2 (32 source-removed), owned by plan **64**;
 - R-G5-4-b-1 (545 source-removed), owned by plan **64**.
+
+**UPDATED by plan 63 (2026-10-09):**
+- R-G5-1-a (4,594) and R-G5-2-a (18) are discharged: all 4,612 rows are build:eo_bg_stitch, with a producer per copy proven by an output-neutral `33006aa` emission sidecar (`historical_bg/p7_producer_tie/`).
+- Accepted tie rule: contiguous per-producer block emission (537/537 derivation, 546/546 holdout).
+- S′ = S ∪ 6 scope-delta groups is published as an opt-in (`gate_result_s02_resolved.json`). Plan 46's S is unchanged.
+- New row R-G5-6 (Design): G emits byte-identical same-type duplicate background records; R does not.

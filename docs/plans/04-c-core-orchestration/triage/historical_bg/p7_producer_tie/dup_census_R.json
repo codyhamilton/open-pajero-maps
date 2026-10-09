@@ -1,0 +1,32 @@
+{
+ "by_level_code": {},
+ "disc_sha256_16": "8c2d20275227b9d2",
+ "levels": {
+  "0": {
+   "alias_slots": 3469500,
+   "leaves": 235371
+  },
+  "10": {
+   "leaves": 9
+  },
+  "12": {
+   "leaves": 1
+  },
+  "2": {
+   "leaves": 231564
+  },
+  "4": {
+   "leaves": 14511
+  },
+  "6": {
+   "leaves": 939
+  },
+  "8": {
+   "leaves": 78
+  }
+ },
+ "total": {
+  "alias_slots": 3469500,
+  "leaves": 482473
+ }
+}

@@ -139,3 +139,50 @@ Output `p7_producer_tie/ties_all.json` (sha256 `8ce2237e…`):
   - 4,612 rows / 98 groups (bg 18, bnd 4,594; T1 3,288, T2 1,324; scope delta 516).
   - Each row's producer is proven by the sidecar, and the accepted rule agrees on 4,612/4,612 rows (98/98 groups).
   - **Verdict: `build:eo_bg_stitch` 4,612/4,612** (the unchanged phase-23 limb for the proven producer, from `ties_all.json`).
+- **Duplicate-emission census** (`dup_census.py`; distinct leaf frames; alias slots read once):
+
+  | Disc | Leaves with byte-identical same-type class>0 duplicates | Classes | Extra copies |
+  |---|---|---|---|
+  | R `8c2d2027…` | **0** / 482,473 | 0 | 0 |
+  | 013586b5 | 336,329 / 3,954,156 | 338,760 | 445,137 |
+  | 0c22b266 (live) | 336,135 / 3,954,165 | 338,565 | 444,934 |
+
+  G emits duplicates where R never does, so I opened new row **R-G5-6** (owner Design; `blocks-phase3`, Design may reclassify). The mechanism is the accepted rule: each routed same-type source emits its own piece, and identical pieces are not deduplicated. Plan 63 does not fix it.
+- **S′ (opt-in; plan 46's S unchanged).**
+  - `s02_resolution.tsv.gz` (`7b79ca5f…`): the 6 scope-delta groups. Their S02 bit is the plan-46 predicate on the sidecar-proven producer: all 6 = 1 (closed, closing edge longest, crossings ≥ 1).
+  - New opt-in `gate_repro.py --s02-resolve` (default off; it touches the s02 side only, never the residual bit). One run with `--s02-scope full` → `p7_producer_tie/gate_result_s02_resolved.json`:
+    - S02: 145,960 groups / 11,127,845 rows. S′ is the whole scope. Identity: 145,954 + 6 and 11,127,333 + 512 (75 + 75 + 119 + 119 + 62 + 62).
+    - Res entries (fill+bnd): 305,225 (+3 cover = 305,228 = 451,185 − |S′| + 3). ✓
+    - Res bnd groups: 204,121 = 219,201 − a(S′), with a(S′) = 15,080. ✓ (Design predicted 15,080.)
+    - S04 status-1 groups: 203,954. The identity predicts 219,032 − 15,080 = 203,952. The difference of 2 is (1481,1288) shapes 0/2: their residual bit stays 0, because the resolution deliberately does not retro-edit `residual_crossing_verified` (Contract 3). Named, not absorbed.
+    - Everything else is unchanged vs `gate_result_full.json` (R01 920,786; S03 517,648; S04 rows 5,413,971; rings 70,861; rem fill 137).
+    - `rem_bnd` under S′ reads 8,227 (−512). It is informational only: the historical 137 / 8,739 stays the plan-46 gate.
+- **Residuals:**
+  - R-G5-1-a → discharged-plan-63 (4,594 build); R-G5-2-a → discharged-plan-63 (18 build).
+  - Parents R-G5-1 / R-G5-2 updated.
+  - R-G5-4-a-1 gets a note only: applying the rule there is a 63 non-goal, and the row is unchanged.
+  - New R-G5-6.
+  - Docs updated: `causes_residual.md` note, `synthesis.md`, and the OVERVIEW ownership map.
+
+### scratch_receipt — Phase 3 (2026-10-09 ~14:15 AEST)
+1. **`du -sb`:**
+   - `output/scratch-63`: 5,633,431,511 B before; **gone** after. Deleted:
+     - the P2 reproduction (386 windows, A/B outputs);
+     - the `gatework` of the S′ gate run (dump_s02 / dump_ext / cls1 / cls2);
+     - the census tsv intermediates (R / 0c22b266);
+     - the apply_ties A/B copies (compared first);
+     - wrapper logs (peaks copied to the ledger first).
+   - Re-created throwaway worktree `open-pajero-maps-63-33006aa`: 10,164,202 B; **removed** after `PATCH_SAME`.
+2. **Kept, all committed, all in `git ls-files`.** sha256 prefixes:
+   - `verdicts_ambiguous.tsv.gz` `10d250a83a35ebe8`; `verdicts_ambiguous.json` `730e4e6d38927bd5`
+   - `dup_cases.tsv.gz` `023789200fe88c03`
+   - `s02_resolution.tsv.gz` `7b79ca5fafaa021c`
+   - `gate_result_s02_resolved.json` `38a81418c1fd18de`
+   - `dup_census_R.json` `2ca164f217df7d13`; `dup_census_0c22b266.json` `fc0ea943a2abcd49`
+   - `residuals.tsv` `48b0e91d4891b294` (before the sha-text fix in this commit)
+   - Plus `apply_ties.py`, `s02_resolution.py`, `gate_repro.py --s02-resolve`, `causes_residual.md`, `synthesis.md`, `OVERVIEW.md` and the ledger rows.
+   - No `keep/`.
+3. **Worktrees:** no plan-63 worktree in `git worktree list`.
+4. **Scopes and temp dirs:** 0 `maps-heavy*` units; `/tmp/p63_*`: 0.
+5. **Disk:** `df -h /home`: 11 G free (97 %).
+6. **Never-delete list respected.** `.heavy.lock`, `scratch-46` (dump, gate shards, `gatework_full_a`), the spool, R (read-only mount), 013586b5 / 4ed9cd80 / 0c22b266, and `.venv-rp` were read only, never touched.

@@ -164,3 +164,19 @@ The historical tables in this file are unchanged as history. See `residuals.tsv`
 - **Children:**
   - R-G5-4-a-1: 222 producer_ambiguous (plan 63);
   - R-G5-4-a-2 and R-G5-4-b-1: 32 + 545 source-removed, clip empty on d35b565 (plan 64).
+
+**Plan 63 note (2026-10-09).** The 98-group "2+ candidate rings match the same record" class (table above; R-G5-1-a 4,594 + R-G5-2-a 18 rows) is resolved by the predicate this file named: ordered E2 class-2 record-sequence provenance, including divided-leaf keep order, with no nearest-ring choice.
+- **Proof.** An output-neutral source-tag sidecar on the `33006aa` encoder (`historical_bg/p7_producer_tie/sidecar/sidecar_33006aa.patch`).
+  - 2,085/2,085 window frames are byte-equal to 013586b5.
+  - The sidecar matches the plan-46 scan on 14,211/14,211 unique-byte records; 3 of these are the same source in E1 interior-cover form.
+- **Result.** Every ambiguous record is one of two byte-identical copies, and each copy is emitted by a distinct candidate.
+- **Rule.** The copies follow `enc_bg` class-major order over the merged ordinal: own backgrounds first, then E1-routed items by source (iy, ix), k.
+  - Accepted: 537/537 derivation and 546/546 holdout, with the code path cited.
+  - Rejected: key order, nearest home, spool / global / block order, distinguishing-piece order and first emitter.
+- **Verdicts.** All 4,612 rows are build:eo_bg_stitch under the unchanged phase-23 limb (`verdicts_ambiguous.tsv.gz`).
+- **Scope delta.** S′ = S ∪ 6 groups (145,960 / 11,127,845; a(S′) = 15,080) comes from one opt-in `gate_repro --s02-scope full --s02-resolve` run.
+  - Measured: res entries 305,225 (+3 cover), res bnd groups 204,121.
+  - S04 status-1 groups stay at 203,954, against the identity's 203,952. The 2 are the (1481,1288) all-sentinel groups: the resolution does not set `residual_crossing_verified`, by design.
+  - The historical remainder 137 / 8,739 stays the plan-46 gate.
+- **New finding, R-G5-6.** G holds byte-identical same-type duplicate records in 336,329 leaves (013586b5) and 336,135 leaves (0c22b266); R holds them in 0 leaves.
+
