@@ -121,7 +121,9 @@ class Ctx:
         self.ps, self.cell_b4, self.leaf_records = ps, cell_b4, leaf_records
         self.clip_ring, self.wire_vertices, self.wire_records = clip_ring, wire_vertices, wire_records
         self.oe, self.find_producer = owner_exclusive_vertices, find_producer
+        import atexit, shutil
         tmp = Path(tempfile.mkdtemp(prefix="p62_redecide_"))
+        atexit.register(shutil.rmtree, tmp, True)  # scratch hygiene: probe .so temp dir
         self.probe_old = load_probe(compile_probe(a.cenc_old.resolve(), (tmp / "probe_old.so").resolve()))
         self.probe_excl = load_probe(compile_probe(a.cenc_excl.resolve(), (tmp / "probe_excl.so").resolve()))
         self.old_pt, self.new_pt = {}, {}

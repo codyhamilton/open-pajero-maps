@@ -20,6 +20,7 @@ def test_configs_are_single_fix_ablations():
         c = rd.CONFIGS[name]
         for f in ("piecewise", "far", "divided", "same_type"):
             assert getattr(c, f) == (f != off), (name, f)
+        assert not c.p44_neigh, name  # single-fix: the Moore radius stays 8
     p44 = rd.CONFIGS["PLAN44"]
     assert not any((p44.piecewise, p44.far, p44.divided, p44.same_type)) and p44.p44_neigh
 
@@ -33,7 +34,8 @@ def test_old_class_and_radius():
     assert rd.p44_radius("build", "11") == 11
     assert rd.p44_radius("ambiguous", "") == 8
     assert rd.radius(rd.CONFIGS["FULL"], "outside", 16) == 8
-    assert rd.radius(rd.CONFIGS["-RC3"], "outside", 8) == 16
+    assert rd.radius(rd.CONFIGS["-RC3"], "outside", 8) == 8
+    assert rd.radius(rd.CONFIGS["PLAN44"], "outside", 8) == 16
 
 
 def test_filter_type():

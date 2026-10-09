@@ -77,7 +77,7 @@ The host was offline from 2026-10-08 ~11:37 to 2026-10-09 12:11 AEST, with no re
 
 ### Drivers and runs
 - **Driver:** `p9_r01_residual/redecide.py`, with pure helpers in `parser/tools/r01_redecide.py` (tests: `parser/tests/test_r01_redecide.py`, 8 pass; `perf_inventory` entry).
-- **Configs:** FULL (plan 46), -RC2, -RC3, -RC4, -RC5 (single-fix ablations) and PLAN44 (all off, plan 44's own Moore radius).
+- **Configs:** FULL (plan 46), -RC2, -RC3, -RC4, -RC5 (single-fix ablations, all at Moore(8)) and PLAN44 (all off, plan 44's own Moore radius). The first run gave -RC3 plan 44's radius (16 on the outside set), which is not single-fix. Codex review B caught this; -RC3 is now pure (Moore(8), no FarHomes), and both runs were redone.
   - Every residual group got all six configs. This is exhaustive, so no sample was needed.
   - Every proven group got FULL and PLAN44.
 - **Discs, clippers, spool:**
@@ -85,7 +85,7 @@ The host was offline from 2026-10-08 ~11:37 to 2026-10-09 12:11 AEST, with no re
   - producer clip `cenc_33006aa`; decide clip `cenc_d35b565`;
   - spool `extract_timing/spool`; R=8 ∪ FarHomes.
 - **Run A:** `p9_r01_residual/redecide.tsv.gz`. **Run B:** `output/scratch-62/runs/redecide_b.tsv.gz`. They are **byte-identical** (cmp of both the groups and rows80 files).
-- **Peak:** VmHWM 3.89 GiB, 385 s per run. Ledger: `56/ledger/r01_residual_plan62.json` + SUMMARY row.
+- **Peak (rerun):** VmHWM A 3.84 / B 3.88 GiB, ~385 s per run; wrapper max RSS 3.88 GiB, memory.peak 4.52 GiB. Ledger: `56/ledger/r01_residual_plan62.json` + SUMMARY row.
 - **Companion run:** phase23 decide (the unchanged design-44 limb) on all 95,139 rows, twice, DECIDE_IDENTICAL (`verdicts_census.tsv.gz`). It agrees with FULL on 95,059 / 95,059 a/b rows. For c it is superseded by G-c4: the old pardiv1 leaf keys do not exist on d35b565.
 
 ### Validation of the harness
@@ -98,7 +98,7 @@ The host was offline from 2026-10-08 ~11:37 to 2026-10-09 12:11 AEST, with no re
 |---|---|---:|---|
 | a | ambiguous → build | 2,561 | RC2 2,536, RC5 25 |
 | a | ambiguous → ambiguous | 222 | — |
-| a | outside@16 → build | 3,023 | RC3 2,525, RC2 498 |
+| a | outside@16 → build | 3,023 | RC3 2,525, RC2 466, RC2+RC3 32 (each single removal reverts) |
 | a | skip_divided → build | 525 | RC4 |
 | a | no_oe → build | 118 | RC2 |
 | a | source-removed → build | 5 | U4F_RING |
@@ -158,7 +158,11 @@ python $H/p9_r01_residual/summarize.py          # transitions.json, audit.json
 
 The phase23 decide uses `p6_producer/phase23.py decide`, run with identity from `make_identity.py`, `--r 8`, and the same discs and clipper.
 
-## scratch_receipt — Phases 1 + 2 (2026-10-09 12:33 AEST; taken late because the host was offline 10-08 11:37 → 10-09 12:11)
+## scratch_receipt — Phase 1 (deviation, recorded honestly)
+
+There is no separate Phase 1 receipt: Cody's scratch rule arrived on 2026-10-09, after Phase 1 had already run on 10-08. Phase 1's scratch was `output/scratch-62/census_join.tsv.gz` and `identity_census.tsv.gz`. Phase 2 consumed both, but they were not moved under `keep/`. They were deleted in the first Phase 2 receipt below. `census_join.tsv.gz` was first cmp-verified against its committed copy, sha ac26effb…. Phase 1's committed outputs are `census.tsv.gz` 07523d89… and `census.json`.
+
+## scratch_receipt — Phase 2, first run (2026-10-09 12:33 AEST; taken late because the host was offline 10-08 11:37 → 10-09 12:11)
 
 1. `du -sb output/scratch-62`: **3,699,606 B** before, path **gone** after (`test ! -e` → true). Real path: `/home/codyh/workspace/open-pajero-maps/output/scratch-62`.
    - Deleted: `census_join.tsv.gz` + json (cmp-identical to the committed copy), `identity_census.tsv.gz`, `tie/` (probe .so), and `runs/`.
@@ -166,7 +170,7 @@ The phase23 decide uses `p6_producer/phase23.py decide`, run with identity from 
 2. **Kept, all committed** under `p9_r01_residual/` (sha256):
    - `census.tsv.gz` 07523d89…
    - `census_join.tsv.gz` ac26effb…
-   - `redecide.tsv.gz` ca6b5abe…
+   - `redecide.tsv.gz` ca6b5abe… (superseded by the rerun below)
    - `redecide_rows80.tsv.gz` 767865db…
    - `verdicts_census.tsv.gz` 69b49f6a…
    - `transitions.json` af60d14a…
@@ -186,3 +190,34 @@ The phase23 decide uses `p6_producer/phase23.py decide`, run with identity from 
 Stale-scratch clear before resuming (2026-10-09, Maps Manager request), in `output/scratch-46/`: `gatework_full_b` 5.2 G (plan-46 run B, identical to A), `gate_v2_blob` 170 M, `gate_v3_piece` 167 M. /home went from 5.0 G free to 11 G.
 
 Tests: `parser/tests` 1513 passed, 9 skipped (10 m 36 s).
+
+## Codex review 1 (land `f6ba75a`): VERDICT FIX
+
+The seat is now Codex (CHM, 2026-10-09). `codex exec -s read-only`.
+- **A, C, D, E, F, G: PASS.**
+- **B: FAIL.** `-RC3` also switched to plan 44's radius, so it was not a single-fix ablation.
+- **H: FAIL.** There was no per-phase Phase 1 receipt, and `output/scratch-62/review` existed after the receipt said the path was gone.
+- **Non-blocking:** the residual rows cite `docs/plans/62-r01-still-outside-r16.md`. That record is created at close-out.
+
+Fixes:
+- **B:** `-RC3` is now pure (Moore(8), no FarHomes) and has a unit test. The re-decide was rerun twice under the wrapper (REDECIDE_IDENTICAL).
+  - The only attribution change: of a's 3,023 outside→build rows, 32 rows (one group, producer 11 cells away) are now RC2+RC3. Each single removal reverts them. The remainder are RC3 2,525 and RC2 466.
+  - Classes, the audit and rows80 are unchanged.
+  - New `redecide.tsv.gz` 9c47f1ef…, `transitions.json` d51baafb…, `audit.json` fcafc023…; `redecide_rows80.tsv.gz` unchanged at 767865db….
+  - Ledger and SUMMARY updated with the rerun peaks.
+- **H:** the Phase 1 deviation is recorded above, and a fresh Phase 2 receipt for the rerun follows.
+- The driver now removes its probe temp dir at exit (`atexit`).
+
+## scratch_receipt — Phase 2 rerun (2026-10-09 ~13:25 AEST)
+
+1. `du -sb output/scratch-62`: **327,679 B** before. Contents were `runs/` and `review/`:
+   - `runs/`: rerun.sh, rerun.log, wrapper json/time, run-B copies `redecide_b*` (byte compare recorded first);
+   - `review/`: codex review 1 prompt/stdout/stderr/last.md (verdict recorded above).
+   
+   After: path **gone** (`test ! -e` → true).
+2. **Kept, all committed** under `p9_r01_residual/`: `redecide.tsv.gz` 9c47f1ef…, `redecide_rows80.tsv.gz` 767865db…, `transitions.json` d51baafb…, `audit.json` fcafc023…, plus the ledger json. No `keep/`.
+3. **Worktrees:** none added by plan 62.
+4. **Temp dirs and scopes:**
+   - `/tmp/p62_redecide_g9hvwriy` and `/tmp/p62_redecide_potzbhhu` (probe .so) removed.
+   - No `maps-heavy-*` scope remains (`systemctl --user list-units --type=scope --all`: 0).
+5. `df -h /home`: 11 G free (97 %).

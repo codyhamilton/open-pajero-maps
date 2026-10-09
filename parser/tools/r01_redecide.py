@@ -36,7 +36,7 @@ class Config:
 CONFIGS = {
     "FULL": Config("FULL", True, True, True, True),
     "-RC2": Config("-RC2", False, True, True, True),
-    "-RC3": Config("-RC3", True, False, True, True, p44_neigh=True),
+    "-RC3": Config("-RC3", True, False, True, True),  # pure: Moore(8), no FarHomes
     "-RC4": Config("-RC4", True, True, False, True),
     "-RC5": Config("-RC5", True, True, True, False),
     "PLAN44": Config("PLAN44", False, False, False, False, p44_neigh=True),

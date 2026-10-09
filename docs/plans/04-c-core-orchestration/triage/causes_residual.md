@@ -151,8 +151,9 @@ The historical tables in this file are unchanged as history. See `residuals.tsv`
 
   | Fix | Rows |
   | --- | ---: |
-  | RC2 | 3,437 |
+  | RC2 | 3,405 |
   | RC3 | 2,525 |
+  | RC2 and RC3 (each necessary) | 32 |
   | RC4 | 605 (525 skip + 80 R-G5-4-c) |
   | RC5 | 25 |
   | Plan-44 Unit 4f defect | 5 |

@@ -8,32 +8,32 @@
     "12G",
     "--",
     "bash",
-    "output/scratch-62/runs/phase2b.sh",
-    "# redecide.py --modes residual,audit,ceiling, run A then run B, cmp"
+    "output/scratch-62/runs/rerun.sh",
+    "# redecide.py --modes residual,audit,ceiling, run A then run B, cmp (rerun after review fix: pure -RC3)"
   ],
-  "wall_s": 764.8,
-  "max_rss_kib": 4081384,
-  "memory_peak": 924377088,
+  "wall_s": 768.3,
+  "max_rss_kib": 4071772,
+  "memory_peak": 4857540608,
   "memory_stat": null,
   "tree_peak_mb": null,
   "residency": [
     {
       "class": "process_vmhwm_run_a",
       "evidence": "docs/plans/04-c-core-orchestration/triage/historical_bg/p9_r01_residual/redecide.perf.json",
-      "kib": 4079616,
+      "kib": 4028109,
       "live_at_peak": true
     },
     {
       "class": "process_vmhwm_run_b",
       "evidence": "output/scratch-62/runs/redecide_b.perf.json",
-      "kib": 4081357,
+      "kib": 4071731,
       "live_at_peak": true
     }
   ],
   "inter_phase_boundary": null,
   "notes": [
     "3,888 groups / 95,139 rows; FarHomes(L0) index + LRU 4096 numpy ring cache; per-leaf candidate/clip caches dropped per leaf.",
-    "Wrapper memory_peak (cgroup) 0.86 GiB is below process max RSS: the cgroup was sampled after run B's exit; max_rss_kib is the /usr/bin/time child maximum.",
+    "Wrapper memory_peak (cgroup) 4.52 GiB includes spool/disc file pages; max_rss_kib is the /usr/bin/time child maximum.",
     "Companion phase23 decide double run (runs/phase2.json): max_rss_kib 4023824, memory_peak 6550163456 (incl. file pages), wall 636 s.",
     "No R bump; no mass run; disk use < 5 MB of outputs."
   ]
