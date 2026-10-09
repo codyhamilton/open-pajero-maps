@@ -38,3 +38,29 @@ Output `p7_producer_tie/ties_all.json` (sha256 `8ce2237e…`):
 3. **Worktrees:** none added.
 4. **Temp dirs and scopes:** the `/tmp/p63_tie_*` probe dirs were removed by atexit (0 remain). 0 `maps-heavy` scopes.
 5. **Disk:** `df -h /home`: 11 G free (97 %).
+
+## Phase 2: emission provenance (in progress)
+
+### Refine: sidecar hook point and sampler (fixed before any rule is scored)
+
+- **Sidecar** (`p7_producer_tie/sidecar/sidecar_33006aa.patch` vs `33006aa`). It is applied in a throwaway worktree `open-pajero-maps-63-33006aa` and is gated by `KW_SIDECAR_DIR`, writing one file per pid/tid.
+  - `_e2.c` `kw_e2`: `I` lines for each routed item (target cell, item j, source cell, k, cover flag) and a `C` line for each receiving cell (own background count). Together these map merged ordinal → source: own first, then items in E1 row order.
+  - `_cenc.c` `enc_bg`: records (input background ordinal, class, records emitted) in emission order.
+  - `_e2.c`: logs those entries after each whole-cell `kw__encode_rec` (`W`) and after each divided-tier `dv_probe` (`P`, sub-record j mapped to parent ordinal), plus `F` for each committed sub-frame. Every line carries an FNV-1a hash of the frame, so committed frames are tied to their probe.
+  - Output-neutral by construction (logging only). Gate 1 checks this.
+- **Trial** (24-cell window 0 1760 580 1768 583, which includes divided cells): 72/72 frames byte-equal to 013586b5, 3.7 s, max RSS 1.0 GiB. Single-cell windows are cheap, so the plan uses them directly.
+- **Windows** (`p7_producer_tie/windows.py`):
+  - 46 single-cell windows, one per affected cell.
+  - Plus a sampler: 40 6×6 L0 windows anchored at the spool L0 cells with the lowest `sha256("p63-sample:{ix},{iy}")`.
+  - Builds are serial, `-j4`, under the heavy wrapper.
+- **Analysis** (`p7_producer_tie/provenance.py`): G1 (frames vs 013586b5 leaves) → sidecar → per-record emitter (count and unit class checked) → G2 (scan unique-byte vs sidecar, tie cells) → per-copy provenance → duplicate cases → rule table.
+- **Holdout (fixed now, before scoring):**
+  - Derivation = all tie-window cells, plus sample cells whose `sha256("p63-holdout:{level},{ix},{iy}")[0]` is even.
+  - Holdout = sample cells where that byte is odd.
+  - Scored cases are byte-identical same-type class>0 duplicate records in one leaf whose scan hits equal their distinct non-cover sidecar emitters. Other cases are counted by reason.
+  - Strata (split/depth/type) are reported.
+- **Rules scored:**
+  - candidate key order; nearest home; spool order in home; global spool order;
+  - block order (L0: block 32×64 cells, blockset 8×4 blocks);
+  - contiguous per-producer block emission (enc_bg class-major, then merged ordinal = own first, then routed by source (iy,ix), k), the one with a code path;
+  - disc record order of the distinguishing piece; first emitter; divided-leaf keep order (depth 2 only).

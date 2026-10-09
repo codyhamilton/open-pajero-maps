@@ -1,0 +1,171 @@
+diff --git a/parser/kiwiw/_cenc.c b/parser/kiwiw/_cenc.c
+index 500defc..8cd1b1a 100644
+--- a/parser/kiwiw/_cenc.c
++++ b/parser/kiwiw/_cenc.c
+@@ -713,6 +713,22 @@ static int64_t bg_shape(const uint8_t *lat, const uint8_t *lon, int64_t o, int64
+     return e.len;
+ }
+ 
++/* plan 63 source-tag sidecar (throwaway; output-neutral): when kw__sc_on, enc_bg
++ * appends (input background ordinal, class, records emitted) in emission order. */
++__attribute__((visibility("hidden"))) __thread int kw__sc_on = 0;
++__attribute__((visibility("hidden"))) __thread int64_t *kw__sc_ent = NULL;
++__attribute__((visibility("hidden"))) __thread int64_t kw__sc_n = 0;
++static __thread int64_t sc_cap = 0;
++static void sc_add(int64_t i, int64_t c, int64_t n) {
++    if (kw__sc_n + 3 > sc_cap) {
++        int64_t nc = sc_cap ? 2 * sc_cap : 3 * 1024;
++        int64_t *p = realloc(kw__sc_ent, (size_t)nc * sizeof *p);
++        if (!p) { kw__sc_n = -1 << 30; return; }
++        kw__sc_ent = p; sc_cap = nc;
++    }
++    if (kw__sc_n < 0) return;
++    kw__sc_ent[kw__sc_n++] = i; kw__sc_ent[kw__sc_n++] = c; kw__sc_ent[kw__sc_n++] = n;
++}
+ static int64_t enc_bg(const Rec *r, const Bounds *bd, uint8_t *out) {
+     int64_t nb = r->cnt[K_NB];
+     const uint8_t *cls = r->col[C_B_CLASS], *typ = r->col[C_B_TYPE], *mult = r->col[C_B_MULT];
+@@ -743,6 +759,7 @@ static int64_t enc_bg(const Rec *r, const Bounds *bd, uint8_t *out) {
+         ci += rd_i32(nst, i);
+         if (ci > r->cnt[K_NC]) { free(cstart); return -1; }
+     }
++    if (kw__sc_on) kw__sc_n = 0;
+     for (int c = 0; c < 4; c++) {
+         if (!class_in[c]) continue;
+         for (int64_t i = 0; i < nb; i++) {
+@@ -756,6 +773,7 @@ static int64_t enc_bg(const Rec *r, const Bounds *bd, uint8_t *out) {
+                 put16(out, p + 4, tc & 0xFFFF);
+                 p += 12;
+                 class_n[c]++;
++                if (kw__sc_on) sc_add(i, 0, 1);
+                 continue;
+             }
+             int64_t nrec;
+@@ -764,6 +782,7 @@ static int64_t enc_bg(const Rec *r, const Bounds *bd, uint8_t *out) {
+             if (len < 0) { free(cstart); return -1; }
+             p += len;
+             class_n[c] += nrec;
++            if (kw__sc_on && nrec > 0) sc_add(i, c, nrec);
+         }
+     }
+     free(cstart);
+diff --git a/parser/kiwiw/_e2.c b/parser/kiwiw/_e2.c
+index d780c92..a4e8469 100644
+--- a/parser/kiwiw/_e2.c
++++ b/parser/kiwiw/_e2.c
+@@ -65,6 +65,59 @@
+ #include <string.h>
+ #include <time.h>
+ #include <unistd.h>
++#include <fcntl.h>
++#include <stdio.h>
++#include <sys/syscall.h>
++/* plan 63 source-tag sidecar (throwaway; output-neutral): KW_SIDECAR_DIR set ->
++ * one line per routed item and per receiving cell, per pid/tid file. */
++static __thread int g_sc_fd = -2;
++static void sc_line(const char *fmt, long long a, long long b, long long c, long long d,
++                    long long e, long long f, long long g) {
++    if (g_sc_fd == -2) {
++        const char *dir = getenv("KW_SIDECAR_DIR");
++        g_sc_fd = -1;
++        if (dir) {
++            char path[4096];
++            snprintf(path, sizeof path, "%s/e2_%d_%ld.tsv", dir, (int)getpid(),
++                     (long)syscall(SYS_gettid));
++            g_sc_fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
++        }
++    }
++    if (g_sc_fd < 0) return;
++    char buf[256];
++    int n = snprintf(buf, sizeof buf, fmt, a, b, c, d, e, f, g);
++    if (n > 0 && write(g_sc_fd, buf, (size_t)n) < 0) { /* sidecar only */ }
++}
++extern __thread int kw__sc_on;
++extern __thread int64_t *kw__sc_ent;
++extern __thread int64_t kw__sc_n;
++static uint64_t sc_hash(const uint8_t *p, int64_t n) {
++    uint64_t h = 1469598103934665603ULL;
++    for (int64_t i = 0; i < n; i++) { h ^= p[i]; h *= 1099511628211ULL; }
++    return h;
++}
++/* tag line + the last enc_bg's entries; map (optional) = sub-record bg j -> parent i */
++static void sc_ents(const char *tag, long long lv, long long ix, long long iy, long long cell,
++                    const uint8_t *fr, int64_t flen, const int32_t *map) {
++    if (g_sc_fd == -2) sc_line("", 0, 0, 0, 0, 0, 0, 0);
++    if (g_sc_fd < 0) return;
++    size_t cap = 128 + (size_t)(kw__sc_n > 0 ? kw__sc_n : 0) * 24;
++    char *b = malloc(cap);
++    if (!b) return;
++    size_t m = (size_t)snprintf(b, cap, "%s\t%lld\t%lld\t%lld\t%lld\t%lld\t%016llx\t", tag, lv,
++                                ix, iy, cell, (long long)flen,
++                                (unsigned long long)sc_hash(fr, flen));
++    if (kw__sc_n < 0) m += (size_t)snprintf(b + m, cap - m, "OOM");
++    for (int64_t q = 0; q + 2 < kw__sc_n; q += 3) {
++        long long i = kw__sc_ent[q];
++        if (map) i = map[i];
++        m += (size_t)snprintf(b + m, cap - m, "%s%lld:%lld:%lld", q ? "," : "", i,
++                              (long long)kw__sc_ent[q + 1], (long long)kw__sc_ent[q + 2]);
++    }
++    b[m++] = '\n';
++    if (write(g_sc_fd, b, m) < 0) { /* sidecar only */ }
++    free(b);
++}
+ 
+ #define E2_HDR 168
+ #define E2_MAXCOLS 64
+@@ -804,8 +857,10 @@ static int64_t dv_probe(dv_state *X, int cell, const dv_lists *L, uint8_t *out,
+         tpos += tl;
+     }
+ #undef PC
+-    return kw__probe(r, total, X->level, cell % X->nx, cell / X->nx, X->b4, X->rect[cell], sizes,
+-                     out, (double)X->cr[cell]);
++    int64_t pr = kw__probe(r, total, X->level, cell % X->nx, cell / X->nx, X->b4, X->rect[cell],
++                           sizes, out, (double)X->cr[cell]);
++    if (kw__sc_on && pr >= 0) sc_ents("P", X->level, X->ix, X->iy, cell, out, pr, L->v[1]);
++    return pr;
+ }
+ 
+ /* ---- keep-order (the priority tables come from the descriptor) ---- */
+@@ -1238,6 +1293,7 @@ int64_t kw_e2(const uint8_t *desc, int64_t desc_len, const uint8_t *idx, int64_t
+     int64_t cnt[E2_NCNT - 1] = {0};
+     e2_desc D;
+     g_e2_idx.n = g_e2_dec.n = g_e2_wbuf.n = 0;
++    kw__sc_on = getenv("KW_SIDECAR_DIR") != NULL;
+     if ((ret = e2_parse_desc(desc, desc_len, &D))) goto done;
+     if (idx_len < 48 || memcmp(idx, "KWSPIDX1", 8) != 0) { ret = -2; goto done; }
+     uint64_t ncell = e2_u64(idx + 8);
+@@ -1323,9 +1379,13 @@ int64_t kw_e2(const uint8_t *desc, int64_t desc_len, const uint8_t *idx, int64_t
+                 if (e2_locate(&D, &g_e2_srcs[n_src - 1], k, it)) { ret = -3; goto done; }
+                 cnt[7]++;
+                 cnt[8] += it->cover;
++                sc_line("I\t%lld\t%lld\t%lld\t%lld\t%lld\t%lld\t%lld\n", D.level, ix, iy, n_it,
++                        sx, sy, k * 2 + it->cover);
+                 n_it++;
+                 ri++;
+             }
++            sc_line("C\t%lld\t%lld\t%lld\t%lld\t%lld\t%lld\t%lld\n", D.level, ix, iy,
++                    (long long)e2_u64(rec + 24), n_it, has_own, 0);
+             if (n_it) {
+                 if (e2_parse_rec(&D, rec, rlen, 1, &own)) { ret = -3; goto done; }
+                 double b4[4], rlat[5], rlon[5];
+@@ -1350,6 +1410,8 @@ int64_t kw_e2(const uint8_t *desc, int64_t desc_len, const uint8_t *idx, int64_t
+             int64_t n = kw__encode_rec(rec, (int64_t)rlen, D.level, ix, iy, D.grid,
+                                        D.threshold, D.lim, g_e2_wbuf.p + g_e2_wbuf.n, sizes,
+                                        (double)D.range0);
++            if (kw__sc_on && n >= 0)
++                sc_ents("W", D.level, ix, iy, -1, g_e2_wbuf.p + g_e2_wbuf.n, n, NULL);
+             if (n >= 0) {
+                 if (e2_reserve(&g_e2_idx, E2_IXROW)) { ret = -4; goto done; }
+                 uint8_t *o = g_e2_idx.p + g_e2_idx.n;
+@@ -1397,6 +1459,11 @@ int64_t kw_e2(const uint8_t *desc, int64_t desc_len, const uint8_t *idx, int64_t
+                         }
+                         if (e2_reserve(&g_e2_idx, E2_IXROW)) { ret = -4; goto done; }
+                         memcpy(g_e2_wbuf.p + g_e2_wbuf.n, DV_SLOT(c), (size_t)fl);
++                        if (kw__sc_on) {
++                            int64_t sv = kw__sc_n; kw__sc_n = 0;
++                            sc_ents("F", D.level, ix, iy, c, DV_SLOT(c), fl, NULL);
++                            kw__sc_n = sv;
++                        }
+                         uint8_t *o = g_e2_idx.p + g_e2_idx.n;
+                         int32_t xy[2] = {(int32_t)ix, (int32_t)iy};
+                         uint32_t v[4] = {(uint32_t)fl, (uint32_t)X->fsz[c][0],
