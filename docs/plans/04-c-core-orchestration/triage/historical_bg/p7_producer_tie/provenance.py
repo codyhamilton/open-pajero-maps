@@ -9,7 +9,7 @@ Inputs: windows.py output (frames.tsv/.bin + sidecar sc/*.tsv per window), the 0
      (merged background ordinal, class, records) in enc_bg emission order; expanded per record and
      checked against the leaf's record count and unit class; merged ordinal -> source via the C
      (own background count) and I (routed item j -> source cell, k, cover) lines.
- G2  sidecar control gate (tie cells): every class>0 record whose plan-46 scan hit set
+ G2  sidecar control gate (every analysed window cell): every class>0 record whose plan-46 scan hit set
      (Moore(8) U FarHomes, same type, 33006aa clip, piecewise byte) is a single candidate: the
      sidecar emitter equals it.
  PROV per-copy producer for every T1/T2 group of ties_all.json.
@@ -249,24 +249,26 @@ def main(argv=None):
                         byw[(code, wire)].append((s, so, emit[s][0]))
                 dups = {k: v for k, v in byw.items() if len(v) >= 2}
                 is_tie = w["set"] == "tie"
-                codes = {k[0] for k in dups}
-                if is_tie:
-                    codes |= {code for _s, cls, code, _w in recs if cls}
+                # G2 runs over every record of every analysed window cell (tie and sample windows)
+                codes = {code for _s, cls, code, _w in recs if cls}
                 hitmap, pieces_of = scan.hits(lk, path, ptype.get(lkey, 0), codes) if codes else ({}, {})
-                if is_tie:
+                if True:
                     for (s, cls, code, wire), so in zip(recs, src):
                         if not cls:
                             continue
                         hs = hitmap.get((code, wire), [])
                         g2[f"hits_{min(len(hs), 2)}"] += 1
+                        g2[f"{w['set']}/hits_{min(len(hs), 2)}"] += 1
                         if len(hs) == 1:
                             want = hs[0]
                             got = so[1:] if so[0] in ("own", "routed") else None
                             if got == want:
                                 g2["agree"] += 1
+                                g2[f"{w['set']}/agree"] += 1
                             elif so[0] == "cover" and tuple(so[1:]) == tuple(want):
                                 # same source shape, emitted in its interior-cover form (E1 kind 1)
                                 g2["agree_cover_form"] += 1
+                                g2[f"{w['set']}/agree_cover_form"] += 1
                                 g2_cover.append({"leaf": [*lk, list(path)], "shape": s, "scan": list(want),
                                                  "sidecar": list(so)})
                             else:

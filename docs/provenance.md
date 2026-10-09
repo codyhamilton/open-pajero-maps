@@ -1012,8 +1012,8 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - **Phase 1:** `historical_bg/p7_producer_tie/ties_all.json` (`8ce2237e…`, `tie_census.py`, `parser/tools/producer_tie.py`). Covers 98 groups / 4,612 rows / 47 leaves: T1 54, T2 44, T0 0. Double run byte-identical.
 - **Phase 2:** sidecar `p7_producer_tie/sidecar/sidecar_33006aa.patch`, applied to `33006aa` in a throwaway worktree and gated on `KW_SIDECAR_DIR`.
   - Window builds come from `windows.py` (386 windows; `windows.json`); analysis from `provenance.py`.
-  - Outputs: `provenance.tsv.gz` (`e323cccf…`), `rules.json` (`9b76437c…`), `dup_cases.tsv.gz` (`982269d0…`). Double run byte-identical.
-  - Gates: G1 2,085/2,085 frames are byte-equal to 013586b5. G2 14,211/14,211 records agree (3 of them in cover form).
+  - Outputs: `provenance.tsv.gz` (`e323cccf…`), `rules.json` (`0ef611e2…`, after review fix 1), `dup_cases.tsv.gz` (`02378920…`, writer fix). Double run byte-identical.
+  - Gates: G1 2,085/2,085 frames are byte-equal to 013586b5. G2 398,324/398,324 unique-byte records in all 1,770 window cells agree (581 of them in cover form; tie cells 14,211 with 3 in cover form).
   - The accepted rule is contiguous per-producer block emission (537/537 derivation, 546/546 holdout).
   - Duplicate census of 013586b5: `dup_census.py` → `dup_census_013586b5.{json,tsv.gz}`.
 - **Inputs:** disc `scratch-45/ref_33006aa` (013586b5); clipper `scratch-46/cenc_33006aa`; spool `extract_timing/spool`.

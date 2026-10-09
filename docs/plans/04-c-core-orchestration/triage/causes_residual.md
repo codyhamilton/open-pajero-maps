@@ -168,7 +168,7 @@ The historical tables in this file are unchanged as history. See `residuals.tsv`
 **Plan 63 note (2026-10-09).** The 98-group "2+ candidate rings match the same record" class (table above; R-G5-1-a 4,594 + R-G5-2-a 18 rows) is resolved by the predicate this file named: ordered E2 class-2 record-sequence provenance, including divided-leaf keep order, with no nearest-ring choice.
 - **Proof.** An output-neutral source-tag sidecar on the `33006aa` encoder (`historical_bg/p7_producer_tie/sidecar/sidecar_33006aa.patch`).
   - 2,085/2,085 window frames are byte-equal to 013586b5.
-  - The sidecar matches the plan-46 scan on 14,211/14,211 unique-byte records; 3 of these are the same source in E1 interior-cover form.
+  - The sidecar matches the plan-46 scan on 398,324/398,324 unique-byte records in all 1,770 window cells (14,211 in the 46 tie cells); 581 of these are the same source in E1 interior-cover form.
 - **Result.** Every ambiguous record is one of two byte-identical copies, and each copy is emitted by a distinct candidate.
 - **Rule.** The copies follow `enc_bg` class-major order over the merged ordinal: own backgrounds first, then E1-routed items by source (iy, ix), k.
   - Accepted: 537/537 derivation and 546/546 holdout, with the code path cited.

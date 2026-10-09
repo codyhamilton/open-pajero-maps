@@ -135,7 +135,7 @@ Output `p7_producer_tie/ties_all.json` (sha256 `8ce2237e…`):
   - A == B for `provenance.tsv.gz`, `rules.json` and `dup_cases.tsv.gz`.
   - `provenance.tsv.gz` and `rules.json` are identical to the committed files (`e323cccf…`, `9b76437c…`).
   - The corrected `dup_cases.tsv.gz` is now `02378920…` (was `982269d0…`, malformed).
-- **`apply_ties.py` → `verdicts_ambiguous.tsv.gz`** (`730e4e6d…`, content `10d250a8…`, + `.json`). Run twice: byte-identical.
+- **`apply_ties.py` → `verdicts_ambiguous.tsv.gz`** (`10d250a8…`; summary `.json` `730e4e6d…`). Run twice: byte-identical.
   - 4,612 rows / 98 groups (bg 18, bnd 4,594; T1 3,288, T2 1,324; scope delta 516).
   - Each row's producer is proven by the sidecar, and the accepted rule agrees on 4,612/4,612 rows (98/98 groups).
   - **Verdict: `build:eo_bg_stitch` 4,612/4,612** (the unchanged phase-23 limb for the proven producer, from `ties_all.json`).
@@ -179,10 +179,36 @@ Output `p7_producer_tie/ties_all.json` (sha256 `8ce2237e…`):
    - `s02_resolution.tsv.gz` `7b79ca5fafaa021c`
    - `gate_result_s02_resolved.json` `38a81418c1fd18de`
    - `dup_census_R.json` `2ca164f217df7d13`; `dup_census_0c22b266.json` `fc0ea943a2abcd49`
-   - `residuals.tsv` `48b0e91d4891b294` (before the sha-text fix in this commit)
+   - `residuals.tsv`: final hash in the review-fix receipt below.
    - Plus `apply_ties.py`, `s02_resolution.py`, `gate_repro.py --s02-resolve`, `causes_residual.md`, `synthesis.md`, `OVERVIEW.md` and the ledger rows.
    - No `keep/`.
 3. **Worktrees:** no plan-63 worktree in `git worktree list`.
 4. **Scopes and temp dirs:** 0 `maps-heavy*` units; `/tmp/p63_*`: 0.
 5. **Disk:** `df -h /home`: 11 G free (97 %).
 6. **Never-delete list respected.** `.heavy.lock`, `scratch-46` (dump, gate shards, `gatework_full_a`), the spool, R (read-only mount), 013586b5 / 4ed9cd80 / 0c22b266, and `.venv-rp` were read only, never touched.
+
+## Review 1 (Codex, read-only): FIX → fixes
+
+1. **G2 covered only the 46 tie cells** (the contract says every window cell). `provenance.py` now runs G2 over every record of every analysed window cell, tie and sample. I rebuilt the 386 windows from the committed patch (`windows.json` identical) and ran the analysis A + B (A == B on all three outputs). Max RSS 3.71 GiB, memory.peak 1.28 GiB, 859 s.
+   - **G2 (all 1,770 cells):** 398,324 unique-byte records → 397,743 exact plus 581 cover-form (same source shape, E1 kind 1) = **100 %, 0 disagreements**.
+     - Tie cells: 14,211 (3 cover-form).
+     - Sample cells: 384,113 (578 cover-form).
+   - Unchanged: G1, provenance, cases, the rule table, `provenance.tsv.gz` (`e323cccf…`) and `dup_cases.tsv.gz` (`02378920…`).
+   - New `rules.json` `0ef611e2…` (G2 counts only).
+   - `verdicts_ambiguous.tsv.gz` is unchanged (`10d250a8…`, A == B); its summary `.json` is now `569f3783…` because it records the new `rules.json` input sha.
+   - The 14,211 figures above (Phase 2) are the tie-cell subset.
+2. **Receipt hashes.** Phase 3's verdict tsv/json labels are corrected. Final kept hashes are in the receipt below.
+
+### scratch_receipt — review fix 1 (2026-10-09 ~14:55 AEST)
+1. **`du -sb`:**
+   - `output/scratch-63/fix`: 52,170,794 B before; **gone** after (windows, A/B outputs, apply_ties A/B copies, wrapper logs; peaks are recorded above).
+   - Throwaway worktree: 10,164,202 B; **removed** after `PATCH_SAME`.
+   - `output/scratch-63/review` (13,859 B: prompt and Codex output) stays until the re-review, then is deleted at close-out.
+2. **Kept, all committed, all in `git ls-files`.** sha256 prefixes:
+   - `rules.json` `0ef611e2613bfb3c`
+   - `verdicts_ambiguous.json` `569f3783332b4b7b`; `verdicts_ambiguous.tsv.gz` `10d250a83a35ebe8`
+   - `provenance.tsv.gz` `e323cccf50e636c7`; `dup_cases.tsv.gz` `023789200fe88c03`
+   - `residuals.tsv` `fb8cb4ba86afc888`
+3. **Worktrees:** none for plan 63.
+4. **Scopes and temp dirs:** 0 `maps-heavy*`; `/tmp/p63_*`: 0.
+5. **Disk:** `df -h /home`: 11 G free.
