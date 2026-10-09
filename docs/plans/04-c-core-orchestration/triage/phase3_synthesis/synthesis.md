@@ -132,3 +132,10 @@ The plan-35 synthesis and the plan-54 block above are unchanged as history. Live
   ops work, not residual owners. Plans 61 and 62 are box drafts only.
 
 The authoritative table is still `residuals.tsv`; OVERVIEW matches this map.
+
+**UPDATED by plan 62 (2026-10-09):** R-G5-4-a/b/c were re-decided under the plan-46 producer
+(`p9_r01_residual/`). All three parents are discharged. R-G5-4-c (80/80 proven-fixed) is no
+longer `maps-parity-carried`. The exact children are `blocks-phase3`:
+- R-G5-4-a-1 (222 producer_ambiguous), owned by plan **63**;
+- R-G5-4-a-2 (32 source-removed), owned by plan **64**;
+- R-G5-4-b-1 (545 source-removed), owned by plan **64**.

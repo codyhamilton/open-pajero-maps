@@ -659,6 +659,12 @@
       "path": "parser/tools/_bg_producer_scan.c",
       "phase": null,
       "reason": "Plan 46 C shim (clip + ring stats) compiled from pinned _cenc.c; no full-AU loop in C itself."
+    },
+    {
+      "class": "orchestration",
+      "path": "parser/tools/r01_redecide.py",
+      "phase": null,
+      "reason": "Plan 62 R01 residual re-decide helpers (ablation configs, attribution, decide-limb class); pure functions; the disc/spool driver p9_r01_residual/redecide.py streams per leaf with the plan-46 LRU 4096 ring cache (VmHWM 3.9 GiB, 384 s for 3,888 groups)."
     }
   ]
 }

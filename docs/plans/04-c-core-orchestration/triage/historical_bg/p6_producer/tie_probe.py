@@ -6,7 +6,7 @@ For each record, list every same-type candidate whose clip contains the record b
 RC3 far homes, RC4 divided-leaf geometry, RC5 same type), and test whether the tied candidates are
 byte-identical over the whole compared extent = the full clip blob into the leaf (all pieces, not
 just the matching piece). Source-ring identity is recorded as additional evidence.
-Writes ties.json. Deterministic tie-break (if identical): lowest (level,hx,hy,ri).
+Writes ties.json. Optional 6th arg: a JSON leaf list (plan 62). Deterministic tie-break (if identical): lowest (level,hx,hy,ri).
 """
 import json, sys, hashlib
 from pathlib import Path
@@ -65,13 +65,17 @@ def one_leaf(lk, shapes, disc, spool, far, probe, shim):
 
 
 def main(argv):
-    disc, spool_dir, cenc, work, out = argv
+    disc, spool_dir, cenc, work, out = argv[:5]
+    leaves_json = argv[5] if len(argv) > 5 else None
     work = Path(work); work.mkdir(parents=True, exist_ok=True)
     probe = O.load_probe(O.compile_probe(Path(cenc).resolve(), (work / 'p.so').resolve()))
     shim = S.load_shim(S.compile_shim(Path(cenc).resolve(), (work / 's.so').resolve()))
     spool = SpoolReader(spool_dir); far = S.FarHomes(spool_dir, 0)
     LEAVES = [((0, 1481, 1288, (265,)), (0, 2)), ((0, 1753, 1158, (217,)), (1, 2)),
               ((0, 1754, 1158, (218,)), (1, 3))]
+    if leaves_json:  # plan 62: [[level, ix, iy, [path...]], [shapes...]] per entry
+        LEAVES = [((int(a[0]), int(a[1]), int(a[2]), tuple(int(x) for x in a[3])), tuple(int(x) for x in b))
+                  for a, b in json.loads(Path(leaves_json).read_text())]
     allres = []
     for lk, shapes in LEAVES:
         allres.append(one_leaf(lk, shapes, disc, spool, far, probe, shim))

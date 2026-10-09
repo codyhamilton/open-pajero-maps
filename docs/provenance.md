@@ -996,3 +996,12 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - Record `docs/plans/65-r01-owner-wording-sync.md`.
 - Scratch: `output/scratch-65/` (Flash review prompt/logs; regenerable).
 
+
+## Plan 62 — R01 residual re-decide under the plan-46 producer (2026-10-09)
+
+- Census `historical_bg/p9_r01_residual/census.tsv.gz` (7,396 rows; from `census_join.tsv.gz`, which joins all 95,139 plan-44/45 rows to the plan-46 scan).
+- Re-decide `p9_r01_residual/redecide.tsv.gz` + `redecide_rows80.tsv.gz` (`redecide.py`; configs FULL / -RC2..-RC5 / PLAN44; double run byte-identical). `transitions.json`, `audit.json` and `u4f_probe.json` sit alongside.
+- phase23 decide double run: `p9_r01_residual/verdicts_census.tsv.gz` (byte-identical).
+- Discs: old `scratch-45/ref_33006aa` (013586b5); new `scratch-45/ref_d35b565` (4ed9cd80). Clippers: `scratch-46/cenc_33006aa`, `cenc_d35b565`. Spool: `extract_timing/spool`.
+- Scratch: `output/scratch-62/` (run B copies, logs, wrapper JSON, `census_join`/`identity_census` inputs; regenerable).
+- Disk (2026-10-09): removed `output/scratch-46/gatework_full_b` (5.2 G, plan-46 run B, verified identical to run A), `gate_v2_blob` (170 M) and `gate_v3_piece` (167 M). Superseded gate iterations; regenerable from the committed tools.

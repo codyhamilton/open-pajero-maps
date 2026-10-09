@@ -1,0 +1,17 @@
+{
+  "rows": 95139,
+  "by_kind_verdict": {
+    "background|build:eo_bg_stitch": 94260,
+    "background|no-owner-exclusive-vertex": 16,
+    "background|producer_ambiguous": 222,
+    "background|removed": 64,
+    "background|source-removed": 577
+  },
+  "old_disc_sha": "013586b58490873f",
+  "new_disc_sha": "4ed9cd801bdd7099",
+  "cenc_excl_sha": "5c43e00dd0c62151",
+  "R": 8,
+  "file": "docs/plans/04-c-core-orchestration/triage/historical_bg/p9_r01_residual/verdicts_census.tsv.gz",
+  "sha256": "69b49f6a3b3ecb780c13138a403d51594623a243932cd54dd19f60e3cc316de4",
+  "content_sha256": "7292b4d2982e90cd086e9b52b04c5789466931a42832f6b680b3d165bde63fb5"
+}

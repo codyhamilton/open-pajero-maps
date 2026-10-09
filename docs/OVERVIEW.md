@@ -82,7 +82,7 @@ and the proven part of R-G5-1 / R-G5-2 (4,214 rows build:eo_bg_stitch).
 
 | Owner | Rows | Status |
 | --- | --- | --- |
-| Plan **44** (closed) | R-G5-4-a, R-G5-4-b | Closed owner; 87,743 rows proven-fixed but not discharged; residual parents still `blocks-phase3` (7,316 rows) → Design: plan **62** (in Execute) |
+| Design (plan **62** children) → Design drafts **63** (R-G5-4-a-1) / **64** (R-G5-4-a-2, R-G5-4-b-1) | R-G5-4-a-1 (222 producer_ambiguous), R-G5-4-a-2 (32 source-removed), R-G5-4-b-1 (545 source-removed) | Plan 62 re-decided the plan-44/45 R01 residual under the plan-46 producer: parents R-G5-4-a/b/c discharged (6,597 more rows proven-fixed, RC-attributed); these exact children remain; no waiver |
 | Design (plan **46** children) → Design drafts **63** (R-G5-1-a, R-G5-2-a) / **64** (R-G5-1-b) | R-G5-1-a (4,594 producer_ambiguous), R-G5-1-b (50 source-removed), R-G5-2-a (18 producer_ambiguous) | Exact named children from plan 46's per-row decisions; no waiver |
 | Cody via Design (no waiver) | R-G8-1-a | Budget basis (with R-G9-4) |
 
@@ -92,7 +92,6 @@ stands against end-to-end parity until fixed or proven non-deviation):
 
 | Owner | Rows | State |
 | --- | --- | --- |
-| Plan **45** (closed) → Design | R-G5-4-c | 80/80 R01 rows `producer_home_outside_R_cap` at R=8 (widen@16 saturated); in plan **62**'s scope (re-decide under the plan-46 producer); carried is not closed |
 | Plan **51** (closed) → Cody | R-G9-3-a | Emission proven-cause (land-local catch-all); road volume open on Cody F6 / kind-order |
 | Plan **52** (closed) → Design | R-G9-3-b | Fragmentation proven-cause; piece-count residual open |
 | Plan **52** (closed) → Cody | R-G9-3-c | Under-selection proven-cause (L8 motorway-only); volume open on Cody L8 selection expand |
@@ -104,9 +103,9 @@ Cody-open product questions (no waiver, no drafts here): F6 catch-all / kind-ord
 
 Plan **39** proved 825,634 R01 rows fixed by the 3-14 build change (`build:eo_bg_stitch`);
 plan **42** discharged parent R-G9-3 with the named children above. Memory-band plans
-**56–59** are closed ops residency work — they are **not** residual-row owners. Plans **61**
-(full-product RSS unknowns) and **62** (R01 still-outside@16) exist only as box drafts; they are
-not landed.
+**56–59** are closed ops residency work — they are **not** residual-row owners. Plan **62** (closed)
+re-decided the R01 residual (R-G5-4-a/b/c) under the plan-46 producer; R-G5-4-c is no longer
+carried. Plan **61** (full-product RSS unknowns) exists only as a box draft; it is not landed.
 
 No later phase is released below; the signed phase outcome remains in plan 04.
 

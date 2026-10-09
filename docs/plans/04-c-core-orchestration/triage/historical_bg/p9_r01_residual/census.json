@@ -1,0 +1,63 @@
+{
+ "rows": 7396,
+ "by_parent": {
+  "R-G5-4-a": 6486,
+  "R-G5-4-b": 830,
+  "R-G5-4-c": 80
+ },
+ "by_parent_oldclass": {
+  "R-G5-4-a|ambiguous": 2783,
+  "R-G5-4-a|no_oe": 118,
+  "R-G5-4-a|outside": 3023,
+  "R-G5-4-a|skip": 525,
+  "R-G5-4-a|source-removed": 37,
+  "R-G5-4-b|ambiguous": 189,
+  "R-G5-4-b|outside": 193,
+  "R-G5-4-b|skip": 16,
+  "R-G5-4-b|source-removed": 432,
+  "R-G5-4-c|outside": 80
+ },
+ "by_parent_oldclass_s46": {
+  "R-G5-4-a|ambiguous|producer-ambiguous": 222,
+  "R-G5-4-a|ambiguous|unique-byte": 2561,
+  "R-G5-4-a|no_oe|unique-byte": 118,
+  "R-G5-4-a|outside|unique-byte": 3023,
+  "R-G5-4-a|skip|unique-byte": 525,
+  "R-G5-4-a|source-removed|unique-byte": 37,
+  "R-G5-4-b|ambiguous|unique-byte": 189,
+  "R-G5-4-b|outside|unique-byte": 193,
+  "R-G5-4-b|skip|unique-byte": 16,
+  "R-G5-4-b|source-removed|unique-byte": 432,
+  "R-G5-4-c|outside|unique-byte": 80
+ },
+ "by_depth": {
+  "R-G5-4-a|d1": 5961,
+  "R-G5-4-a|d2": 525,
+  "R-G5-4-b|d1": 814,
+  "R-G5-4-b|d2": 16,
+  "R-G5-4-c|d2": 80
+ },
+ "c_by_cell": {
+  "1797,424": 12,
+  "828,862": 52,
+  "832,856": 16
+ },
+ "cells": 307,
+ "inputs": {
+  "census_join": [
+   "docs/plans/04-c-core-orchestration/triage/historical_bg/p9_r01_residual/census_join.tsv.gz",
+   "ac26effb83ff3852bc8af2d3f6bb3992b8444d5ecd71c0178c6bcf024eb0c08e"
+  ],
+  "rows_80_keys": [
+   "docs/plans/04-c-core-orchestration/triage/historical_bg/p4_ceiling/rows_80_keys.tsv",
+   "a7226f41cb776d0b70258bf96df99b8936e62b6716c46b7368526f07e88b18ab"
+  ],
+  "plan44_decisions": [
+   "docs/plans/04-c-core-orchestration/triage/historical_bg/p5_owner_exclusive/phase2_decisions_full.tsv.gz",
+   "3d221b6f10ddb275e3b7394e9a76ee234540ce2e9ee277f40ec6d55692e48203"
+  ]
+ },
+ "file": "docs/plans/04-c-core-orchestration/triage/historical_bg/p9_r01_residual/census.tsv.gz",
+ "sha256": "07523d897f0f9383046c073b3a5ec9659388b95c57b6604823995ccbc39fd550",
+ "content_sha256": "97d96beba8d6a92fb16c4597b3ab7169eaacd77f1cf53529a6e8907b24666cfc"
+}

@@ -1,0 +1,21 @@
+{
+ "rows": 95139,
+ "joined": 95139,
+ "unjoined": 0,
+ "basis_cell_311_rows": 0,
+ "crosstab": {
+  "R-G5-4-a|build:eo_bg_stitch|unique-byte": 87648,
+  "R-G5-4-a|disagree_no_oe|unique-byte": 118,
+  "R-G5-4-a|disagree_source_removed|unique-byte": 37,
+  "R-G5-4-a|producer_ambiguous|producer_ambiguous": 222,
+  "R-G5-4-a|producer_ambiguous|unique-byte": 2561,
+  "R-G5-4-a|producer_home_outside_R_cap|unique-byte": 3023,
+  "R-G5-4-a|skip_divided_leaf|unique-byte": 525,
+  "R-G5-4-b|build:eo_bg_stitch|unique-byte": 95,
+  "R-G5-4-b|disagree_source_removed|unique-byte": 432,
+  "R-G5-4-b|producer_ambiguous|unique-byte": 189,
+  "R-G5-4-b|producer_home_outside_R_cap|unique-byte": 193,
+  "R-G5-4-b|skip_divided_leaf|unique-byte": 16,
+  "R-G5-4-c|producer_home_outside_R_cap@16(p45)|unique-byte": 80
+ }
+}

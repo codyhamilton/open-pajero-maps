@@ -1,0 +1,717 @@
+{
+ "transitions": {
+  "R-G5-4-a|ambiguous|ambiguous": 222,
+  "R-G5-4-a|ambiguous|build": 2561,
+  "R-G5-4-a|build|build": 87648,
+  "R-G5-4-a|no_oe|build": 118,
+  "R-G5-4-a|outside|build": 3023,
+  "R-G5-4-a|skip|build": 525,
+  "R-G5-4-a|source-removed|build": 5,
+  "R-G5-4-a|source-removed|source-removed": 32,
+  "R-G5-4-b|ambiguous|build": 189,
+  "R-G5-4-b|build|build": 95,
+  "R-G5-4-b|outside|build": 96,
+  "R-G5-4-b|outside|source-removed": 97,
+  "R-G5-4-b|skip|source-removed": 16,
+  "R-G5-4-b|source-removed|source-removed": 432,
+  "R-G5-4-c|outside|build": 80
+ },
+ "attribution": {
+  "R-G5-4-a|ambiguous|ambiguous|none": 222,
+  "R-G5-4-a|ambiguous|build|RC2": 2536,
+  "R-G5-4-a|ambiguous|build|RC5": 25,
+  "R-G5-4-a|no_oe|build|RC2": 118,
+  "R-G5-4-a|outside|build|RC2": 498,
+  "R-G5-4-a|outside|build|RC3": 2525,
+  "R-G5-4-a|skip|build|RC4": 525,
+  "R-G5-4-a|source-removed|build|U4F_RING": 5,
+  "R-G5-4-a|source-removed|source-removed|none": 32,
+  "R-G5-4-b|ambiguous|build|RC2": 189,
+  "R-G5-4-b|outside|build|RC2": 96,
+  "R-G5-4-b|outside|source-removed|RC3": 97,
+  "R-G5-4-b|skip|source-removed|RC4": 16,
+  "R-G5-4-b|source-removed|source-removed|none": 432,
+  "R-G5-4-c|outside|build|RC4": 80
+ },
+ "attribution_method": "single-fix ablation over ALL residual groups (exhaustive, not a sample): a transition is attributed to each RC whose single removal from FULL reverts the row to its plan-44 class; skip->X is RC4 by construction; U4F_RING = plan 44 Unit 4f picked the first ring in the producer home (u4f_probe.json); RC6 moves no class (mechanism bit only)",
+ "phase23_crosscheck_rows": {
+  "agree": 95059,
+  "disagree": 0
+ },
+ "ambiguous_groups": [
+  {
+   "leaf": [
+    0,
+    1176,
+    1591,
+    "1784"
+   ],
+   "shape": 1,
+   "rows": 22,
+   "tie_decide": [
+    [
+     [
+      1178,
+      1588,
+      0,
+      288
+     ],
+     "build"
+    ],
+    [
+     [
+      1178,
+      1589,
+      0,
+      288
+     ],
+     "build"
+    ]
+   ]
+  },
+  {
+   "leaf": [
+    0,
+    1176,
+    1591,
+    "1784"
+   ],
+   "shape": 3,
+   "rows": 22,
+   "tie_decide": [
+    [
+     [
+      1178,
+      1588,
+      0,
+      288
+     ],
+     "build"
+    ],
+    [
+     [
+      1178,
+      1589,
+      0,
+      288
+     ],
+     "build"
+    ]
+   ]
+  },
+  {
+   "leaf": [
+    0,
+    1664,
+    560,
+    "1536"
+   ],
+   "shape": 6,
+   "rows": 25,
+   "tie_decide": [
+    [
+     [
+      1665,
+      559,
+      0,
+      288
+     ],
+     "build"
+    ],
+    [
+     [
+      1665,
+      559,
+      1,
+      288
+     ],
+     "build"
+    ]
+   ]
+  },
+  {
+   "leaf": [
+    0,
+    1664,
+    560,
+    "1536"
+   ],
+   "shape": 8,
+   "rows": 25,
+   "tie_decide": [
+    [
+     [
+      1665,
+      559,
+      0,
+      288
+     ],
+     "build"
+    ],
+    [
+     [
+      1665,
+      559,
+      1,
+      288
+     ],
+     "build"
+    ]
+   ]
+  },
+  {
+   "leaf": [
+    0,
+    1694,
+    1781,
+    "1726"
+   ],
+   "shape": 1,
+   "rows": 32,
+   "tie_decide": [
+    [
+     [
+      1693,
+      1784,
+      0,
+      288
+     ],
+     "build"
+    ],
+    [
+     [
+      1693,
+      1784,
+      1,
+      288
+     ],
+     "build"
+    ]
+   ]
+  },
+  {
+   "leaf": [
+    0,
+    1694,
+    1781,
+    "1726"
+   ],
+   "shape": 3,
+   "rows": 32,
+   "tie_decide": [
+    [
+     [
+      1693,
+      1784,
+      0,
+      288
+     ],
+     "build"
+    ],
+    [
+     [
+      1693,
+      1784,
+      1,
+      288
+     ],
+     "build"
+    ]
+   ]
+  },
+  {
+   "leaf": [
+    0,
+    1759,
+    1513,
+    "1343"
+   ],
+   "shape": 5,
+   "rows": 32,
+   "tie_decide": [
+    [
+     [
+      1759,
+      1514,
+      0,
+      288
+     ],
+     "build"
+    ],
+    [
+     [
+      1759,
+      1514,
+      2,
+      288
+     ],
+     "build"
+    ]
+   ]
+  },
+  {
+   "leaf": [
+    0,
+    1759,
+    1513,
+    "1343"
+   ],
+   "shape": 8,
+   "rows": 32,
+   "tie_decide": [
+    [
+     [
+      1759,
+      1514,
+      0,
+      288
+     ],
+     "build"
+    ],
+    [
+     [
+      1759,
+      1514,
+      2,
+      288
+     ],
+     "build"
+    ]
+   ]
+  }
+ ],
+ "source_removed_groups": [
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    808,
+    1121,
+    "1064"
+   ],
+   "shape": 0,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    808,
+    1121,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1059,
+    1248,
+    "1027"
+   ],
+   "shape": 1,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    1061,
+    1248,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1109,
+    1181,
+    "949"
+   ],
+   "shape": 0,
+   "rows": 17,
+   "old_class": "source-removed",
+   "producer": [
+    1109,
+    1193,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1152,
+    1401,
+    "1824"
+   ],
+   "shape": 0,
+   "rows": 32,
+   "old_class": "outside",
+   "producer": [
+    1152,
+    1422,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1152,
+    1417,
+    "288"
+   ],
+   "shape": 0,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    1152,
+    1422,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1152,
+    1432,
+    "768"
+   ],
+   "shape": 0,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    1152,
+    1422,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1152,
+    1448,
+    "1280"
+   ],
+   "shape": 0,
+   "rows": 32,
+   "old_class": "outside",
+   "producer": [
+    1152,
+    1422,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1248,
+    908,
+    "384"
+   ],
+   "shape": 0,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    1248,
+    910,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1248,
+    918,
+    "704"
+   ],
+   "shape": 0,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    1248,
+    910,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1248,
+    939,
+    "1376"
+   ],
+   "shape": 1,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    1248,
+    935,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1248,
+    970,
+    "320"
+   ],
+   "shape": 1,
+   "rows": 26,
+   "old_class": "source-removed",
+   "producer": [
+    1248,
+    980,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1248,
+    1005,
+    "1440"
+   ],
+   "shape": 1,
+   "rows": 28,
+   "old_class": "outside",
+   "producer": [
+    1248,
+    980,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1248,
+    1321,
+    "1312"
+   ],
+   "shape": 0,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    1248,
+    1313,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1248,
+    1443,
+    "1120"
+   ],
+   "shape": 1,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    1248,
+    1444,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1248,
+    1456,
+    "1536"
+   ],
+   "shape": 1,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    1248,
+    1444,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1248,
+    1625,
+    "800"
+   ],
+   "shape": 0,
+   "rows": 5,
+   "old_class": "outside",
+   "producer": [
+    1248,
+    1608,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1248,
+    1644,
+    "1408"
+   ],
+   "shape": 14,
+   "rows": 1,
+   "old_class": "source-removed",
+   "producer": [
+    1248,
+    1642,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1268,
+    1152,
+    "20"
+   ],
+   "shape": 3,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    1257,
+    1152,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-a",
+   "leaf": [
+    0,
+    1323,
+    1686,
+    "715"
+   ],
+   "shape": 2,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    1323,
+    1675,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1645,
+    1269,
+    "1709"
+   ],
+   "shape": 0,
+   "rows": 32,
+   "old_class": "source-removed",
+   "producer": [
+    1645,
+    1269,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1695,
+    700,
+    "1951"
+   ],
+   "shape": 7,
+   "rows": 4,
+   "old_class": "source-removed",
+   "producer": [
+    1695,
+    699,
+    0,
+    288
+   ],
+   "clip_size_d35b565": 0
+  },
+  {
+   "parent": "R-G5-4-b",
+   "leaf": [
+    0,
+    1738,
+    570,
+    "1866.3"
+   ],
+   "shape": 2160,
+   "rows": 16,
+   "old_class": "skip",
+   "producer": [
+    1738,
+    570,
+    6105,
+    288
+   ],
+   "clip_size_d35b565": 0
+  }
+ ],
+ "inputs": {
+  "redecide": [
+   "docs/plans/04-c-core-orchestration/triage/historical_bg/p9_r01_residual/redecide.tsv.gz",
+   "ca6b5abef1615e10654eb73f46528337cbb6a4038d5ad0b7ec411f3ffb2b9769"
+  ],
+  "verdicts_census": [
+   "docs/plans/04-c-core-orchestration/triage/historical_bg/p9_r01_residual/verdicts_census.tsv.gz",
+   "69b49f6a3b3ecb780c13138a403d51594623a243932cd54dd19f60e3cc316de4"
+  ],
+  "u4f_probe": [
+   "docs/plans/04-c-core-orchestration/triage/historical_bg/p9_r01_residual/u4f_probe.json",
+   "1eec00a322b814d1109896098efd60f1164da0def32f1033251a320244cb3dd1"
+  ]
+ }
+}

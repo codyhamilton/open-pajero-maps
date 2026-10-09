@@ -1,0 +1,13 @@
+{
+ "proven_rows": 87743,
+ "by_tag_fullclass": {
+  "same_type|build": 87743
+ },
+ "definition": "PLAN44 matcher config (no type filter, whole-blob, Moore(recover_r), full-frame rect) re-run on every plan-44 build group: producer type (cid tc) == record code => same_type; FULL (plan-46) class recorded alongside",
+ "inputs": {
+  "redecide": [
+   "docs/plans/04-c-core-orchestration/triage/historical_bg/p9_r01_residual/redecide.tsv.gz",
+   "ca6b5abef1615e10654eb73f46528337cbb6a4038d5ad0b7ec411f3ffb2b9769"
+  ]
+ }
+}

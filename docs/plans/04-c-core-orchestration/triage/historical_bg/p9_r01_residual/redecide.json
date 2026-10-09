@@ -1,0 +1,83 @@
+{
+ "groups": 3888,
+ "rows": 95139,
+ "transitions": {
+  "R-G5-4-a|ambiguous|ambiguous": 222,
+  "R-G5-4-a|ambiguous|build": 2561,
+  "R-G5-4-a|no_oe|build": 118,
+  "R-G5-4-a|outside|build": 3023,
+  "R-G5-4-a|skip|build": 525,
+  "R-G5-4-a|source-removed|build": 5,
+  "R-G5-4-a|source-removed|source-removed": 32,
+  "R-G5-4-b|ambiguous|build": 189,
+  "R-G5-4-b|outside|build": 96,
+  "R-G5-4-b|outside|source-removed": 97,
+  "R-G5-4-b|skip|source-removed": 16,
+  "R-G5-4-b|source-removed|source-removed": 432,
+  "R-G5-4-c|outside|build": 80
+ },
+ "attribution": {
+  "R-G5-4-a|ambiguous|ambiguous|none": 222,
+  "R-G5-4-a|ambiguous|build|RC2": 2536,
+  "R-G5-4-a|ambiguous|build|RC5": 25,
+  "R-G5-4-a|no_oe|build|RC2": 118,
+  "R-G5-4-a|outside|build|RC2": 498,
+  "R-G5-4-a|outside|build|RC3": 2525,
+  "R-G5-4-a|skip|build|RC4": 525,
+  "R-G5-4-a|source-removed|build|joint": 5,
+  "R-G5-4-a|source-removed|source-removed|none": 32,
+  "R-G5-4-b|ambiguous|build|RC2": 189,
+  "R-G5-4-b|outside|build|RC2": 96,
+  "R-G5-4-b|outside|source-removed|RC3": 97,
+  "R-G5-4-b|skip|source-removed|RC4": 16,
+  "R-G5-4-b|source-removed|source-removed|none": 432,
+  "R-G5-4-c|outside|producer:unique|RC4": 80
+ },
+ "plan44_reproduction": {
+  "audit|build|build": 87743,
+  "ceiling|outside|outside": 80,
+  "residual|ambiguous|ambiguous": 2972,
+  "residual|no_oe|no_oe": 118,
+  "residual|outside|outside": 3216,
+  "residual|skip|skip": 541,
+  "residual|source-removed|build": 5,
+  "residual|source-removed|source-removed": 464
+ },
+ "full_matches_s46": {
+  "audit|1": 87743,
+  "ceiling|1": 80,
+  "residual|1": 7316
+ },
+ "same_type_audit": {
+  "same_type|build": 87743
+ },
+ "inputs": {
+  "census": [
+   "output/scratch-62/census_join.tsv.gz",
+   "ac26effb83ff3852bc8af2d3f6bb3992b8444d5ecd71c0178c6bcf024eb0c08e"
+  ],
+  "src80": [
+   "docs/plans/04-c-core-orchestration/triage/historical_bg/p4_ceiling/rows_80_keys.tsv",
+   "a7226f41cb776d0b70258bf96df99b8936e62b6716c46b7368526f07e88b18ab"
+  ],
+  "old_disc_sha": "013586b58490873f",
+  "new_disc_sha": "4ed9cd801bdd7099",
+  "cenc_old_sha": "9d68181fd30d4b30",
+  "cenc_excl_sha": "5c43e00dd0c62151"
+ },
+ "file": "docs/plans/04-c-core-orchestration/triage/historical_bg/p9_r01_residual/redecide.tsv.gz",
+ "sha256": "ca6b5abef1615e10654eb73f46528337cbb6a4038d5ad0b7ec411f3ffb2b9769",
+ "content_sha256": "9184974a2ae46823efb29a875b2d7a2f7558e6585fe893a4cd5bc40c0ecba524",
+ "rows80": {
+  "file": "docs/plans/04-c-core-orchestration/triage/historical_bg/p9_r01_residual/redecide_rows80.tsv.gz",
+  "sha256": "767865dba8aa5a29d234868303f014ad06c2effc40c6de43a00c65aabc966843",
+  "gc3": {
+   "match": 14,
+   "mismatch": 44,
+   "src_sentinel": 22
+  },
+  "gc4": {
+   "build": 80
+  }
+ }
+}

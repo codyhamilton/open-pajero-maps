@@ -145,3 +145,21 @@ All heavy jobs ran serially under `flock output/.heavy.lock`; cbuild was serial,
 - source-removed: 50 rows / 1 group (R-G5-1-b).
 
 The historical tables in this file are unchanged as history. See `residuals.tsv` and `docs/plans/46-bg-producer-scan-rebuild.md`.
+
+**Plan 62 note (2026-10-09).** Plan 62 re-decided the R01 residual of plans 44/45 (R-G5-4-a/b 7,316 rows, R-G5-4-c 80) under the plan-46 producer (`historical_bg/p9_r01_residual/`). It ablated each fix singly over every residual group.
+- **6,597 rows are build:eo_bg_stitch.** The fix that moved them:
+
+  | Fix | Rows |
+  | --- | ---: |
+  | RC2 | 3,437 |
+  | RC3 | 2,525 |
+  | RC4 | 605 (525 skip + 80 R-G5-4-c) |
+  | RC5 | 25 |
+  | Plan-44 Unit 4f defect | 5 |
+
+  The Unit 4f defect: it took the first ring of the producer home instead of the producer ring.
+- **No `producer_home_outside_R_cap` row remains.**
+- **Same-type audit:** all 87,743 proven rows have a same-type producer.
+- **Children:**
+  - R-G5-4-a-1: 222 producer_ambiguous (plan 63);
+  - R-G5-4-a-2 and R-G5-4-b-1: 32 + 545 source-removed, clip empty on d35b565 (plan 64).

@@ -21,6 +21,7 @@ Published for Design handoff to plans **57–59**. Measurement-only; no optim la
 | encode | cite_prior plan48 | — | — | AU 15240.1 / Perth 13809.5 MB | tree peak only (no phase tags) | **58** |
 | dump/extend | finalize-run fixture | 0.45 GiB (baseline max 473352 KiB) | 0.33 GiB | — | finalize kind array (1 000 013 rows × parts); gates all pass | **59** |
 | triage (plan 46) | bg producer scan v5, 4 shards | wrapper 4.39 GiB; **max shard RssAnon 928.6 MiB** (cap 3072) | 4.36 GiB (incl. file pages) | — | LRU 4096 numpy ring cache + tiled leaf order; spool/disc memmap file pages; follow-on gate_repro 6.10 GiB max RSS / 5.36 GiB peak | — (post-56 addendum, `ledger/bg_producer_scan_plan46.json`) |
+| triage (plan 62) | R01 residual re-decide + RC ablation + audit, run A+B | wrapper max RSS 3.89 GiB (VmHWM A 3.89 / B 3.89 GiB) | 0.86 GiB (post-exit sample) | — | FarHomes(L0) + LRU 4096 ring cache; per-leaf caches; companion phase23 decide 3.84 GiB max RSS / 6.10 GiB peak incl. file pages | — (post-56 addendum, `ledger/r01_residual_plan62.json`) |
 
 Ledger JSON: `docs/plans/56-cross-phase-rss-profile/ledger/`. Wrapper logs: `output/scratch-56/runs/` (gitignored).
 
