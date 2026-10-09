@@ -23,3 +23,27 @@ Wrapper `run_heavy_python.py --memory-max 12G` (flock; waited behind another age
 - **Plan-63 rule on live, national:** 338,565 / 338,565 AU classes and 1,987 / 1,987 Perth classes have copies in strictly increasing merged ordinal and (class, own-first, source iy, ix, k) order; 0 shared emitters (every copy from a distinct source). Assumption 4 holds on live without re-derivation.
 - **Emitter form:** 768,130 of 783,499 AU copies are E1 interior-cover items (kind 1, a source whose ring covers the whole leaf); 242,645 of the 338,565 classes are cover-only pairs at L0/288.
 - **Sample** (`sample.json`): 2,472 classes in 31 strata (derivation 1,237 / holdout 1,235), committed before any R read.
+
+### P1b — finding: plan 63's R duplicate census was vacuous; R does hold duplicates (16:20 AEST)
+
+- A 40-row tool probe of the correspondence (not a scoring run) failed to align R leaves: plan 63's `leaf_all_records(frame[:U16(frame,0)*2])` returns **no records** for R frames. On G discs word 0 is the frame length / 2; on R it is not (R frame (0,1834,340,(650,)) truncates to 140 bytes, losing road / background / name sections).
+- `p10_bg_dedup/r_census.py` (reads each distinct R frame whole; section offsets bound every read; counts both ways): over all 482,473 distinct R frames, the truncated read yields **0 records at every level** (`records_trunc` 0; 446,505 frames lose records), so `dup_census_R.json` ("0 of 482,473") measured nothing. Whole-frame read: 1,315,200 class>0 records.
+- **R holds byte-identical same-type class>0 duplicates: 258 leaves, 486 classes, 486 extra copies** (all pairs). By level/type: L0 291 197, 321 9, 640 45; L2 291 189, 321 13, 640 26; L4 321 5; L6 321 2. No type 288. Copy positions: adjacent (gap 1) in 299 / 486, gaps 2–9+ otherwise.
+- **No R duplicate class coincides with a G duplicate class** (same level, cell, type: 0 of 486); 132 of the 486 R classes sit in cells where G has duplicates of another type.
+- Consequence for the plan (to Design at the Phase 1 report): R-G5-6's ground "R never does (0 / 482,473)" is false as measured; the P4 gate "0 duplicate leaves" is not by itself R parity. Phase 1 continues (the R correspondence measures what R holds where G duplicates). `r_corr.py` reads R wires from the whole leaf entry.
+
+### P1c — R correspondence, national framing-equal counts, R-G5-4-a-1 (done ~16:20 AEST; checkpointed 16:35 after interruption)
+
+Seat note: CHM 15:54 — Codex at its 5 h limit until 17:14; any new harness seat before 17:15 goes on OpenCode DeepSeek Flash. Work here is run directly on codyh-ubuntu; only reviews use a seat.
+
+- **Sample correspondence** (`r_corr.py`, 2,472 classes; runs A and B byte-identical): **R-one-byte 0, R-one-geom 0**; R-merged 1; R-absent 266 (231 no type in cell, 30 type elsewhere in cell, 5 R outside coverage); R-noncomparable 2,188 (alias 1,497, type-set 691); R-other 17. By split: derivation absent 125 / merged 1 / noncomparable 1,102 / other 9; holdout absent 141 / noncomparable 1,086 / other 8.
+  - Alias rows, geometry class inside R's shared sparse-tile frame (measured, never a pass): absent 595, type-set 674, other 228, **no one-byte / one-geom**.
+  - R-other (17): an R same-type record overlaps or contains the piece with different geometry (types 321, 289); none equal.
+- **National, framing-equal** (`--all-census`, every census class prefiltered on R's leaf index without decode): 338,565 = R alias frame 334,466 + frame differs 1,852 + no R leaf 83 + **framing-equal 2,164**. The 2,164: R-absent 541, R-noncomparable(type-set) 1,609, R-other 13, R-merged 1, **R-one-byte 0, R-one-geom 0**.
+- **Reading:** nowhere that R is comparable does R hold one copy of a G duplicate piece. Keep-first / keep-last / keep-own-first have no R-one-* class to score on; R's behaviour where comparable is "nothing of that type there" (absent) or "another type maps the area" (type-set, the F6 question), plus 14 merged/other cases.
+- **R-G5-4-a-1** (`a1.py`; 4 single-cell `33006aa` sidecar windows from the spool of record; runs A/B identical): gate 4/4 frames byte-equal to 013586b5, 0 unmatched; all 8 groups: copies emitted by the two plan-62 tie candidates, one each (distinct), plan-63 rule order holds, decide verdict under the proven producer of the group's shape = build → **222 rows / 8 groups build:eo_bg_stitch**. (1176,1591) agrees with plan 63's `provenance.tsv.gz`.
+- Peaks: p1c max RSS 3,742,280 KiB / memory.peak 4.73 GB, 346 s; p1d (a1) within 1.06 GB.
+
+### P1d — D-class census (in progress)
+
+- First Perth run stopped by pid after ~10 min (no output): a 48×48 grid containment test costs ~10 s per dense urban leaf (1,800+ type-288 records, thousands of nested pairs). Definitions revised **before any measuring run completed** (tool probes only): D-contain by a vertex criterion, grid (24×24) only for the overlap area. See `dclass.py` docstring.
