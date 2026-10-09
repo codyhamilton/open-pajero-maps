@@ -1,0 +1,361 @@
+{
+ "cells": [
+  {
+   "cell": [
+    808,
+    1121
+   ],
+   "decoded": 1,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 1
+  },
+  {
+   "cell": [
+    1059,
+    1248
+   ],
+   "decoded": 2,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 2
+  },
+  {
+   "cell": [
+    1109,
+    1181
+   ],
+   "decoded": 1,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 1
+  },
+  {
+   "cell": [
+    1152,
+    1401
+   ],
+   "decoded": 1,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 1
+  },
+  {
+   "cell": [
+    1152,
+    1417
+   ],
+   "decoded": 0,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 0
+  },
+  {
+   "cell": [
+    1152,
+    1432
+   ],
+   "decoded": 0,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 0
+  },
+  {
+   "cell": [
+    1152,
+    1448
+   ],
+   "decoded": 2,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 2
+  },
+  {
+   "cell": [
+    1248,
+    908
+   ],
+   "decoded": 1,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 1
+  },
+  {
+   "cell": [
+    1248,
+    918
+   ],
+   "decoded": 1,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 1
+  },
+  {
+   "cell": [
+    1248,
+    939
+   ],
+   "decoded": 2,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 2
+  },
+  {
+   "cell": [
+    1248,
+    970
+   ],
+   "decoded": 1,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 1
+  },
+  {
+   "cell": [
+    1248,
+    1005
+   ],
+   "decoded": 1,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 1
+  },
+  {
+   "cell": [
+    1248,
+    1321
+   ],
+   "decoded": 5,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 5
+  },
+  {
+   "cell": [
+    1248,
+    1443
+   ],
+   "decoded": 0,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 0
+  },
+  {
+   "cell": [
+    1248,
+    1456
+   ],
+   "decoded": 0,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 0
+  },
+  {
+   "cell": [
+    1248,
+    1625
+   ],
+   "decoded": 5,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 5
+  },
+  {
+   "cell": [
+    1248,
+    1644
+   ],
+   "decoded": 5,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 5
+  },
+  {
+   "cell": [
+    1268,
+    1152
+   ],
+   "decoded": 3,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 3
+  },
+  {
+   "cell": [
+    1323,
+    1686
+   ],
+   "decoded": 2,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 2
+  },
+  {
+   "cell": [
+    1645,
+    1269
+   ],
+   "decoded": 13,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 13
+  },
+  {
+   "cell": [
+    1695,
+    700
+   ],
+   "decoded": 6,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 6
+  },
+  {
+   "cell": [
+    1738,
+    570
+   ],
+   "decoded": 16,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 16
+  },
+  {
+   "cell": [
+    1750,
+    594
+   ],
+   "decoded": 37,
+   "decoded_eq_whole_types": true,
+   "leaves": 1,
+   "status": "resolved",
+   "t288_c2_decoded": 0,
+   "t288_decoded": 0,
+   "t288_wires_whole": 0,
+   "wires_trunc": 0,
+   "wires_whole": 37
+  }
+ ],
+ "total": {
+  "cells": 23,
+  "cells_decoded_eq_whole": 23,
+  "decoded": 105,
+  "leaves": 23,
+  "t288_c2_decoded": 0,
+  "t288_decoded": 0,
+  "t288_wires_whole": 0,
+  "wires_trunc": 0,
+  "wires_whole": 105
+ },
+ "wall_s": 0.2
+}

@@ -79,3 +79,22 @@ Seat note: CHM 15:54 — Codex at its 5 h limit until 17:14; any new harness sea
 - Measured only (not an acceptance): on the comparable set (R-absent + R-merged + R-other), drop-all matches R in 125/135 derivation and 141/149 holdout classes (R-absent); merge-sources 1/135 and 0/149; keep-* 0.
 - **Outcome: "no rule accepted" — the plan stops for Design** (Phase 2 outcome text). D-class RCs not attempted (see P1d reading). Phase 3/4 not started; no encoder change, no oracle change.
 
+
+## Reader re-audit (Design ruling 2026-10-09 17:23; done 17:51 AEST)
+
+Question: which committed claims read R through plan 63's truncating cut `frame[:U16(frame, 0) * 2]` (`p7_producer_tie/provenance.leaf_all_records` callers), and which conclusions change when R is read whole. Tool `p10_bg_dedup/reader_audit.py` (modes `g`, `p64`); one wrapper run (flock + 12G), max RSS 317,276 KiB / memory.peak 4.04 GB incl. file pages, 444 s.
+
+Every committed caller of the cut (`rg "U16\(.*, 0\) \* 2"` over `historical_bg/` and `parser/tools/`):
+
+| Plan / tool | Disc(s) cut | R read? | Claim | Re-check | Changes? |
+| --- | --- | --- | --- | --- | --- |
+| 63 `dup_census.py` | R, 013586b5, 0c22b266 | **yes (cut)** | "R holds byte-identical duplicates in 0 leaves" (`dup_census_R.json`) | `r_census.py` whole-frame: R holds **486 classes in 258 leaves**; the cut parses 0 of R's 1,315,200 background records | **Yes** — already corrected in R-G5-6 by plan 68 P1 |
+| 63 `provenance.py` (P2 provenance, rules, G1/G2 gates) | 013586b5 windows only | no | producers per copy; rule 537/537 + 546/546; R-G5-1-a / R-G5-2-a discharged (4,612 build) | `reader_audit g` on 013586b5: cut == whole for **3,954,156 / 3,954,156** frames (11,601,627 records), 0 length-word overruns | No — discharges stand |
+| 64 `trace.py` / `stage.py` / `classify.py` | R, 013586b5, 4ed9cd80, 0c22b266 | **yes**: geometry via plan 48 `r_parent` (whole entry); wire bytes via the cut | "R has 0 type-288 polygons in each of the 23 leaf cells"; H3 23/23 | `reader_audit p64`: on R, 23/23 cells decode (whole) == whole-frame wires record-for-record (105 records, types and classes equal); the cut yields 0 wires (so `trace.json`'s R `wire` fields are null, unused by any verdict); type 288 on R: **0 decoded, 0 in whole wires** (all classes); G discs: cut == whole on 4ed9cd80 3,954,159/3,954,159 and 0c22b266 3,954,165/3,954,165 | No — claim and H3 verdicts stand |
+| 68 `census.py`, `a1.py` | 0c22b266, Perth, 013586b5 windows | no | live census 338,565; a1 222 build | G cut lossless (above) | No |
+| 68 `r_census.py`, `r_corr.py`, `dclass.py --whole` | R | whole | R census / correspondence / D-classes | already whole-frame (R frame hash `fnv` in `r_corr` is computed on the cut but used only for G sidecar matching) | No |
+
+- On G discs the length word is the frame length, so the cut is lossless there; every G-side claim of plans 63 / 64 / 68 stands.
+- The only changed conclusion is plan 63's R duplicate count (0 → 486), already carried by R-G5-6 (to be split per the ruling).
+- Earlier R readers (plan 48 `RReader` / `r_parent` / `decode_parcel`, used by plans 44–62) read the whole leaf entry (`length = entry.size * ls`) and are not this cut.
+- Outputs committed: `reader_audit_p64.json`, `reader_audit_g_{013586b5,4ed9cd80,0c22b266}.json`.
