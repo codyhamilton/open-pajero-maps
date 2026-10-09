@@ -145,3 +145,10 @@ longer `maps-parity-carried`. The exact children are `blocks-phase3`:
 - Accepted tie rule: contiguous per-producer block emission (537/537 derivation, 546/546 holdout).
 - S′ = S ∪ 6 scope-delta groups is published as an opt-in (`gate_result_s02_resolved.json`). Plan 46's S is unchanged.
 - New row R-G5-6 (Design): G emits byte-identical same-type duplicate background records; R does not.
+
+**UPDATED by plan 64 (2026-10-09):** R-G5-1-b (50), R-G5-4-a-2 (32) and R-G5-4-b-1 (545) are
+discharged: 627 rows / 23 groups are H3 correct removal (build:eo_bg_stitch (removed); the d35b565
+clip of the proven producer is a sub-unit sliver dropped at `emit_piece`; R has 0 type-288 polygons
+in each leaf cell), each group on its own evidence (`historical_bg/p8_source_removed/classify.json`).
+Finding for Design/Cody (not a fix): the 17 producers are open OSM ways closed and typed 288 by the
+extractor's level-0 catch-all. R-G5-4-a-1 (222) is carried by Design draft 68 Phase 1.

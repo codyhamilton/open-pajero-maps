@@ -133,3 +133,21 @@ Seat: Codex on codyh-ubuntu (master direct). Draft re-copied from `/workspace/ma
 - `013586b5` leaf (0,1750,594,(598,)) shape 171 is a 134-vertex type-288 record whose vertices all lie on the leaf frame: a densified whole-frame square.
 - Producer (1751,594,16) is an 8-coordinate ring (bbox x 4034–4731, y 3351–3550 relative to cell (1750,594)). Exactly one distinct vertex lies inside the leaf; its exact polygon ∩ leaf area is ≈ 4 raw units² (a 62-unit-long sliver, about 0.13 units wide at x=4096).
 - R has no type-288 record in cell (1750,594).
+
+## Phase 3 — act and update residuals (2026-10-09)
+
+No code fix: every group is H3 (correct removal), so the build stays as it is and no oracle moved (nothing has to land before plan 68).
+
+- `residuals.tsv`: R-G5-1-b (50), R-G5-4-a-2 (32) and R-G5-4-b-1 (545) → `discharged-plan-64`, owner `Design → plan 64 (discharged)`. Each row cites `classify.json` (`1ffb9e0c…`), `trace.json` (`471366e1…`), `stage.json` (`ccd57f1e…`). Parents R-G5-1, R-G5-4-a, R-G5-4-b blocking text updated (R-G5-4-a-1 stays `blocks-phase3`, carried by Design draft 68 Phase 1).
+- Row sum check: 32×15 + 17 + 26 + 28 + 5 + 1 + 4 + 16 + 50 = 627 = 50 + 32 + 545.
+- `causes_residual.md`: Plan 64 note (H1/H5 false per group, mechanism, H3, finding). `synthesis.md` and `OVERVIEW.md` live-ownership table synced.
+- **Finding for Design and Cody (not a fix; F6 / kind-order are Cody-held).** All 17 producers are open OSM ways that `osm_to_parcel_geometry.py` closes into rings and `bg_type.json` level-0 rule 11 (catch-all `{}`) types 288: 5 tagged only `source:geometry=PSMA_Admin_Boundaries`, 2 only `source=CAPAD 2016 - Terrestrial`, 8 untagged, 1 `barrier=fence`, 1 `natural=tree_row` (R-G5-1-b). 16/17 self-intersect once closed. Whether open ways should become polygons at all is a mapping question for Design / Cody.
+
+### Phase 3 scratch receipt
+
+1. No scratch created: `output/scratch-64` absent before and after (`test ! -e`); `du -sb` n/a (0 B).
+2. Kept: only committed docs edits. No `keep/`.
+3. `git worktree list`: no plan-64 worktree.
+4. 0 `/tmp/p64_*`; 0 `maps-heavy` scopes.
+5. No heavy run, so no ledger peak; ledger note added.
+6. `df -h /home`: 11 G free (97 %).

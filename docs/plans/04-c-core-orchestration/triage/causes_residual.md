@@ -180,3 +180,11 @@ The historical tables in this file are unchanged as history. See `residuals.tsv`
   - The historical remainder 137 / 8,739 stays the plan-46 gate.
 - **New finding, R-G5-6.** G holds byte-identical same-type duplicate records in 336,329 leaves (013586b5) and 336,135 leaves (0c22b266); R holds them in 0 leaves.
 
+
+
+**Plan 64 note (2026-10-09).** The 627 source-removed rows / 23 groups (R-G5-1-b 50, R-G5-4-a-2 32, R-G5-4-b-1 545) are decided per group, each on its own evidence (`historical_bg/p8_source_removed/`, `classify.json`):
+- **H1 (wrong producer) false, 23/23.** The plan-63 sidecar emitter equals the recorded producer, the 33006aa clip reproduces the shape bytes, and it is the only unique-byte hit (the 97 RC3 and 16 RC4 rows included).
+- **H5 (extract change) false, 23/23.** One pyosmium pass over the pinned PBF: every producer ring is its OSM way's coordinates plus the extractor's ring closure, and all 6,608 home rings of the 17 producer cells match the spool of record.
+- **Mechanism.** On d35b565 the ring reaches the leaf and `eo_clip` builds its even-odd arrangement; the interior faces are sub-unit slivers (0.9–497 raw²) that `emit_piece` drops at round/clean (`_cenc.c:586/:592`), so 0 records. The 33006aa record is the legacy chain walk closing the sliver the long way round the frame (1,935× to 9,007,839× the exact region). Stage trace output-neutral: 26/26 frames byte-equal to 4ed9cd80.
+- **Verdict H3 (correct removal), 23/23.** R has 0 type-288 polygons in every leaf cell. 627 rows build:eo_bg_stitch (removed) with the R comparison; discharged.
+- **Finding for Design and Cody (not fixed; F6 / kind-order Cody-held).** All 17 producers are open OSM ways closed into polygons by `osm_to_parcel_geometry.py` and typed 288 by the level-0 catch-all rule 11 of `bg_type.json`: 5 tagged only `source:geometry=PSMA_Admin_Boundaries`, 2 only `source=CAPAD 2016 - Terrestrial`, 8 untagged, 1 `barrier=fence`, 1 `natural=tree_row`; 16/17 self-intersect once closed.
