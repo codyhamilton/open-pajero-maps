@@ -28,10 +28,17 @@
       "evidence": "docs/plans/64-source-removed-clip-empty-rc/IMPLEMENTATION.md (Phase 1)",
       "kib": 3894272,
       "live_at_peak": true
+    },
+    {
+      "class": "phase2_stage_windows_and_classify",
+      "evidence": "docs/plans/64-source-removed-clip-empty-rc/IMPLEMENTATION.md (Phase 2)",
+      "kib": 3897480,
+      "live_at_peak": true
     }
   ],
   "inter_phase_boundary": null,
   "notes": [
-    "Phase 1: pyosmium flex_mem location index over australia-260824.osm.pbf (11,464,956 ways) dominates: max RSS 4.07 GiB / memory.peak 4.35 GiB incl. file pages, 390-406 s; trace analyze (FarHomes L0) max RSS 3.71 GiB / memory.peak 0.37 GiB, 43 s; 23 window builds 24 s. Final run (p1ab: re-extract v2 + analyze) 4.08 GiB max RSS / 4.35 GiB peak, 425 s."
+    "Phase 1: pyosmium flex_mem location index over australia-260824.osm.pbf (11,464,956 ways) dominates: max RSS 4.07 GiB / memory.peak 4.35 GiB incl. file pages, 390-406 s; trace analyze (FarHomes L0) max RSS 3.71 GiB / memory.peak 0.37 GiB, 43 s; 23 window builds 24 s. Final run (p1ab: re-extract v2 + analyze) 4.08 GiB max RSS / 4.35 GiB peak, 425 s.",
+    "Phase 2: 23 stage windows at d35b565 (-j4, serial) + stage analyze + classify.py (FarHomes L0, R/4ed9cd80/0c22b266 cell decodes): max RSS 3.72 GiB / memory.peak 0.35 GiB, 45 s."
   ]
 }

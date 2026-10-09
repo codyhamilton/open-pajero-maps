@@ -1,0 +1,1150 @@
+{
+ "fields": [
+  "i",
+  "c",
+  "n",
+  "inside",
+  "m",
+  "whole",
+  "eo",
+  "cx",
+  "es",
+  "ee",
+  "faces",
+  "fpos",
+  "fleft",
+  "path",
+  "pieces",
+  "pzero",
+  "q",
+  "a2",
+  "rec",
+  "pq3",
+  "pa0"
+ ],
+ "gate0_vs_4ed9cd80": {
+  "disc_leaf_unmatched": 0,
+  "disc_leaves": 26,
+  "frames_equal": 26
+ },
+ "groups": [
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 13,
+     "eo": 1,
+     "es": 3,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 0,
+     "inside": 0,
+     "m": 2,
+     "n": 4,
+     "pa0": 1,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 1,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "own",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_808_1121_1064_0",
+   "leaf": [
+    0,
+    808,
+    1121,
+    [
+     1064
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    808,
+    1121,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 12,
+     "eo": 1,
+     "es": 2,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 1,
+     "inside": 0,
+     "m": 2,
+     "n": 12,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 2,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1059_1248_1027_1",
+   "leaf": [
+    0,
+    1059,
+    1248,
+    [
+     1027
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1061,
+    1248,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 12,
+     "eo": 1,
+     "es": 2,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 0,
+     "inside": 0,
+     "m": 2,
+     "n": 29,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 2,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1109_1181_949_0",
+   "leaf": [
+    0,
+    1109,
+    1181,
+    [
+     949
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1109,
+    1193,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 12,
+     "eo": 1,
+     "es": 2,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 0,
+     "inside": 0,
+     "m": 2,
+     "n": 14,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 2,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1152_1401_1824_0",
+   "leaf": [
+    0,
+    1152,
+    1401,
+    [
+     1824
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1152,
+    1422,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 12,
+     "eo": 1,
+     "es": 2,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 0,
+     "inside": 0,
+     "m": 2,
+     "n": 14,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 2,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1152_1417_288_0",
+   "leaf": [
+    0,
+    1152,
+    1417,
+    [
+     288
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1152,
+    1422,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 12,
+     "eo": 1,
+     "es": 2,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 0,
+     "inside": 0,
+     "m": 2,
+     "n": 14,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 2,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1152_1432_768_0",
+   "leaf": [
+    0,
+    1152,
+    1432,
+    [
+     768
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1152,
+    1422,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 12,
+     "eo": 1,
+     "es": 2,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 0,
+     "inside": 0,
+     "m": 2,
+     "n": 14,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 2,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1152_1448_1280_0",
+   "leaf": [
+    0,
+    1152,
+    1448,
+    [
+     1280
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1152,
+    1422,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 13,
+     "eo": 1,
+     "es": 3,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 0,
+     "inside": 0,
+     "m": 2,
+     "n": 14,
+     "pa0": 1,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 1,
+     "pzero": 2,
+     "q": 49,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1248_908_384_0",
+   "leaf": [
+    0,
+    1248,
+    908,
+    [
+     384
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1248,
+    910,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 12,
+     "eo": 1,
+     "es": 2,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 0,
+     "inside": 0,
+     "m": 2,
+     "n": 14,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 2,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1248_918_704_0",
+   "leaf": [
+    0,
+    1248,
+    918,
+    [
+     704
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1248,
+    910,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 12,
+     "eo": 1,
+     "es": 2,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 1,
+     "inside": 0,
+     "m": 2,
+     "n": 12,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 2,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1248_939_1376_1",
+   "leaf": [
+    0,
+    1248,
+    939,
+    [
+     1376
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1248,
+    935,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 13,
+     "eo": 1,
+     "es": 3,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 1,
+     "inside": 0,
+     "m": 2,
+     "n": 27,
+     "pa0": 1,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 1,
+     "pzero": 2,
+     "q": 40,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1248_970_320_1",
+   "leaf": [
+    0,
+    1248,
+    970,
+    [
+     320
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1248,
+    980,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 13,
+     "eo": 1,
+     "es": 3,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 1,
+     "inside": 0,
+     "m": 2,
+     "n": 27,
+     "pa0": 1,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 1,
+     "pzero": 2,
+     "q": 64,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1248_1005_1440_1",
+   "leaf": [
+    0,
+    1248,
+    1005,
+    [
+     1440
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1248,
+    980,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 12,
+     "eo": 1,
+     "es": 2,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 0,
+     "inside": 0,
+     "m": 2,
+     "n": 19,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 2,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1248_1321_1312_0",
+   "leaf": [
+    0,
+    1248,
+    1321,
+    [
+     1312
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1248,
+    1313,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 13,
+     "eo": 1,
+     "es": 3,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 1,
+     "inside": 0,
+     "m": 2,
+     "n": 42,
+     "pa0": 1,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 1,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1248_1443_1120_1",
+   "leaf": [
+    0,
+    1248,
+    1443,
+    [
+     1120
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1248,
+    1444,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 13,
+     "eo": 1,
+     "es": 3,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 1,
+     "inside": 0,
+     "m": 2,
+     "n": 42,
+     "pa0": 1,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 1,
+     "pzero": 2,
+     "q": 59,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1248_1456_1536_1",
+   "leaf": [
+    0,
+    1248,
+    1456,
+    [
+     1536
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1248,
+    1444,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 13,
+     "eo": 1,
+     "es": 3,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 0,
+     "inside": 0,
+     "m": 2,
+     "n": 24,
+     "pa0": 1,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 1,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1248_1625_800_0",
+   "leaf": [
+    0,
+    1248,
+    1625,
+    [
+     800
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1248,
+    1608,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 14,
+     "eo": 1,
+     "es": 4,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 14,
+     "inside": 0,
+     "m": 2,
+     "n": 10,
+     "pa0": 1,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 1,
+     "pzero": 2,
+     "q": 51,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1248_1644_1408_14",
+   "leaf": [
+    0,
+    1248,
+    1644,
+    [
+     1408
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1248,
+    1642,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 13,
+     "eo": 1,
+     "es": 3,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 3,
+     "inside": 0,
+     "m": 2,
+     "n": 36,
+     "pa0": 1,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 1,
+     "pzero": 2,
+     "q": 47,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1268_1152_20_3",
+   "leaf": [
+    0,
+    1268,
+    1152,
+    [
+     20
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1257,
+    1152,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 12,
+     "eo": 1,
+     "es": 2,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 1,
+     "inside": 0,
+     "m": 2,
+     "n": 8,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 2,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1323_1686_715_2",
+   "leaf": [
+    0,
+    1323,
+    1686,
+    [
+     715
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1323,
+    1675,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-a-2"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 12,
+     "eo": 1,
+     "es": 2,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 0,
+     "inside": 0,
+     "m": 2,
+     "n": 4,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 2,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "own",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1645_1269_1709_0",
+   "leaf": [
+    0,
+    1645,
+    1269,
+    [
+     1709
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1645,
+    1269,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 1,
+     "ee": 16,
+     "eo": 1,
+     "es": 6,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 7,
+     "inside": 0,
+     "m": 2,
+     "n": 9,
+     "pa0": 2,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 0,
+     "pzero": 2,
+     "q": 26,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1695_700_1951_7",
+   "leaf": [
+    0,
+    1695,
+    700,
+    [
+     1951
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1695,
+    699,
+    0,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [],
+   "dv_assign_calls": [
+    {
+     "a2": 0,
+     "cx": 1,
+     "ee": 12,
+     "eo": 1,
+     "es": 2,
+     "faces": 5,
+     "fleft": 2,
+     "fpos": 4,
+     "i": 6105,
+     "inside": 0,
+     "m": 2,
+     "n": 6,
+     "nrec": 0,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 2,
+     "pq3": 2,
+     "ptype": 1,
+     "pzero": 2,
+     "q": 2,
+     "rec": 0,
+     "ret": 0,
+     "source_kind": "own",
+     "sub": 3,
+     "whole": 0
+    }
+   ],
+   "gid": "0_1738_570_1866.3_2160",
+   "leaf": [
+    0,
+    1738,
+    570,
+    [
+     1866,
+     3
+    ]
+   ],
+   "n_calls": 0,
+   "producer": [
+    1738,
+    570,
+    6105,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-4-b-1"
+  },
+  {
+   "calls": [
+    {
+     "a2": 0,
+     "c": 2,
+     "cx": 2,
+     "ee": 8,
+     "eo": 1,
+     "es": 2,
+     "faces": 3,
+     "fleft": 1,
+     "fpos": 2,
+     "i": 172,
+     "inside": 0,
+     "m": 1,
+     "n": 7,
+     "pa0": 0,
+     "path": 1,
+     "path_name": "eo_faces",
+     "pieces": 1,
+     "pq3": 1,
+     "pzero": 1,
+     "q": 2,
+     "rec": 0,
+     "source_kind": "routed",
+     "whole": 0
+    }
+   ],
+   "dv_assign_calls": [],
+   "gid": "0_1750_594_598_171",
+   "leaf": [
+    0,
+    1750,
+    594,
+    [
+     598
+    ]
+   ],
+   "n_calls": 1,
+   "producer": [
+    1751,
+    594,
+    16,
+    288
+   ],
+   "records_from_producer": 0,
+   "row": "R-G5-1-b"
+  }
+ ],
+ "patch": "p8_source_removed/stage_d35b565.patch",
+ "path_names": {
+  "-1": "early_return",
+  "1": "eo_faces",
+  "2": "inside",
+  "3": "open",
+  "4": "whole",
+  "5": "m0_fill_test",
+  "6": "legacy_chain_walk"
+ }
+}

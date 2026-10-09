@@ -28,8 +28,8 @@ Seat: Codex on codyh-ubuntu (master direct). Draft re-copied from `/workspace/ma
 - **H1 (wrong producer): false for 23/23.** The sidecar emitter of each group's 013586b5 shape is the recorded producer (21 routed, 2 own; R-G5-1-b's is routed from (1751,594)). Independently, the producer's 33006aa clip reproduces the shape's bytes, and it is the only same-type ring of Moore(8) ∪ FarHomes whose 33006aa clip does (plan-46 unique-byte scan, 1 hit each). The 113 RC3/RC4 rows (groups at (1152,1401), (1152,1448), (1248,1005), (1248,1625), (1738,570) 1866.3) were checked the same way; none is H1.
 - **d35b565 clip:** the producer's d35b565 clip into the leaf writes 0 bytes for 23/23 (reproduces `clip_size_d35b565` 0).
 - **H5 (extract defect): false for 23/23.** All 17 producer homes reproduce their spool cell ring-for-ring (6,608 rings, type and coordinates equal, PBF order = spool order). Each producer ring equals its OSM way's node coordinates plus the extractor's ring closure, and its type 288 is the documented level-0 mapping (the first matching `bg_type.json` rule is rule 11, the catch-all `{}` → 288).
-- **Finding for Design and Cody (not a fix; F6 / kind-order stays Cody-held):** all 17 producers are **open** OSM ways (first node ≠ last node) that `osm_to_parcel_geometry.py` closes into polygon rings (`ring.append(ring[0])` for any non-road way with ≥3 coordinates) and maps through the level-0 catch-all to type 288. Their tags: 6 ways only `source:geometry=PSMA_Admin_Boundaries`, 2 only `source=CAPAD 2016 - Terrestrial`, 7 with no tags at all, 1 `barrier=fence`, 1 `natural=tree_row`. 14 of 17 rings self-intersect once closed. These are linear features or bare relation members, not areas.
-- **Piece geometry:** every 013586b5 shape is a large frame-hugging polygon: it covers 3 %–100 % of its leaf rect (R-G5-1-b: the whole rect, all 134 vertices on the frame), while the producer ring's exact even-odd region inside the leaf is 0.9–498 raw units² (Phase 2 `classify.json`). Producer rings have 0–4 vertices inside the leaf rect.
+- **Finding for Design and Cody (not a fix; F6 / kind-order stays Cody-held):** all 17 producers are **open** OSM ways (first node ≠ last node) that `osm_to_parcel_geometry.py` closes into polygon rings (`ring.append(ring[0])` for any non-road way with ≥3 coordinates) and maps through the level-0 catch-all to type 288. Their tags: 5 ways only `source:geometry=PSMA_Admin_Boundaries`, 2 only `source=CAPAD 2016 - Terrestrial`, 8 with no tags at all, 1 `barrier=fence`, 1 `natural=tree_row`. 16 of 17 rings self-intersect once closed. These are linear features or bare relation members, not areas.
+- **Piece geometry:** every 013586b5 shape is a large frame-hugging polygon: it covers 3 %–100 % of its leaf rect (R-G5-1-b: the whole rect, all 134 vertices on the frame), while the producer ring's exact even-odd region inside the leaf is 0.9–497 raw units² (Phase 2 `classify.json`). Producer rings have 0–4 vertices inside the leaf rect.
 - **Footprints:** R has **no** type-288 record covering any part of any group's footprint. 013586b5 covers it fully by construction; 4ed9cd80 / 0c22b266 cover 3 %–100 % of it with other type-288 records. Records meeting each footprint on all four discs (type, class, leaf, wire sha) are in `trace.json`.
 
 | Group (leaf, shape) | Row | Rows | Producer | Sidecar emitter | 33006aa clip → shape bytes | d35b565 clip | Shape: on-frame W/E/S/N, off | Shape area / rect | Ring n, verts in rect, self-x | OSM way (closed?) tags | R / 4ed9 / 0c22 same-type cover of footprint |
@@ -65,6 +65,67 @@ Seat: Codex on codyh-ubuntu (master direct). Draft re-copied from `/workspace/ma
 3. Worktrees: `../open-pajero-maps-64-33006aa` removed (`git worktree remove` + `prune`); `git worktree list` has no `64-33006aa`. (`../open-pajero-maps-64-d35b565` is Phase 2's and is removed in its receipt.)
 4. Temp dirs and scopes: the run temp dirs lived under `p1/tmp` (deleted with `p1/`); 0 `/tmp/p64_*`; 0 `maps-heavy` scopes.
 5. Peaks copied to the ledger before deleting the wrapper logs: re-extract max RSS 4,264,296 KiB / memory.peak 4.57 GB, 390 s; trace analyze 3,894,272 KiB / 0.40 GB, 43.5 s; final p1ab run 4,274,144 KiB / 4.68 GB, 425.5 s.
+6. `df -h /home`: 11 G free (97 %).
+
+## Phase 2: empty-clip cause decided — DONE
+
+### Refine: hook point (fixed before the run)
+
+- `p8_source_removed/stage_d35b565.patch` (vs `d35b565`, `7395df53…`) = plan 63's sidecar (applies unchanged) + per-`bg_shape` stage counters (`_cenc.c` TLS `KwSt`, reset at entry): ring points, inside, clipped chains, whole, `eo_clip` result and the reason the EO arrangement ran, clipped / atomic edges, faces walked, faces with positive area, faces judged interior (`eo_left`) and sent to `emit_piece`, pieces dropped at round/clean split by line (fewer than 3 lattice points `_cenc.c:586`, zero lattice area `_cenc.c:592`), records written, legacy path taken.
+- `enc_bg` appends one entry per class>0 input background (`SW` / `SP` lines next to the sidecar's `W` / `P`, same frame hash). Divided leaves: `_e2.c` `dv_bg_cells` pushes a parent background onto a sub-cell only if its clip there writes a record (`_e2.c:647` at d35b565), so that assignment clip is logged too (`SD` lines). Logging only; gate below.
+- Tool: `stage.py` (build / analyze). Classifier: `classify.py` (H1–H5 per group; commits `classify.json`).
+
+### Outcome
+
+- **Gate (output neutrality):** 23 single-cell windows from a throwaway `d35b565` worktree with the patch: 26/26 window frames byte-equal to a 4ed9cd80 leaf of their cell, 0 unmatched 4ed9cd80 leaves (`stage.json`, `ccd57f1e…`).
+- **Stage trace (23/23 groups, each its own call):** the producer ring reaches `bg_shape` for its leaf (22 via `enc_bg`; (1738,570) 1866.3 via the `dv_bg_cells` assignment clip of sub-cell 3, which is why that ring is never in the sub-cell's list). In every call:
+  1. clip: chains exist (the ring does enter the leaf);
+  2. `eo_clip` takes the EO arrangement path (`_cenc.c:940`): 22 because two clipped segments properly cross (`:803`; the extractor-closed open way self-intersects), R-G5-1-b because a chain is not locally CCW (`:806`);
+  3. the arrangement walks 5 faces (R-G5-1-b 3); the faces judged interior to the ring (`:889`) are 2 (R-G5-1-b 1). The large frame-bounded faces are judged exterior. These are the faces the 33006aa legacy chain walk emitted as its frame-hugging piece;
+  4. **first empty stage: `emit_piece` round/clean.** Every interior face is a sub-unit sliver. After densify and `rint` it has fewer than 3 distinct lattice points (`_cenc.c:586`) or zero lattice area (`:592`), so 0 records are written.
+- **Why the 33006aa record is an artefact:** the producer's exact even-odd region inside the leaf is 0.9–497 raw units². The 013586b5 shape it produced is 1,935× to 9,007,839× larger (R-G5-1-b: the whole 4096² leaf from a 5.8 unit² sliver). That is the legacy chain walk closing a sliver chain the long way round the frame.
+- **R comparison (mandatory):** R has **0 type-288 polygons anywhere in each of the 23 leaf cells** (parent-raw decode of every R leaf of the cell), so R has no coverage of either the exact region or the 013586b5 footprint. 4ed9cd80 has 1–2,275 type-288 polygons meeting each leaf rect, all from other producers (R-G5-6 / F6 territory, not this plan's).
+- **Verdict per group (classifier, each on its own evidence): H3 for 23/23.** H1 false, H5 false (Phase 1). The 013586b5 record is a legacy artefact (ratio ≥ 100×). d35b565 removes it at a named step that drops only sub-lattice slivers. R has no such coverage either. H2 is not supported: the stage trace names no defect, since EO picks the ring's own interior faces and only lattice rounding empties them. H4 is not needed.
+
+  | Row | Groups | Rows | Verdict |
+  | --- | ---: | ---: | --- |
+  | R-G5-1-b | 1 | 50 | H3 |
+  | R-G5-4-a-2 | 1 | 32 | H3 |
+  | R-G5-4-b-1 | 21 | 545 | H3 |
+
+| Group (leaf, shape) | Row | Rows | d35b565 call | EO trigger | faces / pos-area / interior | pieces dropped: <3 pts (:586) / zero area (:592) | records | exact in-leaf region (raw²) | 013586b5 shape / region | R same-type polygons in cell | 4ed9 same-type in leaf | Verdict |
+| --- | --- | ---: | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| (808,1121) 1064 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 1 / 1 | 0 | 66.0308 | 31,674.7× | 0 | 5 | **H3** |
+| (1059,1248) 1027 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 2 / 0 | 0 | 15.7726 | 34,830.1× | 0 | 1 | **H3** |
+| (1109,1181) 949 | R-G5-4-b-1 | 17 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 2 / 0 | 0 | 496.6567 | 10,526.7× | 0 | 1 | **H3** |
+| (1152,1401) 1824 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 2 / 0 | 0 | 1.0567 | 7,609,613.3× | 0 | 1 | **H3** |
+| (1152,1417) 288 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 2 / 0 | 0 | 1.0354 | 7,767,433.4× | 0 | 1 | **H3** |
+| (1152,1432) 768 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 2 / 0 | 0 | 1.2686 | 6,339,784.8× | 0 | 2 | **H3** |
+| (1152,1448) 1280 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 2 / 0 | 0 | 0.8928 | 9,007,839.1× | 0 | 1 | **H3** |
+| (1248,908) 384 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 1 / 1 | 0 | 4.591 | 112,197.8× | 0 | 1 | **H3** |
+| (1248,918) 704 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 2 / 0 | 0 | 5.7478 | 89,605.7× | 0 | 1 | **H3** |
+| (1248,939) 1376 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 2 / 0 | 0 | 7.3157 | 70,198.9× | 0 | 2 | **H3** |
+| (1248,970) 320 | R-G5-4-b-1 | 26 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 1 / 1 | 0 | 4.5643 | 111,835.3× | 0 | 2 | **H3** |
+| (1248,1005) 1440 | R-G5-4-b-1 | 28 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 1 / 1 | 0 | 3.5101 | 144,697.1× | 0 | 2 | **H3** |
+| (1248,1321) 1312 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 2 / 0 | 0 | 5.622 | 1,466,758.9× | 0 | 1 | **H3** |
+| (1248,1443) 1120 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 1 / 1 | 0 | 197.7695 | 41,735.8× | 0 | 1 | **H3** |
+| (1248,1456) 1536 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 1 / 1 | 0 | 7.6684 | 1,076,485.1× | 0 | 1 | **H3** |
+| (1248,1625) 800 | R-G5-4-b-1 | 5 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 1 / 1 | 0 | 4.4977 | 1,837,605.1× | 0 | 8 | **H3** |
+| (1248,1644) 1408 | R-G5-4-b-1 | 1 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 1 / 1 | 0 | 3.4365 | 2,405,375.8× | 0 | 26 | **H3** |
+| (1268,1152) 20 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 1 / 1 | 0 | 295.4396 | 1,935.3× | 0 | 1 | **H3** |
+| (1323,1686) 715 | R-G5-4-a-2 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 2 / 0 | 0 | 1.459 | 4,050,508.6× | 0 | 2 | **H3** |
+| (1645,1269) 1709 | R-G5-4-b-1 | 32 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 2 / 0 | 0 | 1.8489 | 7,697,741.2× | 0 | 3 | **H3** |
+| (1695,700) 1951 | R-G5-4-b-1 | 4 | enc_bg bg_shape, eo_faces | proper crossing | 5 / 4 / 2 | 0 / 2 | 0 | 12.5069 | 60,503.2× | 0 | 5 | **H3** |
+| (1738,570) 1866.3 | R-G5-4-b-1 | 16 | dv_bg_cells assignment clip, eo_faces | proper crossing | 5 / 4 / 2 | 2 / 0 | 0 | 2.1421 | 1,939,642.8× | 0 | 2275 | **H3** |
+| (1750,594) 598 | R-G5-1-b | 50 | enc_bg bg_shape, eo_faces | chain not locally CCW | 3 / 2 / 1 | 1 / 0 | 0 | 5.7873 | 2,898,959.1× | 0 | 140 | **H3** |
+
+### Phase 2 scratch receipt
+
+1. `du -sb output/scratch-64`: before 3,533,979 B (`p2/`: 23 stage windows, stage / classify outputs, wrapper logs, run scripts; empty `tmp/`). After: `output/scratch-64` gone (`test ! -e`).
+2. Kept, all committed: `stage.json` (`ccd57f1e…`), `classify.json` (`1ffb9e0c…`), `stage.py` (`b0250061…`), `classify.py` (`d4cacf14…`), `stage_d35b565.patch` (`7395df53…`), ledger row. No `keep/`.
+3. Worktrees: `../open-pajero-maps-64-d35b565` removed (`git worktree remove` + `prune`); `git worktree list` has no plan-64 worktree.
+4. Temp dirs and scopes: run temp dirs lived under `p2/tmp` (removed by atexit, then deleted with `p2/`); 0 `/tmp/p64_*`; 0 `maps-heavy` scopes.
+5. Peaks copied to the ledger first: final stage + classify run max RSS 3,897,480 KiB / memory.peak 0.35 GB, 45.3 s (windows 25 s, FarHomes L0 in classify); first stage run 1,106,504 KiB / 0.31 GB, 30.3 s.
 6. `df -h /home`: 11 G free (97 %).
 
 ### R-G5-1-b early read (pre-revision, exploratory; superseded by the outcome above)
