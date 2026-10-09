@@ -4,7 +4,7 @@ Seat: Codex on codyh-ubuntu (master direct). Draft re-copied fresh from the box 
 
 Hard stop: Phase 4 gate summary → report for Design accept before any oracle promotion.
 
-## Phase 1 — R-side truth on a committed sample; R-G5-4-a-1 (in progress)
+## Phase 1 — R-side truth on a committed sample; R-G5-4-a-1 (CLOSED 2026-10-09 17:21 AEST)
 
 ### Refine (fixed before any R read)
 
@@ -44,6 +44,38 @@ Seat note: CHM 15:54 — Codex at its 5 h limit until 17:14; any new harness sea
 - **R-G5-4-a-1** (`a1.py`; 4 single-cell `33006aa` sidecar windows from the spool of record; runs A/B identical): gate 4/4 frames byte-equal to 013586b5, 0 unmatched; all 8 groups: copies emitted by the two plan-62 tie candidates, one each (distinct), plan-63 rule order holds, decide verdict under the proven producer of the group's shape = build → **222 rows / 8 groups build:eo_bg_stitch**. (1176,1591) agrees with plan 63's `provenance.tsv.gz`.
 - Peaks: p1c max RSS 3,742,280 KiB / memory.peak 4.73 GB, 346 s; p1d (a1) within 1.06 GB.
 
-### P1d — D-class census (in progress)
+### P1d — D-class census (done 17:12 AEST)
 
 - First Perth run stopped by pid after ~10 min (no output): a 48×48 grid containment test costs ~10 s per dense urban leaf (1,800+ type-288 records, thousands of nested pairs). Definitions revised **before any measuring run completed** (tool probes only): D-contain by a vertex criterion, grid (24×24) only for the overlap area. See `dclass.py` docstring.
+- Runs: Perth G alone (`dclass_perth`, 317 s, max RSS 488,124 KiB); then p1e = R (`--whole`) + AU G (`0c22b266`) at `-j4`, 2,003 s, max RSS 1,583,952 KiB, memory.peak 4.59 GB (incl. file pages). D-class pairs (class>0, same type, different bytes, one leaf frame):
+
+| disc | leaves | leaves with a D pair | D-contain | D-overlap | D-rot |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| G AU `0c22b266` | 3,954,165 | 377,083 | 17,769,567 | 1,087,605 | 2,205 |
+| G Perth `5b86d33e` | 1,949 | 1,571 | 1,480,848 | 35,692 | 113 |
+| R `8c2d2027` (whole frames) | 482,473 | 14,657 | 5,500 | 40,888 | 9 |
+
+- G AU by type: L0/288 carries 17,569,839 contain + 996,128 overlap + 2,190 rot (98.9 %); R has **no type-288 D pair at any level**. Next: L0/291 G 135,069 / 66,195 vs R 1,611 / 21,250; L0/321 G 41,781 / 6,999 vs R 402 / 78; L0/578 G 11,603 / 15,729 vs R 48 / 292. Per level / type counts in `dclass_{au,perth,R}.json`, first 20,000 example rows per class in the tsv.gz.
+- **Reading:** G's D-classes exceed R by orders of magnitude and are concentrated in type 288 (the F6 catch-all→288 type, Cody-held, out of scope here). No D-class RC is attempted in this plan: Phase 2's D-class RC requirement is routed to Design with the Phase 2 stop below.
+
+### P1 artefacts (committed, `p10_bg_dedup/`)
+
+- `r_correspondence.{tsv.gz,json}` (sample, run A; `fe38eabb…`, run B byte-identical); `r_correspondence_national.{tsv.gz,json}` (`867e12ce…`); `r_census.{tsv.gz,json}` (`c8ef0707…`, run B byte-identical); `a1_verdicts.json` (`3a307345…`, run B byte-identical); `dclass_{au,perth,R}.{json,tsv.gz}` (`d8b579f4…`, `375d42ca…`, `b7110e08…`); with P1a's census and `sample.json`.
+- `residuals.tsv`: R-G5-4-a-1 → discharged-plan-68 (222 rows / 8 groups build:eo_bg_stitch); R-G5-6 text corrected (R holds 486 duplicate classes; plan 63's R count was a reader artefact) and the correspondence / D-class results added; status unchanged (blocks-phase3, Design).
+- Ledger `docs/plans/56-cross-phase-rss-profile/ledger/bg_dedup_plan68.json` + SUMMARY rows.
+
+### P1 + P2 scratch receipt (17:20–17:21 AEST)
+
+- Before: `du -sb output/scratch-68` = 619,645,918 (sc_au 567,431,091; perth disc 31,538,911; sc_perth 16,722,922; outputs, logs, a1win). Worktrees `../open-pajero-maps-68-sidecar` (86,819,909 B, only the plan-63 sidecar patch applied) and `../open-pajero-maps-68-33006aa` (10,164,202 B, same).
+- Kept items verified `cmp`-equal to their committed copies before deletion (8 outputs + `rules.json`).
+- After: `output/scratch-68` gone (no `keep/`); both worktrees removed (`git worktree remove --force` + `prune`; `git worktree list` has no `68-` entry); `/tmp/p68*` probe scripts removed; no maps-heavy scope of mine; `TMPDIR` / `KW_SIDECAR_DIR` unset in my shell.
+- Untouched: `.heavy.lock`, `scratch-45` / `scratch-50` (spool overlay) / `scratch-53` (oracle discs), `extract_timing/spool`, R, `.venv-rp`, other plans' scratch and worktrees.
+- `df -h /home`: 324G size, 298G used, 9.5G avail (97 %).
+
+## Phase 2 — Dedup rule; D-class RCs (STOPPED for Design, 17:21 AEST)
+
+- `p10_bg_dedup/rules.py` → `rules.json` (`a4d3d4ae…`; run A == run B byte-identical; light, 33 MB RSS, 0.07 s; run without the wrapper because the heavy lock was held by other plans' jobs and this read of two committed tsv.gz files is not heavy work).
+- Candidates: keep-first, keep-last, keep-own-cell-first, merge-sources, drop-all. Design set = R-one-byte ∪ R-one-geom classes: **0 in derivation, 0 in holdout** (and 0 nationally among the 2,164 framing-equal classes). No rule can reach "100 % on derivation and holdout" on an empty set, so none is accepted.
+- Measured only (not an acceptance): on the comparable set (R-absent + R-merged + R-other), drop-all matches R in 125/135 derivation and 141/149 holdout classes (R-absent); merge-sources 1/135 and 0/149; keep-* 0.
+- **Outcome: "no rule accepted" — the plan stops for Design** (Phase 2 outcome text). D-class RCs not attempted (see P1d reading). Phase 3/4 not started; no encoder change, no oracle change.
+

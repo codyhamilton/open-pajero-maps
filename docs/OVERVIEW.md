@@ -82,8 +82,7 @@ and the proven part of R-G5-1 / R-G5-2 (4,214 rows build:eo_bg_stitch).
 
 | Owner | Rows | Status |
 | --- | --- | --- |
-| Design (plan **62** child) → Design draft **68** Phase 1 (R-G5-4-a-1) | R-G5-4-a-1 (222 producer_ambiguous) | Plan 62 re-decided the plan-44/45 R01 residual under the plan-46 producer: parents R-G5-4-a/b/c discharged (6,597 more rows proven-fixed, RC-attributed); plan 64 discharged R-G5-4-a-2 / R-G5-4-b-1 (577 rows H3); no waiver |
-| Design (plan **63** new row) | R-G5-6 (duplicate-emission parity: G 336,329 leaves with byte-identical same-type duplicates, R 0) | Named deviation from R with mechanism; not fixed by plan 63 |
+| Design (plan **63** new row; plan **68** stopped at Phase 2 for Design) | R-G5-6 (duplicate-emission parity: live G 336,135 leaves / 338,565 classes with byte-identical same-type duplicates; R 258 leaves / 486 classes, corrected by plan 68) | Plan 68 P2: no dedup rule accepted (0 R-one-copy classes where R is comparable; R mostly absent or another type); D-classes G ≫ R, mostly type 288. Awaits Design. R-G5-4-a-1 discharged by plan 68 P1 (222 build) |
 | Cody via Design (no waiver) | R-G8-1-a | Budget basis (with R-G9-4) |
 
 **`maps-parity-carried` ownership** (not Phase 3 product-close blockers — but **carried is

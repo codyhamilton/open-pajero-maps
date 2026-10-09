@@ -1,0 +1,39 @@
+{
+ "alias_geom_class": {},
+ "alias_position": {},
+ "by_class": {
+  "R-absent/no_type_in_cell": 522,
+  "R-absent/type_elsewhere_in_cell": 19,
+  "R-merged": 1,
+  "R-noncomparable/type-set": 1609,
+  "R-other/near_same_type": 13
+ },
+ "by_split_class": {
+  "national/R-absent": 541,
+  "national/R-merged": 1,
+  "national/R-noncomparable": 1609,
+  "national/R-other": 13
+ },
+ "by_stratum_class": {
+  "national/R-absent": 541,
+  "national/R-merged": 1,
+  "national/R-noncomparable": 1609,
+  "national/R-other": 13
+ },
+ "framing_equal": {
+  "R-absent/True": 541,
+  "R-merged/True": 1,
+  "R-noncomparable/True": 1609,
+  "R-other/True": 13
+ },
+ "n": 2164,
+ "position": {},
+ "prefilter": {
+  "frame_differs": 1852,
+  "framing_equal": 2164,
+  "r_alias": 334466,
+  "r_no_leaf": 83
+ },
+ "sample_sha256": "7104c69dfa40561356f18e35c939a493f690e0d5350fd4248ae647e208db610e",
+ "wall_s": 143.7
+}

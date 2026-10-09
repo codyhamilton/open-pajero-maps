@@ -1,0 +1,85 @@
+{
+ "by_level_code": {
+  "0/291": 197,
+  "0/321": 9,
+  "0/640": 45,
+  "2/291": 189,
+  "2/321": 13,
+  "2/640": 26,
+  "4/321": 5,
+  "6/321": 2
+ },
+ "levels": {
+  "0": {
+   "dup_classes": 251,
+   "extra_copies": 251,
+   "frames_trunc_lost_records": 217747,
+   "leaves": 235371,
+   "leaves_with_dup": 135,
+   "records_full": 638852,
+   "records_full_cls>0": 638852,
+   "records_trunc": 0
+  },
+  "10": {
+   "frames_trunc_lost_records": 6,
+   "leaves": 9,
+   "records_full": 25,
+   "records_full_cls>0": 25,
+   "records_trunc": 0
+  },
+  "12": {
+   "frames_trunc_lost_records": 1,
+   "leaves": 1,
+   "records_full": 25,
+   "records_full_cls>0": 25,
+   "records_trunc": 0
+  },
+  "2": {
+   "dup_classes": 228,
+   "extra_copies": 228,
+   "frames_trunc_lost_records": 213827,
+   "leaves": 231564,
+   "leaves_with_dup": 117,
+   "records_full": 584318,
+   "records_full_cls>0": 584318,
+   "records_trunc": 0
+  },
+  "4": {
+   "dup_classes": 5,
+   "extra_copies": 5,
+   "frames_trunc_lost_records": 13907,
+   "leaves": 14511,
+   "leaves_with_dup": 4,
+   "records_full": 59760,
+   "records_full_cls>0": 59760,
+   "records_trunc": 0
+  },
+  "6": {
+   "dup_classes": 2,
+   "extra_copies": 2,
+   "frames_trunc_lost_records": 939,
+   "leaves": 939,
+   "leaves_with_dup": 2,
+   "records_full": 19700,
+   "records_full_cls>0": 19700,
+   "records_trunc": 0
+  },
+  "8": {
+   "frames_trunc_lost_records": 78,
+   "leaves": 78,
+   "records_full": 12520,
+   "records_full_cls>0": 12520,
+   "records_trunc": 0
+  }
+ },
+ "total": {
+  "dup_classes": 486,
+  "extra_copies": 486,
+  "frames_trunc_lost_records": 446505,
+  "leaves": 482473,
+  "leaves_with_dup": 258,
+  "records_full": 1315200,
+  "records_full_cls>0": 1315200
+ },
+ "wall_s": 38.2
+}

@@ -1,0 +1,140 @@
+{
+ "accepted": null,
+ "inputs": {
+  "national_corr_sha256": "867e12ce7f7c1bc51816d5c8d4059d6c58c58f613c55db749f4d02596b5b560a",
+  "sample_corr_sha256": "fe38eabb4711a2d0a35e2ccc40ce0791b5db312ab8aeee432b67a551dd1ec2cf"
+ },
+ "national_framing_equal_classes": {
+  "R-absent": 541,
+  "R-merged": 1,
+  "R-noncomparable": 1609,
+  "R-other": 13
+ },
+ "outcome": "no rule accepted (stop for Design)",
+ "rules": {
+  "drop-all": {
+   "accepted": false,
+   "pass_100_design": false,
+   "scores": {
+    "comparable/derivation": [
+     125,
+     135
+    ],
+    "comparable/holdout": [
+     141,
+     149
+    ],
+    "design/derivation": [
+     0,
+     0
+    ],
+    "design/holdout": [
+     0,
+     0
+    ]
+   },
+   "why_not": "design set empty (0 R-one-byte / R-one-geom classes)"
+  },
+  "keep-first": {
+   "accepted": false,
+   "pass_100_design": false,
+   "scores": {
+    "comparable/derivation": [
+     0,
+     135
+    ],
+    "comparable/holdout": [
+     0,
+     149
+    ],
+    "design/derivation": [
+     0,
+     0
+    ],
+    "design/holdout": [
+     0,
+     0
+    ]
+   },
+   "why_not": "design set empty (0 R-one-byte / R-one-geom classes)"
+  },
+  "keep-last": {
+   "accepted": false,
+   "pass_100_design": false,
+   "scores": {
+    "comparable/derivation": [
+     0,
+     135
+    ],
+    "comparable/holdout": [
+     0,
+     149
+    ],
+    "design/derivation": [
+     0,
+     0
+    ],
+    "design/holdout": [
+     0,
+     0
+    ]
+   },
+   "why_not": "design set empty (0 R-one-byte / R-one-geom classes)"
+  },
+  "keep-own-cell-first": {
+   "accepted": false,
+   "pass_100_design": false,
+   "scores": {
+    "comparable/derivation": [
+     0,
+     135
+    ],
+    "comparable/holdout": [
+     0,
+     149
+    ],
+    "design/derivation": [
+     0,
+     0
+    ],
+    "design/holdout": [
+     0,
+     0
+    ]
+   },
+   "why_not": "design set empty (0 R-one-byte / R-one-geom classes)"
+  },
+  "merge-sources": {
+   "accepted": false,
+   "pass_100_design": false,
+   "scores": {
+    "comparable/derivation": [
+     1,
+     135
+    ],
+    "comparable/holdout": [
+     0,
+     149
+    ],
+    "design/derivation": [
+     0,
+     0
+    ],
+    "design/holdout": [
+     0,
+     0
+    ]
+   },
+   "why_not": "design set empty (0 R-one-byte / R-one-geom classes)"
+  }
+ },
+ "sample_classes": {
+  "derivation/R-absent": 125,
+  "derivation/R-merged": 1,
+  "derivation/R-noncomparable": 1102,
+  "derivation/R-other": 9,
+  "holdout/R-absent": 141,
+  "holdout/R-noncomparable": 1086,
+  "holdout/R-other": 8
+ }
+}

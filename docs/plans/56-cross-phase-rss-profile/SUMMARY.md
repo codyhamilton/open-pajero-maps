@@ -27,6 +27,9 @@ Published for Design handoff to plans **57–59**. Measurement-only; no optim la
 | triage (plan 63) | P3 P2-reproduction + dup census R/0c22b266 + gate_repro (S′ opt-in) | wrapper max RSS 6.94 GiB (gate_repro) / 3.71 GiB (reproduction) | 6.34 GiB | — | dump_join/K1 classify; serial | — (post-56 addendum, `ledger/producer_tie_plan63.json`) |
 | triage (plan 64) | P1 PBF provenance re-extract (17 homes / 23 cells) + 23 sidecar windows at 33006aa + trace | wrapper max RSS 4.08 GiB (re-extract) / 3.71 GiB (trace) | 4.35 GiB (incl. file pages) | — | pyosmium flex_mem node index; FarHomes(L0); builds serial -j4 | — (post-56 addendum, `ledger/source_removed_plan64.json`) |
 | triage (plan 64) | P2 d35b565 stage windows (23) + stage trace + H1–H5 classifier | wrapper max RSS 3.72 GiB (classify, FarHomes) / 1.06 GiB (windows) | 0.35 GiB | — | FarHomes(L0); builds serial -j4 | — (post-56 addendum, `ledger/source_removed_plan64.json`) |
+| triage (plan 68) | P1a sidecar AU+Perth encodes (-j4) + national duplicate census | wrapper max RSS 3.41 GiB | 7.93 GiB (incl. file pages) | — | sidecar encode -j4 + census over all leaves | — (post-56 addendum, `ledger/bg_dedup_plan68.json`) |
+| triage (plan 68) | P1b–c R census + R correspondence (sample A+B, national) + R-G5-4-a-1 windows | wrapper max RSS 3.57 GiB (p1c) / 2.24 GiB (rcorr A) / 0.07 GiB (R census) | 4.41 GiB (incl. file pages) | — | R whole-frame reads; FarHomes(L0); windows serial -j4 | — (post-56 addendum, `ledger/bg_dedup_plan68.json`) |
+| triage (plan 68) | P1d D-class census Perth / R / AU (-j4) | wrapper max RSS 1.51 GiB (R+AU) / 0.47 GiB (Perth) | 4.27 GiB (incl. file pages) | — | Pool -j4 over blocks; vertex criterion + 24×24 overlap grid | — (post-56 addendum, `ledger/bg_dedup_plan68.json`) |
 
 Ledger JSON: `docs/plans/56-cross-phase-rss-profile/ledger/`. Wrapper logs: `output/scratch-56/runs/` (gitignored).
 

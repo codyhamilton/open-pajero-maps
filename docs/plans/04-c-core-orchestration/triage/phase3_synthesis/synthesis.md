@@ -152,3 +152,12 @@ clip of the proven producer is a sub-unit sliver dropped at `emit_piece`; R has 
 in each leaf cell), each group on its own evidence (`historical_bg/p8_source_removed/classify.json`).
 Finding for Design/Cody (not a fix): the 17 producers are open OSM ways closed and typed 288 by the
 extractor's level-0 catch-all. R-G5-4-a-1 (222) is carried by Design draft 68 Phase 1.
+
+**UPDATED by plan 68 (2026-10-09, stopped at Phase 2 for Design):** R-G5-4-a-1 (222) is
+discharged: in all 8 groups the two byte-identical copies are emitted one each by the two tie
+candidates (33006aa sidecar windows), plan 63's rule order holds, and the decide verdict is
+build:eo_bg_stitch (`historical_bg/p10_bg_dedup/a1_verdicts.json`). R-G5-6 corrected: R holds
+486 duplicate classes (plan 63's R count of 0 was a frame-length reader artefact). Where R is
+comparable it never holds exactly one copy of a G duplicate (0 R-one-* classes, sample and
+national), so no dedup rule is accepted (`rules.json`); R-G5-6 awaits Design.
+

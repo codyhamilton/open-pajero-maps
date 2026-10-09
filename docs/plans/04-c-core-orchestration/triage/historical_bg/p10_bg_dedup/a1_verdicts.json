@@ -1,0 +1,457 @@
+{
+ "gate1": {
+  "disc_leaf_unmatched": 0,
+  "frames_equal": 4,
+  "sidecar_frames": 4
+ },
+ "groups": [
+  {
+   "all_in_candidates": true,
+   "candidates": [
+    [
+     1178,
+     1588,
+     0
+    ],
+    [
+     1178,
+     1589,
+     0
+    ]
+   ],
+   "class": 2,
+   "code": 288,
+   "copies": [
+    1,
+    3
+   ],
+   "decide_under_producer": "build",
+   "distinct": true,
+   "emitters": [
+    [
+     "routed",
+     1178,
+     1588,
+     0
+    ],
+    [
+     "routed",
+     1178,
+     1589,
+     0
+    ]
+   ],
+   "leaf": [
+    0,
+    1176,
+    1591,
+    [
+     1784
+    ]
+   ],
+   "plan63_crosscheck": true,
+   "producer_of_shape": [
+    1178,
+    1588,
+    0
+   ],
+   "rows": 22,
+   "rule63_order": true,
+   "shape": 1,
+   "verdict": "build:eo_bg_stitch"
+  },
+  {
+   "all_in_candidates": true,
+   "candidates": [
+    [
+     1178,
+     1588,
+     0
+    ],
+    [
+     1178,
+     1589,
+     0
+    ]
+   ],
+   "class": 2,
+   "code": 288,
+   "copies": [
+    1,
+    3
+   ],
+   "decide_under_producer": "build",
+   "distinct": true,
+   "emitters": [
+    [
+     "routed",
+     1178,
+     1588,
+     0
+    ],
+    [
+     "routed",
+     1178,
+     1589,
+     0
+    ]
+   ],
+   "leaf": [
+    0,
+    1176,
+    1591,
+    [
+     1784
+    ]
+   ],
+   "plan63_crosscheck": true,
+   "producer_of_shape": [
+    1178,
+    1589,
+    0
+   ],
+   "rows": 22,
+   "rule63_order": true,
+   "shape": 3,
+   "verdict": "build:eo_bg_stitch"
+  },
+  {
+   "all_in_candidates": true,
+   "candidates": [
+    [
+     1665,
+     559,
+     0
+    ],
+    [
+     1665,
+     559,
+     1
+    ]
+   ],
+   "class": 2,
+   "code": 288,
+   "copies": [
+    6,
+    8
+   ],
+   "decide_under_producer": "build",
+   "distinct": true,
+   "emitters": [
+    [
+     "routed",
+     1665,
+     559,
+     0
+    ],
+    [
+     "routed",
+     1665,
+     559,
+     1
+    ]
+   ],
+   "leaf": [
+    0,
+    1664,
+    560,
+    [
+     1536
+    ]
+   ],
+   "plan63_crosscheck": null,
+   "producer_of_shape": [
+    1665,
+    559,
+    0
+   ],
+   "rows": 25,
+   "rule63_order": true,
+   "shape": 6,
+   "verdict": "build:eo_bg_stitch"
+  },
+  {
+   "all_in_candidates": true,
+   "candidates": [
+    [
+     1665,
+     559,
+     0
+    ],
+    [
+     1665,
+     559,
+     1
+    ]
+   ],
+   "class": 2,
+   "code": 288,
+   "copies": [
+    6,
+    8
+   ],
+   "decide_under_producer": "build",
+   "distinct": true,
+   "emitters": [
+    [
+     "routed",
+     1665,
+     559,
+     0
+    ],
+    [
+     "routed",
+     1665,
+     559,
+     1
+    ]
+   ],
+   "leaf": [
+    0,
+    1664,
+    560,
+    [
+     1536
+    ]
+   ],
+   "plan63_crosscheck": null,
+   "producer_of_shape": [
+    1665,
+    559,
+    1
+   ],
+   "rows": 25,
+   "rule63_order": true,
+   "shape": 8,
+   "verdict": "build:eo_bg_stitch"
+  },
+  {
+   "all_in_candidates": true,
+   "candidates": [
+    [
+     1693,
+     1784,
+     0
+    ],
+    [
+     1693,
+     1784,
+     1
+    ]
+   ],
+   "class": 2,
+   "code": 288,
+   "copies": [
+    1,
+    3
+   ],
+   "decide_under_producer": "build",
+   "distinct": true,
+   "emitters": [
+    [
+     "routed",
+     1693,
+     1784,
+     0
+    ],
+    [
+     "routed",
+     1693,
+     1784,
+     1
+    ]
+   ],
+   "leaf": [
+    0,
+    1694,
+    1781,
+    [
+     1726
+    ]
+   ],
+   "plan63_crosscheck": null,
+   "producer_of_shape": [
+    1693,
+    1784,
+    0
+   ],
+   "rows": 32,
+   "rule63_order": true,
+   "shape": 1,
+   "verdict": "build:eo_bg_stitch"
+  },
+  {
+   "all_in_candidates": true,
+   "candidates": [
+    [
+     1693,
+     1784,
+     0
+    ],
+    [
+     1693,
+     1784,
+     1
+    ]
+   ],
+   "class": 2,
+   "code": 288,
+   "copies": [
+    1,
+    3
+   ],
+   "decide_under_producer": "build",
+   "distinct": true,
+   "emitters": [
+    [
+     "routed",
+     1693,
+     1784,
+     0
+    ],
+    [
+     "routed",
+     1693,
+     1784,
+     1
+    ]
+   ],
+   "leaf": [
+    0,
+    1694,
+    1781,
+    [
+     1726
+    ]
+   ],
+   "plan63_crosscheck": null,
+   "producer_of_shape": [
+    1693,
+    1784,
+    1
+   ],
+   "rows": 32,
+   "rule63_order": true,
+   "shape": 3,
+   "verdict": "build:eo_bg_stitch"
+  },
+  {
+   "all_in_candidates": true,
+   "candidates": [
+    [
+     1759,
+     1514,
+     0
+    ],
+    [
+     1759,
+     1514,
+     2
+    ]
+   ],
+   "class": 2,
+   "code": 288,
+   "copies": [
+    5,
+    8
+   ],
+   "decide_under_producer": "build",
+   "distinct": true,
+   "emitters": [
+    [
+     "routed",
+     1759,
+     1514,
+     0
+    ],
+    [
+     "routed",
+     1759,
+     1514,
+     2
+    ]
+   ],
+   "leaf": [
+    0,
+    1759,
+    1513,
+    [
+     1343
+    ]
+   ],
+   "plan63_crosscheck": null,
+   "producer_of_shape": [
+    1759,
+    1514,
+    0
+   ],
+   "rows": 32,
+   "rule63_order": true,
+   "shape": 5,
+   "verdict": "build:eo_bg_stitch"
+  },
+  {
+   "all_in_candidates": true,
+   "candidates": [
+    [
+     1759,
+     1514,
+     0
+    ],
+    [
+     1759,
+     1514,
+     2
+    ]
+   ],
+   "class": 2,
+   "code": 288,
+   "copies": [
+    5,
+    8
+   ],
+   "decide_under_producer": "build",
+   "distinct": true,
+   "emitters": [
+    [
+     "routed",
+     1759,
+     1514,
+     0
+    ],
+    [
+     "routed",
+     1759,
+     1514,
+     2
+    ]
+   ],
+   "leaf": [
+    0,
+    1759,
+    1513,
+    [
+     1343
+    ]
+   ],
+   "plan63_crosscheck": null,
+   "producer_of_shape": [
+    1759,
+    1514,
+    2
+   ],
+   "rows": 32,
+   "rule63_order": true,
+   "shape": 8,
+   "verdict": "build:eo_bg_stitch"
+  }
+ ],
+ "inputs": {
+  "old_disc": "output/scratch-45/ref_33006aa/ALLDATA.KWI",
+  "transitions_sha256": "d51baafb6f501c59568efcf90a01296a30c29ac8c84ec2c080b3c50df6ca9042"
+ },
+ "rows_by_verdict": {
+  "build:eo_bg_stitch": 222,
+  "groups_build:eo_bg_stitch": 8
+ }
+}
