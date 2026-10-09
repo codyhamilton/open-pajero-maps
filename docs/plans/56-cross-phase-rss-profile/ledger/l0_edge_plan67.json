@@ -1,0 +1,34 @@
+{
+ "schema": 1,
+ "phase": "triage",
+ "label": "plan67_l0_edge",
+ "argv": [
+  "run_heavy_python.py",
+  "--memory-max",
+  "12G",
+  "--",
+  "bash",
+  "output/scratch-67/p1/p1.sh",
+  "# P1 census.py on aeae426c + 0c22b266 (peak memory.peak of plan 67 Phase 1)"
+ ],
+ "wall_s": 110.57,
+ "max_rss_kib": 75192,
+ "memory_peak": 762011648,
+ "memory_stat": null,
+ "tree_peak_mb": null,
+ "residency": [
+  {
+   "class": "phase1_census",
+   "evidence": "docs/plans/67-l0-edge-coincident-128-rc/IMPLEMENTATION.md (Phase 1)",
+   "kib": 98308,
+   "live_at_peak": true
+  }
+ ],
+ "inter_phase_boundary": null,
+ "notes": [
+  "Top-level fields = p1.sh (first census pass; memory.peak includes the disc file pages read cold).",
+  "p1b.sh (rect variants, both discs): max RSS 89,476 KiB / memory.peak 83.6 MB, 123 s.",
+  "p1c.sh (census runs A+B on both discs, p53_check, pytest attempt): max RSS 98,308 KiB / memory.peak 92.9 MB, 273 s (exit 1 at pytest: wrong cwd; re-run as p1d).",
+  "p1d.sh (pytest test_l0_edge_dv_assign + test_bg_producer_scan, compiles the probe): max RSS 71,252 KiB / memory.peak 93.9 MB, 2 s."
+ ]
+}

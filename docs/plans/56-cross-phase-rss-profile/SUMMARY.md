@@ -32,6 +32,7 @@ Published for Design handoff to plans **57–59**. Measurement-only; no optim la
 | triage (plan 68) | P1d D-class census Perth / R / AU (-j4) | wrapper max RSS 1.51 GiB (R+AU) / 0.47 GiB (Perth) | 4.27 GiB (incl. file pages) | — | Pool -j4 over blocks; vertex criterion + 24×24 overlap grid | — (post-56 addendum, `ledger/bg_dedup_plan68.json`) |
 | triage (plan 68) | reader re-audit (R p64 cells + 3 G discs whole vs cut) | wrapper max RSS 0.30 GiB | 3.76 GiB (incl. file pages) | — | sequential frame reads | — (post-56 addendum, `ledger/bg_dedup_plan68.json`) |
 | triage (plan 68) | review-1 rerun: sidecar encodes + census B + r_corr A/B + D-class A/B (R/Perth/AU) | wrapper max RSS 3.57 GiB | **10.42 GiB** (incl. file pages; cap 12G) | — | serial; Pool -j4 D-class; encodes -j4 | — (post-56 addendum, `ledger/bg_dedup_plan68.json`) |
+| triage (plan 67) | P1 L0 edge census (P53 reproduction + PE) on aeae426c + 0c22b266, double run | wrapper max RSS 0.09 GiB | 0.71 GiB (incl. file pages) | — | sequential leaf reads | — (post-56 addendum, `ledger/l0_edge_plan67.json`) |
 
 Ledger JSON: `docs/plans/56-cross-phase-rss-profile/ledger/`. Wrapper logs: `output/scratch-56/runs/` (gitignored).
 

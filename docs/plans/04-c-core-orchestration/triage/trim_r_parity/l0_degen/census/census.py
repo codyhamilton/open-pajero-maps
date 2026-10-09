@@ -10,11 +10,18 @@ Per divided L0 leaf (leaf path length >= 2): every road link's vertices in two f
 Predicate variants (all evaluated; the reproduction gate picks P53):
   shape  : 'coincident' (all vertices identical) | 'all_on_edge' (every vertex on a parent edge)
   coords : 'frame' | 'parent'
-  nx     : 'ptype' (1 -> 2x2, 2 -> 4x4) | 'two'
+  nx     : 'ptype' (1 -> 2x2, 2 -> 4x4) | 'two' | 'four' (fixed 4x4 for every parcel_type)
+  rect   : 'closed' [x0,x1]x[y0,y1] | 'flip' (closed, sy counted from the north edge) |
+           'halfopen' [x0,x1)x[y0,y1) | 'assign' (dv_assign semantics in raw: lat half-open, east edge
+           closed into the last column, interior boundaries to the east / north cell)
 For a variant, each qualifying link is classed: on parent edge (every vertex x in {0,R} or y in {0,R})
--> inside / outside the closed leaf rect [sx*R/nx, (sx+1)*R/nx] x [sy*R/nx, (sy+1)*R/nx] with
-c = lpath[-1] = sy*nx + sx; else coincident_not_on_parent_edge (shape 'coincident' only).
+-> inside / outside the leaf rect of cell c = lpath[-1] = sy*nx + sx under the rect variant; else
+coincident_not_on_parent_edge (shape 'coincident' only).
 PE: rect from `bg_producer_scan.leaf_clip_geometry` (the committed E2 clip convention) on frame-raw.
+P53 (reproduction gate result, plan 67 Phase 1): 'coincident/frame/four/closed' -- coincident links on
+a parent edge, closed rect of a FIXED 4x4 division whatever the parcel_type. It reproduces plan 53's
+census.json (5,969; E 5,871 / N 39 / S 26 / W 29; (E,N) 2 / (E,S) 1 / (W,N) 1; inside 27; coincident not
+on edge 209; 534 parents with identical per-parent counts) and census_after.json (128) exactly.
 Output <out>.json (counts per variant, by edge, per parent) and <out>.tsv.gz (every PE / P53-candidate
 record with full vertex lists)."""
 from __future__ import annotations
@@ -53,6 +60,25 @@ def in_rect(V, rect):
     return all(x0 <= x <= x1 and y0 <= y <= y1 for x, y in V)
 
 
+def _clamp(v, n):
+    return n - 1 if v >= n else int(v) if v > 0 else 0
+
+
+def in_leaf(V, c, nx, R, mode):
+    sx, sy = c % nx, c // nx
+    w = R / nx
+    if mode == "closed":
+        return in_rect(V, (sx * w, sy * w, (sx + 1) * w, (sy + 1) * w))
+    if mode == "flip":
+        fy = nx - 1 - sy
+        return in_rect(V, (sx * w, fy * w, (sx + 1) * w, (fy + 1) * w))
+    if mode == "halfopen":
+        return all(sx * w <= x < (sx + 1) * w and sy * w <= y < (sy + 1) * w for x, y in V)
+    if mode == "assign":
+        return all(0 <= y < R and 0 <= x <= R and _clamp(y / w, nx) * nx + _clamp(x / w, nx) == c for x, y in V)
+    raise ValueError(mode)
+
+
 def edge_key(es):
     order = "EWNS"
     return str(tuple(sorted(es, key=order.index)))
@@ -88,8 +114,9 @@ def main(argv=None):
     a = ap.parse_args(argv)
     t0 = time.time()
     from bg_producer_scan import leaf_clip_geometry
-    VARS = [(s, c, n) for s in ("coincident", "all_on_edge") for c in ("frame", "parent") for n in ("ptype", "two")]
-    cnt = {v: Counter() for v in VARS}; pe = Counter(); rows = []
+    VARS = [(s, c, n, m) for s in ("coincident", "all_on_edge") for c in ("frame", "parent") for n in ("ptype", "two", "four")
+            for m in ("closed", "flip", "halfopen", "assign")]
+    cnt = {v: Counter() for v in VARS}; pe = Counter(); rows = []; p53_par = Counter()
     parents = set(); nlinks = 0; frame_ranges = Counter()
     for gx, gy, lpath, ptype, fbr, pb, links in iter_divided_links(a.disc):
         parents.add((gx, gy)); c = int(lpath[-1])
@@ -101,7 +128,7 @@ def main(argv=None):
             V = {"frame": [_raw(la, lo, fbr) for la, lo in pts], "parent": [parent_raw(la, lo, pb) for la, lo in pts]}
             rec = None
             for v in VARS:
-                s, cs, nn = v
+                s, cs, nn, mode = v
                 W = V[cs]
                 if not W:
                     continue
@@ -113,25 +140,27 @@ def main(argv=None):
                     if s == "coincident":
                         cnt[v]["coincident_not_on_parent_edge"] += 1
                     continue
-                nx = (2 if ptype == 1 else 4) if nn == "ptype" else 2
-                sx, sy = c % nx, c // nx
-                rect = (sx * R / nx, sy * R / nx, (sx + 1) * R / nx, (sy + 1) * R / nx)
-                if in_rect(W, rect):
+                nx = (2 if ptype == 1 else 4) if nn == "ptype" else 2 if nn == "two" else 4
+                rec = rec or {}
+                if in_leaf(W, c, nx, R, mode):
                     cnt[v]["on_edge_inside_leaf_rect"] += 1
                 else:
                     cnt[v]["on_edge_outside_leaf_rect"] += 1
                     cnt[v]["by_edge/" + edge_key(es)] += 1
                     cnt[v]["parent/%d,%d" % (gx, gy)] += 1
-                    rec = rec or {}
                     rec.setdefault("variants", []).append("/".join(v))
+                    if v == ("coincident", "frame", "four", "closed"):
+                        p53_par[(gx, gy)] += 1
             Wf = V["frame"]
             es = edges_of(Wf, R_f) if Wf else None
             pe_out = bool(Wf) and es is not None and not in_rect(Wf, pe_rect)
+            co = "coincident/" if Wf and len(set(Wf)) == 1 else "non_coincident/"
             if pe_out:
                 pe["on_edge_outside_leaf_rect"] += 1; pe["by_edge/" + edge_key(es)] += 1
+                pe[co + "on_edge_outside_leaf_rect"] += 1
                 rec = rec or {}
             elif Wf and es is not None:
-                pe["on_edge_inside_leaf_rect"] += 1
+                pe["on_edge_inside_leaf_rect"] += 1; pe[co + "on_edge_inside_leaf_rect"] += 1
             if rec is not None:
                 rows.append({"ix": gx, "iy": gy, "lpath": list(lpath), "ptype": ptype, "link": li,
                              "dc": lk.display_class, "osm_way_id": getattr(lk, "osm_way_id", None),
@@ -151,6 +180,9 @@ def main(argv=None):
                          for v in VARS},
             "variant_parents": {"/".join(v): len([k for k in cnt[v] if k.startswith("parent/")]) for v in VARS},
             "PE": dict(sorted(pe.items())), "wall_s": round(time.time() - t0, 1)}
+    p53 = "coincident/frame/four/closed"
+    summ["P53"] = {"variant": p53, **summ["variants"][p53],
+                   "parents_outside": {"%d,%d" % k: n for k, n in sorted(p53_par.items())}}
     Path(str(a.out) + ".json").write_text(json.dumps(summ, indent=1, sort_keys=True) + "\n")
     print(json.dumps({k: summ[k] for k in ("n_divided_parents", "n_road_links_in_divided_leaves")}))
 

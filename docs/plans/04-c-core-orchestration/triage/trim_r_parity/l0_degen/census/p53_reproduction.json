@@ -1,0 +1,116 @@
+{
+ "P53_variant": "coincident/frame/four/closed",
+ "PE": {
+  "0c22b266": {
+   "coincident/on_edge_inside_leaf_rect": 155,
+   "non_coincident/on_edge_inside_leaf_rect": 109,
+   "on_edge_inside_leaf_rect": 264
+  },
+  "aeae426c": {
+   "by_edge/('E', 'N')": 1,
+   "by_edge/('E', 'S')": 1,
+   "by_edge/('E',)": 5840,
+   "coincident/on_edge_inside_leaf_rect": 155,
+   "coincident/on_edge_outside_leaf_rect": 5841,
+   "non_coincident/on_edge_inside_leaf_rect": 109,
+   "non_coincident/on_edge_outside_leaf_rect": 1,
+   "on_edge_inside_leaf_rect": 264,
+   "on_edge_outside_leaf_rect": 5842
+  }
+ },
+ "all_equal": true,
+ "checks [mine, recorded, equal]": {
+  "0c22b266/by_edge": [
+   {
+    "E": 32,
+    "EN": 1,
+    "N": 39,
+    "S": 26,
+    "W": 29,
+    "WN": 1
+   },
+   {
+    "E": 32,
+    "EN": 1,
+    "N": 39,
+    "S": 26,
+    "W": 29,
+    "WN": 1
+   },
+   true
+  ],
+  "0c22b266/n_links": [
+   563528,
+   563528,
+   true
+  ],
+  "0c22b266/outside": [
+   128,
+   128,
+   true
+  ],
+  "aeae426c/by_edge": [
+   {
+    "E": 5871,
+    "EN": 2,
+    "ES": 1,
+    "N": 39,
+    "S": 26,
+    "W": 29,
+    "WN": 1
+   },
+   {
+    "E": 5871,
+    "EN": 2,
+    "ES": 1,
+    "N": 39,
+    "S": 26,
+    "W": 29,
+    "WN": 1
+   },
+   true
+  ],
+  "aeae426c/coincident_not_on_parent_edge": [
+   209,
+   209,
+   true
+  ],
+  "aeae426c/inside": [
+   27,
+   27,
+   true
+  ],
+  "aeae426c/n_divided_parents": [
+   560,
+   560,
+   true
+  ],
+  "aeae426c/n_links": [
+   569300,
+   569300,
+   true
+  ],
+  "aeae426c/n_parents_outside": [
+   534,
+   534,
+   true
+  ],
+  "aeae426c/outside": [
+   5969,
+   5969,
+   true
+  ],
+  "aeae426c/parents_outside_identical": [
+   null,
+   null,
+   true
+  ]
+ },
+ "live_unrecorded_by_plan53": {
+  "coincident_not_on_parent_edge": 209,
+  "inside": 27,
+  "n_divided_parents": 560,
+  "n_parents_outside": 110
+ },
+ "schema": "plan67-p53-reproduction-v1"
+}

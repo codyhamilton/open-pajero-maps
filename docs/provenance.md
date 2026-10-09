@@ -1041,3 +1041,7 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - **Reader re-audit:** `reader_audit.py` → `reader_audit_{p64,g_013586b5,g_4ed9cd80,g_0c22b266}.json`.
 - **Scratch:** `output/scratch-68/` deleted; throwaway worktrees removed. Receipts in `docs/plans/68-bg-duplicate-record-dedup.md`.
 
+
+## Plan 67 — L0 edge-coincident 128 RC (2026-10-09; in progress)
+
+- **Phase 1:** `trim_r_parity/l0_degen/census/`: `census.py` (plan 48 `RReader` whole leaf entries + `decode_parcel`) on `scratch-50/G_new` (`aeae426c`, read-only) and `scratch-53/G_new` (`0c22b266`) → `census_p53_aeae426c.*`, `census_live.*`; `p53_check.py` → `p53_reproduction.json` (plan 53's `census.json` / `census_after.json` reproduced exactly by a fixed 4×4 division); tests `parser/tests/test_l0_edge_dv_assign.py` + `fixtures/l0_edge/probe_dv.c` (encoder `dv_assign`).
