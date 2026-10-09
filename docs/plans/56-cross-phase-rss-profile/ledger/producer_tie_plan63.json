@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "phase": "triage",
+  "label": "plan63_producer_tie",
+  "argv": [
+    "run_heavy_python.py",
+    "--memory-max",
+    "12G",
+    "--",
+    "bash",
+    "output/scratch-63/runs/p1.sh",
+    "# tie_census.py over 98 groups / 47 leaves, run A then B, cmp"
+  ],
+  "wall_s": 38.9,
+  "max_rss_kib": 3900776,
+  "memory_peak": 679624704,
+  "memory_stat": null,
+  "tree_peak_mb": null,
+  "residency": [
+    {
+      "class": "phase1_tie_census",
+      "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 1)",
+      "kib": 3900776,
+      "live_at_peak": true
+    }
+  ],
+  "inter_phase_boundary": null,
+  "notes": [
+    "Phase 1: FarHomes(L0) index dominates; 19 s per run."
+  ]
+}

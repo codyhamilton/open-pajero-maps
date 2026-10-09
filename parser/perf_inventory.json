@@ -665,6 +665,12 @@
       "path": "parser/tools/r01_redecide.py",
       "phase": null,
       "reason": "Plan 62 R01 residual re-decide helpers (ablation configs, attribution, decide-limb class); pure functions; the disc/spool driver p9_r01_residual/redecide.py streams per leaf with the plan-46 LRU 4096 ring cache (VmHWM 3.9 GiB, 384 s for 3,888 groups)."
+    },
+    {
+      "class": "orchestration",
+      "path": "parser/tools/producer_tie.py",
+      "phase": null,
+      "reason": "Plan 63 producer-tie census helpers (T0/T1/T2 class, lowest key, duplicate-record classes); pure. Driver p7_producer_tie/tie_census.py: 47 leaves, max RSS 3.72 GiB (FarHomes L0), 19 s."
     }
   ]
 }
