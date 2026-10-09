@@ -1,0 +1,22 @@
+{
+ "counts": {
+  "groups": 98,
+  "groups_rule_agrees": 98,
+  "rows": 4612,
+  "rows_T1": 3288,
+  "rows_T2": 1324,
+  "rows_background": 18,
+  "rows_background_boundary": 4594,
+  "rule_agrees_sidecar": 4612,
+  "scope_delta_rows": 516,
+  "verdict_build:eo_bg_stitch": 4612
+ },
+ "inputs": {
+  "dup_cases": "023789200fe88c031cf2e455c1c3c4bb5c6c35b176c99a0058bf0088a1f7b144",
+  "provenance": "e323cccf50e636c7fc86f02489e0e054fc5814a360a2f3a28174043dc445a722",
+  "rules": "9b76437ce21d10ab0695d628de225c2444d7ccb83755ed902853a638fabaff4f",
+  "ties_all": "8ce2237efe9fef21c06c83907106f88f5a8881b7c607b13e0b94b35c1770b9dc",
+  "verdicts": "ca4a555a35bf3b1509445a0075408074ffe8342ce1e34a2a33afeccb073cec96"
+ },
+ "output_sha256": "10d250a83a35ebe85ade291be67de5387a20c550197db4776163e76f8041f3ed"
+}

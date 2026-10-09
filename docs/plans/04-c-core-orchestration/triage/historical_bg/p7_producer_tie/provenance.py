@@ -319,7 +319,7 @@ def main(argv=None):
          "emitter_hx", "emitter_hy", "emitter_ri", "merged_ordinal", "emitter_in_candidates", "candidates"],
         prov_rows)
     cases.sort(key=lambda c: (c["leaf"][:3], c["leaf"][3], c["copies"]))
-    gzw(a.out_dir / "dup_cases.tsv.gz", ["case_json"], [json.dumps(c, sort_keys=True) for c in cases])
+    gzw(a.out_dir / "dup_cases.tsv.gz", ["case_json"], [[json.dumps(c, sort_keys=True)] for c in cases])
     prov_summary = summarize_prov(prov_rows, ties)
     out = {"gate1": dict(sorted(g1.items())), "gate1_fail": g1_fail, "sidecar_fail": sc_fail,
            "gate2": dict(sorted(g2.items())), "gate2_disagree": g2_dis, "gate2_cover_form": g2_cover, "provenance": prov_summary,

@@ -128,6 +128,10 @@ def main(argv=None) -> int:
     ap.add_argument("--s02-scope", choices=("pinstop", "full"), default="full",
                     help="full = whole S02 predicate, the re-baselined gate (Design ruling 2026-10-08, default); "
                          "pinstop = replay of the retired 3-07 attempt-3 pin-stop scope (diagnostic only)")
+    ap.add_argument("--s02-resolve", type=Path, default=None,
+                    help="opt-in (plan 63): tsv.gz of S02-scope groups whose producer is proven by the "
+                         "33006aa emission sidecar; their s02 bit is set from the proven producer "
+                         "(columns GROUP + producer_hx/hy/ri + s02). Default off: plan 46's S unchanged")
     ap.add_argument("--resume-residual", action="store_true",
                     help="reuse dump_s02 + cls1; rerun from the residual join")
     a = ap.parse_args(argv)
@@ -147,6 +151,27 @@ def main(argv=None) -> int:
     np.save(W / "side/side_background.npy", side_bg)
     np.save(W / "side/side_background_boundary.npy", side_bb)
     s02 = side_bb.copy()
+    resolution = None
+    if a.s02_resolve is not None:
+        import csv, gzip, hashlib
+        applied = []
+        with gzip.open(a.s02_resolve, "rt") as f:
+            for r in csv.DictReader(f, delimiter="\t"):
+                m = np.ones(len(s02), bool)
+                for k in GROUP:
+                    m &= s02[k] == int(r[k])
+                idx = np.nonzero(m)[0]
+                if len(idx) != 1:
+                    raise SystemExit(f"s02-resolve: group not unique in side table: {r}")
+                j = int(idx[0])
+                was = int(s02["s02"][j])
+                s02["s02"][j] = int(r["s02"])
+                for k in ("producer_hx", "producer_hy", "producer_ri"):
+                    s02[k][j] = int(r[k])
+                applied.append({**{k: int(r[k]) for k in GROUP}, "s02_was": was, "s02": int(r["s02"])})
+        resolution = {"path": str(a.s02_resolve), "sha256": hashlib.sha256(a.s02_resolve.read_bytes()).hexdigest(),
+                      "groups": len(applied), "set_to_1": sum(x["s02"] == 1 and x["s02_was"] == 0 for x in applied),
+                      "applied": applied}
     s02["status"] = s02["s02"].astype(s02["status"].dtype)
     # dump_join's aggregate assert sums side['rows'] over status==1; S02 applies only to
     # scope rows (L0, 291, sentinel), so 'rows' must be the scope row count per group.
@@ -217,6 +242,8 @@ def main(argv=None) -> int:
            "s02_candidates": {k: {"hist_old_disc": HIST_S02_CANDIDATES[k], "measured": s02_full[k]}
                               for k in HIST_S02_CANDIDATES},
            "s02_full_predicate": s02_full}
+    if resolution is not None:
+        res["s02_resolution"] = resolution
     m = res["measured"]
     # --- S02
     rows_bb, _ = load_dump(W / "dump_ext", "background_boundary")

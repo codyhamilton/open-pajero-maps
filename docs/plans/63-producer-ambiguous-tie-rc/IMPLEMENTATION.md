@@ -125,3 +125,17 @@ Output `p7_producer_tie/ties_all.json` (sha256 `8ce2237e…`):
 3. **Worktrees:** `git worktree list` has no plan-63 worktree.
 4. **Scopes and temp dirs:** 0 `maps-heavy*` units; `/tmp/p63_*` and `$TMPDIR/p63_*`: 0. The trial script `/tmp/p63_cmp.py` was removed.
 5. **Disk:** `df -h /home`: 11 G free (97 %).
+
+## Phase 3: apply, decide, residuals (in progress; checkpoint 2026-10-09 ~14:00 AEST)
+
+- **Interruption ~13:42.** I checked the state afterwards: host up; both of my heavy scopes were alive (P2 reproduction holding the flock, P3 heavy queued); no duplicate job was started.
+- **`dup_cases.tsv.gz` writer bug (found in P3).** `provenance.py` wrote each JSON case through `"\t".join(map(str, <string>))`, which put a tab between every character. No rule or provenance result was affected: `rules.json` and `provenance.tsv.gz` never read it back.
+  - Fix: one-element row lists. The whole of Phase 2 was then reproduced from the committed patch and driver (`rerun_p2.sh`, under the wrapper; max RSS 3.71 GiB, memory.peak 1.26 GiB, 824 s).
+  - `windows.json` was identical.
+  - A == B for `provenance.tsv.gz`, `rules.json` and `dup_cases.tsv.gz`.
+  - `provenance.tsv.gz` and `rules.json` are identical to the committed files (`e323cccf…`, `9b76437c…`).
+  - The corrected `dup_cases.tsv.gz` is now `02378920…` (was `982269d0…`, malformed).
+- **`apply_ties.py` → `verdicts_ambiguous.tsv.gz`** (`730e4e6d…`, content `10d250a8…`, + `.json`). Run twice: byte-identical.
+  - 4,612 rows / 98 groups (bg 18, bnd 4,594; T1 3,288, T2 1,324; scope delta 516).
+  - Each row's producer is proven by the sidecar, and the accepted rule agrees on 4,612/4,612 rows (98/98 groups).
+  - **Verdict: `build:eo_bg_stitch` 4,612/4,612** (the unchanged phase-23 limb for the proven producer, from `ties_all.json`).
