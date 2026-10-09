@@ -1,0 +1,52 @@
+{
+ "by_level_code": {
+  "0/288": 1982,
+  "0/321": 5
+ },
+ "disc_sha256": "5b86d33ed5976e7bd4208fb46c4fdde14747c7f31d1d40d819e9e9b2bf5f00d9",
+ "emitter_columns": [
+  "s",
+  "class",
+  "merged_ordinal",
+  "kind",
+  "src_ix",
+  "src_iy",
+  "k"
+ ],
+ "gate": {
+  "classes": 1987,
+  "cover_form_copies": 4134,
+  "extra_copies": 2573,
+  "frame_F": 244,
+  "frame_W": 1568,
+  "rule63_ok": 1987,
+  "shared_emitter": 0
+ },
+ "levels": {
+  "0": {
+   "leaves": 1812,
+   "leaves_with_dup": 1812
+  },
+  "10": {
+   "leaves": 1
+  },
+  "12": {
+   "leaves": 1
+  },
+  "2": {
+   "leaves": 117
+  },
+  "4": {
+   "leaves": 15
+  },
+  "6": {
+   "leaves": 2
+  },
+  "8": {
+   "leaves": 1
+  }
+ },
+ "rule63": "copies in leaf order strictly increasing in merged ordinal and in (class, own-first, src_iy, src_ix, k)",
+ "rule63_fail_examples": [],
+ "sidecar_fail": []
+}
