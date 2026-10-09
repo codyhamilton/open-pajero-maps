@@ -17,9 +17,36 @@
  "memory_stat": null,
  "tree_peak_mb": null,
  "residency": [
-  {"class": "phase1a_sidecar_encode_and_census", "evidence": "docs/plans/68-bg-duplicate-record-dedup/IMPLEMENTATION.md (P1a)", "kib": 3580680, "live_at_peak": true},
-  {"class": "phase1c_r_correspondence_and_a1", "evidence": "docs/plans/68-bg-duplicate-record-dedup/IMPLEMENTATION.md (P1c)", "kib": 3742280, "live_at_peak": true},
-  {"class": "phase1d_dclass_R_and_AU", "evidence": "docs/plans/68-bg-duplicate-record-dedup/IMPLEMENTATION.md (P1d)", "kib": 1583952, "live_at_peak": true}
+  {
+   "class": "phase1a_sidecar_encode_and_census",
+   "evidence": "docs/plans/68-bg-duplicate-record-dedup/IMPLEMENTATION.md (P1a)",
+   "kib": 3580680,
+   "live_at_peak": true
+  },
+  {
+   "class": "phase1c_r_correspondence_and_a1",
+   "evidence": "docs/plans/68-bg-duplicate-record-dedup/IMPLEMENTATION.md (P1c)",
+   "kib": 3742280,
+   "live_at_peak": true
+  },
+  {
+   "class": "phase1d_dclass_R_and_AU",
+   "evidence": "docs/plans/68-bg-duplicate-record-dedup/IMPLEMENTATION.md (P1d)",
+   "kib": 1583952,
+   "live_at_peak": true
+  },
+  {
+   "class": "reader_reaudit",
+   "evidence": "docs/plans/68-bg-duplicate-record-dedup.md (Reader re-audit)",
+   "kib": 317276,
+   "live_at_peak": true
+  },
+  {
+   "class": "review1_rerun",
+   "evidence": "docs/plans/68-bg-duplicate-record-dedup.md (Review 1)",
+   "kib": 3742820,
+   "live_at_peak": true
+  }
  ],
  "inter_phase_boundary": null,
  "notes": [
@@ -28,6 +55,8 @@
   "P1c rcorr_a (sample correspondence): max RSS 2,348,276 KiB / 2.78 GB, 143 s; p1c.sh (rcorr_b + national + a1 windows + r_census_b): max RSS 3,742,280 KiB / 4.73 GB, 346 s.",
   "P1d dclass_perth: max RSS 488,124 KiB / 1.03 GB, 317 s; p1d.sh stopped by pid after the a1 step (grid test too slow; exit 143, 1,056,928 KiB); p1e.sh (dclass R --whole + AU G, -j4): max RSS 1,583,952 KiB / memory.peak 4.59 GB, 2,003 s.",
   "P2 rules.py: 33 MB RSS, 0.07 s (light; not wrapped).",
-  "Plan stopped at Phase 2 for Design; no Phase 3/4 runs."
+  "Plan stopped at Phase 2 for Design; no Phase 3/4 runs.",
+  "Reader re-audit (reader_audit.py p64 + g on 3 G discs): max RSS 317,276 KiB / memory.peak 4.04 GB incl. file pages, 444 s.",
+  "Review-1 rerun (rerun.sh: sidecar AU+Perth encodes -j4, census B, r_corr sample+national A/B, dclass R/Perth/AU A/B -j4): max RSS 3,742,820 KiB / memory.peak 11.19 GB incl. file pages (under the 12G cap; file pages of the 1.7 GB discs + R), 4,968 s."
  ]
 }

@@ -82,7 +82,8 @@ and the proven part of R-G5-1 / R-G5-2 (4,214 rows build:eo_bg_stitch).
 
 | Owner | Rows | Status |
 | --- | --- | --- |
-| Design (plan **63** new row; plan **68** stopped at Phase 2 for Design) | R-G5-6 (duplicate-emission parity: live G 336,135 leaves / 338,565 classes with byte-identical same-type duplicates; R 258 leaves / 486 classes, corrected by plan 68) | Plan 68 P2: no dedup rule accepted (0 R-one-copy classes where R is comparable; R mostly absent or another type); D-classes G ≫ R, mostly type 288. Awaits Design. R-G5-4-a-1 discharged by plan 68 P1 (222 build) |
+| Cody (remedy, with F6; via Design) | R-G5-6-a (L0 type-288 G duplicates 338,038 classes + 98.5 % of G D-class pairs, where R has nothing or another type) | Content row from plan 68 (closed at P2 as findings; no dedup, no oracle change) |
+| Design | R-G5-6-b (527 non-288 G duplicate classes + drop-all mismatches 10/135, 8/149), R-G5-6-c (R's own 486 duplicate classes / 258 leaves) | RC owed (plan 68 split, Design ruling 2026-10-09); R-G5-4-a-1 discharged by plan 68 P1 (222 build) |
 | Cody via Design (no waiver) | R-G8-1-a | Budget basis (with R-G9-4) |
 
 **`maps-parity-carried` ownership** (not Phase 3 product-close blockers — but **carried is

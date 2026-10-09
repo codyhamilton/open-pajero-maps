@@ -4,7 +4,7 @@ Seat: Codex on codyh-ubuntu (master direct). Draft re-copied fresh from the box 
 
 Hard stop: Phase 4 gate summary → report for Design accept before any oracle promotion.
 
-## Phase 1 — R-side truth on a committed sample; R-G5-4-a-1 (CLOSED 2026-10-09 17:21 AEST)
+## Phase 1 — R-side truth on a committed sample; R-G5-4-a-1 (done 17:21 AEST; review fixes + double runs 19:4x AEST, see Review 1)
 
 ### Refine (fixed before any R read)
 
@@ -40,7 +40,7 @@ Seat note: CHM 15:54 — Codex at its 5 h limit until 17:14; any new harness sea
   - Alias rows, geometry class inside R's shared sparse-tile frame (measured, never a pass): absent 595, type-set 674, other 228, **no one-byte / one-geom**.
   - R-other (17): an R same-type record overlaps or contains the piece with different geometry (types 321, 289); none equal.
 - **National, framing-equal** (`--all-census`, every census class prefiltered on R's leaf index without decode): 338,565 = R alias frame 334,466 + frame differs 1,852 + no R leaf 83 + **framing-equal 2,164**. The 2,164: R-absent 541, R-noncomparable(type-set) 1,609, R-other 13, R-merged 1, **R-one-byte 0, R-one-geom 0**.
-- **Reading:** nowhere that R is comparable does R hold one copy of a G duplicate piece. Keep-first / keep-last / keep-own-first have no R-one-* class to score on; R's behaviour where comparable is "nothing of that type there" (absent) or "another type maps the area" (type-set, the F6 question), plus 14 merged/other cases.
+- **Reading:** in the committed sample and in the 2,164 national framing-equal classes, R never holds exactly one copy of a G duplicate piece (the 1,852 national classes whose frames differ, the 334,466 R-alias and 83 no-R-leaf classes are not classified). Keep-first / keep-last / keep-own-first have no R-one-* class to score on; R's behaviour where comparable is "nothing of that type there" (absent) or "another type maps the area" (type-set, the F6 question), plus 14 merged/other cases.
 - **R-G5-4-a-1** (`a1.py`; 4 single-cell `33006aa` sidecar windows from the spool of record; runs A/B identical): gate 4/4 frames byte-equal to 013586b5, 0 unmatched; all 8 groups: copies emitted by the two plan-62 tie candidates, one each (distinct), plan-63 rule order holds, decide verdict under the proven producer of the group's shape = build → **222 rows / 8 groups build:eo_bg_stitch**. (1176,1591) agrees with plan 63's `provenance.tsv.gz`.
 - Peaks: p1c max RSS 3,742,280 KiB / memory.peak 4.73 GB, 346 s; p1d (a1) within 1.06 GB.
 
@@ -55,7 +55,7 @@ Seat note: CHM 15:54 — Codex at its 5 h limit until 17:14; any new harness sea
 | G Perth `5b86d33e` | 1,949 | 1,571 | 1,480,848 | 35,692 | 113 |
 | R `8c2d2027` (whole frames) | 482,473 | 14,657 | 5,500 | 40,888 | 9 |
 
-- G AU by type: L0/288 carries 17,569,839 contain + 996,128 overlap + 2,190 rot (98.9 %); R has **no type-288 D pair at any level**. Next: L0/291 G 135,069 / 66,195 vs R 1,611 / 21,250; L0/321 G 41,781 / 6,999 vs R 402 / 78; L0/578 G 11,603 / 15,729 vs R 48 / 292. Per level / type counts in `dclass_{au,perth,R}.json`, first 20,000 example rows per class in the tsv.gz.
+- G AU by type: L0/288 carries 17,569,839 contain + 996,128 overlap + 2,190 rot (98.5 % of all D pairs, 18,568,157 / 18,859,377; review 1 finding 5 — superseded by the review-fix rerun: 18,568,441 / 18,859,711 = 98.5 %); R has **no type-288 D pair at any level**. Next: L0/291 G 135,069 / 66,195 vs R 1,611 / 21,250; L0/321 G 41,781 / 6,999 vs R 402 / 78; L0/578 G 11,603 / 15,729 vs R 48 / 292. Per level / type counts in `dclass_{au,perth,R}.json`, first 20,000 example rows per class in the tsv.gz.
 - **Reading:** G's D-classes exceed R by orders of magnitude and are concentrated in type 288 (the F6 catch-all→288 type, Cody-held, out of scope here). No D-class RC is attempted in this plan: Phase 2's D-class RC requirement is routed to Design with the Phase 2 stop below.
 
 ### P1 artefacts (committed, `p10_bg_dedup/`)
@@ -98,3 +98,32 @@ Every committed caller of the cut (`rg "U16\(.*, 0\) \* 2"` over `historical_bg/
 - The only changed conclusion is plan 63's R duplicate count (0 → 486), already carried by R-G5-6 (to be split per the ruling).
 - Earlier R readers (plan 48 `RReader` / `r_parent` / `decode_parcel`, used by plans 44–62) read the whole leaf entry (`length = entry.size * ls`) and are not this cut.
 - Outputs committed: `reader_audit_p64.json`, `reader_audit_g_{013586b5,4ed9cd80,0c22b266}.json`.
+
+## Review 1 (Codex, read-only, 17:28 AEST): FIX → fixes
+
+1. **Medium — `r_corr.near()`** missed crossing rings whose vertices are all far from the other's edges (perpendicular rectangles sharing 16 raw²). Fixed: `rings_cross()` edge-intersection test before the vertex distances.
+2. **Medium — `dclass.py` D-contain** tested only the direction picked by shoelace area (an even-odd bowtie has ~0 signed area). Fixed: containment tested in both directions.
+3. **Medium — Phase 1 closed without unit tests or double runs** for the G censuses, national correspondence and D-class censuses. Added `parser/tests/test_p10_bg_dedup.py` (7 tests; the two regression tests fail on the pre-fix code, pass after); double runs below.
+4. **Medium — "never" overstated** — qualified to "the committed sample and the 2,164 national framing-equal classes" here, in `synthesis.md` and in OVERVIEW.
+5. **Low — 98.9 %** → 98.5 % (L0/288 share of all G AU D pairs).
+
+**Review-fix rerun** (`output/scratch-68/rerun/rerun.sh`, one wrapper run under flock + 12G; queued 17:51, lock acquired ~18:08 behind other lanes' jobs):
+- Sidecar worktree `../open-pajero-maps-68-sidecar` (`c5d329c` + plan-63 patch) re-created; sidecar AU and Perth encodes sha256 `0c22b266…` / `5b86d33e…` (output-neutral, again).
+- Census run B (AU, Perth): json (minus `wall_s`) and tsv.gz byte-identical to the committed run A.
+- Sample correspondence A == B (tsv.gz byte-identical). Versus the pre-fix file, **only R-alias rows' measured `geom_class` changed** (15 alias rows absent → R-other via the crossing test; 7 alias rows' `near` detail); the classes that score (non-alias) are unchanged: R-absent 266, R-merged 1, R-other 17, R-noncomparable 2,188 (alias 1,497, type-set 691). Alias geometry classes now: absent 580 (was 595), type-set 674, other 243 (was 228).
+- National correspondence A == B and byte-identical to the committed pre-fix file (2,164 framing-equal: absent 541, type-set 1,609, other 13, merged 1, one-* 0).
+- `rules.json` re-scored on the new sample file: unchanged outcome and scores (drop-all 125/135 and 141/149; no rule accepted).
+- D-class censuses A == B (json minus `wall_s`, and tsv.gz). Totals after the fix: G AU contain 17,769,942 / overlap 1,087,564 / rot 2,205, leaves with a D pair 377,088 (was 17,769,567 / 1,087,605 / 2,205 / 377,083); Perth 1,480,892 / 35,691 / 113 / 1,571 (was 1,480,848 / 35,692 / 113 / 1,571); R 5,531 / 40,883 / 9 / 14,671 (was 5,500 / 40,888 / 9 / 14,657). L0/288 share of G AU D pairs 98.5 %; R still has no type-288 D pair.
+- The drop-all mismatches are all non-288: derivation 10 = R-other 7 × type 321 + 2 × 289 + R-merged 1 × 321; holdout 8 = R-other 8 × 321. National framing-equal non-matches: R-other 11 × 321 + 2 × 289, R-merged 1 × 321.
+
+## Plan close (Design ruling 2026-10-09 17:23)
+
+- **Closed at Phase 2 as a findings plan.** Phase 3 (encoder dedup on windows) and Phase 4 (successor oracle) are **cancelled**: no candidate rule can be accepted (0 R-one-byte / R-one-geom classes to score, in the sample and in all 2,164 national framing-equal classes), and Design ruled against implementing drop-all — the type-288 bulk is a content question (F6 catch-all, Cody-held) rather than an emission-dedup one. No encoder change, no oracle change; `0c22b266…` / `5b86d33e…` stay in force.
+- **Phase 4 gate text, rewritten for the record.** The draft's Phase 4 gate ("`dup_census.py` on the successor reports **0** leaves with byte-identical same-type class>0 duplicates at every level") is withdrawn: R itself holds 486 such classes in 258 leaves (plan 63's 0 was a reader artefact), so "0 duplicates" is not R parity. Any future successor gate for this class reads: *G duplicate classes where R holds no copy → 0 (per R-G5-6-a / -b remedy), and R's own duplicate classes (R-G5-6-c) reproduced where G and R frames are comparable; neither side measured through the truncating cut.*
+- **Recorded process deviation (accepted by Design):** the Phase 2 scoring read (`rules.py`, 33 MB RSS, 0.07 s, two committed tsv.gz inputs) ran without the flock wrapper while other lanes held the heavy lock. All heavy runs stayed under flock + `run_heavy_python.py --memory-max 12G`.
+- **R-G5-6 split** (residuals.tsv, OVERVIEW):
+  - **R-G5-6-a** — G duplicate (338,038 classes) and different-bytes same-type (98.5 % of 18,859,711 D pairs) classes on L0 type 288, where R has nothing or another type (sample: every comparable 288 class is R-absent; none R-other / merged). Content row, `blocks-phase3`, remedy owner **Cody** (held with F6 and the plan-64 open-ways finding: 17/17 plan-64 producers are open OSM ways closed and typed 288 by the L0 catch-all).
+  - **R-G5-6-b** — G duplicate classes not on type 288: **527** (L0 289 17, 290 12, 291 364, 321 110, 322 5, 578 10, 640 3; L2 290 6), plus the drop-all mismatches (derivation 10/135, holdout 8/149; all types 321 / 289). RC owed; owner Design.
+  - **R-G5-6-c** — R's own 486 duplicate classes (258 leaves; L0 291 197 / 321 9 / 640 45, L2 291 189 / 321 13 / 640 26, L4 321 5, L6 321 2); none coincides with a G duplicate class. Whether and how many G reproduces is not measured; RC owed; owner Design.
+- R-G5-4-a-1 stays discharged (plan 68 Phase 1, 222 build).
+

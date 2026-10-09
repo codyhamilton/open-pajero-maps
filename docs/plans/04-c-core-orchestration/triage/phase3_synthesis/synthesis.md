@@ -158,6 +158,9 @@ discharged: in all 8 groups the two byte-identical copies are emitted one each b
 candidates (33006aa sidecar windows), plan 63's rule order holds, and the decide verdict is
 build:eo_bg_stitch (`historical_bg/p10_bg_dedup/a1_verdicts.json`). R-G5-6 corrected: R holds
 486 duplicate classes (plan 63's R count of 0 was a frame-length reader artefact). Where R is
-comparable it never holds exactly one copy of a G duplicate (0 R-one-* classes, sample and
-national), so no dedup rule is accepted (`rules.json`); R-G5-6 awaits Design.
+comparable — the committed sample and the 2,164 national framing-equal classes — it never holds
+exactly one copy of a G duplicate (0 R-one-* classes), so no dedup rule is accepted (`rules.json`).
+Plan 68 closed at Phase 2 (Design ruling): R-G5-6 split into R-G5-6-a (L0 type 288, content, Cody
+with F6), R-G5-6-b (527 non-288 classes + drop-all mismatches; Design) and R-G5-6-c (R's own 486
+classes; Design).
 

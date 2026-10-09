@@ -1,13 +1,13 @@
 {
  "counts": {
-  "0/D-contain/288": 1477687,
+  "0/D-contain/288": 1477728,
   "0/D-contain/289": 2,
-  "0/D-contain/290": 89,
+  "0/D-contain/290": 90,
   "0/D-contain/291": 171,
-  "0/D-contain/321": 1927,
+  "0/D-contain/321": 1928,
   "0/D-contain/322": 27,
-  "0/D-contain/578": 890,
-  "0/D-overlap/288": 34305,
+  "0/D-contain/578": 891,
+  "0/D-overlap/288": 34304,
   "0/D-overlap/289": 4,
   "0/D-overlap/290": 21,
   "0/D-overlap/291": 64,
@@ -42,5 +42,5 @@
   "8/leaves_with_D": 1
  },
  "definitions": "Plan 68 Phase 1: same-type, different-bytes record pairs in one leaf (D-classes), G and R.\n\nDefinitions (committed with this file before its first measuring run):\n  pairs: two class>0 background records of one leaf frame, same type code, not byte-identical.\n  D-rot:     same frame-local vertex ring up to start vertex and / or direction (exact; one frame).\n  D-contain: not D-rot; every vertex of one piece lies inside the other (even-odd) or within 1 raw unit\n             of its boundary, and no vertex of the other lies inside the first farther than 1 raw unit\n             from its boundary (vertex criterion; tool probe showed a 48x48 grid test costs ~10 s per\n             dense urban leaf, so the grid is used only for the overlap area below).\n  D-overlap: neither; some vertex of one lies inside the other farther than 1 raw unit from its boundary,\n             and the shared area (24x24 grid sample over the smaller piece's bbox) >= max(1 raw unit^2,\n             1 % of the smaller piece's area).\n  class-0 repeats: two or more class-0 records of one type in one leaf (byte-identical or not).\nPieces are frame-local raw coordinates (one frame, so no framing question). R frames are read whole\n(r_census.py); G frames to their length word. Multiprocessing over blocks (-j). Output <out>.json with\ncounts per level / class / type and <out>.tsv.gz example rows (first 20,000 per class, deterministic).",
- "wall_s": 317.1
+ "wall_s": 285.4
 }

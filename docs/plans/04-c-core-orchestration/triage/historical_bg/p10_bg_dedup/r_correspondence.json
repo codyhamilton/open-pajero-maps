@@ -1,13 +1,13 @@
 {
  "alias_geom_class": {
   "derivation/R-absent/no_type_in_cell": 227,
-  "derivation/R-absent/type_elsewhere_in_cell": 63,
+  "derivation/R-absent/type_elsewhere_in_cell": 58,
   "derivation/R-noncomparable/type-set": 344,
-  "derivation/R-other/near_same_type": 119,
+  "derivation/R-other/near_same_type": 124,
   "holdout/R-absent/no_type_in_cell": 233,
-  "holdout/R-absent/type_elsewhere_in_cell": 72,
+  "holdout/R-absent/type_elsewhere_in_cell": 62,
   "holdout/R-noncomparable/type-set": 330,
-  "holdout/R-other/near_same_type": 109
+  "holdout/R-other/near_same_type": 119
  },
  "alias_position": {},
  "by_class": {
@@ -91,6 +91,7 @@
  },
  "n": 2472,
  "position": {},
+ "prefilter": {},
  "sample_sha256": "7104c69dfa40561356f18e35c939a493f690e0d5350fd4248ae647e208db610e",
- "wall_s": 142.5
+ "wall_s": 139.3
 }

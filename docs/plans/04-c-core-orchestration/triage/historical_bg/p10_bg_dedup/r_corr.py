@@ -147,8 +147,31 @@ def samples(R, n=NGRID):
     return G[inside], dx * dy
 
 
+def rings_cross(A, B, chunk=256):
+    """some edge of closed ring A properly or improperly intersects some edge of closed ring B."""
+    a0 = A; a1 = np.roll(A, -1, 0); b0 = B; b1 = np.roll(B, -1, 0)
+    bx0 = np.minimum(b0[:, 0], b1[:, 0]); bx1 = np.maximum(b0[:, 0], b1[:, 0])
+    by0 = np.minimum(b0[:, 1], b1[:, 1]); by1 = np.maximum(b0[:, 1], b1[:, 1])
+
+    def orient(p, q, r):
+        return np.sign((q[..., 0] - p[..., 0]) * (r[..., 1] - p[..., 1]) - (q[..., 1] - p[..., 1]) * (r[..., 0] - p[..., 0]))
+    for s in range(0, len(A), chunk):
+        p, q = a0[s:s + chunk, None, :], a1[s:s + chunk, None, :]
+        m = ((np.maximum(p[..., 0], q[..., 0]) >= bx0[None]) & (np.minimum(p[..., 0], q[..., 0]) <= bx1[None]) &
+             (np.maximum(p[..., 1], q[..., 1]) >= by0[None]) & (np.minimum(p[..., 1], q[..., 1]) <= by1[None]))
+        if not m.any():
+            continue
+        r, u = b0[None], b1[None]
+        d1, d2 = orient(p, q, r), orient(p, q, u); d3, d4 = orient(r, u, p), orient(r, u, q)
+        if (m & (d1 * d2 <= 0) & (d3 * d4 <= 0)).any():
+            return True
+    return False
+
+
 def near(A, B, tol=TOL):
-    """distance(A ring, B ring) <= tol (vertex-to-segment both ways, or one inside the other)."""
+    """distance(A ring, B ring) <= tol (edges cross, vertex-to-segment both ways, or one inside the other).
+    Review fix (plan 68 Codex review 1): crossing rings whose vertices are all far from the other's edges
+    (e.g. perpendicular rectangles) were missed; edge intersection is now tested first."""
     A = open_ring(A); B = open_ring(B)
     if len(A) == 0 or len(B) == 0:
         return False
@@ -156,6 +179,8 @@ def near(A, B, tol=TOL):
     if (a0 > b1 + tol).any() or (b0 > a1 + tol).any():
         return False
     if pip(A[:1], B)[0] or pip(B[:1], A)[0]:
+        return True
+    if rings_cross(A, B):
         return True
     if seg_dist(A, segs(B, True)).min() <= tol or seg_dist(B, segs(A, True)).min() <= tol:
         return True

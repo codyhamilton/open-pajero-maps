@@ -146,7 +146,10 @@ def leaf_pairs(recs):
             else:
                 k = None
                 si, bj = (i, j) if area[i] <= area[j] else (j, i)
-                if ins_ij[si, bj] and in_or_near(rings[si], bj) and not deep_inside(rings[bj], si).any():
+                # review fix (plan 68 Codex review 1): containment is tested in both directions, not only
+                # the one picked by shoelace area (an even-odd bowtie can contain a larger-area-looking piece)
+                if any(ins_ij[x, y] and in_or_near(rings[x], y) and not deep_inside(rings[y], x).any()
+                       for x, y in ((si, bj), (bj, si))):
                     k = "D-contain"
                 elif iarea[i, j] >= 1.0 and (deep_inside(A, j).any() or deep_inside(B, i).any()):
                     if si not in gcache:

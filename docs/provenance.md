@@ -1028,7 +1028,7 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - **Inputs:** discs `scratch-45/ref_33006aa` (013586b5), `scratch-45/ref_d35b565` (4ed9cd80), `scratch-53/G_new` (0c22b266), R mounted DVD; spool `extract_timing/spool`.
 - **Scratch:** `output/scratch-64/p1` deleted; worktree removed. Receipts in `docs/plans/64-source-removed-clip-empty-rc.md`.
 
-## Plan 68 — BG duplicate-record dedup (2026-10-09; stopped at Phase 2 for Design)
+## Plan 68 — BG duplicate-record dedup (2026-10-09; closed at Phase 2 as a findings plan, Design ruling)
 
 - **Phase 1:** `historical_bg/p10_bg_dedup/`.
   - Census: plan 63's `sidecar_33006aa.patch` on `c5d329c` in a throwaway worktree; full AU and Perth sidecar encodes from `scratch-50/spool_overlay` sha-equal to `0c22b266…` / `5b86d33e…`; `census.py` → `census_{au,perth}.{json,tsv.gz}`.
@@ -1036,6 +1036,8 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
   - R: mounted DVD `ALLDATA.KWI` (`8c2d2027…`) read whole-frame; `r_census.py` → `r_census.*`; `r_corr.py` → `r_correspondence.*` (sample) and `r_correspondence_national.*` (framing-equal classes).
   - R-G5-4-a-1: `a1.py` (4 single-cell `33006aa` sidecar windows from `extract_timing/spool`) → `a1_verdicts.json`.
   - D-classes: `dclass.py` → `dclass_{au,perth,R}.*`.
-- **Phase 2:** `rules.py` → `rules.json` (`a4d3d4ae…`): no rule accepted.
-- **Scratch:** `output/scratch-68/` deleted; both throwaway worktrees removed. Receipt in `docs/plans/68-bg-duplicate-record-dedup/IMPLEMENTATION.md`.
+- **Phase 2:** `rules.py` → `rules.json`: no rule accepted. P3/P4 cancelled; no oracle change.
+- **Review 1 fixes:** `r_corr.rings_cross` (crossing rings) and two-direction D-contain in `dclass.py`; tests `parser/tests/test_p10_bg_dedup.py`; correspondence and D-class outputs regenerated (A == B), census run B == A.
+- **Reader re-audit:** `reader_audit.py` → `reader_audit_{p64,g_013586b5,g_4ed9cd80,g_0c22b266}.json`.
+- **Scratch:** `output/scratch-68/` deleted; throwaway worktrees removed. Receipts in `docs/plans/68-bg-duplicate-record-dedup.md`.
 
