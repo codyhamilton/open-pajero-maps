@@ -25,6 +25,7 @@ Published for Design handoff to plans **57–59**. Measurement-only; no optim la
 | triage (plan 63) | producer-tie census P1, run A+B | wrapper max RSS 3.72 GiB | 0.63 GiB | — | FarHomes(L0) + 47 leaves | — (post-56 addendum, `ledger/producer_tie_plan63.json`) |
 | triage (plan 63) | P2 sidecar window builds (386) + provenance/rules A+B + 013586b5 dup census | wrapper max RSS 3.71 GiB (provenance) / 1.07 GiB (builds) / 0.41 GiB (census) | 1.94 GiB (census, incl. file pages) | — | FarHomes(L0); builds serial -j4 | — (post-56 addendum, `ledger/producer_tie_plan63.json`) |
 | triage (plan 63) | P3 P2-reproduction + dup census R/0c22b266 + gate_repro (S′ opt-in) | wrapper max RSS 6.94 GiB (gate_repro) / 3.71 GiB (reproduction) | 6.34 GiB | — | dump_join/K1 classify; serial | — (post-56 addendum, `ledger/producer_tie_plan63.json`) |
+| triage (plan 64) | P1 PBF provenance re-extract (17 homes / 23 cells) + 23 sidecar windows at 33006aa + trace | wrapper max RSS 4.08 GiB (re-extract) / 3.71 GiB (trace) | 4.35 GiB (incl. file pages) | — | pyosmium flex_mem node index; FarHomes(L0); builds serial -j4 | — (post-56 addendum, `ledger/source_removed_plan64.json`) |
 
 Ledger JSON: `docs/plans/56-cross-phase-rss-profile/ledger/`. Wrapper logs: `output/scratch-56/runs/` (gitignored).
 

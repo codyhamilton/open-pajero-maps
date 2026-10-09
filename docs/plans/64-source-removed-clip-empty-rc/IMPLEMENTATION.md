@@ -1,0 +1,74 @@
+# Plan 64 — implementation log
+
+Seat: Codex on codyh-ubuntu (master direct). Draft re-copied from `/workspace/maps-design-drafts/64-source-removed-clip-empty-rc/` at start (14:31 AEST, sha `42447564…`), and re-copied again after the Design scope revision (14:45 AEST note; DESIGN.md + REVISION-NOTE.md). Tip `61d2fe8`.
+
+## Phase 1: producer and source trace — DONE
+
+### Scope (revision 2026-10-09)
+
+23 groups / 627 rows: R-G5-1-b (1 group, 50 rows; plan 46), R-G5-4-a-2 (1 / 32) and R-G5-4-b-1 (21 / 545) from `p9_r01_residual/transitions.json` `source_removed_groups` (sha `d51baafb…`). 17 distinct producer homes, 23 leaf cells.
+
+### Tools (committed under `triage/historical_bg/p8_source_removed/`)
+
+- `reextract_cell.py`: output-neutral provenance re-extract. One streaming pyosmium pass (location index `flex_mem`, as the production extractor) using the extractor's own functions (`_osm_tags_to_bg_type`, `selection.level_filter`, ring closure, `_centroid`, `assign_to_parcel` on `TileGrid.from_reference(0)`). Lists every background ring per producer home in PBF order and compares it ring-by-ring (type and coordinates) with the spool cell; lists every way and tagged relation whose bbox meets each group cell (+0.002°) with tags, level-0 type mapping and `level_filter` result (H4 proof (i) input).
+- `trace.py build|analyze`: sidecar window builds (plan 63's committed `sidecar_33006aa.patch` in throwaway worktree `../open-pajero-maps-64-33006aa`), then per group: G1 output-neutral gate, sidecar emitter vs recorded producer, 33006aa/d35b565 clipper probes of the producer ring, plan-46 unique-byte scan, shape on-frame counts, producer ring vs clip rect, footprint on R / 013586b5 / 4ed9cd80 / 0c22b266, extract join.
+
+### Inputs
+
+- PBF `australia-260824.osm.pbf` sha256 `433a1da21d4b39bdbbb79cb6ee5865e9ade308bae62226a4398d5fe3a3ec99c0` (= the pinned `433a1da2…`; open question 2 answered: byte-identical on the host).
+- Discs: R mounted `/run/media/codyh/464210-8480`; `013586b5` = `output/scratch-45/ref_33006aa`; `4ed9cd80` = `output/scratch-45/ref_d35b565`; `0c22b266` = `output/scratch-53/G_new` (manifest shas). R reader = plan 48's (`overlay_test.RReader` + `r_neighbours.LeafIndex` + `decode_parcel`, via `trim_witness.r_parent`), answering open question 1.
+
+### Run notes
+
+- First re-extract launch (single-home tool) was stopped by pid before it finished, after the scope revision arrived; an earlier launch lost its shell to a `pkill -f` pattern that matched the launching shell (orphan python killed by pid, scope gone). Neither produced output. The re-extract was re-run once for all 17 homes / 23 cells.
+
+### Outcome (`p8_source_removed/trace.json`, `471366e1…`)
+
+- **Gate (output neutrality):** 23 single-cell sidecar windows at `33006aa`: every window frame is byte-equal to a 013586b5 leaf of its cell and every 013586b5 leaf is matched (26 leaves; the divided cell (1738,570) has 4). The sidecar parses (hash, record count, unit class) for every frame.
+- **H1 (wrong producer): false for 23/23.** The sidecar emitter of each group's 013586b5 shape is the recorded producer (21 routed, 2 own; R-G5-1-b's is routed from (1751,594)). Independently, the producer's 33006aa clip reproduces the shape's bytes, and it is the only same-type ring of Moore(8) ∪ FarHomes whose 33006aa clip does (plan-46 unique-byte scan, 1 hit each). The 113 RC3/RC4 rows (groups at (1152,1401), (1152,1448), (1248,1005), (1248,1625), (1738,570) 1866.3) were checked the same way; none is H1.
+- **d35b565 clip:** the producer's d35b565 clip into the leaf writes 0 bytes for 23/23 (reproduces `clip_size_d35b565` 0).
+- **H5 (extract defect): false for 23/23.** All 17 producer homes reproduce their spool cell ring-for-ring (6,608 rings, type and coordinates equal, PBF order = spool order). Each producer ring equals its OSM way's node coordinates plus the extractor's ring closure, and its type 288 is the documented level-0 mapping (the first matching `bg_type.json` rule is rule 11, the catch-all `{}` → 288).
+- **Finding for Design and Cody (not a fix; F6 / kind-order stays Cody-held):** all 17 producers are **open** OSM ways (first node ≠ last node) that `osm_to_parcel_geometry.py` closes into polygon rings (`ring.append(ring[0])` for any non-road way with ≥3 coordinates) and maps through the level-0 catch-all to type 288. Their tags: 6 ways only `source:geometry=PSMA_Admin_Boundaries`, 2 only `source=CAPAD 2016 - Terrestrial`, 7 with no tags at all, 1 `barrier=fence`, 1 `natural=tree_row`. 14 of 17 rings self-intersect once closed. These are linear features or bare relation members, not areas.
+- **Piece geometry:** every 013586b5 shape is a large frame-hugging polygon: it covers 3 %–100 % of its leaf rect (R-G5-1-b: the whole rect, all 134 vertices on the frame), while the producer ring's exact even-odd region inside the leaf is 0.9–498 raw units² (Phase 2 `classify.json`). Producer rings have 0–4 vertices inside the leaf rect.
+- **Footprints:** R has **no** type-288 record covering any part of any group's footprint. 013586b5 covers it fully by construction; 4ed9cd80 / 0c22b266 cover 3 %–100 % of it with other type-288 records. Records meeting each footprint on all four discs (type, class, leaf, wire sha) are in `trace.json`.
+
+| Group (leaf, shape) | Row | Rows | Producer | Sidecar emitter | 33006aa clip → shape bytes | d35b565 clip | Shape: on-frame W/E/S/N, off | Shape area / rect | Ring n, verts in rect, self-x | OSM way (closed?) tags | R / 4ed9 / 0c22 same-type cover of footprint |
+| --- | --- | ---: | --- | --- | --- | ---: | --- | --- | --- | --- | --- |
+| (808,1121) 1064 s0 | R-G5-4-b-1 | 32 | (808,1121,0) | own (808,1121,0) = | 296 B, yes | 0 | 12/2/34/0, 97 of 143 | 2,091,504 / 16,777,216 | 5, 1, 1 | 961577161 (open) {"source:geometry": "PSMA_Admin_Boundaries"} | 0.0 / 1.0 / 1.0 |
+| (1059,1248) 1027 s1 | R-G5-4-b-1 | 32 | (1061,1248,0) | routed (1061,1248,0) = | 150 B, yes | 0 | 5/1/34/0, 32 of 70 | 549,362 / 16,777,216 | 13, 0, 2 | 964224756 (open) {"source": "CAPAD 2016 - Terrestrial"} | 0.0 / 1.0 / 1.0 |
+| (1109,1181) 949 s0 | R-G5-4-b-1 | 17 | (1109,1193,0) | routed (1109,1193,0) = | 186 B, yes | 0 | 0/34/23/1, 32 of 88 | 5,228,171 / 16,777,216 | 30, 0, 1 | 853069217 (open) {"source:geometry": "PSMA_Admin_Boundaries"} | 0.0 / 0.1719 / 0.1719 |
+| (1152,1401) 1824 s0 | R-G5-4-b-1 | 32 | (1152,1422,0) | routed (1152,1422,0) = | 208 B, yes | 0 | 0/34/34/1, 32 of 99 | 8,041,193 / 16,777,216 | 15, 0, 9 | 853069378 (open) {"source:geometry": "PSMA_Admin_Boundaries"} | 0.0 / 1.0 / 1.0 |
+| (1152,1417) 288 s0 | R-G5-4-b-1 | 32 | (1152,1422,0) | routed (1152,1422,0) = | 208 B, yes | 0 | 0/34/34/1, 32 of 99 | 8,042,062 / 16,777,216 | 15, 0, 9 | 853069378 (open) {"source:geometry": "PSMA_Admin_Boundaries"} | 0.0 / 1.0 / 1.0 |
+| (1152,1432) 768 s0 | R-G5-4-b-1 | 32 | (1152,1422,0) | routed (1152,1422,0) = | 208 B, yes | 0 | 0/34/34/1, 32 of 99 | 8,042,496 / 16,777,216 | 15, 0, 9 | 853069378 (open) {"source:geometry": "PSMA_Admin_Boundaries"} | 0.0 / 1.0 / 1.0 |
+| (1152,1448) 1280 s0 | R-G5-4-b-1 | 32 | (1152,1422,0) | routed (1152,1422,0) = | 208 B, yes | 0 | 0/34/34/1, 32 of 99 | 8,042,496 / 16,777,216 | 15, 0, 9 | 853069378 (open) {"source:geometry": "PSMA_Admin_Boundaries"} | 0.0 / 1.0 / 1.0 |
+| (1248,908) 384 s0 | R-G5-4-b-1 | 32 | (1248,910,0) | routed (1248,910,0) = | 280 B, yes | 0 | 34/0/2/5, 96 of 135 | 515,102 / 16,777,216 | 15, 1, 3 | 516574447 (open) {} | 0.0 / 1.0 / 1.0 |
+| (1248,918) 704 s0 | R-G5-4-b-1 | 32 | (1248,910,0) | routed (1248,910,0) = | 148 B, yes | 0 | 34/0/1/4, 32 of 69 | 515,040 / 16,777,216 | 15, 0, 3 | 516574447 (open) {} | 0.0 / 1.0 / 1.0 |
+| (1248,939) 1376 s1 | R-G5-4-b-1 | 32 | (1248,935,0) | routed (1248,935,0) = | 148 B, yes | 0 | 34/0/1/4, 32 of 69 | 513,551 / 16,777,216 | 13, 0, 1 | 460118552 (open) {} | 0.0 / 1.0 / 1.0 |
+| (1248,970) 320 s1 | R-G5-4-b-1 | 26 | (1248,980,0) | routed (1248,980,0) = | 264 B, yes | 0 | 34/0/1/5, 89 of 127 | 510,448 / 16,777,216 | 28, 1, 6 | 459544152 (open) {} | 0.0 / 0.9637 / 0.9637 |
+| (1248,1005) 1440 s1 | R-G5-4-b-1 | 28 | (1248,980,0) | routed (1248,980,0) = | 264 B, yes | 0 | 34/0/1/5, 89 of 127 | 507,904 / 16,777,216 | 28, 1, 6 | 459544152 (open) {} | 0.0 / 0.98 / 0.98 |
+| (1248,1321) 1312 s0 | R-G5-4-b-1 | 32 | (1248,1313,0) | routed (1248,1313,0) = | 208 B, yes | 0 | 0/34/34/1, 32 of 99 | 8,246,055 / 16,777,216 | 20, 0, 4 | 575140882 (open) {} | 0.0 / 1.0 / 1.0 |
+| (1248,1443) 1120 s1 | R-G5-4-b-1 | 32 | (1248,1444,0) | routed (1248,1444,0) = | 342 B, yes | 0 | 0/34/35/2, 97 of 166 | 8,254,062 / 16,777,216 | 43, 1, 5 | 41029322 (open) {} | 0.0 / 1.0 / 1.0 |
+| (1248,1456) 1536 s1 | R-G5-4-b-1 | 32 | (1248,1444,0) | routed (1248,1444,0) = | 342 B, yes | 0 | 0/34/35/2, 97 of 166 | 8,254,868 / 16,777,216 | 43, 1, 5 | 41029322 (open) {} | 0.0 / 1.0 / 1.0 |
+| (1248,1625) 800 s0 | R-G5-4-b-1 | 5 | (1248,1608,0) | routed (1248,1608,0) = | 342 B, yes | 0 | 0/34/36/2, 96 of 166 | 8,264,983 / 16,777,216 | 25, 1, 6 | 591101742 (open) {} | 0.0 / 0.1391 / 0.1391 |
+| (1248,1644) 1408 s14 | R-G5-4-b-1 | 1 | (1248,1642,0) | routed (1248,1642,0) = | 340 B, yes | 0 | 0/34/36/1, 96 of 165 | 8,266,100 / 16,777,216 | 11, 2, 4 | 591106133 (open) {} | 0.0 / 0.0269 / 0.0269 |
+| (1268,1152) 20 s3 | R-G5-4-b-1 | 32 | (1257,1152,0) | routed (1257,1152,0) = | 282 B, yes | 0 | 6/2/34/0, 96 of 136 | 571,764 / 16,777,216 | 37, 1, 2 | 589762366 (open) {"source": "CAPAD 2016 - Terrestrial"} | 0.0 / 1.0 / 1.0 |
+| (1323,1686) 715 s2 | R-G5-4-a-2 | 32 | (1323,1675,0) | routed (1323,1675,0) = | 190 B, yes | 0 | 0/34/25/1, 32 of 90 | 5,909,783 / 16,777,216 | 9, 0, 5 | 854815947 (open) {"source:geometry": "PSMA_Admin_Boundaries"} | 0.0 / 1.0 / 1.0 |
+| (1645,1269) 1709 s0 | R-G5-4-b-1 | 32 | (1645,1269,0) | own (1645,1269,0) = | 256 B, yes | 0 | 1/34/25/34, 32 of 123 | 14,232,731 / 16,777,216 | 5, 0, 1 | 731816618 (open) {} | 0.0 / 1.0 / 1.0 |
+| (1695,700) 1951 s7 | R-G5-4-b-1 | 4 | (1695,699,0) | routed (1695,699,0) = | 288 B, yes | 0 | 0/34/6/2, 99 of 139 | 756,705 / 16,777,216 | 10, 4, 3 | 853079791 (open) {"source:geometry": "PSMA_Admin_Boundaries"} | 0.0 / 0.0841 / 0.0841 |
+| (1738,570) 1866.3 s2160 | R-G5-4-b-1 | 16 | (1738,570,6105) | own (1738,570,6105) = | 146 B, yes | 0 | 1/18/18/18, 16 of 68 | 4,154,850 / 4,194,304 | 7, 0, 2 | 1239544336 (open) {"barrier": "fence"} | 0.0 / 1.0 / 1.0 |
+| (1750,594) 598 s171 | R-G5-1-b | 50 | (1751,594,16) | routed (1751,594,16) = | 278 B, yes | 0 | 34/36/34/34, 0 of 134 | 16,777,216 / 16,777,216 | 8, 2, 0 | 903365395 (open) {"leaf_type": "broadleaved", "natural": "tree_row"} | 0.0 / 0.6876 / 0.6876 |
+
+### Phase 1 scratch receipt
+
+1. `du -sb output/scratch-64`: before 12,823,738 B (`p1/` 9,505,761 B: re-extract output, 23 sidecar window dirs, trace output, wrapper logs, probe tmp; `p2/` 3,312,616 B is Phase 2's in-progress scratch, already started because Phase 2's runs queued behind Phase 1 on the lock). After: 3,312,616 B, `ls -A` = `p2` only. `output/scratch-64/p1` is gone.
+2. Kept, all committed: `p8_source_removed/trace.json` (`471366e1…`), `trace.py` (`6fb211bb…`), `reextract_cell.py` (`5f4bdcce…`), the `docs/provenance.md` entry, `ledger/source_removed_plan64.json` + SUMMARY row. No `keep/`. Phase 2 reads only `trace.json`.
+3. Worktrees: `../open-pajero-maps-64-33006aa` removed (`git worktree remove` + `prune`); `git worktree list` has no `64-33006aa`. (`../open-pajero-maps-64-d35b565` is Phase 2's and is removed in its receipt.)
+4. Temp dirs and scopes: the run temp dirs lived under `p1/tmp` (deleted with `p1/`); 0 `/tmp/p64_*`; 0 `maps-heavy` scopes.
+5. Peaks copied to the ledger before deleting the wrapper logs: re-extract max RSS 4,264,296 KiB / memory.peak 4.57 GB, 390 s; trace analyze 3,894,272 KiB / 0.40 GB, 43.5 s; final p1ab run 4,274,144 KiB / 4.68 GB, 425.5 s.
+6. `df -h /home`: 11 G free (97 %).
+
+### R-G5-1-b early read (pre-revision, exploratory; superseded by the outcome above)
+
+- `013586b5` leaf (0,1750,594,(598,)) shape 171 is a 134-vertex type-288 record whose vertices all lie on the leaf frame: a densified whole-frame square.
+- Producer (1751,594,16) is an 8-coordinate ring (bbox x 4034–4731, y 3351–3550 relative to cell (1750,594)). Exactly one distinct vertex lies inside the leaf; its exact polygon ∩ leaf area is ≈ 4 raw units² (a 62-unit-long sliver, about 0.13 units wide at x=4096).
+- R has no type-288 record in cell (1750,594).

@@ -1018,3 +1018,11 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
   - Duplicate census of 013586b5: `dup_census.py` → `dup_census_013586b5.{json,tsv.gz}`.
 - **Inputs:** disc `scratch-45/ref_33006aa` (013586b5); clipper `scratch-46/cenc_33006aa`; spool `extract_timing/spool`.
 - **Scratch:** `output/scratch-63/` deleted per phase; the throwaway `33006aa` worktree removed each time. Receipts in `docs/plans/63-producer-ambiguous-tie-rc.md`. Record + reviews Codex (FIX → LAND).
+
+## Plan 64 — empty-clip "source-removed" groups (2026-10-09)
+
+- **Phase 1:** `historical_bg/p8_source_removed/trace.json` (`471366e1…`; `trace.py`, `reextract_cell.py`) for 23 groups / 627 rows (R-G5-1-b 1/50, R-G5-4-a-2 1/32, R-G5-4-b-1 21/545; groups from `p9_r01_residual/transitions.json` `d51baafb…`).
+  - Producer proof: plan 63's `sidecar_33006aa.patch` in a throwaway `33006aa` worktree, 23 single-cell windows; every window frame byte-equal to 013586b5 (26 leaves); sidecar emitter = recorded producer for 23/23; the 33006aa clip of the producer reproduces the shape bytes and is the only same-type unique-byte hit (Moore(8) ∪ FarHomes) for 23/23.
+  - Extract trace: one streaming pass over `australia-260824.osm.pbf` (sha256 `433a1da21d4b39bd…`, the pinned file) with the extractor's own functions; all 17 producer homes reproduce their spool cell ring-for-ring (types and coordinates, 6,608 rings).
+- **Inputs:** discs `scratch-45/ref_33006aa` (013586b5), `scratch-45/ref_d35b565` (4ed9cd80), `scratch-53/G_new` (0c22b266), R mounted DVD; spool `extract_timing/spool`.
+- **Scratch:** `output/scratch-64/p1` deleted; worktree removed. Receipts in `docs/plans/64-source-removed-clip-empty-rc/IMPLEMENTATION.md`.
