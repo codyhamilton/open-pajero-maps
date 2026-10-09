@@ -22,10 +22,29 @@
       "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 1)",
       "kib": 3900776,
       "live_at_peak": true
+    },
+    {
+      "class": "phase2_window_builds",
+      "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 2)",
+      "kib": 1117772,
+      "live_at_peak": true
+    },
+    {
+      "class": "phase2_provenance_rules",
+      "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 2)",
+      "kib": 3893112,
+      "live_at_peak": true
+    },
+    {
+      "class": "phase2_dup_census_013586b5",
+      "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 2)",
+      "kib": 431328,
+      "live_at_peak": true
     }
   ],
   "inter_phase_boundary": null,
   "notes": [
-    "Phase 1: FarHomes(L0) index dominates; 19 s per run."
+    "Phase 1: FarHomes(L0) index dominates; 19 s per run.",
+    "Phase 2: 386 sidecar window builds at 33006aa (-j4, serial) max RSS 1.07 GiB / memory.peak 0.35 GiB, 79 s + 278 s; provenance.py A+B max RSS 3.71 GiB / memory.peak 1.11 GiB, 231 s / 223 s (FarHomes L0); dup census 013586b5 max RSS 0.41 GiB / memory.peak 1.94 GiB incl. file pages, 104 s."
   ]
 }

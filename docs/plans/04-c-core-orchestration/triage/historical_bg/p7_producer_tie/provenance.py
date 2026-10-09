@@ -174,7 +174,7 @@ def main(argv=None):
         for y in range(y0, y1):
             for x in range(x0, x1):
                 owner.setdefault((lv, x, y), (w["name"], w["set"]))
-    g1 = Counter(); g1_fail = []; sc_fail = []; g2 = Counter(); g2_dis = []
+    g1 = Counter(); g1_fail = []; sc_fail = []; g2 = Counter(); g2_dis = []; g2_cover = []
     prov_rows = []; cases = []
     spool_cls = {}
 
@@ -264,6 +264,11 @@ def main(argv=None):
                             got = so[1:] if so[0] in ("own", "routed") else None
                             if got == want:
                                 g2["agree"] += 1
+                            elif so[0] == "cover" and tuple(so[1:]) == tuple(want):
+                                # same source shape, emitted in its interior-cover form (E1 kind 1)
+                                g2["agree_cover_form"] += 1
+                                g2_cover.append({"leaf": [*lk, list(path)], "shape": s, "scan": list(want),
+                                                 "sidecar": list(so)})
                             else:
                                 g2["disagree"] += 1
                                 g2_dis.append({"leaf": [*lk, list(path)], "shape": s, "scan": list(want),
@@ -279,12 +284,12 @@ def main(argv=None):
                 for (code, wire), v in sorted(dups.items(), key=lambda kv: kv[1][0][0]):
                     hs = hitmap.get((code, wire), [])
                     em = [x[1] for x in v]
+                    # emitter identity = source shape (sx, sy, k); a cover-form item is its source shape
+                    ident = [tuple(e[1:]) for e in em]
                     reason = "ok"
-                    if any(e[0] == "cover" for e in em):
-                        reason = "cover_emitter"
-                    elif len({e for e in em}) != len(em):
+                    if len(set(ident)) != len(ident):
                         reason = "shared_emitter"
-                    elif sorted(tuple(e[1:]) for e in em) != hs:
+                    elif sorted(ident) != hs:
                         reason = "hits_ne_emitters"
                     # distinguishing pieces: per hit, first leaf position of a piece not equal to this wire
                     dist = {}
@@ -295,6 +300,7 @@ def main(argv=None):
                     cases.append({"leaf": [*lk, list(path)], "set": w["set"],
                                   "split": "derivation" if is_tie or not HOLDOUT(*lk) else "holdout",
                                   "code": code, "depth": len(path), "copies": [x[0] for x in v],
+                                  "cover_form": sum(e[0] == "cover" for e in em),
                                   "emitters": [list(e) for e in em], "merged": [x[2] for x in v],
                                   "hits": [list(h) for h in hs], "reason": reason,
                                   "hit_class": {",".join(map(str, h)): src_class(*h) for h in hs},
@@ -316,10 +322,10 @@ def main(argv=None):
     gzw(a.out_dir / "dup_cases.tsv.gz", ["case_json"], [json.dumps(c, sort_keys=True) for c in cases])
     prov_summary = summarize_prov(prov_rows, ties)
     out = {"gate1": dict(sorted(g1.items())), "gate1_fail": g1_fail, "sidecar_fail": sc_fail,
-           "gate2": dict(sorted(g2.items())), "gate2_disagree": g2_dis, "provenance": prov_summary,
+           "gate2": dict(sorted(g2.items())), "gate2_disagree": g2_dis, "gate2_cover_form": g2_cover, "provenance": prov_summary,
            "cases": {"n": len(cases), "by_reason_split": dict(sorted(Counter(f"{c['reason']}/{c['split']}"
                                                                           for c in cases).items())),
-                     "strata": dict(sorted(Counter(f"{c['split']}/d{c['depth']}/{c['code']}"
+                     "strata": dict(sorted(Counter(f"{c['split']}/d{c['depth']}/{c['code']}/{'cover' if c['cover_form'] else 'ring'}"
                                                    for c in cases if c["reason"] == "ok").items()))},
            "rules": rules, "code_path": CODE_PATH,
            "holdout_definition": "sample-window cells with sha256('p63-holdout:{level},{ix},{iy}')[0] odd; "

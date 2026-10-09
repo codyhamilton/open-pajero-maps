@@ -16,9 +16,10 @@ ROOT = Path(__file__).resolve().parents[6]
 HERE = Path(__file__).resolve().parent
 SAMPLE_N = 40
 SAMPLE_W = 6
+SAMPLE2_K = 60
 
 
-def window_list(spool: Path) -> list[dict]:
+def window_list(spool: Path, census: Path | None = None) -> list[dict]:
     sys.path[:0] = [str(ROOT / "parser")]
     from kiwiw.spool import SpoolReader
     ties = json.loads((HERE / "ties_all.json").read_text())
@@ -31,6 +32,28 @@ def window_list(spool: Path) -> list[dict]:
     for _h, x, y in keys[:SAMPLE_N]:
         out.append({"name": f"s_0_{x}_{y}", "set": "sample",
                     "window": [0, x, y, x + SAMPLE_W, y + SAMPLE_W]})
+    if census:
+        # sampler v2 (stratified): L0 leaves of the 013586b5 duplicate census (cells holding
+        # byte-identical same-type class>0 records, i.e. >=2 same-type emitters), strata
+        # (type code, depth); per stratum the SAMPLE2_K cells with the lowest
+        # sha256("p63-sample2:{ix},{iy}"); single-cell windows; tie cells excluded.
+        import csv as _csv, gzip as _gz
+        tie = {(ix, iy) for _lv, ix, iy in cells}
+        strata = {}
+        with _gz.open(census, "rt") as f:
+            for r in _csv.DictReader(f, delimiter="\t"):
+                if r["level"] != "0":
+                    continue
+                c = (int(r["ix"]), int(r["iy"]))
+                if c in tie:
+                    continue
+                strata.setdefault((int(r["code"]), len(r["path"].split(","))), set()).add(c)
+        pick = set()
+        for _k, cs in sorted(strata.items()):
+            ranked = sorted(cs, key=lambda c: hashlib.sha256(f"p63-sample2:{c[0]},{c[1]}".encode()).hexdigest())
+            pick.update(ranked[:SAMPLE2_K])
+        for x, y in sorted(pick, key=lambda c: (c[1], c[0])):
+            out.append({"name": f"v_0_{x}_{y}", "set": "sample", "window": [0, x, y, x + 1, y + 1]})
     return out
 
 
@@ -41,9 +64,10 @@ def main(argv=None):
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--python", default=sys.executable)
     ap.add_argument("-j", type=int, default=4)
+    ap.add_argument("--census", type=Path, default=None, help="013586b5 dup census tsv.gz (sampler v2)")
     a = ap.parse_args(argv)
     a.out.mkdir(parents=True, exist_ok=True)
-    wins = window_list(a.spool)
+    wins = window_list(a.spool, a.census)
     (a.out / "windows.json").write_text(json.dumps(wins, indent=1) + "\n")
     t0 = time.time()
     for w in wins:

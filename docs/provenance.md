@@ -1006,3 +1006,15 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - Scratch: `output/scratch-62/` deleted per phase (receipts in `docs/plans/62-r01-still-outside-r16.md`); the plan-60/65 worktree `open-pajero-maps-60` and `output/scratch-65` were removed at the 62 close-out.
 - Record `docs/plans/62-r01-still-outside-r16.md`; reviews Codex (FIX → LAND).
 - Disk (2026-10-09): removed `output/scratch-46/gatework_full_b` (5.2 G, plan-46 run B, verified identical to run A), `gate_v2_blob` (170 M) and `gate_v3_piece` (167 M). Superseded gate iterations; regenerable from the committed tools.
+
+## Plan 63 — producer-ambiguous tie RC (2026-10-09)
+
+- **Phase 1:** `historical_bg/p7_producer_tie/ties_all.json` (`8ce2237e…`, `tie_census.py`, `parser/tools/producer_tie.py`). Covers 98 groups / 4,612 rows / 47 leaves: T1 54, T2 44, T0 0. Double run byte-identical.
+- **Phase 2:** sidecar `p7_producer_tie/sidecar/sidecar_33006aa.patch`, applied to `33006aa` in a throwaway worktree and gated on `KW_SIDECAR_DIR`.
+  - Window builds come from `windows.py` (386 windows; `windows.json`); analysis from `provenance.py`.
+  - Outputs: `provenance.tsv.gz` (`e323cccf…`), `rules.json` (`9b76437c…`), `dup_cases.tsv.gz` (`982269d0…`). Double run byte-identical.
+  - Gates: G1 2,085/2,085 frames are byte-equal to 013586b5. G2 14,211/14,211 records agree (3 of them in cover form).
+  - The accepted rule is contiguous per-producer block emission (537/537 derivation, 546/546 holdout).
+  - Duplicate census of 013586b5: `dup_census.py` → `dup_census_013586b5.{json,tsv.gz}`.
+- **Inputs:** disc `scratch-45/ref_33006aa` (013586b5); clipper `scratch-46/cenc_33006aa`; spool `extract_timing/spool`.
+- **Scratch:** `output/scratch-63/` is deleted per phase, and the `33006aa` worktree is removed at the end of Phase 2. Receipts are in `docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md`.
