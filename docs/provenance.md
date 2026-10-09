@@ -1003,5 +1003,6 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
 - Re-decide `p9_r01_residual/redecide.tsv.gz` + `redecide_rows80.tsv.gz` (`redecide.py`; configs FULL / -RC2..-RC5 / PLAN44; double run byte-identical). `transitions.json`, `audit.json` and `u4f_probe.json` sit alongside.
 - phase23 decide double run: `p9_r01_residual/verdicts_census.tsv.gz` (byte-identical).
 - Discs: old `scratch-45/ref_33006aa` (013586b5); new `scratch-45/ref_d35b565` (4ed9cd80). Clippers: `scratch-46/cenc_33006aa`, `cenc_d35b565`. Spool: `extract_timing/spool`.
-- Scratch: `output/scratch-62/` (run B copies, logs, wrapper JSON, `census_join`/`identity_census` inputs; regenerable).
+- Scratch: `output/scratch-62/` deleted per phase (receipts in `docs/plans/62-r01-still-outside-r16.md`); the plan-60/65 worktree `open-pajero-maps-60` and `output/scratch-65` were removed at the 62 close-out.
+- Record `docs/plans/62-r01-still-outside-r16.md`; reviews Codex (FIX → LAND).
 - Disk (2026-10-09): removed `output/scratch-46/gatework_full_b` (5.2 G, plan-46 run B, verified identical to run A), `gate_v2_blob` (170 M) and `gate_v3_piece` (167 M). Superseded gate iterations; regenerable from the committed tools.
