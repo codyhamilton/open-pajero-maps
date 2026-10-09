@@ -1017,4 +1017,4 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
   - The accepted rule is contiguous per-producer block emission (537/537 derivation, 546/546 holdout).
   - Duplicate census of 013586b5: `dup_census.py` → `dup_census_013586b5.{json,tsv.gz}`.
 - **Inputs:** disc `scratch-45/ref_33006aa` (013586b5); clipper `scratch-46/cenc_33006aa`; spool `extract_timing/spool`.
-- **Scratch:** `output/scratch-63/` is deleted per phase, and the `33006aa` worktree is removed at the end of Phase 2. Receipts are in `docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md`.
+- **Scratch:** `output/scratch-63/` deleted per phase; the throwaway `33006aa` worktree removed each time. Receipts in `docs/plans/63-producer-ambiguous-tie-rc.md`. Record + reviews Codex (FIX → LAND).

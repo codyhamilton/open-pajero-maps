@@ -19,37 +19,37 @@
   "residency": [
     {
       "class": "phase1_tie_census",
-      "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 1)",
+      "evidence": "docs/plans/63-producer-ambiguous-tie-rc.md (Phase 1)",
       "kib": 3900776,
       "live_at_peak": true
     },
     {
       "class": "phase2_window_builds",
-      "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 2)",
+      "evidence": "docs/plans/63-producer-ambiguous-tie-rc.md (Phase 2)",
       "kib": 1117772,
       "live_at_peak": true
     },
     {
       "class": "phase2_provenance_rules",
-      "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 2)",
+      "evidence": "docs/plans/63-producer-ambiguous-tie-rc.md (Phase 2)",
       "kib": 3893112,
       "live_at_peak": true
     },
     {
       "class": "phase2_dup_census_013586b5",
-      "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 2)",
+      "evidence": "docs/plans/63-producer-ambiguous-tie-rc.md (Phase 2)",
       "kib": 431328,
       "live_at_peak": true
     },
     {
       "class": "phase3_p2_reproduction",
-      "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 3)",
+      "evidence": "docs/plans/63-producer-ambiguous-tie-rc.md (Phase 3)",
       "kib": 3892836,
       "live_at_peak": true
     },
     {
       "class": "phase3_dup_census_R_0c22_and_gate_repro_resolved",
-      "evidence": "docs/plans/63-producer-ambiguous-tie-rc/IMPLEMENTATION.md (Phase 3)",
+      "evidence": "docs/plans/63-producer-ambiguous-tie-rc.md (Phase 3)",
       "kib": 7278648,
       "live_at_peak": true
     }

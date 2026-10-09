@@ -1,4 +1,27 @@
-# Plan 63 — IMPLEMENTATION (checkpoint)
+# Producer-ambiguous tie RC (R-G5-1-a / R-G5-2-a): emission provenance on 33006aa
+
+## Intent
+Plan 46 left 4,612 rows in 98 groups as `producer_ambiguous`: two same-type candidate rings each byte-hit the record. Plan 63 proves the producer of every copy with an output-neutral source-tag sidecar on the `33006aa` encoder. It derives and holdout-tests the selection rule, re-decides every row, publishes S′ as an opt-in, and records the duplicate-emission parity against R. It uses no nearest-ring choice and no waivers.
+
+Design: box draft `63-producer-ambiguous-tie-rc/DESIGN.md` (re-copied fresh 2026-10-09), base `b889c2e`. Seat: Codex.
+
+## Outcome
+- **Commits:** P1 `627fabb`; P2 `1005eed`, `6b3c47b`; P3 `5174eab`, `c35a22e`; review fix `a4bb568`; close-out (this record).
+- **R-G5-1-a (4,594) and R-G5-2-a (18): discharged-plan-63.** All 4,612 rows are `build:eo_bg_stitch`, and each copy has a sidecar-proven producer (`p7_producer_tie/verdicts_ambiguous.tsv.gz` `10d250a8…`).
+- **Accepted rule: contiguous per-producer block emission** (`33006aa` `_cenc.c` `enc_bg` over `_e2.c` `kw_e2` / `e2_merge`; divided leaves via `dv_bg_cells` / `dv_probe`). 537/537 on derivation, 546/546 on holdout. Every other candidate rule was rejected.
+- **Gates:** G1 2,085/2,085 frames are byte-equal to 013586b5. G2 398,324/398,324 unique-byte records agree, 581 of them in cover form.
+- **S′ = S ∪ 6 scope-delta groups** (opt-in `gate_repro --s02-resolve`; plan 46's S is unchanged): 145,960 / 11,127,845; a(S′) = 15,080. The S04 identity is off by 2, and the record names why.
+- **New R-G5-6 (Design):** G holds byte-identical same-type duplicate records in 336,329 leaves on 013586b5 and 336,135 on 0c22b266; R holds them in 0.
+- **R-G5-4-a-1:** a note only, because applying the rule there is a 63 non-goal (plan-62 consumer).
+
+## Review
+Codex (read-only), first review: **FIX**.
+1. G2 covered only the tie cells. Fixed: all 1,770 cells now pass, 398,324/398,324.
+2. The receipt hash labels were stale. Fixed.
+
+Codex re-review: **LAND**. Tests: `test_producer_tie`, `test_bg_producer_scan` and `test_perf_inventory` pass (19).
+
+## Implementation log (collapsed from IMPLEMENTATION.md)
 
 The draft was re-copied fresh from the box on 2026-10-09 12:55 AEST.
 - Base: `origin/master` `b889c2e` (plan 62 close-out).
