@@ -151,3 +151,10 @@ No code fix: every group is H3 (correct removal), so the build stays as it is an
 4. 0 `/tmp/p64_*`; 0 `maps-heavy` scopes.
 5. No heavy run, so no ledger peak; ledger note added.
 6. `df -h /home`: 11 G free (97 %).
+
+## Review 1 (Codex, read-only): FIX → fix
+
+- First attempt aborted before reading anything: the shell carried a stale `TMPDIR` / `KW_SIDECAR_DIR` pointing into the deleted `output/scratch-63/p2/`. Both unset; review re-run.
+- Finding 1 (medium): R-G5-4-a-1 still named plan 63 as owner in `residuals.tsv` and `synthesis.md`, while OVERVIEW routes it to Design draft 68 Phase 1. Fixed: owner `Design → plan 68 Phase 1`, routing note appended; row stays `blocks-phase3`.
+- Reviewer: the 23 per-group H3 verdicts, the 627-row split, R witnesses, stage counters, output-neutral gate, cited code lines and the P1–P3 receipts otherwise check out.
+- Interrupted ~15:26 AEST after the fix; resumed from observed state (origin 61d2fe8, local ccbe5fa + fix uncommitted, lock free, no heavy jobs or scopes, `output/scratch-64/review` only).
