@@ -1026,4 +1026,4 @@ Hard-coded readers of these paths: committed `forced_zero.py`, `build_ext.py`, `
   - Extract trace: one streaming pass over `australia-260824.osm.pbf` (sha256 `433a1da21d4b39bd…`, the pinned file) with the extractor's own functions; all 17 producer homes reproduce their spool cell ring-for-ring (types and coordinates, 6,608 rings).
 - **Phase 2:** `stage_d35b565.patch` (sidecar + `bg_shape` stage counters; throwaway `d35b565` worktree), `stage.py` → `stage.json` (`ccd57f1e…`; 26/26 window frames byte-equal to 4ed9cd80); `classify.py` → `classify.json` (`1ffb9e0c…`): H3 for 23/23 groups (EO interior faces dropped at `emit_piece` round/clean; R has 0 type-288 polygons in all 23 leaf cells).
 - **Inputs:** discs `scratch-45/ref_33006aa` (013586b5), `scratch-45/ref_d35b565` (4ed9cd80), `scratch-53/G_new` (0c22b266), R mounted DVD; spool `extract_timing/spool`.
-- **Scratch:** `output/scratch-64/p1` deleted; worktree removed. Receipts in `docs/plans/64-source-removed-clip-empty-rc/IMPLEMENTATION.md`.
+- **Scratch:** `output/scratch-64/p1` deleted; worktree removed. Receipts in `docs/plans/64-source-removed-clip-empty-rc.md`.

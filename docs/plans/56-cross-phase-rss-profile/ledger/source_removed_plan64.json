@@ -19,19 +19,19 @@
  "residency": [
   {
    "class": "phase1_pbf_reextract_flex_mem",
-   "evidence": "docs/plans/64-source-removed-clip-empty-rc/IMPLEMENTATION.md (Phase 1)",
+   "evidence": "docs/plans/64-source-removed-clip-empty-rc.md (Phase 1)",
    "kib": 4264296,
    "live_at_peak": true
   },
   {
    "class": "phase1_sidecar_windows_and_trace",
-   "evidence": "docs/plans/64-source-removed-clip-empty-rc/IMPLEMENTATION.md (Phase 1)",
+   "evidence": "docs/plans/64-source-removed-clip-empty-rc.md (Phase 1)",
    "kib": 3894272,
    "live_at_peak": true
   },
   {
    "class": "phase2_stage_windows_and_classify",
-   "evidence": "docs/plans/64-source-removed-clip-empty-rc/IMPLEMENTATION.md (Phase 2)",
+   "evidence": "docs/plans/64-source-removed-clip-empty-rc.md (Phase 2)",
    "kib": 3897480,
    "live_at_peak": true
   }

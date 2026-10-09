@@ -1,4 +1,27 @@
-# Plan 64 — implementation log
+# Empty-clip "source-removed" rows (R-G5-1-b / R-G5-4-a-2 / R-G5-4-b-1): per-group cause on d35b565
+
+## Intent
+Plan 46 and plan 62 left 627 rows in 23 L0 type-288 groups as "source-removed": the producer ring is in the candidate set, but its `d35b565` clip into the leaf is empty. Plan 64 decides each group between H1 (wrong producer), H2 (clip/stitch defect), H3 (correct removal), H4 (source drift) and H5 (extract defect), each on its own evidence, with a mandatory R comparison. No waivers, no analogy, no F6 / kind-order work.
+
+Design: box draft `64-source-removed-clip-empty-rc/DESIGN.md` + `REVISION-NOTE.md` (scope revision 2026-10-09 ~14:45 AEST; re-copied fresh), base `61d2fe8`. Seat: Codex.
+
+## Outcome
+- **Commits:** P1 `d4a638f`; P2 `b267561`; P3 `ccbe5fa`; review fix `e5c9125`; close-out (this record).
+- **H3 (correct removal) for 23/23 groups; R-G5-1-b (50), R-G5-4-a-2 (32), R-G5-4-b-1 (545): discharged-plan-64.** Evidence per group in `historical_bg/p8_source_removed/classify.json` (`1ffb9e0c…`), `trace.json` (`471366e1…`), `stage.json` (`ccd57f1e…`).
+  - H1 false 23/23: plan-63 sidecar emitter = recorded producer; only unique-byte hit.
+  - H5 false 23/23: producer ring = its OSM way + extractor closure; 6,608 home rings equal the spool of record; PBF sha = pin.
+  - Mechanism: on `d35b565` `eo_clip` yields sub-unit interior slivers (0.9–497 raw²) that `emit_piece` drops at round/clean (`_cenc.c:586/:592`); the `33006aa` record was the legacy chain walk's frame-hugging artefact (1,935×–9,007,839× the exact region). Stage trace output-neutral: 26/26 frames byte-equal to 4ed9cd80.
+  - R has 0 type-288 polygons in each of the 23 leaf cells.
+- **No code change, no oracle move** (nothing lands before plan 68).
+- **Finding for Design and Cody (not a fix; F6 / kind-order Cody-held):** all 17 producers are open OSM ways closed into rings by `osm_to_parcel_geometry.py` and typed 288 by the level-0 catch-all (`bg_type.json` rule 11): 5 only `source:geometry=PSMA_Admin_Boundaries`, 2 only `source=CAPAD 2016 - Terrestrial`, 8 untagged, 1 `barrier=fence`, 1 `natural=tree_row`; 16/17 self-intersect once closed.
+- R-G5-4-a-1 (222) re-routed to Design draft 68 Phase 1 (owner text only; still `blocks-phase3`).
+- Peaks (56 ledger `source_removed_plan64.json`): P1 max RSS 4,274,144 KiB / memory.peak 4.68 GB, 425 s; P2 3,897,480 KiB / 0.35 GB, 45 s; P3 docs only.
+
+## Review
+Codex (read-only), first review: **FIX** — R-G5-4-a-1 owner still plan 63 in `residuals.tsv` / `synthesis.md`. Fixed (`e5c9125`).
+Codex re-review: **LAND** (no findings; 627 = 50/32/545 reconciled, 26/26 gate, P1–P3 receipts present).
+
+## Implementation log (collapsed from IMPLEMENTATION.md)
 
 Seat: Codex on codyh-ubuntu (master direct). Draft re-copied from `/workspace/maps-design-drafts/64-source-removed-clip-empty-rc/` at start (14:31 AEST, sha `42447564…`), and re-copied again after the Design scope revision (14:45 AEST note; DESIGN.md + REVISION-NOTE.md). Tip `61d2fe8`.
 
@@ -158,3 +181,12 @@ No code fix: every group is H3 (correct removal), so the build stays as it is an
 - Finding 1 (medium): R-G5-4-a-1 still named plan 63 as owner in `residuals.tsv` and `synthesis.md`, while OVERVIEW routes it to Design draft 68 Phase 1. Fixed: owner `Design → plan 68 Phase 1`, routing note appended; row stays `blocks-phase3`.
 - Reviewer: the 23 per-group H3 verdicts, the 627-row split, R witnesses, stage counters, output-neutral gate, cited code lines and the P1–P3 receipts otherwise check out.
 - Interrupted ~15:26 AEST after the fix; resumed from observed state (origin 61d2fe8, local ccbe5fa + fix uncommitted, lock free, no heavy jobs or scopes, `output/scratch-64/review` only).
+
+## Close-out scratch receipt (2026-10-09 ~15:45 AEST)
+
+1. `du -sb output/scratch-64`: 337,360 B before (`review/`: prompt, two Codex logs and outputs); after: gone (`test ! -e`).
+2. Kept: only committed files (this record, `p8_source_removed/` tools and JSON, residual docs, ledger). No `keep/`.
+3. `git worktree list`: no plan-64 worktree.
+4. 0 `/tmp/p64_*`; 0 `maps-heavy` scopes; `.heavy.lock` untouched.
+5. Never-delete list respected: `.heavy.lock`, other plans' scratch (incl. scratch-32 pins), spool of record, R, oracle discs, `.venv-rp` read only.
+6. `df -h /home`: 11 G free (97 %).
