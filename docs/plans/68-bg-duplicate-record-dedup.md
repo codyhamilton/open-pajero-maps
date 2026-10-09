@@ -82,7 +82,7 @@ Seat note: CHM 15:54 — Codex at its 5 h limit until 17:14; any new harness sea
 
 ### P1 artefacts (committed, `p10_bg_dedup/`)
 
-- `r_correspondence.{tsv.gz,json}` (sample; pre-fix `fe38eabb…`, post-review-fix `ccb1e9f9…` / json `7c0b5524…`, runs A == B); `r_correspondence_national.{tsv.gz,json}` (`867e12ce…`); `r_census.{tsv.gz,json}` (`c8ef0707…`, run B byte-identical); `a1_verdicts.json` (`3a307345…`, run B byte-identical); `dclass_{au,perth,R}.{json,tsv.gz}` (tsv.gz pre-fix `d8b579f4…`, `375d42ca…`, `b7110e08…`; post-review-fix `8c67f7f7…`, `a33171c0…`, `0bfc8772…`, runs A == B); with P1a's census and `sample.json`.
+- `r_correspondence.{tsv.gz,json}` (sample; pre-fix `fe38eabb…`, post-review-fix `ccb1e9f9…` / json `7c0b5524…`, runs A == B); `r_correspondence_national.tsv.gz` (`867e12ce…`) / `.json` (`a71fb404…`); `r_census.tsv.gz` (`c8ef0707…`) / `.json` (`d4a97b63…`) (run B byte-identical); `a1_verdicts.json` (`3a307345…`, run B byte-identical); `dclass_{au,perth,R}.{json,tsv.gz}` (tsv.gz pre-fix `d8b579f4…`, `375d42ca…`, `b7110e08…`; post-review-fix `8c67f7f7…`, `a33171c0…`, `0bfc8772…`, runs A == B); with P1a's census and `sample.json`.
 - `residuals.tsv`: R-G5-4-a-1 → discharged-plan-68 (222 rows / 8 groups build:eo_bg_stitch); R-G5-6 text corrected (R holds 486 duplicate classes; plan 63's R count was a reader artefact) and the correspondence / D-class results added; status unchanged (blocks-phase3, Design).
 - Ledger `docs/plans/56-cross-phase-rss-profile/ledger/bg_dedup_plan68.json` + SUMMARY rows.
 
@@ -149,3 +149,14 @@ Every committed caller of the cut (`rg "U16\(.*, 0\) \* 2"` over `historical_bg/
   - **R-G5-6-c** — R's own 486 duplicate classes (258 leaves; L0 291 197 / 321 9 / 640 45, L2 291 189 / 321 13 / 640 26, L4 321 5, L6 321 2); none coincides with a G duplicate class. Whether and how many G reproduces is not measured; RC owed; owner Design.
 - R-G5-4-a-1 stays discharged (plan 68 Phase 1, 222 build).
 
+
+## Review 3 (OpenCode DeepSeek Flash, read-only, seat change 19:21; 19:41 AEST): LAND
+
+All five review-2 findings verified resolved (P4 gate withdrawn/rewritten in this record; pre/post-fix hashes match git blobs and committed files; per-type figures match `dclass_{au,R}.json`; ledger peak 11,189,379,072 B / 4,967.9 s; record path cited by residuals/ledger exists). Non-blocking: (1) national-correspondence and r_census `.json` hashes were paired with the tsv.gz hash — split above (`a71fb404…`, `d4a97b63…`); (2) provenance said `output/scratch-68/` deleted while `review/` remained — now true (receipt below). Paths under `output/scratch-68/` cited above are historical (scratch deleted).
+
+## Close-out scratch receipt (2026-10-09 19:44 AEST)
+
+- Before the close-out: `output/scratch-68` = 621,556,171 B (`rerun/` 620,057,396; `review/` 1,498,775; `audit/` empty), plus worktree `../open-pajero-maps-68-sidecar` 86,819,909 B (re-created for the rerun; `git apply -R --check` confirmed it held only the plan-63 sidecar patch).
+- Removed: the worktree (`git worktree remove --force` + `prune`), `rerun/`, empty `audit/`, then `review/` (1,504,230 B at deletion, after review 3).
+- After: `test ! -e output/scratch-68` ✓ (no `keep/`); `git worktree list` has no `68-` entry; no `/tmp/p68*`; no maps-heavy scope of plan 68 (the one running scope is plan 67's P1 census); `TMPDIR` / `KW_SIDECAR_DIR` unset; committed outputs checked by sha256 against the rerun outputs before deletion. `df -h /home`: 324G size, 298G used, 9.3G avail (97 %).
+- Not touched: `.heavy.lock`, other plans' scratch (incl. scratch-32 pins), spool of record, R, oracle discs, `.venv-rp`.
